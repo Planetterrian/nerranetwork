@@ -119,6 +119,8 @@ def _parse_envelope(
             "by_the_numbers": [],
             "body_md": "",
             "p_s": fallback_p_s,
+            "featured_episode": None,
+            "cross_network": [],
         }
 
     text = raw_text.strip()
@@ -155,6 +157,8 @@ def _parse_envelope(
             "by_the_numbers": [],
             "body_md": _strip_repeated_show_title(raw_text, show_name),
             "p_s": fallback_p_s,
+            "featured_episode": None,
+            "cross_network": [],
         }
 
     # Coerce + sanitize each field.
@@ -197,6 +201,10 @@ def _parse_envelope(
         "by_the_numbers": by_the_numbers,
         "body_md": body_md,
         "p_s": p_s,
+        # featured_episode + cross_network are populated by the caller
+        # after parse — they don't come from the LLM.
+        "featured_episode": None,
+        "cross_network": [],
     }
 
 
@@ -235,6 +243,157 @@ def _network_synth_defaults() -> tuple[str, int, float]:
         except Exception as exc:
             logger.warning("Failed to read synth defaults: %s", exc)
     return model, max_tokens, temperature
+
+
+def _load_network_adjacencies() -> Dict[str, List[str]]:
+    """Read the network-wide adjacency map from ``shows/_defaults.yaml``.
+
+    Returns ``{slug: [sibling_slugs]}``. Used as the fallback when a
+    show YAML doesn't pin its own ``newsletter.adjacent_shows`` list.
+    Empty dict on failure (so the cross-network module just degrades
+    to "no adjacencies surfaced this week" rather than crashing).
+    """
+    import yaml
+
+    defaults_path = Path("shows/_defaults.yaml")
+    if not defaults_path.exists():
+        return {}
+    try:
+        data = yaml.safe_load(defaults_path.read_text(encoding="utf-8")) or {}
+    except Exception as exc:
+        logger.warning("Failed to read network adjacencies: %s", exc)
+        return {}
+    nl = data.get("newsletter") or {}
+    adj = nl.get("network_adjacencies") or {}
+    return {k: list(v or []) for k, v in adj.items()}
+
+
+def _show_short_label(slug: str) -> Dict[str, str]:
+    """Return ``{name, emoji, short_label}`` for a slug from its YAML.
+
+    Used by the cross-network module to render sibling shows with
+    their per-show emoji + short name. Falls back to the slug if the
+    YAML is missing.
+    """
+    import yaml
+
+    out = {"name": slug, "emoji": "", "short_label": slug}
+    yp = Path("shows") / f"{slug}.yaml"
+    if not yp.exists():
+        return out
+    try:
+        data = yaml.safe_load(yp.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return out
+    name = (data.get("publishing") or {}).get("rss_title") or data.get("name") or slug
+    nl = data.get("newsletter") or {}
+    out.update({
+        "name": str(name),
+        "emoji": str(nl.get("emoji") or ""),
+        "short_label": str(nl.get("short_label") or name),
+    })
+    return out
+
+
+def _build_cross_network_data(
+    show_slug: str, start_date: str, end_date: str
+) -> List[Dict[str, str]]:
+    """Pull top story-of-the-week from up to 3 adjacent shows.
+
+    Returns a list of dicts shaped for ``_build_cross_network_html``:
+        ``{name, slug, emoji, hook, url}``.
+
+    Lookup order for adjacent shows:
+      1. Per-show ``newsletter.adjacent_shows`` (explicit pinning)
+      2. Network-wide ``newsletter.network_adjacencies[slug]``
+      3. Empty (no module rendered)
+    """
+    import yaml
+
+    # Per-show pinned adjacencies, if any.
+    pinned: List[str] = []
+    yp = Path("shows") / f"{show_slug}.yaml"
+    if yp.exists():
+        try:
+            data = yaml.safe_load(yp.read_text(encoding="utf-8")) or {}
+            pinned = list(((data.get("newsletter") or {}).get("adjacent_shows") or []))
+        except Exception as exc:
+            logger.warning("adjacent_shows read failed for %s: %s", show_slug, exc)
+
+    # Fallback to the network-wide map.
+    if not pinned:
+        pinned = _load_network_adjacencies().get(show_slug, [])
+    pinned = pinned[:3]
+    if not pinned:
+        return []
+
+    # Pull each sibling's top-of-week episode (the most recent one
+    # with a non-empty hook). One query covers all shows.
+    try:
+        all_eps = query_all_shows_range(start_date, end_date)
+    except Exception as exc:
+        logger.debug("Cross-network query failed: %s", exc)
+        return []
+
+    by_show: Dict[str, List[Dict[str, Any]]] = {}
+    for ep in all_eps:
+        slug = ep.get("show_slug") or ""
+        if slug and slug != show_slug:
+            by_show.setdefault(slug, []).append(ep)
+
+    out: List[Dict[str, str]] = []
+    for sib_slug in pinned:
+        eps = by_show.get(sib_slug) or []
+        if not eps:
+            continue
+        eps.sort(key=lambda e: (e.get("date") or ""), reverse=True)
+        top = next((e for e in eps if e.get("hook")), eps[0])
+        meta = _show_short_label(sib_slug)
+        from engine.newsletter_template import episode_blog_url
+        url = (
+            episode_blog_url(sib_slug, top["episode_num"])
+            if top.get("episode_num") else ""
+        )
+        out.append({
+            "name": meta["short_label"],
+            "slug": sib_slug,
+            "emoji": meta["emoji"],
+            "hook": (top.get("hook") or "")[:140],
+            "url": url,
+        })
+    return out
+
+
+def _pick_featured_episode(
+    episodes: List[Dict[str, Any]], show_slug: str
+) -> Optional[Dict[str, Any]]:
+    """Pick the week's featured episode for the "10-minutes" block.
+
+    Heuristic: the most recent episode with a non-empty hook (the
+    fresher the episode, the more likely the reader hasn't heard it
+    yet). Falls back to the most recent episode period. Returns None
+    if the list is empty.
+    """
+    if not episodes:
+        return None
+    sorted_eps = sorted(
+        episodes, key=lambda e: (e.get("date") or ""), reverse=True
+    )
+    candidate = next(
+        (e for e in sorted_eps if (e.get("hook") or "").strip()),
+        sorted_eps[0],
+    )
+    from engine.newsletter_template import episode_blog_url
+    return {
+        "show_slug": show_slug,
+        "episode_num": candidate.get("episode_num"),
+        "date": candidate.get("date", ""),
+        "title": candidate.get("title", ""),
+        "hook": candidate.get("hook", ""),
+        "listen_url": episode_blog_url(
+            show_slug, candidate.get("episode_num", 0)
+        ),
+    }
 
 
 def _cfg_synth_params(cfg, default_max_tokens: int, default_temperature: float) -> tuple[str, int, float]:
@@ -338,30 +497,17 @@ def synthesize_weekly_newsletter(
 
     episodes_text = "\n\n---\n\n".join(episode_summaries)
 
-    # Cross-show highlights: top stories from OTHER shows this week that
-    # subscribers of THIS show might find interesting. This is a key
-    # cross-promotion mechanism for the network.
-    cross_show_section = ""
-    try:
-        all_shows_eps = query_all_shows_range(start_date, end_date)
-        other_shows = [
-            ep for ep in all_shows_eps
-            if ep.get("show_slug") != show_slug and ep.get("hook")
-        ]
-        if other_shows:
-            highlights = other_shows[:5]
-            cross_lines = []
-            for ep in highlights:
-                show_label = ep.get("show_name") or ep.get("show_slug", "")
-                hook = (ep.get("hook") or "")[:120]
-                cross_lines.append(f"- **{show_label}**: {hook}")
-            cross_show_section = (
-                "\n\n## From the Nerra Network This Week\n"
-                "Other shows in the network covered these notable stories:\n"
-                + "\n".join(cross_lines)
-            )
-    except Exception as exc:
-        logger.debug("Cross-show highlights failed: %s", exc)
+    # Episode link reference table — fed into the prompt so the LLM
+    # cites episodes with their canonical blog URLs instead of
+    # hallucinating links. Format: "Episode N (date): URL".
+    from engine.newsletter_template import episode_link_table
+    episode_links_text = episode_link_table(episodes, show_slug)
+
+    # Cross-network adjacencies: top stories from sibling shows this
+    # week, used to populate the "Across the Nerra Network" module
+    # rendered between the body and footer. We pre-fetch this rather
+    # than asking the LLM to fill it so the data stays accurate.
+    cross_network = _build_cross_network_data(show_slug, start_date, end_date)
 
     # Load show-specific or default prompt
     if prompt_file and prompt_file.exists():
@@ -380,13 +526,24 @@ def synthesize_weekly_newsletter(
         episode_count=len(episodes),
         start_date=start_date,
         end_date=end_date,
-        episodes_text=episodes_text + cross_show_section,
+        episodes_text=episodes_text,
         entities=", ".join(sorted(all_entities)[:30]),
     )
+
+    # Episode-link reference table — we instruct the LLM to use these
+    # canonical URLs whenever it cites an episode in body text. Without
+    # this, models routinely hallucinate URLs.
+    link_block = (
+        f"\n\n## Episode link reference (use these URLs when citing "
+        f"episodes; format: `[▶ Episode N · {{date}}]({{url}})`):\n"
+        f"{episode_links_text}\n"
+        if episode_links_text else ""
+    )
+
     # Append the JSON envelope output instructions. We do this after
     # the per-show prompt so the editorial guidance still drives the
     # body content; the envelope is a shape constraint, not a rewrite.
-    prompt = body_prompt + _ENVELOPE_INSTRUCTIONS.format(
+    prompt = body_prompt + link_block + _ENVELOPE_INSTRUCTIONS.format(
         target_words=target_words
     )
 
@@ -411,11 +568,20 @@ def synthesize_weekly_newsletter(
         envelope = _parse_envelope(
             text, show_name=show_name, week_ending=week_ending
         )
+        # Attach the deterministically-built bits (not from the LLM):
+        # featured episode + cross-network siblings.
+        envelope["featured_episode"] = _pick_featured_episode(
+            episodes, show_slug
+        )
+        envelope["cross_network"] = cross_network
         logger.info(
             "[Synthesizer] Weekly newsletter for %s: subject=%r body=%d chars "
-            "p_s=%d chars stats=%d (model=%s)",
+            "p_s=%d chars stats=%d siblings=%d featured=%s (model=%s)",
             show_slug, envelope["subject_hook"], len(envelope["body_md"]),
-            len(envelope["p_s"]), len(envelope["by_the_numbers"]), synth_model,
+            len(envelope["p_s"]), len(envelope["by_the_numbers"]),
+            len(cross_network),
+            envelope["featured_episode"]["episode_num"] if envelope["featured_episode"] else None,
+            synth_model,
         )
         return envelope
     except Exception as e:

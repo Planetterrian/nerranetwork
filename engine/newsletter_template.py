@@ -346,6 +346,211 @@ def _strip_repeated_show_title(body_md: str, show_name: str) -> str:
     return body_md
 
 
+def episode_blog_url(slug: str, episode_num: int) -> str:
+    """Canonical per-episode permalink on nerranetwork.com.
+
+    Pattern: ``https://nerranetwork.com/blog/<slug>/ep<NNN>.html``.
+    Locked in by the static site (see ``blog/<slug>/`` directories).
+    """
+    return f"{_NETWORK_SITE}/blog/{slug}/ep{int(episode_num):03d}.html"
+
+
+def episode_link_table(
+    episodes: List[Dict[str, Any]], slug: str
+) -> str:
+    """Render a markdown reference table of episode → URL pairs for the
+    LLM prompt context.
+
+    Lets the synthesizer instruct the model to use ``[▶ Episode N
+    · {date}]({url})`` whenever it cites an episode in body text,
+    without the model hallucinating URLs.
+    """
+    if not episodes:
+        return ""
+    lines = ["Episode reference (use these exact URLs when citing episodes):"]
+    for ep in episodes:
+        num = ep.get("episode_num")
+        if num is None:
+            continue
+        url = episode_blog_url(slug, num)
+        date_str = ep.get("date", "")
+        lines.append(f"- Episode {num} ({date_str}): {url}")
+    return "\n".join(lines)
+
+
+def _build_featured_episode_html(
+    featured: Optional[Dict[str, Any]], show: Dict[str, str]
+) -> str:
+    """Render the "If you only have 10 minutes" block at top of body.
+
+    *featured* is a dict with at least ``episode_num``, ``hook``, and
+    ``date``. We compute the listen URL from ``episode_blog_url``.
+    Returns an empty string if no featured episode is provided.
+    """
+    if not featured:
+        return ""
+    num = featured.get("episode_num")
+    hook = (featured.get("hook") or "").strip()
+    date_str = featured.get("date", "")
+    if num is None or not hook:
+        return ""
+    brand = show["brand_color"]
+    slug = featured.get("show_slug", "")
+    listen = featured.get("listen_url") or (
+        episode_blog_url(slug, int(num)) if slug else show["show_page"]
+    )
+    safe_hook = hook.replace("<", "&lt;").replace(">", "&gt;")
+    safe_date = (date_str or "").replace("<", "&lt;").replace(">", "&gt;")
+    return (
+        '<table role="presentation" width="100%" cellpadding="0" '
+        'cellspacing="0" border="0" style="background:#ffffff;">'
+        '<tr><td '
+        'style="padding:20px 24px 8px;'
+        'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\','
+        'Roboto,Helvetica,Arial,sans-serif;">'
+        f'<div style="border:1px solid {brand}33;background:{brand}0a;'
+        f'border-radius:12px;padding:18px 18px 16px;">'
+        '<div style="font-size:11px;font-weight:700;'
+        f'color:{brand};letter-spacing:0.08em;'
+        'text-transform:uppercase;margin-bottom:6px;">'
+        '🎧 If you only have 10 minutes this week'
+        '</div>'
+        f'<div style="font-size:17px;font-weight:600;color:#0f172a;'
+        f'line-height:1.4;margin:0 0 10px;">'
+        f'Episode {num} · {safe_hook}'
+        '</div>'
+        f'<div style="font-size:12px;color:#64748b;margin:0 0 14px;">'
+        f'{safe_date}</div>'
+        f'<a href="{listen}" '
+        f'style="display:inline-block;background:{brand};color:#ffffff;'
+        f'text-decoration:none;font-weight:600;font-size:14px;'
+        f'padding:8px 16px;border-radius:8px;">'
+        '▶ Listen now</a>'
+        '</div></td></tr></table>'
+    )
+
+
+def _build_cross_network_html(
+    adjacent_shows: Optional[List[Dict[str, Any]]], brand: str
+) -> str:
+    """Render the "Across the Nerra Network" cross-promo block.
+
+    *adjacent_shows* is a list of dicts:
+        ``{"name": ..., "slug": ..., "emoji": ..., "hook": ..., "url": ...}``
+
+    Renders as a styled card list between the body and the footer.
+    Empty input → empty string (the block is opt-out by data, not a
+    feature flag).
+    """
+    if not adjacent_shows:
+        return ""
+    rows: List[str] = []
+    for adj in adjacent_shows[:3]:
+        name = (adj.get("name") or "").strip()
+        emoji = (adj.get("emoji") or "").strip()
+        hook = (adj.get("hook") or "").strip()
+        url = (adj.get("url") or "").strip()
+        if not name or not hook:
+            continue
+        n_safe = name.replace("<", "&lt;").replace(">", "&gt;")
+        h_safe = hook.replace("<", "&lt;").replace(">", "&gt;")
+        prefix = f"{emoji} " if emoji else ""
+        if url:
+            link_open = (
+                f'<a href="{url}" '
+                f'style="color:#0f172a;text-decoration:none;'
+                f'border-bottom:1px solid {brand};">'
+            )
+            link_close = "</a>"
+        else:
+            link_open = link_close = ""
+        rows.append(
+            '<tr><td '
+            'style="padding:10px 0;border-top:1px solid #e2e8f0;'
+            'font-size:14px;line-height:1.5;color:#334155;">'
+            f'<strong style="color:#0f172a;">{prefix}{link_open}'
+            f'{n_safe}{link_close}</strong>'
+            f'<span style="color:#64748b;"> — {h_safe}</span>'
+            '</td></tr>'
+        )
+    if not rows:
+        return ""
+    return (
+        '<table role="presentation" width="100%" cellpadding="0" '
+        'cellspacing="0" border="0" style="background:#f8fafc;">'
+        '<tr><td '
+        'style="padding:24px;'
+        'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\','
+        'Roboto,Helvetica,Arial,sans-serif;">'
+        '<div style="font-size:11px;font-weight:700;color:#64748b;'
+        'letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">'
+        '🌐 Across the Nerra Network'
+        '</div>'
+        '<table role="presentation" width="100%" cellpadding="0" '
+        'cellspacing="0" border="0">'
+        + "".join(rows) +
+        '</table>'
+        '</td></tr></table>'
+    )
+
+
+def _build_reply_share_html(
+    show: Dict[str, str], *, archive_url: str = ""
+) -> str:
+    """Render a reply-CTA + share-intents row above the footer CTAs.
+
+    Mailto opens a prefilled message. Twitter/LinkedIn/WhatsApp share
+    intents point to the archive_url (the show landing page, since
+    Buttondown's per-issue archive URL isn't known until after send).
+    """
+    name = show["name"]
+    brand = show["brand_color"]
+    target = (archive_url or show["show_page"]).strip()
+
+    # Pre-encode the share intents (URL-encoded query strings).
+    import urllib.parse as _u
+    share_text = f"I'm reading {name} this week — give it a listen:"
+    twitter = (
+        "https://twitter.com/intent/tweet?"
+        + _u.urlencode({"text": share_text, "url": target})
+    )
+    linkedin = (
+        "https://www.linkedin.com/sharing/share-offsite/?"
+        + _u.urlencode({"url": target})
+    )
+    whatsapp = (
+        "https://wa.me/?"
+        + _u.urlencode({"text": f"{share_text} {target}"})
+    )
+
+    def _chip(href: str, label: str) -> str:
+        return (
+            f'<a href="{href}" '
+            f'style="display:inline-block;color:{brand};text-decoration:none;'
+            f'font-weight:600;font-size:13px;padding:6px 12px;'
+            f'margin:2px;border:1px solid {brand}55;border-radius:100px;'
+            f'background:#ffffff;">{label}</a>'
+        )
+
+    return (
+        '<table role="presentation" width="100%" cellpadding="0" '
+        'cellspacing="0" border="0" style="background:#ffffff;">'
+        '<tr><td align="center" '
+        'style="padding:8px 16px 20px;'
+        'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\','
+        'Roboto,Helvetica,Arial,sans-serif;color:#475569;">'
+        '<p style="font-size:13px;margin:0 0 10px;line-height:1.5;">'
+        '💬 <strong>Reply to this email</strong> — Patrick reads every one.'
+        '</p>'
+        '<div>'
+        + _chip(twitter, "Share on X")
+        + _chip(linkedin, "Share on LinkedIn")
+        + _chip(whatsapp, "Share on WhatsApp")
+        + '</div>'
+        '</td></tr></table>'
+    )
+
+
 def _build_footer_html(show: Dict[str, str]) -> str:
     """Render the email's footer block as inline-styled HTML."""
     brand = show["brand_color"]
@@ -474,7 +679,10 @@ def wrap_with_branding(
     daily_date: Optional[datetime.date] = None,
     preheader: str = "",
     by_the_numbers: Optional[List[Dict[str, str]]] = None,
+    featured_episode: Optional[Dict[str, Any]] = None,
     p_s: str = "",
+    adjacent_shows: Optional[List[Dict[str, Any]]] = None,
+    show_reply_share: bool = True,
     requires_financial_disclaimer: bool = False,
 ) -> str:
     """Wrap *markdown_body* with a branded hero, optional middle blocks,
@@ -489,10 +697,13 @@ def wrap_with_branding(
       1. Hidden preheader div (inbox preview text)
       2. Hero (cover, name, tagline, date pill)
       3. By-the-numbers stat tiles
-      4. Financial disclaimer callout
-      5. Markdown body
-      6. P.S. block
-      7. Footer (CTAs + Nerra Network credit)
+      4. Featured-episode "if you only have 10 minutes" block
+      5. Financial disclaimer callout
+      6. Markdown body
+      7. P.S. block
+      8. Cross-network "Across the Nerra Network" module
+      9. Reply / share row
+      10. Footer (CTAs + Nerra Network credit)
 
     Pass *week_ending* for weekly newsletters; pass *daily_label* +
     *daily_date* for daily episode newsletters. If neither is set,
@@ -512,11 +723,24 @@ def wrap_with_branding(
     stats_block = _build_by_the_numbers_html(
         by_the_numbers, show["brand_color"]
     )
+    # Stamp the slug into the featured-episode dict so the block can
+    # build the listen URL even if the caller didn't pre-resolve it.
+    featured_with_slug = None
+    if featured_episode:
+        featured_with_slug = dict(featured_episode)
+        featured_with_slug.setdefault("show_slug", slug)
+    featured_block = _build_featured_episode_html(featured_with_slug, show)
     disclaimer = (
         _build_financial_disclaimer_html()
         if requires_financial_disclaimer else ""
     )
     p_s_block = _build_p_s_html(p_s, show["brand_color"])
+    cross_network = _build_cross_network_html(
+        adjacent_shows, show["brand_color"]
+    )
+    reply_share = (
+        _build_reply_share_html(show) if show_reply_share else ""
+    )
     footer = _build_footer_html(show)
 
     # Idempotent strip in case the body still has the show title at top.
@@ -526,6 +750,16 @@ def wrap_with_branding(
 
     # Blocks separated by two blank lines so markdown processors treat
     # them as separate sections. Empty blocks contribute nothing.
-    parts = [preheader_div, hero, stats_block, disclaimer, body_clean,
-             p_s_block, footer]
+    parts = [
+        preheader_div,
+        hero,
+        stats_block,
+        featured_block,
+        disclaimer,
+        body_clean,
+        p_s_block,
+        cross_network,
+        reply_share,
+        footer,
+    ]
     return "\n\n".join(p for p in parts if p) + "\n"

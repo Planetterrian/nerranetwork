@@ -411,3 +411,241 @@ def test_wrap_with_branding_loads_disclaimer_flag_from_yaml_for_mit():
         week_ending=datetime.date(2026, 4, 30),
     )
     assert "Heads up" not in out
+
+
+# ---------------------------------------------------------------------------
+# Episode deep-link helpers
+# ---------------------------------------------------------------------------
+
+def test_episode_blog_url_pads_to_three_digits():
+    assert nt.episode_blog_url("tesla", 7) == (
+        "https://nerranetwork.com/blog/tesla/ep007.html"
+    )
+    assert nt.episode_blog_url("tesla", 100) == (
+        "https://nerranetwork.com/blog/tesla/ep100.html"
+    )
+
+
+def test_episode_link_table_renders_reference_block():
+    eps = [
+        {"episode_num": 100, "date": "2026-04-30"},
+        {"episode_num": 101, "date": "2026-05-01"},
+    ]
+    out = nt.episode_link_table(eps, "tesla")
+    assert "Episode 100" in out
+    assert "Episode 101" in out
+    assert "https://nerranetwork.com/blog/tesla/ep100.html" in out
+    assert "2026-04-30" in out
+
+
+def test_episode_link_table_skips_missing_episode_num():
+    eps = [{"date": "2026-04-30"}, {"episode_num": 5, "date": "2026-05-01"}]
+    out = nt.episode_link_table(eps, "tesla")
+    assert "Episode 5" in out
+    # The malformed row didn't add a stray "Episode None".
+    assert "Episode None" not in out
+
+
+def test_episode_link_table_empty_returns_empty_string():
+    assert nt.episode_link_table([], "tesla") == ""
+
+
+# ---------------------------------------------------------------------------
+# Featured episode block
+# ---------------------------------------------------------------------------
+
+def test_featured_episode_renders_with_listen_button():
+    show = nt._load_show_branding("tesla")
+    featured = {
+        "episode_num": 100,
+        "date": "2026-04-30",
+        "hook": "Cybercab production begins in Texas",
+        "show_slug": "tesla",
+    }
+    out = nt._build_featured_episode_html(featured, show)
+    assert "10 minutes" in out
+    assert "Episode 100" in out
+    assert "Cybercab production begins in Texas" in out
+    assert "Listen now" in out
+    assert "blog/tesla/ep100.html" in out
+
+
+def test_featured_episode_returns_empty_when_missing_data():
+    show = nt._load_show_branding("tesla")
+    assert nt._build_featured_episode_html(None, show) == ""
+    assert nt._build_featured_episode_html({}, show) == ""
+    # Hook missing → no render.
+    assert nt._build_featured_episode_html(
+        {"episode_num": 1, "show_slug": "tesla"}, show
+    ) == ""
+
+
+def test_featured_episode_uses_explicit_listen_url():
+    """If the caller supplies a listen_url (e.g. R2 mp3), use it
+    instead of the default blog deep link."""
+    show = nt._load_show_branding("tesla")
+    featured = {
+        "episode_num": 100,
+        "date": "2026-04-30",
+        "hook": "Hook here",
+        "show_slug": "tesla",
+        "listen_url": "https://custom.example.com/ep100",
+    }
+    out = nt._build_featured_episode_html(featured, show)
+    assert "https://custom.example.com/ep100" in out
+
+
+def test_featured_episode_html_escapes_user_input():
+    show = nt._load_show_branding("tesla")
+    featured = {
+        "episode_num": 5,
+        "hook": "<script>alert(1)</script>",
+        "date": "2026-04-30",
+        "show_slug": "tesla",
+    }
+    out = nt._build_featured_episode_html(featured, show)
+    assert "<script>" not in out
+    assert "&lt;script&gt;" in out
+
+
+# ---------------------------------------------------------------------------
+# Cross-network "Across the Nerra Network" module
+# ---------------------------------------------------------------------------
+
+def test_cross_network_renders_adjacent_shows():
+    siblings = [
+        {
+            "name": "MIT", "slug": "modern_investing", "emoji": "📈",
+            "hook": "Oil hit $126; Fed in stagflation trap.",
+            "url": "https://nerranetwork.com/blog/modern_investing/ep042.html",
+        },
+        {
+            "name": "M&A", "slug": "models_agents", "emoji": "🤖",
+            "hook": "Vision Banana redefines computer vision.",
+            "url": "https://nerranetwork.com/blog/models_agents/ep020.html",
+        },
+    ]
+    out = nt._build_cross_network_html(siblings, "#E31937")
+    assert "Across the Nerra Network" in out
+    assert "MIT" in out
+    assert "Oil hit" in out
+    assert "M&amp;A" not in out  # name passes through; only hook is escaped
+    # Both URLs present.
+    assert "ep042.html" in out
+    assert "ep020.html" in out
+
+
+def test_cross_network_caps_at_three():
+    siblings = [
+        {"name": f"S{i}", "hook": "h", "url": "", "emoji": ""}
+        for i in range(5)
+    ]
+    out = nt._build_cross_network_html(siblings, "#000")
+    assert ">S0<" in out and ">S2<" in out
+    assert ">S3<" not in out
+
+
+def test_cross_network_skips_blank_rows():
+    siblings = [
+        {"name": "", "hook": "h", "url": "", "emoji": ""},
+        {"name": "OK", "hook": "h", "url": "", "emoji": ""},
+    ]
+    out = nt._build_cross_network_html(siblings, "#000")
+    assert ">OK<" in out
+
+
+def test_cross_network_empty_renders_nothing():
+    assert nt._build_cross_network_html([], "#000") == ""
+    assert nt._build_cross_network_html(None, "#000") == ""
+
+
+def test_cross_network_html_escapes_hook():
+    siblings = [
+        {"name": "X", "hook": "<i>tag</i>", "url": "", "emoji": ""},
+    ]
+    out = nt._build_cross_network_html(siblings, "#000")
+    assert "<i>tag</i>" not in out
+    assert "&lt;i&gt;tag&lt;/i&gt;" in out
+
+
+# ---------------------------------------------------------------------------
+# Reply / share row
+# ---------------------------------------------------------------------------
+
+def test_reply_share_renders_three_intents():
+    show = nt._load_show_branding("tesla")
+    out = nt._build_reply_share_html(show)
+    assert "Reply to this email" in out
+    assert "Share on X" in out
+    assert "Share on LinkedIn" in out
+    assert "Share on WhatsApp" in out
+    # Twitter intent uses query params.
+    assert "twitter.com/intent/tweet" in out
+    assert "linkedin.com/sharing" in out
+    assert "wa.me" in out
+
+
+def test_reply_share_uses_show_page_when_no_archive_url():
+    show = nt._load_show_branding("tesla")
+    out = nt._build_reply_share_html(show)
+    # Show page is URL-encoded inside the share intent.
+    assert "tesla" in out
+
+
+# ---------------------------------------------------------------------------
+# wrap_with_branding — full block ordering with featured + cross-network
+# ---------------------------------------------------------------------------
+
+def test_wrap_with_branding_full_render_order_with_engagement_blocks():
+    """All optional blocks composed in the documented order."""
+    out = nt.wrap_with_branding(
+        "tesla", "## Body content\n\nLorem ipsum.",
+        week_ending=datetime.date(2026, 4, 30),
+        preheader="Inbox preview teaser",
+        by_the_numbers=[{"value": "$372", "label": "TSLA close"}],
+        featured_episode={
+            "episode_num": 100, "hook": "Cybercab begins",
+            "date": "2026-04-30", "show_slug": "tesla",
+        },
+        p_s="One more thing.",
+        adjacent_shows=[
+            {"name": "MIT", "hook": "Oil at $126", "url": "", "emoji": "📈"},
+        ],
+        show_reply_share=True,
+        requires_financial_disclaimer=False,
+    )
+    pre = out.find("Inbox preview teaser")
+    hero = out.find("Tesla Shorts Time")
+    stats = out.find("TSLA close")
+    featured = out.find("10 minutes")
+    body = out.find("## Body content")
+    p_s = out.find("One more thing.")
+    cross = out.find("Across the Nerra Network")
+    share = out.find("Share on X")
+    foot = out.find("Listen to the podcast")
+    # Documented block order (preheader → hero → stats → featured →
+    # body → p_s → cross-network → reply/share → footer).
+    assert 0 <= pre < hero < stats < featured < body < p_s < cross < share < foot
+
+
+def test_wrap_with_branding_omits_engagement_blocks_by_default():
+    """Backward-compat: existing callers that don't pass the new
+    fields get exactly what they got before (no surprise blocks)."""
+    out = nt.wrap_with_branding(
+        "tesla", "## Body\n\nx",
+        week_ending=datetime.date(2026, 4, 30),
+        show_reply_share=False,
+    )
+    assert "10 minutes" not in out
+    assert "Across the Nerra Network" not in out
+    assert "Share on X" not in out
+
+
+def test_wrap_with_branding_show_reply_share_default_is_on():
+    """Reply/share row is on by default — it's a near-zero-cost
+    engagement boost we want every newsletter to have."""
+    out = nt.wrap_with_branding(
+        "tesla", "## Body\n\nx",
+        week_ending=datetime.date(2026, 4, 30),
+    )
+    assert "Reply to this email" in out
