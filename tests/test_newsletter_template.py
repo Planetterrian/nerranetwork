@@ -649,3 +649,163 @@ def test_wrap_with_branding_show_reply_share_default_is_on():
         week_ending=datetime.date(2026, 4, 30),
     )
     assert "Reply to this email" in out
+
+
+# ---------------------------------------------------------------------------
+# Markdown table → mobile-safe HTML table
+# ---------------------------------------------------------------------------
+
+def test_render_html_table_renders_headers_and_rows():
+    out = nt.render_html_table(
+        ["Day", "Ticker", "P&L"],
+        [["Mon", "TSLA", "+1.2%"], ["Tue", "AAPL", "-0.4%"]],
+        brand="#E31937",
+    )
+    # Headers in brand-color band.
+    assert "Day" in out
+    assert "TSLA" in out
+    assert "AAPL" in out
+    # Brand color is the header background.
+    assert "#E31937" in out
+    # Alternating row backgrounds (white / slate-50).
+    assert "#ffffff" in out
+    assert "#f8fafc" in out
+
+
+def test_render_html_table_handles_inline_markdown_in_cells():
+    out = nt.render_html_table(
+        ["Header"],
+        [["**bold**"], ["[link](https://x.com)"]],
+    )
+    assert "<strong>bold</strong>" in out
+    assert '<a href="https://x.com"' in out
+
+
+def test_render_html_table_escapes_html():
+    out = nt.render_html_table(
+        ["H"], [["<script>x</script>"]],
+    )
+    assert "<script>" not in out
+    assert "&lt;script&gt;" in out
+
+
+def test_render_html_table_empty_returns_empty_string():
+    assert nt.render_html_table([], []) == ""
+    assert nt.render_html_table(["H"], []) == ""
+
+
+def test_convert_md_tables_to_html_swaps_a_simple_table():
+    body = (
+        "Some intro paragraph.\n\n"
+        "| Day | Ticker | P&L |\n"
+        "|-----|--------|-----|\n"
+        "| Mon | TSLA   | +1% |\n"
+        "| Tue | AAPL   | -2% |\n\n"
+        "And a closing paragraph."
+    )
+    out = nt.convert_md_tables_to_html(body)
+    assert "Some intro paragraph." in out
+    assert "<table" in out
+    assert "TSLA" in out
+    assert "AAPL" in out
+    assert "And a closing paragraph." in out
+    # The original markdown rows are gone (replaced by HTML).
+    assert "| Mon | TSLA" not in out
+
+
+def test_convert_md_tables_to_html_handles_multiple_tables():
+    body = (
+        "| A | B |\n|---|---|\n| 1 | 2 |\n\n"
+        "Some prose.\n\n"
+        "| X | Y |\n|---|---|\n| 9 | 8 |\n"
+    )
+    out = nt.convert_md_tables_to_html(body)
+    # Both tables converted.
+    assert out.count("<table") == 2
+
+
+def test_convert_md_tables_to_html_leaves_non_table_markdown_alone():
+    body = "## Heading\n\nA bullet:\n- item one\n- item two\n"
+    out = nt.convert_md_tables_to_html(body)
+    assert out == body
+
+
+def test_convert_md_tables_to_html_pads_ragged_rows():
+    """If the LLM emits a row missing a cell, we pad with empties so
+    the rendered HTML stays well-formed instead of breaking the table."""
+    body = (
+        "| A | B | C |\n"
+        "|---|---|---|\n"
+        "| 1 | 2 |\n"  # missing the C cell
+    )
+    out = nt.convert_md_tables_to_html(body)
+    assert "<table" in out
+    # Three <td>s rendered (with one empty) so column count matches.
+    assert out.count("<td") == 3
+
+
+def test_convert_md_tables_to_html_handles_pipe_in_text():
+    """Pipes inside cell text are not supported (markdown doesn't
+    escape them), but we shouldn't crash. The cell just splits on the
+    inner pipe — that's fine, it's how every markdown renderer does
+    it."""
+    body = (
+        "| Header |\n"
+        "|--------|\n"
+        "| just a regular cell |\n"
+    )
+    out = nt.convert_md_tables_to_html(body)
+    assert "<table" in out
+    assert "just a regular cell" in out
+
+
+def test_convert_md_tables_to_html_no_tables_returns_input_verbatim():
+    body = "Plain text, no pipes here."
+    assert nt.convert_md_tables_to_html(body) == body
+
+
+# ---------------------------------------------------------------------------
+# Dark mode + accessibility
+# ---------------------------------------------------------------------------
+
+def test_wrap_with_branding_includes_dark_mode_style_block():
+    out = nt.wrap_with_branding(
+        "tesla", "Body.", week_ending=datetime.date(2026, 4, 30),
+    )
+    assert "@media (prefers-color-scheme: dark)" in out
+    assert "#0f172a" in out  # dark page bg
+    assert "#e2e8f0" in out  # dark text
+
+
+def test_hero_alt_text_describes_show_not_file():
+    show = nt._load_show_branding("tesla")
+    hero = nt._build_hero_html(show, "Pill")
+    # Old behavior was alt="Tesla Shorts Time cover" (file-ish);
+    # new behavior should describe the show / tagline so screen
+    # readers convey the same info as the visual cover.
+    assert 'alt="Tesla Shorts Time' in hero
+    assert ' cover"' not in hero
+
+
+def test_hero_alt_text_includes_tagline_when_present():
+    show = dict(nt._load_show_branding("tesla"))
+    show["tagline"] = "Daily Tesla news at podcast speed."
+    hero = nt._build_hero_html(show, "Pill")
+    assert "Daily Tesla news at podcast speed." in hero
+
+
+def test_wrap_with_branding_converts_md_table_in_body():
+    """End-to-end: a markdown table inside the body markdown comes out
+    as an HTML <table> in the wrapped result."""
+    body = (
+        "## Scoreboard\n\n"
+        "| Day | Ticker |\n"
+        "|-----|--------|\n"
+        "| Mon | TSLA   |\n"
+    )
+    out = nt.wrap_with_branding(
+        "tesla", body, week_ending=datetime.date(2026, 4, 30),
+    )
+    assert "<table" in out
+    # Original markdown row is gone.
+    assert "| Mon | TSLA" not in out

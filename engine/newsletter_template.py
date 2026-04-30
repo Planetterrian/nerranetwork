@@ -174,8 +174,17 @@ def _build_hero_html(show: Dict[str, str], pill_text: str) -> str:
     brand = show["brand_color"]
     brand_dark = show["brand_color_dark"]
 
+    # Descriptive alt text per WCAG: identifies the show, not the file.
+    # Tagline (when present) gives screen-reader users the same context
+    # the cover communicates visually.
+    alt_text = name
+    if tagline:
+        alt_text = f"{name} — {tagline}"
+    # Strip any double-quotes from alt (guards against odd YAML data
+    # breaking the attribute).
+    alt_text = alt_text.replace('"', "")
     cover_img = (
-        f'<img src="{cover_url}" alt="{name} cover" '
+        f'<img src="{cover_url}" alt="{alt_text}" '
         f'width="120" height="120" '
         f'style="display:block;border-radius:18px;width:120px;'
         f'height:120px;object-fit:cover;margin:0 auto 16px;'
@@ -209,6 +218,29 @@ def _build_hero_html(show: Dict[str, str], pill_text: str) -> str:
         f'{pill_text}</div>'
         f'</td></tr></table>'
     )
+
+
+_DARK_MODE_STYLE = """\
+<style>
+  /* Dark-mode overrides for clients that respect prefers-color-scheme
+   * (Apple Mail iOS/macOS, some Outlook versions). Gmail/Outlook 365
+   * apply their own algorithmic dark mode and ignore <style>; for those
+   * we rely on inline styles on the gradient hero looking acceptable
+   * either way (the brand-color background dominates the cell). */
+  @media (prefers-color-scheme: dark) {
+    body, table, td { background-color:#0f172a !important; }
+    body, p, h1, h2, h3, h4, td, span, div { color:#e2e8f0 !important; }
+    a { color:#93c5fd !important; }
+    /* Soft override on the off-white card backgrounds so they don't
+     * shine out against the dark page. */
+    table[role=presentation] td[style*='background:#ffffff'],
+    table[role=presentation] td[style*='background:#fafafa'],
+    table[role=presentation] td[style*='background:#f8fafc'] {
+      background-color:#1e293b !important;
+    }
+  }
+</style>
+"""
 
 
 def _build_preheader_html(preheader: str) -> str:
@@ -344,6 +376,145 @@ def _strip_repeated_show_title(body_md: str, show_name: str) -> str:
     if norm == show_lower or norm.startswith(show_lower + " "):
         return "\n".join(lines[1:]).lstrip()
     return body_md
+
+
+_MD_TABLE_HEADER_RE = re.compile(
+    r"""
+    ^[ \t]*(?:\|[^\n]*\|)[ \t]*\n          # header row (pipe-bounded)
+    [ \t]*(?:\|[ \t]*:?-+:?[ \t]*)+\|[ \t]*\n  # separator row (---|---)
+    """,
+    re.VERBOSE | re.MULTILINE,
+)
+
+
+def _md_table_cells(line: str) -> List[str]:
+    """Split a markdown table row into stripped cell strings."""
+    # Drop leading/trailing pipes, then split.
+    s = line.strip()
+    if s.startswith("|"):
+        s = s[1:]
+    if s.endswith("|"):
+        s = s[:-1]
+    return [c.strip() for c in s.split("|")]
+
+
+def _render_md_inline_to_html(text: str) -> str:
+    """Convert a small subset of inline markdown to HTML for table cells.
+
+    Handles ``**bold**``, ``*italic*``, and ``[label](url)``. Anything
+    else is HTML-escaped. Email-only — keep simple, don't pull a full
+    markdown engine into an email-template module.
+    """
+    escaped = (
+        text.replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+    )
+    # Links: [label](url)
+    escaped = re.sub(
+        r"\[([^\]]+)\]\(([^)]+)\)",
+        r'<a href="\2" style="color:#2563eb;">\1</a>',
+        escaped,
+    )
+    # Bold
+    escaped = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", escaped)
+    # Italic
+    escaped = re.sub(r"\*([^*]+)\*", r"<em>\1</em>", escaped)
+    return escaped
+
+
+def render_html_table(
+    headers: List[str], rows: List[List[str]], *, brand: str = "#7C5CFF"
+) -> str:
+    """Render a mobile-friendly inline-styled HTML table.
+
+    Email clients vary wildly in their CSS support — we use ``<table>``
+    with ``border-collapse:collapse`` (works everywhere), alternating row
+    backgrounds for scanability, and a brand-colored header band. Outlook
+    2019+ honors ``border-collapse``; older versions degrade gracefully.
+
+    Each cell content is rendered through the small inline-markdown
+    helper so ``**bold**`` and links survive the conversion.
+    """
+    if not headers or not rows:
+        return ""
+    head_cells = "".join(
+        f'<th align="left" '
+        f'style="padding:10px 12px;background:{brand};color:#ffffff;'
+        f'font-size:12px;font-weight:700;text-transform:uppercase;'
+        f'letter-spacing:0.04em;border:1px solid {brand};">'
+        f'{_render_md_inline_to_html(h)}</th>'
+        for h in headers
+    )
+    body_rows: List[str] = []
+    for i, row in enumerate(rows):
+        bg = "#ffffff" if i % 2 == 0 else "#f8fafc"
+        cells = "".join(
+            f'<td valign="top" '
+            f'style="padding:10px 12px;background:{bg};'
+            f'border:1px solid #e2e8f0;font-size:14px;'
+            f'color:#0f172a;line-height:1.4;">'
+            f'{_render_md_inline_to_html(c)}</td>'
+            for c in row
+        )
+        body_rows.append(f"<tr>{cells}</tr>")
+    return (
+        '<table role="presentation" width="100%" cellpadding="0" '
+        'cellspacing="0" border="0" '
+        'style="border-collapse:collapse;margin:14px 0;'
+        'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\','
+        'Roboto,Helvetica,Arial,sans-serif;">'
+        f'<thead><tr>{head_cells}</tr></thead>'
+        f'<tbody>{"".join(body_rows)}</tbody>'
+        '</table>'
+    )
+
+
+def convert_md_tables_to_html(body_md: str, *, brand: str = "#7C5CFF") -> str:
+    """Replace markdown tables in *body_md* with inline-styled HTML
+    tables.
+
+    Outlook 2019, Yahoo, and ProtonMail all render markdown tables
+    inconsistently — many strip the formatting entirely. We pre-render
+    them to HTML so they survive any client. Non-table markdown is
+    untouched (Buttondown's renderer handles it).
+    """
+    if not body_md or "|" not in body_md:
+        return body_md
+    out_lines: List[str] = []
+    lines = body_md.split("\n")
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        # Cheap pre-check: is this the start of a possible table? It's
+        # a header row if it contains pipes AND the next line is a
+        # separator row.
+        if "|" in line and i + 1 < len(lines):
+            sep = lines[i + 1].strip()
+            sep_cells = _md_table_cells(sep) if sep.startswith(
+                ("|", ":", "-")
+            ) else []
+            looks_like_sep = bool(sep_cells) and all(
+                re.match(r"^:?-+:?$", c) for c in sep_cells
+            )
+            if looks_like_sep and "|" in line:
+                headers = _md_table_cells(line)
+                rows: List[List[str]] = []
+                j = i + 2
+                while j < len(lines) and "|" in lines[j] and lines[j].strip():
+                    rows.append(_md_table_cells(lines[j]))
+                    j += 1
+                # Pad/truncate rows to header width so the rendered
+                # HTML stays well-formed even if the LLM emitted ragged
+                # rows.
+                w = len(headers)
+                rows = [r[:w] + [""] * (w - len(r)) for r in rows]
+                out_lines.append(render_html_table(headers, rows, brand=brand))
+                i = j
+                continue
+        out_lines.append(line)
+        i += 1
+    return "\n".join(out_lines)
 
 
 def episode_blog_url(slug: str, episode_num: int) -> str:
@@ -747,10 +918,19 @@ def wrap_with_branding(
     body_clean = _strip_repeated_show_title(
         (markdown_body or "").strip(), show["name"]
     )
+    # Pre-render any markdown tables in the body to inline HTML so they
+    # survive Outlook / Yahoo / ProtonMail. Non-table markdown is left
+    # alone for Buttondown's renderer to handle.
+    body_clean = convert_md_tables_to_html(
+        body_clean, brand=show["brand_color"]
+    )
 
     # Blocks separated by two blank lines so markdown processors treat
-    # them as separate sections. Empty blocks contribute nothing.
+    # them as separate sections. Empty blocks contribute nothing. The
+    # dark-mode <style> block goes at the very top so any client that
+    # respects @media queries picks it up before parsing the body.
     parts = [
+        _DARK_MODE_STYLE,
         preheader_div,
         hero,
         stats_block,
