@@ -15,8 +15,18 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# TTS pricing per 1000 characters
-ELEVENLABS_COST_PER_1K_CHARS = 0.15  # Flash v2.5: 0.5 credits/char = $0.15/1K chars
+# TTS pricing per 1000 characters, by provider.
+# - ElevenLabs Flash v2.5: $0.15/1K chars  (0.5 credits/char × $0.30/1K credits)
+# - Grok TTS (xAI /v1/tts): $0.0042/1K chars ($4.20 per 1M chars, ~36× cheaper
+#   than ElevenLabs Flash; introduced April 2026, used for the Russian shows
+#   since May 2026).
+ELEVENLABS_COST_PER_1K_CHARS = 0.15
+GROK_TTS_COST_PER_1K_CHARS = 0.0042
+
+TTS_PROVIDER_PRICING = {
+    "elevenlabs": ELEVENLABS_COST_PER_1K_CHARS,
+    "grok": GROK_TTS_COST_PER_1K_CHARS,
+}
 
 # xAI Grok pricing per 1M tokens (input/output).
 # Only models actually reachable by the current code are listed — historical
@@ -187,14 +197,18 @@ def save_usage(tracker: dict, output_dir: Path) -> Path | None:
         x_api = tracker["services"]["x_api"]
         x_api["total_calls"] = x_api["search_calls"] + x_api["post_calls"]
 
-        # TTS cost
+        # TTS cost — rate depends on provider (ElevenLabs vs Grok TTS;
+        # Grok is ~36× cheaper per character so the provider switch matters
+        # for accurate per-episode cost reporting).
         tts = tracker["services"]["tts_api"]
         provider = tts.get("provider", "elevenlabs")
-        tts["estimated_cost_usd"] = (
-            tts["characters"] / 1000
-        ) * ELEVENLABS_COST_PER_1K_CHARS
+        rate_per_1k = TTS_PROVIDER_PRICING.get(provider, ELEVENLABS_COST_PER_1K_CHARS)
+        tts["estimated_cost_usd"] = (tts["characters"] / 1000) * rate_per_1k
 
-        # Also keep legacy key for backward compatibility
+        # Also keep legacy key for backward compatibility (the dashboard
+        # historically read `services.elevenlabs_api`; we mirror the tts
+        # block under that key regardless of provider so that path keeps
+        # working).
         if "elevenlabs_api" not in tracker["services"]:
             tracker["services"]["elevenlabs_api"] = tts
 

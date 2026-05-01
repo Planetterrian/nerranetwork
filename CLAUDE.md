@@ -16,9 +16,9 @@ Automated daily podcast generation system running 10 shows via a unified
 | Env Intel | — | `shows/env_intel.yaml` | Odd weekdays | `@teslashortstime` | ElevenLabs |
 | Models & Agents | — | `shows/models_agents.yaml` | Odd days | — (X disabled) | ElevenLabs |
 | Models & Agents for Beginners | — | `shows/models_agents_beginners.yaml` | Even days | — (X disabled) | ElevenLabs |
-| Финансы Просто | — | `shows/finansy_prosto.yaml` | Even days | — (X disabled) | ElevenLabs |
+| Финансы Просто | — | `shows/finansy_prosto.yaml` | Even days | — (X disabled) | Grok TTS (Olya) |
 | Modern Investing Techniques | — | `shows/modern_investing.yaml` | Weekdays | — (X disabled) | ElevenLabs |
-| Привет, Русский! | — | `shows/privet_russian.yaml` | Even days | — (X disabled) | ElevenLabs |
+| Привет, Русский! | — | `shows/privet_russian.yaml` | Even days | — (X disabled) | Grok TTS (Olya) |
 
 **Science That Changes Everything** (`digests/science_that_changes.py`, ~83 lines)
 is a standalone X-posting script, not a podcast show.
@@ -139,7 +139,7 @@ nerranetworks/
 - `GROK_API_KEY` — primary xAI key (all shows)
 - `ELEVENLABS_API_KEY` — ElevenLabs TTS (all shows)
 - `X_*` / `PLANETTERRIAN_X_*` — two separate X accounts
-- Voice IDs: All English shows share `dTrBzPvD2GpAqkk1MUzA`, Russian shows (FP/PR) use `gedzfqL7OGdPbwm0ynTP`
+- Voice IDs: English shows share ElevenLabs voice `dTrBzPvD2GpAqkk1MUzA`. Russian shows (FP/PR) use the **Grok TTS** custom voice `0b875ae2` ("Olya") since May 2026 — see landmine #16.
 - See `docs/env_var_inventory.md` for the complete inventory
 
 ### RSS Feeds
@@ -252,8 +252,14 @@ decision); everything else has a live status card.
    reintroduced without updating `_defaults.yaml`.
 10. **Early episodes deleted** — first 20 Tesla, 10 FF, 10 PT, 10 OV episodes
     removed (quality issues). RSS entries removed where applicable.
-11. **All shows use ElevenLabs TTS** — Chatterbox, Kokoro, and Fish Audio
-    were trialled and removed. All shows use ElevenLabs `eleven_flash_v2_5`.
+11. **English shows use ElevenLabs TTS; Russian shows use Grok TTS (May
+    2026)** — Chatterbox, Kokoro, and Fish Audio were trialled and removed.
+    English shows still use ElevenLabs `eleven_flash_v2_5` (voice
+    `dTrBzPvD2GpAqkk1MUzA`). Russian shows (Финансы Просто, Привет
+    Русский!) migrated to xAI's Grok TTS (`/v1/tts`, voice `0b875ae2`
+    "Olya") for the same persona at ~36× lower per-character cost
+    ($4.20/M vs $150/M for Flash). Reuses `GROK_API_KEY` / `XAI_API_KEY`
+    — no new secret. See landmine #16.
 12. **Summaries JSONs moved** — all summaries live in per-show subdirectories
     (`digests/<show>/summaries_*.json`), not at the `digests/` top level.
 13. **LLM default migrated to `grok-4.3` (May 2026)** — released 2026-04-30,
@@ -296,3 +302,20 @@ decision); everything else has a live status card.
     Data API has no endpoint for this flag. Once flagged once, every
     future video added via the API automatically becomes a podcast
     episode. **One-time setup per playlist — not a code change.**
+16. **Russian shows on Grok TTS, not ElevenLabs (May 2026)** — Финансы
+    Просто and Привет, Русский! switched their `tts.provider` from
+    `elevenlabs` to `grok` and their voice ID from
+    `gedzfqL7OGdPbwm0ynTP` to `0b875ae2` (custom "Olya" voice trained on
+    the xAI Console). Same on-air persona, ~36× cheaper per character
+    ($4.20/M vs $150/M for ElevenLabs Flash v2.5). Implementation
+    details: `engine/tts.py:synthesize()` dispatches on the new
+    `provider` kwarg; the Grok path posts to `https://api.x.ai/v1/tts`
+    and reuses `GROK_API_KEY` / `XAI_API_KEY` (no new secret). Voice
+    settings that are ElevenLabs-only (`stability`, `similarity_boost`,
+    `style`, `use_speaker_boost`, `model`, `speed`) are intentionally
+    absent from the two Russian YAMLs because Grok TTS doesn't expose
+    them. Pricing is per-provider in
+    [`engine/tracking.py`](engine/tracking.py): `TTS_PROVIDER_PRICING`.
+    The `test_russian_shows_use_grok_tts` test in
+    [`tests/test_tts_grok.py`](tests/test_tts_grok.py) blocks accidental
+    rollback to the old ElevenLabs voice.

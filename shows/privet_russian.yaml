@@ -117,12 +117,15 @@ llm:
   min_podcast_words: 800
 
 tts:
-  voice_id: gedzfqL7OGdPbwm0ynTP
+  # Olya — Russian voice. Migrated from ElevenLabs (`gedzfqL7OGdPbwm0ynTP`)
+  # to xAI's Grok TTS (May 2026) for the same persona at ~36× lower
+  # per-character cost ($4.20/M vs $150/M). Reuses GROK_API_KEY /
+  # XAI_API_KEY — no new secret needed. ElevenLabs-specific voice
+  # settings (stability / similarity_boost / style / use_speaker_boost)
+  # are not exposed by Grok TTS and are intentionally absent here.
+  provider: grok
+  voice_id: 0b875ae2
   language_code: ru
-  stability: 0.5
-  similarity_boost: 0.75
-  style: 0.0
-  use_speaker_boost: true
   max_chars: 10000
 
 audio:
