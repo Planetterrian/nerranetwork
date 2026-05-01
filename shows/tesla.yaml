@@ -223,6 +223,20 @@ youtube:
   category_id: 28               # Science & Tech (algorithm performs better than 2/Autos here)
   default_language: en
   privacy_status: public        # Phase-1 validated; uploads are public
+  # Curated Pexels search phrases. Direct keywords like "model 3" / "model y"
+  # were returning fashion photography models — confirmed root cause for
+  # the Ep456 manifest containing topless / portrait images. Each phrase
+  # below is disambiguated so Pexels returns vehicles / charging / factory
+  # imagery only.
+  image_queries:
+    - tesla car
+    - tesla supercharger
+    - electric vehicle charging
+    - cybertruck
+    - tesla factory
+    - tesla model y
+    - ev road trip
+  image_query_prefix: "tesla "
   tags:
     - tesla
     - tsla

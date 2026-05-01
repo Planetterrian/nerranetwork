@@ -268,3 +268,31 @@ decision); everything else has a live status card.
     end-to-end. Pricing for the historical 4.20 family is retained in
     `engine/tracking.py` so old `credit_usage_*.json` files still cost
     out correctly.
+14. **YouTube slideshow imagery is curated, not derived from `keywords:`**
+    — early Tesla videos (e.g. Ep456) shipped with topless / fashion-model
+    photos because `engine/visual_assets.py:_select_keywords()` was passing
+    raw show keywords (`model 3`, `model y`, `model s`) to Pexels with no
+    topic context. Pexels treats `model` as a person who poses, not a car.
+    Fix landed May 2026: every show's `youtube:` block now declares
+    `image_queries:` (curated, disambiguated phrases) and optionally
+    `image_query_prefix:` (auto-prepended to any `keywords:` fallback).
+    A safety filter (`image_safe_skip_terms`, default list in
+    [`engine/config.py`](engine/config.py)) drops Pexels results whose
+    URL slug contains people-only / off-topic substrings. The filter
+    count is recorded as the `pexels_photos_filtered` metric — a spike
+    means a show's queries need tightening. The
+    `test_every_show_yaml_has_image_queries` test in
+    [`tests/test_visual_assets.py`](tests/test_visual_assets.py) blocks
+    any new show from going live without curated phrases.
+15. **YouTube Podcasts surface requires manual Studio setup, not API**
+    — the pipeline correctly creates per-show playlists and adds each
+    upload via `engine/youtube.add_video_to_playlist()`, and every show
+    YAML carries a `podcast_playlist_id:` (verified live in CI). But a
+    playlist only appears under "YouTube Podcasts" once it's been
+    flagged as a podcast in YouTube Studio: open
+    `Studio > Content > Podcasts > "Set existing playlist as a podcast"`
+    on each channel (`@NerraNetwork` for English shows, `@NerraRU` for
+    Финансы Просто / Привет, Русский!) once per playlist. The YouTube
+    Data API has no endpoint for this flag. Once flagged once, every
+    future video added via the API automatically becomes a podcast
+    episode. **One-time setup per playlist — not a code change.**
