@@ -592,7 +592,7 @@
                     <span>daily shows</span>
                 </div>
                 <div class="proof-stat">
-                    <strong>402+</strong>
+                    <strong>403+</strong>
                     <span>episodes shipped</span>
                 </div>
                 <div class="proof-stat">
@@ -1112,6 +1112,15 @@
         <div class="latest-scroll-row">
             
             <div class="latest-scroll-card glass-card">
+                <div class="episode-card-show" style="background:#0B6FD6;">Omni View</div>
+                <div class="episode-card-title">Ep 40: UK raises terror threat level to 'severe' after stabbings of two Jewish men in Golders Green.</div>
+                <div class="episode-card-date">Fri, May 01, 2026</div>
+                
+                <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/omni_view/Omni_View_Ep040_20260501.mp3" aria-label="Omni View episode audio" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
+                
+            </div>
+            
+            <div class="latest-scroll-card glass-card">
                 <div class="episode-card-show" style="background:#E31937;">Tesla Shorts Time</div>
                 <div class="episode-card-title">Ep 455: Tesla has started mass production of the Semi in Nevada.</div>
                 <div class="episode-card-date">Thu, Apr 30, 2026</div>
@@ -1162,15 +1171,6 @@
                 <div class="episode-card-date">Thu, Apr 30, 2026</div>
                 
                 <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/modern_investing/Modern_Investing_Ep031_20260430.mp3" aria-label="Modern Investing Techniques episode audio" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
-                
-            </div>
-            
-            <div class="latest-scroll-card glass-card">
-                <div class="episode-card-show" style="background:#0B6FD6;">Omni View</div>
-                <div class="episode-card-title">Ep 39: King Charles addresses Congress and shares laughs with Trump at White House state dinner during historic royal visit.</div>
-                <div class="episode-card-date">Wed, Apr 29, 2026</div>
-                
-                <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/omni_view/Omni_View_Ep039_20260429.mp3" aria-label="Omni View episode audio" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
                 
             </div>
             
@@ -1258,6 +1258,22 @@
             </div>
             <div class="blog-idx-grid" style="max-width:900px;margin:0 auto;padding-bottom:var(--sp-8)">
                 
+                <a href="blog/omni_view/ep040.html"
+                   class="blog-idx-card"
+                   style="--card-show-color: #0B6FD6">
+                    <div class="blog-idx-card-top">
+                        <span class="blog-idx-show-badge" style="background:color-mix(in srgb, #0B6FD6 15%, transparent);color:#0B6FD6">Omni View</span>
+                        <span class="blog-idx-date">May 01, 2026</span>
+                        <span class="blog-idx-ep">Ep 40</span>
+                        <span class="blog-idx-reading">15 min</span>
+                    </div>
+                    <h2>Omni View — Omni‑View Briefing</h2>
+                    
+                    <p>UK raises terror threat level to 'severe' after stabbings of two Jewish men in Golders Green.</p>
+                    
+                    <span class="blog-idx-read-more" style="color:#0B6FD6">Read article &rarr;</span>
+                </a>
+                
                 <a href="blog/tesla/ep455.html"
                    class="blog-idx-card"
                    style="--card-show-color: #E31937">
@@ -1336,22 +1352,6 @@
                     <p>Weather</p>
                     
                     <span class="blog-idx-read-more" style="color:#6366F1">Read article &rarr;</span>
-                </a>
-                
-                <a href="blog/modern_investing/ep031.html"
-                   class="blog-idx-card"
-                   style="--card-show-color: #059669">
-                    <div class="blog-idx-card-top">
-                        <span class="blog-idx-show-badge" style="background:color-mix(in srgb, #059669 15%, transparent);color:#059669">Modern Investing Techniques</span>
-                        <span class="blog-idx-date">April 30, 2026</span>
-                        <span class="blog-idx-ep">Ep 31</span>
-                        <span class="blog-idx-reading">7 min</span>
-                    </div>
-                    <h2>Modern Investing Techniques</h2>
-                    
-                    <p>Oil topped $126 on Iran tensions yet equities stayed mixed, signaling the war is accelerating the shift to renewables.</p>
-                    
-                    <span class="blog-idx-read-more" style="color:#059669">Read article &rarr;</span>
                 </a>
                 
             </div>
@@ -1616,29 +1616,43 @@
             </div>
             <form action="https://buttondown.com/api/emails/embed-subscribe/patricknovak1" method="post" target="popupwindow"
                   class="nn-subscribe-form" style="max-width:none;"
-                  onsubmit="var btn=this.querySelector('button[type=submit]');btn.disabled=true;btn.textContent='Subscribing…';setTimeout(function(){btn.textContent='Check your email ✓';},500);">
-                <p style="font-family:var(--font-ui);font-size:0.85rem;color:var(--nn-text-muted);margin-bottom:var(--sp-3);">Pick the shows you want in your weekly digest:</p>
+                  onsubmit="
+                    var boxes = this.querySelectorAll('input[name=tag]:checked');
+                    if (boxes.length === 0) {
+                      alert('Please pick at least one show to subscribe to.');
+                      return false;
+                    }
+                    var btn=this.querySelector('button[type=submit]');
+                    btn.disabled=true;btn.textContent='Subscribing…';
+                    setTimeout(function(){btn.textContent='Check your email ✓';},500);
+                  ">
+                <p style="font-family:var(--font-ui);font-size:0.85rem;color:var(--nn-text-muted);margin-bottom:var(--sp-3);">
+                    Pick the shows you want — everything's selected by default. Uncheck any you'd rather skip.
+                    <a href="#" onclick="event.preventDefault();this.closest('form').querySelectorAll('input[name=tag]').forEach(function(b){b.checked=false;});return false;" style="color:var(--nn-text-muted);font-size:0.8rem;">Clear all</a>
+                    ·
+                    <a href="#" onclick="event.preventDefault();this.closest('form').querySelectorAll('input[name=tag]').forEach(function(b){b.checked=true;});return false;" style="color:var(--nn-text-muted);font-size:0.8rem;">Select all</a>
+                </p>
                 <div class="nn-subscribe-tags" style="margin-bottom:var(--sp-4);">
                     
-                    <label><input type="checkbox" name="tag" value="Models & Agents"> Models & Agents</label>
+                    <label><input type="checkbox" name="tag" value="Models & Agents" checked> Models & Agents</label>
                     
-                    <label><input type="checkbox" name="tag" value="Planetterrian Daily"> Planetterrian Daily</label>
+                    <label><input type="checkbox" name="tag" value="Planetterrian Daily" checked> Planetterrian Daily</label>
                     
-                    <label><input type="checkbox" name="tag" value="Omni View"> Omni View</label>
+                    <label><input type="checkbox" name="tag" value="Omni View" checked> Omni View</label>
                     
-                    <label><input type="checkbox" name="tag" value="Models & Agents for Beginners"> Models & Agents for Beginners</label>
+                    <label><input type="checkbox" name="tag" value="Models & Agents for Beginners" checked> Models & Agents for Beginners</label>
                     
-                    <label><input type="checkbox" name="tag" value="Fascinating Frontiers"> Fascinating Frontiers</label>
+                    <label><input type="checkbox" name="tag" value="Fascinating Frontiers" checked> Fascinating Frontiers</label>
                     
-                    <label><input type="checkbox" name="tag" value="Modern Investing Techniques"> Modern Investing Techniques</label>
+                    <label><input type="checkbox" name="tag" value="Modern Investing Techniques" checked> Modern Investing Techniques</label>
                     
-                    <label><input type="checkbox" name="tag" value="Tesla Shorts Time"> Tesla Shorts Time</label>
+                    <label><input type="checkbox" name="tag" value="Tesla Shorts Time" checked> Tesla Shorts Time</label>
                     
-                    <label><input type="checkbox" name="tag" value="Environmental Intelligence"> Environmental Intelligence</label>
+                    <label><input type="checkbox" name="tag" value="Environmental Intelligence" checked> Environmental Intelligence</label>
                     
-                    <label><input type="checkbox" name="tag" value="Финансы Просто"> Финансы Просто</label>
+                    <label><input type="checkbox" name="tag" value="Finansy Prosto" checked> Финансы Просто</label>
                     
-                    <label><input type="checkbox" name="tag" value="Привет, Русский!"> Привет, Русский!</label>
+                    <label><input type="checkbox" name="tag" value="Privet Russian" checked> Привет, Русский!</label>
                     
                 </div>
                 <div class="nn-subscribe-row">
