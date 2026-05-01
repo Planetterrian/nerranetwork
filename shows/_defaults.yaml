@@ -103,6 +103,26 @@ newsletter:
   # ``floor((send_date - newsletter_start_date) / 7) + 1`` instead
   # of carrying mutable state in git or R2.
   newsletter_start_date: "2026-04-30"
+  # ---- Cross-network ("Across the Nerra Network") adjacency map ----
+  # Each show points to 1-3 sibling shows whose top stories of the
+  # week are surfaced in the email's cross-network module. Override
+  # in a show's own YAML to pin specific siblings; otherwise the
+  # synthesizer falls back to "any other show" rotation.
+  adjacent_shows: []
+  # Network-wide map used as a fallback when a show YAML doesn't list
+  # its own adjacent_shows. Each key is a slug, value is an ordered
+  # list of preferred siblings.
+  network_adjacencies:
+    tesla: [modern_investing, models_agents]
+    modern_investing: [tesla, finansy_prosto]
+    omni_view: [modern_investing, env_intel]
+    models_agents: [models_agents_beginners, tesla]
+    models_agents_beginners: [models_agents, fascinating_frontiers]
+    fascinating_frontiers: [planetterrian, models_agents]
+    planetterrian: [env_intel, fascinating_frontiers]
+    env_intel: [planetterrian, omni_view]
+    finansy_prosto: [modern_investing, privet_russian]
+    privet_russian: [finansy_prosto]
 
 chapters:
   enabled: true

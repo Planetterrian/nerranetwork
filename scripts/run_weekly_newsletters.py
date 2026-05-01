@@ -138,7 +138,9 @@ def main():
                 week_ending=week_ending,
                 preheader=envelope.get("preheader", ""),
                 by_the_numbers=envelope.get("by_the_numbers") or [],
+                featured_episode=envelope.get("featured_episode"),
                 p_s=envelope.get("p_s", ""),
+                adjacent_shows=envelope.get("cross_network") or [],
                 requires_financial_disclaimer=requires_disclaimer,
             )
 
