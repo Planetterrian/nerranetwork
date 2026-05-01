@@ -10,19 +10,26 @@
 
 llm:
   provider: xai
-  model: grok-4.20-non-reasoning
+  # Grok 4.3 (released 2026-04-30) — always-on reasoning, $1.25/$2.50 per
+  # 1M tokens (vs grok-4.20 at $2/$6). ~55% cheaper per episode at higher
+  # intelligence tier; supersedes the previous grok-4.20-non-reasoning
+  # default and the grok-4.20-reasoning override on Tesla / Modern
+  # Investing (reasoning is no longer a separate variant).
+  model: grok-4.3
   digest_temperature: 0.5
   podcast_temperature: 0.7
   max_tokens: 3500
   podcast_max_tokens: 8000
   min_podcast_words: 1500
   podcast_chain: false
-  # Refusal fallback — same price as the primary, different refusal
-  # thresholds. Replaces the previous grok-4 fallback (2.5x output cost).
+  # Refusal fallback — keep on the older 4.20-reasoning variant so a
+  # refusal genuinely switches model family/training-snapshot rather than
+  # retrying the same model. Still cheaper than the historical grok-4
+  # fallback ($3/$15) we replaced in April 2026.
   fallback_model: grok-4.20-reasoning
   # Synthesizer (weekly newsletter, monthly report, cross-show briefing).
-  # Reasoning variant is same-price, benefits longer-form synthesis.
-  synth_model: grok-4.20-reasoning
+  # Inherits the cheaper, smarter primary by default.
+  synth_model: grok-4.3
   synth_max_tokens: 8000
   synth_temperature: 0.4
   # Episode quality reviewer — fast/cheap variant, headroom for critique.

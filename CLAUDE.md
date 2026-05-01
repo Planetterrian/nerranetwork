@@ -256,3 +256,15 @@ decision); everything else has a live status card.
     were trialled and removed. All shows use ElevenLabs `eleven_flash_v2_5`.
 12. **Summaries JSONs moved** — all summaries live in per-show subdirectories
     (`digests/<show>/summaries_*.json`), not at the `digests/` top level.
+13. **LLM default migrated to `grok-4.3` (May 2026)** — released 2026-04-30,
+    always-on reasoning, $1.25/$2.50 per 1M tokens (~55% cheaper per
+    episode than the previous `grok-4.20-*` defaults). Network default,
+    synth model, and Tesla / Modern Investing per-show overrides all now
+    inherit `grok-4.3` from [`shows/_defaults.yaml`](shows/_defaults.yaml).
+    Refusal fallback stays on `grok-4.20-reasoning` so refusals genuinely
+    switch model snapshot. Tool-use path in `digests/xai_grok.py` (X /
+    web search via the Responses API) still defaults to
+    `grok-4.20-non-reasoning` until 4.3 + tool calls are verified
+    end-to-end. Pricing for the historical 4.20 family is retained in
+    `engine/tracking.py` so old `credit_usage_*.json` files still cost
+    out correctly.

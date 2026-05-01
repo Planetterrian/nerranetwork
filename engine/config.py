@@ -37,7 +37,7 @@ class XAccountConfig:
 @dataclass
 class LLMConfig:
     provider: str = "xai"
-    model: str = "grok-4.20-non-reasoning"
+    model: str = "grok-4.3"
     system_prompt_file: str = ""
     digest_prompt_file: str = ""
     podcast_prompt_file: str = ""
@@ -50,12 +50,12 @@ class LLMConfig:
     # Model used when the primary refuses after educational retry. A
     # different model (or different variant of the same family) often
     # has different refusal thresholds and can succeed where the primary
-    # won't. Keeping this in the same pricing tier as the primary avoids
-    # cost spikes on refusal.
+    # won't. Pointing back at the older 4.20-reasoning ensures the chain
+    # actually switches snapshots on a refusal of grok-4.3.
     fallback_model: str = "grok-4.20-reasoning"
     # Synthesizer (weekly newsletter, monthly report, cross-show briefing)
     # defaults. Empty synth_model means "use model".
-    synth_model: str = "grok-4.20-reasoning"
+    synth_model: str = "grok-4.3"
     synth_max_tokens: int = 8000
     synth_temperature: float = 0.4
     # Episode quality reviewer defaults. Fast/cheap variant is appropriate

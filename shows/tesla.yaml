@@ -109,12 +109,12 @@ keywords:
 
 llm:
   provider: xai
-  # Reasoning variant — same price as the non-reasoning primary ($2/$6 per
-  # 1M tokens), better step-by-step grounding for a show that mixes live
-  # stock data, FSD claims, and corporate announcements.
-  model: grok-4.20-reasoning
-  # Refusal fallback points back at the non-reasoning variant so the chain
-  # actually switches models on a refusal (default would equal `model`).
+  # Inherits grok-4.3 from _defaults.yaml. Tesla previously pinned
+  # grok-4.20-reasoning for step-by-step grounding on live market data
+  # and FSD claims; grok-4.3 has always-on reasoning at lower cost so
+  # we no longer need the per-show override.
+  # Refusal fallback points at a different family so the chain actually
+  # switches models on a refusal (default would equal `model`).
   fallback_model: grok-4.20-non-reasoning
   system_prompt_file: shows/prompts/tesla_system.txt
   digest_prompt_file: shows/prompts/tesla_digest.txt

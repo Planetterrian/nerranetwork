@@ -23,11 +23,17 @@ ELEVENLABS_COST_PER_1K_CHARS = 0.15  # Flash v2.5: 0.5 credits/char = $0.15/1K c
 # ids (grok-2, grok-3, grok-3-mini, grok-4.20-0309-*) were pruned April 2026
 # once the audit confirmed no live call site resolves to them.
 GROK_PRICING = {
-    # Grok 4 (previous refusal fallback — retained because historical
+    # Grok 4.3 — current network default (released 2026-04-30). Always-on
+    # reasoning, 1M context, ~37% cheaper input and ~58% cheaper output
+    # than grok-4.20 at the same or better intelligence tier.
+    "grok-4.3": {"input_per_1m": 1.25, "output_per_1m": 2.50},
+    # Grok 4 (legacy refusal fallback — retained because older
     # credit_usage JSONs still report it, and _estimate_grok_cost may be
     # re-run against them).
     "grok-4": {"input_per_1m": 3.00, "output_per_1m": 15.00},
-    # Grok 4.20 — current production family
+    # Grok 4.20 — superseded by 4.3 as default but retained because
+    # historical credit_usage JSONs reference these ids and the multi-agent
+    # variant is still used for the tool-use (web/x_search) path.
     "grok-4.20-non-reasoning": {"input_per_1m": 2.00, "output_per_1m": 6.00},
     "grok-4.20-reasoning": {"input_per_1m": 2.00, "output_per_1m": 6.00},
     "grok-4.20-multi-agent": {"input_per_1m": 2.00, "output_per_1m": 6.00},

@@ -819,13 +819,15 @@ class TestSystemPrompts:
         sp_path = Path(config.llm.system_prompt_file)
         assert sp_path.exists(), f"System prompt file not found: {sp_path}"
 
-    def test_all_shows_use_grok420(self, show_slug):
-        """All shows should use a current grok-4.20 variant.
+    def test_all_shows_use_current_grok(self, show_slug):
+        """All shows should use a currently-blessed Grok model.
 
-        Both ``grok-4.20-non-reasoning`` (default across the network) and
-        ``grok-4.20-reasoning`` (same price, used for fact-heavy shows like
-        Tesla and Modern Investing) are acceptable. The assertion exists to
-        block drift to older/unapproved models.
+        ``grok-4.3`` (network default since 2026-05-01, always-on reasoning,
+        $1.25/$2.50 per 1M tokens) is the canonical choice. The older
+        ``grok-4.20-non-reasoning`` / ``grok-4.20-reasoning`` are tolerated
+        during the rollout window but should be removed once every show is
+        confirmed running cleanly on 4.3. The assertion exists to block
+        drift to older/unapproved models (e.g. grok-3, grok-2).
         """
         from engine.config import load_config
 
@@ -833,7 +835,11 @@ class TestSystemPrompts:
         if not config_path.exists():
             pytest.skip(f"Config not found: {config_path}")
 
-        allowed = {"grok-4.20-non-reasoning", "grok-4.20-reasoning"}
+        allowed = {
+            "grok-4.3",
+            "grok-4.20-non-reasoning",
+            "grok-4.20-reasoning",
+        }
         config = load_config(config_path)
         assert config.llm.model in allowed, (
             f"{show_slug} should use one of {sorted(allowed)}, "
