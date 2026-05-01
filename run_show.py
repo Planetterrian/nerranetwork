@@ -219,14 +219,19 @@ def _preflight_checks(config, *, dry_run: bool = False) -> None:
             issues.append(f"Audio file not found: {path_str}")
 
     # Validate TTS provider name
-    if config.tts.provider != "elevenlabs":
-        issues.append(f"Unknown TTS provider: {config.tts.provider!r} (only 'elevenlabs' is supported)")
+    if config.tts.provider not in ("elevenlabs", "grok"):
+        issues.append(
+            f"Unknown TTS provider: {config.tts.provider!r} "
+            "(supported: 'elevenlabs', 'grok')"
+        )
 
-    # Check critical API key env vars are populated
-    if not os.environ.get("ELEVENLABS_API_KEY"):
+    # Check critical API key env vars are populated. For TTS, only require
+    # the key matching the configured provider — shows on Grok TTS don't
+    # need ELEVENLABS_API_KEY and vice versa.
+    if config.tts.provider == "elevenlabs" and not os.environ.get("ELEVENLABS_API_KEY"):
         issues.append("ELEVENLABS_API_KEY env var is empty or missing")
 
-    if not os.environ.get("GROK_API_KEY"):
+    if not (os.environ.get("GROK_API_KEY") or os.environ.get("XAI_API_KEY")):
         issues.append("GROK_API_KEY env var is empty or missing")
 
     # Validate numeric config bounds
@@ -1467,16 +1472,29 @@ def run(args: argparse.Namespace) -> None:
         tts_script_path.write_text(podcast_script, encoding="utf-8")
         logger.info("TTS script saved: %s", tts_script_path)
 
-        # 9. TTS — ElevenLabs
-        # 9. TTS — ElevenLabs
+        # 9. TTS — provider-aware (ElevenLabs default; Grok for Russian shows)
+        tts_provider = (config.tts.provider or "elevenlabs").lower()
         tts_ready = False
-        api_key = (os.getenv("ELEVENLABS_API_KEY") or "").strip()
-        if not api_key:
-            logger.error("ELEVENLABS_API_KEY not set. Skipping TTS.")
+        if tts_provider == "grok":
+            api_key = (
+                os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY") or ""
+            ).strip()
+            if not api_key:
+                logger.error("GROK_API_KEY (or XAI_API_KEY) not set. Skipping TTS.")
+            else:
+                from engine.tts import synthesize  # noqa: F401 (import below)
+                # No fail-fast auth ping for Grok TTS — the same key drives
+                # the LLM stage which has already validated upstream. A bad
+                # key would have failed the digest run before we reached TTS.
+                tts_ready = True
         else:
-            from engine.tts import synthesize, validate_elevenlabs_auth
-            validate_elevenlabs_auth(api_key)
-            tts_ready = True
+            api_key = (os.getenv("ELEVENLABS_API_KEY") or "").strip()
+            if not api_key:
+                logger.error("ELEVENLABS_API_KEY not set. Skipping TTS.")
+            else:
+                from engine.tts import synthesize, validate_elevenlabs_auth
+                validate_elevenlabs_auth(api_key)
+                tts_ready = True
 
         if tts_ready:
             raw_mp3 = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}_raw.mp3"
@@ -1530,6 +1548,7 @@ def run(args: argparse.Namespace) -> None:
                         config.tts.voice_id,
                         section_tmp_dir,
                         api_key=api_key,
+                        provider=tts_provider,
                         section_prefix=f"sec_ep{episode_num:03d}",
                         max_chars=config.tts.max_chars,
                         model_id=config.tts.model,
@@ -1559,7 +1578,8 @@ def run(args: argparse.Namespace) -> None:
                     # Not enough sections — fall back to single synthesis
                     synthesize(
                         podcast_script, config.tts.voice_id, raw_mp3,
-                        api_key=api_key, max_chars=config.tts.max_chars,
+                        api_key=api_key, provider=tts_provider,
+                        max_chars=config.tts.max_chars,
                         model_id=config.tts.model, stability=config.tts.stability,
                         similarity_boost=config.tts.similarity_boost,
                         style=config.tts.style,
@@ -1570,7 +1590,8 @@ def run(args: argparse.Namespace) -> None:
             else:
                 synthesize(
                     podcast_script, config.tts.voice_id, raw_mp3,
-                    api_key=api_key, max_chars=config.tts.max_chars,
+                    api_key=api_key, provider=tts_provider,
+                    max_chars=config.tts.max_chars,
                     model_id=config.tts.model, stability=config.tts.stability,
                     similarity_boost=config.tts.similarity_boost,
                     style=config.tts.style,

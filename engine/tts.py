@@ -1,13 +1,20 @@
 """TTS helpers for the podcast generation pipeline.
 
-Uses **ElevenLabs** cloud API for all shows.
+Supports two providers, selected per-show via ``tts.provider``:
+
+  - **elevenlabs** (default for English shows) — `eleven_flash_v2_5` via the
+    streaming endpoint. Stability / similarity_boost / style settings.
+  - **grok** (Russian shows since May 2026) — xAI's `/v1/tts` endpoint at
+    ~36× lower per-character cost than ElevenLabs Flash. Reuses the
+    `GROK_API_KEY` / `XAI_API_KEY` env var already used for LLM calls.
 
 Public API:
-  - synthesize(): top-level entry point — text in, audio file out
-  - validate_elevenlabs_auth(): fail-fast API key check
+  - synthesize(): top-level entry point — text in, audio file out, picks
+    the provider on the *provider* kwarg
+  - validate_elevenlabs_auth(): fail-fast API key check (ElevenLabs only)
   - chunk_text(): sentence-aware text splitting for the configurable chunk limit
-  - speak_chunk(): single-chunk TTS with retry
-  - speak(): full TTS with automatic chunking + ffmpeg concatenation
+  - speak_chunk(): single-chunk ElevenLabs TTS with retry
+  - speak(): full ElevenLabs TTS with automatic chunking + ffmpeg concatenation
   - synthesize_sections(): section-aware synthesis (per-section files)
 """
 
@@ -28,6 +35,10 @@ from tenacity import (
 logger = logging.getLogger(__name__)
 
 ELEVENLABS_API_BASE = "https://api.elevenlabs.io/v1"
+GROK_TTS_ENDPOINT = "https://api.x.ai/v1/tts"
+# Grok caps per-request text at 15,000 chars; we use 14,000 as the chunk
+# ceiling to leave a small headroom for any trailing punctuation we add.
+GROK_MAX_CHARS_PER_REQUEST = 14000
 
 
 def _ffmpeg_escape(path: Path) -> str:
@@ -587,12 +598,251 @@ def _speak_with_model(
             pass
 
 
+# ---------------------------------------------------------------------------
+# Grok TTS (xAI /v1/tts)
+# ---------------------------------------------------------------------------
+
+class GrokTTSClientError(Exception):
+    """Non-retryable Grok TTS API error (4xx)."""
+
+    def __init__(self, message: str, status_code: int, body: str = ""):
+        super().__init__(message)
+        self.status_code = status_code
+        self.body = body
+
+
+class _GrokTTSServerError(requests.HTTPError):
+    """Retryable Grok TTS server error (5xx / 429)."""
+
+
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    retry=retry_if_exception_type(
+        (requests.ConnectionError, requests.Timeout, _GrokTTSServerError),
+    ),
+)
+def grok_speak_chunk(
+    text: str,
+    voice_id: str,
+    out_path: Path,
+    *,
+    api_key: str,
+    language_code: str = "auto",
+    timeout: int = 120,
+) -> None:
+    """Generate audio for a single text chunk via the Grok ``/v1/tts`` endpoint.
+
+    Returns MP3 bytes by default (24 kHz / 128 kbps, per xAI docs). Retries
+    only on transient errors (timeouts, connection failures, 429/5xx). The
+    API key reuses ``GROK_API_KEY`` / ``XAI_API_KEY`` — the same one used
+    for LLM calls — so no new env var is needed.
+    """
+    if not text or not text.strip():
+        raise ValueError(
+            "grok_speak_chunk: text is empty — refusing to produce a silent chunk",
+        )
+    if len(text) > GROK_MAX_CHARS_PER_REQUEST + 1000:
+        # The API caps at 15k; we pre-chunk under that. If a caller bypassed
+        # chunking, fail loudly rather than truncating silently.
+        raise ValueError(
+            f"grok_speak_chunk: text length {len(text)} exceeds Grok's "
+            f"15,000-char per-request cap. Caller must chunk first.",
+        )
+
+    payload = {
+        "text": text,
+        "voice_id": voice_id,
+        "language": language_code or "auto",
+    }
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+
+    with requests.post(
+        GROK_TTS_ENDPOINT, json=payload, headers=headers,
+        stream=True, timeout=timeout,
+    ) as r:
+        if r.status_code == 401:
+            raise GrokTTSClientError(
+                "Grok TTS returned 401 Unauthorized. Verify GROK_API_KEY / "
+                "XAI_API_KEY and that the voice_id is accessible.",
+                status_code=401,
+            )
+        if 400 <= r.status_code < 500 and r.status_code != 429:
+            body = r.text[:500]
+            logger.error(
+                "Grok TTS returned %d for chunk (%d chars): %s",
+                r.status_code, len(text), body,
+            )
+            raise GrokTTSClientError(
+                f"Grok TTS returned {r.status_code}: {body}",
+                status_code=r.status_code,
+                body=body,
+            )
+        if r.status_code == 429 or r.status_code >= 500:
+            body = r.text[:500]
+            logger.warning(
+                "Grok TTS returned %d (retryable) for chunk (%d chars): %s",
+                r.status_code, len(text), body,
+            )
+            raise _GrokTTSServerError(
+                f"Grok TTS returned {r.status_code}: {body}",
+                response=r,
+            )
+        r.raise_for_status()
+        with open(out_path, "wb") as f:
+            for data in r.iter_content(chunk_size=8192):
+                f.write(data)
+
+
+def _speak_with_grok(
+    text: str,
+    voice_id: str,
+    filename: str,
+    *,
+    api_key: str,
+    max_chars: int = GROK_MAX_CHARS_PER_REQUEST,
+    language_code: str = "auto",
+    timeout: int = 120,
+    append_exclamation: bool = False,
+) -> None:
+    """Grok-TTS counterpart of ``speak()``.
+
+    Same chunk → WAV → crossfade → final MP3 pipeline as the ElevenLabs
+    path. Single chunks short-circuit to a direct MP3 write (no re-encode).
+    """
+    text = prepare_text_for_tts(text)
+    # Cap at Grok's 15k-char request limit even when caller passes a
+    # higher max_chars (e.g. shows that inherited the ElevenLabs default).
+    effective_max = min(max_chars, GROK_MAX_CHARS_PER_REQUEST)
+    chunks = chunk_text(text, max_chars=effective_max)
+
+    if len(chunks) == 1:
+        out_text = chunks[0]
+        if append_exclamation:
+            out_text = out_text + "!"
+        grok_speak_chunk(
+            out_text, voice_id, Path(filename),
+            api_key=api_key, language_code=language_code, timeout=timeout,
+        )
+        logger.info("Grok TTS: Generated single chunk (%d chars)", len(out_text))
+        return
+
+    logger.info(
+        "Grok TTS: Splitting into %d chunks for seamless generation",
+        len(chunks),
+    )
+    import tempfile as _tmpmod
+    tmp_dir = Path(_tmpmod.mkdtemp(prefix="tts_grok_", dir=str(Path(filename).parent)))
+    chunk_files: List[Path] = []
+    wav_files: List[Path] = []
+    try:
+        for i, chunk_text_str in enumerate(chunks):
+            chunk_file = tmp_dir / f"tts_chunk_{i:03d}.mp3"
+            if append_exclamation:
+                if i < len(chunks) - 1:
+                    chunk_text_str = chunk_text_str.rstrip(".!?") + "."
+                else:
+                    chunk_text_str = chunk_text_str + "!"
+            grok_speak_chunk(
+                chunk_text_str, voice_id, chunk_file,
+                api_key=api_key, language_code=language_code, timeout=timeout,
+            )
+            chunk_files.append(chunk_file)
+            logger.info(
+                "Grok TTS: Generated chunk %d/%d (%d chars)",
+                i + 1, len(chunks), len(chunk_text_str),
+            )
+
+        # Decode each MP3 chunk to WAV for lossless concatenation, mirroring
+        # the ElevenLabs path. Output is mono 44.1 kHz to match the rest
+        # of the pipeline (Grok's default is 24 kHz; ffmpeg upsamples on
+        # decode and we re-encode once at the end).
+        for cf in chunk_files:
+            wav_file = cf.with_suffix(".wav")
+            subprocess.run(
+                ["ffmpeg", "-y", "-i", str(cf), "-ar", "44100", "-ac", "1", str(wav_file)],
+                check=True, capture_output=True, timeout=120,
+            )
+            wav_files.append(wav_file)
+
+        _XFADE_SECS = "0.05"
+        if len(wav_files) == 2:
+            merged_wav = tmp_dir / "tts_merged.wav"
+            subprocess.run(
+                [
+                    "ffmpeg", "-y",
+                    "-i", str(wav_files[0]), "-i", str(wav_files[1]),
+                    "-filter_complex", f"acrossfade=d={_XFADE_SECS}:c1=tri:c2=tri",
+                    str(merged_wav),
+                ],
+                check=True, capture_output=True, timeout=300,
+            )
+        else:
+            merged_wav = wav_files[0]
+            for idx in range(1, len(wav_files)):
+                step_out = tmp_dir / f"tts_xfade_{idx:03d}.wav"
+                subprocess.run(
+                    [
+                        "ffmpeg", "-y",
+                        "-i", str(merged_wav), "-i", str(wav_files[idx]),
+                        "-filter_complex", f"acrossfade=d={_XFADE_SECS}:c1=tri:c2=tri",
+                        str(step_out),
+                    ],
+                    check=True, capture_output=True, timeout=300,
+                )
+                merged_wav = step_out
+
+        subprocess.run(
+            [
+                "ffmpeg", "-y",
+                "-i", str(merged_wav),
+                "-c:a", "libmp3lame", "-q:a", "2",
+                str(filename),
+            ],
+            check=True, capture_output=True, timeout=300,
+        )
+        logger.info(
+            "Grok TTS: Concatenated %d chunks via WAV intermediates "
+            "(single MP3 encode)", len(chunks),
+        )
+    finally:
+        for cf in chunk_files + wav_files:
+            try:
+                if cf.exists():
+                    cf.unlink()
+            except Exception:
+                pass
+        for tmp_file in tmp_dir.glob("tts_xfade_*.wav"):
+            try:
+                tmp_file.unlink()
+            except Exception:
+                pass
+        for tmp_file in tmp_dir.glob("tts_merged.wav"):
+            try:
+                tmp_file.unlink()
+            except Exception:
+                pass
+        try:
+            if tmp_dir.exists() and tmp_dir != Path(filename).parent:
+                tmp_dir.rmdir()
+        except Exception:
+            pass
+
+
+# ---------------------------------------------------------------------------
+# Public entry points (provider-aware)
+# ---------------------------------------------------------------------------
+
 def synthesize(
     text: str,
     voice_id: str,
     output_path: str | Path,
     *,
     api_key: str,
+    provider: str = "elevenlabs",
     max_chars: int = 10000,
     model_id: str = "eleven_flash_v2_5",
     stability: float = 0.5,
@@ -606,10 +856,31 @@ def synthesize(
 ) -> Path:
     """Top-level entry point: text in, audio file path out.
 
+    *provider* picks the backend:
+
+      - ``"elevenlabs"`` (default) — uses the ElevenLabs streaming endpoint
+        with the full ElevenLabs voice-settings palette (stability /
+        similarity_boost / style / speed / model_id).
+      - ``"grok"`` — uses xAI's ``/v1/tts`` endpoint. Voice settings other
+        than ``language_code`` are ignored (Grok doesn't expose them).
+
     Handles chunking and concatenation internally so callers just pass
-    text and get back a path.  Always uses the ElevenLabs streaming endpoint.
+    text and get back a path.
     """
     output_path = Path(output_path)
+    if provider == "grok":
+        # Grok's "auto" detects language; explicit codes (e.g. "ru") are
+        # the safer choice for non-English shows.
+        _speak_with_grok(
+            text, voice_id, str(output_path),
+            api_key=api_key,
+            max_chars=max_chars,
+            language_code=language_code or "auto",
+            timeout=timeout,
+            append_exclamation=append_exclamation,
+        )
+        return output_path
+    # Default: ElevenLabs
     speak(
         text,
         voice_id,
@@ -635,6 +906,7 @@ def synthesize_sections(
     output_dir: Path,
     *,
     api_key: str,
+    provider: str = "elevenlabs",
     section_prefix: str = "section",
     max_chars: int = 10000,
     model_id: str = "eleven_flash_v2_5",
@@ -648,21 +920,24 @@ def synthesize_sections(
 ) -> List[Path]:
     """Synthesize multiple script sections into individual audio files.
 
-    Each section is synthesized via ``speak()`` (which handles chunking
-    internally for sections exceeding *max_chars*).  Returns an ordered
-    list of MP3 paths — one per section.  Always uses the ElevenLabs
-    streaming endpoint.
+    Each section is synthesized via the configured *provider* backend
+    (``elevenlabs`` or ``grok``), reusing the chunking / concatenation
+    pipeline of that provider. Returns an ordered list of MP3 paths —
+    one per section.
 
     Parameters
     ----------
     sections:
         Ordered list of text sections to synthesize.
     voice_id:
-        ElevenLabs voice ID.
+        Backend-specific voice ID. ElevenLabs uses 20-char alphanumeric
+        IDs; Grok uses the named voices (``eve``, ``ara``, etc.) or
+        custom 8-char alphanumeric IDs.
     output_dir:
         Directory for intermediate per-section MP3 files.
     api_key:
-        ElevenLabs API key.
+        ElevenLabs key for ``provider="elevenlabs"``; xAI / Grok key for
+        ``provider="grok"``.
     section_prefix:
         Filename prefix for section files.
     max_chars:
@@ -683,21 +958,32 @@ def synthesize_sections(
             continue
 
         section_path = output_dir / f"{section_prefix}_{i:03d}.mp3"
-        speak(
-            section_text,
-            voice_id,
-            str(section_path),
-            api_key=api_key,
-            max_chars=max_chars,
-            model_id=model_id,
-            stability=stability,
-            similarity_boost=similarity_boost,
-            style=style,
-            language_code=language_code,
-            speed=speed,
-            apply_text_normalization=apply_text_normalization,
-            timeout=timeout,
-        )
+        if provider == "grok":
+            _speak_with_grok(
+                section_text,
+                voice_id,
+                str(section_path),
+                api_key=api_key,
+                max_chars=max_chars,
+                language_code=language_code or "auto",
+                timeout=timeout,
+            )
+        else:
+            speak(
+                section_text,
+                voice_id,
+                str(section_path),
+                api_key=api_key,
+                max_chars=max_chars,
+                model_id=model_id,
+                stability=stability,
+                similarity_boost=similarity_boost,
+                style=style,
+                language_code=language_code,
+                speed=speed,
+                apply_text_normalization=apply_text_normalization,
+                timeout=timeout,
+            )
         section_files.append(section_path)
         logger.info(
             "Synthesized section %d/%d (%d chars): %s",
