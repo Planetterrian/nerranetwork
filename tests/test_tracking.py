@@ -323,6 +323,23 @@ class TestGrokPricing:
         assert "grok-4.20-non-reasoning" in GROK_PRICING
         assert "grok-4.20-reasoning" in GROK_PRICING
 
+    def test_grok43_pricing_exists(self):
+        """grok-4.3 is the current network default (since 2026-05-01)."""
+        assert "grok-4.3" in GROK_PRICING
+        assert GROK_PRICING["grok-4.3"]["input_per_1m"] == 1.25
+        assert GROK_PRICING["grok-4.3"]["output_per_1m"] == 2.50
+
+    def test_grok43_cheaper_than_grok420(self):
+        """The whole point of switching to grok-4.3 is cost savings."""
+        assert (
+            GROK_PRICING["grok-4.3"]["input_per_1m"]
+            < GROK_PRICING["grok-4.20-non-reasoning"]["input_per_1m"]
+        )
+        assert (
+            GROK_PRICING["grok-4.3"]["output_per_1m"]
+            < GROK_PRICING["grok-4.20-non-reasoning"]["output_per_1m"]
+        )
+
     def test_reviewer_model_priced(self):
         """Reviewer model must have pricing so its cost is attributed."""
         assert "grok-4-1-fast-non-reasoning" in GROK_PRICING

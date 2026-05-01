@@ -228,7 +228,7 @@ def _network_synth_defaults() -> tuple[str, int, float]:
     """
     import yaml
 
-    model = "grok-4.20-reasoning"
+    model = "grok-4.3"
     max_tokens = 8000
     temperature = 0.4
     defaults_path = Path("shows/_defaults.yaml")
@@ -399,7 +399,7 @@ def _pick_featured_episode(
 def _cfg_synth_params(cfg, default_max_tokens: int, default_temperature: float) -> tuple[str, int, float]:
     """Return the per-show synthesiser params, falling back to show's model."""
     llm = getattr(cfg, "llm", None)
-    model = getattr(llm, "synth_model", "") or getattr(llm, "model", "") or "grok-4.20-reasoning"
+    model = getattr(llm, "synth_model", "") or getattr(llm, "model", "") or "grok-4.3"
     max_tokens = getattr(llm, "synth_max_tokens", 0) or default_max_tokens
     temperature = getattr(llm, "synth_temperature", 0.0) or default_temperature
     return model, max_tokens, temperature

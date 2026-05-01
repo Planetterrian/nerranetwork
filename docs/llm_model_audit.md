@@ -9,6 +9,21 @@
 > recommended" items remain deliberately unimplemented. The inventory
 > below describes the state *before* those changes; current state is
 > captured in `shows/_defaults.yaml` and the show YAMLs.
+>
+> **2026-05-01 update — Grok 4.3 migration (branch
+> `claude/review-grok-model-7wx4c`):** xAI released `grok-4.3` on
+> 2026-04-30 with always-on reasoning at **$1.25 / $2.50 per 1M
+> tokens** (vs. the entire `grok-4.20-*` family at $2 / $6). The
+> network default, synth model, and the Tesla / Modern Investing
+> per-show overrides were all flipped to `grok-4.3`. This collapses
+> recommendations §7.4 (A/B reasoning on Tesla / MIT) and §7.6 (widen
+> synthesiser to reasoning variant) into a single drop-in upgrade
+> that is also ~55% cheaper per episode. Refusal fallback stays on
+> `grok-4.20-reasoning` so a refusal genuinely switches snapshot.
+> The tool-use path in `digests/xai_grok.py` (Responses API with
+> `web_search` / `x_search` built-in tools) still defaults to
+> `grok-4.20-non-reasoning` pending end-to-end verification that
+> grok-4.3 supports those tools through the Responses endpoint.
 
 ---
 

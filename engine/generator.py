@@ -40,7 +40,9 @@ class LLMRefusalError(RuntimeError):
 # after educational prompt retry.  A different model often has different
 # refusal thresholds and can succeed where the primary model won't.
 # Kept for back-compat and for call sites that don't have a config loaded;
-# prefer ``config.llm.fallback_model`` where possible.
+# prefer ``config.llm.fallback_model`` where possible. Points at the older
+# grok-4.20-reasoning so a refusal switches model family/snapshot rather
+# than re-asking the same primary (grok-4.3).
 _LLM_FALLBACK_MODEL = "grok-4.20-reasoning"
 
 
@@ -86,7 +88,7 @@ def _get_api_key() -> str:
 def _call_grok(
     prompt: str,
     *,
-    model: str = "grok-4.20-non-reasoning",
+    model: str = "grok-4.3",
     system_prompt: Optional[str] = None,
     temperature: float = 0.7,
     max_tokens: int = 3500,

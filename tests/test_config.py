@@ -167,7 +167,7 @@ class TestDefaultValues:
     def test_llm_defaults(self):
         c = LLMConfig()
         assert c.provider == "xai"
-        assert c.model == "grok-4.20-non-reasoning"
+        assert c.model == "grok-4.3"
         assert c.system_prompt_file == ""
         assert c.digest_prompt_file == ""
         assert c.podcast_prompt_file == ""
@@ -391,9 +391,10 @@ class TestLoadConfigRealFiles:
         assert cfg.sources[0].label == "Teslarati"
         assert "tsla" in cfg.keywords
         assert len(cfg.web_search_queries) == 4
-        # Tesla uses the reasoning variant for factual grounding on live
-        # market data — same price as the non-reasoning default.
-        assert cfg.llm.model == "grok-4.20-reasoning"
+        # Tesla inherits the network default (grok-4.3) — always-on
+        # reasoning at lower cost than the previous grok-4.20-reasoning
+        # override.
+        assert cfg.llm.model == "grok-4.3"
         assert cfg.llm.digest_temperature == 0.5
         assert cfg.llm.podcast_temperature == 0.7
         assert cfg.tts.voice_id == "dTrBzPvD2GpAqkk1MUzA"
@@ -410,7 +411,7 @@ class TestLoadConfigRealFiles:
         assert len(cfg.sources) == 25
         assert cfg.sources[0].label == "NASA Breaking"
         assert "space" in cfg.keywords
-        assert cfg.llm.model == "grok-4.20-non-reasoning"
+        assert cfg.llm.model == "grok-4.3"
         assert cfg.tts.voice_id == "dTrBzPvD2GpAqkk1MUzA"
         assert cfg.audio.music_file == "assets/music/fascinatingfrontiers.mp3"
         assert cfg.audio.background_music_file == "assets/music/fascinatingfrontiers_bg.mp3"
@@ -439,7 +440,7 @@ class TestLoadConfigRealFiles:
         assert len(cfg.sources) == 28
         assert cfg.sources[0].label == "NPR"
         assert "election" in cfg.keywords
-        assert cfg.llm.model == "grok-4.20-non-reasoning"
+        assert cfg.llm.model == "grok-4.3"
         assert cfg.llm.digest_temperature == 0.5
         assert cfg.llm.max_tokens == 4000
         assert cfg.tts.stability == 0.5
@@ -459,7 +460,7 @@ class TestLoadConfigRealFiles:
         assert cfg.sources[0].label == "BC Ministry of Environment"
         assert "contaminated sites" in cfg.keywords
         assert "CCME" in cfg.keywords
-        assert cfg.llm.model == "grok-4.20-non-reasoning"
+        assert cfg.llm.model == "grok-4.3"
         assert cfg.llm.digest_temperature == 0.5
         assert cfg.tts.voice_id == "dTrBzPvD2GpAqkk1MUzA"
         assert cfg.tts.stability == 0.5  # Normalized to network standard
