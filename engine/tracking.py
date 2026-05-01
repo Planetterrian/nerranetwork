@@ -41,9 +41,12 @@ GROK_PRICING = {
     # credit_usage JSONs still report it, and _estimate_grok_cost may be
     # re-run against them).
     "grok-4": {"input_per_1m": 3.00, "output_per_1m": 15.00},
-    # Grok 4.20 — superseded by 4.3 as default but retained because
-    # historical credit_usage JSONs reference these ids and the multi-agent
-    # variant is still used for the tool-use (web/x_search) path.
+    # Grok 4.20 — fully superseded by 4.3 (primary, synth, and tool-use
+    # paths all migrated). Pricing entries retained because historical
+    # credit_usage JSONs reference these ids; cost re-scoring against
+    # those files would silently zero out without these rows.
+    # `grok-4.20-reasoning` is also still the configured refusal fallback
+    # (genuinely different snapshot from grok-4.3).
     "grok-4.20-non-reasoning": {"input_per_1m": 2.00, "output_per_1m": 6.00},
     "grok-4.20-reasoning": {"input_per_1m": 2.00, "output_per_1m": 6.00},
     "grok-4.20-multi-agent": {"input_per_1m": 2.00, "output_per_1m": 6.00},

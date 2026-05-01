@@ -20,7 +20,7 @@ def _get_xai_api_key() -> str:
 def grok_generate_text(
     *,
     prompt: str,
-    model: str = "grok-4.20-non-reasoning",
+    model: str = "grok-4.3",
     temperature: float = 0.7,
     max_tokens: int = 3500,
     timeout_seconds: float = 3600.0,

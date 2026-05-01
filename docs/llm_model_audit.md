@@ -10,20 +10,28 @@
 > below describes the state *before* those changes; current state is
 > captured in `shows/_defaults.yaml` and the show YAMLs.
 >
-> **2026-05-01 update — Grok 4.3 migration (branch
-> `claude/review-grok-model-7wx4c`):** xAI released `grok-4.3` on
-> 2026-04-30 with always-on reasoning at **$1.25 / $2.50 per 1M
-> tokens** (vs. the entire `grok-4.20-*` family at $2 / $6). The
-> network default, synth model, and the Tesla / Modern Investing
-> per-show overrides were all flipped to `grok-4.3`. This collapses
-> recommendations §7.4 (A/B reasoning on Tesla / MIT) and §7.6 (widen
-> synthesiser to reasoning variant) into a single drop-in upgrade
-> that is also ~55% cheaper per episode. Refusal fallback stays on
-> `grok-4.20-reasoning` so a refusal genuinely switches snapshot.
-> The tool-use path in `digests/xai_grok.py` (Responses API with
-> `web_search` / `x_search` built-in tools) still defaults to
-> `grok-4.20-non-reasoning` pending end-to-end verification that
-> grok-4.3 supports those tools through the Responses endpoint.
+> **2026-05-01 update — Grok 4.3 migration:** xAI released `grok-4.3`
+> on 2026-04-30 with always-on reasoning at **$1.25 / $2.50 per 1M
+> tokens** (vs. the entire `grok-4.20-*` family at $2 / $6). Migrated
+> in two PRs:
+>
+> 1. **Network default + synth + per-show overrides** (PR #278) —
+>    flipped `shows/_defaults.yaml`, Tesla and Modern Investing
+>    per-show YAMLs, plus the `_call_grok()` and synthesiser hard-coded
+>    defaults. Collapses recommendations §7.4 (A/B reasoning on Tesla
+>    / MIT) and §7.6 (widen synthesiser to reasoning variant) into a
+>    single drop-in upgrade that is also ~55% cheaper per episode.
+> 2. **Tool-use path** (PR #283) — `digests/xai_grok.py:grok_generate_text()`
+>    default flipped from `grok-4.20-non-reasoning` to `grok-4.3` once
+>    operator confirmed `grok-4.3` supports the `x_search` and
+>    `web_search` built-in tools through the Responses API. Both
+>    callers in `engine/fetcher.py` (X account fetch, web search
+>    backfill) now route through 4.3.
+>
+> Refusal fallback stays on `grok-4.20-reasoning` so a refusal
+> genuinely switches snapshot rather than retrying the same primary.
+> Reviewer (`grok-4-1-fast-non-reasoning`) is unchanged — already the
+> cheapest tier.
 
 ---
 
