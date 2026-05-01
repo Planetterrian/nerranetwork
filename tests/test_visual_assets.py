@@ -20,6 +20,8 @@ from engine import visual_assets
 # ---------------------------------------------------------------------------
 
 def test_select_keywords_dedupes_and_lowercases():
+    # No prefix — bare keyword behaviour preserved for shows that don't
+    # set ``image_query_prefix``.
     out = visual_assets._select_keywords(
         ["Tesla", "TESLA", "Model 3", "model 3", "FSD"],
         limit=5,
@@ -310,3 +312,265 @@ def test_manifest_invalidates_on_missing_image(tmp_path: Path, monkeypatch):
     )
     # We re-downloaded.
     assert len(fetch_calls) == 1
+
+
+# ---------------------------------------------------------------------------
+# Curated image_queries override
+# ---------------------------------------------------------------------------
+
+def test_image_queries_override_keywords(tmp_path: Path, monkeypatch):
+    """When ``image_queries`` is set, ``keywords`` is ignored verbatim."""
+    cover = tmp_path / "cover.jpg"
+    cover.write_bytes(b"\xFF\xD8")
+    work = tmp_path / "youtube_tmp"
+
+    queries_seen = []
+
+    def fake_search(query, *, api_key, per_page=3):
+        queries_seen.append(query)
+        return _fake_pexels_response([f"id_{len(queries_seen)}"])
+
+    monkeypatch.setattr(visual_assets, "_pexels_search", fake_search)
+    monkeypatch.setattr(
+        visual_assets, "_download_image",
+        lambda url, dest: (dest.parent.mkdir(parents=True, exist_ok=True),
+                           dest.write_bytes(b"\xFF\xD8"), dest)[2],
+    )
+
+    visual_assets.fetch_scene_images(
+        work_dir=work, episode_num=20,
+        keywords=["tesla", "model 3", "model y"],  # would leak fashion models
+        image_queries=["tesla supercharger", "electric vehicle charging"],
+        fallback_cover=cover, api_key="fake-key",
+        target_count=2,
+    )
+
+    assert queries_seen == ["tesla supercharger", "electric vehicle charging"]
+
+
+def test_image_queries_dedupes_and_skips_blanks(tmp_path: Path, monkeypatch):
+    cover = tmp_path / "cover.jpg"
+    cover.write_bytes(b"\xFF\xD8")
+    work = tmp_path / "youtube_tmp"
+
+    queries_seen = []
+
+    def fake_search(query, *, api_key, per_page=3):
+        queries_seen.append(query)
+        return _fake_pexels_response([f"id_{len(queries_seen)}"])
+
+    monkeypatch.setattr(visual_assets, "_pexels_search", fake_search)
+    monkeypatch.setattr(
+        visual_assets, "_download_image",
+        lambda url, dest: (dest.parent.mkdir(parents=True, exist_ok=True),
+                           dest.write_bytes(b"\xFF\xD8"), dest)[2],
+    )
+
+    visual_assets.fetch_scene_images(
+        work_dir=work, episode_num=21,
+        keywords=[],
+        image_queries=["tesla car", "", "  ", "Tesla Car", "tesla supercharger"],
+        fallback_cover=cover, api_key="fake-key",
+        target_count=10,
+    )
+
+    # "Tesla Car" is a case-insensitive dupe of "tesla car"; blanks dropped.
+    assert queries_seen == ["tesla car", "tesla supercharger"]
+
+
+# ---------------------------------------------------------------------------
+# image_query_prefix
+# ---------------------------------------------------------------------------
+
+def test_select_keywords_applies_prefix():
+    """Prefix is prepended to keywords that don't already contain its head word."""
+    out = visual_assets._select_keywords(
+        ["model 3", "tesla supercharger", "robotaxi", "cybertruck"],
+        prefix="tesla ",
+    )
+    # "tesla supercharger" already contains "tesla" — prefix not duplicated.
+    assert "tesla model 3" in out
+    assert "tesla supercharger" in out
+    assert "tesla robotaxi" in out
+    assert "tesla cybertruck" in out
+    # No bare "model 3" leaks through (would hit fashion models on Pexels).
+    assert "model 3" not in out
+
+
+def test_select_keywords_no_prefix_keeps_originals():
+    out = visual_assets._select_keywords(
+        ["space telescope", "rocket launch"],
+        prefix="",
+    )
+    assert out == ["space telescope", "rocket launch"]
+
+
+def test_select_keywords_prefix_dedupes_after_application():
+    """If prefix application would create duplicates, dedupe correctly."""
+    out = visual_assets._select_keywords(
+        ["car", "tesla car"],
+        prefix="tesla ",
+    )
+    # Both expand to "tesla car" — only one survives.
+    assert out.count("tesla car") == 1
+
+
+# ---------------------------------------------------------------------------
+# Pexels safety filter
+# ---------------------------------------------------------------------------
+
+def test_photo_is_safe_drops_url_slug_match():
+    photo = {
+        "id": 8784176,
+        "url": "https://www.pexels.com/photo/topless-model-in-panties-8784176/",
+        "alt": "",
+    }
+    assert visual_assets._photo_is_safe(photo, ["topless"]) is False
+    assert visual_assets._photo_is_safe(photo, ["model-in"]) is False
+
+
+def test_photo_is_safe_passes_clean_photos():
+    photo = {
+        "id": 35736766,
+        "url": "https://www.pexels.com/photo/tesla-model-3-charging-at-electric-station-35736766/",
+        "alt": "Tesla Model 3 charging",
+    }
+    skip = ["topless", "model-in", "lingerie"]
+    assert visual_assets._photo_is_safe(photo, skip) is True
+
+
+def test_photo_is_safe_empty_skip_terms_is_permissive():
+    photo = {"id": 1, "url": "anything", "alt": ""}
+    assert visual_assets._photo_is_safe(photo, []) is True
+
+
+def test_photo_is_safe_case_insensitive():
+    photo = {"id": 1, "url": "https://www.pexels.com/photo/Topless-Model/", "alt": ""}
+    assert visual_assets._photo_is_safe(photo, ["topless"]) is False
+
+
+def test_safety_filter_drops_photos_during_fetch(tmp_path: Path, monkeypatch):
+    """End-to-end: bad photos are filtered out, photos_filtered is recorded."""
+    cover = tmp_path / "cover.jpg"
+    cover.write_bytes(b"\xFF\xD8")
+    work = tmp_path / "youtube_tmp"
+
+    def fake_search(query, *, api_key, per_page=3):
+        # First photo is bad (matches "topless"), second is fine.
+        return {
+            "photos": [
+                {
+                    "id": 1,
+                    "url": "https://pexels.com/photo/topless-model-1",
+                    "alt": "topless model",
+                    "photographer": "Bad Photographer",
+                    "photographer_url": "https://pexels.com/@bad",
+                    "src": {"large2x": "https://example.com/1.jpg"},
+                },
+                {
+                    "id": 2,
+                    "url": "https://pexels.com/photo/tesla-model-3-charging-2",
+                    "alt": "tesla charging",
+                    "photographer": "Good Photographer",
+                    "photographer_url": "https://pexels.com/@good",
+                    "src": {"large2x": "https://example.com/2.jpg"},
+                },
+            ],
+        }
+
+    monkeypatch.setattr(visual_assets, "_pexels_search", fake_search)
+    monkeypatch.setattr(
+        visual_assets, "_download_image",
+        lambda url, dest: (dest.parent.mkdir(parents=True, exist_ok=True),
+                           dest.write_bytes(b"\xFF\xD8"), dest)[2],
+    )
+
+    result = visual_assets.fetch_scene_images(
+        work_dir=work, episode_num=30,
+        keywords=[],
+        image_queries=["tesla car"],
+        fallback_cover=cover, api_key="fake-key",
+        safe_skip_terms=["topless", "lingerie"],
+        target_count=5,
+    )
+
+    # Only the clean photo made it through.
+    assert len(result) == 1
+    assert result.is_fallback is False
+    assert result.photos_filtered == 1
+    # Manifest persists the count.
+    manifest = json.loads(
+        (work / "scenes_ep030" / "manifest.json").read_text(encoding="utf-8")
+    )
+    assert manifest["photos_filtered"] == 1
+
+
+def test_safety_filter_off_when_skip_terms_empty(tmp_path: Path, monkeypatch):
+    """With empty skip_terms, the bad photo passes through unchanged."""
+    cover = tmp_path / "cover.jpg"
+    cover.write_bytes(b"\xFF\xD8")
+    work = tmp_path / "youtube_tmp"
+
+    def fake_search(query, *, api_key, per_page=3):
+        return {
+            "photos": [
+                {
+                    "id": 1,
+                    "url": "https://pexels.com/photo/topless-model-1",
+                    "alt": "",
+                    "photographer": "X",
+                    "photographer_url": "",
+                    "src": {"large2x": "https://example.com/1.jpg"},
+                },
+            ],
+        }
+
+    monkeypatch.setattr(visual_assets, "_pexels_search", fake_search)
+    monkeypatch.setattr(
+        visual_assets, "_download_image",
+        lambda url, dest: (dest.parent.mkdir(parents=True, exist_ok=True),
+                           dest.write_bytes(b"\xFF\xD8"), dest)[2],
+    )
+
+    result = visual_assets.fetch_scene_images(
+        work_dir=work, episode_num=31,
+        keywords=[],
+        image_queries=["tesla car"],
+        fallback_cover=cover, api_key="fake-key",
+        safe_skip_terms=[],
+        target_count=5,
+    )
+
+    assert len(result) == 1
+    assert result.photos_filtered == 0
+
+
+# ---------------------------------------------------------------------------
+# Show YAML coverage — every show with youtube.enabled has curated queries
+# ---------------------------------------------------------------------------
+
+def test_every_show_yaml_has_image_queries():
+    """Every show YAML defines image_queries so the keyword fallback never
+    fires in production. Drift from this is the leading regression mode for
+    the off-topic-imagery class of bug.
+    """
+    import yaml as _yaml
+    shows_dir = Path(__file__).resolve().parent.parent / "shows"
+    # Underscore-prefixed YAMLs (`_defaults.yaml`, `_blocked_sources.yaml`)
+    # and shared maps (`pronunciation_map.yaml`) are network-wide
+    # configuration, not shows.
+    show_files = sorted(
+        f for f in shows_dir.glob("*.yaml")
+        if not f.name.startswith("_")
+        and f.name != "pronunciation_map.yaml"
+    )
+    assert show_files, f"No show YAMLs found under {shows_dir}"
+    for show_file in show_files:
+        data = _yaml.safe_load(show_file.read_text(encoding="utf-8")) or {}
+        yt = data.get("youtube") or {}
+        queries = yt.get("image_queries") or []
+        assert isinstance(queries, list) and len(queries) >= 3, (
+            f"{show_file.name}: youtube.image_queries must list >=3 curated "
+            f"phrases (got {queries!r}). The keyword fallback returned "
+            f"off-topic imagery in production — see Tesla Ep456 manifest."
+        )

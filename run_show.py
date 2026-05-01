@@ -1742,6 +1742,7 @@ def run(args: argparse.Namespace) -> None:
     )
     youtube_long_url = youtube_urls.get("long_url", "")
     youtube_short_url = youtube_urls.get("short_url", "")
+    youtube_pexels_filtered = int(youtube_urls.get("pexels_photos_filtered", 0) or 0)
     if youtube_long_url:
         extra_context["youtube_url"] = youtube_long_url
     if youtube_short_url:
@@ -1760,6 +1761,7 @@ def run(args: argparse.Namespace) -> None:
             "youtube_enabled",
             bool(getattr(config.youtube, "enabled", False)),
         )
+        metrics.record("pexels_photos_filtered", youtube_pexels_filtered)
     except Exception:
         pass
 
@@ -2512,16 +2514,22 @@ def _publish_youtube(
     # ---- Resolve scene slideshow (Pexels-backed; falls back to cover) ----
     scene_paths = [cover_path]
     pexels_attribution: list = []
+    pexels_filtered = 0
     try:
+        yt = config.youtube
         scene_set = fetch_scene_images(
             work_dir=work_dir,
             episode_num=episode_num,
             keywords=list(getattr(config, "keywords", []) or []),
             fallback_cover=cover_path,
+            image_queries=list(getattr(yt, "image_queries", []) or []),
+            image_query_prefix=getattr(yt, "image_query_prefix", "") or "",
+            safe_skip_terms=list(getattr(yt, "image_safe_skip_terms", []) or []),
         )
         if not scene_set.is_fallback and len(scene_set) >= 2:
             scene_paths = scene_set.paths()
             pexels_attribution = scene_set.attribution_lines()
+        pexels_filtered = int(getattr(scene_set, "photos_filtered", 0) or 0)
     except Exception as exc:  # pragma: no cover — best-effort
         logger.warning("Scene fetch failed (using cover only): %s", exc)
 
@@ -2650,6 +2658,10 @@ def _publish_youtube(
         except OSError:
             pass
 
+    # Surface the Pexels safety-filter count so the caller can record
+    # it as a metric. A spike here is the operator's signal that the
+    # show's image_queries / safe_skip_terms need tightening.
+    result["pexels_photos_filtered"] = pexels_filtered
     return result
 
 

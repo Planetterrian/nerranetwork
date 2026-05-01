@@ -223,6 +223,32 @@ class YouTubeConfig:
     tags: List[str] = field(default_factory=list)
     synthetic_disclosure: str = ""
     podcast_playlist_id: Optional[str] = None
+    # ---- Slideshow imagery (Pexels search) ----
+    # Curated, disambiguated search phrases. When non-empty, these are
+    # used verbatim and the show's ``keywords:`` list is ignored. This
+    # is the safer path for shows whose keywords collide with photography
+    # terms — e.g. Tesla "model 3" returns fashion models on Pexels, not
+    # cars. Keep entries short, concrete, and always include the show's
+    # primary subject (e.g. "tesla supercharger", not "supercharger").
+    image_queries: List[str] = field(default_factory=list)
+    # Fallback prefix prepended to each ``keywords:`` entry when
+    # ``image_queries:`` is empty. Disambiguates collision-prone tokens
+    # like "model 3" / "bonds" / "growth". Trailing space is required if
+    # you want a space between prefix and keyword (e.g. "tesla ").
+    image_query_prefix: str = ""
+    # Pexels result safety filter. Any photo whose pexels URL slug or
+    # alt text contains one of these substrings (case-insensitive) is
+    # discarded. Set per-show to suppress people-only / off-topic
+    # results that slip through even disambiguated queries. The default
+    # list catches the worst Tesla / news-show offenders; shows whose
+    # subject IS people (e.g. a hypothetical "Founders" show) should
+    # override with an empty list or a narrower one.
+    image_safe_skip_terms: List[str] = field(default_factory=lambda: [
+        "topless", "panties", "lingerie", "nude", "bikini",
+        "girl-with", "blonde-girl", "adolescent",
+        "silhouette-of-woman", "woman-in-spotlight",
+        "model-in", "topless-model",
+    ])
 
 
 @dataclass

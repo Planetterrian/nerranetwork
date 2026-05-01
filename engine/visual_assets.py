@@ -68,6 +68,10 @@ class SceneSet:
     """Collection of scenes for one episode + cache metadata."""
     scenes: List[Scene] = field(default_factory=list)
     is_fallback: bool = False  # True when we returned the cover only
+    # Count of Pexels photos rejected by the safety filter on this run.
+    # Persisted to the manifest so the dashboard / metrics layer can
+    # surface it without re-querying Pexels.
+    photos_filtered: int = 0
 
     def __len__(self) -> int:
         return len(self.scenes)
@@ -136,34 +140,75 @@ def _download_image(url: str, dest: Path) -> Optional[Path]:
 
 
 def _select_keywords(keywords: List[str],
-                     limit: int = DEFAULT_KEYWORDS_PER_QUERY) -> List[str]:
+                     limit: int = DEFAULT_KEYWORDS_PER_QUERY,
+                     prefix: str = "") -> List[str]:
     """Pick the *limit* most useful keywords for image search.
 
     Single-word, lowercase, deduped. Skips boilerplate tokens that
     are technical jargon ('hw4', 'lfp', 'fsd' etc. — Pexels gets
     nothing useful for those).
+
+    When *prefix* is non-empty, it's prepended to each keyword unless
+    the keyword already contains the prefix's first word. This
+    disambiguates collision-prone tokens like Tesla's "model 3" (which
+    Pexels otherwise interprets as fashion models). Tests rely on this
+    exact prefix-application semantics.
     """
     # Skip technical SKUs / acronyms that return junk on Pexels.
     skip_too_short = {
         "ai", "hw", "lfp", "ev", "fsd", "tsla", "hw4", "hw5",
         "ai5", "ipo", "etf", "gic", "tfsa", "rrsp",
     }
+    prefix = (prefix or "").strip()
+    prefix_head = prefix.split()[0].lower() if prefix else ""
     seen: set = set()
     out: List[str] = []
     for kw in keywords:
         if not isinstance(kw, str):
             continue
         clean = kw.strip().lower()
-        if not clean or clean in seen or clean in skip_too_short:
+        if not clean or clean in skip_too_short:
             continue
         # Skip obvious technical SKUs / acronyms (only digits or 2-3 char tokens).
         if clean.isdigit() or (len(clean) <= 3 and clean.isalpha() and clean.isupper()):
             continue
-        seen.add(clean)
-        out.append(clean)
+        if prefix and prefix_head and prefix_head not in clean:
+            query = f"{prefix.rstrip()} {clean}".strip()
+        else:
+            query = clean
+        if query in seen:
+            continue
+        seen.add(query)
+        out.append(query)
         if len(out) >= limit:
             break
     return out
+
+
+def _photo_is_safe(photo: dict, skip_terms: List[str]) -> bool:
+    """Return ``False`` when a Pexels photo should be filtered out.
+
+    Drops photos whose URL slug or alt text contains any *skip_terms*
+    substring (case-insensitive). The slug is the most reliable signal
+    Pexels exposes — it's derived from the human-curated photo title
+    (e.g. ``topless-model-in-panties-8784176`` is a real example that
+    leaked into a Tesla podcast video).
+    """
+    if not skip_terms:
+        return True
+    haystacks: List[str] = []
+    for key in ("url", "alt"):
+        val = photo.get(key)
+        if isinstance(val, str) and val:
+            haystacks.append(val.lower())
+    if not haystacks:
+        return True
+    blob = " ".join(haystacks)
+    for term in skip_terms:
+        term_clean = (term or "").strip().lower()
+        if term_clean and term_clean in blob:
+            return False
+    return True
 
 
 # ---------------------------------------------------------------------------
@@ -200,13 +245,18 @@ def _load_cached_scenes(cache_dir: Path) -> Optional[SceneSet]:
         ))
     if not scenes:
         return None
-    return SceneSet(scenes=scenes, is_fallback=bool(data.get("is_fallback")))
+    return SceneSet(
+        scenes=scenes,
+        is_fallback=bool(data.get("is_fallback")),
+        photos_filtered=int(data.get("photos_filtered", 0) or 0),
+    )
 
 
 def _save_manifest(cache_dir: Path, scene_set: SceneSet) -> None:
     cache_dir.mkdir(parents=True, exist_ok=True)
     payload = {
         "is_fallback": scene_set.is_fallback,
+        "photos_filtered": scene_set.photos_filtered,
         "scenes": [
             {
                 "path": str(s.path),
@@ -234,6 +284,9 @@ def fetch_scene_images(
     fallback_cover: Path,
     api_key: Optional[str] = None,
     target_count: int = DEFAULT_PHOTO_COUNT,
+    image_queries: Optional[List[str]] = None,
+    image_query_prefix: str = "",
+    safe_skip_terms: Optional[List[str]] = None,
 ) -> SceneSet:
     """Fetch a slideshow of royalty-free photos for the episode.
 
@@ -246,8 +299,9 @@ def fetch_scene_images(
     episode_num:
         Episode number — keys the cache so reruns don't re-fetch.
     keywords:
-        Show YAML's ``keywords:`` list. We pick the most useful 5,
-        query each, and dedupe results.
+        Show YAML's ``keywords:`` list. Used only when *image_queries*
+        is empty. We pick the most useful 5 (after applying
+        *image_query_prefix*), query each, and dedupe results.
     fallback_cover:
         Path to the show's cover JPG. Used as the only scene if
         Pexels is disabled / unavailable / returns nothing.
@@ -258,6 +312,19 @@ def fetch_scene_images(
     target_count:
         Target number of distinct photos. Stops querying once we
         have at least this many.
+    image_queries:
+        Curated, disambiguated search phrases. When non-empty, used
+        verbatim and *keywords* / *image_query_prefix* are ignored.
+        Strongly preferred — Tesla "model 3" returning fashion models
+        on Pexels was the bug that motivated this parameter.
+    image_query_prefix:
+        Prefix prepended to each keyword (e.g. ``"tesla "``) when
+        *image_queries* is empty. Disambiguates without requiring
+        per-show curation.
+    safe_skip_terms:
+        Substrings (case-insensitive) that disqualify a Pexels photo
+        when found in its URL slug or alt text. Defaults to ``[]``
+        meaning no filtering.
 
     Returns
     -------
@@ -290,17 +357,40 @@ def fetch_scene_images(
         # called us.
         raise FileNotFoundError(f"fallback_cover missing: {fallback_cover}")
 
-    selected = _select_keywords(keywords)
+    if image_queries:
+        # Curated path: trust the operator's queries verbatim, skip
+        # only blanks and dupes. No prefix injection — they already
+        # disambiguated.
+        seen: set = set()
+        selected: List[str] = []
+        for q in image_queries:
+            if not isinstance(q, str):
+                continue
+            clean = q.strip()
+            if not clean:
+                continue
+            key = clean.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            selected.append(clean)
+        query_source = "image_queries"
+    else:
+        selected = _select_keywords(keywords, prefix=image_query_prefix)
+        query_source = "keywords"
+
     if not selected:
-        logger.info("No usable keywords for slideshow — using cover")
+        logger.info("No usable queries for slideshow — using cover")
         scene_set = SceneSet(scenes=[Scene(path=fallback_cover)],
                              is_fallback=True)
         _save_manifest(cache_dir, scene_set)
         return scene_set
 
+    skip_terms = list(safe_skip_terms or [])
     cache_dir.mkdir(parents=True, exist_ok=True)
     scenes: List[Scene] = []
     seen_pexels_ids: set = set()
+    photos_filtered = 0
 
     for query in selected:
         if len(scenes) >= target_count:
@@ -320,6 +410,14 @@ def fetch_scene_images(
                 break
             photo_id = photo.get("id")
             if not photo_id or photo_id in seen_pexels_ids:
+                continue
+            if not _photo_is_safe(photo, skip_terms):
+                photos_filtered += 1
+                logger.info(
+                    "Pexels safety filter dropped photo %s (query=%r, url=%s)",
+                    photo_id, query, photo.get("url", ""),
+                )
+                seen_pexels_ids.add(photo_id)
                 continue
             src = photo.get("src") or {}
             image_url = src.get("large2x") or src.get("large") or src.get("original")
@@ -344,12 +442,16 @@ def fetch_scene_images(
     if not scenes:
         logger.info("Pexels returned no usable photos — using cover")
         scene_set = SceneSet(scenes=[Scene(path=fallback_cover)],
-                             is_fallback=True)
+                             is_fallback=True,
+                             photos_filtered=photos_filtered)
     else:
-        scene_set = SceneSet(scenes=scenes, is_fallback=False)
+        scene_set = SceneSet(scenes=scenes, is_fallback=False,
+                             photos_filtered=photos_filtered)
         logger.info(
-            "Built %d-photo slideshow for ep%d (queries: %s)",
-            len(scenes), episode_num, ", ".join(selected),
+            "Built %d-photo slideshow for ep%d (source=%s, queries: %s, "
+            "filtered=%d)",
+            len(scenes), episode_num, query_source, ", ".join(selected),
+            photos_filtered,
         )
 
     _save_manifest(cache_dir, scene_set)
