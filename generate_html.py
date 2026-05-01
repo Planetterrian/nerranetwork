@@ -1294,6 +1294,16 @@ def _get_jinja_env():
     # threading it through every render() call.
     env.globals["marketing"] = MARKETING_CONFIG
     env.filters["with_utm"] = _with_utm
+    # Jinja's default ``tojson`` filter inherits Python's
+    # ``ensure_ascii=True``, which escapes Cyrillic to ``Ф...``
+    # in rendered HTML. That's bad for SEO (Google parsers prefer
+    # readable Unicode) and bad for shareable copy-paste. Override the
+    # policy so ``{{ show_name | tojson }}`` for "Финансы Просто"
+    # renders as ``"Финансы Просто"`` instead of ``"Фи..."``.
+    env.policies["json.dumps_kwargs"] = {
+        "sort_keys": True,
+        "ensure_ascii": False,
+    }
     return env
 
 

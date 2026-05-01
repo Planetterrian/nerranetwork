@@ -501,7 +501,13 @@ def _build_jsonld(metadata: dict, show_name: str, blog_url: str,
         if show_config.get("podcast_image"):
             podcast_episode["image"] = f"https://nerranetwork.com/{show_config['podcast_image']}"
 
-    return json.dumps([blog_posting, podcast_episode], indent=2)
+    # ``ensure_ascii=False`` so Cyrillic show names ("Финансы Просто",
+    # "Привет, Русский!") render as readable Unicode in the page source
+    # instead of as ``Фи...`` escape sequences. Better for
+    # SEO indexing and shareable copy-paste.
+    return json.dumps(
+        [blog_posting, podcast_episode], indent=2, ensure_ascii=False
+    )
 
 
 # ---------------------------------------------------------------------------
