@@ -23,8 +23,9 @@ from __future__ import annotations
 
 import datetime
 import logging
+import re
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +64,14 @@ def _load_show_branding(slug: str) -> Dict[str, str]:
         "brand_color_dark": _DEFAULT_BRAND_DARK,
         "rss_url": "",
         "youtube_playlist_url": "",
+        # Newsletter-specific branding bits. ``short_label`` and ``emoji``
+        # feed the subject-line composer; ``newsletter_start_date`` lets
+        # us derive a per-show issue number deterministically without
+        # storing mutable state.
+        "short_label": "",
+        "emoji": "",
+        "newsletter_start_date": "",
+        "requires_financial_disclaimer": "false",
     }
 
     # Lazy import to avoid pulling jinja into engine layer at import
@@ -91,22 +100,47 @@ def _load_show_branding(slug: str) -> Dict[str, str]:
             out["rss_url"] = f"{_NETWORK_SITE}/{cfg['rss_file']}"
         out["blog_page"] = f"{_NETWORK_SITE}/blog/{slug}/index.html"
 
-    # YouTube playlist URL — read straight from the show YAML so we
+    # YouTube playlist URL + newsletter branding bits — read straight
+    # from the show YAML (with _defaults.yaml as the fallback) so we
     # don't double-source it. Fail-soft if the YAML is missing.
     try:
         import yaml as _yaml
 
+        defaults_path = _shows_yaml_dir() / "_defaults.yaml"
+        defaults = (
+            _yaml.safe_load(defaults_path.read_text(encoding="utf-8")) or {}
+            if defaults_path.exists() else {}
+        )
+
         yaml_path = _shows_yaml_dir() / f"{slug}.yaml"
+        data: Dict[str, Any] = {}
         if yaml_path.exists():
             data = _yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
-            yt = data.get("youtube") or {}
-            playlist_id = (yt.get("podcast_playlist_id") or "").strip()
-            if playlist_id:
-                out["youtube_playlist_url"] = (
-                    f"https://www.youtube.com/playlist?list={playlist_id}"
-                )
+
+        yt = data.get("youtube") or {}
+        playlist_id = (yt.get("podcast_playlist_id") or "").strip()
+        if playlist_id:
+            out["youtube_playlist_url"] = (
+                f"https://www.youtube.com/playlist?list={playlist_id}"
+            )
+
+        # Merge newsletter block: per-show overrides defaults.
+        nl_default = defaults.get("newsletter") or {}
+        nl_show = data.get("newsletter") or {}
+        for key in (
+            "short_label", "emoji", "newsletter_start_date",
+        ):
+            val = nl_show.get(key) or nl_default.get(key) or ""
+            if val:
+                out[key] = str(val)
+        # Bool flag: stored as str so the dict stays Dict[str, str].
+        flag = nl_show.get(
+            "requires_financial_disclaimer",
+            nl_default.get("requires_financial_disclaimer", False),
+        )
+        out["requires_financial_disclaimer"] = "true" if flag else "false"
     except Exception as exc:  # pragma: no cover — defensive
-        logger.warning("Could not read YouTube playlist for %s: %s", slug, exc)
+        logger.warning("Could not read newsletter branding for %s: %s", slug, exc)
 
     return out
 
@@ -177,6 +211,141 @@ def _build_hero_html(show: Dict[str, str], pill_text: str) -> str:
     )
 
 
+def _build_preheader_html(preheader: str) -> str:
+    """Hidden preview-text div for inbox snippets.
+
+    Inboxes show this as the snippet next to the subject line. It must
+    be visually hidden (display:none + opacity:0 + max-height:0) but
+    present in the DOM so Gmail / Apple Mail picks it up. Trailing
+    zero-width-non-joiners pad past short snippets so the inbox doesn't
+    bleed body text into the preview.
+    """
+    if not preheader:
+        return ""
+    pad = "&nbsp;&zwnj;" * 24
+    safe = preheader.replace("<", "&lt;").replace(">", "&gt;")
+    return (
+        '<div style="display:none;font-size:1px;color:#fafafa;'
+        'line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;'
+        'mso-hide:all;">'
+        f'{safe}{pad}'
+        '</div>'
+    )
+
+
+def _build_by_the_numbers_html(
+    stats: Optional[List[Dict[str, str]]], brand: str
+) -> str:
+    """Render up to 3 stat tiles right under the hero, before the body."""
+    if not stats:
+        return ""
+    cells: List[str] = []
+    for item in stats[:3]:
+        value = (item.get("value") or "").strip()
+        label = (item.get("label") or "").strip()
+        if not value or not label:
+            continue
+        v_safe = value.replace("<", "&lt;").replace(">", "&gt;")
+        l_safe = label.replace("<", "&lt;").replace(">", "&gt;")
+        cells.append(
+            f'<td align="center" valign="top" '
+            f'style="padding:8px 6px;width:33%;">'
+            f'<div style="font-size:22px;font-weight:700;color:{brand};'
+            f'line-height:1.1;letter-spacing:-0.01em;">{v_safe}</div>'
+            f'<div style="font-size:11px;color:#64748b;'
+            f'text-transform:uppercase;letter-spacing:0.06em;'
+            f'margin-top:4px;line-height:1.3;">{l_safe}</div>'
+            f'</td>'
+        )
+    if not cells:
+        return ""
+    return (
+        '<table role="presentation" width="100%" cellpadding="0" '
+        'cellspacing="0" border="0" '
+        'style="background:#ffffff;border-bottom:1px solid #e2e8f0;">'
+        '<tr><td align="center" '
+        'style="padding:18px 16px;'
+        'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\','
+        'Roboto,Helvetica,Arial,sans-serif;">'
+        '<div style="font-size:11px;color:#94a3b8;font-weight:600;'
+        'text-transform:uppercase;letter-spacing:0.08em;'
+        'margin-bottom:10px;">By the numbers</div>'
+        '<table role="presentation" width="100%" cellpadding="0" '
+        'cellspacing="0" border="0" style="max-width:480px;margin:0 auto;">'
+        f'<tr>{"".join(cells)}</tr>'
+        '</table>'
+        '</td></tr></table>'
+    )
+
+
+def _build_financial_disclaimer_html() -> str:
+    """Styled callout box for shows that discuss financial topics.
+
+    Replaces the old in-prose ``**FINANCIAL DISCLAIMER:**`` line with
+    a visually-distinct amber sidebar so it doesn't get lost in the
+    body and is unmistakable to subscribers.
+    """
+    return (
+        '<table role="presentation" width="100%" cellpadding="0" '
+        'cellspacing="0" border="0" '
+        'style="background:#FFF7ED;border-left:4px solid #F59E0B;">'
+        '<tr><td '
+        'style="padding:12px 16px;'
+        'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\','
+        'Roboto,Helvetica,Arial,sans-serif;'
+        'font-size:13px;color:#78350F;line-height:1.5;">'
+        '<strong>Heads up:</strong> Educational and entertainment only. '
+        'Not financial advice. Any trades discussed are simulated. '
+        'Always do your own research.'
+        '</td></tr></table>'
+    )
+
+
+def _build_p_s_html(p_s: str, brand: str) -> str:
+    """Render the P.S. block between the body and the footer.
+
+    P.S. is one of the most-read elements of any newsletter; we render
+    it in its own card with a brand-colored left border so it visually
+    separates from the body and footer.
+    """
+    if not p_s:
+        return ""
+    safe = p_s.replace("<", "&lt;").replace(">", "&gt;")
+    return (
+        '<table role="presentation" width="100%" cellpadding="0" '
+        'cellspacing="0" border="0" style="background:#ffffff;">'
+        '<tr><td '
+        'style="padding:8px 24px 24px;'
+        'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\','
+        'Roboto,Helvetica,Arial,sans-serif;">'
+        f'<p style="font-size:15px;line-height:1.6;color:#0f172a;'
+        f'margin:0;border-left:3px solid {brand};padding:4px 0 4px 14px;">'
+        f'<strong style="color:{brand};letter-spacing:0.04em;">P.S.</strong>'
+        f'&nbsp;{safe}</p>'
+        '</td></tr></table>'
+    )
+
+
+def _strip_repeated_show_title(body_md: str, show_name: str) -> str:
+    """Drop a leading ``**<Show> Weekly**`` / ``# <Show>`` line if the LLM
+    repeats the show title at the top of the body.
+
+    The branded hero already shows the title in big text, so a body
+    that opens with the title again is visual duplication. Idempotent
+    with the synthesizer's own strip — safe to call twice.
+    """
+    if not body_md:
+        return body_md
+    lines = body_md.lstrip().split("\n")
+    first = lines[0].strip()
+    show_lower = show_name.lower().strip()
+    norm = re.sub(r"^[#*\s_]+|[#*\s_]+$", "", first).lower().strip()
+    norm = re.sub(r"\s+(weekly|weekly digest|digest)$", "", norm).strip()
+    if norm == show_lower or norm.startswith(show_lower + " "):
+        return "\n".join(lines[1:]).lstrip()
+    return body_md
+
+
 def _build_footer_html(show: Dict[str, str]) -> str:
     """Render the email's footer block as inline-styled HTML."""
     brand = show["brand_color"]
@@ -231,6 +400,71 @@ def _build_footer_html(show: Dict[str, str]) -> str:
     )
 
 
+def compute_issue_number(
+    slug: str, send_date: Optional[datetime.date] = None
+) -> int:
+    """Return a deterministic per-show issue number.
+
+    Derived from ``newsletter.newsletter_start_date`` in the show YAML
+    so the count survives rebuilds without state files. Falls back to
+    1 if the start date is missing or in the future.
+
+    Daily shows that send weekly newsletters tick once per send (i.e.
+    ``floor((send_date - start) / 7) + 1``).
+    """
+    if send_date is None:
+        send_date = datetime.date.today()
+    show = _load_show_branding(slug)
+    raw = show.get("newsletter_start_date") or ""
+    if not raw:
+        return 1
+    try:
+        start = datetime.date.fromisoformat(raw)
+    except ValueError:
+        logger.warning(
+            "Bad newsletter_start_date %r for %s; defaulting to issue 1",
+            raw, slug,
+        )
+        return 1
+    if send_date < start:
+        return 1
+    return ((send_date - start).days // 7) + 1
+
+
+def build_subject_line(
+    slug: str, subject_hook: str, *, send_date: Optional[datetime.date] = None
+) -> str:
+    """Compose the final email subject from a hook + show short label.
+
+    Format: ``"<hook> · <short_label> <emoji>"``. Falls back to the
+    full show name if no short label is configured. Hard-capped at
+    100 chars to stay within email-client subject limits.
+    """
+    show = _load_show_branding(slug)
+    short = show.get("short_label") or show.get("name") or slug
+    emoji = show.get("emoji") or ""
+
+    hook = (subject_hook or "").strip().rstrip(" .,;:")
+    if not hook:
+        # No hook from the LLM — degrade to a clean date-stamped fallback.
+        when = send_date or datetime.date.today()
+        hook = f"This week: {when.strftime('%b %-d')}"
+
+    suffix = f" · {short}".rstrip()
+    if emoji:
+        suffix += f" {emoji}"
+    full = f"{hook}{suffix}"
+    if len(full) <= 100:
+        return full
+    # Trim the hook side; never truncate the show short label.
+    headroom = 100 - len(suffix) - 1  # -1 for ellipsis
+    if headroom < 10:
+        # Pathological case: short_label alone is huge. Just trim the
+        # whole thing.
+        return full[:100]
+    return f"{hook[:headroom].rstrip()}…{suffix}"
+
+
 def wrap_with_branding(
     slug: str,
     markdown_body: str,
@@ -238,12 +472,27 @@ def wrap_with_branding(
     week_ending: Optional[datetime.date] = None,
     daily_label: Optional[str] = None,
     daily_date: Optional[datetime.date] = None,
+    preheader: str = "",
+    by_the_numbers: Optional[List[Dict[str, str]]] = None,
+    p_s: str = "",
+    requires_financial_disclaimer: bool = False,
 ) -> str:
-    """Wrap *markdown_body* with a branded hero and footer.
+    """Wrap *markdown_body* with a branded hero, optional middle blocks,
+    and footer.
 
     The result is a single string suitable for Buttondown's email
     body — markdown in the middle is left untouched, and the inline
     HTML at top/bottom passes through Buttondown's renderer.
+
+    Optional middle blocks (rendered top-to-bottom in this order):
+
+      1. Hidden preheader div (inbox preview text)
+      2. Hero (cover, name, tagline, date pill)
+      3. By-the-numbers stat tiles
+      4. Financial disclaimer callout
+      5. Markdown body
+      6. P.S. block
+      7. Footer (CTAs + Nerra Network credit)
 
     Pass *week_ending* for weekly newsletters; pass *daily_label* +
     *daily_date* for daily episode newsletters. If neither is set,
@@ -258,9 +507,25 @@ def wrap_with_branding(
     else:
         pill = _format_week_pill(None)
 
+    preheader_div = _build_preheader_html(preheader)
     hero = _build_hero_html(show, pill)
+    stats_block = _build_by_the_numbers_html(
+        by_the_numbers, show["brand_color"]
+    )
+    disclaimer = (
+        _build_financial_disclaimer_html()
+        if requires_financial_disclaimer else ""
+    )
+    p_s_block = _build_p_s_html(p_s, show["brand_color"])
     footer = _build_footer_html(show)
 
-    # Two blank lines between blocks so markdown processors treat
-    # them as separate sections.
-    return f"{hero}\n\n{markdown_body.strip()}\n\n{footer}\n"
+    # Idempotent strip in case the body still has the show title at top.
+    body_clean = _strip_repeated_show_title(
+        (markdown_body or "").strip(), show["name"]
+    )
+
+    # Blocks separated by two blank lines so markdown processors treat
+    # them as separate sections. Empty blocks contribute nothing.
+    parts = [preheader_div, hero, stats_block, disclaimer, body_clean,
+             p_s_block, footer]
+    return "\n\n".join(p for p in parts if p) + "\n"

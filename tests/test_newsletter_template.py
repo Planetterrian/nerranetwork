@@ -146,3 +146,268 @@ def test_wrap_with_branding_renders_for_russian_show():
     )
     assert "Привет, Русский!" in out
     assert "Урок 1" in out
+
+
+# ---------------------------------------------------------------------------
+# Preheader (hidden inbox preview text)
+# ---------------------------------------------------------------------------
+
+def test_preheader_html_hides_via_inline_style():
+    out = nt._build_preheader_html("Cybercab production begins")
+    assert "Cybercab production begins" in out
+    # Must be visually hidden in inboxes (display:none + opacity:0).
+    assert "display:none" in out
+    assert "opacity:0" in out
+    # Mso-hide:all keeps Outlook from showing it.
+    assert "mso-hide:all" in out
+
+
+def test_preheader_empty_renders_nothing():
+    assert nt._build_preheader_html("") == ""
+
+
+def test_preheader_pads_short_strings():
+    """Short preheaders need zero-width-non-joiner padding so the inbox
+    snippet doesn't bleed body text into the preview."""
+    out = nt._build_preheader_html("Short")
+    assert "Short" in out
+    assert "&zwnj;" in out
+
+
+def test_preheader_html_escapes_user_input():
+    out = nt._build_preheader_html("<script>alert(1)</script>")
+    assert "<script>" not in out
+    assert "&lt;script&gt;" in out
+
+
+# ---------------------------------------------------------------------------
+# By the numbers stat tiles
+# ---------------------------------------------------------------------------
+
+def test_by_the_numbers_renders_three_cells():
+    stats = [
+        {"value": "$372", "label": "TSLA close"},
+        {"value": "+20%", "label": "Berlin output"},
+        {"value": "19", "label": "Robotaxi units"},
+    ]
+    out = nt._build_by_the_numbers_html(stats, "#E31937")
+    for s in stats:
+        assert s["value"] in out
+        assert s["label"] in out
+    assert "By the numbers" in out
+    # Brand color is reused for the value text.
+    assert "#E31937" in out
+
+
+def test_by_the_numbers_caps_at_three():
+    stats = [{"value": str(i), "label": f"L{i}"} for i in range(5)]
+    out = nt._build_by_the_numbers_html(stats, "#000000")
+    # Values 0..2 render; 3 and 4 do not.
+    assert ">0<" in out and ">2<" in out
+    assert ">3<" not in out
+
+
+def test_by_the_numbers_skips_blank_items():
+    stats = [
+        {"value": "", "label": "Empty"},
+        {"value": "$1", "label": ""},
+        {"value": "ok", "label": "Real"},
+    ]
+    out = nt._build_by_the_numbers_html(stats, "#000")
+    assert "Real" in out
+    # The two malformed items don't crash the render.
+    assert "Empty" not in out
+
+
+def test_by_the_numbers_empty_list_renders_nothing():
+    assert nt._build_by_the_numbers_html([], "#000") == ""
+    assert nt._build_by_the_numbers_html(None, "#000") == ""
+
+
+# ---------------------------------------------------------------------------
+# P.S. block
+# ---------------------------------------------------------------------------
+
+def test_p_s_html_renders_with_brand_left_border():
+    out = nt._build_p_s_html("If you've been on the fence about FSD…", "#E31937")
+    assert "P.S." in out
+    assert "FSD" in out
+    assert "border-left:3px solid #E31937" in out
+
+
+def test_p_s_empty_renders_nothing():
+    assert nt._build_p_s_html("", "#000") == ""
+
+
+def test_p_s_html_escapes_user_input():
+    out = nt._build_p_s_html("<b>bold</b>", "#000")
+    assert "<b>" not in out
+    assert "&lt;b&gt;" in out
+
+
+# ---------------------------------------------------------------------------
+# Financial disclaimer callout
+# ---------------------------------------------------------------------------
+
+def test_financial_disclaimer_renders():
+    out = nt._build_financial_disclaimer_html()
+    assert "Heads up" in out
+    assert "Not financial advice" in out
+    # Amber sidebar.
+    assert "#F59E0B" in out
+
+
+# ---------------------------------------------------------------------------
+# Strip repeated show title
+# ---------------------------------------------------------------------------
+
+def test_strip_repeated_show_title_removes_bold_weekly():
+    body = "**Tesla Shorts Time Daily Weekly**\n\n## Big picture\n\n…"
+    cleaned = nt._strip_repeated_show_title(body, "Tesla Shorts Time Daily")
+    assert cleaned.startswith("## Big picture")
+
+
+def test_strip_repeated_show_title_removes_h1():
+    body = "# Modern Investing Techniques\n\nSome content."
+    cleaned = nt._strip_repeated_show_title(body, "Modern Investing Techniques")
+    assert cleaned.startswith("Some content.")
+
+
+def test_strip_repeated_show_title_keeps_unrelated_first_line():
+    body = "## This Week's Big Picture\n\nNarrative arc here."
+    cleaned = nt._strip_repeated_show_title(body, "Tesla Shorts Time")
+    # Must not eat the actual section heading.
+    assert cleaned == body
+
+
+def test_strip_repeated_show_title_handles_empty():
+    assert nt._strip_repeated_show_title("", "X") == ""
+
+
+# ---------------------------------------------------------------------------
+# Subject line composer
+# ---------------------------------------------------------------------------
+
+def test_build_subject_line_uses_short_label_and_emoji():
+    s = nt.build_subject_line("tesla", "Cybercab production begins")
+    assert "Cybercab production begins" in s
+    assert "Tesla Shorts" in s
+    # Per-show emoji from YAML.
+    assert "🚀" in s
+
+
+def test_build_subject_line_truncates_over_100_chars():
+    very_long_hook = "a" * 200
+    s = nt.build_subject_line("tesla", very_long_hook)
+    assert len(s) <= 100
+    # Suffix preserved at the end.
+    assert s.endswith("Tesla Shorts 🚀")
+
+
+def test_build_subject_line_falls_back_when_hook_missing():
+    s = nt.build_subject_line(
+        "tesla", "", send_date=datetime.date(2026, 4, 30),
+    )
+    # Should still produce a usable subject.
+    assert "Tesla Shorts" in s
+    assert s.strip() != ""
+
+
+def test_build_subject_line_strips_trailing_punct():
+    s = nt.build_subject_line("tesla", "Big news...")
+    assert "Big news" in s
+    # No double punctuation before the separator.
+    assert "Big news... ·" not in s
+
+
+# ---------------------------------------------------------------------------
+# Per-show issue numbering
+# ---------------------------------------------------------------------------
+
+def test_compute_issue_number_first_week_is_one():
+    # Tesla newsletter_start_date is 2026-04-30; sending on the same
+    # day is issue #1.
+    n = nt.compute_issue_number("tesla", datetime.date(2026, 4, 30))
+    assert n == 1
+
+
+def test_compute_issue_number_second_week():
+    n = nt.compute_issue_number("tesla", datetime.date(2026, 5, 7))
+    assert n == 2
+
+
+def test_compute_issue_number_clamps_dates_before_start():
+    # If we somehow run before the configured start_date, fall back
+    # to issue 1 instead of returning a negative.
+    n = nt.compute_issue_number("tesla", datetime.date(2020, 1, 1))
+    assert n == 1
+
+
+# ---------------------------------------------------------------------------
+# wrap_with_branding — new optional blocks compose top-to-bottom
+# ---------------------------------------------------------------------------
+
+def test_wrap_with_branding_renders_all_blocks_in_order():
+    out = nt.wrap_with_branding(
+        "tesla", "## Body content\n\nLorem ipsum.",
+        week_ending=datetime.date(2026, 4, 30),
+        preheader="Inbox preview teaser",
+        by_the_numbers=[
+            {"value": "$372", "label": "TSLA close"},
+        ],
+        p_s="One more thing.",
+        requires_financial_disclaimer=False,
+    )
+    pre = out.find("Inbox preview teaser")
+    hero = out.find("Tesla Shorts Time")
+    stats = out.find("TSLA close")
+    body = out.find("## Body content")
+    p_s = out.find("One more thing.")
+    foot = out.find("Listen to the podcast")
+    # All present and in the documented order.
+    assert 0 <= pre < hero < stats < body < p_s < foot
+
+
+def test_wrap_with_branding_renders_disclaimer_when_flagged():
+    out = nt.wrap_with_branding(
+        "modern_investing", "## Body\n\nx",
+        week_ending=datetime.date(2026, 4, 30),
+        requires_financial_disclaimer=True,
+    )
+    assert "Heads up" in out
+    assert "Not financial advice" in out
+
+
+def test_wrap_with_branding_omits_disclaimer_by_default():
+    out = nt.wrap_with_branding(
+        "tesla", "## Body\n\nx",
+        week_ending=datetime.date(2026, 4, 30),
+    )
+    assert "Heads up" not in out
+
+
+def test_wrap_with_branding_strips_redundant_title():
+    """If the LLM body opens with the show title, it gets stripped so
+    the visual hero (which already shows it) isn't duplicated."""
+    body = "**Tesla Shorts Time Daily Weekly**\n\n## Big picture\n\n…"
+    out = nt.wrap_with_branding(
+        "tesla", body, week_ending=datetime.date(2026, 4, 30),
+    )
+    # The repeated "Weekly" line is gone; the section heading remains.
+    assert "## Big picture" in out
+    # Hero still shows the show name (this lives in the gradient block
+    # not the markdown body).
+    assert "Tesla Shorts Time" in out
+
+
+def test_wrap_with_branding_loads_disclaimer_flag_from_yaml_for_mit():
+    """Even without explicit requires_financial_disclaimer=True, the
+    show YAML should not auto-render the callout — the caller decides.
+    This locks in the contract that the wrapper does NOT silently
+    consult YAML; the YAML is read by the caller (run_weekly_newsletters).
+    """
+    out = nt.wrap_with_branding(
+        "modern_investing", "## Body\n\nx",
+        week_ending=datetime.date(2026, 4, 30),
+    )
+    assert "Heads up" not in out

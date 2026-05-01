@@ -5,7 +5,7 @@ import argparse
 import logging
 import os
 import sys
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -66,18 +66,20 @@ def main():
 
         prompt_file = Path(f"shows/prompts/{show_slug}_weekly.txt")
 
-        newsletter_md = synthesize_weekly_newsletter(
+        envelope = synthesize_weekly_newsletter(
             show_slug=show_slug,
             week_ending=week_ending,
             prompt_file=prompt_file if prompt_file.exists() else None,
         )
 
-        if not newsletter_md:
+        if not envelope or not envelope.get("body_md"):
             logger.warning("  No newsletter generated for %s", show_slug)
             results[show_slug] = "skipped"
             continue
 
-        # Save to file
+        newsletter_md = envelope["body_md"]
+
+        # Save the body markdown so the operator can review it before send.
         filename = f"{show_slug}_weekly_{week_ending.isoformat()}.md"
         (output_dir / filename).write_text(newsletter_md, encoding="utf-8")
         logger.info("  Saved: %s", output_dir / filename)
@@ -105,22 +107,39 @@ def main():
                 continue
 
             from engine.newsletter import send_newsletter
-            from engine.newsletter_template import wrap_with_branding
+            from engine.newsletter_template import (
+                build_subject_line,
+                compute_issue_number,
+                wrap_with_branding,
+            )
 
-            week_start = (week_ending - timedelta(days=6)).strftime("%b %d")
-            week_end_str = week_ending.strftime("%b %d, %Y")
-            subject = f"{cfg.publishing.rss_title} — Weekly Digest ({week_start}\u2013{week_end_str})"
-
+            issue_number = compute_issue_number(show_slug, week_ending)
+            subject = build_subject_line(
+                show_slug, envelope.get("subject_hook", ""),
+                send_date=week_ending,
+            )
+            logger.info(
+                "  Issue #%d / subject=%r", issue_number, subject,
+            )
             tag = getattr(newsletter_cfg, "tag", "") or ""
             tags_list = [tag] if tag else None
 
-            # Wrap the synthesized markdown with a per-show branded
-            # hero (cover image + brand colour + week pill) and a
-            # footer (Listen / Watch on YouTube / Read the blog CTAs
-            # + Nerra Network credit). Buttondown passes inline HTML
-            # through its markdown renderer untouched.
+            requires_disclaimer = bool(
+                getattr(newsletter_cfg, "requires_financial_disclaimer", False)
+            )
+
+            # Wrap the synthesized markdown with the show's branded
+            # hero, optional by-the-numbers strip, optional financial
+            # disclaimer callout, body, P.S. block, and footer.
+            # Buttondown passes inline HTML through its markdown
+            # renderer untouched.
             branded_body = wrap_with_branding(
-                show_slug, newsletter_md, week_ending=week_ending,
+                show_slug, newsletter_md,
+                week_ending=week_ending,
+                preheader=envelope.get("preheader", ""),
+                by_the_numbers=envelope.get("by_the_numbers") or [],
+                p_s=envelope.get("p_s", ""),
+                requires_financial_disclaimer=requires_disclaimer,
             )
 
             email_id = send_newsletter(

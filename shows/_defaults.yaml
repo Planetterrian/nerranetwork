@@ -82,6 +82,27 @@ newsletter:
   enabled: false
   platform: buttondown
   status: about_to_send
+  # ---- Branded-email defaults (PR-A: newsletter quick wins) ----
+  # Target word count for the LLM-generated body. The synthesizer
+  # passes this into the JSON-envelope output instructions so the
+  # model knows where to land. Per-show overrides are encouraged;
+  # 1300 is a sensible network default for a news-driven weekly.
+  length_target_words: 1300
+  # Compose flag for the styled "Heads up: educational only..."
+  # callout. Flip to true on shows that discuss money / trades.
+  requires_financial_disclaimer: false
+  # short_label is what we use in the subject suffix ("Cybercab
+  # production begins · Tesla Shorts 🚀"). Keep <=14 chars.
+  short_label: ""
+  # Per-show emoji that pairs with short_label in subject lines and
+  # cross-network modules. Single grapheme; pick one that's readable
+  # on iOS and Android.
+  emoji: ""
+  # The date the show's first newsletter went out. We derive a
+  # deterministic per-show issue number as
+  # ``floor((send_date - newsletter_start_date) / 7) + 1`` instead
+  # of carrying mutable state in git or R2.
+  newsletter_start_date: "2026-04-30"
 
 chapters:
   enabled: true

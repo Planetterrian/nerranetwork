@@ -8,7 +8,9 @@ All synthesis uses the existing ``_call_grok()`` LLM interface from
 from __future__ import annotations
 
 import calendar
+import json
 import logging
+import re
 from collections import Counter
 from datetime import date, timedelta
 from pathlib import Path
@@ -18,6 +20,184 @@ from engine.content_lake import query_all_shows_range, query_show_range
 from engine.generator import _call_grok
 
 logger = logging.getLogger(__name__)
+
+
+# Envelope schema returned by synthesize_weekly_newsletter:
+#
+#   {
+#       "subject_hook": str,             # <=50 char one-liner for subject prefix
+#       "preheader": str,                # 90-110 char inbox preview teaser
+#       "by_the_numbers": [              # 0-3 stat tiles, optional per show
+#           {"value": "$372.80", "label": "TSLA close"},
+#           ...
+#       ],
+#       "body_md": str,                  # the full markdown digest body
+#       "p_s": str,                      # one-sentence P.S. closer
+#   }
+#
+# Callers (run_weekly_newsletters.py) consume this dict directly and pass each
+# field into the email template. If the LLM call fails or returns malformed
+# JSON, _parse_envelope falls back to wrapping the raw text in body_md and
+# synthesizing the other fields from show metadata so the send still goes out.
+
+_ENVELOPE_INSTRUCTIONS = """\
+
+## OUTPUT FORMAT (REQUIRED)
+
+Return your response as a single JSON object with exactly this schema. Do \
+NOT wrap it in markdown code fences. Do NOT include any prose outside the \
+JSON. Output the JSON object and nothing else.
+
+{{
+  "subject_hook": "<=50 chars; the single most newsworthy hook of the week, \
+no clickbait, no show name (we add it). Example: 'Cybercab production begins'>",
+  "preheader": "<90-110 chars; inbox preview teaser, complete sentence, \
+gives the reader a reason to open. Example: 'Cybercab rolls off the line in \
+Texas, Semi hits mass production, and the FSD v14 wave is coming.'>",
+  "by_the_numbers": [
+    {{"value": "<short stat>", "label": "<label>"}},
+    {{"value": "<short stat>", "label": "<label>"}},
+    {{"value": "<short stat>", "label": "<label>"}}
+  ],
+  "body_md": "<the full weekly newsletter markdown — all sections required \
+above, formatted as markdown. Do NOT repeat the show title at the top \
+(the email template already shows it). Start the body directly with the \
+first content section. Target word count: {target_words} words.>",
+  "p_s": "<one sentence; a personal aside, recommendation, or call to \
+action. Example: 'If you've been on the fence about FSD v14, this is \
+the week to grab the trial.'>"
+}}
+
+If you have fewer than 3 quantitative stats worth surfacing, return an empty \
+array for by_the_numbers (do not invent numbers). All other fields are required.
+"""
+
+
+def _strip_repeated_show_title(body_md: str, show_name: str) -> str:
+    """Drop a leading ``**<Show> Weekly**`` / ``# <Show>`` line if the LLM
+    repeats the show title at the top of the body.
+
+    The branded hero already shows the title in big text, so a body that
+    opens with the title again is visual duplication. We only strip the
+    very first non-empty line if it matches the show name pattern.
+    """
+    if not body_md:
+        return body_md
+    lines = body_md.lstrip().split("\n")
+    # The first non-blank line is what we examine.
+    first = lines[0].strip()
+    show_lower = show_name.lower().strip()
+    # Patterns: "# <Show>", "## <Show>", "**<Show> Weekly**", etc.
+    norm = re.sub(r"^[#*\s_]+|[#*\s_]+$", "", first).lower().strip()
+    norm = re.sub(r"\s+(weekly|weekly digest|digest)$", "", norm).strip()
+    if norm == show_lower or norm.startswith(show_lower + " "):
+        return "\n".join(lines[1:]).lstrip()
+    return body_md
+
+
+def _parse_envelope(
+    raw_text: str, *, show_name: str, week_ending: date
+) -> Dict[str, Any]:
+    """Parse the LLM JSON envelope; fall back to wrapping raw markdown.
+
+    Robust against:
+      - extra prose before/after the JSON
+      - markdown ``` fences around the JSON
+      - the LLM returning plain markdown (no JSON at all)
+    """
+    fallback_subject = f"This week on {show_name}"
+    fallback_preheader = (
+        f"Your weekly digest from {show_name} — top stories, trends, and "
+        f"what to watch next week."
+    )[:160]
+    fallback_p_s = ""
+
+    if not raw_text or not raw_text.strip():
+        return {
+            "subject_hook": fallback_subject,
+            "preheader": fallback_preheader,
+            "by_the_numbers": [],
+            "body_md": "",
+            "p_s": fallback_p_s,
+        }
+
+    text = raw_text.strip()
+    # Strip ```json ... ``` fences if the model added them despite instructions.
+    fence_match = re.search(
+        r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL
+    )
+    if fence_match:
+        text = fence_match.group(1)
+
+    # Try direct parse, then a fallback that grabs the first {...} block.
+    parsed: Optional[Dict[str, Any]] = None
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError:
+        brace_match = re.search(r"\{.*\}", text, re.DOTALL)
+        if brace_match:
+            try:
+                parsed = json.loads(brace_match.group(0))
+            except json.JSONDecodeError:
+                parsed = None
+
+    if not isinstance(parsed, dict) or "body_md" not in parsed:
+        # The LLM ignored the envelope instruction and returned plain
+        # markdown. Wrap it so the send still works; downstream code
+        # only ever reads keys, so missing optional fields are fine.
+        logger.warning(
+            "[Synthesizer] LLM did not return JSON envelope, wrapping "
+            "raw markdown (len=%d)", len(raw_text),
+        )
+        return {
+            "subject_hook": fallback_subject,
+            "preheader": fallback_preheader,
+            "by_the_numbers": [],
+            "body_md": _strip_repeated_show_title(raw_text, show_name),
+            "p_s": fallback_p_s,
+        }
+
+    # Coerce + sanitize each field.
+    subject_hook = str(parsed.get("subject_hook") or fallback_subject).strip()
+    # Hard cap at 60 chars even though we ask for 50; subject lines have
+    # client-level limits and the template appends show short + emoji.
+    subject_hook = subject_hook[:60].rstrip(" .,;:")
+
+    preheader = str(parsed.get("preheader") or fallback_preheader).strip()
+    preheader = preheader[:160]
+
+    btn_raw = parsed.get("by_the_numbers") or []
+    by_the_numbers: List[Dict[str, str]] = []
+    if isinstance(btn_raw, list):
+        # Filter malformed items first so a sloppy LLM that emits
+        # ``[{}, {}, {}, {real}]`` still surfaces the real one;
+        # then cap at 3.
+        for item in btn_raw:
+            if len(by_the_numbers) >= 3:
+                break
+            if not isinstance(item, dict):
+                continue
+            value = str(item.get("value") or "").strip()
+            label = str(item.get("label") or "").strip()
+            if value and label:
+                by_the_numbers.append({"value": value[:24], "label": label[:32]})
+
+    body_md = str(parsed.get("body_md") or "").strip()
+    body_md = _strip_repeated_show_title(body_md, show_name)
+
+    p_s = str(parsed.get("p_s") or "").strip()
+    # Strip a leading "P.S." if the LLM added one — the template
+    # renders the label itself.
+    p_s = re.sub(r"^p\.?\s*s\.?\s*[—–\-:]?\s*", "", p_s, flags=re.IGNORECASE)
+    p_s = p_s[:280]
+
+    return {
+        "subject_hook": subject_hook,
+        "preheader": preheader,
+        "by_the_numbers": by_the_numbers,
+        "body_md": body_md,
+        "p_s": p_s,
+    }
 
 
 def _load_config_safe(show_slug: str, config_path: Optional[Path] = None):
@@ -119,11 +299,15 @@ def synthesize_weekly_newsletter(
     *,
     config_path: Optional[Path] = None,
     prompt_file: Optional[Path] = None,
-) -> Optional[str]:
+) -> Optional[Dict[str, Any]]:
     """Generate a weekly newsletter for a show from the past 7 days.
 
-    Returns markdown-formatted newsletter text, or ``None`` if insufficient
-    data.
+    Returns an envelope dict (see module docstring) with ``subject_hook``,
+    ``preheader``, ``by_the_numbers``, ``body_md``, and ``p_s`` keys, or
+    ``None`` if insufficient data.
+
+    Older callers that expect a plain markdown string should read
+    ``envelope["body_md"]``.
     """
     start_date = (week_ending - timedelta(days=6)).isoformat()
     end_date = week_ending.isoformat()
@@ -186,7 +370,12 @@ def synthesize_weekly_newsletter(
         prompt_template = _DEFAULT_WEEKLY_PROMPT
 
     show_name = getattr(cfg.publishing, "rss_title", show_slug)
-    prompt = prompt_template.format(
+
+    # Per-show length target (defaults to 1300 — see _defaults.yaml).
+    nl_cfg = getattr(cfg, "newsletter", None)
+    target_words = int(getattr(nl_cfg, "length_target_words", 0) or 1300)
+
+    body_prompt = prompt_template.format(
         show_name=show_name,
         episode_count=len(episodes),
         start_date=start_date,
@@ -194,10 +383,18 @@ def synthesize_weekly_newsletter(
         episodes_text=episodes_text + cross_show_section,
         entities=", ".join(sorted(all_entities)[:30]),
     )
+    # Append the JSON envelope output instructions. We do this after
+    # the per-show prompt so the editorial guidance still drives the
+    # body content; the envelope is a shape constraint, not a rewrite.
+    prompt = body_prompt + _ENVELOPE_INSTRUCTIONS.format(
+        target_words=target_words
+    )
 
     system_prompt = (
         f"You are the weekly newsletter editor for {show_name}, "
-        f"part of the Nerra Network podcast network."
+        f"part of the Nerra Network podcast network. You always return "
+        f"output as a single valid JSON object matching the schema in "
+        f"the user prompt."
     )
 
     synth_model, synth_max_tokens, synth_temperature = _cfg_synth_params(
@@ -211,11 +408,16 @@ def synthesize_weekly_newsletter(
             max_tokens=synth_max_tokens,
             system_prompt=system_prompt,
         )
-        logger.info(
-            "[Synthesizer] Weekly newsletter for %s: %d chars (model=%s)",
-            show_slug, len(text), synth_model,
+        envelope = _parse_envelope(
+            text, show_name=show_name, week_ending=week_ending
         )
-        return text
+        logger.info(
+            "[Synthesizer] Weekly newsletter for %s: subject=%r body=%d chars "
+            "p_s=%d chars stats=%d (model=%s)",
+            show_slug, envelope["subject_hook"], len(envelope["body_md"]),
+            len(envelope["p_s"]), len(envelope["by_the_numbers"]), synth_model,
+        )
+        return envelope
     except Exception as e:
         logger.error(
             "[Synthesizer] Weekly newsletter failed for %s: %s",
