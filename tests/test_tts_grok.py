@@ -403,3 +403,89 @@ def test_no_show_uses_elevenlabs_in_production():
             "rolled back this show and forgot to update this guard, or "
             "(b) shows/_defaults.yaml regressed."
         )
+
+
+# ---------------------------------------------------------------------------
+# Spec v2 follow-up: bumped timeout + section-fallback resilience
+# ---------------------------------------------------------------------------
+
+def test_grok_tts_timeout_default_is_300_seconds():
+    """The default request timeout is 300s — bumped from 120 in May 2026
+    after a Grok-side slow response burned through tenacity retries and
+    killed a 20-minute Tesla run."""
+    from engine.tts import GROK_TTS_TIMEOUT_SECONDS, grok_speak_chunk
+    import inspect
+    assert GROK_TTS_TIMEOUT_SECONDS == 300
+    sig = inspect.signature(grok_speak_chunk)
+    assert sig.parameters["timeout"].default == GROK_TTS_TIMEOUT_SECONDS
+
+
+def test_synthesize_sections_falls_back_on_timeout(tmp_path: Path, monkeypatch):
+    """If a section TTS call raises (e.g. tenacity exhausted retries on
+    a Grok read timeout), the function falls back to single-pass
+    synthesis of the joined text instead of failing the whole episode.
+    """
+    from engine import tts as _tts
+
+    calls = {"per_section": 0, "fallback": 0}
+
+    def _fake_speak_with_grok(text, voice_id, filename, **kwargs):
+        # First call (section #1) succeeds, second (section #2) times out,
+        # then the fallback succeeds.
+        if calls["per_section"] == 0 and calls["fallback"] == 0:
+            calls["per_section"] += 1
+            Path(filename).write_bytes(b"\xff\xfb\x90")
+            return
+        if calls["per_section"] == 1 and calls["fallback"] == 0:
+            calls["per_section"] += 1
+            raise RuntimeError("simulated read timeout after retries")
+        # Fallback call.
+        calls["fallback"] += 1
+        Path(filename).write_bytes(b"\xff\xfb\x90")
+
+    monkeypatch.setattr(_tts, "_speak_with_grok", _fake_speak_with_grok)
+
+    out_dir = tmp_path / "sections"
+    result = _tts.synthesize_sections(
+        ["Section A text.", "Section B text.", "Section C text."],
+        voice_id="kdif6sqjcyiq",
+        output_dir=out_dir,
+        api_key="k",
+        provider="grok",
+        section_prefix="ep001",
+    )
+
+    # Section #1 was rendered, section #2 raised, fallback ran once.
+    assert calls["per_section"] == 2
+    assert calls["fallback"] == 1
+    # Result contains exactly one file (the fallback) — caller's
+    # `concatenate_with_stings` handles 1-element lists by passing
+    # the file through with no transition stings.
+    assert len(result) == 1
+    assert result[0].name.endswith("_fallback.mp3")
+    assert result[0].exists()
+
+
+def test_synthesize_sections_succeeds_when_all_sections_synth(tmp_path: Path, monkeypatch):
+    """Happy path: every section succeeds, no fallback needed."""
+    from engine import tts as _tts
+
+    def _fake_speak_with_grok(text, voice_id, filename, **kwargs):
+        Path(filename).write_bytes(b"\xff\xfb\x90")
+
+    monkeypatch.setattr(_tts, "_speak_with_grok", _fake_speak_with_grok)
+
+    out_dir = tmp_path / "sections"
+    result = _tts.synthesize_sections(
+        ["A", "B", "C"],
+        voice_id="kdif6sqjcyiq",
+        output_dir=out_dir,
+        api_key="k",
+        provider="grok",
+        section_prefix="ep002",
+    )
+
+    assert len(result) == 3
+    assert all(p.exists() for p in result)
+    # No fallback file generated.
+    assert not (out_dir / "ep002_fallback.mp3").exists()

@@ -1033,7 +1033,28 @@ def run(args: argparse.Namespace) -> None:
                 ]
                 metrics.record("cross_episode_repeats", len(_repeat_issues))
                 _repeat_threshold = getattr(config.slow_news, "repeat_trigger_threshold", 3) or 3
-                if len(_repeat_issues) >= _repeat_threshold:
+                # Spec v2 follow-up after Tesla Ep459: a daily news show
+                # legitimately revisits 3-6 ongoing stories per day
+                # (Tesla earnings cadence, FSD lawsuit, Cybertruck
+                # production updates) without that meaning "the LLM
+                # ignored the content tracker." Today's run had 6
+                # cross-episode repeats out of 22 articles (27%) — far
+                # under "the digest is mostly recycled" — but the
+                # absolute threshold of 3 still triggered slow-news
+                # fallback, burning ~5 minutes regenerating from
+                # evergreen segments instead of just shipping the
+                # surviving 16 fresh stories. Add a ratio gate: only
+                # fall back when repeats are BOTH above the absolute
+                # threshold AND >=40% of the digest. This lets healthy
+                # news cycles ship; protects against actual tracker-
+                # ignoring runs.
+                total_digest_items = max(1, len(articles))
+                repeat_ratio = len(_repeat_issues) / total_digest_items
+                metrics.record("cross_episode_repeat_ratio", round(repeat_ratio, 3))
+                if (
+                    len(_repeat_issues) >= _repeat_threshold
+                    and repeat_ratio >= 0.40
+                ):
                     # If slow news mode is available, fall back to it instead
                     # of skipping entirely — the repeat articles are stale but
                     # evergreen segments can fill the episode.
