@@ -282,6 +282,29 @@ def _fetch_single_feed(
             if not title or not link:
                 continue
 
+            # Sanitize the URL: strip C0/C1 control characters that have
+            # leaked from RSS scrapes (the May 2 Omni View daily had
+            # `?ito\x14...` literals in href attributes), and resolve
+            # Google News redirect URLs to their canonical publisher
+            # form so the email body stays under Gmail's 102 KB clip
+            # threshold. Both ops are best-effort — `sanitize_url`
+            # returns None on malformed URLs so we drop the article;
+            # `resolve_google_news_url` returns the input unchanged on
+            # network failure so we ship the redirect rather than
+            # nothing.
+            from engine.url_utils import (
+                resolve_google_news_url,
+                sanitize_url,
+            )
+            link_clean = sanitize_url(link)
+            if not link_clean:
+                logger.debug(
+                    "Dropping article with malformed URL: %s — %s",
+                    title[:60], link[:120],
+                )
+                continue
+            link = resolve_google_news_url(link_clean)
+
             # Keyword filtering (if keywords provided)
             if keywords:
                 text_lower = (title + " " + description).lower()

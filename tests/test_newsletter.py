@@ -307,18 +307,40 @@ class TestSendShowNewsletter(unittest.TestCase):
         self.assertEqual(result, "email-789")
         mock_send.assert_called_once()
 
+    @patch("engine.newsletter._can_send_now", return_value=True)
+    @patch("engine.newsletter._record_send")
     @patch("engine.newsletter.send_newsletter")
     @patch("engine.newsletter.os.getenv")
-    def test_subject_format(self, mock_getenv, mock_send):
+    def test_subject_format_uses_build_subject_line(
+        self, mock_getenv, mock_send, _mock_record, _mock_can_send,
+    ):
+        """Spec v2 §3: daily subject is ``<hook> · <show> <emoji>`` —
+        the old ``f"{config.name}: {hook}"`` format was broken because
+        the show name preceded a long unbounded hook, getting Gmail-
+        truncated. Episode number lives in the hero pill, not the
+        subject."""
         mock_getenv.return_value = "key"
         mock_send.return_value = "id"
-        config = self._make_config(name="My Show")
+        ns = self._make_config(name="Tesla Shorts Time")
+        ns.slug = "tesla"
 
-        send_show_newsletter("digest", config, 10, "2025-03-01")
-        call_kwargs = mock_send.call_args
-        self.assertIn("My Show", call_kwargs.kwargs["subject"])
-        self.assertIn("Episode 10", call_kwargs.kwargs["subject"])
-        self.assertIn("2025-03-01", call_kwargs.kwargs["subject"])
+        send_show_newsletter(
+            "digest", ns, 456, "2026-05-02",
+            hook="Cybercab production begins in Texas",
+        )
+        assert mock_send.call_args is not None, (
+            "send_newsletter was never called"
+        )
+        subject = mock_send.call_args.kwargs["subject"]
+        # Hook is present (possibly truncated to 50 chars by the daily cap).
+        assert "Cybercab" in subject
+        # Show short label is present (Tesla's is "Tesla Shorts").
+        assert "Tesla Shorts" in subject
+        # Subject does NOT contain the episode number — that lives in
+        # the hero pill ("Ep 456 · May 2, 2026").
+        assert "Episode 456" not in subject
+        # Spec §3: hard cap on overall subject length.
+        assert len(subject) <= 100
 
     def test_disabled_newsletter_returns_none(self):
         config = self._make_config(enabled=False)
