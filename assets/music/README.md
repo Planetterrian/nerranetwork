@@ -8,12 +8,20 @@ config under `audio.music_file` and optionally `audio.background_music_file`.
 
 ```
 assets/music/
-├── tesla_shorts_time.mp3          # TST + EI + M&A — energetic tech/financial news theme
+├── tesla_shorts_time.mp3          # TST — energetic tech/financial news theme
 ├── fascinatingfrontiers.mp3       # FF — short cosmic intro jingle (~5 s)
 ├── fascinatingfrontiers_bg.mp3    # FF — longer ambient space background/outro
 ├── oilers-pride.mp3               # PT — science/discovery theme
-├── LubechangeOilers.mp3           # OV — balanced news theme
-├── modern_investing.mp3           # MIT — financial/market intelligence theme (TODO: generate)
+├── OmniView.mp3                   # OV — balanced news theme (May 2026; replaced LubechangeOilers.mp3)
+├── EnvIntel.mp3                   # EI — Canadian environmental-policy theme (May 2026)
+├── ModelsAgents.mp3               # M&A and M&AB — AI/agents theme (shared across both shows)
+├── ModernInvesting.mp3            # MIT — financial/market intelligence theme (May 2026)
+├── Финансы Просто.mp3             # FP — Russian financial-literacy theme (May 2026)
+├── ПриветРусский.mp3              # PR — Russian language-learning theme (May 2026; on-disk filename
+│                                  #       is in Unicode NFD form — keep YAML music_file in sync if
+│                                  #       the file is ever renamed; see shows/privet_russian.yaml)
+├── LubechangeOilers.mp3           # ORPHANED (May 2026) — OV moved to OmniView.mp3; kept on disk
+│                                  #   for rollback. Safe to delete after a few clean OV runs.
 └── README.md                      # This file
 ```
 

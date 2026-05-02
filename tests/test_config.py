@@ -455,7 +455,8 @@ class TestLoadConfigRealFiles:
         assert cfg.llm.max_tokens == 4000
         assert cfg.tts.stability == 0.5
         assert cfg.tts.style == 0.0
-        assert cfg.audio.music_file == "assets/music/LubechangeOilers.mp3"
+        # OV got its own dedicated theme in May 2026 (replaced LubechangeOilers.mp3).
+        assert cfg.audio.music_file == "assets/music/OmniView.mp3"
         assert cfg.publishing.rss_category == "News"
         assert cfg.publishing.guid_prefix == "omni-view"
         assert cfg.episode.prefix == "Omni_View"
@@ -481,7 +482,9 @@ class TestLoadConfigRealFiles:
         assert cfg.tts.stability == 0.5  # Inherited from legacy ElevenLabs baseline
         assert cfg.tts.style == 0.0
         assert cfg.tts.max_chars == 10000
-        assert cfg.audio.music_file == "assets/music/tesla_shorts_time.mp3"
+        # EI got its own dedicated theme in May 2026
+        # (replaced the shared tesla_shorts_time.mp3).
+        assert cfg.audio.music_file == "assets/music/EnvIntel.mp3"
         assert cfg.publishing.x_enabled is False
         assert cfg.episode.prefix == "Env_Intel"
         assert cfg.episode.output_dir == "digests/env_intel"
