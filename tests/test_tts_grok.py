@@ -100,7 +100,7 @@ def test_grok_speak_chunk_request_overrides(tmp_path: Path, monkeypatch):
 
     tts.grok_speak_chunk(
         "Hello",
-        voice_id="b4cusb2omvkz",
+        voice_id="kdif6sqjcyiq",
         out_path=tmp_path / "o.wav",
         api_key="k",
         output_codec="mp3",
@@ -341,7 +341,7 @@ def test_russian_shows_use_grok_tts():
 
 def test_english_shows_resolve_to_custom_voice():
     """Every English show — including Tesla Shorts Time — must resolve to
-    Grok TTS with the operator's custom-trained voice ``b4cusb2omvkz``
+    Grok TTS with the operator's custom-trained voice ``kdif6sqjcyiq``
     after deep-merging _defaults.yaml.
 
     This is the result of the May 2026 full-network migration: a single
@@ -369,8 +369,8 @@ def test_english_shows_resolve_to_custom_voice():
             f"(got {cfg.tts.provider!r}); check shows/_defaults.yaml didn't "
             "regress and the show YAML didn't add an override."
         )
-        assert cfg.tts.voice_id == "b4cusb2omvkz", (
-            f"{slug}.yaml: post-merge tts.voice_id must be 'b4cusb2omvkz' "
+        assert cfg.tts.voice_id == "kdif6sqjcyiq", (
+            f"{slug}.yaml: post-merge tts.voice_id must be 'kdif6sqjcyiq' "
             f"(got {cfg.tts.voice_id!r}); the network adopted the operator's "
             "custom-trained voice for every English show in May 2026 — "
             "per-show overrides need a documented reason."

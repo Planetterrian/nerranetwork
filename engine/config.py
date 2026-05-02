@@ -68,14 +68,15 @@ class LLMConfig:
 @dataclass
 class TTSConfig:
     # Network default since May 2026: Grok TTS with the operator's
-    # custom-trained voice `b4cusb2omvkz`, used for every English
-    # show on the network for a single consistent host identity.
+    # English voice `kdif6sqjcyiq`, used for every English show on
+    # the network for a single consistent host identity. Replaced
+    # the prior `b4cusb2omvkz` voice in May 2026.
     # Russian shows (FP/PR) override voice_id to their custom Olya
     # (`0b875ae2`) and language_code to `ru`. No show is on ElevenLabs
     # in production; the legacy fields below remain only for emergency
     # rollback.
     provider: str = "grok"
-    voice_id: str = "b4cusb2omvkz"
+    voice_id: str = "kdif6sqjcyiq"
     language_code: str = "en"  # BCP-47 (Grok) / ISO 639-1 (ElevenLabs); shows override for non-English
     max_chars: int = 10000
     # ---- Legacy ElevenLabs baseline ----
