@@ -483,7 +483,9 @@ class TestShowConfigs:
         assert config.newsletter.enabled is True
         assert config.newsletter.api_key_env == "BUTTONDOWN_API_KEY"
         assert len(config.sources) > 10  # Has many RSS feeds
-        assert config.tts.voice_id == "dTrBzPvD2GpAqkk1MUzA"
+        # M&A migrated from ElevenLabs (`dTrBzPvD2GpAqkk1MUzA`) to Grok TTS
+        # with the `sal` built-in voice in May 2026 — see landmine #16.
+        assert config.tts.voice_id == "sal"
 
 
 # ---------------------------------------------------------------------------

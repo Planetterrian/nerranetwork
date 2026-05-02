@@ -270,10 +270,10 @@ def test_save_usage_uses_grok_rate_when_provider_grok(tmp_path: Path):
     assert tts_block["estimated_cost_usd"] < elevenlabs_equiv / 10
 
 
-def test_save_usage_uses_elevenlabs_rate_when_provider_unspecified(tmp_path: Path):
-    """Existing English shows: provider defaults to ElevenLabs, rate unchanged."""
-    tracker = create_tracker("Tesla", 1)
-    record_tts_usage(tracker, characters=10_000)  # no provider arg
+def test_save_usage_uses_elevenlabs_rate_when_provider_elevenlabs(tmp_path: Path):
+    """Tesla Shorts Time stays on ElevenLabs and is charged at that rate."""
+    tracker = create_tracker("Tesla Shorts Time", 460)
+    record_tts_usage(tracker, characters=10_000, provider="elevenlabs")
     save_usage(tracker, tmp_path)
 
     tts_block = tracker["services"]["tts_api"]
@@ -283,7 +283,7 @@ def test_save_usage_uses_elevenlabs_rate_when_provider_unspecified(tmp_path: Pat
 
 
 # ---------------------------------------------------------------------------
-# Russian show YAML coverage — guard against config drift
+# Show-YAML coverage — drift guards for the May 2026 TTS layout
 # ---------------------------------------------------------------------------
 
 def test_russian_shows_use_grok_tts():
@@ -311,3 +311,64 @@ def test_russian_shows_use_grok_tts():
             f"{slug}.yaml: tts.language_code must be 'ru' "
             f"(got {tts_block.get('language_code')!r})"
         )
+
+
+def test_english_shows_resolve_to_grok_sal():
+    """Every English show except Tesla Shorts Time must resolve to Grok TTS
+    with the ``sal`` built-in voice after deep-merging _defaults.yaml.
+
+    Inheritance is the contract here — the per-show YAMLs intentionally
+    leave the tts: block empty so the network default carries them.
+    Adding an override silently puts a show on a different voice and
+    breaks the Listener-side voice continuity.
+    """
+    from engine.config import load_config
+    shows_dir = Path(__file__).resolve().parent.parent / "shows"
+    english_grok_shows = (
+        "omni_view",
+        "fascinating_frontiers",
+        "planetterrian",
+        "env_intel",
+        "models_agents",
+        "models_agents_beginners",
+        "modern_investing",
+    )
+    for slug in english_grok_shows:
+        cfg = load_config(shows_dir / f"{slug}.yaml")
+        assert cfg.tts.provider == "grok", (
+            f"{slug}.yaml: post-merge tts.provider must be 'grok' "
+            f"(got {cfg.tts.provider!r}); check shows/_defaults.yaml didn't "
+            "regress and the show YAML didn't add an override."
+        )
+        assert cfg.tts.voice_id == "sal", (
+            f"{slug}.yaml: post-merge tts.voice_id must be 'sal' "
+            f"(got {cfg.tts.voice_id!r}); the network voted on a single "
+            "shared voice in May 2026 — per-show overrides need a "
+            "documented reason."
+        )
+        assert cfg.tts.language_code == "en", (
+            f"{slug}.yaml: post-merge tts.language_code must be 'en' "
+            f"(got {cfg.tts.language_code!r})"
+        )
+
+
+def test_tesla_stays_on_elevenlabs():
+    """Tesla Shorts Time is the lone English-show ElevenLabs holdout.
+
+    The voice listeners know is `dTrBzPvD2GpAqkk1MUzA`. If anyone strips
+    the tts.provider override or changes voice_id, this test catches it
+    before the next Tesla episode renders with a different voice.
+    """
+    from engine.config import load_config
+    shows_dir = Path(__file__).resolve().parent.parent / "shows"
+    cfg = load_config(shows_dir / "tesla.yaml")
+    assert cfg.tts.provider == "elevenlabs", (
+        f"tesla.yaml: tts.provider must be 'elevenlabs' (got "
+        f"{cfg.tts.provider!r}). TST is the only show that didn't migrate "
+        "to Grok TTS in May 2026; voice continuity on the network's "
+        "largest show outweighs the cost delta."
+    )
+    assert cfg.tts.voice_id == "dTrBzPvD2GpAqkk1MUzA", (
+        f"tesla.yaml: tts.voice_id must be 'dTrBzPvD2GpAqkk1MUzA' "
+        f"(got {cfg.tts.voice_id!r})"
+    )

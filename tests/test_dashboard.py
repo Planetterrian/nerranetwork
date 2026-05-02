@@ -52,9 +52,11 @@ def test_mab_and_ma_are_separate():
     assert ma["name"] != mab["name"]
     assert ma["cfg"].publishing.rss_file != mab["cfg"].publishing.rss_file
     assert ma["cfg"].publishing.rss_title != mab["cfg"].publishing.rss_title
-    # Each must resolve tts.provider to elevenlabs on its own.
-    assert ma["cfg"].tts.provider == "elevenlabs"
-    assert mab["cfg"].tts.provider == "elevenlabs"
+    # Each must resolve tts.provider to grok on its own (network default
+    # since May 2026; the original "elevenlabs" assertion regressed when
+    # the network flipped — see CLAUDE.md landmines #11 and #16).
+    assert ma["cfg"].tts.provider == "grok"
+    assert mab["cfg"].tts.provider == "grok"
 
 
 # ---------------------------------------------------------------------------
