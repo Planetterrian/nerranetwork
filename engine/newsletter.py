@@ -449,7 +449,10 @@ def send_show_newsletter(
 _LASTSEND_FILENAME = "_newsletter_lastsend.txt"
 
 
-def _lastsend_path(slug: str) -> "Path":
+def _lastsend_path(slug: str):
+    """Return the per-show timestamp file path used by the
+    same-day send guardrail. Late-import ``pathlib`` to keep the
+    module import cheap on cron runs that don't actually send."""
     from pathlib import Path
     return Path("digests") / slug / _LASTSEND_FILENAME
 
