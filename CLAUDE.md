@@ -9,15 +9,15 @@ Automated daily podcast generation system running 10 shows via a unified
 
 | Show | Legacy Script | YAML Config | Schedule | X Account | TTS |
 |------|--------------|-------------|----------|-----------|-----|
-| Tesla Shorts Time | — (deleted) | `shows/tesla.yaml` | Daily | `@teslashortstime` | ElevenLabs |
-| Omni View | — (deleted) | `shows/omni_view.yaml` | Odd days | `@omniviewnews` | Grok TTS (sal) |
-| Fascinating Frontiers | — (deleted) | `shows/fascinating_frontiers.yaml` | Even days | `@planetterrian` | Grok TTS (sal) |
-| Planetterrian Daily | — (deleted) | `shows/planetterrian.yaml` | Odd days | `@planetterrian` | Grok TTS (sal) |
-| Env Intel | — | `shows/env_intel.yaml` | Odd weekdays | `@teslashortstime` | Grok TTS (sal) |
-| Models & Agents | — | `shows/models_agents.yaml` | Odd days | — (X disabled) | Grok TTS (sal) |
-| Models & Agents for Beginners | — | `shows/models_agents_beginners.yaml` | Even days | — (X disabled) | Grok TTS (sal) |
+| Tesla Shorts Time | — (deleted) | `shows/tesla.yaml` | Daily | `@teslashortstime` | Grok TTS (custom) |
+| Omni View | — (deleted) | `shows/omni_view.yaml` | Odd days | `@omniviewnews` | Grok TTS (custom) |
+| Fascinating Frontiers | — (deleted) | `shows/fascinating_frontiers.yaml` | Even days | `@planetterrian` | Grok TTS (custom) |
+| Planetterrian Daily | — (deleted) | `shows/planetterrian.yaml` | Odd days | `@planetterrian` | Grok TTS (custom) |
+| Env Intel | — | `shows/env_intel.yaml` | Odd weekdays | `@teslashortstime` | Grok TTS (custom) |
+| Models & Agents | — | `shows/models_agents.yaml` | Odd days | — (X disabled) | Grok TTS (custom) |
+| Models & Agents for Beginners | — | `shows/models_agents_beginners.yaml` | Even days | — (X disabled) | Grok TTS (custom) |
 | Финансы Просто | — | `shows/finansy_prosto.yaml` | Even days | — (X disabled) | Grok TTS (Olya) |
-| Modern Investing Techniques | — | `shows/modern_investing.yaml` | Weekdays | — (X disabled) | Grok TTS (sal) |
+| Modern Investing Techniques | — | `shows/modern_investing.yaml` | Weekdays | — (X disabled) | Grok TTS (custom) |
 | Привет, Русский! | — | `shows/privet_russian.yaml` | Even days | — (X disabled) | Grok TTS (Olya) |
 
 **Science That Changes Everything** (`digests/science_that_changes.py`, ~83 lines)
@@ -139,7 +139,7 @@ nerranetworks/
 - `GROK_API_KEY` — primary xAI key (all shows)
 - `ELEVENLABS_API_KEY` — ElevenLabs TTS (all shows)
 - `X_*` / `PLANETTERRIAN_X_*` — two separate X accounts
-- Voice IDs: 9 of 10 shows are on **Grok TTS** as of May 2026 — English shows use the `sal` built-in voice, Russian shows (FP/PR) use the custom `0b875ae2` ("Olya"). Tesla Shorts Time is the lone holdout on ElevenLabs voice `dTrBzPvD2GpAqkk1MUzA`. See landmine #16.
+- Voice IDs: **All 10 shows are on Grok TTS** as of the May 2026 full-network migration. The 8 English shows (including Tesla Shorts Time) share the operator's custom-trained voice `b4cusb2omvkz`. Russian shows (FP/PR) use the custom Olya voice `0b875ae2`. ElevenLabs is no longer used in production but the API key + legacy settings stay in `_defaults.yaml` for emergency rollback. See landmine #17.
 - See `docs/env_var_inventory.md` for the complete inventory
 
 ### RSS Feeds
@@ -252,16 +252,15 @@ decision); everything else has a live status card.
    reintroduced without updating `_defaults.yaml`.
 10. **Early episodes deleted** — first 20 Tesla, 10 FF, 10 PT, 10 OV episodes
     removed (quality issues). RSS entries removed where applicable.
-11. **9 of 10 shows on Grok TTS; Tesla Shorts Time stays on ElevenLabs
-    (May 2026)** — Chatterbox, Kokoro, and Fish Audio were trialled
-    and removed. English shows other than Tesla migrated to xAI's
-    Grok TTS with the `sal` built-in voice; Russian shows use the
-    custom Olya voice (`0b875ae2`). Tesla Shorts Time remains on
-    ElevenLabs `eleven_flash_v2_5` (voice `dTrBzPvD2GpAqkk1MUzA`)
-    because voice continuity matters most on the network's largest
-    public-facing show. Network cost: ~36× cheaper per character on
-    Grok ($4.20/M vs $150/M for ElevenLabs Flash). Reuses
-    `GROK_API_KEY` / `XAI_API_KEY` — no new secret. See landmine #16.
+11. **All 10 shows on Grok TTS (May 2026, full-network migration)** —
+    Chatterbox, Kokoro, and Fish Audio were trialled and removed.
+    English shows (including Tesla Shorts Time as of the third migration
+    wave) all use the operator's custom-trained voice `b4cusb2omvkz`
+    for a single consistent host identity. Russian shows use the
+    custom Olya voice (`0b875ae2`). ElevenLabs is no longer used in
+    production. Network cost: ~36× cheaper per character on Grok
+    ($4.20/M vs $150/M for ElevenLabs Flash). Reuses `GROK_API_KEY` /
+    `XAI_API_KEY` — no new secret. See landmines #16 and #17.
 12. **Summaries JSONs moved** — all summaries live in per-show subdirectories
     (`digests/<show>/summaries_*.json`), not at the `digests/` top level.
 13. **LLM default migrated to `grok-4.3` (May 2026)** — released 2026-04-30,
@@ -343,3 +342,61 @@ decision); everything else has a live status card.
     Tesla ever migrates, the env-var requirement disappears
     (`run_show.py:_validate_environment` already gates the check on
     `provider == "elevenlabs"`).
+17. **Full-network voice migration + broadcast-quality audio pipeline
+    (third TTS wave, May 2026)** — Tesla Shorts Time joined the rest of
+    the network on Grok TTS. Every English show now inherits the
+    operator's custom-trained voice `b4cusb2omvkz` from
+    [`shows/_defaults.yaml`](shows/_defaults.yaml); the previous `sal`
+    built-in voice was retired and TST's ElevenLabs override
+    (`provider: elevenlabs`, voice `dTrBzPvD2GpAqkk1MUzA`) was removed.
+
+    Same migration shipped a broadcast-quality audio pipeline. Cumulative
+    changes to the per-episode signal flow:
+
+    - **Grok TTS request:** now requests **WAV at 48 kHz** with
+      `text_normalization: true` (`engine/tts.py:grok_speak_chunk`).
+      Previously MP3 at 24 kHz with no normalization. The pipeline
+      crossfades chunks in WAV and only encodes to MP3 once at the very
+      end (one lossy pass instead of two). Server-side text normalization
+      handles dates, currencies, and ordinary numbers — the
+      `pronunciation_map.yaml` layer remains for proper-noun / acronym
+      overrides.
+    - **Voice EQ chain** (`engine/audio.py:_voice_norm_full_cmd`)
+      gained a 6.5 kHz dip (`equalizer=f=6500:t=q:w=1.5:g=-3`) for
+      gentle de-essing on the new custom voice. Previous chain
+      (highpass / lowpass / loudnorm / compressor / limiter) is
+      otherwise unchanged.
+    - **Final mix** (`engine/audio.py:_final_mix_cmd`) replaced the
+      simple `amix` with sidechain-ducked music + EBU R128 loudnorm
+      to **-16 LUFS** (Apple Podcasts / Spotify spec). Music
+      automatically pulls down 8 dB when voice is present and rises
+      smoothly when voice pauses. The fixed-curve `mix_with_music`
+      music timeline still runs upstream to control intro / overlap /
+      fadeout / outro volumes; the sidechain ducking adds the
+      moment-to-moment dynamic response that makes voice + music feel
+      cinematic instead of mechanical.
+    - **Final encode** bumped from CBR 192 kbps to VBR `-q:a 0`
+      (~245 kbps) for archival-quality spoken-word + music. ~6.5 MB
+      per 30-min episode (was ~5 MB).
+    - **Speech tags** are now allowed in podcast prompts (every
+      `shows/prompts/*_podcast.txt` carries a `DELIVERY` block).
+      Allowed: `[breath]`, `[pause]`, `[long-pause]`,
+      `<emphasis>...</emphasis>`. Banned: every other Grok tag
+      (`[laugh]` / `<whisper>` / `<slow>` / etc. — they sound
+      performative). The TTS path keeps tags; every non-TTS consumer
+      runs through `engine.utils.strip_speech_tags()` before publishing
+      so blog markdown, RSS show notes, X teaser, and YouTube
+      descriptions never see them.
+    - **Drift guards:** `tests/test_tts_grok.py` now has
+      `test_english_shows_resolve_to_custom_voice` (every English show
+      including Tesla resolves to `b4cusb2omvkz`),
+      `test_no_show_uses_elevenlabs_in_production` (catches accidental
+      rollback flips), and `test_russian_shows_use_grok_tts` (Olya
+      voice unchanged).
+
+    `ELEVENLABS_API_KEY` is **kept** in GitHub Secrets / `.env` for
+    emergency rollback even though no show currently needs it. The
+    legacy ElevenLabs settings in `_defaults.yaml` (model, stability,
+    similarity_boost, style, etc.) are also preserved — harmless under
+    `provider=grok` and a one-line YAML flip back to ElevenLabs if
+    Grok TTS has an outage.

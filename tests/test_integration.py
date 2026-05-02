@@ -484,9 +484,10 @@ class TestShowConfigs:
         assert config.newsletter.enabled is True
         assert config.newsletter.api_key_env == "BUTTONDOWN_API_KEY"
         assert len(config.sources) > 10  # Has many RSS feeds
-        # M&A migrated from ElevenLabs (`dTrBzPvD2GpAqkk1MUzA`) to Grok TTS
-        # with the `sal` built-in voice in May 2026 — see landmine #16.
-        assert config.tts.voice_id == "sal"
+        # Network-wide voice migration in May 2026: every English show
+        # inherits the operator's custom-trained Grok voice
+        # `b4cusb2omvkz` from _defaults.yaml. See landmine #17.
+        assert config.tts.voice_id == "b4cusb2omvkz"
 
 
 # ---------------------------------------------------------------------------

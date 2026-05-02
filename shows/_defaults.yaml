@@ -39,21 +39,22 @@ llm:
 
 tts:
   # Network default since May 2026: xAI Grok TTS at $4.20/M chars
-  # (~36× cheaper than ElevenLabs Flash). Voice "sal" is a Grok built-in
-  # named voice — no training required. Russian shows (FP/PR) override
-  # voice_id to their custom "Olya" (`0b875ae2`) and language_code to
-  # `ru`. Tesla Shorts Time stays on ElevenLabs by overriding
-  # provider+voice_id back; see shows/tesla.yaml.
+  # (~36× cheaper than ElevenLabs Flash). Voice `b4cusb2omvkz` is the
+  # operator's custom-trained voice — every English show on the
+  # network shares it for a single consistent "host" identity.
+  # Russian shows (FP/PR) override voice_id to their custom "Olya"
+  # (`0b875ae2`) and language_code to `ru`. No show is on ElevenLabs
+  # in production any more; the legacy block below is retained only
+  # for emergency rollback.
   provider: grok
-  voice_id: sal
+  voice_id: b4cusb2omvkz
   language_code: en
   max_chars: 10000
   # ---- Legacy ElevenLabs baseline ----
-  # Active only when a show overrides `provider: elevenlabs` (currently
-  # Tesla Shorts Time). Kept here so any future ElevenLabs flip-back
-  # inherits the same baseline rather than re-discovering tuned values.
-  # The Grok TTS code path silently ignores all of these — they cost
-  # nothing to leave in defaults.
+  # No show currently overrides `provider: elevenlabs`. Kept here so
+  # an emergency rollback (e.g. Grok TTS outage) is a one-line YAML
+  # flip rather than a re-tune. Harmless when `provider=grok` (Grok
+  # path silently ignores these fields).
   model: eleven_flash_v2_5
   stability: 0.5
   similarity_boost: 0.75

@@ -81,9 +81,35 @@ def test_grok_speak_chunk_posts_to_xai_endpoint(tmp_path: Path, monkeypatch):
     assert body["voice_id"] == "0b875ae2"
     assert body["language"] == "ru"
     assert body["text"] == "Привет, как дела?"
+    # Default output_format is WAV/48 kHz (May 2026 audio-quality upgrade);
+    # text_normalization is on by default so Grok handles numbers/dates/
+    # currency server-side.
+    assert body["output_format"]["codec"] == "wav"
+    assert body["output_format"]["sample_rate"] == 48000
+    assert body["text_normalization"] is True
     # Audio bytes were written to disk.
     assert out.exists()
     assert out.read_bytes() == b"\xff\xfb\x90"
+
+
+def test_grok_speak_chunk_request_overrides(tmp_path: Path, monkeypatch):
+    """Caller can override output codec/sample_rate and text_normalization
+    if a future show needs MP3 streaming or wants raw text passthrough."""
+    fake_post, captured = _make_fake_post()
+    monkeypatch.setattr(tts.requests, "post", fake_post)
+
+    tts.grok_speak_chunk(
+        "Hello",
+        voice_id="b4cusb2omvkz",
+        out_path=tmp_path / "o.wav",
+        api_key="k",
+        output_codec="mp3",
+        output_sample_rate=24000,
+        text_normalization=False,
+    )
+    body = captured["json"]
+    assert body["output_format"] == {"codec": "mp3", "sample_rate": 24000}
+    assert body["text_normalization"] is False
 
 
 def test_grok_speak_chunk_defaults_language_to_auto(tmp_path: Path, monkeypatch):
@@ -313,18 +339,21 @@ def test_russian_shows_use_grok_tts():
         )
 
 
-def test_english_shows_resolve_to_grok_sal():
-    """Every English show except Tesla Shorts Time must resolve to Grok TTS
-    with the ``sal`` built-in voice after deep-merging _defaults.yaml.
+def test_english_shows_resolve_to_custom_voice():
+    """Every English show — including Tesla Shorts Time — must resolve to
+    Grok TTS with the operator's custom-trained voice ``b4cusb2omvkz``
+    after deep-merging _defaults.yaml.
 
-    Inheritance is the contract here — the per-show YAMLs intentionally
-    leave the tts: block empty so the network default carries them.
-    Adding an override silently puts a show on a different voice and
-    breaks the Listener-side voice continuity.
+    This is the result of the May 2026 full-network migration: a single
+    consistent host identity across every English show. Inheritance is
+    the contract here — per-show YAMLs intentionally leave the ``tts:``
+    block empty so the network default carries them. An override silently
+    puts a show on a different voice and breaks listener-side continuity.
     """
     from engine.config import load_config
     shows_dir = Path(__file__).resolve().parent.parent / "shows"
     english_grok_shows = (
+        "tesla",  # was the lone ElevenLabs holdout; migrated May 2026
         "omni_view",
         "fascinating_frontiers",
         "planetterrian",
@@ -340,11 +369,11 @@ def test_english_shows_resolve_to_grok_sal():
             f"(got {cfg.tts.provider!r}); check shows/_defaults.yaml didn't "
             "regress and the show YAML didn't add an override."
         )
-        assert cfg.tts.voice_id == "sal", (
-            f"{slug}.yaml: post-merge tts.voice_id must be 'sal' "
-            f"(got {cfg.tts.voice_id!r}); the network voted on a single "
-            "shared voice in May 2026 — per-show overrides need a "
-            "documented reason."
+        assert cfg.tts.voice_id == "b4cusb2omvkz", (
+            f"{slug}.yaml: post-merge tts.voice_id must be 'b4cusb2omvkz' "
+            f"(got {cfg.tts.voice_id!r}); the network adopted the operator's "
+            "custom-trained voice for every English show in May 2026 — "
+            "per-show overrides need a documented reason."
         )
         assert cfg.tts.language_code == "en", (
             f"{slug}.yaml: post-merge tts.language_code must be 'en' "
@@ -352,23 +381,25 @@ def test_english_shows_resolve_to_grok_sal():
         )
 
 
-def test_tesla_stays_on_elevenlabs():
-    """Tesla Shorts Time is the lone English-show ElevenLabs holdout.
-
-    The voice listeners know is `dTrBzPvD2GpAqkk1MUzA`. If anyone strips
-    the tts.provider override or changes voice_id, this test catches it
-    before the next Tesla episode renders with a different voice.
+def test_no_show_uses_elevenlabs_in_production():
+    """No production show should be configured for ElevenLabs after the
+    May 2026 full-network migration. The legacy fields in
+    `shows/_defaults.yaml` exist only for emergency rollback — if any
+    show silently falls back to provider=elevenlabs the cost
+    (~$150/M chars) and the voice mismatch would surprise listeners.
     """
     from engine.config import load_config
     shows_dir = Path(__file__).resolve().parent.parent / "shows"
-    cfg = load_config(shows_dir / "tesla.yaml")
-    assert cfg.tts.provider == "elevenlabs", (
-        f"tesla.yaml: tts.provider must be 'elevenlabs' (got "
-        f"{cfg.tts.provider!r}). TST is the only show that didn't migrate "
-        "to Grok TTS in May 2026; voice continuity on the network's "
-        "largest show outweighs the cost delta."
+    all_shows = (
+        "tesla", "omni_view", "fascinating_frontiers", "planetterrian",
+        "env_intel", "models_agents", "models_agents_beginners",
+        "modern_investing", "finansy_prosto", "privet_russian",
     )
-    assert cfg.tts.voice_id == "dTrBzPvD2GpAqkk1MUzA", (
-        f"tesla.yaml: tts.voice_id must be 'dTrBzPvD2GpAqkk1MUzA' "
-        f"(got {cfg.tts.voice_id!r})"
-    )
+    for slug in all_shows:
+        cfg = load_config(shows_dir / f"{slug}.yaml")
+        assert cfg.tts.provider != "elevenlabs", (
+            f"{slug}.yaml resolves to provider='elevenlabs' — emergency "
+            "rollback flip detected. Either (a) the operator manually "
+            "rolled back this show and forgot to update this guard, or "
+            "(b) shows/_defaults.yaml regressed."
+        )

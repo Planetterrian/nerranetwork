@@ -1610,9 +1610,14 @@ def run(args: argparse.Namespace) -> None:
             if config.tts.validate_transcription:
                 import json as _json
                 from engine.tts_validation import validate_tts_transcription
+                from engine.utils import strip_speech_tags
                 logger.info("Running post-TTS transcription validation...")
+                # Whisper transcribes audio (no tag literals come back), so
+                # we compare against the tag-stripped script — otherwise the
+                # match score is artificially lowered by every [breath] /
+                # <emphasis>...</emphasis> in the reference text.
                 tts_val = validate_tts_transcription(
-                    raw_mp3, podcast_script,
+                    raw_mp3, strip_speech_tags(podcast_script),
                     model_size=config.tts.whisper_model,
                     threshold=config.tts.whisper_threshold,
                 )
