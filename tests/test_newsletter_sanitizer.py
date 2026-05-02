@@ -45,14 +45,18 @@ class TestScrubScaffold:
         assert "**ЗАГОЛОВОК:**" not in out
         assert "Космос" in out
 
-    def test_strips_box_drawing_rules(self):
+    def test_does_not_strip_box_drawing_rules(self):
+        """Spec v2 follow-up: the sanitizer leaves box rules alone so
+        engine.newsletter_body.replace_box_rules_with_hr can convert
+        them to ``<hr>``. Stripping here would defeat that conversion."""
         text = (
             "Section A\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
             "Section B"
         )
         out = scrub_scaffold(text)
-        assert "━━━" not in out
+        # Rules survive the scrub stage.
+        assert "━━━" in out
         assert "Section A" in out
         assert "Section B" in out
 
@@ -170,10 +174,43 @@ class TestPatternCoverage:
             "**Memory hook:**",
             "Source: General concept",
             "(full URL from pre-fetched: …)",
-            "box-drawing horizontal rule (━)",
+            # Box-drawing rules are NOT in the sanitizer anymore — they're
+            # converted to <hr> by engine.newsletter_body in the body-
+            # transform stage. The presence of `replace_box_rules_with_hr`
+            # is exercised in tests/test_newsletter_body.py.
+            #
+            # Added in the canonical-digest-scrub follow-up — Tesla
+            # Ep458 .md leaked **TOPIC SELECTION:** verbatim.
+            "**TOPIC SELECTION:** ... line",
+            "**TOPIC FRESHNESS:** ... line",
+            "**WHAT TO SKIP:** ... line",
+            "**LENGTH TARGET:** ... line",
         ]
         for r in required:
             assert r in names, (
                 f"Spec v2 §2.2 requires pattern {r!r} in the blocklist; "
                 f"it's missing — extend SCAFFOLD_PATTERNS."
             )
+
+    def test_strips_topic_selection_with_trailing_text(self):
+        """The **TOPIC SELECTION:** label is sometimes echoed with the
+        rest of the prompt instruction concatenated on the same line.
+        Strip the whole line, not just the label."""
+        text = (
+            "Some prose.\n"
+            "**TOPIC SELECTION:** At what point does bidirectional charging "
+            "turn an EV into an energy asset\n"
+            "More prose."
+        )
+        out = scrub_scaffold(text)
+        assert "TOPIC SELECTION" not in out
+        # The instruction tail is also gone (whole-line strip).
+        assert "bidirectional charging" not in out
+        assert "Some prose." in out
+        assert "More prose." in out
+
+    def test_strips_topic_freshness_block(self):
+        text = "**TOPIC FRESHNESS — MUST choose a different topic:** Recent: A, B, C\nNext line."
+        out = scrub_scaffold(text)
+        assert "TOPIC FRESHNESS" not in out
+        assert "Next line." in out
