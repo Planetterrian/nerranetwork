@@ -139,7 +139,7 @@ nerranetworks/
 - `GROK_API_KEY` — primary xAI key (all shows)
 - `ELEVENLABS_API_KEY` — ElevenLabs TTS (all shows)
 - `X_*` / `PLANETTERRIAN_X_*` — two separate X accounts
-- Voice IDs: **All 10 shows are on Grok TTS** as of the May 2026 full-network migration. The 8 English shows (including Tesla Shorts Time) share the operator's custom-trained voice `b4cusb2omvkz`. Russian shows (FP/PR) use the custom Olya voice `0b875ae2`. ElevenLabs is no longer used in production but the API key + legacy settings stay in `_defaults.yaml` for emergency rollback. See landmine #17.
+- Voice IDs: **All 10 shows are on Grok TTS** as of the May 2026 full-network migration. The 8 English shows (including Tesla Shorts Time) share the operator's custom-trained voice `kdif6sqjcyiq`. Russian shows (FP/PR) use the custom Olya voice `0b875ae2`. ElevenLabs is no longer used in production but the API key + legacy settings stay in `_defaults.yaml` for emergency rollback. See landmine #17.
 - See `docs/env_var_inventory.md` for the complete inventory
 
 ### RSS Feeds
@@ -255,7 +255,7 @@ decision); everything else has a live status card.
 11. **All 10 shows on Grok TTS (May 2026, full-network migration)** —
     Chatterbox, Kokoro, and Fish Audio were trialled and removed.
     English shows (including Tesla Shorts Time as of the third migration
-    wave) all use the operator's custom-trained voice `b4cusb2omvkz`
+    wave) all use the operator's custom-trained voice `kdif6sqjcyiq`
     for a single consistent host identity. Russian shows use the
     custom Olya voice (`0b875ae2`). ElevenLabs is no longer used in
     production. Network cost: ~36× cheaper per character on Grok
@@ -345,7 +345,7 @@ decision); everything else has a live status card.
 17. **Full-network voice migration + broadcast-quality audio pipeline
     (third TTS wave, May 2026)** — Tesla Shorts Time joined the rest of
     the network on Grok TTS. Every English show now inherits the
-    operator's custom-trained voice `b4cusb2omvkz` from
+    operator's custom-trained voice `kdif6sqjcyiq` from
     [`shows/_defaults.yaml`](shows/_defaults.yaml); the previous `sal`
     built-in voice was retired and TST's ElevenLabs override
     (`provider: elevenlabs`, voice `dTrBzPvD2GpAqkk1MUzA`) was removed.
@@ -389,7 +389,7 @@ decision); everything else has a live status card.
       descriptions never see them.
     - **Drift guards:** `tests/test_tts_grok.py` now has
       `test_english_shows_resolve_to_custom_voice` (every English show
-      including Tesla resolves to `b4cusb2omvkz`),
+      including Tesla resolves to `kdif6sqjcyiq`),
       `test_no_show_uses_elevenlabs_in_production` (catches accidental
       rollback flips), and `test_russian_shows_use_grok_tts` (Olya
       voice unchanged).

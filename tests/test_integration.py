@@ -486,8 +486,8 @@ class TestShowConfigs:
         assert len(config.sources) > 10  # Has many RSS feeds
         # Network-wide voice migration in May 2026: every English show
         # inherits the operator's custom-trained Grok voice
-        # `b4cusb2omvkz` from _defaults.yaml. See landmine #17.
-        assert config.tts.voice_id == "b4cusb2omvkz"
+        # `kdif6sqjcyiq` from _defaults.yaml. See landmine #17.
+        assert config.tts.voice_id == "kdif6sqjcyiq"
 
 
 # ---------------------------------------------------------------------------
