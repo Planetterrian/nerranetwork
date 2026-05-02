@@ -565,11 +565,15 @@ class TestShowMusicConfigs:
 
     def test_ov_has_music(self, load_config):
         cfg = load_config("shows/omni_view.yaml")
-        assert cfg.audio.music_file == "assets/music/LubechangeOilers.mp3"
+        # OV got its own dedicated theme in May 2026
+        # (replaced the old shared `LubechangeOilers.mp3`).
+        assert cfg.audio.music_file == "assets/music/OmniView.mp3"
 
     def test_ei_has_music(self, load_config):
         cfg = load_config("shows/env_intel.yaml")
-        assert cfg.audio.music_file == "assets/music/tesla_shorts_time.mp3"
+        # EI got its own dedicated theme in May 2026
+        # (replaced the shared `tesla_shorts_time.mp3`).
+        assert cfg.audio.music_file == "assets/music/EnvIntel.mp3"
 
     def test_ei_standard_timing(self, load_config):
         """EI uses standard intro timing with lower volumes for briefing format."""

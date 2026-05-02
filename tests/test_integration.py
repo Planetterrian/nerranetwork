@@ -466,7 +466,8 @@ class TestShowConfigs:
         assert config.slug == "env_intel"
         assert config.publishing.x_enabled is False
         assert config.newsletter.enabled is True
-        assert config.audio.music_file == "assets/music/tesla_shorts_time.mp3"
+        # EI got its own dedicated theme in May 2026 (replaced tesla_shorts_time.mp3).
+        assert config.audio.music_file == "assets/music/EnvIntel.mp3"
 
     def test_models_agents_config_details(self):
         """Models & Agents config has expected properties."""
