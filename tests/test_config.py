@@ -177,13 +177,21 @@ class TestDefaultValues:
 
     def test_tts_defaults(self):
         c = TTSConfig()
-        assert c.voice_id == "dTrBzPvD2GpAqkk1MUzA"
+        # Network default since May 2026 — Grok TTS with the "sal"
+        # built-in voice. Tesla Shorts Time is the only English show
+        # that overrides back to ElevenLabs.
+        assert c.provider == "grok"
+        assert c.voice_id == "sal"
+        assert c.language_code == "en"
+        assert c.max_chars == 10000
+        # Legacy ElevenLabs baseline — preserved on the dataclass so
+        # any show that overrides ``provider: elevenlabs`` inherits a
+        # tuned starting point. Harmless under provider=grok.
         assert c.model == "eleven_flash_v2_5"
         assert c.stability == 0.5
         assert c.similarity_boost == 0.75
         assert c.style == 0.0
         assert c.use_speaker_boost is True
-        assert c.max_chars == 10000
         assert c.speed == 1.0
         assert c.apply_text_normalization == "on"
 
@@ -412,7 +420,9 @@ class TestLoadConfigRealFiles:
         assert cfg.sources[0].label == "NASA Breaking"
         assert "space" in cfg.keywords
         assert cfg.llm.model == "grok-4.3"
-        assert cfg.tts.voice_id == "dTrBzPvD2GpAqkk1MUzA"
+        # English shows migrated to Grok TTS (sal voice) in May 2026.
+        assert cfg.tts.provider == "grok"
+        assert cfg.tts.voice_id == "sal"
         assert cfg.audio.music_file == "assets/music/fascinatingfrontiers.mp3"
         assert cfg.audio.background_music_file == "assets/music/fascinatingfrontiers_bg.mp3"
         assert cfg.audio.voice_intro_delay == 5.0
@@ -462,8 +472,13 @@ class TestLoadConfigRealFiles:
         assert "CCME" in cfg.keywords
         assert cfg.llm.model == "grok-4.3"
         assert cfg.llm.digest_temperature == 0.5
-        assert cfg.tts.voice_id == "dTrBzPvD2GpAqkk1MUzA"
-        assert cfg.tts.stability == 0.5  # Normalized to network standard
+        # English shows migrated to Grok TTS (sal voice) in May 2026. The
+        # ElevenLabs settings (stability/style) still inherit from the
+        # legacy block in _defaults.yaml — harmless since the Grok path
+        # ignores them — so these assertions still pass.
+        assert cfg.tts.provider == "grok"
+        assert cfg.tts.voice_id == "sal"
+        assert cfg.tts.stability == 0.5  # Inherited from legacy ElevenLabs baseline
         assert cfg.tts.style == 0.0
         assert cfg.tts.max_chars == 10000
         assert cfg.audio.music_file == "assets/music/tesla_shorts_time.mp3"
@@ -499,9 +514,13 @@ class TestNestedConfigOverrides:
         p.write_text(yaml.dump(data), encoding="utf-8")
 
         cfg = load_config(p)
+        # Overrides applied
         assert cfg.tts.stability == 0.3
         assert cfg.tts.max_chars == 9999
-        assert cfg.tts.voice_id == "dTrBzPvD2GpAqkk1MUzA"
+        # Network defaults preserved (Grok TTS + sal voice; legacy
+        # ElevenLabs baseline still set on the dataclass for back-compat).
+        assert cfg.tts.provider == "grok"
+        assert cfg.tts.voice_id == "sal"
         assert cfg.tts.model == "eleven_flash_v2_5"
 
     def test_partial_audio_override(self, tmp_path):

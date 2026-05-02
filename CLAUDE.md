@@ -10,14 +10,14 @@ Automated daily podcast generation system running 10 shows via a unified
 | Show | Legacy Script | YAML Config | Schedule | X Account | TTS |
 |------|--------------|-------------|----------|-----------|-----|
 | Tesla Shorts Time | — (deleted) | `shows/tesla.yaml` | Daily | `@teslashortstime` | ElevenLabs |
-| Omni View | — (deleted) | `shows/omni_view.yaml` | Odd days | `@omniviewnews` | ElevenLabs |
-| Fascinating Frontiers | — (deleted) | `shows/fascinating_frontiers.yaml` | Even days | `@planetterrian` | ElevenLabs |
-| Planetterrian Daily | — (deleted) | `shows/planetterrian.yaml` | Odd days | `@planetterrian` | ElevenLabs |
-| Env Intel | — | `shows/env_intel.yaml` | Odd weekdays | `@teslashortstime` | ElevenLabs |
-| Models & Agents | — | `shows/models_agents.yaml` | Odd days | — (X disabled) | ElevenLabs |
-| Models & Agents for Beginners | — | `shows/models_agents_beginners.yaml` | Even days | — (X disabled) | ElevenLabs |
+| Omni View | — (deleted) | `shows/omni_view.yaml` | Odd days | `@omniviewnews` | Grok TTS (sal) |
+| Fascinating Frontiers | — (deleted) | `shows/fascinating_frontiers.yaml` | Even days | `@planetterrian` | Grok TTS (sal) |
+| Planetterrian Daily | — (deleted) | `shows/planetterrian.yaml` | Odd days | `@planetterrian` | Grok TTS (sal) |
+| Env Intel | — | `shows/env_intel.yaml` | Odd weekdays | `@teslashortstime` | Grok TTS (sal) |
+| Models & Agents | — | `shows/models_agents.yaml` | Odd days | — (X disabled) | Grok TTS (sal) |
+| Models & Agents for Beginners | — | `shows/models_agents_beginners.yaml` | Even days | — (X disabled) | Grok TTS (sal) |
 | Финансы Просто | — | `shows/finansy_prosto.yaml` | Even days | — (X disabled) | Grok TTS (Olya) |
-| Modern Investing Techniques | — | `shows/modern_investing.yaml` | Weekdays | — (X disabled) | ElevenLabs |
+| Modern Investing Techniques | — | `shows/modern_investing.yaml` | Weekdays | — (X disabled) | Grok TTS (sal) |
 | Привет, Русский! | — | `shows/privet_russian.yaml` | Even days | — (X disabled) | Grok TTS (Olya) |
 
 **Science That Changes Everything** (`digests/science_that_changes.py`, ~83 lines)
@@ -139,7 +139,7 @@ nerranetworks/
 - `GROK_API_KEY` — primary xAI key (all shows)
 - `ELEVENLABS_API_KEY` — ElevenLabs TTS (all shows)
 - `X_*` / `PLANETTERRIAN_X_*` — two separate X accounts
-- Voice IDs: English shows share ElevenLabs voice `dTrBzPvD2GpAqkk1MUzA`. Russian shows (FP/PR) use the **Grok TTS** custom voice `0b875ae2` ("Olya") since May 2026 — see landmine #16.
+- Voice IDs: 9 of 10 shows are on **Grok TTS** as of May 2026 — English shows use the `sal` built-in voice, Russian shows (FP/PR) use the custom `0b875ae2` ("Olya"). Tesla Shorts Time is the lone holdout on ElevenLabs voice `dTrBzPvD2GpAqkk1MUzA`. See landmine #16.
 - See `docs/env_var_inventory.md` for the complete inventory
 
 ### RSS Feeds
@@ -252,14 +252,16 @@ decision); everything else has a live status card.
    reintroduced without updating `_defaults.yaml`.
 10. **Early episodes deleted** — first 20 Tesla, 10 FF, 10 PT, 10 OV episodes
     removed (quality issues). RSS entries removed where applicable.
-11. **English shows use ElevenLabs TTS; Russian shows use Grok TTS (May
-    2026)** — Chatterbox, Kokoro, and Fish Audio were trialled and removed.
-    English shows still use ElevenLabs `eleven_flash_v2_5` (voice
-    `dTrBzPvD2GpAqkk1MUzA`). Russian shows (Финансы Просто, Привет
-    Русский!) migrated to xAI's Grok TTS (`/v1/tts`, voice `0b875ae2`
-    "Olya") for the same persona at ~36× lower per-character cost
-    ($4.20/M vs $150/M for Flash). Reuses `GROK_API_KEY` / `XAI_API_KEY`
-    — no new secret. See landmine #16.
+11. **9 of 10 shows on Grok TTS; Tesla Shorts Time stays on ElevenLabs
+    (May 2026)** — Chatterbox, Kokoro, and Fish Audio were trialled
+    and removed. English shows other than Tesla migrated to xAI's
+    Grok TTS with the `sal` built-in voice; Russian shows use the
+    custom Olya voice (`0b875ae2`). Tesla Shorts Time remains on
+    ElevenLabs `eleven_flash_v2_5` (voice `dTrBzPvD2GpAqkk1MUzA`)
+    because voice continuity matters most on the network's largest
+    public-facing show. Network cost: ~36× cheaper per character on
+    Grok ($4.20/M vs $150/M for ElevenLabs Flash). Reuses
+    `GROK_API_KEY` / `XAI_API_KEY` — no new secret. See landmine #16.
 12. **Summaries JSONs moved** — all summaries live in per-show subdirectories
     (`digests/<show>/summaries_*.json`), not at the `digests/` top level.
 13. **LLM default migrated to `grok-4.3` (May 2026)** — released 2026-04-30,
@@ -302,20 +304,42 @@ decision); everything else has a live status card.
     Data API has no endpoint for this flag. Once flagged once, every
     future video added via the API automatically becomes a podcast
     episode. **One-time setup per playlist — not a code change.**
-16. **Russian shows on Grok TTS, not ElevenLabs (May 2026)** — Финансы
-    Просто and Привет, Русский! switched their `tts.provider` from
-    `elevenlabs` to `grok` and their voice ID from
-    `gedzfqL7OGdPbwm0ynTP` to `0b875ae2` (custom "Olya" voice trained on
-    the xAI Console). Same on-air persona, ~36× cheaper per character
-    ($4.20/M vs $150/M for ElevenLabs Flash v2.5). Implementation
-    details: `engine/tts.py:synthesize()` dispatches on the new
-    `provider` kwarg; the Grok path posts to `https://api.x.ai/v1/tts`
-    and reuses `GROK_API_KEY` / `XAI_API_KEY` (no new secret). Voice
-    settings that are ElevenLabs-only (`stability`, `similarity_boost`,
-    `style`, `use_speaker_boost`, `model`, `speed`) are intentionally
-    absent from the two Russian YAMLs because Grok TTS doesn't expose
-    them. Pricing is per-provider in
-    [`engine/tracking.py`](engine/tracking.py): `TTS_PROVIDER_PRICING`.
-    The `test_russian_shows_use_grok_tts` test in
-    [`tests/test_tts_grok.py`](tests/test_tts_grok.py) blocks accidental
-    rollback to the old ElevenLabs voice.
+16. **TTS network default flipped to Grok TTS (May 2026)** — staged in
+    two PRs:
+    - **First wave (Russian shows):** Финансы Просто and Привет,
+      Русский! switched from ElevenLabs voice `gedzfqL7OGdPbwm0ynTP` to
+      Grok TTS with the custom "Olya" voice `0b875ae2` (trained on the
+      xAI Console). Validated with one live episode (PR Ep017,
+      2026-05-02) before broader rollout.
+    - **Second wave (English shows):** Network default in
+      [`shows/_defaults.yaml`](shows/_defaults.yaml) flipped to
+      `provider: grok`, `voice_id: sal` (Grok built-in named voice),
+      `language_code: en`. The 7 non-Tesla English shows (Omni View,
+      Fascinating Frontiers, Planetterrian, Env Intel, Models &
+      Agents, Models & Agents for Beginners, Modern Investing) now
+      inherit those defaults — their `tts:` blocks are intentionally
+      empty (`{}`) to make inheritance the contract. Tesla Shorts Time
+      explicitly overrides back to `provider: elevenlabs`,
+      `voice_id: dTrBzPvD2GpAqkk1MUzA` because voice continuity on the
+      network's largest show outweighs the cost delta.
+
+    Implementation details: `engine/tts.py:synthesize()` dispatches on
+    the `provider` kwarg; the Grok path posts to
+    `https://api.x.ai/v1/tts` and reuses `GROK_API_KEY` /
+    `XAI_API_KEY` (no new secret). ElevenLabs-only voice settings
+    (`stability`, `similarity_boost`, `style`, `use_speaker_boost`,
+    `model`, `speed`) live in [`shows/_defaults.yaml`](shows/_defaults.yaml)
+    under a `# ---- Legacy ElevenLabs baseline ----` block — harmless
+    when `provider=grok` (Grok path silently ignores them) and a tuned
+    starting point if any show flips back to ElevenLabs. Pricing is
+    per-provider in [`engine/tracking.py`](engine/tracking.py):
+    `TTS_PROVIDER_PRICING`. Three drift guards in
+    [`tests/test_tts_grok.py`](tests/test_tts_grok.py) block silent
+    regressions: `test_russian_shows_use_grok_tts` (Olya voice on
+    Russian shows), `test_english_shows_resolve_to_grok_sal` (sal voice
+    on the 7 English shows after deep-merge), and
+    `test_tesla_stays_on_elevenlabs` (TST voice continuity).
+    `ELEVENLABS_API_KEY` is still required because Tesla uses it; if
+    Tesla ever migrates, the env-var requirement disappears
+    (`run_show.py:_validate_environment` already gates the check on
+    `provider == "elevenlabs"`).
