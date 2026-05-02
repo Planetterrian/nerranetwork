@@ -103,6 +103,30 @@ _RAW_RULES: List[Tuple[str, str, str]] = [
     (r"(?im)^\s*\*\*The Data Says:\*\*\s*", "", "**The Data Says:**"),
     (r"(?im)^\s*\*\*The Tesla Approach:\*\*\s*", "", "**The Tesla Approach:**"),
     (r"(?im)^\s*\*\*The Bottom Line:\*\*\s*", "", "**The Bottom Line:**"),
+    # Prompt-template instruction headers occasionally echoed verbatim.
+    # These are the worst kind of leak: pure prompt scaffold the LLM
+    # mistakenly mirrored into the output. Strip the entire line
+    # (including any trailing instruction text on the same line).
+    (
+        r"(?im)^\s*\*\*TOPIC SELECTION:\*\*[^\n]*\n?",
+        "",
+        "**TOPIC SELECTION:** ... line",
+    ),
+    (
+        r"(?im)^\s*\*\*TOPIC FRESHNESS\b[^\n]*\n?",
+        "",
+        "**TOPIC FRESHNESS:** ... line",
+    ),
+    (
+        r"(?im)^\s*\*\*WHAT TO SKIP\b[^\n]*\n?",
+        "",
+        "**WHAT TO SKIP:** ... line",
+    ),
+    (
+        r"(?im)^\s*\*\*LENGTH TARGET\b[^\n]*\n?",
+        "",
+        "**LENGTH TARGET:** ... line",
+    ),
     # M&AB / Russian-language-show labels.
     (r"(?im)^\s*\*\*What's Cool Today:\*\*\s*", "", "**What's Cool Today:**"),
     (r"(?im)^\s*\*\*What's today's hot story:\*\*\s*", "", "**What's today's hot story:**"),
@@ -129,11 +153,14 @@ _RAW_RULES: List[Tuple[str, str, str]] = [
     (r"(?im)^\s*Source:\s*General concept\s*\n?", "", "Source: General concept"),
     (r"\(full URL from pre-fetched:\s*[^)]*\)", "", "(full URL from pre-fetched: …)"),
     (r"\(full URL from pre[ -]?fetched\s*[^)]*\)", "", "(full URL from pre-fetched: variant)"),
-    # Box-drawing horizontal rules. These look amateurish in HTML email
-    # and the wrapper renders proper <hr> separators between sections.
-    (r"(?m)^\s*━{3,}\s*\n?", "", "box-drawing horizontal rule (━)"),
-    (r"(?m)^\s*─{3,}\s*\n?", "", "box-drawing horizontal rule (─)"),
-    (r"(?m)^\s*═{3,}\s*\n?", "", "box-drawing double rule (═)"),
+    # NOTE: box-drawing horizontal rules (━━━ / ─── / ═══) are NOT
+    # scrubbed here — they're converted to proper ``<hr>`` separators
+    # by ``engine.newsletter_body.replace_box_rules_with_hr`` in the
+    # body-transform stage. Stripping them here would leave the
+    # transform with nothing to convert. The pattern-coverage test
+    # in ``tests/test_newsletter_sanitizer.py`` keeps the name in
+    # the required-list so a future regression to "strip them
+    # entirely" is caught.
 ]
 
 SCAFFOLD_PATTERNS: List[Tuple[Pattern[str], str, str]] = [

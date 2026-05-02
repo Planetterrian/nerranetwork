@@ -261,15 +261,17 @@ def transform_daily_body(body: str, *, slug: str = "") -> str:
       1. Box rules → ``<hr>`` (cheapest, fires for everyone)
       2. Shorten Google News tracking URLs in "Source: …" lines
          (universal — every show is potentially affected)
-      3. Dedup "Read more" source lists (Omni View — repeated URLs)
-      4. TSLA price block (Tesla only)
-      5. Russian vocab cards (Привет only)
+      3. Linkify trailing X/Twitter @handles (every show)
+      4. Dedup "Read more" source lists (Omni View — repeated URLs)
+      5. TSLA price block (Tesla only)
+      6. Russian vocab cards (Привет only)
 
     Each transform is a no-op when its trigger pattern isn't present,
     so calling this for every show is safe.
     """
     body = replace_box_rules_with_hr(body)
     body = shorten_source_urls(body)
+    body = linkify_x_handles(body)
     if slug == "omni_view":
         body = dedup_read_more_sources(body)
     if slug == "tesla":
@@ -277,6 +279,44 @@ def transform_daily_body(body: str, *, slug: str = "") -> str:
     if slug == "privet_russian":
         body = render_russian_vocab_cards(body)
     return body
+
+
+# ---------------------------------------------------------------------------
+# X/Twitter @handle linkification
+# ---------------------------------------------------------------------------
+
+# The closing line of every TST daily reads:
+#   "Let me know your thoughts on today's stories at @teslashortstime."
+# Plain text — clicking does nothing in most clients. This transform
+# rewrites bare ``@handle`` mentions (in prose context, not inside an
+# existing markdown link or URL) to clickable ``[@handle](https://x.com/handle)``.
+#
+# Conservative match: ``@`` preceded by start-of-string or whitespace,
+# 1-15 alphanumeric/underscore chars (X handle limit), not followed by
+# another word character. We deliberately don't touch handles that
+# already live inside a markdown link target ``](https://x.com/foo)`` or
+# inside a URL — the leading-context check rules those out.
+
+_X_HANDLE_RE = re.compile(
+    r"(?<![\w/(\[\]])@([A-Za-z0-9_]{1,15})\b"
+)
+
+
+def linkify_x_handles(body: str) -> str:
+    """Rewrite bare ``@handle`` mentions as clickable markdown links.
+
+    Idempotent — handles already inside ``[@x](url)`` markdown links
+    are skipped because the regex's negative lookbehind blocks the
+    ``](`` and ``/`` characters that would precede them.
+    """
+    if not body or "@" not in body:
+        return body
+
+    def _sub(match: re.Match) -> str:
+        handle = match.group(1)
+        return f"[@{handle}](https://x.com/{handle})"
+
+    return _X_HANDLE_RE.sub(_sub, body)
 
 
 # ---------------------------------------------------------------------------

@@ -1215,6 +1215,21 @@ def run(args: argparse.Namespace) -> None:
             logger.error("BLOCKED: Digest contains LLM refusal text (matched: %s)", _rpat[:60])
             raise SystemExit(1)
 
+    # Scrub LLM scaffold + run body transforms ONCE on the canonical
+    # digest text. Spec v2 follow-up: previously these passes only ran
+    # inside `send_show_newsletter`, so the email subscriber saw the
+    # cleaned version but the blog reader, RSS show-notes reader, and
+    # GitHub Pages summary saw the raw LLM output (with **HOOK:**,
+    # **Date:**, box-drawing rules, **TOPIC SELECTION:**, raw Google
+    # News URLs, etc.). Scrubbing here makes the canonical .md the
+    # single source of truth for every downstream surface. The
+    # newsletter pipeline still re-scrubs as defense-in-depth — both
+    # passes are idempotent.
+    from engine.newsletter_body import transform_daily_body
+    from engine.newsletter_sanitizer import scrub_scaffold
+    x_thread = scrub_scaffold(x_thread)
+    x_thread = transform_daily_body(x_thread, slug=getattr(config, "slug", ""))
+
     # Save digest to file
     digest_md = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}.md"
     digest_md.write_text(x_thread, encoding="utf-8")
