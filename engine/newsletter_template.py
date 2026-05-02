@@ -343,6 +343,12 @@ _DARK_MODE_STYLE = """\
     .brand-text-warn { color:#fbbf24 !important; }
     .surface-warn   { background:#3b2a13 !important; background-color:#3b2a13 !important; }
 
+    /* Tesla price-watch block. The light-mode cream `#fef2f2` has
+     * great contrast against `#0f172a` text, but in dark mode the
+     * universal text-color override flips text to `#e2e8f0` and
+     * cream-on-light-text becomes invisible. Flip the bg too. */
+    .surface-tsla   { background:#3b1c1f !important; background-color:#3b1c1f !important; }
+
     /* Hidden preheader stays hidden in dark mode too. Some Outlook
      * versions ignore display:none from inline styles when dark-mode
      * is active; the !important class hook fixes it. */
@@ -1260,6 +1266,28 @@ def wrap_with_branding(
             show, issue_number, send_date, slug=slug,
         )
 
+    # Wrap the body markdown in a ``surface-white`` table so the
+    # dark-mode ``<style>`` override flips its background. Without
+    # this wrapper Buttondown's markdown→HTML conversion produces
+    # bare ``<p>`` tags that the email client renders against its
+    # own page background, which on iOS Mail dark mode results in
+    # near-black body text (Buttondown default `#0f172a`-ish) against
+    # a darkening surface — barely readable. Spec v2 follow-up.
+    body_wrapped = ""
+    if body_clean.strip():
+        body_wrapped = (
+            '<table role="presentation" width="100%" cellpadding="0" '
+            'cellspacing="0" border="0" '
+            'class="surface-white" '
+            'style="background:#ffffff;">'
+            '<tr><td style="padding:8px 24px;'
+            "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
+            'Roboto,Helvetica,Arial,sans-serif;'
+            'font-size:15px;line-height:1.6;color:#0f172a;">'
+            f'{body_clean}'
+            '</td></tr></table>'
+        )
+
     # Blocks separated by two blank lines so markdown processors treat
     # them as separate sections. Empty blocks contribute nothing. The
     # dark-mode <style> block goes at the very top so any client that
@@ -1272,7 +1300,7 @@ def wrap_with_branding(
         stats_block,
         featured_block,
         disclaimer,
-        body_clean,
+        body_wrapped,
         p_s_block,
         cross_network,
         reply_share,

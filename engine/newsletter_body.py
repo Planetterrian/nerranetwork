@@ -97,12 +97,18 @@ def render_tsla_price_block(body: str) -> str:
                 f' <span style="color:{delta_color};font-size:14px;'
                 f'font-weight:600;">{arrow} {delta}</span>'.strip()
             )
+        # Dark-mode rules in `_DARK_MODE_STYLE` flip ``.surface-tsla``
+        # to a dark slate background. Without the class hook the cream
+        # `#fef2f2` survives into dark mode and the dark-text override
+        # turns the whole block into light-on-light = invisible. Spec
+        # v2 follow-up after the May 2 Tesla daily render bug.
         return (
             '<table role="presentation" cellpadding="0" cellspacing="0" '
             'border="0" '
             'class="surface-white" '
             'style="background:#ffffff;margin:0 0 16px;">'
             '<tr><td '
+            'class="surface-tsla" '
             'style="padding:10px 14px;border-left:4px solid #E31937;'
             'background:#fef2f2;border-radius:0 6px 6px 0;'
             "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
@@ -111,7 +117,8 @@ def render_tsla_price_block(body: str) -> str:
             'style="font-size:11px;font-weight:700;color:#475569;'
             'text-transform:uppercase;letter-spacing:0.06em;'
             'margin-bottom:2px;">TSLA today</div>'
-            '<div style="font-size:18px;font-weight:700;color:#0f172a;'
+            '<div class="brand-text-tesla" '
+            'style="font-size:18px;font-weight:700;color:#0f172a;'
             'line-height:1.2;">'
             f'{price}{delta_html}'
             '</div>'
@@ -252,14 +259,17 @@ def transform_daily_body(body: str, *, slug: str = "") -> str:
     Order matters:
 
       1. Box rules → ``<hr>`` (cheapest, fires for everyone)
-      2. Dedup "Read more" source lists (Omni View — repeated URLs)
-      3. TSLA price block (Tesla only)
-      4. Russian vocab cards (Привет only)
+      2. Shorten Google News tracking URLs in "Source: …" lines
+         (universal — every show is potentially affected)
+      3. Dedup "Read more" source lists (Omni View — repeated URLs)
+      4. TSLA price block (Tesla only)
+      5. Russian vocab cards (Привет only)
 
     Each transform is a no-op when its trigger pattern isn't present,
     so calling this for every show is safe.
     """
     body = replace_box_rules_with_hr(body)
+    body = shorten_source_urls(body)
     if slug == "omni_view":
         body = dedup_read_more_sources(body)
     if slug == "tesla":
@@ -267,6 +277,61 @@ def transform_daily_body(body: str, *, slug: str = "") -> str:
     if slug == "privet_russian":
         body = render_russian_vocab_cards(body)
     return body
+
+
+# ---------------------------------------------------------------------------
+# "Source: <long-url>" shortening (post-fetch defense)
+# ---------------------------------------------------------------------------
+
+# Match "Source: <url>" emitted by the LLM at the end of a story. The URL
+# can be Google News (`news.google.com/rss/articles/CBMi...`) which is
+# 200-600 chars, or any other publisher URL with utm_*-style noise.
+# Captures (1) the URL itself; we replace the whole "Source: …" tail.
+_SOURCE_URL_RE = re.compile(
+    r"\s*Source:\s*(https?://[^\s)]+)",
+    flags=re.IGNORECASE,
+)
+
+
+def shorten_source_urls(body: str) -> str:
+    """Render long bare-URL "Source:" trailers as compact "Source: <domain>"
+    markdown links. Spec v2 follow-up after the May 2 Tesla daily showed
+    the literal Google News redirect blob `CBMiig...` in the body.
+
+    The fetcher's ``resolve_google_news_url`` canonicalizes URLs at fetch
+    time, but (a) cached articles from before that fix landed still have
+    the long URLs and (b) network failures during resolution leave the
+    original Google-News URL in the article record. This transform is a
+    final visual cleanup applied to the rendered body so the email never
+    shows the 600-char tracking blob even when the upstream resolver
+    bailed.
+    """
+    if not body or "Source:" not in body:
+        return body
+
+    def _sub(match: re.Match) -> str:
+        url = match.group(1).rstrip(" ).,;")
+        # Extract a human-readable domain.
+        try:
+            from urllib.parse import urlparse
+            host = urlparse(url).netloc
+        except Exception:  # noqa: BLE001
+            host = ""
+        if not host:
+            return match.group(0)
+        # Strip leading "www."; if it's still Google News after our
+        # fetch-time resolver bailed, label it that way explicitly so
+        # the reader at least sees what they're getting.
+        host = host.lower()
+        if host.startswith("www."):
+            host = host[4:]
+        if host.startswith("news.google."):
+            label = "Google News"
+        else:
+            label = host
+        return f" Source: [{label}]({url})"
+
+    return _SOURCE_URL_RE.sub(_sub, body)
 
 
 # ---------------------------------------------------------------------------

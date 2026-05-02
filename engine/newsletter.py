@@ -359,7 +359,6 @@ def send_show_newsletter(
         _today = _dt.date.today()
     from engine.newsletter_template import (
         build_subject_line,
-        compute_issue_number,
         wrap_with_branding,
     )
     subject = build_subject_line(
@@ -404,7 +403,13 @@ def send_show_newsletter(
         daily_date=_today,
         adjacent_shows=adjacent_shows,
         requires_financial_disclaimer=requires_disc,
-        issue_number=compute_issue_number(slug, _today),
+        # Daily emails count by episode, not by weeks-since-launch.
+        # The latter (compute_issue_number) is for weekly synthesis
+        # newsletters; on a daily it produces "Issue #1" for any show
+        # that launched within the last 7 days regardless of how many
+        # episodes have shipped (Tesla Ep 458 read "Issue #1" on
+        # the May 2 daily — bug). Pass the episode number explicitly.
+        issue_number=episode_num,
     )
 
     # Pre-send contrast tripwire (§7.3). Light-mode-only check — the
