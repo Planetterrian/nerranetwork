@@ -228,11 +228,23 @@ def test_by_the_numbers_empty_list_renders_nothing():
 # P.S. block
 # ---------------------------------------------------------------------------
 
-def test_p_s_html_renders_with_brand_left_border():
-    out = nt._build_p_s_html("If you've been on the fence about FSD…", "#E31937")
+def test_p_s_html_renders_with_dashed_top_border():
+    """Spec v2 §7.7: P.S. moved from a brand-color left border to a
+    dashed top-border separator with italic body + brand-only label."""
+    out = nt._build_p_s_html(
+        "If you've been on the fence about FSD…",
+        "#E31937", slug="tesla",
+    )
     assert "P.S." in out
     assert "FSD" in out
-    assert "border-left:3px solid #E31937" in out
+    # New dashed top-border separator (replaces brand-color left border).
+    assert "border-top:1px dashed #cbd5e1" in out
+    # Brand color is reserved for the "P.S." label only.
+    assert "color:#E31937" in out
+    # Italic body — aside, not section header.
+    assert "font-style:italic" in out
+    # Brand class for dark-mode override.
+    assert 'class="brand-text-tesla"' in out
 
 
 def test_p_s_empty_renders_nothing():

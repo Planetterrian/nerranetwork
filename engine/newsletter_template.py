@@ -167,7 +167,29 @@ def _format_date_pill(label: str, date: datetime.date) -> str:
 
 
 def _build_hero_html(show: Dict[str, str], pill_text: str) -> str:
-    """Render the email's hero block as inline-styled HTML."""
+    """Render the email's hero block as inline-styled HTML.
+
+    Several fixes ship with the May 2026 newsletter spec v2:
+
+    1. **Date pill is a `<table>` with `bgcolor`, not an inline-block
+       `<div>` with rgba()**. Outlook desktop (Word renderer) ignores
+       both ``rgba()`` and ``display:inline-block`` on `<div>`s, so the
+       pill background was failing — leaving white text on the
+       gradient (low-contrast on Финансы pink, M&AB orange, PT blue).
+       The new `<table>` pill uses solid ``#0b1220`` (very dark navy),
+       which gives ≥7:1 contrast with white text on every brand
+       gradient. (Spec §1.1.)
+
+    2. **Cover `<img>` carries inline `color/font-size/font-weight`**
+       so the alt-text fallback is readable when images are blocked
+       (Outlook desktop default). Without this the alt text inherits
+       client defaults — typically near-black — and disappears against
+       Tesla red, Omni View navy, etc. (Spec §1.2.)
+
+    3. **VML wrapper for the gradient cell** so Outlook desktop
+       renders a solid darker brand colour instead of the gradient's
+       transparent default. (Spec §1.5.)
+    """
     name = show["name"]
     tagline = show["tagline"]
     cover_url = show["cover_url"]
@@ -188,59 +210,172 @@ def _build_hero_html(show: Dict[str, str], pill_text: str) -> str:
         f'width="120" height="120" '
         f'style="display:block;border-radius:18px;width:120px;'
         f'height:120px;object-fit:cover;margin:0 auto 16px;'
-        f'box-shadow:0 8px 24px rgba(0,0,0,0.25);" />'
+        f'box-shadow:0 8px 24px rgba(0,0,0,0.25);'
+        # Alt-text fallback styling — visible only when the image
+        # itself fails to load. Bright white, bold so it reads against
+        # any of the brand gradients.
+        f'color:#ffffff;font-size:14px;font-weight:700;" />'
         if cover_url else ""
     )
 
+    # Date / week pill — `<table>` with bgcolor + hex background so
+    # Outlook (and any client that strips rgba) renders the dark navy
+    # capsule around the white text. The 100-px border-radius is
+    # recognised by Apple Mail / Gmail and degrades to a rectangle
+    # in Outlook (still readable).
+    pill_html = (
+        '<table role="presentation" border="0" cellpadding="0" '
+        'cellspacing="0" style="margin:0 auto;">'
+        '<tr>'
+        '<td bgcolor="#0b1220" '
+        'style="background-color:#0b1220;color:#ffffff;font-size:12px;'
+        'font-weight:600;padding:6px 14px;border-radius:100px;'
+        'letter-spacing:0.04em;text-transform:uppercase;'
+        "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
+        'Roboto,Helvetica,Arial,sans-serif;">'
+        f'{pill_text}'
+        '</td>'
+        '</tr>'
+        '</table>'
+    )
+
+    # The gradient cell. The VML conditional comments wrap the gradient
+    # `<table>` so Outlook desktop falls back to a solid darker brand
+    # background; non-Outlook clients ignore the comments and see the
+    # gradient.
     return (
+        # Outlook gradient fallback (Word renderer doesn't understand
+        # CSS gradients). v:rect produces a solid-fill behind the
+        # native HTML, which Outlook then composites *over* the
+        # original table. We use the darker stop so white text stays
+        # readable.
+        '<!--[if gte mso 9]>'
+        '<v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" '
+        'stroke="false" '
+        'style="width:600px;mso-position-horizontal:center;">'
+        f'<v:fill type="solid" color="{brand_dark}" />'
+        '<v:textbox inset="0,0,0,0"><div>'
+        '<![endif]-->'
         f'<table role="presentation" width="100%" cellpadding="0" '
-        f'cellspacing="0" border="0" '
-        f'style="background:linear-gradient(135deg,{brand} 0%,'
+        f'cellspacing="0" border="0" bgcolor="{brand_dark}" '
+        f'style="background-color:{brand_dark};'
+        f'background:linear-gradient(135deg,{brand} 0%,'
         f'{brand_dark} 100%);">'
         f'<tr><td align="center" '
         f'style="padding:40px 24px 32px;'
-        f'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\','
+        f"font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
         f'Roboto,Helvetica,Arial,sans-serif;">'
         f'{cover_img}'
         f'<h1 style="color:#ffffff;font-size:28px;font-weight:700;'
         f'margin:0 0 8px;line-height:1.2;letter-spacing:-0.01em;">'
         f'{name}</h1>'
         + (
-            f'<p style="color:rgba(255,255,255,0.92);font-size:15px;'
-            f'margin:0 0 20px;line-height:1.4;max-width:480px;">'
+            f'<p style="color:#ffffff;font-size:15px;'
+            f'margin:0 0 20px;line-height:1.4;max-width:480px;'
+            f'opacity:0.92;">'
             f'{tagline}</p>'
             if tagline else ""
         )
-        + f'<div style="display:inline-block;background:rgba(0,0,0,0.25);'
-        f'color:#ffffff;font-size:12px;font-weight:600;'
-        f'padding:6px 14px;border-radius:100px;'
-        f'letter-spacing:0.04em;text-transform:uppercase;">'
-        f'{pill_text}</div>'
-        f'</td></tr></table>'
+        + pill_html
+        + '</td></tr></table>'
+        '<!--[if gte mso 9]>'
+        '</div></v:textbox></v:rect>'
+        '<![endif]-->'
     )
 
 
 _DARK_MODE_STYLE = """\
 <style>
-  /* Dark-mode overrides for clients that respect prefers-color-scheme
-   * (Apple Mail iOS/macOS, some Outlook versions). Gmail/Outlook 365
-   * apply their own algorithmic dark mode and ignore <style>; for those
-   * we rely on inline styles on the gradient hero looking acceptable
-   * either way (the brand-color background dominates the cell). */
+  /* Newsletter v2 (May 2026): expanded dark-mode stylesheet that
+   * targets each brand color individually so contrast hits WCAG AA on
+   * the dark surface, plus class hooks for ``preheader``,
+   * ``card``, ``surface-*`` so inline-color overrides don't lose the
+   * specificity war in Outlook iOS / mobile Gmail.
+   *
+   * Spec references: §1.3 light-mode contrast swaps, §1.4 dark-mode
+   * brand tokens + ``.preheader`` hide.
+   */
+  body, table, td, p, h1, h2, h3, h4, span, div, a {
+    -webkit-text-size-adjust:100%;
+    -ms-text-size-adjust:100%;
+  }
+
   @media (prefers-color-scheme: dark) {
-    body, table, td { background-color:#0f172a !important; }
-    body, p, h1, h2, h3, h4, td, span, div { color:#e2e8f0 !important; }
-    a { color:#93c5fd !important; }
-    /* Soft override on the off-white card backgrounds so they don't
-     * shine out against the dark page. */
+    /* Page + table containers — flip the white shells. */
+    body, .email-bg, .surface-white, .surface-fafafa, .surface-f8fafc,
     table[role=presentation] td[style*='background:#ffffff'],
     table[role=presentation] td[style*='background:#fafafa'],
     table[role=presentation] td[style*='background:#f8fafc'] {
-      background-color:#1e293b !important;
+      background:#0f172a !important;
+      background-color:#0f172a !important;
     }
+
+    /* Cards (slightly lifted "panel" surfaces). */
+    .card { background:#1e293b !important; background-color:#1e293b !important; }
+
+    /* Primary text on every dark-mode surface. */
+    body, p, h1, h2, h3, h4, td, span, div, li {
+      color:#e2e8f0 !important;
+    }
+    /* Secondary / muted text — class-targeted so it doesn't override
+     * other usages. */
+    .text-muted { color:#94a3b8 !important; }
+
+    /* Links. */
+    a, a span { color:#93c5fd !important; }
+
+    /* Brand-color tokens — lighter dark-mode variants for AA contrast
+     * on `#1e293b` cards. The original brand colors are preserved in
+     * inline styles for light mode; dark mode lifts each one. */
+    .brand-text-tesla     { color:#fb7185 !important; }   /* was #E31937 */
+    .brand-text-mit       { color:#34d399 !important; }   /* was #059669 */
+    .brand-text-omni      { color:#60a5fa !important; }   /* was #0B6FD6 */
+    .brand-text-ma        { color:#a78bfa !important; }   /* was #8B5CF6 */
+    .brand-text-mab       { color:#fbbf24 !important; }   /* was #F59E0B */
+    .brand-text-frontiers { color:#a5b4fc !important; }   /* was #7C5CFF */
+    .brand-text-envintel  { color:#86efac !important; }   /* was #1B5E20 */
+    .brand-text-privet    { color:#a5b4fc !important; }   /* was #6366F1 */
+    .brand-text-finansy   { color:#f9a8d4 !important; }   /* was #EC4899 */
+    .brand-text-planet    { color:#67e8f9 !important; }   /* was #018DB1 */
+
+    /* Financial-disclaimer callout background (was cream-amber) and
+     * the dark-amber text — flip both for legibility. */
+    .brand-text-warn { color:#fbbf24 !important; }
+    .surface-warn   { background:#3b2a13 !important; background-color:#3b2a13 !important; }
+
+    /* Hidden preheader stays hidden in dark mode too. Some Outlook
+     * versions ignore display:none from inline styles when dark-mode
+     * is active; the !important class hook fixes it. */
+    .preheader { display:none !important; }
+
+    /* `<hr>` separators flip from light slate to dark slate. */
+    hr { border-top-color:#334155 !important; }
   }
 </style>
 """
+
+
+# ---------------------------------------------------------------------------
+# Per-show CSS class for brand-text dark-mode variants
+# ---------------------------------------------------------------------------
+
+_SLUG_TO_BRAND_CLASS: Dict[str, str] = {
+    "tesla": "brand-text-tesla",
+    "modern_investing": "brand-text-mit",
+    "omni_view": "brand-text-omni",
+    "models_agents": "brand-text-ma",
+    "models_agents_beginners": "brand-text-mab",
+    "fascinating_frontiers": "brand-text-frontiers",
+    "env_intel": "brand-text-envintel",
+    "privet_russian": "brand-text-privet",
+    "finansy_prosto": "brand-text-finansy",
+    "planetterrian": "brand-text-planet",
+}
+
+
+def _brand_class(slug: str) -> str:
+    """Return the CSS class for *slug*'s brand-text dark-mode token."""
+    return _SLUG_TO_BRAND_CLASS.get(slug, "")
 
 
 def _build_preheader_html(preheader: str) -> str:
@@ -256,8 +391,13 @@ def _build_preheader_html(preheader: str) -> str:
         return ""
     pad = "&nbsp;&zwnj;" * 24
     safe = preheader.replace("<", "&lt;").replace(">", "&gt;")
+    # `.preheader` class hooks the dark-mode override (see
+    # `_DARK_MODE_STYLE`) — prevents Outlook 2016/2019 from leaking
+    # the preview text into the visible body when it ignores
+    # ``display:none`` on inline-styled divs.
     return (
-        '<div style="display:none;font-size:1px;color:#fafafa;'
+        '<div class="preheader" '
+        'style="display:none;font-size:1px;color:#fafafa;'
         'line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;'
         'mso-hide:all;">'
         f'{safe}{pad}'
@@ -266,9 +406,14 @@ def _build_preheader_html(preheader: str) -> str:
 
 
 def _build_by_the_numbers_html(
-    stats: Optional[List[Dict[str, str]]], brand: str
+    stats: Optional[List[Dict[str, str]]], brand: str, slug: str = ""
 ) -> str:
-    """Render up to 3 stat tiles right under the hero, before the body."""
+    """Render up to 3 stat tiles right under the hero, before the body.
+
+    *slug* picks the dark-mode brand-text class (so the value number
+    flips to a lighter variant on dark surfaces — see
+    ``_DARK_MODE_STYLE``).
+    """
     if not stats:
         return ""
     cells: List[str] = []
@@ -282,9 +427,11 @@ def _build_by_the_numbers_html(
         cells.append(
             f'<td align="center" valign="top" '
             f'style="padding:8px 6px;width:33%;">'
-            f'<div style="font-size:22px;font-weight:700;color:{brand};'
+            f'<div class="{_brand_class(slug)}" '
+            f'style="font-size:22px;font-weight:700;color:{brand};'
             f'line-height:1.1;letter-spacing:-0.01em;">{v_safe}</div>'
-            f'<div style="font-size:11px;color:#64748b;'
+            f'<div class="text-muted" '
+            f'style="font-size:11px;color:#475569;'
             f'text-transform:uppercase;letter-spacing:0.06em;'
             f'margin-top:4px;line-height:1.3;">{l_safe}</div>'
             f'</td>'
@@ -294,12 +441,13 @@ def _build_by_the_numbers_html(
     return (
         '<table role="presentation" width="100%" cellpadding="0" '
         'cellspacing="0" border="0" '
+        'class="surface-white" '
         'style="background:#ffffff;border-bottom:1px solid #e2e8f0;">'
         '<tr><td align="center" '
         'style="padding:18px 16px;'
-        'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\','
+        "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
         'Roboto,Helvetica,Arial,sans-serif;">'
-        '<div style="font-size:11px;color:#94a3b8;font-weight:600;'
+        '<div style="font-size:11px;color:#475569;font-weight:600;'
         'text-transform:uppercase;letter-spacing:0.08em;'
         'margin-bottom:10px;">By the numbers</div>'
         '<table role="presentation" width="100%" cellpadding="0" '
@@ -310,30 +458,47 @@ def _build_by_the_numbers_html(
     )
 
 
-def _build_financial_disclaimer_html() -> str:
+def _build_financial_disclaimer_html(language: str = "en") -> str:
     """Styled callout box for shows that discuss financial topics.
 
     Replaces the old in-prose ``**FINANCIAL DISCLAIMER:**`` line with
     a visually-distinct amber sidebar so it doesn't get lost in the
     body and is unmistakable to subscribers.
+
+    *language* picks the copy: ``"en"`` (default) or ``"ru"`` for
+    Финансы Просто. Spec §4.4.
     """
+    if language == "ru":
+        body = (
+            '<strong>Внимание:</strong> Только для образовательных и '
+            'развлекательных целей. Это не финансовая консультация. '
+            'Все упомянутые сделки — учебные. '
+            'Всегда проводите собственное исследование.'
+        )
+    else:
+        body = (
+            '<strong>Heads up:</strong> Educational and entertainment only. '
+            'Not financial advice. Any trades discussed are simulated. '
+            'Always do your own research.'
+        )
     return (
         '<table role="presentation" width="100%" cellpadding="0" '
         'cellspacing="0" border="0" '
+        'class="surface-warn" '
         'style="background:#FFF7ED;border-left:4px solid #F59E0B;">'
         '<tr><td '
         'style="padding:12px 16px;'
-        'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\','
+        "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
         'Roboto,Helvetica,Arial,sans-serif;'
         'font-size:13px;color:#78350F;line-height:1.5;">'
-        '<strong>Heads up:</strong> Educational and entertainment only. '
-        'Not financial advice. Any trades discussed are simulated. '
-        'Always do your own research.'
+        '<span class="brand-text-warn" style="color:#78350F;">'
+        f'{body}'
+        '</span>'
         '</td></tr></table>'
     )
 
 
-def _build_p_s_html(p_s: str, brand: str) -> str:
+def _build_p_s_html(p_s: str, brand: str, slug: str = "") -> str:
     """Render the P.S. block between the body and the footer.
 
     P.S. is one of the most-read elements of any newsletter; we render
@@ -343,17 +508,28 @@ def _build_p_s_html(p_s: str, brand: str) -> str:
     if not p_s:
         return ""
     safe = p_s.replace("<", "&lt;").replace(">", "&gt;")
+    # Spec §7.7: P.S. gets a dashed top-border separator and italic
+    # treatment so it stands out from the body without competing
+    # with the cross-network card below it. Brand color is reserved
+    # for the "P.S." label only — the body itself is muted slate so
+    # it reads as an aside, not a section header.
     return (
         '<table role="presentation" width="100%" cellpadding="0" '
-        'cellspacing="0" border="0" style="background:#ffffff;">'
+        'cellspacing="0" border="0" '
+        'class="surface-white" '
+        'style="background:#ffffff;">'
         '<tr><td '
         'style="padding:8px 24px 24px;'
-        'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\','
+        "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
         'Roboto,Helvetica,Arial,sans-serif;">'
-        f'<p style="font-size:15px;line-height:1.6;color:#0f172a;'
-        f'margin:0;border-left:3px solid {brand};padding:4px 0 4px 14px;">'
-        f'<strong style="color:{brand};letter-spacing:0.04em;">P.S.</strong>'
+        '<div style="border-top:1px dashed #cbd5e1;padding-top:14px;">'
+        f'<p style="font-size:14px;line-height:1.6;color:#475569;'
+        f'margin:0;font-style:italic;">'
+        f'<strong class="{_brand_class(slug)}" '
+        f'style="font-style:normal;color:{brand};'
+        f'letter-spacing:0.04em;">P.S.</strong>'
         f'&nbsp;{safe}</p>'
+        '</div>'
         '</td></tr></table>'
     )
 
@@ -590,7 +766,8 @@ def _build_featured_episode_html(
         f'line-height:1.4;margin:0 0 10px;">'
         f'Episode {num} · {safe_hook}'
         '</div>'
-        f'<div style="font-size:12px;color:#64748b;margin:0 0 14px;">'
+        f'<div class="text-muted" '
+        f'style="font-size:12px;color:#475569;margin:0 0 14px;">'
         f'{safe_date}</div>'
         f'<a href="{listen}" '
         f'style="display:inline-block;background:{brand};color:#ffffff;'
@@ -626,34 +803,44 @@ def _build_cross_network_html(
         n_safe = name.replace("<", "&lt;").replace(">", "&gt;")
         h_safe = hook.replace("<", "&lt;").replace(">", "&gt;")
         prefix = f"{emoji} " if emoji else ""
+        # Spec §6.1: the show name itself should be clickable, not
+        # just the hook text after the em-dash. We wrap both name AND
+        # hook in the same anchor so anywhere on the row is a click
+        # target — bigger tap surface on mobile.
         if url:
-            link_open = (
+            row_open = (
                 f'<a href="{url}" '
-                f'style="color:#0f172a;text-decoration:none;'
-                f'border-bottom:1px solid {brand};">'
+                f'style="display:block;color:inherit;text-decoration:none;">'
             )
-            link_close = "</a>"
+            row_close = "</a>"
         else:
-            link_open = link_close = ""
+            row_open = row_close = ""
         rows.append(
             '<tr><td '
             'style="padding:10px 0;border-top:1px solid #e2e8f0;'
             'font-size:14px;line-height:1.5;color:#334155;">'
-            f'<strong style="color:#0f172a;">{prefix}{link_open}'
-            f'{n_safe}{link_close}</strong>'
-            f'<span style="color:#64748b;"> — {h_safe}</span>'
+            f'{row_open}'
+            f'<strong style="color:#0f172a;'
+            + (f'border-bottom:1px solid {brand};' if url else "")
+            + f'">{prefix}{n_safe}</strong>'
+            f'<span class="text-muted" style="color:#475569;">'
+            f' — {h_safe}</span>'
+            f'{row_close}'
             '</td></tr>'
         )
     if not rows:
         return ""
     return (
         '<table role="presentation" width="100%" cellpadding="0" '
-        'cellspacing="0" border="0" style="background:#f8fafc;">'
+        'cellspacing="0" border="0" '
+        'class="surface-f8fafc" '
+        'style="background:#f8fafc;">'
         '<tr><td '
         'style="padding:24px;'
-        'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\','
+        "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
         'Roboto,Helvetica,Arial,sans-serif;">'
-        '<div style="font-size:11px;font-weight:700;color:#64748b;'
+        '<div class="text-muted" '
+        'style="font-size:11px;font-weight:700;color:#475569;'
         'letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">'
         '🌐 Across the Nerra Network'
         '</div>'
@@ -666,9 +853,17 @@ def _build_cross_network_html(
 
 
 def _build_reply_share_html(
-    show: Dict[str, str], *, archive_url: str = ""
+    show: Dict[str, str],
+    *,
+    archive_url: str = "",
+    slug: str = "",
 ) -> str:
     """Render a reply-CTA + share-intents row above the footer CTAs.
+
+    Russian-language shows (FP/PR) get Russian copy for both the reply
+    CTA and the share-intent text — see spec §4.1 / §4.2. The chip
+    labels stay in English because that's what the underlying buttons
+    do (Share on X, Share on LinkedIn) and the brands are global.
 
     Mailto opens a prefilled message. Twitter/LinkedIn/WhatsApp share
     intents point to the archive_url (the show landing page, since
@@ -678,9 +873,29 @@ def _build_reply_share_html(
     brand = show["brand_color"]
     target = (archive_url or show["show_page"]).strip()
 
+    # Russian-language localization for the reply CTA + share text.
+    is_russian = slug in ("finansy_prosto", "privet_russian")
+    if is_russian:
+        reply_html = (
+            '💬 <strong>Ответьте на это письмо</strong> — '
+            'Патрик читает каждое.'
+        )
+        share_text = f'Слушаю «{name}» — рекомендую:'
+        share_x_label = "Поделиться в X"
+        share_li_label = "Поделиться в LinkedIn"
+        share_wa_label = "Поделиться в WhatsApp"
+    else:
+        reply_html = (
+            '💬 <strong>Reply to this email</strong> — '
+            'Patrick reads every one.'
+        )
+        share_text = f"I'm reading {name} this week — give it a listen:"
+        share_x_label = "Share on X"
+        share_li_label = "Share on LinkedIn"
+        share_wa_label = "Share on WhatsApp"
+
     # Pre-encode the share intents (URL-encoded query strings).
     import urllib.parse as _u
-    share_text = f"I'm reading {name} this week — give it a listen:"
     twitter = (
         "https://twitter.com/intent/tweet?"
         + _u.urlencode({"text": share_text, "url": target})
@@ -705,19 +920,85 @@ def _build_reply_share_html(
 
     return (
         '<table role="presentation" width="100%" cellpadding="0" '
-        'cellspacing="0" border="0" style="background:#ffffff;">'
+        'cellspacing="0" border="0" '
+        'class="surface-white" '
+        'style="background:#ffffff;">'
         '<tr><td align="center" '
         'style="padding:8px 16px 20px;'
-        'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\','
+        "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
         'Roboto,Helvetica,Arial,sans-serif;color:#475569;">'
         '<p style="font-size:13px;margin:0 0 10px;line-height:1.5;">'
-        '💬 <strong>Reply to this email</strong> — Patrick reads every one.'
+        f'{reply_html}'
         '</p>'
         '<div>'
-        + _chip(twitter, "Share on X")
-        + _chip(linkedin, "Share on LinkedIn")
-        + _chip(whatsapp, "Share on WhatsApp")
+        + _chip(twitter, share_x_label)
+        + _chip(linkedin, share_li_label)
+        + _chip(whatsapp, share_wa_label)
         + '</div>'
+        '</td></tr></table>'
+    )
+
+
+def _build_view_in_browser_html(archive_url: str) -> str:
+    """Top-of-body "View in browser" link for clients that mangle the
+    rendered HTML (mostly Outlook desktop with images blocked).
+
+    Spec §7.1. Empty archive_url → empty string (no link, no row).
+    """
+    if not archive_url:
+        return ""
+    return (
+        '<table role="presentation" width="100%" cellpadding="0" '
+        'cellspacing="0" border="0" '
+        'class="surface-white" '
+        'style="background:#ffffff;">'
+        '<tr><td align="center" '
+        'style="padding:8px 16px;font-size:11px;'
+        "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
+        'Roboto,Helvetica,Arial,sans-serif;">'
+        '<a class="text-muted" '
+        f'href="{archive_url}" '
+        'style="color:#475569;text-decoration:underline;">'
+        'View this email in your browser'
+        '</a>'
+        '</td></tr></table>'
+    )
+
+
+def _build_issue_counter_html(
+    show: Dict[str, str], issue_number: int, send_date: datetime.date,
+    *, slug: str = "",
+) -> str:
+    """Per-show issue counter rendered just above Buttondown's auto-footer.
+
+    Spec §7.2 / §1.6. Buttondown auto-appends a network-wide counter
+    we can't suppress on the current plan; this block overrides it
+    visually with the correct per-show count and a properly styled
+    color that survives dark mode.
+    """
+    name = show.get("name") or "Nerra Network"
+    is_russian = slug in ("finansy_prosto", "privet_russian")
+    if is_russian:
+        label = (
+            f'Выпуск #{issue_number} · {name} · '
+            f'{send_date.strftime("%d.%m.%Y")}'
+        )
+    else:
+        label = (
+            f'Issue #{issue_number} · {name} · '
+            f'{send_date.strftime("%b %-d, %Y")}'
+        )
+    return (
+        '<table role="presentation" width="100%" cellpadding="0" '
+        'cellspacing="0" border="0" '
+        'class="surface-fafafa" '
+        'style="background:#fafafa;">'
+        '<tr><td align="center" '
+        'class="text-muted" '
+        'style="padding:14px 24px;font-size:12px;color:#475569;'
+        "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
+        'Roboto,Helvetica,Arial,sans-serif;">'
+        f'{label}'
         '</td></tr></table>'
     )
 
@@ -747,10 +1028,11 @@ def _build_footer_html(show: Dict[str, str]) -> str:
     return (
         f'<table role="presentation" width="100%" cellpadding="0" '
         f'cellspacing="0" border="0" '
+        f'class="surface-fafafa" '
         f'style="background:#fafafa;border-top:4px solid {brand};">'
         f'<tr><td align="center" '
         f'style="padding:32px 24px;'
-        f'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\','
+        f"font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
         f'Roboto,Helvetica,Arial,sans-serif;color:#0f172a;">'
         f'<p style="font-size:14px;color:#475569;margin:0 0 16px;">'
         f'Catch up on more {name}:'
@@ -758,18 +1040,26 @@ def _build_footer_html(show: Dict[str, str]) -> str:
         f'<div style="line-height:1.8;">'
         f'{listen}{watch}{blog}'
         f'</div>'
-        f'<p style="font-size:12px;color:#94a3b8;margin:24px 0 4px;'
+        # AI-disclosure line — bumped from #94a3b8 (3.0:1 on white) to
+        # #475569 (6.4:1) so light-mode hits AA. Spec §1.3.
+        # The voice provider is now "Grok TTS (xAI)" for every show
+        # except — well, after the May 2026 full migration, every
+        # show. Update the disclosure copy accordingly.
+        f'<p class="text-muted" '
+        f'style="font-size:12px;color:#475569;margin:24px 0 4px;'
         f'line-height:1.5;">'
         f'<a href="{_NETWORK_SITE}" '
         f'style="color:#475569;text-decoration:none;font-weight:600;">'
         f'Nerra Network</a> · '
-        f'AI-narrated voice (ElevenLabs) · '
+        f'AI-narrated voice (Grok TTS) · '
         f'Editorial by Patrick'
         f'</p>'
-        f'<p style="font-size:11px;color:#cbd5e1;margin:0;line-height:1.5;">'
+        # Unsubscribe / subscription source — same contrast bump.
+        f'<p class="text-muted" '
+        f'style="font-size:11px;color:#475569;margin:0;line-height:1.5;">'
         f'You\'re receiving this because you subscribed to {name} on '
         f'<a href="{_NETWORK_SITE}" '
-        f'style="color:#94a3b8;text-decoration:underline;">'
+        f'style="color:#475569;text-decoration:underline;">'
         f'nerranetwork.com</a>.'
         f'</p>'
         f'</td></tr></table>'
@@ -808,23 +1098,45 @@ def compute_issue_number(
 
 
 def build_subject_line(
-    slug: str, subject_hook: str, *, send_date: Optional[datetime.date] = None
+    slug: str,
+    subject_hook: str,
+    *,
+    send_date: Optional[datetime.date] = None,
+    hook_max_chars: int = 90,
+    is_daily: bool = False,
 ) -> str:
     """Compose the final email subject from a hook + show short label.
 
     Format: ``"<hook> · <short_label> <emoji>"``. Falls back to the
     full show name if no short label is configured. Hard-capped at
     100 chars to stay within email-client subject limits.
+
+    Parameters
+    ----------
+    hook_max_chars:
+        Hard cap applied to the hook portion *before* it's joined with
+        the suffix. Dailies pass ``50`` (spec §3) so the show name +
+        emoji are never truncated by Gmail's inbox preview. Weeklies
+        use the default 90 (most of the 100-char overall budget).
+    is_daily:
+        When ``True`` and *subject_hook* is empty, the fallback uses a
+        daily date-stamped phrasing instead of "This week: …".
     """
     show = _load_show_branding(slug)
     short = show.get("short_label") or show.get("name") or slug
     emoji = show.get("emoji") or ""
 
     hook = (subject_hook or "").strip().rstrip(" .,;:")
+    # Apply the per-call hook cap before the suffix join.
+    if hook and len(hook) > hook_max_chars:
+        hook = hook[:hook_max_chars].rstrip(" ,.;:") + "…"
     if not hook:
         # No hook from the LLM — degrade to a clean date-stamped fallback.
         when = send_date or datetime.date.today()
-        hook = f"This week: {when.strftime('%b %-d')}"
+        if is_daily:
+            hook = when.strftime("%b %-d update")
+        else:
+            hook = f"This week: {when.strftime('%b %-d')}"
 
     suffix = f" · {short}".rstrip()
     if emoji:
@@ -855,6 +1167,8 @@ def wrap_with_branding(
     adjacent_shows: Optional[List[Dict[str, Any]]] = None,
     show_reply_share: bool = True,
     requires_financial_disclaimer: bool = False,
+    archive_url: str = "",
+    issue_number: Optional[int] = None,
 ) -> str:
     """Wrap *markdown_body* with a branded hero, optional middle blocks,
     and footer.
@@ -892,7 +1206,7 @@ def wrap_with_branding(
     preheader_div = _build_preheader_html(preheader)
     hero = _build_hero_html(show, pill)
     stats_block = _build_by_the_numbers_html(
-        by_the_numbers, show["brand_color"]
+        by_the_numbers, show["brand_color"], slug
     )
     # Stamp the slug into the featured-episode dict so the block can
     # build the listen URL even if the caller didn't pre-resolve it.
@@ -901,16 +1215,20 @@ def wrap_with_branding(
         featured_with_slug = dict(featured_episode)
         featured_with_slug.setdefault("show_slug", slug)
     featured_block = _build_featured_episode_html(featured_with_slug, show)
+    # Russian shows that need the disclaimer (currently only Финансы
+    # Просто) get the Cyrillic version. Spec §4.4.
+    disclaimer_lang = "ru" if slug == "finansy_prosto" else "en"
     disclaimer = (
-        _build_financial_disclaimer_html()
+        _build_financial_disclaimer_html(disclaimer_lang)
         if requires_financial_disclaimer else ""
     )
-    p_s_block = _build_p_s_html(p_s, show["brand_color"])
+    p_s_block = _build_p_s_html(p_s, show["brand_color"], slug)
     cross_network = _build_cross_network_html(
         adjacent_shows, show["brand_color"]
     )
     reply_share = (
-        _build_reply_share_html(show) if show_reply_share else ""
+        _build_reply_share_html(show, slug=slug)
+        if show_reply_share else ""
     )
     footer = _build_footer_html(show)
 
@@ -925,6 +1243,23 @@ def wrap_with_branding(
         body_clean, brand=show["brand_color"]
     )
 
+    # Two trust-and-tracking blocks added in spec v2: a "view in
+    # browser" link at the very top (clients that mangle the rendered
+    # HTML — Outlook desktop with images blocked is the worst case)
+    # and a per-show issue counter just before the footer that
+    # overrides Buttondown's network-wide counter visually.
+    view_in_browser = _build_view_in_browser_html(archive_url)
+    issue_counter = ""
+    if issue_number is not None:
+        send_date = (
+            week_ending
+            or daily_date
+            or datetime.date.today()
+        )
+        issue_counter = _build_issue_counter_html(
+            show, issue_number, send_date, slug=slug,
+        )
+
     # Blocks separated by two blank lines so markdown processors treat
     # them as separate sections. Empty blocks contribute nothing. The
     # dark-mode <style> block goes at the very top so any client that
@@ -932,6 +1267,7 @@ def wrap_with_branding(
     parts = [
         _DARK_MODE_STYLE,
         preheader_div,
+        view_in_browser,
         hero,
         stats_block,
         featured_block,
@@ -941,5 +1277,6 @@ def wrap_with_branding(
         cross_network,
         reply_share,
         footer,
+        issue_counter,
     ]
     return "\n\n".join(p for p in parts if p) + "\n"
