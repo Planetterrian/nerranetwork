@@ -47,8 +47,8 @@ class TestScrubScaffold:
 
     def test_does_not_strip_box_drawing_rules(self):
         """Spec v2 follow-up: the sanitizer leaves box rules alone so
-        engine.newsletter_body.replace_box_rules_with_hr can convert
-        them to ``<hr>``. Stripping here would defeat that conversion."""
+        engine.newsletter_body.replace_box_rules_with_md_hr can convert
+        them to ``---``. Stripping here would defeat that conversion."""
         text = (
             "Section A\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
@@ -175,9 +175,10 @@ class TestPatternCoverage:
             "Source: General concept",
             "(full URL from pre-fetched: …)",
             # Box-drawing rules are NOT in the sanitizer anymore — they're
-            # converted to <hr> by engine.newsletter_body in the body-
-            # transform stage. The presence of `replace_box_rules_with_hr`
-            # is exercised in tests/test_newsletter_body.py.
+            # converted to markdown ``---`` by engine.newsletter_body in
+            # the canonical body-transform stage, then upgraded to styled
+            # ``<hr>`` in the email-only transform. Both are exercised
+            # in tests/test_newsletter_body.py.
             #
             # Added in the canonical-digest-scrub follow-up — Tesla
             # Ep458 .md leaked **TOPIC SELECTION:** verbatim.
@@ -185,6 +186,9 @@ class TestPatternCoverage:
             "**TOPIC FRESHNESS:** ... line",
             "**WHAT TO SKIP:** ... line",
             "**LENGTH TARGET:** ... line",
+            # Added in the description+voice polish follow-up — Tesla
+            # Ep459 leaked the literal ``Catchy Title:`` placeholder.
+            "**Catchy Title: ...**",
         ]
         for r in required:
             assert r in names, (
@@ -214,3 +218,25 @@ class TestPatternCoverage:
         out = scrub_scaffold(text)
         assert "TOPIC FRESHNESS" not in out
         assert "Next line." in out
+
+    def test_strips_catchy_title_placeholder_keeps_real_title(self):
+        """Tesla Ep459 leaked ``**Catchy Title: <real title>: <date>...**``
+        because the LLM mirrored the prompt's placeholder. The sanitizer
+        strips the ``Catchy Title:`` prefix while preserving the real
+        headline that follows."""
+        text = (
+            "## Short Spot\n"
+            "**Catchy Title: Brand-New Cybertruck Crashed: May 02, 2026, Yahoo**\n"
+            "Body about the crash."
+        )
+        out = scrub_scaffold(text)
+        assert "Catchy Title:" not in out
+        # The real headline survives, still bold.
+        assert "**Brand-New Cybertruck Crashed: May 02, 2026, Yahoo**" in out
+        assert "Body about the crash." in out
+
+    def test_catchy_title_strip_idempotent(self):
+        text = "**Catchy Title: Some Real Headline: May 02, Source**"
+        once = scrub_scaffold(text)
+        twice = scrub_scaffold(once)
+        assert once == twice
