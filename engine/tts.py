@@ -630,13 +630,34 @@ def grok_speak_chunk(
     api_key: str,
     language_code: str = "auto",
     timeout: int = 120,
+    output_codec: str = "wav",
+    output_sample_rate: int = 48000,
+    text_normalization: bool = True,
 ) -> None:
     """Generate audio for a single text chunk via the Grok ``/v1/tts`` endpoint.
 
-    Returns MP3 bytes by default (24 kHz / 128 kbps, per xAI docs). Retries
-    only on transient errors (timeouts, connection failures, 429/5xx). The
-    API key reuses ``GROK_API_KEY`` / ``XAI_API_KEY`` — the same one used
-    for LLM calls — so no new env var is needed.
+    Defaults to **WAV at 48 kHz** so the chunk-concat pipeline can crossfade
+    in lossless PCM and only encode to MP3 once at the very end. The previous
+    default (MP3 24 kHz / 128 kbps) forced a decode + upsample on every
+    chunk, throwing away high-frequency detail and stacking lossy passes.
+
+    Also defaults ``text_normalization=True`` so Grok handles numbers, dates,
+    currency, and abbreviations server-side ("$381.63" → "three hundred
+    eighty-one dollars and sixty-three cents", "2026-05-02" → "May second,
+    twenty twenty-six"). Combined with ``shows/pronunciation_map.yaml`` the
+    pipeline now has two layers of pronunciation correction.
+
+    Speech tags supported in *text*: inline ``[breath]``, ``[pause]``,
+    ``[long-pause]``, ``[sigh]``, ``[laugh]``; wrapping ``<emphasis>...</emphasis>``,
+    ``<whisper>...</whisper>``, ``<soft>...</soft>``, ``<loud>...</loud>``,
+    ``<slow>...</slow>``, ``<fast>...</fast>``. The Grok backend consumes
+    them — they don't appear in the audio as literal words. Use
+    ``engine.text_utils.strip_speech_tags()`` before any non-TTS consumer
+    (blog text, RSS show notes, X teaser).
+
+    Retries only on transient errors (timeouts, connection failures, 429/5xx).
+    The API key reuses ``GROK_API_KEY`` / ``XAI_API_KEY`` — same one used for
+    LLM calls — so no new env var is needed.
     """
     if not text or not text.strip():
         raise ValueError(
@@ -654,6 +675,11 @@ def grok_speak_chunk(
         "text": text,
         "voice_id": voice_id,
         "language": language_code or "auto",
+        "output_format": {
+            "codec": output_codec,
+            "sample_rate": output_sample_rate,
+        },
+        "text_normalization": text_normalization,
     }
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -710,8 +736,11 @@ def _speak_with_grok(
 ) -> None:
     """Grok-TTS counterpart of ``speak()``.
 
-    Same chunk → WAV → crossfade → final MP3 pipeline as the ElevenLabs
-    path. Single chunks short-circuit to a direct MP3 write (no re-encode).
+    Pipeline: per-chunk Grok TTS → WAV 48 kHz → crossfade in WAV →
+    encode once to MP3 at the very end (single lossy pass). Skips the
+    MP3-decode step the older path used because Grok now returns WAV
+    directly. Single chunks short-circuit to one ffmpeg encode (no
+    crossfade needed).
     """
     text = prepare_text_for_tts(text)
     # Cap at Grok's 15k-char request limit even when caller passes a
@@ -719,28 +748,55 @@ def _speak_with_grok(
     effective_max = min(max_chars, GROK_MAX_CHARS_PER_REQUEST)
     chunks = chunk_text(text, max_chars=effective_max)
 
+    import tempfile as _tmpmod
+    tmp_dir = Path(_tmpmod.mkdtemp(prefix="tts_grok_", dir=str(Path(filename).parent)))
+
     if len(chunks) == 1:
         out_text = chunks[0]
         if append_exclamation:
             out_text = out_text + "!"
-        grok_speak_chunk(
-            out_text, voice_id, Path(filename),
-            api_key=api_key, language_code=language_code, timeout=timeout,
-        )
-        logger.info("Grok TTS: Generated single chunk (%d chars)", len(out_text))
+        # Single chunk: WAV from Grok → final MP3 in one encode pass.
+        wav_chunk = tmp_dir / "tts_chunk.wav"
+        try:
+            grok_speak_chunk(
+                out_text, voice_id, wav_chunk,
+                api_key=api_key, language_code=language_code, timeout=timeout,
+            )
+            subprocess.run(
+                [
+                    "ffmpeg", "-y", "-i", str(wav_chunk),
+                    "-c:a", "libmp3lame", "-q:a", "0",
+                    str(filename),
+                ],
+                check=True, capture_output=True, timeout=300,
+            )
+            logger.info(
+                "Grok TTS: Generated single chunk (%d chars) → MP3 (one encode)",
+                len(out_text),
+            )
+        finally:
+            if wav_chunk.exists():
+                try:
+                    wav_chunk.unlink()
+                except OSError:
+                    pass
+            try:
+                if tmp_dir.exists() and tmp_dir != Path(filename).parent:
+                    tmp_dir.rmdir()
+            except OSError:
+                pass
         return
 
     logger.info(
         "Grok TTS: Splitting into %d chunks for seamless generation",
         len(chunks),
     )
-    import tempfile as _tmpmod
-    tmp_dir = Path(_tmpmod.mkdtemp(prefix="tts_grok_", dir=str(Path(filename).parent)))
     chunk_files: List[Path] = []
     wav_files: List[Path] = []
     try:
         for i, chunk_text_str in enumerate(chunks):
-            chunk_file = tmp_dir / f"tts_chunk_{i:03d}.mp3"
+            # Grok now returns WAV 48 kHz directly — no MP3 decode step.
+            chunk_file = tmp_dir / f"tts_chunk_{i:03d}.wav"
             if append_exclamation:
                 if i < len(chunks) - 1:
                     chunk_text_str = chunk_text_str.rstrip(".!?") + "."
@@ -751,22 +807,11 @@ def _speak_with_grok(
                 api_key=api_key, language_code=language_code, timeout=timeout,
             )
             chunk_files.append(chunk_file)
+            wav_files.append(chunk_file)
             logger.info(
                 "Grok TTS: Generated chunk %d/%d (%d chars)",
                 i + 1, len(chunks), len(chunk_text_str),
             )
-
-        # Decode each MP3 chunk to WAV for lossless concatenation, mirroring
-        # the ElevenLabs path. Output is mono 44.1 kHz to match the rest
-        # of the pipeline (Grok's default is 24 kHz; ffmpeg upsamples on
-        # decode and we re-encode once at the end).
-        for cf in chunk_files:
-            wav_file = cf.with_suffix(".wav")
-            subprocess.run(
-                ["ffmpeg", "-y", "-i", str(cf), "-ar", "44100", "-ac", "1", str(wav_file)],
-                check=True, capture_output=True, timeout=120,
-            )
-            wav_files.append(wav_file)
 
         _XFADE_SECS = "0.05"
         if len(wav_files) == 2:
@@ -799,7 +844,7 @@ def _speak_with_grok(
             [
                 "ffmpeg", "-y",
                 "-i", str(merged_wav),
-                "-c:a", "libmp3lame", "-q:a", "2",
+                "-c:a", "libmp3lame", "-q:a", "0",
                 str(filename),
             ],
             check=True, capture_output=True, timeout=300,
@@ -809,7 +854,9 @@ def _speak_with_grok(
             "(single MP3 encode)", len(chunks),
         )
     finally:
-        for cf in chunk_files + wav_files:
+        # chunk_files and wav_files reference the same on-disk files now;
+        # use a set to avoid double-unlink errors.
+        for cf in set(chunk_files) | set(wav_files):
             try:
                 if cf.exists():
                     cf.unlink()

@@ -489,3 +489,65 @@ DEFAULT_HEADERS = {
     "User-Agent": "PodcastBot/1.0 (+https://github.com/patricknovak/nerranetworks)"
 }
 HTTP_TIMEOUT_SECONDS = 10
+
+
+# ---------------------------------------------------------------------------
+# Speech tag stripping (Grok TTS)
+# ---------------------------------------------------------------------------
+
+# Inline tags used by Grok TTS: bracketed single-token directives that
+# instruct the speech model to insert non-verbal audio (breath, pause, etc.)
+# at that point in the stream. Listed verbatim from the Grok TTS docs:
+# https://docs.x.ai/developers/model-capabilities/audio/text-to-speech
+_INLINE_SPEECH_TAGS = (
+    "pause", "long-pause", "laugh", "cry",
+    "sniff", "kiss", "throat-clear",
+    "breath", "sigh", "gasp",
+)
+_INLINE_TAG_PATTERN = re.compile(
+    r"\[\s*(?:" + "|".join(re.escape(t) for t in _INLINE_SPEECH_TAGS) + r")\s*\]",
+    flags=re.IGNORECASE,
+)
+
+# Wrapping tags surround a span of text and modify its delivery (whisper,
+# emphasis, etc.). The Grok backend interprets and consumes them; we strip
+# them for any non-TTS consumer (blog markdown, RSS show notes, X teaser).
+_WRAPPING_TAGS = (
+    "soft", "loud", "whisper",
+    "slow", "fast", "high", "low",
+    "singing", "emphasis",
+)
+_WRAPPING_TAG_PATTERN = re.compile(
+    r"</?\s*(?:" + "|".join(re.escape(t) for t in _WRAPPING_TAGS) + r")\s*>",
+    flags=re.IGNORECASE,
+)
+
+
+def strip_speech_tags(text: str) -> str:
+    """Remove Grok TTS speech tags from text.
+
+    Strips inline tags (``[breath]``, ``[pause]``, ``[long-pause]``,
+    ``[laugh]``, etc.) and the open/close pair of every wrapping tag
+    (``<emphasis>...</emphasis>``, ``<whisper>...</whisper>``, etc. —
+    only the brackets are removed; the wrapped text content is preserved
+    so the digest reads as written prose).
+
+    Apply at every non-TTS consumer of the podcast script: blog markdown,
+    RSS show notes, X teaser, transcript fallback when Whisper isn't
+    available, chapter section detection, etc. The TTS path itself
+    deliberately keeps the tags so the Grok backend can consume them.
+
+    Idempotent: stripping an already-stripped string is a no-op.
+    """
+    if not text:
+        return text
+    out = _INLINE_TAG_PATTERN.sub("", text)
+    out = _WRAPPING_TAG_PATTERN.sub("", out)
+    # Collapse any double spaces left behind by removed inline tags
+    # (e.g. ``"sentence one. [breath] sentence two."`` → two spaces between
+    # the period and "sentence two.").
+    out = re.sub(r"  +", " ", out)
+    # Tighten "tag-eats-newline" cases like ``"... line.\n[breath]\nNext line ..."``
+    # which leave a stray double-newline-with-space artifact.
+    out = re.sub(r"\n[ \t]+\n", "\n\n", out)
+    return out

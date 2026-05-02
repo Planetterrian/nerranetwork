@@ -23,11 +23,13 @@ import pytest
 # ---------------------------------------------------------------------------
 
 def voice_normalization_full(voice_in: str, voice_out: str) -> list:
-    """The full filter chain for voice normalization."""
+    """The full 6-stage filter chain for voice normalization (May 2026:
+    added 6.5 kHz de-essing dip for the new custom Grok voice)."""
     return [
         "ffmpeg", "-y", "-threads", "0", "-i", voice_in,
         "-af",
         "highpass=f=80,lowpass=f=15000,"
+        "equalizer=f=6500:t=q:w=1.5:g=-3,"
         "loudnorm=I=-18:TP=-1.5:LRA=11:linear=true,"
         "acompressor=threshold=-20dB:ratio=4:attack=1:release=100:makeup=2,"
         "alimiter=level_in=1:level_out=0.95:limit=0.95",
@@ -116,14 +118,21 @@ def music_concat(concat_list: str, music_full_out: str) -> list:
 
 
 def final_mix(voice_in: str, music_in: str, final_out: str) -> list:
-    """Mix voice and music tracks together."""
+    """Mix voice and music tracks together with sidechain ducking +
+    EBU R128 loudnorm (May 2026 broadcast-quality upgrade)."""
     return [
         "ffmpeg", "-y", "-threads", "0",
         "-i", voice_in, "-i", music_in,
         "-filter_complex",
-        "[0:a][1:a]amix=inputs=2:duration=longest:dropout_transition=2",
+        "[0:a]asplit=2[voice_mix][voice_sc];"
+        "[1:a][voice_sc]sidechaincompress="
+        "threshold=-30dB:ratio=8:attack=20:release=300:level_sc=2"
+        "[music_ducked];"
+        "[voice_mix][music_ducked]amix=inputs=2:duration=longest:dropout_transition=2[mixed];"
+        "[mixed]loudnorm=I=-16:TP=-1.5:LRA=11[out]",
+        "-map", "[out]",
         "-ar", "44100", "-ac", "2",
-        "-c:a", "libmp3lame", "-b:a", "192k", "-preset", "fast",
+        "-c:a", "libmp3lame", "-q:a", "0",
         final_out,
     ]
 
@@ -245,13 +254,36 @@ class TestMusicConcatenation:
 
 class TestFinalMix:
 
-    def test_amix_filter(self):
+    def test_filter_complex_has_sidechain_ducking(self):
         cmd = final_mix("/voice.mp3", "/music.mp3", "/final.mp3")
         fc = cmd[cmd.index("-filter_complex") + 1]
-        assert "[0:a][1:a]" in fc
+        # Voice is split so it can both drive the sidechain compressor AND
+        # be summed back into the mix.
+        assert "asplit=2" in fc
+        assert "[voice_mix]" in fc and "[voice_sc]" in fc
+        # Music is ducked under voice presence.
+        assert "sidechaincompress=" in fc
+        assert "threshold=-30dB" in fc
+        assert "ratio=8" in fc
+        assert "[music_ducked]" in fc
+        # Voice + ducked music summed.
         assert "amix=inputs=2" in fc
         assert "duration=longest" in fc
         assert "dropout_transition=2" in fc
+
+    def test_filter_complex_has_loudnorm_target(self):
+        """Final mix must hit -16 LUFS / TP=-1.5 (Apple Podcasts / Spotify spec)."""
+        cmd = final_mix("/voice.mp3", "/music.mp3", "/final.mp3")
+        fc = cmd[cmd.index("-filter_complex") + 1]
+        assert "loudnorm=I=-16" in fc
+        assert "TP=-1.5" in fc
+
+    def test_final_mix_maps_filter_output(self):
+        """`-map [out]` must point at the loudnorm tail; otherwise ffmpeg
+        emits the raw amix stream and we lose loudness normalization."""
+        cmd = final_mix("/v.mp3", "/m.mp3", "/f.mp3")
+        assert "-map" in cmd
+        assert cmd[cmd.index("-map") + 1] == "[out]"
 
     def test_final_mix_stereo(self):
         cmd = final_mix("/v.mp3", "/m.mp3", "/f.mp3")
@@ -259,7 +291,9 @@ class TestFinalMix:
 
     def test_final_mix_encoding(self):
         cmd = final_mix("/v.mp3", "/m.mp3", "/f.mp3")
-        assert cmd[cmd.index("-b:a") + 1] == "192k"
+        # Bumped from CBR 192k to VBR -q:a 0 (~245 kbps) for archival-quality
+        # spoken-word + music in May 2026.
+        assert "-q:a" in cmd and cmd[cmd.index("-q:a") + 1] == "0"
         assert cmd[cmd.index("-ar") + 1] == "44100"
 
 

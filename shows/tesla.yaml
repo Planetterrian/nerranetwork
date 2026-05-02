@@ -127,16 +127,12 @@ llm:
   podcast_chain: true
 
 tts:
-  # Tesla Shorts Time stays on ElevenLabs Flash v2.5 (the only English
-  # show not migrated to Grok TTS in May 2026). The voice listeners
-  # know is `dTrBzPvD2GpAqkk1MUzA`; preserving voice continuity on the
-  # network's largest show outweighs the per-character cost delta.
-  # All other ElevenLabs settings (stability/similarity_boost/style/
-  # use_speaker_boost/model/apply_text_normalization) inherit from
-  # shows/_defaults.yaml's legacy block.
-  provider: elevenlabs
-  voice_id: dTrBzPvD2GpAqkk1MUzA
-  max_chars: 10000
+  # Inherits provider=grok, voice_id=b4cusb2omvkz, language_code=en,
+  # max_chars=10000 from shows/_defaults.yaml. Tesla Shorts Time was
+  # the last ElevenLabs holdout; flipped to the operator's custom Grok
+  # voice in the May 2026 full-network migration so every English show
+  # speaks with a single consistent host identity. See landmine #17.
+  {}
 
 audio:
   music_file: assets/music/tesla_shorts_time.mp3

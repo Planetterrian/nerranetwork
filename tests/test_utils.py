@@ -207,3 +207,95 @@ class TestRemoveSimilarItems:
         ]
         result = omni_remove_similar_items(items)
         assert len(result) == 2
+
+
+# ---------------------------------------------------------------------------
+# strip_speech_tags — Grok TTS speech-tag scrubber for non-TTS consumers
+# ---------------------------------------------------------------------------
+
+class TestStripSpeechTags:
+    """Speech tags must never reach blog/RSS/X — only the TTS engine sees them."""
+
+    def setup_method(self):
+        from engine.utils import strip_speech_tags
+        self._strip = strip_speech_tags
+
+    def test_strips_inline_breath_tag(self):
+        out = self._strip("Sentence one. [breath] Sentence two.")
+        assert "[breath]" not in out
+        assert "Sentence one. Sentence two." == out
+
+    def test_strips_inline_pause_and_long_pause(self):
+        out = self._strip("Section A. [pause] Section B. [long-pause] Section C.")
+        assert "[pause]" not in out
+        assert "[long-pause]" not in out
+        assert out == "Section A. Section B. Section C."
+
+    def test_strips_all_documented_inline_tags(self):
+        """All Grok TTS inline tags must be removed."""
+        text = (
+            "[pause][long-pause][laugh][cry][sniff][kiss]"
+            "[throat-clear][breath][sigh][gasp]"
+        )
+        assert self._strip(text) == ""
+
+    def test_case_insensitive_stripping(self):
+        assert self._strip("Hi [BREATH] world.") == "Hi world."
+        assert self._strip("Hi [Pause] world.") == "Hi world."
+
+    def test_strips_emphasis_open_and_close_keeps_inner_text(self):
+        """Wrapping tags drop the brackets but preserve the prose."""
+        out = self._strip("This is <emphasis>critical</emphasis>.")
+        assert out == "This is critical."
+
+    def test_strips_whisper_brackets(self):
+        out = self._strip("She said <whisper>be quiet</whisper> firmly.")
+        assert out == "She said be quiet firmly."
+
+    def test_strips_all_documented_wrapping_tags(self):
+        text = (
+            "<soft>a</soft><loud>b</loud><whisper>c</whisper>"
+            "<slow>d</slow><fast>e</fast><high>f</high><low>g</low>"
+            "<singing>h</singing><emphasis>i</emphasis>"
+        )
+        assert self._strip(text) == "abcdefghi"
+
+    def test_idempotent(self):
+        text = "[breath] Hello, <emphasis>world</emphasis>."
+        once = self._strip(text)
+        twice = self._strip(once)
+        assert once == twice
+
+    def test_empty_and_none(self):
+        assert self._strip("") == ""
+        assert self._strip(None) is None  # type: ignore[arg-type]
+
+    def test_collapses_double_space_left_by_inline_tag(self):
+        """Removing `[breath]` between two spaces shouldn't leave a double space."""
+        out = self._strip("Word one [breath] word two.")
+        assert "  " not in out
+        assert out == "Word one word two."
+
+    def test_preserves_unrelated_brackets(self):
+        """Brackets not matching a known tag must survive (e.g. citations)."""
+        out = self._strip("Per [Smith 2024], the data shows growth.")
+        assert "[Smith 2024]" in out
+
+    def test_preserves_unrelated_html_like_tags(self):
+        """Wrapping tags outside the speech-tag whitelist are preserved
+        (the strip is conservative — false positives would mangle prose)."""
+        out = self._strip("She wrote <em>important</em> things.")
+        assert "<em>" in out and "</em>" in out
+
+    def test_real_world_podcast_excerpt(self):
+        text = (
+            "Welcome to Tesla Shorts Time. [breath] Today, "
+            "<emphasis>three</emphasis> stories rocked the EV world. "
+            "[pause] Let's get into it."
+        )
+        out = self._strip(text)
+        assert "[breath]" not in out
+        assert "[pause]" not in out
+        assert "<emphasis>" not in out and "</emphasis>" not in out
+        assert "three" in out  # inner text preserved
+        assert "Let's get into it." in out

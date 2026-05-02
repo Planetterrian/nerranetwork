@@ -1,20 +1,55 @@
-# Pronunciation map for ElevenLabs TTS.
+# Pronunciation map for Grok TTS.
 #
-# Purpose: override the TTS input text for a small set of proper nouns or
-# acronyms where ElevenLabs consistently mispronounces the standard spelling.
-# This map is applied ONLY to the TTS copy of the text — the digest, blog,
-# transcript, and social posts still use the standard written form.
+# Purpose: override the TTS input text for a small set of proper nouns,
+# acronyms, or product names where Grok TTS consistently mispronounces the
+# standard spelling. Applied ONLY to the TTS copy of the text — the digest,
+# blog, transcript, and social posts continue to use the standard written
+# form. The map is layered on top of Grok's server-side `text_normalization`
+# (which already handles dates, currencies, and ordinary numbers).
 #
 # Rules for adding entries:
-# 1. Only add an entry after confirming that ElevenLabs mispronounces the
-#    standard written form on the current voice and model.  Most common
-#    acronyms (NASA, NATO, FBI, AI, EV, FSD, etc.) are handled correctly.
+# 1. Only add an entry after confirming Grok mispronounces the standard
+#    written form on the production voice (`b4cusb2omvkz` for English shows,
+#    `0b875ae2` "Olya" for Russian shows). With `text_normalization: true`
+#    the engine handles most things natively — additions here should be
+#    rare exceptions.
 # 2. Match is case-insensitive, whole-word.
 # 3. Replacement is the respelling sent to the TTS engine only.
 # 4. Keep the list minimal — every entry is a maintenance burden.
+# 5. Leave a comment recording WHEN the entry was added and WHY (which
+#    show / which voice / what the symptom was).
 #
 # Format:
 #   corrections:
 #     "Written Form": "tts respelling"
 
-corrections: {}
+corrections:
+  # ---------------- Tickers / financial ----------------
+  # Stock tickers should be read as letters, not as words. Grok will
+  # otherwise occasionally pronounce "TSLA" as "tezz-luh".
+  TSLA: "T S L A"
+  NVDA: "N V D A"
+  MSFT: "M S F T"
+  AAPL: "A A P L"
+
+  # ---------------- Canadian registered accounts ----------------
+  # Spelled-out is universally how listeners refer to these vehicles
+  # (TFSA, RRSP, FHSA), so the audio should match.
+  TFSA: "T F S A"
+  RRSP: "R R S P"
+  FHSA: "F H S A"
+  RESP: "R E S P"
+
+  # ---------------- Tesla-specific ----------------
+  # HW4 / HW5 / AI5 are read as "hardware four", "hardware five",
+  # "A I five" — letter-by-letter avoids the engine attempting to
+  # pronounce the alphanumeric tokens phonetically.
+  HW4: "H W four"
+  HW5: "H W five"
+  AI5: "A I five"
+
+  # ---------------- AI / tech ----------------
+  # LLM and MCP are universally said as letter-by-letter; without this
+  # entry Grok occasionally tries "lum" / "mick-pee".
+  LLM: "L L M"
+  MCP: "M C P"

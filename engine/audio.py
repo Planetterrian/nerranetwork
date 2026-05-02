@@ -110,11 +110,27 @@ def _voice_norm_codec_args(output_path: str) -> list:
 
 
 def _voice_norm_full_cmd(voice_in: str, voice_out: str) -> list:
-    """Build the full 5-stage voice normalization ffmpeg command."""
+    """Build the full 6-stage voice normalization ffmpeg command.
+
+    Order matters — each stage operates on the output of the previous:
+
+      1. highpass=80 Hz       — strip sub-bass rumble / TTS artifacts
+      2. lowpass=15 kHz       — strip ultrasonic hiss above intelligibility
+      3. equalizer=6.5 kHz -3 dB — gentle de-esser, softens "s"/"sh" sibilants
+      4. loudnorm I=-18      — voice-only LUFS target (mix gets re-norm'd to -16)
+      5. acompressor 4:1     — gentle dynamics control (NPR-ish consistency)
+      6. alimiter level_out=0.95 — peak protection, prevents clipping into mix
+
+    The 6.5 kHz dip is new in May 2026 — the custom Grok voice introduced
+    with the full network migration was noticeably sibilant on the raw
+    output, and the dip restores broadcast feel without making the voice
+    sound dull. See landmine #17.
+    """
     return [
         "ffmpeg", "-y", "-threads", "0", "-i", voice_in,
         "-af",
         "highpass=f=80,lowpass=f=15000,"
+        "equalizer=f=6500:t=q:w=1.5:g=-3,"
         "loudnorm=I=-18:TP=-1.5:LRA=11:linear=true,"
         "acompressor=threshold=-20dB:ratio=4:attack=1:release=100:makeup=2,"
         "alimiter=level_in=1:level_out=0.95:limit=0.95",
@@ -449,13 +465,43 @@ def _music_concat_cmd(concat_list: str, music_full_out: str) -> list:
 
 
 def _final_mix_cmd(voice_in: str, music_in: str, final_out: str) -> list:
+    """Voice + music final mix with sidechain ducking + EBU R128 loudnorm.
+
+    Filter graph stages:
+
+      1. ``asplit`` — duplicate the voice signal so it can drive both the
+         sidechain compressor (as the trigger) and the final amix (as audio).
+      2. ``sidechaincompress`` — when voice is present, music is pulled
+         down 8 dB; when voice pauses, music rises smoothly. ``threshold=-30 dB``
+         and ``ratio=8`` mean even modest voice levels duck the music; the
+         ``attack=20 ms`` / ``release=300 ms`` pair gives broadcast feel
+         (fast enough to catch syllable transients, slow enough not to pump).
+         ``level_sc=2`` doubles the trigger sensitivity so quieter narration
+         still ducks the bed reliably.
+      3. ``amix`` — sums voice + ducked music with longest-duration semantics.
+      4. ``loudnorm I=-16`` — final integrated-loudness target. Apple
+         Podcasts and Spotify both auto-normalize listener-side, so episodes
+         well under -16 LUFS get attenuated and feel quiet next to NPR-mastered
+         shows. ``TP=-1.5`` keeps headroom to absorb true-peak intersample
+         peaks without clipping. ``LRA=11`` preserves natural dynamics
+         (a denser LRA flatlines the audio).
+
+    Final encode is libmp3lame -q:a 0 (~245 kbps VBR — archival quality
+    spoken-word + music; ~6.5 MB per 30-min episode).
+    """
     return [
         "ffmpeg", "-y", "-threads", "0",
         "-i", voice_in, "-i", music_in,
         "-filter_complex",
-        "[0:a][1:a]amix=inputs=2:duration=longest:dropout_transition=2",
+        "[0:a]asplit=2[voice_mix][voice_sc];"
+        "[1:a][voice_sc]sidechaincompress="
+        "threshold=-30dB:ratio=8:attack=20:release=300:level_sc=2"
+        "[music_ducked];"
+        "[voice_mix][music_ducked]amix=inputs=2:duration=longest:dropout_transition=2[mixed];"
+        "[mixed]loudnorm=I=-16:TP=-1.5:LRA=11[out]",
+        "-map", "[out]",
         "-ar", "44100", "-ac", "2",
-        "-c:a", "libmp3lame", "-b:a", "192k", "-preset", "fast",
+        "-c:a", "libmp3lame", "-q:a", "0",
         final_out,
     ]
 
