@@ -8,6 +8,7 @@ from engine.newsletter_body import (
     render_russian_vocab_cards,
     render_tsla_price_block,
     replace_box_rules_with_hr,
+    shorten_source_urls,
     transform_daily_body,
 )
 
@@ -189,3 +190,53 @@ class TestTransformDailyBody:
         assert "━━━" not in out
         # No show-specific render.
         assert "TSLA today" not in out
+
+
+# ---------------------------------------------------------------------------
+# Source URL shortening (post-fetch defense)
+# ---------------------------------------------------------------------------
+
+class TestShortenSourceUrls:
+
+    def test_collapses_google_news_blob_to_label(self):
+        long_url = (
+            "https://news.google.com/rss/articles/CBMi" + "x" * 400
+            + "?oc=5"
+        )
+        text = f"Story body. Source: {long_url}"
+        out = shorten_source_urls(text)
+        # Visible label is "Google News" (Buttondown renders the
+        # markdown link, only the label text shows in the email body).
+        assert "[Google News]" in out
+        # Original URL is still inside the markdown link target so
+        # the click goes to the right place.
+        assert long_url in out
+        # Critical: the bare "Source: https://news.google.com/..."
+        # form is replaced — there's no longer a raw URL emitted as
+        # plaintext for the reader to see. The only place the URL
+        # appears is inside the (URL) of [label](URL).
+        assert f"Source: {long_url}" not in out
+
+    def test_collapses_publisher_url_to_domain(self):
+        text = (
+            "Story body. Source: "
+            "https://www.notebookcheck.net/very-long-tracking-path?utm_x=y"
+        )
+        out = shorten_source_urls(text)
+        assert "[notebookcheck.net]" in out
+
+    def test_strips_trailing_punctuation_from_url(self):
+        text = "Read it. Source: https://example.com/foo)."
+        out = shorten_source_urls(text)
+        # Punctuation stays in the prose; URL inside the link doesn't have it.
+        assert "(https://example.com/foo)" in out
+
+    def test_no_match_returns_unchanged(self):
+        text = "Body content with no source line."
+        assert shorten_source_urls(text) == text
+
+    def test_idempotent(self):
+        text = "Source: https://example.com/foo"
+        once = shorten_source_urls(text)
+        twice = shorten_source_urls(once)
+        assert once == twice
