@@ -399,6 +399,40 @@ def _validate_llm_output(
 
     # Check for potential hallucinations — words repeated 4+ times in close
     # proximity often indicate corruption (e.g. "Nano Banana 2" x4)
+    #
+    # False-positive guard added May 2026: the Tesla Ep459 run flagged
+    # "may 02, 2026," (9×), "02, 2026," (7×), "it matters" (11×) and
+    # similar — every story timestamp + the prompt-template "this
+    # matters for X" pattern. None were hallucinations; they were
+    # purely structural artefacts of the digest format. Filter both
+    # date-fragment patterns and known prompt-template phrases below
+    # before counting toward `_suspicious_count`.
+    _DATE_FRAGMENT_RE = re.compile(
+        # Matches things like "02, 2026,", "may 02,", "may, 2026,",
+        # "02 may," — any combination of an optional month name with
+        # a 1-2 digit day-of-month and a 4-digit year, possibly comma-
+        # separated. These appear once per story timestamp and trip
+        # the detector at high story counts without indicating
+        # hallucination.
+        r"^"
+        r"(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*"
+        r"\s*[,]?\s*)?"
+        r"(?:\d{1,2}\s*[,]?\s*)?"
+        r"(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*"
+        r"\s*[,]?\s*)?"
+        r"(?:\d{4}\s*[,]?\s*)?"
+        r"$",
+        re.IGNORECASE,
+    )
+
+    def _is_date_fragment(phrase: str) -> bool:
+        """True if the phrase is just a date-shape with no content."""
+        # Require at least one numeric token (year or day) — otherwise
+        # this matches every English word.
+        if not any(c.isdigit() for c in phrase):
+            return False
+        return bool(_DATE_FRAGMENT_RE.match(phrase.strip()))
+
     _suspicious_count = 0
     words = text.split()
     if len(words) > 50:
@@ -438,6 +472,11 @@ def _validate_llm_output(
             "━━━━━━━━━━ ###", "━━━━━━━━━━━━━━━━━━━━ ###",
             # Article reference patterns
             "according to", "going to", "we're going",
+            # Prompt-template artefacts. The "this matters for X" line
+            # appears once per story by prompt design, so the bigrams
+            # below trip the detector at high story counts even though
+            # nothing is hallucinated. Spec v2 follow-up after Ep459.
+            "it matters", "matters for", "this matters",
         }
         # Podcast scripts are longer and naturally have more repeated phrases
         _rep_threshold = 5 if stage == "podcast_script" else 4
@@ -448,6 +487,9 @@ def _validate_llm_output(
             # Skip phrases that are mostly stopwords or very short tokens
             tokens = phrase.split()
             if all(len(t) <= 3 for t in tokens):
+                continue
+            # Skip date-shape fragments — purely structural, not hallucination.
+            if _is_date_fragment(phrase):
                 continue
             if count >= _rep_threshold:
                 _suspicious_count += 1
@@ -465,6 +507,12 @@ def _validate_llm_output(
             "of the the", "in the the", "one of the", "some of the",
             "a lot of", "going to be", "it's going to",
             "according to the", "is going to", "we're going to",
+            # Prompt-template artefacts — "this matters for X" appears
+            # once per story by prompt design. Spec v2 follow-up after
+            # Ep459 flagged "it matters for" 11×.
+            "it matters for", "this matters for", "matters for the",
+            "matters for tesla", "matters for investors",
+            "matters for the", "matters for business",
             # Language learning pedagogical patterns
             "it sounds like", "sounds like the", "the english word",
             "the russian word", "in russian it", "means it is",
@@ -497,6 +545,10 @@ def _validate_llm_output(
             if all(len(t) <= 3 for t in tokens):
                 continue
             if any(p.match(phrase) for p in _PEDAGOGICAL_TRIGRAM_PATTERNS):
+                continue
+            # Skip date-shape trigrams (e.g. "may 02, 2026," appearing
+            # once per story timestamp). Spec v2 follow-up after Ep459.
+            if _is_date_fragment(phrase):
                 continue
             if count >= _rep_threshold:
                 _suspicious_count += 1

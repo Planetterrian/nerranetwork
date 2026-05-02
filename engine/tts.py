@@ -39,6 +39,13 @@ GROK_TTS_ENDPOINT = "https://api.x.ai/v1/tts"
 # Grok caps per-request text at 15,000 chars; we use 14,000 as the chunk
 # ceiling to leave a small headroom for any trailing punctuation we add.
 GROK_MAX_CHARS_PER_REQUEST = 14000
+# Per-request timeout for Grok TTS (in seconds). Bumped from 120 to 300
+# in May 2026 after Tesla Ep459 hit a real Grok-side slow response that
+# burned through all 3 tenacity retries at the old 120s wall and killed
+# a ~20-minute pipeline run. 300s gives enough headroom for a custom
+# voice + ~14k-char chunk under load; normal calls finish in 30-60s and
+# don't notice the higher cap.
+GROK_TTS_TIMEOUT_SECONDS = 300
 
 
 def _ffmpeg_escape(path: Path) -> str:
@@ -418,7 +425,7 @@ def speak(
     language_code: str = "",
     speed: float = 1.0,
     apply_text_normalization: str = "on",
-    timeout: int = 120,
+    timeout: int = GROK_TTS_TIMEOUT_SECONDS,
     append_exclamation: bool = False,
 ) -> None:
     """Generate audio with automatic chunking and ffmpeg concatenation.
@@ -629,7 +636,7 @@ def grok_speak_chunk(
     *,
     api_key: str,
     language_code: str = "auto",
-    timeout: int = 120,
+    timeout: int = GROK_TTS_TIMEOUT_SECONDS,
     output_codec: str = "wav",
     output_sample_rate: int = 48000,
     text_normalization: bool = True,
@@ -731,7 +738,7 @@ def _speak_with_grok(
     api_key: str,
     max_chars: int = GROK_MAX_CHARS_PER_REQUEST,
     language_code: str = "auto",
-    timeout: int = 120,
+    timeout: int = GROK_TTS_TIMEOUT_SECONDS,
     append_exclamation: bool = False,
 ) -> None:
     """Grok-TTS counterpart of ``speak()``.
@@ -898,7 +905,7 @@ def synthesize(
     language_code: str = "",
     speed: float = 1.0,
     apply_text_normalization: str = "on",
-    timeout: int = 120,
+    timeout: int = GROK_TTS_TIMEOUT_SECONDS,
     append_exclamation: bool = False,
 ) -> Path:
     """Top-level entry point: text in, audio file path out.
@@ -963,7 +970,7 @@ def synthesize_sections(
     language_code: str = "",
     speed: float = 1.0,
     apply_text_normalization: str = "on",
-    timeout: int = 120,
+    timeout: int = GROK_TTS_TIMEOUT_SECONDS,
 ) -> List[Path]:
     """Synthesize multiple script sections into individual audio files.
 
@@ -997,14 +1004,9 @@ def synthesize_sections(
     """
     output_dir.mkdir(parents=True, exist_ok=True)
     section_files: List[Path] = []
+    section_failed = False
 
-    for i, section_text in enumerate(sections):
-        section_text = section_text.strip()
-        if not section_text:
-            logger.warning("Skipping empty section %d", i)
-            continue
-
-        section_path = output_dir / f"{section_prefix}_{i:03d}.mp3"
+    def _synth_one(section_text: str, section_path: Path) -> None:
         if provider == "grok":
             _speak_with_grok(
                 section_text,
@@ -1031,11 +1033,64 @@ def synthesize_sections(
                 apply_text_normalization=apply_text_normalization,
                 timeout=timeout,
             )
+
+    for i, section_text in enumerate(sections):
+        section_text = section_text.strip()
+        if not section_text:
+            logger.warning("Skipping empty section %d", i)
+            continue
+
+        section_path = output_dir / f"{section_prefix}_{i:03d}.mp3"
+        try:
+            _synth_one(section_text, section_path)
+        except Exception as exc:
+            # Per-section failure (typically a Grok TTS read timeout
+            # after tenacity exhausted its retries). Bail out of
+            # section-mode and trigger the single-pass fallback below
+            # so the episode still ships, just without the per-chapter
+            # transition stings.
+            logger.error(
+                "Section %d/%d TTS failed (%s: %s) — falling back to "
+                "single-pass synthesis to save the episode.",
+                i + 1, len(sections), type(exc).__name__, str(exc)[:200],
+            )
+            section_failed = True
+            break
+
         section_files.append(section_path)
         logger.info(
             "Synthesized section %d/%d (%d chars): %s",
             i + 1, len(sections), len(section_text), section_path.name,
         )
+
+    if section_failed:
+        # Clean up any partially-written section files from the failed
+        # attempt so they don't get concatenated by mistake.
+        for sf in section_files:
+            try:
+                if sf.exists():
+                    sf.unlink()
+            except OSError:
+                pass
+        section_files = []
+
+        # Single-pass fallback: synthesize the joined script as one
+        # piece. We lose chapter-marker transitions but ship audio.
+        # The caller's `concatenate_with_stings` handles a 1-element
+        # list by passing the file through (no stings inserted).
+        joined = "\n\n".join(s.strip() for s in sections if s.strip())
+        if joined:
+            fallback_path = output_dir / f"{section_prefix}_fallback.mp3"
+            logger.warning(
+                "Section TTS fallback: synthesizing %d chars as one chunk "
+                "(no per-chapter stings).",
+                len(joined),
+            )
+            _synth_one(joined, fallback_path)
+            section_files.append(fallback_path)
+            logger.info(
+                "Section TTS fallback succeeded: %s", fallback_path.name,
+            )
 
     return section_files
 
