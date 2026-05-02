@@ -127,6 +127,16 @@ _RAW_RULES: List[Tuple[str, str, str]] = [
         "",
         "**LENGTH TARGET:** ... line",
     ),
+    # Tesla Short Spot ``**Catchy Title: <real title>...**`` — the LLM
+    # mirrored the prompt's placeholder ``Catchy Title:`` instead of
+    # replacing it with an actual title. Strip the placeholder prefix
+    # but keep the real title that follows. Capture group 1 is the
+    # rest of the bold line (the title + dateline + source).
+    (
+        r"(?im)\*\*\s*Catchy Title:\s*([^*\n]+?)\s*\*\*",
+        r"**\1**",
+        "**Catchy Title: ...**",
+    ),
     # M&AB / Russian-language-show labels.
     (r"(?im)^\s*\*\*What's Cool Today:\*\*\s*", "", "**What's Cool Today:**"),
     (r"(?im)^\s*\*\*What's today's hot story:\*\*\s*", "", "**What's today's hot story:**"),

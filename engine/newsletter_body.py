@@ -1,26 +1,31 @@
-"""Body-text transforms applied to a daily newsletter's markdown.
+"""Body-text transforms applied to a daily digest's markdown.
 
-The wrapper (``engine.newsletter_template.wrap_with_branding``) handles
-hero / featured-episode / footer / etc. — but the *middle of the email*
-is still the raw markdown body produced by the LLM (the digest text).
+Two stages:
 
-This module post-processes that body so:
+1. ``transform_daily_body`` — markdown-safe transforms applied at the
+   canonical-write site in ``run_show.py``. The output is still valid
+   markdown (no inline HTML), so the blog reader, RSS show notes, and
+   GitHub Pages summary all see the same clean source. Includes:
 
-  - Russian vocabulary list (Привет, Русский!) renders as a card stack
-    instead of a `field: value` plaintext dump (spec §2.3).
-  - Tesla daily's box-drawing horizontal rules become proper ``<hr>``
-    HTML separators that respect dark mode (spec §5.2).
-  - Tesla's "REAL-TIME TSLA price:" line becomes a styled stock-watch
-    block instead of a bold label + raw text (spec §5.3).
+      - Box-drawing rules → markdown ``---`` (renders fine everywhere)
+      - Hook line → markdown blockquote ``> **<text>**`` (visual lift)
+      - Source URL shortening (Google News blob → `[Google News](...)`)
+      - Bare ``@handle`` → markdown link
+      - Omni View "Read more" duplicate-URL dedup
 
-The transforms are conservative: they pattern-match a recognisable
-shape and only fire when matched. A digest that doesn't contain (e.g.)
-the vocab format passes through unchanged.
+2. ``transform_email_body`` — HTML upgrades layered on top of the
+   canonical text inside ``send_show_newsletter``. These would corrupt
+   plaintext / blog / RSS surfaces if applied at the canonical stage
+   (raw inline HTML showing up in markdown), so they're email-only:
 
-All transforms are idempotent — running twice produces the same output
-as once. They're also applied *after* ``scrub_scaffold`` from
-``engine.newsletter_sanitizer`` so labels like ``**Vocabulary List
-(8-12 words/phrases):**`` are already gone by the time we run.
+      - Markdown ``---`` rules → styled ``<hr>`` (dark-mode aware)
+      - Tesla ``**TSLA today:**`` line → styled stock-watch table
+      - Privet vocab list → card-stack table
+
+All transforms are idempotent. They're also applied *after*
+``scrub_scaffold`` from ``engine.newsletter_sanitizer`` so labels like
+``**Vocabulary List (8-12 words/phrases):**`` are already gone by the
+time we run.
 """
 
 from __future__ import annotations
@@ -30,24 +35,37 @@ from typing import List
 
 
 # ---------------------------------------------------------------------------
-# Box-drawing horizontal rules → <hr>
+# Box-drawing horizontal rules → markdown / HTML
 # ---------------------------------------------------------------------------
 
 _BOX_RULE_RE = re.compile(r"(?m)^\s*(?:━|─|═){3,}\s*$")
+_MD_HR_RE = re.compile(r"(?m)^\s*-{3,}\s*$")
 
 
-def replace_box_rules_with_hr(body: str) -> str:
-    """Replace runs of box-drawing horizontal rules with HTML ``<hr>``.
+def replace_box_rules_with_md_hr(body: str) -> str:
+    """Canonical-stage: box-drawing rules → markdown ``---``.
 
-    The Tesla daily previously rendered ``━━━━━━━━━━━━━━━━━━━━`` as
-    section separators. In email those characters are visible literals
-    (most fonts don't merge them into a horizontal line) and Outlook
-    Win renders them as boxes. Replace with a styled ``<hr>`` that
-    respects dark-mode override (set in ``_DARK_MODE_STYLE``).
+    Markdown's standard horizontal rule renders cleanly in every
+    surface that consumes the canonical .md (blog, RSS show notes,
+    GitHub Pages summary). The email pipeline upgrades ``---`` to a
+    styled ``<hr>`` later via ``upgrade_md_hr_to_html``.
     """
     if not body:
         return body
-    return _BOX_RULE_RE.sub(
+    return _BOX_RULE_RE.sub("---", body)
+
+
+def upgrade_md_hr_to_html(body: str) -> str:
+    """Email-stage: markdown ``---`` rules → styled ``<hr>``.
+
+    Outlook Win renders box-drawing characters (━━━) as boxes; even
+    plain ``---`` is rendered as a faint thin rule by some clients
+    and as nothing by others. Replace with an inline-styled ``<hr>``
+    that respects dark mode (overridden in ``_DARK_MODE_STYLE``).
+    """
+    if not body:
+        return body
+    return _MD_HR_RE.sub(
         '<hr style="border:none;border-top:1px solid #e2e8f0;'
         'margin:24px 0;" />',
         body,
@@ -250,30 +268,120 @@ def render_russian_vocab_cards(body: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Hook line → blockquote (visual prominence)
+# ---------------------------------------------------------------------------
+
+# After ``scrub_scaffold`` strips the ``**HOOK:**`` label, the hook
+# becomes a plain paragraph at the top of the digest — visually
+# indistinguishable from the body. Promote it to a markdown blockquote
+# (``> **<text>**``) so it stands out across every surface (blog
+# renders it indented, email wraps it as a styled quote, RSS readers
+# show it as a callout). The hook is a single sentence that follows
+# the price line and precedes the first horizontal rule.
+#
+# Match the first non-empty content line that sits between the
+# price/header lines and the first ``---`` (or end of body), and
+# only if it doesn't already start with ``>`` (idempotent) and isn't
+# already a heading / list item / blockquote / table.
+
+# A bold-label line looks like ``**Field name:** value`` — the colon
+# inside the bold span is the giveaway. We skip those (they're header
+# metadata) and only consider plain prose lines for promotion.
+_BOLD_LABEL_LINE_RE = re.compile(r"^\*\*[^*]+:\*\*")
+# Markdown bullet (``- foo`` or ``* foo``) — single marker followed by
+# whitespace. ``**foo**`` is legitimate bold prose, NOT a bullet, so
+# we use a regex (single char + space) instead of ``startswith("*")``.
+_BULLET_LINE_RE = re.compile(r"^[-*]\s")
+_HOOK_SKIP_PREFIXES = ("#", ">", "1.", "|", "<", "```")
+
+
+def promote_hook_to_blockquote(body: str) -> str:
+    """Wrap the post-scrub hook line in a markdown blockquote.
+
+    The transform finds the first prose line after the header block
+    (Date / TSLA today / etc.) and rewrites it as ``> **<text>**``.
+    Returns the body unchanged if no plausible hook is found —
+    conservative by design.
+
+    Idempotent: skips lines that already start with ``>``.
+    """
+    if not body:
+        return body
+
+    lines = body.split("\n")
+    # Skip the title and any leading metadata lines (bold-label or
+    # blank). Find the first line that's plain prose.
+    for i, raw in enumerate(lines):
+        stripped = raw.strip()
+        if not stripped:
+            continue
+        # Skip title (`# Tesla Shorts Time`) and any bold-label header
+        # lines (``**TSLA today:** ...``).
+        if stripped.startswith("#"):
+            continue
+        if _BOLD_LABEL_LINE_RE.match(stripped):
+            continue
+        # Stop at structural markers — if we hit an HR or a list /
+        # heading before any prose, there's no hook to promote.
+        if stripped.startswith(_HOOK_SKIP_PREFIXES):
+            return body
+        if _BULLET_LINE_RE.match(stripped):
+            return body
+        # Plausible hook — wrap it.
+        # Strip any surrounding `**bold**` so we don't end up with
+        # ``> **\*\*text\*\***``.
+        text = stripped
+        if text.startswith("**") and text.endswith("**") and len(text) > 4:
+            text = text[2:-2].strip()
+        lines[i] = f"> **{text}**"
+        return "\n".join(lines)
+    return body
+
+
+# ---------------------------------------------------------------------------
 # Public combined transform
 # ---------------------------------------------------------------------------
 
 def transform_daily_body(body: str, *, slug: str = "") -> str:
-    """Apply every body transform in the right order.
+    """Canonical-stage transforms (markdown-safe; no inline HTML).
 
-    Order matters:
+    Applied at the canonical .md write site in ``run_show.py`` so every
+    downstream surface (blog, RSS show notes, GitHub Pages summary,
+    email) sees the same source. Order matters:
 
-      1. Box rules → ``<hr>`` (cheapest, fires for everyone)
-      2. Shorten Google News tracking URLs in "Source: …" lines
-         (universal — every show is potentially affected)
-      3. Linkify trailing X/Twitter @handles (every show)
-      4. Dedup "Read more" source lists (Omni View — repeated URLs)
-      5. TSLA price block (Tesla only)
-      6. Russian vocab cards (Привет only)
+      1. Box-drawing rules → markdown ``---``
+      2. Hook line → markdown blockquote
+      3. Shorten Google News tracking URLs in "Source: …" lines
+      4. Linkify trailing X/Twitter @handles
+      5. Dedup Omni View "Read more" duplicate URLs
 
     Each transform is a no-op when its trigger pattern isn't present,
     so calling this for every show is safe.
     """
-    body = replace_box_rules_with_hr(body)
+    body = replace_box_rules_with_md_hr(body)
+    body = promote_hook_to_blockquote(body)
     body = shorten_source_urls(body)
     body = linkify_x_handles(body)
     if slug == "omni_view":
         body = dedup_read_more_sources(body)
+    return body
+
+
+def transform_email_body(body: str, *, slug: str = "") -> str:
+    """Email-only transforms — inline HTML upgrades for layout.
+
+    Applied inside ``send_show_newsletter`` *after* the canonical
+    transforms have already run on the source. These produce HTML
+    that's only safe inside an email (the canonical .md path can't
+    contain raw HTML — Markdown viewers strip or escape it):
+
+      1. Markdown ``---`` → styled ``<hr>`` (dark-mode aware)
+      2. Tesla ``**TSLA today:**`` line → styled stock-watch table
+      3. Privet vocab list → card-stack table
+
+    Idempotent — repeated runs produce the same HTML output.
+    """
+    body = upgrade_md_hr_to_html(body)
     if slug == "tesla":
         body = render_tsla_price_block(body)
     if slug == "privet_russian":

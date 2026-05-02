@@ -23,13 +23,14 @@ import pytest
 # ---------------------------------------------------------------------------
 
 def voice_normalization_full(voice_in: str, voice_out: str) -> list:
-    """The full 6-stage filter chain for voice normalization (May 2026:
-    added 6.5 kHz de-essing dip for the new custom Grok voice)."""
+    """The 5-stage filter chain for voice normalization. The 6.5 kHz
+    de-essing dip was retired May 2026 once the second custom voice
+    clone (kdif6sqjcyiq, recorded on a better mic) replaced the
+    sibilant b4cusb2omvkz."""
     return [
         "ffmpeg", "-y", "-threads", "0", "-i", voice_in,
         "-af",
         "highpass=f=80,lowpass=f=15000,"
-        "equalizer=f=6500:t=q:w=1.5:g=-3,"
         "loudnorm=I=-18:TP=-1.5:LRA=11:linear=true,"
         "acompressor=threshold=-20dB:ratio=4:attack=1:release=100:makeup=2,"
         "alimiter=level_in=1:level_out=0.95:limit=0.95",

@@ -371,7 +371,18 @@ def send_show_newsletter(
     # Body transforms — clean up scaffold + render Tesla price /
     # Russian vocab. Run *before* wrap_with_branding so the wrapper
     # sees clean markdown.
-    from engine.newsletter_body import transform_daily_body
+    #
+    # Two stages: ``transform_daily_body`` is the canonical (markdown
+    # -safe) pass that already ran in ``run_show.py`` on the digest
+    # source; we re-run it here as defense-in-depth (idempotent).
+    # ``transform_email_body`` is the email-only layer that produces
+    # inline HTML (TSLA stock-watch table, styled ``<hr>``, vocab
+    # cards) — applying it at the canonical stage would corrupt the
+    # blog / RSS / GitHub Pages surfaces, which is why it lives here.
+    from engine.newsletter_body import (
+        transform_daily_body,
+        transform_email_body,
+    )
     from engine.newsletter_sanitizer import (
         ScaffoldLeakError,
         assert_clean,
@@ -379,6 +390,7 @@ def send_show_newsletter(
     )
     body_clean = scrub_scaffold(digest_text or "")
     body_clean = transform_daily_body(body_clean, slug=slug)
+    body_clean = transform_email_body(body_clean, slug=slug)
 
     # Hard tripwire: if any blocklisted label survived scrubbing, the
     # prompt regressed and the operator should fix the prompt before
