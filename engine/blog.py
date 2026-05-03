@@ -564,7 +564,10 @@ def generate_blog_post_html(
             source_domains.append({"url": url, "domain": domain})
 
     # Load transcript (TTS script) if available — scan digest dir for
-    # a *_Ep{NNN}_*_tts.txt file matching this episode number.
+    # a *_Ep{NNN}_*_tts.txt file matching this episode number. The TTS
+    # script carries Grok speech tags ([pause], <emphasis>...</emphasis>,
+    # etc.) which the audio engine consumes; readers must never see
+    # them — strip before handing to the template.
     transcript_text = ""
     try:
         _md_path = metadata.get("_md_path")
@@ -573,7 +576,9 @@ def generate_blog_post_html(
             _tts_pattern = f"*_Ep{ep_num:03d}_*_tts.txt"
             _tts_files = sorted(_digest_dir.glob(_tts_pattern))
             if _tts_files:
-                transcript_text = _tts_files[-1].read_text(encoding="utf-8").strip()
+                from engine.utils import strip_speech_tags
+                _raw = _tts_files[-1].read_text(encoding="utf-8").strip()
+                transcript_text = strip_speech_tags(_raw)
     except Exception:
         pass  # Non-fatal — transcript is optional
 

@@ -12,7 +12,9 @@ Provides:
     reads the four ``YOUTUBE_*`` env vars used by the workflow.
 
 Every upload sets ``status.containsSyntheticMedia=True`` because all
-Nerra Network episodes use ElevenLabs voice synthesis. This is the API
+Nerra Network episodes use AI voice synthesis (Grok TTS network-wide
+since May 2026; ElevenLabs is retained as an emergency rollback only).
+This is the API
 field YouTube introduced in October 2024 for AI/A&S disclosure; setting
 it via the API renders the same "Altered or synthetic content" label
 the Studio UI applies, and is required for monetization-eligible AI
