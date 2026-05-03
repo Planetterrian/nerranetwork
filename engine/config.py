@@ -89,6 +89,15 @@ class TTSConfig:
     use_speaker_boost: bool = True
     speed: float = 1.0  # Speech speed (0.7–1.2); Flash v2.5 supports this range
     apply_text_normalization: str = "on"  # "auto", "on", or "off"; helps with number/date pronunciation
+    # Speech-tag wrap applied to every chunk sent to Grok TTS. Grok
+    # cloned voices respond noticeably to ``<fast><build-intensity>`` —
+    # the operator A/B'd against bare text on Tesla Ep459 / Ep460 and
+    # the wrapped read had clearly more energy and dynamic range. Empty
+    # strings = no wrap (back-compat). The Grok backend strips these
+    # tags before producing audio, so they never appear as spoken
+    # words. ElevenLabs path ignores both fields.
+    speech_wrap_open: str = "<fast><build-intensity>"
+    speech_wrap_close: str = "</build-intensity></fast>"
     # Post-TTS transcription validation (opt-in)
     validate_transcription: bool = False
     whisper_model: str = "base"  # "tiny", "base", "small", "medium"

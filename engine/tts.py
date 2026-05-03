@@ -740,6 +740,8 @@ def _speak_with_grok(
     language_code: str = "auto",
     timeout: int = GROK_TTS_TIMEOUT_SECONDS,
     append_exclamation: bool = False,
+    speech_wrap_open: str = "",
+    speech_wrap_close: str = "",
 ) -> None:
     """Grok-TTS counterpart of ``speak()``.
 
@@ -752,8 +754,16 @@ def _speak_with_grok(
     text = prepare_text_for_tts(text)
     # Cap at Grok's 15k-char request limit even when caller passes a
     # higher max_chars (e.g. shows that inherited the ElevenLabs default).
-    effective_max = min(max_chars, GROK_MAX_CHARS_PER_REQUEST)
+    # Reserve space for the speech-tag wrap so ``open + chunk + close``
+    # still fits under Grok's per-request cap.
+    wrap_overhead = len(speech_wrap_open) + len(speech_wrap_close)
+    effective_max = min(max_chars, GROK_MAX_CHARS_PER_REQUEST - wrap_overhead)
     chunks = chunk_text(text, max_chars=effective_max)
+
+    def _wrap(s: str) -> str:
+        if not (speech_wrap_open or speech_wrap_close):
+            return s
+        return f"{speech_wrap_open}{s}{speech_wrap_close}"
 
     import tempfile as _tmpmod
     tmp_dir = Path(_tmpmod.mkdtemp(prefix="tts_grok_", dir=str(Path(filename).parent)))
@@ -762,6 +772,7 @@ def _speak_with_grok(
         out_text = chunks[0]
         if append_exclamation:
             out_text = out_text + "!"
+        out_text = _wrap(out_text)
         # Single chunk: WAV from Grok → final MP3 in one encode pass.
         wav_chunk = tmp_dir / "tts_chunk.wav"
         try:
@@ -809,6 +820,7 @@ def _speak_with_grok(
                     chunk_text_str = chunk_text_str.rstrip(".!?") + "."
                 else:
                     chunk_text_str = chunk_text_str + "!"
+            chunk_text_str = _wrap(chunk_text_str)
             grok_speak_chunk(
                 chunk_text_str, voice_id, chunk_file,
                 api_key=api_key, language_code=language_code, timeout=timeout,
@@ -907,6 +919,8 @@ def synthesize(
     apply_text_normalization: str = "on",
     timeout: int = GROK_TTS_TIMEOUT_SECONDS,
     append_exclamation: bool = False,
+    speech_wrap_open: str = "",
+    speech_wrap_close: str = "",
 ) -> Path:
     """Top-level entry point: text in, audio file path out.
 
@@ -932,6 +946,8 @@ def synthesize(
             language_code=language_code or "auto",
             timeout=timeout,
             append_exclamation=append_exclamation,
+            speech_wrap_open=speech_wrap_open,
+            speech_wrap_close=speech_wrap_close,
         )
         return output_path
     # Default: ElevenLabs
@@ -971,6 +987,8 @@ def synthesize_sections(
     speed: float = 1.0,
     apply_text_normalization: str = "on",
     timeout: int = GROK_TTS_TIMEOUT_SECONDS,
+    speech_wrap_open: str = "",
+    speech_wrap_close: str = "",
 ) -> List[Path]:
     """Synthesize multiple script sections into individual audio files.
 
@@ -1016,6 +1034,8 @@ def synthesize_sections(
                 max_chars=max_chars,
                 language_code=language_code or "auto",
                 timeout=timeout,
+                speech_wrap_open=speech_wrap_open,
+                speech_wrap_close=speech_wrap_close,
             )
         else:
             speak(

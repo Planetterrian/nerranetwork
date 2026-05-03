@@ -489,3 +489,107 @@ def test_synthesize_sections_succeeds_when_all_sections_synth(tmp_path: Path, mo
     assert all(p.exists() for p in result)
     # No fallback file generated.
     assert not (out_dir / "ep002_fallback.mp3").exists()
+
+
+# ---------------------------------------------------------------------------
+# Speech-tag wrap — <fast><build-intensity>...</...></...>
+# ---------------------------------------------------------------------------
+
+def test_grok_path_wraps_text_with_speech_tags(tmp_path: Path, monkeypatch):
+    """When ``speech_wrap_open`` / ``close`` are set, every chunk sent
+    to ``grok_speak_chunk`` must arrive wrapped. The kdif6sqjcyiq clone
+    A/B'd cleaner with ``<fast><build-intensity>`` than bare text — this
+    drift guard catches any regression that drops the wrap."""
+    captured_texts: list = []
+
+    def fake_chunk(text, *args, **kwargs):
+        captured_texts.append(text)
+        # Touch the output path so the surrounding pipeline doesn't
+        # bail looking for a non-existent file.
+        out = args[1] if len(args) > 1 else kwargs.get("out_path")
+        if out:
+            Path(out).write_bytes(b"\xff\xfb\x90")
+
+    monkeypatch.setattr(tts, "grok_speak_chunk", fake_chunk)
+    # Stub ffmpeg so the encode steps don't actually run.
+    monkeypatch.setattr(tts.subprocess, "run", MagicMock())
+
+    tts.synthesize(
+        "Tesla just opened a new Supercharger corridor.",
+        voice_id="kdif6sqjcyiq",
+        output_path=tmp_path / "o.mp3",
+        api_key="k",
+        provider="grok",
+        language_code="en",
+        speech_wrap_open="<fast><build-intensity>",
+        speech_wrap_close="</build-intensity></fast>",
+    )
+
+    assert captured_texts, "grok_speak_chunk was never called"
+    sent = captured_texts[0]
+    assert sent.startswith("<fast><build-intensity>"), sent
+    assert sent.endswith("</build-intensity></fast>"), sent
+    assert "Tesla just opened a new Supercharger corridor." in sent
+
+
+def test_grok_path_wrap_is_empty_string_safe(tmp_path: Path, monkeypatch):
+    """No wrap configured = bare text, byte-identical to pre-wrap behavior."""
+    captured_texts: list = []
+
+    def fake_chunk(text, *args, **kwargs):
+        captured_texts.append(text)
+        out = args[1] if len(args) > 1 else kwargs.get("out_path")
+        if out:
+            Path(out).write_bytes(b"\xff\xfb\x90")
+
+    monkeypatch.setattr(tts, "grok_speak_chunk", fake_chunk)
+    monkeypatch.setattr(tts.subprocess, "run", MagicMock())
+
+    tts.synthesize(
+        "Bare sentence.",
+        voice_id="kdif6sqjcyiq",
+        output_path=tmp_path / "o.mp3",
+        api_key="k",
+        provider="grok",
+        # No speech_wrap_* args at all (defaults to "").
+    )
+
+    sent = captured_texts[0]
+    assert "<fast>" not in sent
+    assert "<build-intensity>" not in sent
+    assert sent == "Bare sentence."
+
+
+def test_default_tts_config_has_fast_build_intensity_wrap():
+    """The network default is ``<fast><build-intensity>...</...></...>`` — the
+    operator's A/B verdict on cloned voices. Drift guard so a quiet
+    config change doesn't silently revert this for every show."""
+    from engine.config import TTSConfig
+    cfg = TTSConfig()
+    assert cfg.speech_wrap_open == "<fast><build-intensity>"
+    assert cfg.speech_wrap_close == "</build-intensity></fast>"
+
+
+def test_synthesize_sections_passes_wrap_through(tmp_path: Path, monkeypatch):
+    """``synthesize_sections`` is the multi-section entry point used by
+    shows that emit transition stings between sections. The wrap kwargs
+    must reach ``_speak_with_grok`` for each section."""
+    grok_called = MagicMock()
+    monkeypatch.setattr(tts, "_speak_with_grok", grok_called)
+
+    tts.synthesize_sections(
+        ["First section.", "Second section."],
+        voice_id="kdif6sqjcyiq",
+        output_dir=tmp_path,
+        api_key="k",
+        provider="grok",
+        language_code="en",
+        speech_wrap_open="<fast><build-intensity>",
+        speech_wrap_close="</build-intensity></fast>",
+    )
+
+    assert grok_called.call_count == 2
+    for call in grok_called.call_args_list:
+        _, kwargs = call
+        assert kwargs["speech_wrap_open"] == "<fast><build-intensity>"
+        assert kwargs["speech_wrap_close"] == "</build-intensity></fast>"
