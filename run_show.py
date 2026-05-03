@@ -1594,6 +1594,8 @@ def run(args: argparse.Namespace) -> None:
                         language_code=config.tts.language_code,
                         speed=config.tts.speed,
                         apply_text_normalization=config.tts.apply_text_normalization,
+                        speech_wrap_open=config.tts.speech_wrap_open,
+                        speech_wrap_close=config.tts.speech_wrap_close,
                     )
 
                     generate_transition_sting(sting_path)
@@ -1622,6 +1624,8 @@ def run(args: argparse.Namespace) -> None:
                         language_code=config.tts.language_code,
                         speed=config.tts.speed,
                         apply_text_normalization=config.tts.apply_text_normalization,
+                        speech_wrap_open=config.tts.speech_wrap_open,
+                        speech_wrap_close=config.tts.speech_wrap_close,
                     )
             else:
                 synthesize(
@@ -1634,6 +1638,8 @@ def run(args: argparse.Namespace) -> None:
                     language_code=config.tts.language_code,
                     speed=config.tts.speed,
                     apply_text_normalization=config.tts.apply_text_normalization,
+                    speech_wrap_open=config.tts.speech_wrap_open,
+                    speech_wrap_close=config.tts.speech_wrap_close,
                 )
 
             _tts_duration = time.monotonic() - t0

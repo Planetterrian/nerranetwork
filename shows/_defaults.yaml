@@ -50,6 +50,15 @@ tts:
   voice_id: kdif6sqjcyiq
   language_code: en
   max_chars: 10000
+  # Speech-tag wrap applied to every chunk sent to Grok TTS. The
+  # ``<fast><build-intensity>`` combo is the single biggest delivery
+  # lever on cloned voices — A/B'd on the operator's kdif6sqjcyiq
+  # voice in May 2026, the wrapped read had visibly more energy and
+  # dynamic range than bare text. Tags are consumed by the Grok
+  # backend (never appear as spoken words). To disable for a show,
+  # override both fields to empty strings in the show's tts: block.
+  speech_wrap_open: "<fast><build-intensity>"
+  speech_wrap_close: "</build-intensity></fast>"
   # ---- Legacy ElevenLabs baseline ----
   # No show currently overrides `provider: elevenlabs`. Kept here so
   # an emergency rollback (e.g. Grok TTS outage) is a one-line YAML
