@@ -293,6 +293,23 @@ _BOLD_LABEL_LINE_RE = re.compile(r"^\*\*[^*]+:\*\*")
 # we use a regex (single char + space) instead of ``startswith("*")``.
 _BULLET_LINE_RE = re.compile(r"^[-*]\s")
 _HOOK_SKIP_PREFIXES = ("#", ">", "1.", "|", "<", "```")
+# A line containing inline ``**...**`` bold spans surrounded by other
+# prose is a decoration / show subtitle (e.g. Planetterrian's
+# ``🌍 **Planetterrian Daily** - Science, Longevity & Health
+# Discoveries``), never the hook. The hook itself is plain prose
+# without internal bold spans. A line that IS one bold span end-to-end
+# (``**Already bold hook**``) is a candidate — that's matched by the
+# fullmatch test in ``_is_decorative_subtitle``.
+_INLINE_BOLD_RE = re.compile(r"\*\*[^*]+\*\*")
+_FULLY_BOLD_RE = re.compile(r"^\*\*[^*]+\*\*$")
+
+
+def _is_decorative_subtitle(stripped: str) -> bool:
+    """A line is a decorative subtitle if it contains a ``**...**``
+    bold span but isn't itself one bold span end-to-end."""
+    return bool(_INLINE_BOLD_RE.search(stripped)) and not bool(
+        _FULLY_BOLD_RE.fullmatch(stripped)
+    )
 
 
 def promote_hook_to_blockquote(body: str) -> str:
@@ -320,6 +337,11 @@ def promote_hook_to_blockquote(body: str) -> str:
         if stripped.startswith("#"):
             continue
         if _BOLD_LABEL_LINE_RE.match(stripped):
+            continue
+        # Decorative subtitle lines (``🌍 **Planetterrian Daily** -
+        # Science, Longevity & Health Discoveries``) — keep walking,
+        # the real hook is below them.
+        if _is_decorative_subtitle(stripped):
             continue
         # Stop at structural markers — if we hit an HR or a list /
         # heading before any prose, there's no hook to promote.

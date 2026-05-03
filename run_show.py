@@ -1829,6 +1829,16 @@ def run(args: argparse.Namespace) -> None:
             "youtube_enabled",
             bool(getattr(config.youtube, "enabled", False)),
         )
+        # Surface upload failure reasons in metrics.json so the operator
+        # can diagnose without grepping GitHub Action logs. Most likely
+        # culprit when uploads silently fail is YouTube Data API
+        # quota exhaustion (10,000 units/day, 1,600 per upload =
+        # ~6 uploads/day per channel; the @NerraNetwork channel has
+        # 8 English shows × 2 videos = 16 uploads which exceeds quota).
+        if youtube_urls.get("long_error"):
+            metrics.record("youtube_long_error", youtube_urls["long_error"])
+        if youtube_urls.get("short_error"):
+            metrics.record("youtube_short_error", youtube_urls["short_error"])
         metrics.record("pexels_photos_filtered", youtube_pexels_filtered)
     except Exception:
         pass
@@ -2665,6 +2675,24 @@ def _publish_youtube(
                 )
         except Exception as exc:
             logger.exception("YouTube long-form publish failed: %s", exc)
+            # Surface the failure reason in the result dict so the
+            # outer pipeline can record it in metrics.json. Without
+            # this the only signal was ``youtube_long_form_uploaded:
+            # false`` and the operator had to dig through GitHub
+            # Action logs to find out why. ``HttpError`` from the
+            # google API client carries a structured ``status`` /
+            # ``reason`` (quotaExceeded / authError / etc.) — capture
+            # both that and the generic str fallback.
+            err_type = type(exc).__name__
+            err_msg = str(exc)[:300]
+            err_status = getattr(exc, "status_code", None) or getattr(
+                getattr(exc, "resp", None), "status", None
+            )
+            result["long_error"] = {
+                "type": err_type,
+                "status": err_status,
+                "message": err_msg,
+            }
 
     # ---- Shorts ----
     if config.youtube.publish_shorts:
@@ -2716,6 +2744,18 @@ def _publish_youtube(
                 )
         except Exception as exc:
             logger.exception("YouTube Shorts publish failed: %s", exc)
+            # Mirror the long-form error capture so metrics.json
+            # carries actionable context for the operator.
+            err_type = type(exc).__name__
+            err_msg = str(exc)[:300]
+            err_status = getattr(exc, "status_code", None) or getattr(
+                getattr(exc, "resp", None), "status", None
+            )
+            result["short_error"] = {
+                "type": err_type,
+                "status": err_status,
+                "message": err_msg,
+            }
 
     # Best-effort cleanup of the rendered MP4s (large files; YouTube has
     # the canonical copy now). Thumbnail kept on disk for debugging.

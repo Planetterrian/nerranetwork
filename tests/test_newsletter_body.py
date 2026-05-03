@@ -149,6 +149,34 @@ class TestHookBlockquote:
         # Don't end up with `> ****Already bold hook****` — the inner
         # ** are stripped before re-wrapping.
         assert "> **Already bold hook**" in out
+
+    def test_skips_decorative_subtitle_with_inline_bold(self):
+        """Planetterrian's canonical .md emits a decorative subtitle
+        line right under the title (``🌍 **Planetterrian Daily** -
+        Science, Longevity & Health Discoveries``). The actual hook
+        is below it. Without this skip, the subtitle was being
+        promoted instead of the real hook (operator screenshot,
+        2026-05-03)."""
+        text = (
+            "# Planetterrian Daily\n"
+            "🌍 **Planetterrian Daily** - Science, Longevity & Health Discoveries\n"
+            "\n"
+            "A blood test for p-tau217 can predict Alzheimer's risk years before symptoms.\n"
+            "\n"
+            "---\n"
+        )
+        out = promote_hook_to_blockquote(text)
+        # The subtitle line stays as-is — never wrapped.
+        assert (
+            "🌍 **Planetterrian Daily** - Science, Longevity & Health Discoveries"
+            in out
+        )
+        assert "> **🌍" not in out
+        # The real hook one line down IS wrapped.
+        assert (
+            "> **A blood test for p-tau217 can predict Alzheimer's risk years before symptoms.**"
+            in out
+        )
         assert "****" not in out
 
     def test_empty_input(self):
