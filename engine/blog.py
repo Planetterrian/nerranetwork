@@ -43,6 +43,11 @@ _HOOK_PATTERNS = [
     re.compile(r"\*\*ЗАГОЛОВОК:\*\*\s*(.+)"),
     re.compile(r"\*\*Theme:\*\*\s*(.+)"),
     re.compile(r"\*\*Тема:\*\*\s*(.+)"),
+    # PR #292: ``promote_hook_to_blockquote`` wraps the post-scrub hook
+    # as ``> **<text>**``. Match that on its own line so blogs / blog
+    # listings still find the right hook after the canonical scrub
+    # strips ``**HOOK:**``.
+    re.compile(r"^>\s*\*\*([^*]+(?:\*[^*]+)*?)\*\*\s*$"),
 ]
 
 # Episode number from filename: ..._Ep414_20260322.md
@@ -99,7 +104,12 @@ def extract_blog_metadata(
             for pat in _HOOK_PATTERNS:
                 m = pat.search(stripped)
                 if m:
-                    hook = m.group(1).strip()
+                    raw = m.group(1).strip()
+                    # Strip inline HTML (defense — listing template runs
+                    # under ``autoescape=False`` and a stray `<table>` from
+                    # a legacy episode would tear the page apart).
+                    raw = re.sub(r"<[^>]+>", "", raw)
+                    hook = raw
                     break
 
     # Fallback: some digests use **Bold Title** instead of # Heading.
@@ -163,15 +173,43 @@ def extract_blog_metadata(
             if not stripped or len(stripped) < 20:
                 continue
             if stripped.startswith(("#", "**Date:", "**Дата:", "**HOOK:", "**ЗАГОЛОВОК:",
-                                    "**Theme:", "**Тема:", "━", "─", "═", "---", "***")):
+                                    "**Theme:", "**Тема:",
+                                    # Tesla price-line variants — never the hook.
+                                    "**REAL-TIME TSLA price:", "**TSLA today:",
+                                    # Markdown blockquote — already handled by the
+                                    # blockquote pattern in _HOOK_PATTERNS; if we
+                                    # got here it didn't match (multiline / weird
+                                    # formatting) and we should ignore rather than
+                                    # leak a literal ">" into the preview.
+                                    ">",
+                                    # Inline HTML (e.g. legacy Tesla episodes
+                                    # whose canonical .md still has the inline
+                                    # <table> for the TSLA price block) —
+                                    # `autoescape=False` would inject the raw
+                                    # HTML into the listing card and break the
+                                    # page structure.
+                                    "<",
+                                    "━", "─", "═", "---", "***")):
                 continue
             if all(c in "━─═" for c in stripped):
+                continue
+            # Lines with internal `**...**` bold are decorations / show
+            # subtitles ("🌍 **Planetterrian Daily** - Science, Longevity
+            # & Health Discoveries"), never the hook prose. The hook is
+            # always plain prose without internal bold spans.
+            if re.search(r"\*\*[^*]+\*\*", stripped) and not re.fullmatch(
+                r"\*\*[^*]+\*\*", stripped
+            ):
                 continue
             # Found a content paragraph — use it as hook
             # Strip markdown formatting for clean display
             clean = re.sub(r"\*\*(.+?)\*\*", r"\1", stripped)
             clean = re.sub(r"\*(.+?)\*", r"\1", clean)
             clean = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", clean)
+            # Defense-in-depth: drop any inline HTML so legacy episodes
+            # whose canonical .md still has raw `<...>` tags can never
+            # corrupt the listing page (autoescape=False).
+            clean = re.sub(r"<[^>]+>", "", clean)
             hook = clean[:200] + ("..." if len(clean) > 200 else "")
             break
 
