@@ -512,10 +512,18 @@ _INLINE_TAG_PATTERN = re.compile(
 # Wrapping tags surround a span of text and modify its delivery (whisper,
 # emphasis, etc.). The Grok backend interprets and consumes them; we strip
 # them for any non-TTS consumer (blog markdown, RSS show notes, X teaser).
+#
+# ``build-intensity`` is the network's TTS-chunk wrap (paired with
+# ``fast``) added in May 2026 for cloned-voice energy. It's added at
+# the chunk-send layer in ``_speak_with_grok`` and shouldn't reach
+# any non-TTS surface — but inclusion here is defense-in-depth in case
+# a future code path stamps the wrap onto the script before it's
+# saved.
 _WRAPPING_TAGS = (
     "soft", "loud", "whisper",
     "slow", "fast", "high", "low",
     "singing", "emphasis",
+    "build-intensity",
 )
 _WRAPPING_TAG_PATTERN = re.compile(
     r"</?\s*(?:" + "|".join(re.escape(t) for t in _WRAPPING_TAGS) + r")\s*>",

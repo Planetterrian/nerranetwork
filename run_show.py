@@ -53,8 +53,8 @@ if hasattr(signal, "SIGALRM"):
 # AI disclosure — appended to every episode's spoken script and RSS metadata
 # ---------------------------------------------------------------------------
 _AI_DISCLOSURE = (
-    "This podcast is curated by Patrick but generated using AI voice synthesis "
-    "of my voice using ElevenLabs. The primary reason to do this is I "
+    "This podcast is curated by Patrick but generated using AI voice "
+    "synthesis of my voice. The primary reason to do this is I "
     "unfortunately don't have the time to be consistent with generating all "
     "the content and wanted to focus on creating consistent and regular "
     "episodes for all the themes that I enjoy and I hope others do as well."
@@ -62,7 +62,7 @@ _AI_DISCLOSURE = (
 
 _AI_DISCLOSURE_RSS = (
     "AI Disclosure: This podcast is curated by Patrick but uses AI-generated "
-    "voice synthesis (ElevenLabs) for audio production."
+    "voice synthesis for audio production."
 )
 
 # ---------------------------------------------------------------------------

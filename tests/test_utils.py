@@ -260,6 +260,17 @@ class TestStripSpeechTags:
         )
         assert self._strip(text) == "abcdefghi"
 
+    def test_strips_build_intensity_wrap(self):
+        """The May-2026 chunk wrap (``<fast><build-intensity>...</...></...>``)
+        must strip cleanly even though it normally never appears in the
+        non-TTS surfaces — defense-in-depth in case a future code path
+        leaks it. ``build-intensity`` was added to ``_WRAPPING_TAGS``
+        alongside the other documented wrapping tags."""
+        out = self._strip(
+            "<fast><build-intensity>Hello world.</build-intensity></fast>"
+        )
+        assert out == "Hello world."
+
     def test_idempotent(self):
         text = "[breath] Hello, <emphasis>world</emphasis>."
         once = self._strip(text)
