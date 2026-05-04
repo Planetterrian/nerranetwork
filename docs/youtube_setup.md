@@ -76,7 +76,7 @@ continues unaffected.
 
 The default Google Cloud quota is **10,000 units/day** per project.
 Each `videos.insert` costs **1,600 units**, so the default lets you
-upload roughly six videos per day. With 10 shows × (long-form + Shorts)
+upload roughly six videos per day. With 11 shows × (long-form + Shorts)
 that's 32,000 units — over budget by a factor of three.
 
 Two paths forward:
@@ -90,7 +90,7 @@ Two paths forward:
    to ~50,000 units/day. Justify with:
    - Original editorial pipeline (we're not aggregating other creators).
    - Compliance with `containsSyntheticMedia` disclosure on every upload.
-   - 10 daily shows × 2 video formats × OAuth-authenticated uploads.
+   - 11 daily shows × 2 video formats × OAuth-authenticated uploads.
 
    Reviews typically take 1–2 weeks. Once granted, flip `youtube.enabled`
    to `true` on the remaining shows.

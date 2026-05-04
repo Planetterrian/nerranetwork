@@ -145,7 +145,7 @@ nerranetworks/
 - `GROK_API_KEY` — primary xAI key (all shows)
 - `ELEVENLABS_API_KEY` — ElevenLabs TTS (all shows)
 - `X_*` / `PLANETTERRIAN_X_*` — two separate X accounts
-- Voice IDs: **All 10 shows are on Grok TTS** as of the May 2026 full-network migration. The 8 English shows (including Tesla Shorts Time) share the operator's custom-trained voice `kdif6sqjcyiq`. Russian shows (FP/PR) use the custom Olya voice `0b875ae2`. ElevenLabs is no longer used in production but the API key + legacy settings stay in `_defaults.yaml` for emergency rollback. See landmine #17.
+- Voice IDs: **All 11 shows are on Grok TTS** as of the May 2026 full-network migration. The 8 English shows (including Tesla Shorts Time) share the operator's custom-trained voice `kdif6sqjcyiq`. Russian shows (FP/PR) use the custom Olya voice `0b875ae2`. ElevenLabs is no longer used in production but the API key + legacy settings stay in `_defaults.yaml` for emergency rollback. See landmine #17.
 - See `docs/env_var_inventory.md` for the complete inventory
 
 ### RSS Feeds
@@ -200,7 +200,7 @@ Phase 2 (complete):
   `record_tts_usage`, `record_x_post`, `save_usage`
 
 Phase 3 (current):
-- All 10 shows now run via `run_show.py` + YAML configs in production (CI/CD).
+- All 11 shows now run via `run_show.py` + YAML configs in production (CI/CD).
 - Legacy scripts (`digests/{tesla_shorts_time,omni_view,fascinating_frontiers,
   planetterrian}.py`) are **deprecated** — retained for reference only.
 - `run_show.py` is the canonical entry point; legacy scripts are not called
