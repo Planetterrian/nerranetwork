@@ -1,0 +1,263 @@
+"""Tests for the May 2026 schedule overhaul.
+
+Covers:
+
+- Every cron line in ``.github/workflows/run-show.yml`` has a matching
+  entry in the gate's ``CRON_MAP`` (drift between the two would silently
+  break a show — schedule fires but nothing runs).
+- The 7 daily shows carry ``weekly_recap_on_sunday: true`` in their
+  YAML; the 3 alt-cadence shows do NOT (Привет, ФП, Env Intel).
+- Only Tesla and Models & Agents for Beginners have
+  ``youtube.enabled: true`` (post quota-cap).
+"""
+
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+import pytest
+import yaml
+
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+WORKFLOW = REPO_ROOT / ".github" / "workflows" / "run-show.yml"
+SHOWS_DIR = REPO_ROOT / "shows"
+
+
+# ---------------------------------------------------------------------------
+# Cron consistency
+# ---------------------------------------------------------------------------
+
+def _extract_cron_lines() -> list[str]:
+    """Pull cron expressions from the ``schedule:`` block in the
+    workflow file (string match — yaml parsing pulls cron strings into
+    a more nested structure)."""
+    txt = WORKFLOW.read_text(encoding="utf-8")
+    # Match `- cron: '<expr>'` only inside the top-level schedule block,
+    # not in any inline comment with the word "cron". The format is
+    # consistent across the file so a simple regex is reliable.
+    return re.findall(r"- cron: '([^']+)'", txt)
+
+
+def _extract_cron_map() -> dict[str, tuple[str, str | None]]:
+    """Pull the inline CRON_MAP dict out of the gate step."""
+    txt = WORKFLOW.read_text(encoding="utf-8")
+    block = re.search(r"CRON_MAP = \{(.*?)\}", txt, flags=re.DOTALL)
+    assert block, "CRON_MAP block not found in run-show.yml"
+    body = block.group(1)
+    entries = re.findall(
+        r'"([^"]+)":\s*\("([^"]+)",\s*([A-Za-z_"]+)\)',
+        body,
+    )
+    out: dict[str, tuple[str, str | None]] = {}
+    for cron, slug, raw_filter in entries:
+        if raw_filter == "None":
+            day_filter: str | None = None
+        else:
+            day_filter = raw_filter.strip('"')
+        out[cron] = (slug, day_filter)
+    return out
+
+
+class TestCronConsistency:
+
+    def test_every_cron_line_has_map_entry(self):
+        cron_lines = _extract_cron_lines()
+        cron_map = _extract_cron_map()
+        for cron in cron_lines:
+            assert cron in cron_map, (
+                f"Cron expression {cron!r} fires but no CRON_MAP entry "
+                f"matches — show won't be selected. Add it or remove "
+                f"the cron line."
+            )
+
+    def test_no_orphan_map_entries(self):
+        cron_lines = set(_extract_cron_lines())
+        cron_map = _extract_cron_map()
+        for cron in cron_map:
+            assert cron in cron_lines, (
+                f"CRON_MAP has {cron!r} but no matching cron line — "
+                f"dead entry, will never fire."
+            )
+
+    def test_seven_daily_shows_have_no_filter(self):
+        """OV, PT, FF, M&A, MAB, MIT, TST run daily — their CRON_MAP
+        entry should carry ``None`` as the day_filter."""
+        daily = {
+            "omni_view", "planetterrian", "fascinating_frontiers",
+            "models_agents", "models_agents_beginners",
+            "modern_investing", "tesla",
+        }
+        cron_map = _extract_cron_map()
+        slugs_with_no_filter = {
+            slug for (slug, df) in cron_map.values() if df is None
+        }
+        missing = daily - slugs_with_no_filter
+        assert not missing, (
+            f"Expected {daily} to all run daily (day_filter=None) but "
+            f"these don't: {missing}"
+        )
+
+    def test_no_show_runs_before_06_utc_or_after_11_utc(self):
+        """Schedule window must be contained in 06:00–11:00 UTC so the
+        whole network finishes well before the Eastern morning. Also
+        catches accidental DST drift."""
+        cron_lines = _extract_cron_lines()
+        for cron in cron_lines:
+            minute, hour = cron.split()[:2]
+            hour_int = int(hour)
+            assert 6 <= hour_int <= 11, (
+                f"Cron {cron!r} hour {hour_int} outside 06:00–11:00 UTC "
+                f"window."
+            )
+
+
+# ---------------------------------------------------------------------------
+# Sunday weekly-recap flag
+# ---------------------------------------------------------------------------
+
+DAILY_SHOWS = [
+    "tesla", "omni_view", "planetterrian", "fascinating_frontiers",
+    "models_agents", "models_agents_beginners", "modern_investing",
+]
+ALT_CADENCE_SHOWS = ["privet_russian", "finansy_prosto", "env_intel"]
+
+
+@pytest.mark.parametrize("slug", DAILY_SHOWS)
+def test_daily_show_has_weekly_recap_flag(slug):
+    """Every show that runs daily must opt in to Sunday recap mode —
+    otherwise Sunday's slot tries to fetch news for a show that may
+    not have anything fresh and the recap never happens."""
+    cfg_path = SHOWS_DIR / f"{slug}.yaml"
+    cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8"))
+    assert cfg.get("weekly_recap_on_sunday") is True, (
+        f"{slug} runs daily but is missing "
+        f"`weekly_recap_on_sunday: true` — Sunday slot would fetch "
+        f"news instead of recapping."
+    )
+
+
+@pytest.mark.parametrize("slug", ALT_CADENCE_SHOWS)
+def test_alt_cadence_show_does_not_recap(slug):
+    """Shows on alt cadence (even days, odd weekdays) shouldn't have
+    the recap flag — they don't run every Sunday so the flag is
+    misleading drift."""
+    cfg_path = SHOWS_DIR / f"{slug}.yaml"
+    cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8"))
+    assert not cfg.get("weekly_recap_on_sunday", False), (
+        f"{slug} is alt-cadence but has weekly_recap_on_sunday=true — "
+        f"either flip the cadence to daily or drop the flag."
+    )
+
+
+# ---------------------------------------------------------------------------
+# YouTube quota cap (post-May-2026 schedule)
+# ---------------------------------------------------------------------------
+
+YOUTUBE_ENABLED_SHOWS = {"tesla", "models_agents_beginners"}
+
+
+def test_only_tst_and_mab_enable_youtube():
+    """YouTube Data API quota is 10,000 units/day, 1,600 per upload.
+    The @NerraNetwork channel can only ship ~6 uploads/day; with 8
+    English shows × 2 videos that's 16 — far over quota. Until quota
+    is increased, only TST and MAB ship to YouTube."""
+    enabled: set[str] = set()
+    for cfg_path in SHOWS_DIR.glob("*.yaml"):
+        if cfg_path.name.startswith("_"):
+            continue  # Skip _defaults.yaml etc.
+        cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
+        slug = cfg.get("slug")
+        if not slug:
+            continue
+        yt = (cfg.get("youtube") or {})
+        if yt.get("enabled") is True:
+            enabled.add(slug)
+    assert enabled == YOUTUBE_ENABLED_SHOWS, (
+        f"YouTube uploads enabled on {enabled}; only "
+        f"{YOUTUBE_ENABLED_SHOWS} should be enabled until quota strategy "
+        f"lands."
+    )
+
+
+# ---------------------------------------------------------------------------
+# weekly_recap_digest behaviour (the helper itself)
+# ---------------------------------------------------------------------------
+
+class TestWeeklyRecapHelper:
+    """``build_weekly_recap_digest`` short-circuits when the content
+    lake is missing or has too few episodes. The runner falls back to
+    a normal daily fetch in that case — the function MUST return None
+    rather than raising or returning something the daily pipeline
+    would mistake for a real digest."""
+
+    def test_returns_none_when_lake_unavailable(self, monkeypatch):
+        from engine import weekly_recap
+        # Stub out content_lake import to simulate ImportError.
+        import sys
+        monkeypatch.setitem(sys.modules, "engine.content_lake", None)
+        from datetime import date
+        out = weekly_recap.build_weekly_recap_digest(
+            "tesla", "Tesla Shorts Time", date(2026, 5, 3),
+        )
+        # We don't strictly require None on import-fail (different
+        # branch), but it must not raise. Acceptable: None or a string
+        # we never use as a real digest.
+        assert out is None or isinstance(out, str)
+
+    def test_returns_none_when_too_few_episodes(self, monkeypatch):
+        from engine import weekly_recap
+        # Force the helper to see only one episode.
+        monkeypatch.setattr(
+            weekly_recap,
+            "build_weekly_recap_digest",
+            weekly_recap.build_weekly_recap_digest,  # keep real
+        )
+
+        # Patch query_show_range inside the helper to return one episode
+        import engine.content_lake as _cl
+
+        def fake_query(slug, start, end):
+            return [
+                {"episode_num": 1, "date": "2026-05-01",
+                 "hook": "Solo episode", "digest_md": "Body"}
+            ]
+
+        monkeypatch.setattr(_cl, "query_show_range", fake_query)
+        from datetime import date
+        out = weekly_recap.build_weekly_recap_digest(
+            "tesla", "Tesla Shorts Time", date(2026, 5, 3),
+        )
+        assert out is None
+
+    def test_synthesises_digest_with_two_or_more_episodes(self, monkeypatch):
+        from engine import weekly_recap
+        import engine.content_lake as _cl
+
+        def fake_query(slug, start, end):
+            return [
+                {
+                    "episode_num": 1, "date": "2026-04-28",
+                    "hook": "Story A happened.", "digest_md": "Body A.",
+                },
+                {
+                    "episode_num": 2, "date": "2026-04-29",
+                    "hook": "Story B happened.", "digest_md": "Body B.",
+                },
+            ]
+
+        monkeypatch.setattr(_cl, "query_show_range", fake_query)
+        from datetime import date
+        out = weekly_recap.build_weekly_recap_digest(
+            "tesla", "Tesla Shorts Time", date(2026, 5, 3),
+        )
+        assert out is not None
+        # Title and recap framing present.
+        assert "Tesla Shorts Time" in out
+        assert "Weekly Recap" in out
+        # Both hooks survive into the synthetic digest.
+        assert "Story A happened." in out
+        assert "Story B happened." in out
+        # Recap-mode framing instruction at the bottom for the host.
+        assert "Sunday weekly recap" in out

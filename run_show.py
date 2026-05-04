@@ -834,20 +834,47 @@ def run(args: argparse.Namespace) -> None:
     template_vars.update(extra_context)
 
     # 7. Generate digest
+    #
+    # Sunday weekly-recap mode (May 2026 schedule overhaul). When the
+    # show has ``weekly_recap_on_sunday: true`` and today is Sunday,
+    # short-circuit the news-fetch + LLM digest stage by synthesising
+    # a digest from the past 7 days of canonical episodes via the
+    # content lake. The rest of the pipeline (podcast script gen,
+    # TTS, publish) runs unchanged on this synthetic digest, so
+    # listeners get the same narrative quality as a daily episode.
+    is_weekly_recap = (
+        bool(getattr(config, "weekly_recap_on_sunday", False))
+        and today.weekday() == 6
+    )
     from engine.generator import generate_digest, LLMRefusalError
-    logger.info("Generating digest ...")
-    try:
-        with metrics.stage("generate_digest"):
-            x_thread = generate_digest(template_vars, config, tracker=tracker)
-    except LLMRefusalError as e:
-        logger.error("PIPELINE ABORTED: %s", e)
-        logger.error(
-            "The LLM refused to generate content. This typically means the news "
-            "sources had insufficient relevant content. Check source feeds and "
-            "consider re-running later."
+    if is_weekly_recap:
+        logger.info("Sunday weekly-recap mode active for %s.", config.slug)
+        from engine.weekly_recap import build_weekly_recap_digest
+        x_thread = build_weekly_recap_digest(
+            config.slug, config.name, today,
         )
-        save_usage(tracker, digests_dir)
-        sys.exit(1)
+        if not x_thread:
+            logger.warning(
+                "Weekly recap could not be synthesised (insufficient "
+                "content lake data) — falling back to daily fetch.",
+            )
+            is_weekly_recap = False
+        else:
+            metrics.record("weekly_recap_mode", True)
+    if not is_weekly_recap:
+        logger.info("Generating digest ...")
+        try:
+            with metrics.stage("generate_digest"):
+                x_thread = generate_digest(template_vars, config, tracker=tracker)
+        except LLMRefusalError as e:
+            logger.error("PIPELINE ABORTED: %s", e)
+            logger.error(
+                "The LLM refused to generate content. This typically means the news "
+                "sources had insufficient relevant content. Check source feeds and "
+                "consider re-running later."
+            )
+            save_usage(tracker, digests_dir)
+            sys.exit(1)
 
     # Record episode content in the cross-episode tracker
     if section_patterns:

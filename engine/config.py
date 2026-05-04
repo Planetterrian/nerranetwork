@@ -297,6 +297,12 @@ class ShowConfig:
     slow_news: SlowNewsConfig = field(default_factory=SlowNewsConfig)
     content_freshness: ContentFreshnessConfig = field(default_factory=ContentFreshnessConfig)
     youtube: YouTubeConfig = field(default_factory=YouTubeConfig)
+    # Sunday weekly-recap mode. When ``true`` and the runner ticks on
+    # a Sunday, the show skips the daily news fetch and instead
+    # synthesises a recap from the past 7 days of episodes pulled
+    # from the content lake. May 2026 schedule overhaul: 7 shows on
+    # daily cadence (OV, PT, FF, M&A, MAB, MIT, TST) opt in.
+    weekly_recap_on_sunday: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -437,6 +443,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         slow_news=_build_nested(SlowNewsConfig, data.get("slow_news")),
         content_freshness=_build_nested(ContentFreshnessConfig, data.get("content_freshness")),
         youtube=_build_nested(YouTubeConfig, data.get("youtube")),
+        weekly_recap_on_sunday=bool(data.get("weekly_recap_on_sunday", False)),
     )
     logger.info("Loaded config for '%s' from %s", config.name, path)
     return config
