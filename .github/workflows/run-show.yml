@@ -274,8 +274,16 @@ jobs:
           assert Path(config.llm.podcast_prompt_file).exists(), f'Podcast prompt not found: {config.llm.podcast_prompt_file}'
           if config.llm.system_prompt_file:
               assert Path(config.llm.system_prompt_file).exists(), f'System prompt not found: {config.llm.system_prompt_file}'
-          assert len(config.sources) > 0, 'No RSS sources configured'
-          print(f'Config validated: {config.name} ({len(config.sources)} sources, model={config.llm.model})')
+          # Narrative-mode shows (e.g. unintended_consequences) are
+          # topic-queue-driven — they intentionally ship with no RSS
+          # sources. Validate the topic queue file instead.
+          if getattr(config, 'narrative_mode', False):
+              assert config.topic_queue_file, 'narrative_mode requires topic_queue_file'
+              assert Path(config.topic_queue_file).exists(), f'Topic queue not found: {config.topic_queue_file}'
+              print(f'Config validated: {config.name} (narrative mode, queue={config.topic_queue_file}, model={config.llm.model})')
+          else:
+              assert len(config.sources) > 0, 'No RSS sources configured'
+              print(f'Config validated: {config.name} ({len(config.sources)} sources, model={config.llm.model})')
           "
 
       - name: Backfill Content Lake from committed digests
