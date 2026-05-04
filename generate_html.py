@@ -1701,9 +1701,9 @@ def generate_network_page(*, dry_run=False):
 
     context = {
         "path_prefix": "",
-        "page_title": "Nerra Network | 10 Daily Shows",
-        "meta_description": "Nerra Network — Ten daily podcasts keeping you informed. Tesla, world news, space, science, environment, AI, modern investing, Russian finance, and language learning. Independent, daily, free.",
-        "meta_keywords": "podcast network, daily podcasts, Nerra Network, Tesla, space, science, AI, environment",
+        "page_title": "Nerra Network | 11 Daily Shows",
+        "meta_description": "Nerra Network — Eleven daily podcasts keeping you informed. Tesla, world news, space, science, environment, AI, modern investing, narrative case studies, Russian finance, and language learning. Independent, daily, free.",
+        "meta_keywords": "podcast network, daily podcasts, Nerra Network, Tesla, space, science, AI, environment, history, unintended consequences",
         "theme_color": "#7C5CFF",
         "og_image": f"{GITHUB_RAW}/assets/og-preview.png",
         "canonical_url": f"{GITHUB_RAW}/index.html",
