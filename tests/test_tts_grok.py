@@ -361,6 +361,7 @@ def test_english_shows_resolve_to_custom_voice():
         "models_agents",
         "models_agents_beginners",
         "modern_investing",
+        "unintended_consequences",  # added May 2026 — narrative show
     )
     for slug in english_grok_shows:
         cfg = load_config(shows_dir / f"{slug}.yaml")
@@ -394,6 +395,7 @@ def test_no_show_uses_elevenlabs_in_production():
         "tesla", "omni_view", "fascinating_frontiers", "planetterrian",
         "env_intel", "models_agents", "models_agents_beginners",
         "modern_investing", "finansy_prosto", "privet_russian",
+        "unintended_consequences",
     )
     for slug in all_shows:
         cfg = load_config(shows_dir / f"{slug}.yaml")

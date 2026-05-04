@@ -119,9 +119,16 @@ content_freshness:
   similarity_threshold: 1.0
 
 youtube:
-  podcast_playlist_id: ""        # Will be created when YouTube enabled
+  # TODO(uc-launch): paste YouTube playlist ID here once one-time
+  # channel verification clears. Reference: PR a87c4097 set the same
+  # field for the other 10 shows. Until then this stays empty and the
+  # show is YouTube-disabled (see ``enabled: false`` below).
+  podcast_playlist_id: ""
   enabled: false                 # Disabled — YouTube quota cap (only TST + MAB)
                                  # See landmine #20 in CLAUDE.md.
+                                 # TODO(uc-launch): flip to true once
+                                 # both quota strategy lands AND playlist
+                                 # ID is set above.
   channel: en
   category_id: 27                # Education
   default_language: en

@@ -432,6 +432,7 @@ class TestYAMLConfigIntegration:
     @pytest.mark.parametrize("slug", [
         "tesla", "omni_view", "fascinating_frontiers",
         "planetterrian", "env_intel", "models_agents",
+        "unintended_consequences",
     ])
     def test_show_has_chapters_config(self, slug):
         cfg = load_config(SHOWS_DIR / f"{slug}.yaml")

@@ -291,6 +291,42 @@ MI_SECTION_PATTERNS: Dict[str, str] = {
     ),
 }
 
+
+# Unintended Consequences — narrative show, six segments per episode.
+# Each segment header (Hook / Good Intention / Implementation /
+# Unintended Consequences / Aftermath / Lesson) lives in the episode
+# brief produced by the digest stage; podcast script weaves them into
+# flowing narration without literal headers, but the brief itself
+# carries the markers below for cross-episode dedup tracking.
+UC_SECTION_PATTERNS: Dict[str, str] = {
+    "hook": (
+        r"(?:### Segment 1 — The Hook|### The Hook)"
+        r"(.*?)"
+        r"(?=### Segment|### The Good|━━|$)"
+    ),
+    "good_intention": (
+        r"(?:### Segment 2 — The Good Intention|### The Good Intention)"
+        r"(.*?)"
+        r"(?=### Segment|### The Implementation|━━|$)"
+    ),
+    "consequences": (
+        r"(?:### Segment 4 — The Unintended Consequences|### The Unintended Consequences)"
+        r"(.*?)"
+        r"(?=### Segment|### The Aftermath|━━|$)"
+    ),
+    "aftermath": (
+        r"(?:### Segment 5 — The Aftermath|### The Aftermath)"
+        r"(.*?)"
+        r"(?=### Segment|### The Lesson|━━|$)"
+    ),
+    "lesson": (
+        r"(?:### Segment 6 — The Lesson|### The Lesson)"
+        r"(.*?)"
+        r"(?=━━|$)"
+    ),
+}
+
+
 # Registry mapping show slugs to their section patterns.
 # New shows should be added here to enable cross-episode content tracking.
 SHOW_SECTION_PATTERNS: Dict[str, Dict[str, str]] = {
@@ -305,6 +341,7 @@ SHOW_SECTION_PATTERNS: Dict[str, Dict[str, str]] = {
     "finansy_prosto": FP_SECTION_PATTERNS,
     "privet_russian": PR_SECTION_PATTERNS,
     "modern_investing": MI_SECTION_PATTERNS,
+    "unintended_consequences": UC_SECTION_PATTERNS,
 }
 
 

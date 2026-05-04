@@ -4,7 +4,7 @@ Nerra Network API Generator
 Generates static JSON API files for the Nerra Network mobile app.
 
 This script produces:
-- api/shows.json: Metadata for all 10 shows
+- api/shows.json: Metadata for all 11 shows
 - api/episodes.json: Aggregated feed of recent episodes (last 100)
 - api/articles.json: All blog articles for news reader (last 100)
 - api/shows/{show_id}.json: Detailed show info with full episode list
@@ -169,6 +169,23 @@ SHOWS = [
         "cover_slug": "privet-russian",
         "rss_file": "privet_russian_podcast.rss",
         "digest_slug": "privet_russian",
+    },
+    {
+        "id": "unintended_consequences",
+        "name": "Unintended Consequences",
+        "tagline": "Good intentions. Surprising results. Real lessons.",
+        "description": "A daily narrative podcast profiling inventions, policies, and systems that were "
+                       "designed with good intentions — but triggered surprising, unintended consequences. "
+                       "From the Cobra Effect to social media algorithms, every episode follows a single "
+                       "case study through good intentions, implementation, unexpected fallout, and the "
+                       "lessons we can learn.",
+        "schedule": "Weekdays",
+        "duration": "~15-18 min",
+        "category": "Education",
+        "brand_color": "#B45309",
+        "cover_slug": "unintended-consequences",
+        "rss_file": "unintended_consequences_podcast.rss",
+        "digest_slug": "unintended_consequences",
     },
 ]
 

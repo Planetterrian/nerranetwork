@@ -239,7 +239,7 @@ class TestContentTrackerIntegration:
         expected = {"tesla", "tesla_shorts_time", "fascinating_frontiers",
                     "planetterrian", "omni_view", "env_intel", "models_agents",
                     "models_agents_beginners", "finansy_prosto", "privet_russian",
-                    "modern_investing"}
+                    "modern_investing", "unintended_consequences"}
         assert set(SHOW_SECTION_PATTERNS.keys()) == expected
 
     def test_cross_episode_dedup(self, tmp_tracker_dir):
@@ -437,7 +437,7 @@ class TestPublisherIntegration:
 class TestShowConfigs:
     """Verify all show YAML configs can be loaded."""
 
-    @pytest.fixture(params=["tesla", "omni_view", "fascinating_frontiers", "planetterrian", "env_intel", "models_agents", "models_agents_beginners", "finansy_prosto", "privet_russian", "modern_investing"])
+    @pytest.fixture(params=["tesla", "omni_view", "fascinating_frontiers", "planetterrian", "env_intel", "models_agents", "models_agents_beginners", "finansy_prosto", "privet_russian", "modern_investing", "unintended_consequences"])
     def show_slug(self, request):
         return request.param
 
@@ -452,7 +452,12 @@ class TestShowConfigs:
         config = load_config(config_path)
         assert config.name
         assert config.slug == show_slug
-        assert len(config.sources) > 0
+        # Narrative-mode shows (e.g. Unintended Consequences) are
+        # topic-queue-driven, not news-driven — they intentionally
+        # ship with no RSS sources. Every other show needs at least
+        # one source to fetch from.
+        if not getattr(config, "narrative_mode", False):
+            assert len(config.sources) > 0
 
     def test_env_intel_config_details(self):
         """Environmental Intelligence config has expected properties."""
@@ -805,7 +810,7 @@ class TestSystemPrompts:
     """Verify all shows now have system prompt files."""
 
     @pytest.fixture(
-        params=["tesla", "omni_view", "fascinating_frontiers", "planetterrian", "env_intel", "models_agents", "models_agents_beginners", "finansy_prosto", "privet_russian", "modern_investing"]
+        params=["tesla", "omni_view", "fascinating_frontiers", "planetterrian", "env_intel", "models_agents", "models_agents_beginners", "finansy_prosto", "privet_russian", "modern_investing", "unintended_consequences"]
     )
     def show_slug(self, request):
         return request.param
@@ -851,7 +856,12 @@ class TestSystemPrompts:
         )
 
     def test_digest_temp_for_news_shows(self, show_slug):
-        """News/factual shows should use temperature <= 0.5."""
+        """News/factual shows should use temperature <= 0.5.
+
+        Narrative shows (e.g. Unintended Consequences) are exempt —
+        they benefit from a slightly warmer setting (≤0.6) for
+        prose phrasing variety while still being grounded in the
+        verifiable history their topic brief supplies."""
         from engine.config import load_config
 
         config_path = PROJECT_ROOT / "shows" / f"{show_slug}.yaml"
@@ -859,6 +869,12 @@ class TestSystemPrompts:
             pytest.skip(f"Config not found: {config_path}")
 
         config = load_config(config_path)
+        if getattr(config, "narrative_mode", False):
+            assert config.llm.digest_temperature <= 0.6, (
+                f"{show_slug} (narrative) digest_temperature should be "
+                f"<= 0.6, got {config.llm.digest_temperature}"
+            )
+            return
         assert config.llm.digest_temperature <= 0.5, (
             f"{show_slug} digest_temperature should be <= 0.5 for factual content, "
             f"got {config.llm.digest_temperature}"
@@ -943,7 +959,8 @@ class TestRunShowPipeline:
     """Verify run_show.py works for all shows (dry-run only — no API calls)."""
 
     ALL_SHOWS = ["tesla", "omni_view", "fascinating_frontiers",
-                 "planetterrian", "env_intel", "models_agents"]
+                 "planetterrian", "env_intel", "models_agents",
+                 "unintended_consequences"]
 
     @pytest.mark.parametrize("show", ALL_SHOWS)
     def test_dry_run(self, show):
@@ -961,7 +978,7 @@ class TestRunShowPipeline:
         assert "DRY RUN" in result.stdout
 
     def test_discover_shows_finds_all(self):
-        """_discover_shows() finds all 6 show configs."""
+        """_discover_shows() finds all the show configs in ALL_SHOWS."""
         from run_show import _discover_shows
         shows = _discover_shows()
         for s in self.ALL_SHOWS:

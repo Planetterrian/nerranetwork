@@ -88,7 +88,7 @@ def convert_digest_to_email_html(markdown_text: str) -> str:
         '<a href="https://nerranetwork.com#subscribe" style="color: #7C5CFF;">Subscribe to more shows</a>'
         '</p>'
         '<p style="margin: 8px 0; font-size: 0.8em; color: #a0aec0;">'
-        'Nerra Network &mdash; 10 daily podcasts, ad-free, from Vancouver, Canada.'
+        'Nerra Network &mdash; 11 daily podcasts, ad-free, from Vancouver, Canada.'
         '</p>'
     )
 

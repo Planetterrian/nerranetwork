@@ -14,7 +14,7 @@ each show's ``newsletter.tag`` in ``shows/<slug>.yaml``.
 
 Usage::
 
-    # Tag the user across all 10 shows
+    # Tag the user across all 11 shows
     python scripts/buttondown_tag_subscriber.py user@example.com --all
 
     # Tag for specific shows
