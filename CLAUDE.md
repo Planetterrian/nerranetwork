@@ -10,15 +10,20 @@ Automated daily podcast generation system running 10 shows via a unified
 | Show | Legacy Script | YAML Config | Schedule | X Account | TTS |
 |------|--------------|-------------|----------|-----------|-----|
 | Tesla Shorts Time | — (deleted) | `shows/tesla.yaml` | Daily | `@teslashortstime` | Grok TTS (custom) |
-| Omni View | — (deleted) | `shows/omni_view.yaml` | Odd days | `@omniviewnews` | Grok TTS (custom) |
-| Fascinating Frontiers | — (deleted) | `shows/fascinating_frontiers.yaml` | Even days | `@planetterrian` | Grok TTS (custom) |
-| Planetterrian Daily | — (deleted) | `shows/planetterrian.yaml` | Odd days | `@planetterrian` | Grok TTS (custom) |
+| Omni View | — (deleted) | `shows/omni_view.yaml` | Daily | `@omniviewnews` | Grok TTS (custom) |
+| Fascinating Frontiers | — (deleted) | `shows/fascinating_frontiers.yaml` | Daily | `@planetterrian` | Grok TTS (custom) |
+| Planetterrian Daily | — (deleted) | `shows/planetterrian.yaml` | Daily | `@planetterrian` | Grok TTS (custom) |
 | Env Intel | — | `shows/env_intel.yaml` | Odd weekdays | `@teslashortstime` | Grok TTS (custom) |
-| Models & Agents | — | `shows/models_agents.yaml` | Odd days | — (X disabled) | Grok TTS (custom) |
-| Models & Agents for Beginners | — | `shows/models_agents_beginners.yaml` | Even days | — (X disabled) | Grok TTS (custom) |
+| Models & Agents | — | `shows/models_agents.yaml` | Daily | — (X disabled) | Grok TTS (custom) |
+| Models & Agents for Beginners | — | `shows/models_agents_beginners.yaml` | Daily | — (X disabled) | Grok TTS (custom) |
 | Финансы Просто | — | `shows/finansy_prosto.yaml` | Even days | — (X disabled) | Grok TTS (Olya) |
-| Modern Investing Techniques | — | `shows/modern_investing.yaml` | Weekdays | — (X disabled) | Grok TTS (custom) |
+| Modern Investing Techniques | — | `shows/modern_investing.yaml` | Daily | — (X disabled) | Grok TTS (custom) |
 | Привет, Русский! | — | `shows/privet_russian.yaml` | Even days | — (X disabled) | Grok TTS (Olya) |
+
+> Sunday recap: shows on a daily cadence with `weekly_recap_on_sunday: true`
+> in their YAML have their Sunday slot rewritten as a weekly-recap episode
+> synthesised from the past 7 days via the content lake — the daily news
+> fetch is skipped. See landmine #19.
 
 **Science That Changes Everything** (`digests/science_that_changes.py`, ~83 lines)
 is a standalone X-posting script, not a podcast show.
@@ -473,3 +478,38 @@ decision); everything else has a live status card.
     cause (a regressed prompt, a fetcher bug, or a scheduler race).
     The `ELEVENLABS_API_KEY` and legacy ElevenLabs settings in
     `_defaults.yaml` remain untouched — separate concern.
+
+19. **Schedule overhaul + Sunday weekly recap (May 2026)** — 7 shows
+    moved to daily cadence (Omni View, Planetterrian, Fascinating
+    Frontiers, Models & Agents, MAB, Modern Investing, Tesla). Cron
+    times shifted +1h across the board to widen the per-slot window;
+    last show now finishes ~12 UTC (~8 AM ET). The `weekly_recap_on_sunday:
+    true` flag in each daily show YAML opts that show into a Sunday-only
+    pipeline branch in `run_show.py`: when today is Sunday and the flag
+    is set, the runner skips the news fetch + LLM digest stage and instead
+    calls `engine.weekly_recap.build_weekly_recap_digest` to synthesise a
+    digest-shaped summary from the past 7 days of episodes pulled from
+    the content lake. The synthetic digest is fed through the unchanged
+    podcast prompt + TTS pipeline so listeners get the same narrative
+    quality as a daily episode. Modern Investing additionally has a
+    Saturday "weekend mode" instruction in its podcast prompt covering
+    international markets, crypto, lessons learned, and what to prepare
+    for in the coming weeks. Drift guards in `tests/test_schedule.py`
+    pin: cron consistency, the 7 daily shows carrying the recap flag,
+    alt-cadence shows NOT carrying it, and the YouTube quota cap
+    (only TST and MAB enabled — see also landmine #20).
+
+20. **YouTube quota cap (May 2026)** — the YouTube Data API quota for
+    the `@NerraNetwork` channel is 10,000 units/day; each `videos.insert`
+    costs 1,600 units. With 7 daily English shows × 2 videos
+    (long-form + Shorts) = 14 uploads/day requested but only 6 fit in
+    quota. The May 2026 schedule overhaul disabled YouTube on every
+    English show except Tesla and MAB — operator-chosen pair (TST is
+    the largest property; MAB is the educational beginner-friendly
+    flagship). Re-enabling other shows requires either (a) a quota
+    increase from YouTube, (b) staggering uploads across days, or
+    (c) skipping Shorts on most shows. Until then the
+    `test_only_tst_and_mab_enable_youtube` drift guard fails CI on any
+    accidental re-enable. Russian channel `@NerraRU` has its own quota
+    so Финансы Просто and Привет, Русский! could be re-enabled
+    independently.

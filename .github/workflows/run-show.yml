@@ -2,34 +2,39 @@ name: Run Podcast Show
 
 on:
   schedule:
-    # All shows scheduled to finish before 7 AM Eastern (~11 UTC EDT / 12 UTC EST).
-    # Pipeline takes up to 45 min, so triggers must be staggered by at
-    # least that much — Tesla previously sat at 9:30 UTC and could
-    # collide with Modern Investing's 9:00 UTC weekday slot. Tesla now
-    # fires at 10:00 UTC daily (60-min gap after MI), still well
-    # ahead of the 11/12 UTC Eastern cutoff.
+    # Network ships ~10 episodes/day. All shows scheduled to finish before
+    # 8 AM Eastern (~12 UTC EDT / 13 UTC EST). Pipeline takes up to 45 min,
+    # so triggers must be staggered by at least that much.
     #
-    # Привет, Русский!: Even days at 5:00 UTC
-    - cron: '0 5 2-31/2 * *'
-    # Omni View: Odd days at 5:30 UTC
-    - cron: '30 5 1-31/2 * *'
-    # Planetterrian Daily: Odd days at 6:00 UTC
-    - cron: '0 6 1-31/2 * *'
-    # Fascinating Frontiers: Even days at 6:30 UTC
-    - cron: '30 6 2-31/2 * *'
-    # Environmental Intelligence: Odd weekdays at 7:00 UTC
-    - cron: '0 7 1-31/2 * 1-5'
-    # Models & Agents: Odd days at 7:30 UTC
-    - cron: '30 7 1-31/2 * *'
-    # Models & Agents for Beginners: Even days at 8:00 UTC
-    - cron: '0 8 2-31/2 * *'
-    # Финансы Просто: Even days at 8:30 UTC
-    - cron: '30 8 2-31/2 * *'
-    # Modern Investing Techniques: Weekdays at 9:00 UTC (before US market open)
-    - cron: '0 9 * * 1-5'
-    # Tesla Shorts Time: Daily at 10:00 UTC — last to get freshest news,
-    # 60-min gap after Modern Investing avoids Grok API contention.
+    # May 2026 schedule overhaul: 7 shows went daily (OV, PT, FF, M&A, MAB,
+    # MIT, TST) with Sunday's slot becoming a "weekly recap" episode that
+    # synthesises the past 7 days from the content lake. MIT also runs
+    # Saturday with a weekend-focus angle (international markets, crypto,
+    # lessons learned). Cron times shifted +1h from the prior schedule.
+    #
+    # Привет, Русский!: Even days at 6:00 UTC
+    - cron: '0 6 2-31/2 * *'
+    # Omni View: Daily at 6:30 UTC (Sunday = weekly recap)
+    - cron: '30 6 * * *'
+    # Planetterrian Daily: Daily at 7:00 UTC (Sunday = weekly recap)
+    - cron: '0 7 * * *'
+    # Fascinating Frontiers: Daily at 7:30 UTC (Sunday = weekly recap)
+    - cron: '30 7 * * *'
+    # Environmental Intelligence: Odd weekdays at 8:00 UTC
+    - cron: '0 8 1-31/2 * 1-5'
+    # Models & Agents: Daily at 8:30 UTC (Sunday = weekly recap)
+    - cron: '30 8 * * *'
+    # Models & Agents for Beginners: Daily at 9:00 UTC (Sunday = weekly recap)
+    - cron: '0 9 * * *'
+    # Финансы Просто: Even days at 9:30 UTC
+    - cron: '30 9 2-31/2 * *'
+    # Modern Investing Techniques: Daily at 10:00 UTC.
+    # Mon-Fri = US market preview; Sat = weekend angle (international
+    # markets, crypto, lessons learned, what to prepare for, long-term
+    # insights); Sun = weekly recap.
     - cron: '0 10 * * *'
+    # Tesla Shorts Time: Daily at 11:00 UTC (Sunday = weekly recap)
+    - cron: '0 11 * * *'
 
   workflow_dispatch:
     inputs:
@@ -103,16 +108,16 @@ jobs:
               # so some crons fire more often than intended.  The day_filter
               # applies the intended restriction.
               CRON_MAP = {
-                  "0 5 2-31/2 * *":   ("privet_russian",          "even"),
-                  "30 5 1-31/2 * *":  ("omni_view",               "odd"),
-                  "0 6 1-31/2 * *":   ("planetterrian",           "odd"),
-                  "30 6 2-31/2 * *":  ("fascinating_frontiers",   "even"),
-                  "0 7 1-31/2 * 1-5": ("env_intel",               "odd_weekday"),
-                  "30 7 1-31/2 * *":  ("models_agents",           "odd"),
-                  "0 8 2-31/2 * *":   ("models_agents_beginners", "even"),
-                  "30 8 2-31/2 * *":  ("finansy_prosto",          "even"),
-                  "0 9 * * 1-5":      ("modern_investing",        "weekday"),
-                  "0 10 * * *":       ("tesla",                    None),
+                  "0 6 2-31/2 * *":   ("privet_russian",          "even"),
+                  "30 6 * * *":       ("omni_view",                None),
+                  "0 7 * * *":        ("planetterrian",            None),
+                  "30 7 * * *":       ("fascinating_frontiers",    None),
+                  "0 8 1-31/2 * 1-5": ("env_intel",               "odd_weekday"),
+                  "30 8 * * *":       ("models_agents",            None),
+                  "0 9 * * *":        ("models_agents_beginners",  None),
+                  "30 9 2-31/2 * *":  ("finansy_prosto",          "even"),
+                  "0 10 * * *":       ("modern_investing",         None),
+                  "0 11 * * *":       ("tesla",                    None),
               }
 
               shows = []
