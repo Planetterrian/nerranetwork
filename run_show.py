@@ -865,10 +865,14 @@ def run(args: argparse.Namespace) -> None:
                 )
                 logger.info("Injecting cross-show context (%d shows) into digest prompt", len(lines))
         if "cross_show_context" not in template_vars:
-            template_vars["cross_show_context"] = ""
+            template_vars["cross_show_context"] = (
+                "(No recent cross-network coverage to dedupe against today.)"
+            )
     except Exception as exc:
         logger.debug("Cross-show context unavailable (non-fatal): %s", exc)
-        template_vars["cross_show_context"] = ""
+        template_vars["cross_show_context"] = (
+            "(Cross-network context unavailable — proceed without dedupe signal.)"
+        )
 
     # Merge extra context from hooks (e.g. price, change_str, x_posts_section)
     template_vars.update(extra_context)
