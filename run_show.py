@@ -1433,7 +1433,27 @@ def run(args: argparse.Namespace) -> None:
                         )
                         clean_digest = clean_digest_new
 
-        effective_hook = hook or f"Here's what's making news in the {config.name} world today."
+        if hook:
+            effective_hook = hook
+        elif getattr(config, "narrative_mode", False):
+            # Narrative-mode shows shouldn't fall back to a news framing.
+            # The hook is the topic title (or show name) so the LLM has
+            # something concrete to anchor the opening to. Logged as a
+            # warning so the operator can investigate why digest hook
+            # extraction returned empty for a topic-queue-driven show.
+            _topic = locals().get("narrative_topic") or {}
+            effective_hook = (_topic.get("title") if isinstance(_topic, dict)
+                              else "") or config.name
+            logger.warning(
+                "Narrative-mode show %s has no extractable hook — using "
+                "topic title (%r) as the {hook} fallback. Investigate the "
+                "digest output if this happens repeatedly.",
+                config.slug, effective_hook,
+            )
+        else:
+            effective_hook = (
+                f"Here's what's making news in the {config.name} world today."
+            )
 
         pod_vars = {
             "episode_num": episode_num,
