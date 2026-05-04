@@ -243,6 +243,102 @@ class TestNetworkRegistration:
 
 
 # ---------------------------------------------------------------------------
+# Narrative-mode fallback for the {hook} template variable
+# ---------------------------------------------------------------------------
+
+class TestNarrativeHookFallback:
+    """UC Ep001 surfaced a bug: when digest hook extraction returned
+    empty, ``run_show.py`` substituted a news-show framing
+    (``"Here's what's making news in the X world today"``) into the
+    podcast prompt's ``{hook}`` template var. UC isn't news — that
+    line broke the show's narrative identity.
+
+    Phase 1.2 of the May 2026 audit branched the fallback on
+    ``narrative_mode``. These tests pin the fallback behaviour."""
+
+    def test_news_fallback_string_still_present_for_news_shows(self):
+        """The original news-show fallback string must still be in
+        run_show.py — narrative shows get a different fallback, but
+        news shows still need the news framing."""
+        from pathlib import Path
+        runner = Path(__file__).resolve().parent.parent / "run_show.py"
+        text = runner.read_text(encoding="utf-8")
+        assert (
+            "Here's what's making news in the {config.name} world today."
+            in text
+        ), (
+            "News-show fallback string missing from run_show.py — every "
+            "news show with empty hook extraction will get an empty "
+            "{hook} variable."
+        )
+
+    def test_narrative_branch_present(self):
+        """run_show.py must branch on ``narrative_mode`` for the
+        ``effective_hook`` fallback so narrative shows never get the
+        news framing."""
+        from pathlib import Path
+        runner = Path(__file__).resolve().parent.parent / "run_show.py"
+        text = runner.read_text(encoding="utf-8")
+        assert "narrative_mode" in text and "effective_hook" in text, (
+            "Narrative-mode branch for effective_hook fallback missing "
+            "from run_show.py — UC will revert to the news framing."
+        )
+        # The narrative branch should pull from narrative_topic.title
+        # (with show name as last-resort fallback).
+        assert "narrative_topic" in text, (
+            "narrative_topic local lookup missing — narrative-mode "
+            "fallback can't resolve the topic title for {hook}."
+        )
+
+
+# ---------------------------------------------------------------------------
+# UC podcast prompt rules added in Phase 1.2 (apocrypha hedge,
+# pronoun discipline, lesson landing)
+# ---------------------------------------------------------------------------
+
+class TestUCPodcastPromptRules:
+    """UC Ep001 surfaced three quality issues the prompt should
+    prevent in Ep002 onward: orphan pronouns after rewrites, stating
+    apocryphal stories as fact, and lesson segments that trail off
+    without a forward-looking close."""
+
+    def setup_method(self):
+        from pathlib import Path
+        prompt_path = (Path(__file__).resolve().parent.parent
+                       / "shows" / "prompts"
+                       / "unintended_consequences_podcast.txt")
+        self.prompt = prompt_path.read_text(encoding="utf-8")
+
+    def test_pronoun_discipline_rule_present(self):
+        assert "antecedents have been lost" in self.prompt, (
+            "Pronoun-discipline rule missing from UC podcast prompt. "
+            "UC Ep001 had 'They did so...' with no antecedent — the rule "
+            "blocks that failure mode."
+        )
+
+    def test_apocrypha_hedge_rule_present(self):
+        assert "HEDGE SOURCING" in self.prompt, (
+            "Apocrypha-hedge rule missing from UC podcast prompt. "
+            "UC Ep001 stated the (apocryphal) Cobra Effect as historical "
+            "fact — the rule requires hedging when sourcing is thin."
+        )
+        # Make sure the rule mentions at least one example so the LLM
+        # has a concrete reference.
+        assert "Cobra Effect" in self.prompt or "Streisand" in self.prompt
+
+    def test_lesson_landing_rule_present(self):
+        assert "forward-looking question" in self.prompt, (
+            "Lesson-landing rule missing from UC podcast prompt. "
+            "UC Ep001 trailed into the sign-off without a close — the "
+            "rule requires a specific forward-looking question or "
+            "modern parallel."
+        )
+        assert "principles stated only once" in self.prompt.lower() or (
+            "principle stated only once" in self.prompt.lower()
+        ), "Anti-repetition clause missing from lesson-landing rule."
+
+
+# ---------------------------------------------------------------------------
 # Cron + workflow consistency
 # ---------------------------------------------------------------------------
 
