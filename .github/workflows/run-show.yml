@@ -445,6 +445,13 @@ jobs:
           git add *.html || true
           git add -A blog/ || true
           git add sitemap.xml || true
+          # Topic queues — narrative-mode shows mark topics as produced
+          # after each successful run. Without committing this, every
+          # narrative-show run re-picks the same first-unproduced topic
+          # because the runner sees a stale queue on every fresh
+          # checkout. (Bug caught May 2026 when UC Ep001 was about to
+          # ship Cobra Effect twice.)
+          git add -A shows/topic_queues/ || true
 
           # Exclude MP3 files (hosted on R2, not in git)
           git reset HEAD -- '*.mp3' 2>/dev/null || true
