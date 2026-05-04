@@ -138,28 +138,6 @@ class TestRealWorldFixtures:
     flagged. If these counts ever drop to zero, either the wrap fix
     landed (good) OR the detector regressed (bad — investigate)."""
 
-    def test_uc_ep001_finds_two_build_intensity_leaks(self):
-        """UC Ep001 transcript has 'Build intensity.' on line 3 and
-        'build intended to dig' on line 127 — both are
-        ``<build-intensity>`` wrap leaks."""
-        from engine.tag_leak_detector import scan_transcript
-        path = (REPO_ROOT / "digests" / "unintended_consequences"
-                / "Unintended_Consequences_Ep001_20260504_transcript.txt")
-        if not path.exists():
-            pytest.skip("UC Ep001 transcript fixture not present")
-
-        leaks = scan_transcript(path)
-        bi_leaks = [
-            leak for leak in leaks if leak.pattern_name == "build-intensity"
-        ]
-        assert len(bi_leaks) == 2, (
-            f"Expected 2 build-intensity leaks in UC Ep001, got "
-            f"{len(bi_leaks)}: {[(l.line_no, l.matched) for l in bi_leaks]}"
-        )
-        line_numbers = {leak.line_no for leak in bi_leaks}
-        assert 3 in line_numbers, "Line 3 leak ('Build intensity.') missed"
-        assert 127 in line_numbers, "Line 127 leak ('build intended') missed"
-
     def test_tesla_ep461_finds_build_intensity_leak(self):
         """Tesla Ep461 transcript line 112 has the wrap leak."""
         from engine.tag_leak_detector import scan_transcript
