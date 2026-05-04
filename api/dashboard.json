@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-04T18:48:14.198548+00:00",
+  "generated_at": "2026-05-04T22:51:04.351066+00:00",
   "network": {
     "landmines_counts": {
       "ok": 6,
@@ -8,8 +8,8 @@
     },
     "shows_count": 11,
     "stale_shows": 1,
-    "total_cost_last_7_days_usd": 49.8898,
-    "total_cost_last_30_days_usd": 253.9517,
+    "total_cost_last_7_days_usd": 49.9417,
+    "total_cost_last_30_days_usd": 254.0036,
     "shows": [
       {
         "slug": "env_intel",
@@ -193,9 +193,9 @@
         "x_enabled": false,
         "latest_pub_date": "2026-05-04T08:00:00+00:00",
         "pub_status": "ok",
-        "cost_last_7_days_usd": 0.0542,
-        "episodes_last_7_days": 1,
-        "p50_pipeline_s": 158.59,
+        "cost_last_7_days_usd": 0.1061,
+        "episodes_last_7_days": 2,
+        "p50_pipeline_s": 70.1,
         "success_rate": 1.0
       }
     ]
@@ -320,14 +320,14 @@
       "details": "11 MP3s tracked in git, digests/ is 638 MB. Above comfort threshold — keep an eye on it.",
       "evidence": {
         "tracked_mp3_count": 11,
-        "digests_mb": 638.1
+        "digests_mb": 638.3
       }
     },
     {
       "id": "item_2_rss_integrity",
       "title": "RSS integrity, LFS absence, R2 host consistency",
       "status": "warn",
-      "details": "non-R2 hosts: op3.dev; 2 recent enclosure(s) unreachable",
+      "details": "non-R2 hosts: op3.dev",
       "evidence": {
         "feeds": 12,
         "malformed": [],
@@ -335,10 +335,7 @@
         "non_r2_hosts": [
           "op3.dev"
         ],
-        "unreachable": [
-          "models_agents_podcast.rss: https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep037_20260429.mp3",
-          "omni_view_podcast.rss: https://op3.dev/e/audio.nerranetwork.com/omni_view/Omni_View_Ep041_20260503.mp3"
-        ],
+        "unreachable": [],
         "offline": false
       }
     },
@@ -1887,36 +1884,36 @@
       },
       "unintended_consequences": {
         "last_7_days": {
-          "grok": 0.014,
-          "tts": 0.0402,
-          "total": 0.0542,
-          "episodes": 1
+          "grok": 0.029,
+          "tts": 0.0771,
+          "total": 0.1061,
+          "episodes": 2
         },
         "last_30_days": {
-          "grok": 0.014,
-          "tts": 0.0402,
-          "total": 0.0542,
-          "episodes": 1
+          "grok": 0.029,
+          "tts": 0.0771,
+          "total": 0.1061,
+          "episodes": 2
         },
         "daily_series": [
           [
             "2026-05-04",
-            0.0542
+            0.1061
           ]
         ]
       }
     },
     "network_last_7_days": {
-      "grok": 2.8163,
-      "tts": 47.0735,
-      "total": 49.8898,
-      "episodes": 52
+      "grok": 2.8313,
+      "tts": 47.1104,
+      "total": 49.9417,
+      "episodes": 53
     },
     "network_last_30_days": {
-      "grok": 11.3946,
-      "tts": 242.5571,
-      "total": 253.9517,
-      "episodes": 166
+      "grok": 11.4096,
+      "tts": 242.594,
+      "total": 254.0036,
+      "episodes": 167
     }
   },
   "pipeline_health": {
@@ -2977,18 +2974,25 @@
       }
     },
     "unintended_consequences": {
-      "sample_size": 1,
-      "p50_duration_s": 158.59,
+      "sample_size": 2,
+      "p50_duration_s": 70.1,
       "p95_duration_s": 158.59,
       "success_rate": 1.0,
       "stage_mean_s": {
         "fetch_and_dedup": 0.0,
-        "generate_digest": 158.59
+        "generate_digest": 114.34
       },
       "recent": [
         {
           "episode_num": 1,
           "total_duration_s": 158.59,
+          "success": true,
+          "youtube_long_url": false,
+          "youtube_short_url": false
+        },
+        {
+          "episode_num": 2,
+          "total_duration_s": 70.1,
           "success": true,
           "youtube_long_url": false,
           "youtube_short_url": false
@@ -3170,8 +3174,8 @@
             "url": "https://op3.dev/e/audio.nerranetwork.com/models_agents/Models_Agents_Ep037_20260429.mp3",
             "host": "op3.dev",
             "pub_date": "2026-04-29T08:00:00+00:00",
-            "http_status": null,
-            "reachable": false
+            "http_status": 200,
+            "reachable": true
           }
         ],
         "malformed": false,
@@ -3216,8 +3220,8 @@
             "url": "https://op3.dev/e/audio.nerranetwork.com/omni_view/Omni_View_Ep041_20260503.mp3",
             "host": "op3.dev",
             "pub_date": "2026-05-03T08:00:00+00:00",
-            "http_status": null,
-            "reachable": false
+            "http_status": 200,
+            "reachable": true
           },
           {
             "url": "https://op3.dev/e/audio.nerranetwork.com/omni_view/Omni_View_Ep040_20260501.mp3",
@@ -3329,11 +3333,18 @@
       },
       {
         "file": "unintended_consequences_podcast.rss",
-        "entry_count": 1,
+        "entry_count": 2,
         "latest_pub_date": "2026-05-04T08:00:00+00:00",
         "latest_enclosures": [
           {
             "url": "https://op3.dev/e/audio.nerranetwork.com/unintended_consequences/Unintended_Consequences_Ep001_20260504.mp3",
+            "host": "op3.dev",
+            "pub_date": "2026-05-04T08:00:00+00:00",
+            "http_status": 200,
+            "reachable": true
+          },
+          {
+            "url": "https://op3.dev/e/audio.nerranetwork.com/unintended_consequences/Unintended_Consequences_Ep002_20260504.mp3",
             "host": "op3.dev",
             "pub_date": "2026-05-04T08:00:00+00:00",
             "http_status": 200,
