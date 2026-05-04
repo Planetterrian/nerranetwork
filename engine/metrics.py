@@ -88,8 +88,21 @@ class PipelineMetrics:
         return round(sum(s.duration_s for s in self.stages), 2)
 
     def to_dict(self) -> Dict[str, Any]:
-        """Serialize metrics to a JSON-compatible dict."""
+        """Serialize metrics to a JSON-compatible dict.
+
+        ``metrics_schema_version`` is bumped whenever the dict shape
+        evolves (new top-level fields, renamed fields, type changes
+        on existing fields). Dashboard/backfill code can apply
+        backward-compatibility transforms based on this value.
+
+        Schema history:
+        - 1 (May 2026, Phase 3.5 of the audit): introduces this field.
+          Top-level keys: show_slug, episode_num, total_duration_s,
+          stages[], counters{}. Per-stage: name, duration_s, success,
+          optional error.
+        """
         return {
+            "metrics_schema_version": 1,
             "show_slug": self.show_slug,
             "episode_num": self.episode_num,
             "total_duration_s": self.total_duration(),

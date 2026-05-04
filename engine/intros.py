@@ -44,12 +44,16 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
             "Hey everyone, welcome to",
             "Thanks for tuning in to",
             "It's a new day on",
+            "Glad to have you with us on",
+            "Pulling up to another day of",
+            "It's that time again — welcome to",
         ],
         "openers": [
             "episode {ep}. I'm Patrick in Vancouver. Today is {date}.",
             "episode {ep}, coming to you from Vancouver. It's {date}.",
             "episode {ep}. It's {date} and I'm Patrick in Vancouver.",
             "episode {ep} for {date}. I'm Patrick, coming to you from Vancouver.",
+            "episode {ep}. Patrick here in Vancouver. It's {date}.",
         ],
         "framings": [
             "Here's what's happening with Tesla today.",
@@ -58,6 +62,9 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
             "Let's dive into today's Tesla news.",
             "There's a lot to cover in Tesla land today.",
             "Here's your Tesla news rundown.",
+            "Plenty going on in EV land — let's get to it.",
+            "Tesla never sleeps and neither does the news cycle.",
+            "Lots happening across deliveries, FSD, and the stock today.",
         ],
         "day_colors": {
             0: {  # Monday
@@ -284,17 +291,24 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
             "Welcome back to",
             "What's up — welcome to",
             "Hey everyone, welcome to",
+            "Good to have you on",
+            "Glad you're here — welcome to",
+            "Pull up a chair, this is",
         ],
         "openers": [
             "episode {ep}, for {date}.",
             "episode {ep}. It's {date}.",
             "episode {ep}, for {date}. Your daily AI briefing.",
+            "episode {ep}, on {date}. Let's see what shipped.",
         ],
         "framings": [
             "Your daily briefing on the AI models and agents that are changing everything. And no, not THOSE kinds of models and agents. Let's get into it.",
             "Let's see what happened in the AI world today. And trust me, it's been busy.",
             "The AI world never sleeps. Here's what you need to know today.",
             "Another day, another round of AI developments. Let's break it down.",
+            "Plenty of model releases and agent benchmarks moving today.",
+            "Lots of news to walk through — let's start with what actually matters.",
+            "There's signal and noise in AI every day. Let's get to the signal.",
         ],
         "day_colors": {
             0: {
@@ -514,17 +528,24 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
             "Welcome to",
             "Good to have you here. This is",
             "Welcome back to",
+            "Glad you're here for",
+            "Settle in — this is",
+            "Today, we're back with",
         ],
         "openers": [
             "episode {ep}.",
             "episode {ep}, for {date}.",
             "episode {ep} — for {date}.",
+            "episode {ep}. It's {date}.",
         ],
         "framings": [
             "Today's case study: a story of good intentions and surprising results.",
             "Today's story is one of those rare examples where the cure was almost worse than the disease — at least at first.",
             "This is a show about what happens when smart, well-meaning people try to fix something — and the world fixes back.",
             "Today's case is a reminder that complex systems rarely respond the way we expect them to.",
+            "Every story we cover starts with someone who had a reasonable plan.",
+            "Today's profile: a policy that did the opposite of what its designers intended.",
+            "We're looking at a case today where the people involved were doing their best, with the information they had.",
         ],
         "day_colors": {
             0: {
