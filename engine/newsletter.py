@@ -426,6 +426,20 @@ def send_show_newsletter(
 
     # Pre-send contrast tripwire (§7.3). Light-mode-only check — the
     # dark-mode <style> block is unit-tested separately.
+    #
+    # Phase 2.2 of the May 2026 audit attempted to flip this from
+    # soft warning to hard block. Discovered that the network's
+    # primary brand color ``#7C5CFF`` on white renders at 4.35:1
+    # which fails WCAG AA's 4.5:1 threshold for normal text (passes
+    # 3:1 for large/bold text but the validator is element-blind).
+    # CTA links and engagement-block buttons all use the brand
+    # color, so hard-blocking blocks every newsletter.
+    #
+    # Pre-req before the flip: either (a) bump brand color slightly
+    # darker (e.g. ``#7C5CFF`` → ``#6B47FF`` raises ratio above 4.5),
+    # OR (b) extend the validator to honor ``font-size`` /
+    # ``font-weight: 700`` for the WCAG large-text 3:1 exemption.
+    # Until one of those lands, stay on warning.
     from engine.contrast_validator import (
         ContrastError,
         assert_contrast_ok,
@@ -433,11 +447,6 @@ def send_show_newsletter(
     try:
         assert_contrast_ok(branded_body)
     except ContrastError as exc:
-        # Don't hard-block on contrast for now — log loudly so
-        # operator sees it, but ship the email. Contrast failures
-        # are quality bugs, not safety bugs; an LLM scaffold leak
-        # IS a safety bug. Once the validator has been calibrated
-        # against a few real renders we can flip this to return None.
         logger.warning("Newsletter contrast issues (sending anyway): %s", exc)
 
     # Buttondown slug — explicit transliterated form for Russian

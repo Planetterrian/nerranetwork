@@ -787,6 +787,14 @@ def aggregate_metrics(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]
         yt_short_attempts = 0
         yt_short_uploaded = 0
         yt_enabled_recent = False
+        # Phase 2.6 health cards: track recent metrics that have no
+        # dedicated dashboard surface yet.
+        recap_attempts = 0  # Sundays where this show's runner ticked
+        recap_synthesised = 0  # Sundays where the recap actually built
+        tag_leak_episodes = 0  # episodes with tag_leaks > 0
+        tag_leak_total = 0  # sum of leak counts across recent episodes
+        tag_leak_pattern_counts: Dict[str, int] = {}
+        yt_long_errors: List[Dict[str, Any]] = []  # last few error payloads
         for f in last30:
             try:
                 data = json.loads(f.read_text(encoding="utf-8"))
@@ -810,6 +818,28 @@ def aggregate_metrics(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]
                     yt_long_uploaded += 1
                 if counters.get("youtube_short_uploaded"):
                     yt_short_uploaded += 1
+                _err = counters.get("youtube_long_error")
+                if isinstance(_err, dict):
+                    yt_long_errors.append(_err)
+            # Sunday weekly-recap health (Phase 1.1 of the May 2026
+            # schedule overhaul wired weekly_recap_mode into metrics).
+            if "weekly_recap_mode" in counters:
+                recap_attempts += 1
+                if counters.get("weekly_recap_mode"):
+                    recap_synthesised += 1
+            # Tag-leak rate (Phase 1.6 of the audit added tag_leaks
+            # metric — every episode now records 0 or N).
+            _tag_leaks = counters.get("tag_leaks")
+            if isinstance(_tag_leaks, int) and _tag_leaks > 0:
+                tag_leak_episodes += 1
+                tag_leak_total += _tag_leaks
+                _by_pat = counters.get("tag_leaks_by_pattern") or {}
+                if isinstance(_by_pat, dict):
+                    for _name, _cnt in _by_pat.items():
+                        if isinstance(_cnt, int):
+                            tag_leak_pattern_counts[_name] = (
+                                tag_leak_pattern_counts.get(_name, 0) + _cnt
+                            )
             recent_samples.append({
                 "episode_num": data.get("episode_num"),
                 "total_duration_s": total,
@@ -841,6 +871,38 @@ def aggregate_metrics(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]
                 "shorts_success_rate": (
                     round(yt_short_uploaded / yt_short_attempts, 3)
                     if yt_short_attempts else 0.0
+                ),
+                # Last few HTTP error payloads from failed long-form
+                # uploads. Most-likely values for `status` are
+                # ``quotaExceeded`` (need quota increase),
+                # ``authError`` (refresh token expired), or 5xx
+                # (transient — retry next slot).
+                "long_form_errors": yt_long_errors[-5:],
+            },
+            # Sunday weekly-recap synthesis health (Phase 1.1 of
+            # the schedule overhaul). recap_attempts is the count
+            # of Sunday slots in the last 30 episodes; recap_synthesised
+            # is how many actually built a recap from the content lake.
+            # A gap means the lake had <2 episodes in the 7-day window
+            # (the runner falls back to a normal daily fetch).
+            "weekly_recap": {
+                "attempts": recap_attempts,
+                "synthesised": recap_synthesised,
+                "success_rate": (
+                    round(recap_synthesised / recap_attempts, 3)
+                    if recap_attempts else 0.0
+                ),
+            },
+            # Tag-leak rate (Phase 1.6 of the audit). Aggregates the
+            # `tag_leaks` and `tag_leaks_by_pattern` per-episode
+            # metrics. Any non-zero count is a regression signal.
+            "tag_leaks": {
+                "episodes_with_leaks": tag_leak_episodes,
+                "total_leaks": tag_leak_total,
+                "by_pattern": tag_leak_pattern_counts,
+                "rate": (
+                    round(tag_leak_episodes / len(totals), 3)
+                    if totals else 0.0
                 ),
             },
         }
