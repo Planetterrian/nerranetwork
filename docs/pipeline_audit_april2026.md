@@ -103,7 +103,7 @@ file unless noted.
 ## Comprehensive audit (P2-6)
 
 ### 6a — Prompt templates
-- **Coverage:** All 10 shows have system / digest / podcast / weekly
+- **Coverage:** all 11 shows have system / digest / podcast / weekly
   prompts.
 - **Length metadata:** After the P0-1 header pass, every podcast prompt
   still contains word/sentence/minute references inside the main body

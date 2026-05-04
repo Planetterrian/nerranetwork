@@ -1,6 +1,6 @@
 # Nerra Network — Daily Podcast Network
 
-Automated daily podcast generation system running **10 shows** via a unified
+Automated daily podcast generation system running **11 shows** via a unified
 `run_show.py` runner + per-show YAML configs. Each show fetches news via RSS
 and xAI/Grok web search, generates a digest and podcast script via xAI/Grok,
 synthesizes audio via ElevenLabs TTS, mixes intro/outro music, and publishes

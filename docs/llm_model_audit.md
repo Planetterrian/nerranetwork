@@ -61,7 +61,7 @@
 
 | # | Model | Where | Purpose | Config-driven? |
 |---|-------|-------|---------|----------------|
-| 1 | `grok-4.20-non-reasoning` | `shows/_defaults.yaml:13` | Default for digest + podcast across all 10 shows | YAML default |
+| 1 | `grok-4.20-non-reasoning` | `shows/_defaults.yaml:13` | Default for digest + podcast across all 11 shows | YAML default |
 | 2 | `grok-4.20-non-reasoning` | `engine/generator.py:82` | Hard-coded function default in `_call_grok()` (belt-and-suspenders) | Hard-coded |
 | 3 | `grok-4.20-non-reasoning` | `engine/synthesizer.py:411` | Cross-show briefing generator | **Hard-coded** |
 | 4 | `grok-4.20-non-reasoning` | `digests/xai_grok.py:25` | Default for legacy helper | Hard-coded |
