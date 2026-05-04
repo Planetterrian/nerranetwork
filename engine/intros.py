@@ -507,6 +507,51 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
             ),
         ],
     },
+    "unintended_consequences": {
+        "host": "Host",
+        "show_name": "Unintended Consequences",
+        "greetings": [
+            "Welcome to",
+            "Good to have you here. This is",
+            "Welcome back to",
+        ],
+        "openers": [
+            "episode {ep}.",
+            "episode {ep}, for {date}.",
+            "episode {ep} — for {date}.",
+        ],
+        "framings": [
+            "Today's case study: a story of good intentions and surprising results.",
+            "Today's story is one of those rare examples where the cure was almost worse than the disease — at least at first.",
+            "This is a show about what happens when smart, well-meaning people try to fix something — and the world fixes back.",
+            "Today's case is a reminder that complex systems rarely respond the way we expect them to.",
+        ],
+        "day_colors": {
+            0: {
+                "framings": [
+                    "Starting the week with a case study you'll be thinking about for days.",
+                    "Monday — a fresh case to chew on as the week begins.",
+                ],
+            },
+            4: {
+                "framings": [
+                    "Closing the week with one final case study before the weekend.",
+                    "Friday — let's wrap the week with a story that has a real lesson in it.",
+                ],
+            },
+        },
+        "closings": [
+            (
+                "That's Unintended Consequences for today. If this episode gave you something "
+                "to think about, share it with a friend who'd appreciate the story. "
+                "Subscribe wherever you listen, and we'll be back tomorrow with another case."
+            ),
+            (
+                "That wraps today's case. The lessons travel further when you share them — "
+                "send this episode to someone who'd find it useful. We'll see you tomorrow."
+            ),
+        ],
+    },
 }
 
 

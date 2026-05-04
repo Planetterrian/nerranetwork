@@ -337,6 +337,7 @@ _DARK_MODE_STYLE = """\
     .brand-text-privet    { color:#a5b4fc !important; }   /* was #6366F1 */
     .brand-text-finansy   { color:#f9a8d4 !important; }   /* was #EC4899 */
     .brand-text-planet    { color:#67e8f9 !important; }   /* was #018DB1 */
+    .brand-text-uc        { color:#fbbf24 !important; }   /* was #B45309 */
 
     /* Financial-disclaimer callout background (was cream-amber) and
      * the dark-amber text — flip both for legibility. */
@@ -376,6 +377,7 @@ _SLUG_TO_BRAND_CLASS: Dict[str, str] = {
     "privet_russian": "brand-text-privet",
     "finansy_prosto": "brand-text-finansy",
     "planetterrian": "brand-text-planet",
+    "unintended_consequences": "brand-text-uc",
 }
 
 

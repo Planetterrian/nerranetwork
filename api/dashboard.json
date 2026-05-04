@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-05-04T11:15:29.046245+00:00",
+  "generated_at": "2026-05-04T15:27:10.806888+00:00",
   "network": {
     "landmines_counts": {
       "ok": 6,
       "warn": 4,
       "fail": 1
     },
-    "shows_count": 10,
+    "shows_count": 11,
     "stale_shows": 1,
     "total_cost_last_7_days_usd": 49.8357,
     "total_cost_last_30_days_usd": 253.8976,
@@ -180,6 +180,23 @@
         "episodes_last_7_days": 13,
         "p50_pipeline_s": 318.83,
         "success_rate": 1.0
+      },
+      {
+        "slug": "unintended_consequences",
+        "name": "Unintended Consequences",
+        "rss_file": "unintended_consequences_podcast.rss",
+        "rss_title": "Unintended Consequences",
+        "rss_image": "https://nerranetwork.com/assets/covers/unintended-consequences.jpg",
+        "show_page": "unintended_consequences.html",
+        "blog_page": "blog/unintended_consequences/index.html",
+        "newsletter_enabled": true,
+        "x_enabled": false,
+        "latest_pub_date": null,
+        "pub_status": "ok",
+        "cost_last_7_days_usd": 0.0,
+        "episodes_last_7_days": 0,
+        "p50_pipeline_s": 0.0,
+        "success_rate": 0.0
       }
     ]
   },
@@ -283,6 +300,16 @@
       "rss_image": "https://nerranetwork.com/assets/covers/tesla-shorts-time.jpg",
       "newsletter_enabled": true,
       "x_enabled": true
+    },
+    {
+      "slug": "unintended_consequences",
+      "name": "Unintended Consequences",
+      "yaml_path": "shows/unintended_consequences.yaml",
+      "load_error": null,
+      "rss_file": "unintended_consequences_podcast.rss",
+      "rss_image": "https://nerranetwork.com/assets/covers/unintended-consequences.jpg",
+      "newsletter_enabled": true,
+      "x_enabled": false
     }
   ],
   "landmines": [
@@ -302,7 +329,7 @@
       "status": "warn",
       "details": "non-R2 hosts: op3.dev",
       "evidence": {
-        "feeds": 11,
+        "feeds": 12,
         "malformed": [],
         "raw_github_hits": [],
         "non_r2_hosts": [
@@ -321,8 +348,8 @@
         "total": 95,
         "by_extension": {
           ".json": 47,
-          ".py": 3,
-          ".txt": 45
+          ".txt": 45,
+          ".py": 3
         },
         "previous_total": 95
       }
@@ -331,7 +358,7 @@
       "id": "item_4_output_dirs",
       "title": "Per-show output paths under digests/",
       "status": "ok",
-      "details": "All 10 shows write into digests/…",
+      "details": "All 11 shows write into digests/…",
       "evidence": {}
     },
     {
@@ -352,7 +379,7 @@
       "id": "item_8_feature_flags",
       "title": "Feature flags (x_enabled) explicit",
       "status": "ok",
-      "details": "All 10 shows declare publishing.x_enabled explicitly.",
+      "details": "All 11 shows declare publishing.x_enabled explicitly.",
       "evidence": {
         "per_show": [
           {
@@ -404,6 +431,11 @@
             "slug": "tesla",
             "x_enabled": true,
             "explicit": true
+          },
+          {
+            "slug": "unintended_consequences",
+            "x_enabled": false,
+            "explicit": true
           }
         ]
       }
@@ -432,7 +464,7 @@
       "id": "item_11_tts_provider",
       "title": "All shows use ElevenLabs TTS",
       "status": "fail",
-      "details": "10 show(s) do not resolve to elevenlabs",
+      "details": "11 show(s) do not resolve to elevenlabs",
       "evidence": {
         "wrong": [
           {
@@ -474,6 +506,10 @@
           {
             "slug": "tesla",
             "provider": "grok"
+          },
+          {
+            "slug": "unintended_consequences",
+            "provider": "grok"
           }
         ]
       }
@@ -489,7 +525,7 @@
       "id": "item_13_youtube_health",
       "title": "YouTube-enabled shows have podcast playlists",
       "status": "ok",
-      "details": "All 3 YouTube-enabled show(s) have a podcast playlist ID configured.",
+      "details": "All 2 YouTube-enabled show(s) have a podcast playlist ID configured.",
       "evidence": {}
     }
   ],
@@ -597,6 +633,15 @@
       },
       {
         "slug": "tesla",
+        "voice_id": "kdif6sqjcyiq",
+        "model": "eleven_flash_v2_5",
+        "stability": 0.5,
+        "similarity_boost": 0.75,
+        "style": 0.0,
+        "drift": []
+      },
+      {
+        "slug": "unintended_consequences",
         "voice_id": "kdif6sqjcyiq",
         "model": "eleven_flash_v2_5",
         "stability": 0.5,
@@ -1836,6 +1881,21 @@
             0.0979
           ]
         ]
+      },
+      "unintended_consequences": {
+        "last_7_days": {
+          "grok": 0.0,
+          "tts": 0.0,
+          "total": 0.0,
+          "episodes": 0
+        },
+        "last_30_days": {
+          "grok": 0.0,
+          "tts": 0.0,
+          "total": 0.0,
+          "episodes": 0
+        },
+        "daily_series": []
       }
     },
     "network_last_7_days": {
@@ -2769,6 +2829,23 @@
         "shorts_uploaded": 7,
         "shorts_success_rate": 1.0
       }
+    },
+    "unintended_consequences": {
+      "sample_size": 0,
+      "p50_duration_s": 0.0,
+      "p95_duration_s": 0.0,
+      "success_rate": 0.0,
+      "stage_mean_s": {},
+      "recent": [],
+      "youtube": {
+        "enabled_in_recent": false,
+        "long_form_attempts": 0,
+        "long_form_uploaded": 0,
+        "long_form_success_rate": 0.0,
+        "shorts_attempts": 0,
+        "shorts_uploaded": 0,
+        "shorts_success_rate": 0.0
+      }
     }
   },
   "rss_audit": {
@@ -3078,6 +3155,14 @@
             "reachable": true
           }
         ],
+        "malformed": false,
+        "error": null
+      },
+      {
+        "file": "unintended_consequences_podcast.rss",
+        "entry_count": 0,
+        "latest_pub_date": null,
+        "latest_enclosures": [],
         "malformed": false,
         "error": null
       }

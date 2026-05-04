@@ -1124,8 +1124,11 @@ NETWORK_SHOWS = {
         "description_long": "A daily narrative podcast profiling inventions, policies, and systems that were meant to help — but triggered surprising, unintended consequences. From the Cobra Effect to social media algorithms, every episode follows a single case study through good intentions, implementation, unexpected fallout, and the lessons we can learn.",
         "related_show": "env_intel",
         "related_reason": "If you enjoy Unintended Consequences, you might also like Environmental Intelligence — the regulatory side of how policy actually plays out.",
-        "apple_podcasts_url": None,        # Not yet on Apple Podcasts
-        "spotify_url": None,               # Not yet on Spotify
+        # TODO(uc-launch): paste Apple Podcasts / Spotify URLs once
+        # both directories ingest the feed (typically 3-7 days after
+        # the first episode ships).
+        "apple_podcasts_url": None,
+        "spotify_url": None,
         "theme_color": "#B45309",
         "meta_description": "Unintended Consequences — Daily narrative podcast on inventions, policies, and systems that were designed to help but triggered surprising results.",
         "meta_keywords": "unintended consequences, history, policy, technology, narrative podcast, case studies",
@@ -1224,7 +1227,7 @@ _SHOW_PICKER_TAGS = {
     },
     "unintended_consequences": {
         "topics": ["history", "policy", "technology", "narrative"],
-        "audience": ["curious", "professionals", "students"],
+        "audience": ["enthusiasts", "professionals", "students"],
         "language": ["english"],
     },
 }
@@ -2106,7 +2109,7 @@ def generate_start_here_page(*, dry_run=False):
         "path_prefix": "",
         "page_title": "Start Here | Nerra Network",
         "page_description": "Not sure where to start? Find the perfect show for your interests across AI, news, science, investing, and more.",
-        "meta_description": "Find your perfect Nerra Network show. 10 ad-free daily podcasts covering AI, Tesla, world news, science, investing, and more.",
+        "meta_description": "Find your perfect Nerra Network show. 11 ad-free daily podcasts covering AI, Tesla, world news, science, investing, and more.",
         "meta_keywords": "podcast recommendations, best podcasts, AI podcasts, Tesla podcasts, science podcasts",
         "theme_color": "#7C5CFF",
         "og_image": "",
@@ -2162,8 +2165,8 @@ def generate_about_page(*, dry_run=False):
     context = {
         "path_prefix": "",
         "page_title": "About — Nerra Network",
-        "page_description": "Meet the independent podcast network producing 10 ad-free daily shows on AI, Tesla, investing, space, science, and environmental policy. Based in Vancouver, Canada.",
-        "meta_description": "About Nerra Network — an independent, ad-free podcast network producing 10 daily shows in Vancouver, Canada. Founded by Patrick Novak.",
+        "page_description": "Meet the independent podcast network producing 11 ad-free daily shows on AI, Tesla, investing, space, science, and environmental policy. Based in Vancouver, Canada.",
+        "meta_description": "About Nerra Network — an independent, ad-free podcast network producing 11 daily shows in Vancouver, Canada. Founded by Patrick Novak.",
         "meta_keywords": "about Nerra Network, Patrick Novak, independent podcast network, Vancouver podcasts, ad-free podcasts",
         "theme_color": "#7C5CFF",
         "og_image": "",
@@ -2199,7 +2202,7 @@ def generate_press_page(*, dry_run=False):
         "path_prefix": "",
         "page_title": "Press & Media Kit — Nerra Network",
         "page_description": "Media resources for journalists and partners covering Nerra Network. Boilerplate, logo, founder contact, and a complete show directory.",
-        "meta_description": "Nerra Network press kit — boilerplate, logo assets, founder contact, and a complete directory of our 10 daily podcast shows.",
+        "meta_description": "Nerra Network press kit — boilerplate, logo assets, founder contact, and a complete directory of our 11 daily podcast shows.",
         "meta_keywords": "Nerra Network press kit, media resources, podcast press, Patrick Novak, Vancouver podcast",
         "theme_color": "#7C5CFF",
         "og_image": "",
@@ -2335,7 +2338,7 @@ def generate_player_page(*, dry_run=False):
     context = {
         "path_prefix": "",
         "page_title": "Player | Nerra Network",
-        "meta_description": "Listen to all Nerra Network shows in one player. Build your queue, reorder episodes, and discover new content across 10 daily podcasts.",
+        "meta_description": "Listen to all Nerra Network shows in one player. Build your queue, reorder episodes, and discover new content across 11 daily podcasts.",
         "meta_keywords": "podcast player, Nerra Network, queue, playlist",
         "theme_color": "#7C5CFF",
         "og_image": None,

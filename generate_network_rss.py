@@ -17,6 +17,7 @@ FEEDS = [
     "finansy_prosto_podcast.rss",
     "privet_russian_podcast.rss",
     "modern_investing_podcast.rss",
+    "unintended_consequences_podcast.rss",
 ]
 
 MAX_EPISODES = 50
@@ -24,9 +25,10 @@ OUTPUT = "network.rss"
 
 NETWORK_TITLE = "Nerra Network"
 NETWORK_DESCRIPTION = (
-    "Ten podcasts in two languages keeping you informed about exciting changes in the world. "
+    "Eleven podcasts in two languages keeping you informed about exciting changes in the world. "
     "Unbiased, multi-perspective coverage of Tesla, world news, space, science, AI, "
-    "the environment, modern investing, financial literacy, and Russian language learning."
+    "the environment, modern investing, financial literacy, Russian language learning, "
+    "and the unintended consequences of well-meant ideas."
 )
 NETWORK_LINK = "https://nerranetwork.com/"
 NETWORK_IMAGE = "https://nerranetwork.com/assets/covers/svg/Nerra-Network-Logo.svg"

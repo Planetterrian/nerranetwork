@@ -119,9 +119,17 @@ content_freshness:
   similarity_threshold: 1.0
 
 youtube:
-  podcast_playlist_id: ""        # Will be created when YouTube enabled
+  # Created May 2026 after channel verification cleared. Same pattern
+  # as the other 10 shows (commit a87c4097). The runner will add
+  # uploaded videos to this playlist via
+  # ``engine/youtube.add_video_to_playlist`` once ``enabled`` is
+  # flipped to true (currently gated on the network-wide YouTube
+  # quota cap — see landmine #20).
+  podcast_playlist_id: PLRHMnzNNXPYCaZmqVHARd4L1Qi977FL5d
   enabled: false                 # Disabled — YouTube quota cap (only TST + MAB)
                                  # See landmine #20 in CLAUDE.md.
+                                 # Flip to true once the quota strategy
+                                 # lands (operator decision).
   channel: en
   category_id: 27                # Education
   default_language: en
