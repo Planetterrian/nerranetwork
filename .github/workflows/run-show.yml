@@ -35,6 +35,9 @@ on:
     - cron: '0 10 * * *'
     # Tesla Shorts Time: Daily at 11:00 UTC (Sunday = weekly recap)
     - cron: '0 11 * * *'
+    # Unintended Consequences: Weekdays at 11:30 UTC. Narrative show —
+    # topic-queue-driven, no daily news fetch. Mon-Fri only (5x/week).
+    - cron: '30 11 * * 1-5'
 
   workflow_dispatch:
     inputs:
@@ -53,6 +56,7 @@ on:
           - finansy_prosto
           - privet_russian
           - modern_investing
+          - unintended_consequences
           - all
       test_mode:
         description: 'Dry run: fetch + digest only (no TTS, no R2 upload, no RSS, no X, no commit)'
@@ -85,7 +89,7 @@ jobs:
 
           if event_name == "workflow_dispatch":
               if dispatch_show == "all":
-                  shows = ["tesla", "omni_view", "fascinating_frontiers", "planetterrian", "env_intel", "models_agents", "models_agents_beginners", "finansy_prosto", "privet_russian", "modern_investing"]
+                  shows = ["tesla", "omni_view", "fascinating_frontiers", "planetterrian", "env_intel", "models_agents", "models_agents_beginners", "finansy_prosto", "privet_russian", "modern_investing", "unintended_consequences"]
               else:
                   shows = [dispatch_show]
           else:
@@ -118,6 +122,7 @@ jobs:
                   "30 9 2-31/2 * *":  ("finansy_prosto",          "even"),
                   "0 10 * * *":       ("modern_investing",         None),
                   "0 11 * * *":       ("tesla",                    None),
+                  "30 11 * * 1-5":    ("unintended_consequences", "weekday"),
               }
 
               shows = []

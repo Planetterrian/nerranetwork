@@ -1,0 +1,435 @@
+# Unintended Consequences — Topic Queue
+#
+# The runner picks the first entry where ``produced: false``, generates
+# the episode, and updates ``produced``, ``episode_number``, and
+# ``produced_date``. Append new topics to the END of the list — the
+# queue is processed in order.
+#
+# Format per entry:
+#   - id: unique-slug
+#     title: "Display title"
+#     brief: "1–3 sentence brief that the LLM will expand into the
+#             full episode using verifiable historical detail."
+#     category: classic | tech | policy | medicine | infrastructure | economics
+#     produced: false
+#     episode_number: null
+#     produced_date: null
+
+queue:
+  # ---------------------------------------------------------------------
+  # Classic case studies
+  # ---------------------------------------------------------------------
+  - id: cobra-effect
+    title: "The Cobra Effect"
+    brief: "British colonial government in Delhi offered a bounty for every dead cobra to reduce the snake population. Citizens began breeding cobras for the reward. When the government scrapped the program, breeders released their now-worthless cobras, making the problem worse than before."
+    category: classic
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: cane-toads-australia
+    title: "Cane Toads in Australia"
+    brief: "In 1935, Australia introduced 102 cane toads from Hawaii to control beetles damaging sugarcane crops in Queensland. The toads ignored the beetles, bred uncontrollably, and now number in the billions, devastating native predators that die from their toxic skin."
+    category: classic
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: leaded-gasoline
+    title: "Leaded Gasoline"
+    brief: "In 1921, Thomas Midgley discovered that adding tetraethyl lead to gasoline eliminated engine knock. It became the global standard for over half a century, while quietly raising blood lead levels in entire generations and causing measurable cognitive damage. The same chemist later invented CFCs."
+    category: classic
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: ddt-silent-spring
+    title: "DDT and Silent Spring"
+    brief: "DDT was hailed as a miracle pesticide after WWII, eradicating malaria in many regions and credited with saving millions of lives. By the 1960s, it had also nearly wiped out birds of prey by thinning their eggshells, contaminated breast milk worldwide, and accumulated up the food chain in ways nobody had planned for."
+    category: classic
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: prohibition-18th-amendment
+    title: "Prohibition (18th Amendment)"
+    brief: "The 1919 ban on alcohol production and sale in the United States was meant to reduce crime, family violence, and public drunkenness. Instead, it created organized crime empires (Capone, Luciano), produced a generation of more dangerous bootleg alcohol, and had to be repealed in 1933 — the only constitutional amendment ever undone."
+    category: classic
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: streisand-effect
+    title: "The Streisand Effect"
+    brief: "In 2003, Barbra Streisand sued to suppress an aerial photograph of her Malibu home, part of a coastal erosion documentation project that had been viewed six times. The lawsuit drew 420,000 views in a month and named the phenomenon: trying to suppress online information guarantees its viral spread."
+    category: classic
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: cfcs-ozone-layer
+    title: "CFCs and the Ozone Layer"
+    brief: "Chlorofluorocarbons were invented in 1928 as a non-toxic, non-flammable miracle refrigerant. By the 1970s, atmospheric chemists had discovered they were tearing a hole in the ozone layer over Antarctica. The 1987 Montreal Protocol phased them out — one of the rare unintended-consequence stories with a happy ending."
+    category: classic
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: aswan-high-dam
+    title: "Aswan High Dam"
+    brief: "Egypt's Aswan High Dam, completed in 1970, controlled Nile flooding and generated hydroelectric power. It also stopped the annual deposit of nutrient-rich silt that had fertilized Egyptian agriculture for 5,000 years, devastated the Mediterranean sardine fishery, and accelerated coastal erosion across the Nile Delta."
+    category: classic
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: maginot-line
+    title: "The Maginot Line"
+    brief: "France spent the 1930s building an impenetrable fortress along the German border — concrete, retractable turrets, underground railways. In 1940, German forces simply walked around it through Belgium and the Ardennes Forest, conquering France in six weeks. The lesson about fixed defenses still echoes."
+    category: classic
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: antibiotics-superbugs
+    title: "Antibiotics and Superbugs"
+    brief: "Penicillin's 1940s introduction was perhaps the most lifesaving innovation in human history. Decades of overprescription in human medicine and routine use in livestock have produced antibiotic-resistant strains — MRSA, drug-resistant TB, CRE — that now kill an estimated 1.27 million people per year globally."
+    category: classic
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  # ---------------------------------------------------------------------
+  # Technology & internet
+  # ---------------------------------------------------------------------
+  - id: social-media-algorithms
+    title: "Social Media Algorithms"
+    brief: "Engagement-optimization algorithms were designed to surface the content users found most interesting. The metric they ended up optimizing was outrage. Internal Facebook research surfaced in 2021 confirmed what skeptics had warned: rage drives engagement, polarization is profitable, and the platform's neutral-feeling math was steering politics worldwide."
+    category: tech
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: gps-navigation-skills
+    title: "GPS and the Death of Navigation Skills"
+    brief: "Turn-by-turn GPS made wayfinding effortless. Studies of London taxi drivers, who memorize 25,000 streets ('The Knowledge'), show measurable hippocampus growth from spatial reasoning. As GPS replaced map reading globally, neuroscientists started measuring the opposite effect — and asking what else we might be quietly losing."
+    category: tech
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: autoplay-infinite-scroll
+    title: "Auto-Play and Infinite Scroll"
+    brief: "Aza Raskin invented infinite scroll in 2006 to remove a click. YouTube introduced auto-play in 2015 to remove a decision. Both were UX improvements by the standards of their time. Both also turned out to be the perfect engagement-trap pairing for products designed to maximize time-on-platform — and Raskin has spent the years since publicly regretting it."
+    category: tech
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: like-button
+    title: "The Like Button"
+    brief: "Justin Rosenstein and a small Facebook team designed the Like button in 2007 as a frictionless way to express appreciation. It became the unit of measurement for human self-worth across two decades, reshaped publishing economics, and the man who built it now restricts his own use of social media."
+    category: tech
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: deepfakes-from-gans
+    title: "Deepfakes from GANs"
+    brief: "Generative Adversarial Networks, introduced by Ian Goodfellow in 2014, were a research breakthrough enabling AI to generate realistic imagery. Within five years, the same architecture was producing non-consensual deepfake pornography, political disinformation, and fraudulent video calls. The technology that made AI image generation possible was the same one that made it dangerous."
+    category: tech
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: google-search-seo
+    title: "Google Search and SEO"
+    brief: "Google's PageRank algorithm democratized information access by ranking pages on link-based relevance. Within a decade it had created a multi-billion-dollar SEO industry whose entire purpose is gaming the system, filling the internet with content optimized for algorithms rather than humans. Search itself has changed because of how people learned to be searched."
+    category: tech
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: e-waste-smartphones
+    title: "E-Waste from Smartphones"
+    brief: "The smartphone is arguably the most powerful general-purpose tool in human history. It is also responsible for an estimated 50+ million tonnes of e-waste annually, much of it processed in informal economies in West Africa and South Asia where workers — often children — burn casings to recover trace metals."
+    category: tech
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: ring-doorbells
+    title: "Ring Doorbells and Neighborhood Surveillance"
+    brief: "Amazon-owned Ring marketed its video doorbells as a way to keep families safe. Their Neighbors app turned suburbs into networks of casual surveillance, with documented patterns of racial profiling, false-alarm-driven police calls, and Amazon partnerships with over 2,000 US police departments — a privacy infrastructure no government could have built directly."
+    category: tech
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: wikipedia-gender-gap
+    title: "Wikipedia's Gender Gap"
+    brief: "Wikipedia is the largest open-knowledge project in history. Repeated studies have shown that 80–90% of its editors are men, with measurable downstream effects: women's biographies are shorter, deleted more often, and more likely to focus on relationships rather than achievements. The platform that aspired to neutrality reflects the demographics of who shows up."
+    category: tech
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: recommendation-engines-filter-bubbles
+    title: "Recommendation Engines and Filter Bubbles"
+    brief: "Personalization promised to give every user a custom-curated internet. Eli Pariser's 'filter bubble' research in 2011 documented the opposite effect — recommendation systems narrowed what people saw based on what they had clicked before, reinforcing existing beliefs and slowly disconnecting users from views unlike their own."
+    category: tech
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  # ---------------------------------------------------------------------
+  # Policy & law
+  # ---------------------------------------------------------------------
+  - id: three-strikes-laws
+    title: "Three Strikes Laws"
+    brief: "The 1990s wave of three-strikes sentencing laws was meant to deter repeat violent offenders. In practice they filled state prisons with nonviolent third-time offenders — including, famously, life sentences for stealing pizza or videocassettes — and California's prison population doubled in a decade before voters rolled back the law in 2012."
+    category: policy
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: war-on-drugs
+    title: "War on Drugs"
+    brief: "Richard Nixon declared the War on Drugs in 1971, framing addiction as a criminal problem rather than a public-health one. Five decades later, US drug use rates are roughly unchanged, the prison population has expanded six-fold, cartels have grown into transnational corporations, and the entire policy architecture has been retroactively criticized — including by Nixon's own former domestic policy chief."
+    category: policy
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: cash-for-clunkers
+    title: "Cash for Clunkers"
+    brief: "The 2009 US Cash for Clunkers stimulus paid people to scrap old fuel-inefficient cars and buy new ones. It pulled forward auto sales, but it also destroyed nearly 700,000 affordable used cars, raising used-car prices for low-income families for years and producing a measurable inflationary effect on the bottom of the auto market."
+    category: policy
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: china-one-child-policy
+    title: "China's One-Child Policy"
+    brief: "China's 1980 one-child policy was designed to slow population growth. By the 2010s, it had produced a 30-million-person gender imbalance, an aging crisis with too few workers to support retirees, and a generation of 'little emperors' raised without siblings. The policy was reversed in 2016, but demographic damage takes decades to undo."
+    category: policy
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: rent-control
+    title: "Rent Control"
+    brief: "Rent control was designed to keep cities affordable for working-class residents. A long line of empirical studies — from Stockholm to San Francisco to Berlin — finds that strict rent caps reduce the supply of rental housing, encourage landlords to convert to condos, and produce shortages that ultimately raise prices for non-controlled units. Few policies are as universally rejected by economists or as politically durable."
+    category: policy
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: no-child-left-behind
+    title: "No Child Left Behind"
+    brief: "The 2001 No Child Left Behind Act tied US school funding to standardized test performance. The intended outcome was accountability. The actual outcome was widespread teaching-to-the-test, narrowed curricula that dropped art and music, and a 2015 replacement that quietly walked back the strictest provisions."
+    category: policy
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: foreign-aid-dependency
+    title: "Foreign Aid Dependency"
+    brief: "Decades of well-meaning Western foreign aid to sub-Saharan Africa has, by the analysis of economists like Dambisa Moyo, often undermined local economies and entrenched the political elites who control the aid pipeline. The case study is contested but the question is unavoidable: what happens when help becomes the system?"
+    category: policy
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: daylight-saving-time
+    title: "Daylight Saving Time"
+    brief: "Daylight Saving Time was promoted in WWI to save coal, then re-introduced in the 1970s during the oil crisis. Modern studies find the energy savings are roughly zero — and the health costs (heart attacks, traffic accidents, sleep disruption) measurable. Most of Asia and Africa never adopted it; most of the world that did is now wondering why we still do."
+    category: policy
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: cafe-fuel-economy-suvs
+    title: "CAFE Fuel Economy Standards"
+    brief: "Corporate Average Fuel Economy standards, enacted in 1975, set higher mileage requirements for cars than for 'light trucks.' Automakers responded by classifying SUVs and minivans as trucks, marketing them aggressively, and building a generation of vehicles that drove average fuel economy in the wrong direction. The regulatory loophole literally reshaped American roads."
+    category: policy
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: eu-cookie-banners
+    title: "EU Cookie Consent Banners"
+    brief: "The 2018 GDPR was a serious privacy reform with real protections for European citizens. The most visible consequence is the cookie consent banner — the most universally ignored UX pattern in the history of the web, which most users dismiss without reading and which arguably weakened the cause of meaningful consent rather than strengthened it."
+    category: policy
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  # ---------------------------------------------------------------------
+  # Science & medicine
+  # ---------------------------------------------------------------------
+  - id: thalidomide
+    title: "Thalidomide"
+    brief: "Thalidomide was marketed in the late 1950s as a safe sedative and morning-sickness treatment. By 1961, doctors had linked it to severe birth defects in over 10,000 children worldwide. The disaster led directly to modern drug safety regulations — but mostly after the damage was done, and with a US that escaped only because one FDA reviewer (Frances Kelsey) refused to approve it."
+    category: medicine
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: lobotomies
+    title: "Lobotomies"
+    brief: "António Egas Moniz won the 1949 Nobel Prize in Medicine for the prefrontal lobotomy. By the late 1950s, tens of thousands of patients — disproportionately women and the mentally ill — had been left with severe cognitive disabilities or worse. The Nobel committee has never rescinded the prize."
+    category: medicine
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: radium-girls
+    title: "The Radium Girls"
+    brief: "In the 1910s and 20s, young women in factories painting watch dials with glow-in-the-dark radium paint were instructed to point their brushes with their lips. The horrific deaths that followed — and the workers' fight for compensation against employers who knew the paint was toxic — established foundational worker-safety law in the United States."
+    category: medicine
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: opioid-prescriptions-oxycontin
+    title: "Opioid Prescriptions (OxyContin)"
+    brief: "Purdue Pharma's OxyContin, approved in 1995 with marketing claims that addiction was rare, became the spark of an opioid crisis that has killed over a million Americans. The Sackler family extracted billions before bankruptcy and settlements; pain management as a medical specialty is still recovering."
+    category: medicine
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: hormone-replacement-therapy
+    title: "Hormone Replacement Therapy"
+    brief: "HRT was prescribed widely in the 1990s as a near-universal solution for menopause and aging in women, until the 2002 Women's Health Initiative trial linked it to increased risks of breast cancer, heart disease, and stroke. The fall was as fast as the rise — and we are still untangling which patients benefit and which don't."
+    category: medicine
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: hand-sanitizer-overuse
+    title: "Hand Sanitizer Overuse"
+    brief: "Alcohol-based hand sanitizer is a hospital infection-control miracle. Outside hospitals, its routine use across schools and workplaces may be contributing to the broader picture of antimicrobial resistance — though the case is contested, and the COVID-era surge in use will take years to fully evaluate."
+    category: medicine
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: biofuels-deforestation
+    title: "Biofuels and Deforestation"
+    brief: "EU and US biofuel mandates in the 2000s aimed to reduce greenhouse-gas emissions from transportation. They drove a global expansion of palm-oil and corn cultivation, much of it on freshly cleared rainforest land. Multiple lifecycle analyses have since concluded that some biofuel programs produced more emissions than the gasoline they replaced."
+    category: medicine
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: mosquito-nets-fishing
+    title: "Mosquito Nets for Fishing"
+    brief: "Insecticide-treated mosquito nets are one of the most cost-effective public-health interventions ever quantified, having saved an estimated 7 million lives from malaria. They are also, in some communities along Lake Victoria and Lake Tanganyika, repurposed as fishing nets — depleting fish stocks, releasing insecticide into waterways, and complicating the case for further distribution."
+    category: medicine
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: des-diethylstilbestrol
+    title: "DES (Diethylstilbestrol)"
+    brief: "DES was a synthetic estrogen prescribed to millions of pregnant women between 1940 and 1971 to prevent miscarriage. It didn't prevent miscarriage. Decades later, the daughters of the women who took it began developing rare reproductive-tract cancers — making DES the first known human transgenerational endocrine disruptor."
+    category: medicine
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: microplastics-synthetic-clothing
+    title: "Microplastics from Synthetic Clothing"
+    brief: "Polyester, nylon, and acrylic fabrics revolutionized affordable clothing. Each wash cycle releases thousands of plastic fibres into wastewater. Microplastics now contaminate the deepest oceans, the highest mountains, infant feces, and human placental tissue — and the apparel industry is one of the largest unintended sources."
+    category: medicine
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  # ---------------------------------------------------------------------
+  # Urban planning & infrastructure
+  # ---------------------------------------------------------------------
+  - id: urban-highways-white-flight
+    title: "Urban Highways and White Flight"
+    brief: "The US Interstate Highway System, championed by Eisenhower in 1956, was sold as a marvel of mobility. In city after city — from New York's Cross Bronx Expressway to Detroit's Black Bottom — highway routing demolished Black and immigrant neighborhoods, accelerated suburban flight, and hollowed out the urban tax base for two generations."
+    category: infrastructure
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: pruitt-igoe
+    title: "Pruitt-Igoe Housing Project"
+    brief: "St. Louis's Pruitt-Igoe complex, opened in 1954, was a Le Corbusier-inspired modernist vision of public housing. By 1972 it had been so completely abandoned that the city dynamited it on national television, an event many architects mark as the death of modernism. The actual story is more complicated than 'modernism failed' — it involves white flight, federal disinvestment, and racial housing policy."
+    category: infrastructure
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: jaywalking-laws
+    title: "Pedestrian Jaywalking Laws"
+    brief: "Before the 1920s, pedestrians had right-of-way on American streets. The auto industry, alarmed by rising pedestrian-death lawsuits, lobbied successfully to redefine jaywalking as a criminal offence and to recast the streets as spaces for cars. That campaign — among the most successful PR efforts of the 20th century — reshaped American cities for a hundred years."
+    category: infrastructure
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: london-congestion-charge
+    title: "London's Congestion Charge"
+    brief: "London's 2003 congestion charge famously reduced central-London traffic by 15% and is held up as a model for urban-mobility policy. It also pushed traffic and pollution into surrounding boroughs that hadn't been part of the original plan — a quiet equity story that complicates the headline win."
+    category: infrastructure
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: subsidized-suburban-development
+    title: "Subsidized Suburban Development"
+    brief: "Post-war US housing policy — VA loans, FHA mortgage insurance, the mortgage interest deduction — was designed to put homeownership within reach of working families. It also subsidized car-dependent suburban sprawl, redlined Black families out of the same wealth-building, and locked future generations into a built environment now nearly impossible to retrofit for transit."
+    category: infrastructure
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  # ---------------------------------------------------------------------
+  # Economics & business
+  # ---------------------------------------------------------------------
+  - id: airline-deregulation
+    title: "Airline Deregulation"
+    brief: "The 1978 Airline Deregulation Act gave Americans cheaper air travel. It also produced four decades of consolidation (down to four major carriers controlling 80% of the market), gutted unionized pilot and flight-attendant pay, eliminated service to dozens of small cities, and turned the commercial flying experience into the punchline it is today."
+    category: economics
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: quantitative-easing
+    title: "Quantitative Easing"
+    brief: "The Federal Reserve's post-2008 quantitative easing programs were emergency monetary policy designed to prevent another Depression. They worked at that. They also inflated asset prices for a decade, widened wealth inequality measurably, and made the rich richer while leaving wages largely flat — a side effect Fed officials acknowledged but couldn't solve."
+    category: economics
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: gamification-of-everything
+    title: "Gamification of Everything"
+    brief: "Game designers spent decades figuring out what makes humans return to a screen. Around 2010, the rest of the economy adopted those techniques — Strava, Duolingo, Snapchat streaks, classroom point systems, productivity apps. Some of it produced genuine engagement; much of it turned learning, fitness, and work into dopamine treadmills with measurable burnout costs."
+    category: economics
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: fast-fashion
+    title: "Fast Fashion"
+    brief: "Zara, H&M, and later Shein collapsed clothing's cost and time-to-shelf, putting style within reach of working-class consumers. The receipts: a textile industry now responsible for 8–10% of global emissions, garment workers paid below subsistence wages, and the 92 million tonnes of textile waste going to landfill annually."
+    category: economics
+    produced: false
+    episode_number: null
+    produced_date: null
+
+  - id: uber-gig-economy
+    title: "Uber and the Gig Economy"
+    brief: "Uber's 2009 launch promised flexible, well-paid driving work and democratized urban mobility. Fifteen years on, real driver earnings have fallen below minimum wage in many markets, the company has spent over $200 million successfully fighting laws that would classify drivers as employees, and the original 'flexibility' has hardened into precarity for millions of workers worldwide."
+    category: economics
+    produced: false
+    episode_number: null
+    produced_date: null
