@@ -776,9 +776,12 @@ def synthesize_cross_show_briefing(
     ]
 
     prompt = f"""\
-You are the editor-in-chief of the Nerra Network, a podcast network with 9 \
-daily shows covering AI, Tesla/energy, space, biotech, environmental policy, \
-world news, Russian finance, and Russian language learning.
+You are the editor-in-chief of the Nerra Network, a podcast network with 11 \
+daily shows covering AI (Models & Agents + a Beginners edition), Tesla & \
+energy, space & astronomy, longevity & health science, environmental policy, \
+world news, modern investing, narrative case studies of unintended \
+consequences, Russian-language financial literacy, and Russian language \
+learning.
 
 Write the weekly cross-network intelligence briefing for the week of \
 {start_date} to {end_date}.

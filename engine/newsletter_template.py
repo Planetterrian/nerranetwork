@@ -1135,9 +1135,28 @@ def build_subject_line(
     emoji = show.get("emoji") or ""
 
     hook = (subject_hook or "").strip().rstrip(" .,;:")
-    # Apply the per-call hook cap before the suffix join.
+    # Apply the per-call hook cap before the suffix join. Use
+    # semantic (word-boundary) truncation rather than hard cut —
+    # truncating mid-word ("Scientists map a neural feedba…") looks
+    # lazy in inbox previews. We allow up to +5 chars over the cap
+    # if the next word boundary is within reach; otherwise we cut
+    # at the last word boundary before the cap.
     if hook and len(hook) > hook_max_chars:
-        hook = hook[:hook_max_chars].rstrip(" ,.;:") + "…"
+        # Look ahead 1-5 chars for a space; if found, cut there.
+        extended = hook[:hook_max_chars + 5]
+        far_space = extended.rfind(" ", hook_max_chars)
+        if far_space > 0:
+            hook = hook[:far_space].rstrip(" ,.;:") + "…"
+        else:
+            # No nearby boundary forward — cut at last word boundary
+            # within the cap.
+            cut = hook.rfind(" ", 0, hook_max_chars)
+            if cut > hook_max_chars - 15:
+                # Word boundary exists within last 15 chars before cap.
+                hook = hook[:cut].rstrip(" ,.;:") + "…"
+            else:
+                # Pathological — fall back to original hard cut.
+                hook = hook[:hook_max_chars].rstrip(" ,.;:") + "…"
     if not hook:
         # No hook from the LLM — degrade to a clean date-stamped fallback.
         when = send_date or datetime.date.today()
@@ -1218,10 +1237,41 @@ def wrap_with_branding(
     )
     # Stamp the slug into the featured-episode dict so the block can
     # build the listen URL even if the caller didn't pre-resolve it.
+    # Phase 2.4 (May 2026 audit): when the synthesizer doesn't supply
+    # a featured episode, auto-fall-back to the most recent episode
+    # from this show via the content lake. The featured-episode
+    # block is the highest-converting CTA in the newsletter; skipping
+    # it on missing-data was a missed opportunity, not a quality gate.
     featured_with_slug = None
     if featured_episode:
         featured_with_slug = dict(featured_episode)
         featured_with_slug.setdefault("show_slug", slug)
+    else:
+        try:
+            from engine.content_lake import query_show_range
+            from datetime import date as _date, timedelta as _td
+            _today = _date.today()
+            _recent = query_show_range(
+                slug,
+                (_today - _td(days=14)).isoformat(),
+                _today.isoformat(),
+            ) or []
+            if _recent:
+                _latest = sorted(
+                    _recent,
+                    key=lambda e: (e.get("date") or "", e.get("episode_num") or 0),
+                    reverse=True,
+                )[0]
+                featured_with_slug = {
+                    "show_slug": slug,
+                    "episode_num": _latest.get("episode_num"),
+                    "title": _latest.get("hook")
+                    or f"Episode {_latest.get('episode_num', '?')}",
+                    "hook": _latest.get("hook", ""),
+                    "date": _latest.get("date", ""),
+                }
+        except Exception:  # noqa: BLE001 — best-effort fallback only
+            featured_with_slug = None
     featured_block = _build_featured_episode_html(featured_with_slug, show)
     # Russian shows that need the disclaimer (currently only Финансы
     # Просто) get the Cyrillic version. Spec §4.4.

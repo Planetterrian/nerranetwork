@@ -77,12 +77,21 @@ jobs:
           fi
           python scripts/run_weekly_newsletters.py $ARGS
 
+      - name: Generate cross-network intelligence briefing
+        # Editorial synthesis across all 11 shows for the past 7 days.
+        # Output: outputs/cross_network/cross_network_briefing_<YYYY-WW>.md.
+        # The synthesizer skips when fewer than 10 episodes are in
+        # window, so the script is no-op friendly.
+        env:
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        run: python scripts/run_cross_network_briefing.py
+
       - name: Commit newsletters
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add outputs/newsletters/
-          git diff --cached --quiet || git commit -m "Add weekly newsletters for $(date -I)"
+          git add outputs/newsletters/ outputs/cross_network/ 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "Add weekly newsletters + cross-network briefing for $(date -I)"
           for attempt in 1 2 3 4; do
             git pull --rebase origin main && git push origin main && exit 0
             echo "Push failed (attempt $attempt), retrying in $((attempt * 2))s..."
