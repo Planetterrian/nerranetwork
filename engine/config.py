@@ -89,15 +89,21 @@ class TTSConfig:
     use_speaker_boost: bool = True
     speed: float = 1.0  # Speech speed (0.7–1.2); Flash v2.5 supports this range
     apply_text_normalization: str = "on"  # "auto", "on", or "off"; helps with number/date pronunciation
-    # Speech-tag wrap applied to every chunk sent to Grok TTS. Grok
-    # cloned voices respond noticeably to ``<fast><build-intensity>`` —
-    # the operator A/B'd against bare text on Tesla Ep459 / Ep460 and
-    # the wrapped read had clearly more energy and dynamic range. Empty
-    # strings = no wrap (back-compat). The Grok backend strips these
-    # tags before producing audio, so they never appear as spoken
-    # words. ElevenLabs path ignores both fields.
-    speech_wrap_open: str = "<fast><build-intensity>"
-    speech_wrap_close: str = "</build-intensity></fast>"
+    # Speech-tag wrap applied to every chunk sent to Grok TTS. The
+    # operator A/B'd ``<fast>`` against bare text in May 2026 and the
+    # wrapped read had clearly more energy and dynamic range. Empty
+    # strings = no wrap (back-compat). Grok strips ``<fast>`` tags
+    # before producing audio.
+    #
+    # History: the wrap originally paired ``<fast>`` with
+    # ``<build-intensity>`` (PR #293, May 3 2026). Whisper transcripts
+    # of UC Ep001 and Tesla Ep461 caught Grok occasionally SPEAKING
+    # "build intensity" instead of consuming the tag — it isn't in
+    # Grok's documented tag list. Dropped May 4 2026; ``<fast>`` alone
+    # delivers the energy lift without the leakage. Re-add only with
+    # transcript-level evidence that Grok consumes the new tag.
+    speech_wrap_open: str = "<fast>"
+    speech_wrap_close: str = "</fast>"
     # Post-TTS transcription validation (opt-in)
     validate_transcription: bool = False
     whisper_model: str = "base"  # "tiny", "base", "small", "medium"

@@ -406,6 +406,21 @@ decision); everything else has a live status card.
     similarity_boost, style, etc.) are also preserved — harmless under
     `provider=grok` and a one-line YAML flip back to ElevenLabs if
     Grok TTS has an outage.
+
+    **May 4 2026 update — speech-tag wrap simplified.** The chunk-
+    send wrap was originally `<fast><build-intensity>...</build-intensity></fast>`
+    (PR #293). Whisper transcripts of UC Ep001 ("Build intensity." at
+    line 3 + "build intended to dig" at line 127) and Tesla Ep461 (line
+    112) showed Grok occasionally **speaking** "build intensity" out
+    loud instead of consuming the tag — `<build-intensity>` was never
+    in Grok's documented tag list. Wrap simplified to `<fast>...</fast>`
+    in `shows/_defaults.yaml` and `engine.config.TTSConfig` defaults.
+    `<fast>` IS documented and consumed correctly; the energy lift
+    survives without the leakage. Drift guard
+    `test_default_tts_config_has_fast_wrap_only` blocks accidental
+    re-introduction. Re-add nested tags only with transcript-level
+    evidence that Grok consumes them.
+
 18. **Newsletter pipeline spec v2 (May 2026)** — multi-day refinement
     pass on the Buttondown send pipeline addressing contrast bugs,
     LLM scaffold leaks, and daily-vs-weekly template parity. Files:
