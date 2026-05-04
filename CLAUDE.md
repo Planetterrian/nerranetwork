@@ -2,10 +2,10 @@
 
 ## Project Overview
 
-Automated daily podcast generation system running 10 shows via a unified
+Automated daily podcast generation system running 11 shows via a unified
 `run_show.py` runner + per-show YAML configs, plus 4 legacy standalone scripts
-(deprecated — see note below). Shows use **ElevenLabs TTS** (`eleven_flash_v2_5`) and post to X/Twitter via
-`engine/publisher.post_to_x()`.
+(deprecated — see note below). Shows use **Grok TTS** (`engine.tts.grok_speak_chunk`)
+and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
 
 | Show | Legacy Script | YAML Config | Schedule | X Account | TTS |
 |------|--------------|-------------|----------|-----------|-----|
@@ -19,6 +19,7 @@ Automated daily podcast generation system running 10 shows via a unified
 | Финансы Просто | — | `shows/finansy_prosto.yaml` | Even days | — (X disabled) | Grok TTS (Olya) |
 | Modern Investing Techniques | — | `shows/modern_investing.yaml` | Daily | — (X disabled) | Grok TTS (custom) |
 | Привет, Русский! | — | `shows/privet_russian.yaml` | Even days | — (X disabled) | Grok TTS (Olya) |
+| Unintended Consequences | — | `shows/unintended_consequences.yaml` | Weekdays | — (X disabled) | Grok TTS (custom) |
 
 > Sunday recap: shows on a daily cadence with `weekly_recap_on_sunday: true`
 > in their YAML have their Sunday slot rewritten as a weekly-recap episode

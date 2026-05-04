@@ -1101,6 +1101,67 @@ NETWORK_SHOWS = {
             {"q": "Is this show financial advice?", "a": "No. Modern Investing Techniques is for educational and entertainment purposes only. We discuss strategies, analyze markets, and track simulated trades to help you learn — but we are not licensed financial advisors. Your financial situation is unique. Before making investment decisions, consider consulting a fee-only financial planner, especially for tax-advantaged account strategies (TFSA/RRSP/FHSA)."},
         ],
     },
+    "unintended_consequences": {
+        "name": "Unintended Consequences",
+        "slug": "unintended_consequences",
+        "display_order": 11,
+        "description": "Inventions, policies, and systems designed with good intentions — and the surprising results they triggered.",
+        "show_page": "unintended-consequences.html",
+        "summaries_page": "unintended-consequences-summaries.html",
+        "json_path": "digests/unintended_consequences/summaries_unintended_consequences.json",
+        "json_format": "wrapped",
+        "rss_file": "unintended_consequences_podcast.rss",
+        "podcast_image": "assets/covers/unintended-consequences.jpg",
+        "x_account": None,
+        "brand_color": "#B45309",          # Deep amber — wisdom, caution, gravitas
+        "brand_color_dark": "#92400E",
+        "tagline": "Good intentions. Surprising results. Real lessons.",
+        "hero_tagline": "Good intentions. Surprising results. Real lessons.",
+        "schedule": "Weekdays",
+        "episode_length": "~15-18 min",
+        "about_text": "A daily narrative podcast profiling case studies of well-intentioned actions that triggered surprising consequences. From the Cobra Effect to social media algorithms, every episode follows a single story through good intentions, implementation, unexpected fallout, and the lessons we can learn.",
+        "about_host": "Hosted by Patrick in Vancouver.",
+        "description_long": "A daily narrative podcast profiling inventions, policies, and systems that were meant to help — but triggered surprising, unintended consequences. From the Cobra Effect to social media algorithms, every episode follows a single case study through good intentions, implementation, unexpected fallout, and the lessons we can learn.",
+        "related_show": "env_intel",
+        "related_reason": "If you enjoy Unintended Consequences, you might also like Environmental Intelligence — the regulatory side of how policy actually plays out.",
+        "apple_podcasts_url": None,        # Not yet on Apple Podcasts
+        "spotify_url": None,               # Not yet on Spotify
+        "theme_color": "#B45309",
+        "meta_description": "Unintended Consequences — Daily narrative podcast on inventions, policies, and systems that were designed to help but triggered surprising results.",
+        "meta_keywords": "unintended consequences, history, policy, technology, narrative podcast, case studies",
+        "audience": "For curious listeners who want stories with depth — historians, policy wonks, designers, engineers, and anyone who's ever wondered why a well-meaning fix made things worse.",
+        "source_highlights": ["Academic journals", "Government archives", "Investigative journalism", "Retrospective analyses"],
+        "resource_categories": [
+            {
+                "title": "Recommended Reading",
+                "resources": [
+                    {"name": "Antifragile (Nassim Taleb)", "url": "https://www.penguinrandomhouse.com/books/176227/antifragile-by-nassim-nicholas-taleb/", "desc": "Classic on systems that gain from disorder — and the ones that don't"},
+                    {"name": "Seeing Like a State (James C. Scott)", "url": "https://yalebooks.yale.edu/book/9780300078152/seeing-like-a-state/", "desc": "Why centralized planning so often fails the people it tries to help"},
+                    {"name": "The Alchemy of Air (Thomas Hager)", "url": "https://www.harmonybooks.com/", "desc": "The Haber-Bosch process — feeding the world, fueling two world wars"},
+                    {"name": "Drawdown (Paul Hawken)", "url": "https://drawdown.org", "desc": "Climate solutions evaluated honestly — including ones that backfired"},
+                ],
+            },
+            {
+                "title": "Source Archives",
+                "resources": [
+                    {"name": "Wikipedia (case studies)", "url": "https://en.wikipedia.org", "desc": "Excellent for episode bibliographies and primary-source links"},
+                    {"name": "JSTOR", "url": "https://www.jstor.org", "desc": "Peer-reviewed academic papers — many available with free registration"},
+                    {"name": "Internet Archive", "url": "https://archive.org", "desc": "Newspapers, government reports, and historical documents"},
+                    {"name": "Google Scholar", "url": "https://scholar.google.com", "desc": "Search engine for academic literature across all disciplines"},
+                ],
+            },
+        ],
+        "tools": [
+            {"name": "Topic Submission", "url": "https://nerranetwork.com/unintended-consequences.html", "desc": "Have a case study you want to hear? Reach out — the topic queue is operator-curated and we welcome suggestions.", "badge": "Free"},
+        ],
+        "faq": [
+            {"q": "Why this show?", "a": "The world is full of cautionary tales about complex systems, well-meaning interventions, and policies that backfired. Most get told as cheap 'look how dumb they were' stories. This show treats the original decision-makers with empathy and extracts general principles you can apply to your own decisions — at work, in policy, in product design."},
+            {"q": "How do you choose topics?", "a": "From a curated queue of around 50 case studies organized into themes: classic studies (Cobra Effect, DDT, Prohibition), technology and the internet, policy and law, science and medicine, urban planning, and economics. New topics are added weekly. Listener suggestions are welcome."},
+            {"q": "Is this depressing?", "a": "Not the goal. Each episode ends with one to three actionable lessons. Many topics also have happy endings — the ozone layer is healing, leaded gasoline is gone, thalidomide led to modern drug-safety regulation. The point is to learn, not to wallow."},
+            {"q": "How long are episodes?", "a": "Each episode is 15-18 minutes — long enough for genuine depth on a single case, short enough for a daily commute. Episodes follow the same six-segment arc: Hook, Good Intention, Implementation, Unintended Consequences, Aftermath, Lesson."},
+            {"q": "Do you fact-check?", "a": "Yes. Episodes draw on academic papers, government archives, investigative journalism, and retrospective analyses. When the historical record is uncertain, we hedge rather than fabricate ('estimates suggest…', 'by most accounts…'). Errors are corrected in the show notes when caught."},
+        ],
+    },
 }
 
 
@@ -1160,6 +1221,11 @@ _SHOW_PICKER_TAGS = {
         "topics": ["language-learning"],
         "audience": ["students", "heritage-learners"],
         "language": ["bilingual"],
+    },
+    "unintended_consequences": {
+        "topics": ["history", "policy", "technology", "narrative"],
+        "audience": ["curious", "professionals", "students"],
+        "language": ["english"],
     },
 }
 
@@ -1678,6 +1744,7 @@ _SHOW_DIRS = {
     "finansy_prosto": "finansy_prosto",
     "modern_investing": "modern_investing",
     "privet_russian": "privet_russian",
+    "unintended_consequences": "unintended_consequences",
 }
 
 

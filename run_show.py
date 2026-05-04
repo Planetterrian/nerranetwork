@@ -497,6 +497,32 @@ def run(args: argparse.Namespace) -> None:
     articles = []
     x_posts = []
     rss_fetch_failed = False
+    narrative_topic: dict = {}
+
+    # Narrative-mode shows (Unintended Consequences) bypass RSS fetch +
+    # slow-news fallback entirely — their input is a curated topic
+    # queue, not daily news. Pick the next unproduced topic up-front;
+    # if the queue is exhausted, skip the episode rather than producing
+    # content with empty inputs.
+    if getattr(config, "narrative_mode", False):
+        from engine.topic_queue import pick_next_topic
+        queue_path = PROJECT_ROOT / config.topic_queue_file
+        narrative_topic = pick_next_topic(queue_path) or {}
+        if not narrative_topic:
+            _skip_episode(
+                "narrative_queue_empty",
+                f"Topic queue {config.topic_queue_file} has no unproduced "
+                f"entries. Append new topics to keep the show running.",
+            )
+            return  # _skip_episode raises SystemExit, but mypy doesn't know that
+        logger.info(
+            "Narrative mode: picked topic %r (%s)",
+            narrative_topic.get("id"), narrative_topic.get("title"),
+        )
+        metrics.record("narrative_mode", True)
+        metrics.record("narrative_topic_id", narrative_topic.get("id", ""))
+        # Skip the fetch threadpool entirely — articles stays [].
+
     with metrics.stage("fetch_and_dedup"):
         with ThreadPoolExecutor(max_workers=3) as executor:
             hook_future = executor.submit(_run_hook)
@@ -610,7 +636,7 @@ def run(args: argparse.Namespace) -> None:
     )
     metrics.record("article_count", len(articles))
 
-    if not articles:
+    if not articles and not getattr(config, "narrative_mode", False):
         logger.warning("No articles found even after expanded search. Skipping episode.")
         _skip_episode("no_articles", "No articles found even after expanded search.")
 
@@ -637,7 +663,10 @@ def run(args: argparse.Namespace) -> None:
             logger.warning("Content lake query failed (dedup disabled): %s", exc)
             return set()
 
-    if len(articles) < skip_threshold:
+    if (
+        len(articles) < skip_threshold
+        and not getattr(config, "narrative_mode", False)
+    ):
         from engine.slow_news import is_slow_news_day, load_segment_library, select_segments
 
         if is_slow_news_day(len(articles), config):
@@ -781,6 +810,17 @@ def run(args: argparse.Namespace) -> None:
         "recent_content_summary": content_tracker_summary,
         "recent_deep_dive_topics": deep_dive_topics_text,
     }
+    # Narrative-mode shows feed a topic from the queue into the digest
+    # prompt instead of news articles. Stage the topic vars here so the
+    # downstream digest prompt template can resolve ``{topic_title}``,
+    # ``{topic_brief}``, and ``{topic_category}``. (The actual queue
+    # pick + skip-when-empty happens further up — see narrative_mode
+    # branch around the fetch stage.)
+    if getattr(config, "narrative_mode", False):
+        narrative_topic = locals().get("narrative_topic") or {}
+        template_vars["topic_title"] = narrative_topic.get("title", "")
+        template_vars["topic_brief"] = narrative_topic.get("brief", "")
+        template_vars["topic_category"] = narrative_topic.get("category", "")
     # Slow news day context injection
     if slow_news_mode and selected_segs:
         from engine.slow_news import build_slow_news_prompt_context
@@ -1282,6 +1322,27 @@ def run(args: argparse.Namespace) -> None:
     digest_md = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}.md"
     digest_md.write_text(x_thread, encoding="utf-8")
     logger.info("Digest saved: %s", digest_md)
+
+    # Narrative-mode shows: mark the topic as produced in the queue so
+    # the next run picks the next entry. Done after the digest is on
+    # disk so a mid-pipeline failure doesn't burn a queue slot.
+    if (
+        getattr(config, "narrative_mode", False)
+        and locals().get("narrative_topic")
+    ):
+        try:
+            from engine.topic_queue import mark_topic_produced
+            queue_path = PROJECT_ROOT / config.topic_queue_file
+            mark_topic_produced(
+                queue_path,
+                topic_id=narrative_topic.get("id", ""),
+                episode_num=episode_num,
+                produced_date=today.isoformat(),
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "Failed to mark topic as produced (non-fatal): %s", exc,
+            )
 
     # Post-generation hook (e.g. extract trade picks for Modern Investing tracker)
     if hook_module and hasattr(hook_module, "post_generate"):

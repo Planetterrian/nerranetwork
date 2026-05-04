@@ -121,7 +121,10 @@ DAILY_SHOWS = [
     "tesla", "omni_view", "planetterrian", "fascinating_frontiers",
     "models_agents", "models_agents_beginners", "modern_investing",
 ]
-ALT_CADENCE_SHOWS = ["privet_russian", "finansy_prosto", "env_intel"]
+ALT_CADENCE_SHOWS = [
+    "privet_russian", "finansy_prosto", "env_intel",
+    "unintended_consequences",  # weekday-only narrative show
+]
 
 
 @pytest.mark.parametrize("slug", DAILY_SHOWS)

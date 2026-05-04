@@ -303,6 +303,14 @@ class ShowConfig:
     # from the content lake. May 2026 schedule overhaul: 7 shows on
     # daily cadence (OV, PT, FF, M&A, MAB, MIT, TST) opt in.
     weekly_recap_on_sunday: bool = False
+    # Narrative mode (May 2026 — Unintended Consequences). When
+    # ``true``, the runner skips RSS fetch + slow-news fallback +
+    # the digest stage and instead pulls the next unproduced topic
+    # from ``topic_queue_file`` to feed straight into the podcast
+    # prompt. Used for evergreen story-driven shows that don't
+    # depend on daily news cycles.
+    narrative_mode: bool = False
+    topic_queue_file: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -444,6 +452,8 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         content_freshness=_build_nested(ContentFreshnessConfig, data.get("content_freshness")),
         youtube=_build_nested(YouTubeConfig, data.get("youtube")),
         weekly_recap_on_sunday=bool(data.get("weekly_recap_on_sunday", False)),
+        narrative_mode=bool(data.get("narrative_mode", False)),
+        topic_queue_file=str(data.get("topic_queue_file", "") or ""),
     )
     logger.info("Loaded config for '%s' from %s", config.name, path)
     return config
