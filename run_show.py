@@ -1801,6 +1801,45 @@ def run(args: argparse.Namespace) -> None:
             except Exception as exc:
                 logger.warning("Transcript generation failed (non-fatal): %s", exc)
 
+            # 9c. Tag-leak regression detector — scan the Whisper
+            # transcript for tag-as-text bleeds (the May 2026
+            # ``<build-intensity>`` regression cost a full network
+            # day before being caught by ear). Best-effort: log
+            # warning + record metric; never blocks the pipeline.
+            # Will flip to hard-block once false-positive rate is
+            # calibrated (see audit plan Phase 1.6).
+            try:
+                from engine.tag_leak_detector import (
+                    scan_transcript, summarize_leaks,
+                )
+                _ep_prefix_t = (
+                    f"{config.episode.prefix}_Ep{episode_num:03d}_"
+                    f"{today:%Y%m%d}"
+                )
+                _transcript_txt = digests_dir / f"{_ep_prefix_t}_transcript.txt"
+                _leaks = scan_transcript(_transcript_txt)
+                metrics.record("tag_leaks", len(_leaks))
+                if _leaks:
+                    logger.warning(
+                        "Tag-leak detector flagged %d suspect line(s) in "
+                        "%s — %s",
+                        len(_leaks),
+                        _transcript_txt.name,
+                        summarize_leaks(_leaks),
+                    )
+                    # Record per-pattern counts so the dashboard can
+                    # show which leak families are still recurring.
+                    _by_pattern: dict = {}
+                    for _leak in _leaks:
+                        _by_pattern[_leak.pattern_name] = (
+                            _by_pattern.get(_leak.pattern_name, 0) + 1
+                        )
+                    metrics.record("tag_leaks_by_pattern", _by_pattern)
+                else:
+                    logger.info("Tag-leak detector: clean transcript.")
+            except Exception as exc:
+                logger.debug("Tag-leak detector failed (non-fatal): %s", exc)
+
             # 10. Audio mixing
             from engine.audio import get_audio_duration, mix_with_music, normalize_voice
 
