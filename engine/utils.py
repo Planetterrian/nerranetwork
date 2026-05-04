@@ -513,12 +513,11 @@ _INLINE_TAG_PATTERN = re.compile(
 # emphasis, etc.). The Grok backend interprets and consumes them; we strip
 # them for any non-TTS consumer (blog markdown, RSS show notes, X teaser).
 #
-# ``build-intensity`` is the network's TTS-chunk wrap (paired with
-# ``fast``) added in May 2026 for cloned-voice energy. It's added at
-# the chunk-send layer in ``_speak_with_grok`` and shouldn't reach
-# any non-TTS surface — but inclusion here is defense-in-depth in case
-# a future code path stamps the wrap onto the script before it's
-# saved.
+# ``build-intensity`` is NOT in Grok's documented tag list — kept here
+# only as a defensive scrubber in case it sneaks back into a script.
+# (It was briefly part of the network's chunk-send wrap in May 2026
+# until Whisper caught Grok speaking "build intensity" out loud — see
+# the history block in ``shows/_defaults.yaml`` and landmine #17.)
 _WRAPPING_TAGS = (
     "soft", "loud", "whisper",
     "slow", "fast", "high", "low",
