@@ -152,7 +152,7 @@
             </div>
             <p style="font-size:0.82rem;color:var(--nn-text-muted);text-align:center;margin-bottom:var(--sp-4);">
                 All trades are simulated — no real money. This is a learning exercise. Not financial advice.
-                <a href="{{ path_prefix }}modern-investing-resources.html" style="color:var(--show-color);margin-left:var(--sp-2);">View investing resources &rarr;</a>
+                <a href="{{ path_prefix }}modern-investing-resources.html" style="color:var(--show-color-text, var(--show-color));margin-left:var(--sp-2);">View investing resources &rarr;</a>
             </p>
         </div>
     </section>
@@ -165,7 +165,7 @@
                 <p style="color:var(--nn-text-muted);font-size:0.92rem;margin-top:var(--sp-2);">
                     Every Practice Investment from the show is tracked here. Simulated trades only — no real money.
                     Benchmark: NASDAQ Composite (^IXIC). Updated daily after each episode.
-                    <a href="{{ path_prefix }}blog/modern_investing/index.html" style="color:var(--show-color);margin-left:var(--sp-2);">Read episode write-ups &rarr;</a>
+                    <a href="{{ path_prefix }}blog/modern_investing/index.html" style="color:var(--show-color-text, var(--show-color));margin-left:var(--sp-2);">Read episode write-ups &rarr;</a>
                 </p>
             </div>
 
@@ -240,7 +240,7 @@
                         {% for t in performance_data.trades %}
                         <tr style="border-top:1px solid var(--nn-border);">
                             <td style="padding:6px 12px;">{{ t.date or "" }}</td>
-                            <td style="padding:6px 12px;">{% if t.episode_num %}<a href="{{ path_prefix }}blog/modern_investing/ep{{ "%03d" % t.episode_num }}.html" style="color:var(--show-color);text-decoration:none;font-weight:600;" title="Read full trade setup and analysis">Ep{{ t.episode_num }}</a>{% else %}—{% endif %}</td>
+                            <td style="padding:6px 12px;">{% if t.episode_num %}<a href="{{ path_prefix }}blog/modern_investing/ep{{ "%03d" % t.episode_num }}.html" style="color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;" title="Read full trade setup and analysis">Ep{{ t.episode_num }}</a>{% else %}—{% endif %}</td>
                             <td style="padding:6px 12px;font-weight:600;">{{ t.symbol or "" }}</td>
                             <td style="padding:6px 12px;color:var(--nn-text-muted);font-size:0.82rem;">{{ t.sector or "" }}</td>
                             <td style="padding:6px 12px;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ t.strategy or '' }}">{{ t.strategy or "" }}</td>
@@ -249,7 +249,7 @@
                             <td style="padding:6px 12px;text-align:right;font-variant-numeric:tabular-nums;color:{% if (t.pnl_pct or 0) >= 0 %}#10b981{% else %}#ef4444{% endif %};">{% if t.pnl_pct is not none %}{{ "{:+.2f}".format(t.pnl_pct) }}%{% else %}—{% endif %}</td>
                             <td style="padding:6px 12px;text-align:right;font-variant-numeric:tabular-nums;color:var(--nn-text-muted);">{% if t.nasdaq_return_pct is not none %}{{ "{:+.2f}".format(t.nasdaq_return_pct) }}%{% else %}—{% endif %}</td>
                             <td style="padding:6px 12px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:{% if (t.alpha_pct or 0) >= 0 %}#10b981{% else %}#ef4444{% endif %};">{% if t.alpha_pct is not none %}{{ "{:+.2f}".format(t.alpha_pct) }}%{% else %}—{% endif %}</td>
-                            <td style="padding:6px 12px;font-size:0.78rem;color:var(--nn-text-muted);max-width:200px;">{% if t.lesson %}{{ t.lesson[:80] }}{% if t.lesson|length > 80 %}…{% endif %}{% elif t.lesson_tags %}<span style="color:var(--show-color);">{{ t.lesson_tags|join(', ') }}</span>{% else %}—{% endif %}</td>
+                            <td style="padding:6px 12px;font-size:0.78rem;color:var(--nn-text-muted);max-width:200px;">{% if t.lesson %}{{ t.lesson[:80] }}{% if t.lesson|length > 80 %}…{% endif %}{% elif t.lesson_tags %}<span style="color:var(--show-color-text, var(--show-color));">{{ t.lesson_tags|join(', ') }}</span>{% else %}—{% endif %}</td>
                         </tr>
                         {% endfor %}
                         {% if not performance_data.trades %}
@@ -480,19 +480,19 @@
 
                 <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:var(--sp-6);margin-bottom:var(--sp-6);">
                     <div>
-                        <h3 style="font-family:var(--font-heading);font-size:1rem;font-weight:600;color:var(--show-color);margin-bottom:var(--sp-3);">Vehicle Benefits</h3>
+                        <h3 style="font-family:var(--font-heading);font-size:1rem;font-weight:600;color:var(--show-color-text, var(--show-color));margin-bottom:var(--sp-3);">Vehicle Benefits</h3>
                         <ul style="list-style:none;padding:0;margin:0;">
                             {% for b in referral.buyer_benefits %}
-                            <li style="font-family:var(--font-ui);font-size:0.9rem;color:var(--nn-text-muted);line-height:1.6;padding:var(--sp-1) 0;padding-left:1.4em;position:relative;"><span style="position:absolute;left:0;color:var(--show-color);">&#10003;</span>{{ b }}</li>
+                            <li style="font-family:var(--font-ui);font-size:0.9rem;color:var(--nn-text-muted);line-height:1.6;padding:var(--sp-1) 0;padding-left:1.4em;position:relative;"><span style="position:absolute;left:0;color:var(--show-color-text, var(--show-color));">&#10003;</span>{{ b }}</li>
                             {% endfor %}
                         </ul>
                     </div>
                     {% if referral.energy_benefits %}
                     <div>
-                        <h3 style="font-family:var(--font-heading);font-size:1rem;font-weight:600;color:var(--show-color);margin-bottom:var(--sp-3);">Energy Products</h3>
+                        <h3 style="font-family:var(--font-heading);font-size:1rem;font-weight:600;color:var(--show-color-text, var(--show-color));margin-bottom:var(--sp-3);">Energy Products</h3>
                         <ul style="list-style:none;padding:0;margin:0;">
                             {% for b in referral.energy_benefits %}
-                            <li style="font-family:var(--font-ui);font-size:0.9rem;color:var(--nn-text-muted);line-height:1.6;padding:var(--sp-1) 0;padding-left:1.4em;position:relative;"><span style="position:absolute;left:0;color:var(--show-color);">&#10003;</span>{{ b }}</li>
+                            <li style="font-family:var(--font-ui);font-size:0.9rem;color:var(--nn-text-muted);line-height:1.6;padding:var(--sp-1) 0;padding-left:1.4em;position:relative;"><span style="position:absolute;left:0;color:var(--show-color-text, var(--show-color));">&#10003;</span>{{ b }}</li>
                             {% endfor %}
                         </ul>
                     </div>
@@ -555,7 +555,7 @@
     <section class="nn-section" style="padding-top:0;padding-bottom:var(--sp-8);">
         <div class="container" style="max-width:700px;">
             <div class="glass-card" style="padding:var(--sp-6);border-color:color-mix(in srgb, var(--show-color) 30%, var(--nn-border));">
-                <div style="font-family:var(--font-ui);font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--show-color);margin-bottom:var(--sp-3);">Recommended for you</div>
+                <div style="font-family:var(--font-ui);font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--show-color-text, var(--show-color));margin-bottom:var(--sp-3);">Recommended for you</div>
                 <a href="{{ path_prefix }}{{ related_show.show_page }}" style="display:flex;align-items:center;gap:var(--sp-4);text-decoration:none;">
                     <picture>
                         <source type="image/webp" srcset="{{ path_prefix }}{{ related_show.podcast_image[:-4] if related_show.podcast_image.endswith('.jpg') else related_show.podcast_image }}-400.webp">

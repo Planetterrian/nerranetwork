@@ -279,7 +279,7 @@ def test_financial_disclaimer_renders():
     assert "Heads up" in out
     assert "Not financial advice" in out
     # Amber sidebar.
-    assert "#F59E0B" in out
+    assert "#B45309" in out
 
 
 # ---------------------------------------------------------------------------
@@ -834,3 +834,75 @@ def test_wrap_with_branding_converts_md_table_in_body():
     assert "<table" in out
     # Original markdown row is gone.
     assert "| Mon | TSLA" not in out
+
+# ---------------------------------------------------------------------------
+# Brand-color contrast guards (May 2026 readability audit)
+# ---------------------------------------------------------------------------
+
+def test_every_show_brand_color_passes_aa_on_white():
+    """Operator caught the May 2026 newsletter rendering with low-
+    contrast brand-color text on white surfaces (engagement-block
+    pills, P.S. callout, cite chips). With the contrast hard-block
+    in send_show_newsletter, any show whose brand color drops below
+    4.5:1 will silently stop sending. Pin every show's brand color
+    here so a future palette tweak can't regress sends."""
+    from engine.contrast_validator import contrast_ratio
+    from generate_html import NETWORK_SHOWS
+
+    failures = []
+    for slug, cfg in NETWORK_SHOWS.items():
+        brand = cfg.get("brand_color", "")
+        if not brand:
+            continue
+        rgb = tuple(int(brand.lstrip("#")[i:i+2], 16) for i in (0, 2, 4))
+        ratio = contrast_ratio(rgb, (255, 255, 255))
+        if ratio < 4.5:
+            failures.append(f"{slug} ({brand}): {ratio:.2f}:1")
+    assert not failures, (
+        "Brand colors failing WCAG AA on white: " + ", ".join(failures)
+    )
+
+
+def test_every_show_brand_color_dark_passes_aa_on_white():
+    """``brand_color_dark`` is the Outlook-fallback solid for the
+    hero gradient (the VML cell + table bgcolor). White text overlays
+    it — including the show name H1 — so it must clear AA. Two shows
+    were caught with a *lighter* dark variant in the May 2026 audit
+    (PT #35B5C4 → 2.45:1; MAB #D97706 → 3.19:1)."""
+    from engine.contrast_validator import contrast_ratio
+    from generate_html import NETWORK_SHOWS
+
+    failures = []
+    for slug, cfg in NETWORK_SHOWS.items():
+        dark = cfg.get("brand_color_dark", "")
+        if not dark:
+            continue
+        rgb = tuple(int(dark.lstrip("#")[i:i+2], 16) for i in (0, 2, 4))
+        ratio = contrast_ratio(rgb, (255, 255, 255))
+        if ratio < 4.5:
+            failures.append(f"{slug} ({dark}): {ratio:.2f}:1")
+    assert not failures, (
+        "brand_color_dark values failing WCAG AA on white: "
+        + ", ".join(failures)
+    )
+
+
+def test_no_brand_alpha_hex_in_template():
+    """8-digit alpha hex (``{brand}33`` style) renders as solid brand
+    color in Outlook desktop's Word renderer (alpha is stripped),
+    which previously made the featured-episode block render as
+    brand-on-brand and the eyebrow text vanished. Catch any future
+    re-introduction of ``{brand}<2-hex>`` in template strings —
+    skipping ``#`` comments so the historical-context note can keep
+    its inline reference."""
+    import re
+    matches = []
+    for raw in open(
+        "engine/newsletter_template.py", encoding="utf-8"
+    ).read().splitlines():
+        code = raw.split("#", 1)[0]
+        matches.extend(re.findall(r"\{brand\}[0-9A-Fa-f]{2}", code))
+    assert not matches, (
+        "8-digit alpha hex on {brand} found in code (Outlook strips "
+        "alpha): " + ", ".join(matches)
+    )
