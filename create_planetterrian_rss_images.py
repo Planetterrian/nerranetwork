@@ -15,7 +15,7 @@ def create_rss_image(input_path: Path, output_path: Path, size: int = 1400):
     """
     # Brand colors from guidelines
     brand_colors = {
-        'deep_teal': '#018DB1',      # Deep teal-blue
+        'deep_teal': '#017A99',      # Deep teal-blue
         'light_teal': '#35B5C4',     # Lighter turquoise-blue
         'yellow': '#F2D20D'          # Bright yellow
     }

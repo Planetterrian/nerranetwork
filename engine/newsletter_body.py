@@ -232,7 +232,7 @@ def _vocab_card(
             '<div class="text-muted" '
             'style="font-size:12px;color:#475569;margin-top:8px;'
             'background:#fef3c7;padding:6px 10px;border-radius:6px;'
-            'border-left:3px solid #f59e0b;">'
+            'border-left:3px solid #b45309;">'
             f'💡 {_esc(memory_hook)}'
             '</div>'
         )

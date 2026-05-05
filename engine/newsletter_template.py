@@ -328,15 +328,15 @@ _DARK_MODE_STYLE = """\
      * on `#1e293b` cards. The original brand colors are preserved in
      * inline styles for light mode; dark mode lifts each one. */
     .brand-text-tesla     { color:#fb7185 !important; }   /* was #E31937 */
-    .brand-text-mit       { color:#34d399 !important; }   /* was #059669 */
+    .brand-text-mit       { color:#34d399 !important; }   /* was #047857 */
     .brand-text-omni      { color:#60a5fa !important; }   /* was #0B6FD6 */
-    .brand-text-ma        { color:#a78bfa !important; }   /* was #8B5CF6 */
-    .brand-text-mab       { color:#fbbf24 !important; }   /* was #F59E0B */
+    .brand-text-ma        { color:#a78bfa !important; }   /* was #7C3AED */
+    .brand-text-mab       { color:#fbbf24 !important; }   /* was #B45309 */
     .brand-text-frontiers { color:#a5b4fc !important; }   /* was #6B47FF */
     .brand-text-envintel  { color:#86efac !important; }   /* was #1B5E20 */
-    .brand-text-privet    { color:#a5b4fc !important; }   /* was #6366F1 */
-    .brand-text-finansy   { color:#f9a8d4 !important; }   /* was #EC4899 */
-    .brand-text-planet    { color:#67e8f9 !important; }   /* was #018DB1 */
+    .brand-text-privet    { color:#a5b4fc !important; }   /* was #4F46E5 */
+    .brand-text-finansy   { color:#f9a8d4 !important; }   /* was #BE185D */
+    .brand-text-planet    { color:#67e8f9 !important; }   /* was #017A99 */
     .brand-text-uc        { color:#fbbf24 !important; }   /* was #B45309 */
 
     /* Financial-disclaimer callout background (was cream-amber) and
@@ -493,7 +493,7 @@ def _build_financial_disclaimer_html(language: str = "en") -> str:
         '<table role="presentation" width="100%" cellpadding="0" '
         'cellspacing="0" border="0" '
         'class="surface-warn" '
-        'style="background:#FFF7ED;border-left:4px solid #F59E0B;">'
+        'style="background:#FFF7ED;border-left:4px solid #B45309;">'
         '<tr><td '
         'style="padding:12px 16px;'
         "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
@@ -760,15 +760,25 @@ def _build_featured_episode_html(
     )
     safe_hook = hook.replace("<", "&lt;").replace(">", "&gt;")
     safe_date = (date_str or "").replace("<", "&lt;").replace(">", "&gt;")
+    # Card background: solid #f8fafc slate — robust across every email
+    # client. Earlier versions used 8-digit hex (`{brand}0a` background,
+    # `{brand}33` border) for a brand-tinted look; Outlook desktop's
+    # Word renderer strips alpha channels, which made the card render
+    # as solid brand-color and the brand-color eyebrow text vanished
+    # (brand-on-brand = 1:1 contrast). Solid slate + solid 3px brand
+    # left-accent gives the same visual hierarchy and works everywhere.
     return (
         '<table role="presentation" width="100%" cellpadding="0" '
-        'cellspacing="0" border="0" style="background:#ffffff;">'
+        'cellspacing="0" border="0" '
+        'class="surface-white" '
+        'style="background:#ffffff;">'
         '<tr><td '
         'style="padding:20px 24px 8px;'
         'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\','
         'Roboto,Helvetica,Arial,sans-serif;">'
-        f'<div style="border:1px solid {brand}33;background:{brand}0a;'
-        f'border-radius:12px;padding:18px 18px 16px;">'
+        f'<div class="card" '
+        f'style="background:#f8fafc;border-left:3px solid {brand};'
+        f'border-radius:8px;padding:18px 18px 16px;">'
         '<div style="font-size:11px;font-weight:700;'
         f'color:{brand};letter-spacing:0.08em;'
         'text-transform:uppercase;margin-bottom:6px;">'
@@ -922,11 +932,16 @@ def _build_reply_share_html(
     )
 
     def _chip(href: str, label: str) -> str:
+        # Border uses a solid neutral slate (#cbd5e1) instead of the
+        # brand-color-with-alpha (`{brand}55`) that Outlook desktop
+        # strips down to a full-saturation brand border. Solid slate
+        # gives the chip clear definition on white in every client
+        # without competing with the brand-color text.
         return (
             f'<a href="{href}" '
             f'style="display:inline-block;color:{brand};text-decoration:none;'
             f'font-weight:600;font-size:13px;padding:6px 12px;'
-            f'margin:2px;border:1px solid {brand}55;border-radius:100px;'
+            f'margin:2px;border:1px solid #cbd5e1;border-radius:100px;'
             f'background:#ffffff;">{label}</a>'
         )
 

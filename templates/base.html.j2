@@ -81,7 +81,18 @@
     {% block head_extra %}{% endblock %}
 
     {% if show_color %}
-    <style>:root { --show-color: {{ show_color }}; --show-color-dark: {{ show_color_dark | default(show_color) }}; }</style>
+    {# `--show-color-text` is a lightened variant for use as TEXT on
+       the network's dark-theme background (`--nn-bg: #0B0F1A`). The
+       saturated brand colors (Tesla red, FP pink, EI deep green, etc.)
+       all measure < 4.1:1 on that surface — fail WCAG AA. Mixing 35 %
+       white in srgb pushes every show above 5.6:1. Borders / accents /
+       tinted backgrounds keep using `--show-color` directly because
+       they're decorative and only need 3:1 (which they already meet). #}
+    <style>:root {
+      --show-color: {{ show_color }};
+      --show-color-dark: {{ show_color_dark | default(show_color) }};
+      --show-color-text: color-mix(in srgb, {{ show_color }}, white 35%);
+    }</style>
     {% endif %}
     <style>
         @media (max-width: 768px) {
