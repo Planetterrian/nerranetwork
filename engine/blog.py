@@ -762,7 +762,7 @@ def generate_network_blog_index_html(
         slug = post.get("show_slug", "")
         cfg = show_configs.get(slug, {})
         post["show_name"] = cfg.get("name", slug)
-        post["show_color"] = cfg.get("brand_color", "#7C5CFF")
+        post["show_color"] = cfg.get("brand_color", "#6B47FF")
 
     # Build show filter list (only shows that have posts)
     slugs_with_posts = {p.get("show_slug") for p in sorted_posts}

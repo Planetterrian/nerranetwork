@@ -67,7 +67,7 @@ SHOWS = [
         "schedule": "Daily",
         "duration": "~20 min",
         "category": "Analysis",
-        "brand_color": "#7C5CFF",
+        "brand_color": "#6B47FF",
         "cover_slug": "omni-view",
         "rss_file": "omni_view_podcast.rss",
         "digest_slug": "omni_view",

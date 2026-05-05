@@ -36,7 +36,7 @@ _NETWORK_NAME = "Nerra Network"
 _NETWORK_TAGLINE = (
     "Daily AI-narrated podcasts. Editorial by Patrick."
 )
-_DEFAULT_BRAND = "#7C5CFF"
+_DEFAULT_BRAND = "#6B47FF"
 _DEFAULT_BRAND_DARK = "#4338ca"
 
 
@@ -332,7 +332,7 @@ _DARK_MODE_STYLE = """\
     .brand-text-omni      { color:#60a5fa !important; }   /* was #0B6FD6 */
     .brand-text-ma        { color:#a78bfa !important; }   /* was #8B5CF6 */
     .brand-text-mab       { color:#fbbf24 !important; }   /* was #F59E0B */
-    .brand-text-frontiers { color:#a5b4fc !important; }   /* was #7C5CFF */
+    .brand-text-frontiers { color:#a5b4fc !important; }   /* was #6B47FF */
     .brand-text-envintel  { color:#86efac !important; }   /* was #1B5E20 */
     .brand-text-privet    { color:#a5b4fc !important; }   /* was #6366F1 */
     .brand-text-finansy   { color:#f9a8d4 !important; }   /* was #EC4899 */
@@ -608,7 +608,7 @@ def _render_md_inline_to_html(text: str) -> str:
 
 
 def render_html_table(
-    headers: List[str], rows: List[List[str]], *, brand: str = "#7C5CFF"
+    headers: List[str], rows: List[List[str]], *, brand: str = "#6B47FF"
 ) -> str:
     """Render a mobile-friendly inline-styled HTML table.
 
@@ -654,7 +654,7 @@ def render_html_table(
     )
 
 
-def convert_md_tables_to_html(body_md: str, *, brand: str = "#7C5CFF") -> str:
+def convert_md_tables_to_html(body_md: str, *, brand: str = "#6B47FF") -> str:
     """Replace markdown tables in *body_md* with inline-styled HTML
     tables.
 

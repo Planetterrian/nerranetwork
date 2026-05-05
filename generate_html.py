@@ -339,7 +339,7 @@ NETWORK_SHOWS = {
         "rss_file": "fascinating_frontiers_podcast.rss",
         "podcast_image": "assets/covers/fascinating-frontiers.jpg",
         "x_account": "planetterrian",
-        "brand_color": "#7C5CFF",
+        "brand_color": "#6B47FF",
         "brand_color_dark": "#6366f1",
         "tagline": "Journey to the stars with today's discoveries.",
         "hero_tagline": "Journey to the stars with today's discoveries.",
@@ -352,7 +352,7 @@ NETWORK_SHOWS = {
         "related_reason": "If you enjoy Fascinating Frontiers, you might also like Planetterrian Daily — daily science, longevity, and health discoveries.",
         "apple_podcasts_url": "https://podcasts.apple.com/us/podcast/fascinating-frontiers/id1864803923",
         "spotify_url": "https://open.spotify.com/show/61S2fHlitcYUZZ0PmCkJYE",
-        "theme_color": "#7C5CFF",
+        "theme_color": "#6B47FF",
         "meta_description": "Fascinating Frontiers — Daily space and astronomy news podcast. Mission updates, cosmic discoveries, and rocket launches.",
         "meta_keywords": "space podcast, astronomy news, NASA discoveries, space exploration, Fascinating Frontiers",
         "audience": "For space enthusiasts, amateur astronomers, students, and anyone who looks up and wonders what's out there.",
@@ -1614,7 +1614,7 @@ def generate_network_page(*, dry_run=False):
             for meta in seen_eps.values():
                 cfg_show = NETWORK_SHOWS.get(slug, {})
                 meta["show_name"] = cfg_show.get("name", slug)
-                meta["show_color"] = cfg_show.get("brand_color", "#7C5CFF")
+                meta["show_color"] = cfg_show.get("brand_color", "#6B47FF")
             all_posts.extend(seen_eps.values())
 
         def _sort_key(p):
@@ -1704,7 +1704,7 @@ def generate_network_page(*, dry_run=False):
         "page_title": "Nerra Network | 11 Daily Shows",
         "meta_description": "Nerra Network — Eleven daily podcasts keeping you informed. Tesla, world news, space, science, environment, AI, modern investing, narrative case studies, Russian finance, and language learning. Independent, daily, free.",
         "meta_keywords": "podcast network, daily podcasts, Nerra Network, Tesla, space, science, AI, environment, history, unintended consequences",
-        "theme_color": "#7C5CFF",
+        "theme_color": "#6B47FF",
         "og_image": f"{GITHUB_RAW}/assets/og-preview.png",
         "canonical_url": f"{GITHUB_RAW}/index.html",
         "rss_url": "network.rss",
@@ -2080,7 +2080,7 @@ def generate_404_page(*, dry_run=False):
         "page_title": "Page Not Found | Nerra Network",
         "meta_description": "The page you're looking for doesn't exist.",
         "meta_keywords": "",
-        "theme_color": "#7C5CFF",
+        "theme_color": "#6B47FF",
         "og_image": "",  # Falls back to default in base.html.j2
         "canonical_url": "",
         "show_color": "",
@@ -2111,7 +2111,7 @@ def generate_start_here_page(*, dry_run=False):
         "page_description": "Not sure where to start? Find the perfect show for your interests across AI, news, science, investing, and more.",
         "meta_description": "Find your perfect Nerra Network show. 11 ad-free daily podcasts covering AI, Tesla, world news, science, investing, and more.",
         "meta_keywords": "podcast recommendations, best podcasts, AI podcasts, Tesla podcasts, science podcasts",
-        "theme_color": "#7C5CFF",
+        "theme_color": "#6B47FF",
         "og_image": "",
         "canonical_url": "https://nerranetwork.com/start-here.html",
         "show_color": "",
@@ -2168,7 +2168,7 @@ def generate_about_page(*, dry_run=False):
         "page_description": "Meet the independent podcast network producing 11 ad-free daily shows on AI, Tesla, investing, space, science, and environmental policy. Based in Vancouver, Canada.",
         "meta_description": "About Nerra Network — an independent, ad-free podcast network producing 11 daily shows in Vancouver, Canada. Founded by Patrick Novak.",
         "meta_keywords": "about Nerra Network, Patrick Novak, independent podcast network, Vancouver podcasts, ad-free podcasts",
-        "theme_color": "#7C5CFF",
+        "theme_color": "#6B47FF",
         "og_image": "",
         "canonical_url": "https://nerranetwork.com/about.html",
         "show_color": "",
@@ -2204,7 +2204,7 @@ def generate_press_page(*, dry_run=False):
         "page_description": "Media resources for journalists and partners covering Nerra Network. Boilerplate, logo, founder contact, and a complete show directory.",
         "meta_description": "Nerra Network press kit — boilerplate, logo assets, founder contact, and a complete directory of our 11 daily podcast shows.",
         "meta_keywords": "Nerra Network press kit, media resources, podcast press, Patrick Novak, Vancouver podcast",
-        "theme_color": "#7C5CFF",
+        "theme_color": "#6B47FF",
         "og_image": "",
         "canonical_url": "https://nerranetwork.com/press.html",
         "show_color": "",
@@ -2237,7 +2237,7 @@ def generate_contact_page(*, dry_run=False):
         "page_description": "Get in touch with Nerra Network. Separate channels for press, partnerships, technical issues, privacy, and general inquiries.",
         "meta_description": "Contact Nerra Network — separate email channels for press, partnerships, technical issues, privacy, and general feedback.",
         "meta_keywords": "contact Nerra Network, press contact, podcast partnership, technical support",
-        "theme_color": "#7C5CFF",
+        "theme_color": "#6B47FF",
         "og_image": "",
         "canonical_url": "https://nerranetwork.com/contact.html",
         "show_color": "",
@@ -2268,7 +2268,7 @@ def generate_faq_page(*, dry_run=False):
         "page_description": "Common questions about Nerra Network, our shows, our AI-assisted editorial process, and how to support the network.",
         "meta_description": "Nerra Network FAQ — how we use AI, who hosts, when episodes release, how to subscribe and support, and our editorial stance.",
         "meta_keywords": "Nerra Network FAQ, podcast questions, AI podcast disclosure, podcast support",
-        "theme_color": "#7C5CFF",
+        "theme_color": "#6B47FF",
         "og_image": "",
         "canonical_url": "https://nerranetwork.com/faq.html",
         "show_color": "",
@@ -2299,7 +2299,7 @@ def generate_how_to_listen_page(*, dry_run=False):
         "page_description": "Subscribe to Nerra Network shows on Apple Podcasts, Spotify, or any RSS-compatible podcast app. Step-by-step guide for every show.",
         "meta_description": "How to subscribe to Nerra Network podcasts on Apple Podcasts, Spotify, and any RSS-compatible app. Complete show directory included.",
         "meta_keywords": "how to listen, subscribe podcast, Apple Podcasts, Spotify, RSS, Nerra Network",
-        "theme_color": "#7C5CFF",
+        "theme_color": "#6B47FF",
         "og_image": "",
         "canonical_url": "https://nerranetwork.com/how-to-listen.html",
         "show_color": "",
@@ -2340,7 +2340,7 @@ def generate_player_page(*, dry_run=False):
         "page_title": "Player | Nerra Network",
         "meta_description": "Listen to all Nerra Network shows in one player. Build your queue, reorder episodes, and discover new content across 11 daily podcasts.",
         "meta_keywords": "podcast player, Nerra Network, queue, playlist",
-        "theme_color": "#7C5CFF",
+        "theme_color": "#6B47FF",
         "og_image": None,
         "canonical_url": f"{GITHUB_RAW}/player.html",
         "rss_url": "network.rss",
