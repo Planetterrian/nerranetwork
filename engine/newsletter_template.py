@@ -331,7 +331,7 @@ _DARK_MODE_STYLE = """\
     .brand-text-mit       { color:#34d399 !important; }   /* was #047857 */
     .brand-text-omni      { color:#60a5fa !important; }   /* was #0B6FD6 */
     .brand-text-ma        { color:#a78bfa !important; }   /* was #7C3AED */
-    .brand-text-mab       { color:#fbbf24 !important; }   /* was #B45309 */
+    .brand-text-mab       { color:#fdba74 !important; }   /* was #C2410C */
     .brand-text-frontiers { color:#a5b4fc !important; }   /* was #6B47FF */
     .brand-text-envintel  { color:#86efac !important; }   /* was #1B5E20 */
     .brand-text-privet    { color:#a5b4fc !important; }   /* was #4F46E5 */

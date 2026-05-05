@@ -600,10 +600,17 @@ class TestShowMusicConfigs:
         assert cfg.audio.voice_intro_delay == 15.0
         assert cfg.audio.outro_crossfade == 20.0
 
-    def test_ff_has_dual_music(self, load_config):
+    def test_ff_has_unified_music(self, load_config):
+        """May 2026: FF moved off the dual-track open/close (short
+        ``fascinatingfrontiers.mp3`` intro jingle + long ``_bg`` outro)
+        to a single track for both. Operator preferred the open and
+        close to share the same musical identity. The short jingle
+        file is kept in the repo for emergency rollback."""
         cfg = load_config("shows/fascinating_frontiers.yaml")
-        assert cfg.audio.music_file == "assets/music/fascinatingfrontiers.mp3"
-        assert cfg.audio.background_music_file == "assets/music/fascinatingfrontiers_bg.mp3"
+        assert cfg.audio.music_file == "assets/music/fascinatingfrontiers_bg.mp3"
+        # Dual-music override removed — the runner now uses the same
+        # track for intro / overlap / fadeout / outro.
+        assert cfg.audio.background_music_file is None
         assert cfg.audio.voice_intro_delay == 15.0
         # FF intentionally pins fade_duration at 27s (longer than the
         # network's 15s baseline) — preserved across the May 2026 bump.

@@ -7,7 +7,7 @@
     
     <meta name="keywords" content="science podcast, longevity research, health discoveries, Planetterrian Daily, biotech news">
     <title>Excess belly fat combined with low muscle mass raises death risk by 83% through ... — Ep36 | Planetterrian Daily Blog</title>
-    <meta name="theme-color" content="#018DB1">
+    <meta name="theme-color" content="#017A99">
 
     <!-- Open Graph -->
     <meta property="og:title" content="Excess belly fat combined with low muscle mass raises death risk by 83% through ... — Ep36 | Planetterrian Daily Blog">
@@ -34,9 +34,23 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%237C5CFF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%236B47FF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/></svg>">
 
     
+    
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="../../assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
     
     
     
@@ -185,7 +199,8 @@
             padding: 2px 10px;
             border-radius: 100px;
             background: color-mix(in srgb, var(--show-color) 15%, transparent);
-            color: var(--show-color);
+            /* AA-compliant text on dark page bg — see --show-color-text in base.html.j2 */
+            color: var(--show-color-text, var(--show-color));
             font-weight: 600;
         }
         .post-author {
@@ -282,7 +297,8 @@
         }
         .blog-toc a:hover,
         .blog-toc a.active {
-            color: var(--show-color);
+            /* AA-compliant text on dark sidebar bg */
+            color: var(--show-color-text, var(--show-color));
             border-left-color: var(--show-color);
         }
         .blog-toc a.toc-h3 {
@@ -327,14 +343,18 @@
             margin: 0 0 var(--sp-4);
         }
         .blog-article a {
-            color: var(--show-color);
+            /* Body links — AA-compliant lightened brand on dark bg.
+               Saturated brand colors fail 4.5:1 on `--nn-bg`; the
+               `--show-color-text` variable lightens by 35 % white so
+               every show clears AA. */
+            color: var(--show-color-text, var(--show-color));
             text-decoration: underline;
             text-underline-offset: 2px;
-            text-decoration-color: color-mix(in srgb, var(--show-color) 40%, transparent);
+            text-decoration-color: color-mix(in srgb, var(--show-color-text, var(--show-color)) 40%, transparent);
             transition: text-decoration-color var(--duration) var(--ease);
         }
         .blog-article a:hover {
-            text-decoration-color: var(--show-color);
+            text-decoration-color: var(--show-color-text, var(--show-color));
         }
         .blog-article strong {
             color: var(--nn-white);
@@ -613,13 +633,88 @@
         }
         .blog-listen-cta:hover {
             border-color: var(--show-color);
-            color: var(--show-color);
+            color: var(--show-color-text, var(--show-color));
+        }
+
+        /* Hover-card citations (Phase 3.4 of the May 2026 audit).
+           A small inline pill shows the publisher domain; on hover or
+           keyboard focus a popover reveals the full URL so readers
+           can verify provenance without leaving the page. Pure CSS,
+           no JS — works in every email/RSS-rendered surface that
+           runs the page stylesheet. */
+        .cite {
+            position: relative;
+            display: inline-block;
+        }
+        .cite-pill {
+            display: inline-block;
+            padding: 0.05em 0.55em;
+            margin: 0 0.1em;
+            border-radius: 999px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.78em;
+            line-height: 1.4;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+            white-space: nowrap;
+        }
+        .cite-pill:hover,
+        .cite-pill:focus {
+            border-color: var(--show-color);
+            /* Same AA fix as body links — brand text needs to clear
+               4.5:1 on the dark card surface. */
+            color: var(--show-color-text, var(--show-color));
+            outline: none;
+        }
+        .cite-card {
+            position: absolute;
+            left: 0;
+            bottom: calc(100% + 6px);
+            z-index: 10;
+            min-width: 240px;
+            max-width: 360px;
+            padding: var(--sp-2) var(--sp-3);
+            border-radius: 8px;
+            background: var(--nn-bg);
+            border: 1px solid var(--nn-border);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+            color: var(--nn-text);
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            word-break: break-all;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--duration) var(--ease);
+            pointer-events: none;
+        }
+        .cite:hover .cite-card,
+        .cite-pill:focus + .cite-card,
+        .cite-pill:focus-within + .cite-card {
+            opacity: 1;
+            visibility: visible;
+        }
+        @media (max-width: 600px) {
+            .cite-card {
+                left: auto;
+                right: 0;
+                min-width: 0;
+                max-width: 90vw;
+            }
         }
     </style>
 
 
     
-    <style>:root { --show-color: #018DB1; --show-color-dark: #35B5C4; }</style>
+    
+    <style>:root {
+      --show-color: #017A99;
+      --show-color-dark: #005A75;
+      --show-color-text: color-mix(in srgb, #017A99, white 35%);
+    }</style>
     
     <style>
         @media (max-width: 768px) {
@@ -939,7 +1034,7 @@
             <li><a href="../../index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../planetterrian.html" style="color:var(--nn-text-muted);text-decoration:none;">Planetterrian Daily</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../blog/planetterrian/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
-            <li aria-current="page" style="color:var(--show-color);">Episode 36</li>
+            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 36</li>
         </ol>
     </nav>
 
@@ -1003,40 +1098,40 @@
 <ol>
 <li><strong>Sarcopenic Obesity Raises Death Risk 83% • 27 March 2026</strong></li>
 <p class="blog-list-cont">Having both excess belly fat and low muscle mass creates a vicious cycle where fat accelerates muscle breakdown and inflammation. The condition can be identified using simple measurements rather than costly tests, enabling earlier intervention.</p>
-<p class="blog-list-cont">Source: <a href="https://www.sciencedaily.com/releases/2026/03/260326075559.htm" target="_blank" rel="noopener">sciencedaily.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.sciencedaily.com/releases/2026/03/260326075559.htm" target="_blank" rel="noopener" aria-describedby="cite-card">sciencedaily.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.sciencedaily.com/releases/2026/03/260326075559.htm</span></span></p>
 <li><strong>Interactive Climate Simulator Drives Leader Action • 27 March 2026</strong></li>
 <p class="blog-list-cont">Global leaders using the En-ROADS climate policy simulator showed stronger understanding of solutions, felt more personally connected, and were more likely to advocate for change. Interactive simulation outperformed passive learning approaches in most cases.</p>
-<p class="blog-list-cont">Source: <a href="https://phys.org/news/2026-03-simulation-strategy-climate-action.html" target="_blank" rel="noopener">phys.org</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://phys.org/news/2026-03-simulation-strategy-climate-action.html" target="_blank" rel="noopener" aria-describedby="cite-card">phys.org</a><span class="cite-card" id="cite-card" role="tooltip">https://phys.org/news/2026-03-simulation-strategy-climate-action.html</span></span></p>
 <li><strong>Engineered Yeast Superfood Boosts Bee Colonies 15-Fold • 27 March 2026</strong></li>
 <p class="blog-list-cont">Scientists created yeast engineered to produce pollen nutrients, resulting in honeybee colonies producing up to 15 times more young in trials. The approach addresses declining natural pollen availability due to climate change and agriculture.</p>
-<p class="blog-list-cont">Source: <a href="https://www.sciencedaily.com/releases/2026/03/260327000518.htm" target="_blank" rel="noopener">sciencedaily.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.sciencedaily.com/releases/2026/03/260327000518.htm" target="_blank" rel="noopener" aria-describedby="cite-card">sciencedaily.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.sciencedaily.com/releases/2026/03/260327000518.htm</span></span></p>
 <li><strong>Tropical Birds Flip Breeding Season With Climate • 27 March 2026</strong></li>
 <p class="blog-list-cont">Research in search of a tropical spring provides the first evidence that some birds reverse their breeding season in response to climate shifts. The work builds on long-term observations of nesting patterns in Costa Rica and Honduras.</p>
-<p class="blog-list-cont">Source: <a href="https://phys.org/news/2026-03-tropical-birds-flip-season-response.html" target="_blank" rel="noopener">phys.org</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://phys.org/news/2026-03-tropical-birds-flip-season-response.html" target="_blank" rel="noopener" aria-describedby="cite-card">phys.org</a><span class="cite-card" id="cite-card" role="tooltip">https://phys.org/news/2026-03-tropical-birds-flip-season-response.html</span></span></p>
 <li><strong>Chem-Bio Hybrid Yields New Antiparasitic Leads • 27 March 2026</strong></li>
 <p class="blog-list-cont">Researchers combined engineered fungal molecules with synthetic methods to discover potential treatments for amebiasis caused by Entamoeba histolytica. The approach targets a disease responsible for approximately 50 million symptomatic cases annually in tropical regions.</p>
-<p class="blog-list-cont">Source: <a href="https://phys.org/news/2026-03-fungal-molecules-drug-chem-bio.html" target="_blank" rel="noopener">phys.org</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://phys.org/news/2026-03-fungal-molecules-drug-chem-bio.html" target="_blank" rel="noopener" aria-describedby="cite-card">phys.org</a><span class="cite-card" id="cite-card" role="tooltip">https://phys.org/news/2026-03-fungal-molecules-drug-chem-bio.html</span></span></p>
 <li><strong>Lab Gloves May Cause Microplastics Overestimation • 27 March 2026</strong></li>
 <p class="blog-list-cont">Scientists are likely overestimating environmental microplastics because plastic particles from laboratory gloves contaminate samples. This finding challenges the reliability of many recent studies detecting microplastics in bodies, food, water and air.</p>
-<p class="blog-list-cont">Source: <a href="https://phys.org/news/2026-03-scientists-overestimating-amounts-microplastics-environment.html" target="_blank" rel="noopener">phys.org</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://phys.org/news/2026-03-scientists-overestimating-amounts-microplastics-environment.html" target="_blank" rel="noopener" aria-describedby="cite-card">phys.org</a><span class="cite-card" id="cite-card" role="tooltip">https://phys.org/news/2026-03-scientists-overestimating-amounts-microplastics-environment.html</span></span></p>
 <li><strong>60% of Australia's Top Pesticides Banned in EU • 27 March 2026</strong></li>
 <p class="blog-list-cont">Analysis of Australia's highest-volume pesticide products found that 60% of those used over 100 metric tons per year are banned in the European Union. The study examined 45 widely used agricultural chemicals through government usage data.</p>
-<p class="blog-list-cont">Source: <a href="https://phys.org/news/2026-03-australia-pesticides-eu.html" target="_blank" rel="noopener">phys.org</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://phys.org/news/2026-03-australia-pesticides-eu.html" target="_blank" rel="noopener" aria-describedby="cite-card">phys.org</a><span class="cite-card" id="cite-card" role="tooltip">https://phys.org/news/2026-03-australia-pesticides-eu.html</span></span></p>
 <li><strong>FDA Approves Gene Therapy for Rare Immune Disorder • 27 March 2026</strong></li>
 <p class="blog-list-cont">The FDA approved Rocket Pharmaceuticals' Kresladi gene therapy for leukocyte adhesion deficiency type 1 after testing in nine patients with positive results. The treatment addresses a rare inherited immune disorder.</p>
-<p class="blog-list-cont">Source: <a href="https://www.statnews.com/2026/03/26/rocket-pharma-kresladi-lad-1-fda-approval/" target="_blank" rel="noopener">statnews.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.statnews.com/2026/03/26/rocket-pharma-kresladi-lad-1-fda-approval/" target="_blank" rel="noopener" aria-describedby="cite-card">statnews.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.statnews.com/2026/03/26/rocket-pharma-kresladi-lad-1-fda-approval/</span></span></p>
 <li><strong>Oyster Shells Remove Rare Earth Metals From Polluted Water • 27 March 2026</strong></li>
 <p class="blog-list-cont">Discarded oyster shells can naturally capture and remove rare earth elements from contaminated water, turning them into stable mineral crystals. The low-cost method offers an environmentally friendly alternative to traditional cleanup approaches.</p>
-<p class="blog-list-cont">Source: <a href="https://phys.org/news/2026-03-discarded-oyster-shells-rare-earth.html" target="_blank" rel="noopener">phys.org</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://phys.org/news/2026-03-discarded-oyster-shells-rare-earth.html" target="_blank" rel="noopener" aria-describedby="cite-card">phys.org</a><span class="cite-card" id="cite-card" role="tooltip">https://phys.org/news/2026-03-discarded-oyster-shells-rare-earth.html</span></span></p>
 <li><strong>Lung Cancer Screening Campaign Boosts Early Diagnosis • 27 March 2026</strong></li>
 <p class="blog-list-cont">A large-scale programme offering scans to smokers aged 55 to 74 detected a substantial number of early-stage lung tumours. The campaign demonstrates the value of targeted screening for high-risk populations.</p>
-<p class="blog-list-cont">Source: <a href="https://www.nature.com/articles/d41586-026-00954-6" target="_blank" rel="noopener">nature.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.nature.com/articles/d41586-026-00954-6" target="_blank" rel="noopener" aria-describedby="cite-card">nature.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.nature.com/articles/d41586-026-00954-6</span></span></p>
 <li><strong>Quantum Biosensors Reveal Cell Metabolism Details • 26 March 2026</strong></li>
 <p class="blog-list-cont">Researchers implanted quantum sensors in living cells to measure shifts in magnetism and temperature inside them. The technique provides new insights into cellular metabolism efficiency in health and disease.</p>
-<p class="blog-list-cont">Source: <a href="https://phys.org/news/2026-03-quantum-biosensors-peer-cells.html" target="_blank" rel="noopener">phys.org</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://phys.org/news/2026-03-quantum-biosensors-peer-cells.html" target="_blank" rel="noopener" aria-describedby="cite-card">phys.org</a><span class="cite-card" id="cite-card" role="tooltip">https://phys.org/news/2026-03-quantum-biosensors-peer-cells.html</span></span></p>
 <li><strong>Bioluminescent Bacteria Essential for Squid Development • 26 March 2026</strong></li>
 <p class="blog-list-cont">Vibrio fischeri bacteria are required not just for light production but for healthy development in Hawaiian bobtail squid. The symbiotic partnership, where squid recruit bacteria from seawater, extends far beyond camouflage benefits.</p>
-<p class="blog-list-cont">Source: <a href="https://phys.org/news/2026-03-bioluminescent-bacterial-partner-essential-squid.html" target="_blank" rel="noopener">phys.org</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://phys.org/news/2026-03-bioluminescent-bacterial-partner-essential-squid.html" target="_blank" rel="noopener" aria-describedby="cite-card">phys.org</a><span class="cite-card" id="cite-card" role="tooltip">https://phys.org/news/2026-03-bioluminescent-bacterial-partner-essential-squid.html</span></span></p>
 </ol>
 <h4 id="planetterrian-spotlight">Planetterrian Spotlight</h4>
 <p><strong>Sarcopenic Obesity Raises Death Risk 83%</strong> stands out for its direct relevance to everyday health. The combination of visceral fat and muscle loss creates self-reinforcing inflammation that accelerates decline in ways that isolated obesity or sarcopenia do not. Because it can be spotted with basic measurements like waist circumference and grip strength, clinicians may soon identify at-risk individuals much earlier. This could shift prevention strategies toward preserving muscle while reducing abdominal fat rather than focusing on weight alone. Watch for follow-up studies testing targeted nutrition and resistance training interventions in this specific population.</p>
@@ -1241,6 +1336,34 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
             </nav>
             
             <!-- Cross-show Recommendations -->
+            
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/fascinating_frontiers/ep062.html" class="blog-related-card" style="--card-show-color: #6B47FF">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #6B47FF, white 35%)">Fascinating Frontiers</span>
+                        <h3>Fascinating Frontiers</h3>
+                        <p>Astronomers identify 27 candidate planets orbiting binary stars in distant solar systems.</p>
+                    </a>
+                    
+                    <a href="../../blog/modern_investing/ep034.html" class="blog-related-card" style="--card-show-color: #047857">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #047857, white 35%)">Modern Investing Techniques</span>
+                        <h3>Modern Investing Techniques</h3>
+                        <p>US companies have announced $665 billion in share buybacks year-to-date, offering a potential support level for equities&hellip;</p>
+                    </a>
+                    
+                    <a href="../../blog/tesla/ep462.html" class="blog-related-card" style="--card-show-color: #E31937">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #E31937, white 35%)">Tesla Shorts Time</span>
+                        <h3>Tesla Shorts Time</h3>
+                        <p>Tesla has started producing its Semi electric trucks at a dedicated factory in Nevada.</p>
+                    </a>
+                    
+                </div>
+            </section>
             
         </article>
     </div>

@@ -40,6 +40,20 @@
 
     
     
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
+    
     
     
     <script defer src="assets/js/tracking.js"></script>
@@ -50,7 +64,12 @@
     
 
     
-    <style>:root { --show-color: #7C3AED; --show-color-dark: #6D28D9; }</style>
+    
+    <style>:root {
+      --show-color: #7C3AED;
+      --show-color-dark: #6D28D9;
+      --show-color-text: color-mix(in srgb, #7C3AED, white 35%);
+    }</style>
     
     <style>
         @media (max-width: 768px) {
@@ -430,7 +449,7 @@
 
     
     <div style="text-align:center;margin-bottom:var(--sp-6);">
-        <a href="blog/models_agents/index.html" style="display:inline-flex;align-items:center;gap:var(--sp-2);font-family:var(--font-ui);font-size:0.88rem;font-weight:500;color:var(--show-color);text-decoration:none;padding:var(--sp-2) var(--sp-5);border:1px solid color-mix(in srgb, var(--show-color) 30%, transparent);border-radius:100px;transition:all var(--duration) var(--ease);" onmouseover="this.style.background='color-mix(in srgb, var(--show-color) 12%, transparent)'" onmouseout="this.style.background='transparent'">
+        <a href="blog/models_agents/index.html" style="display:inline-flex;align-items:center;gap:var(--sp-2);font-family:var(--font-ui);font-size:0.88rem;font-weight:500;color:var(--show-color-text, var(--show-color));text-decoration:none;padding:var(--sp-2) var(--sp-5);border:1px solid color-mix(in srgb, var(--show-color) 30%, transparent);border-radius:100px;transition:all var(--duration) var(--ease);" onmouseover="this.style.background='color-mix(in srgb, var(--show-color) 12%, transparent)'" onmouseout="this.style.background='transparent'">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
             Read in-depth articles on our blog
         </a>
@@ -875,7 +894,7 @@
                     empty.innerHTML = `
                         ${msg}
                         <p style="margin:0.5rem 0 1.5rem;">Try a different search term or filter.</p>
-                        <button type="button" id="clearFiltersBtn" class="nn-filter-btn active" style="border-color:var(--show-color);color:var(--show-color);">Clear filters</button>
+                        <button type="button" id="clearFiltersBtn" class="nn-filter-btn active" style="border-color:var(--show-color);color:var(--show-color-text, var(--show-color));">Clear filters</button>
                     `;
                     const clearBtn = document.getElementById('clearFiltersBtn');
                     if (clearBtn) {
@@ -939,14 +958,14 @@
                     const audioHtml = audioUrl ? `
                         <div class="nn-summary-actions">
                             <audio class="nn-summary-audio" controls preload="none" src="${escapeAttr(audioUrl)}" aria-label="${escapeAttr(title || 'Episode')} audio"
-                                   onerror="this.replaceWith(Object.assign(document.createElement('div'),{innerHTML:'<span style=&quot;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.85rem;&quot;>Audio unavailable. <a href=&quot;${escapeAttr(audioUrl)}&quot; style=&quot;color:var(--show-color);&quot;>Try download</a>.</span>'}))"></audio>
+                                   onerror="this.replaceWith(Object.assign(document.createElement('div'),{innerHTML:'<span style=&quot;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.85rem;&quot;>Audio unavailable. <a href=&quot;${escapeAttr(audioUrl)}&quot; style=&quot;color:var(--show-color-text, var(--show-color));&quot;>Try download</a>.</span>'}))"></audio>
                             <a class="nn-summary-link" href="${escapeAttr(audioUrl)}" target="_blank" rel="noopener">Download</a>
                             ${transcriptHtml}
                             <button class="nn-summary-link" data-share-url="${escapeAttr(audioUrl)}" title="Copy link">Share</button>
                         </div>
                     ` : '';
 
-                    const titleHtml = title ? `<div style="font-weight:600;color:var(--show-color);font-family:var(--font-ui);font-size:0.88rem;">${escapeHtml(title)}</div>` : '';
+                    const titleHtml = title ? `<div style="font-weight:600;color:var(--show-color-text, var(--show-color));font-family:var(--font-ui);font-size:0.88rem;">${escapeHtml(title)}</div>` : '';
 
                     return `
                         <div class="nn-summary-item" data-date="${escapeAttr(date)}">

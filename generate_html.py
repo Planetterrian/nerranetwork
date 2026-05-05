@@ -730,12 +730,16 @@ NETWORK_SHOWS = {
         "rss_file": "models_agents_beginners_podcast.rss",
         "podcast_image": "assets/covers/models-agents-beginners.jpg",
         "x_account": None,
-        "brand_color": "#B45309",
-        # Hero VML / gradient endpoint — must be DARKER than brand_color
-        # for white text on the Outlook fallback. Previous #D97706 was
-        # *lighter* than the brand and white-on-it measured 3.19:1.
-        # #7C2D12 (amber-900) measures 9.37:1.
-        "brand_color_dark": "#7C2D12",
+        # MAB brand: orange-700 (#C2410C, 5.18:1 on white). Picked May
+        # 2026 to differentiate from Unintended Consequences (which
+        # uses the deep amber #B45309) — earlier MAB bump landed on
+        # the same #B45309 by coincidence and the two show pills were
+        # visually identical across the network grid.
+        "brand_color": "#C2410C",
+        # Hero VML / gradient endpoint — orange-800 (7.31:1 on white).
+        # Must be DARKER than brand_color so white text on the Outlook
+        # fallback clears WCAG AA.
+        "brand_color_dark": "#9A3412",
         "tagline": "AI explained simply — for beginners and teens.",
         "hero_tagline": "AI explained simply — for beginners and teens.",
         "schedule": "Daily",
@@ -747,7 +751,7 @@ NETWORK_SHOWS = {
         "related_reason": "If you enjoy Models & Agents for Beginners and want to go deeper, check out Models & Agents — the full daily AI briefing for developers and professionals.",
         "apple_podcasts_url": "https://podcasts.apple.com/us/podcast/models-agents-for-beginners/id1885231582",
         "spotify_url": "https://open.spotify.com/show/7vRUrQAJWzOB729A9aVDd5",
-        "theme_color": "#B45309",
+        "theme_color": "#C2410C",
         "meta_description": "Models & Agents for Beginners — Daily AI podcast for beginners and teens. AI models, agents, and tools explained simply.",
         "meta_keywords": "AI for beginners, AI podcast teens, learn AI, beginner AI, Models and Agents for Beginners",
         "audience": "For students, teens, curious parents, career changers, and anyone new to AI who wants to understand what's happening without the jargon.",

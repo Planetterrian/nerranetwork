@@ -7,7 +7,7 @@
     
     <meta name="keywords" content="AI models, agent frameworks, LLM news, AI briefings, Models and Agents">
     <title>Models & Agents — Ep17 | Models & Agents Blog</title>
-    <meta name="theme-color" content="#8B5CF6">
+    <meta name="theme-color" content="#7C3AED">
 
     <!-- Open Graph -->
     <meta property="og:title" content="Models & Agents — Ep17 | Models & Agents Blog">
@@ -34,9 +34,23 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%237C5CFF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%236B47FF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/></svg>">
 
     
+    
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="../../assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
     
     
     
@@ -185,7 +199,8 @@
             padding: 2px 10px;
             border-radius: 100px;
             background: color-mix(in srgb, var(--show-color) 15%, transparent);
-            color: var(--show-color);
+            /* AA-compliant text on dark page bg — see --show-color-text in base.html.j2 */
+            color: var(--show-color-text, var(--show-color));
             font-weight: 600;
         }
         .post-author {
@@ -282,7 +297,8 @@
         }
         .blog-toc a:hover,
         .blog-toc a.active {
-            color: var(--show-color);
+            /* AA-compliant text on dark sidebar bg */
+            color: var(--show-color-text, var(--show-color));
             border-left-color: var(--show-color);
         }
         .blog-toc a.toc-h3 {
@@ -327,14 +343,18 @@
             margin: 0 0 var(--sp-4);
         }
         .blog-article a {
-            color: var(--show-color);
+            /* Body links — AA-compliant lightened brand on dark bg.
+               Saturated brand colors fail 4.5:1 on `--nn-bg`; the
+               `--show-color-text` variable lightens by 35 % white so
+               every show clears AA. */
+            color: var(--show-color-text, var(--show-color));
             text-decoration: underline;
             text-underline-offset: 2px;
-            text-decoration-color: color-mix(in srgb, var(--show-color) 40%, transparent);
+            text-decoration-color: color-mix(in srgb, var(--show-color-text, var(--show-color)) 40%, transparent);
             transition: text-decoration-color var(--duration) var(--ease);
         }
         .blog-article a:hover {
-            text-decoration-color: var(--show-color);
+            text-decoration-color: var(--show-color-text, var(--show-color));
         }
         .blog-article strong {
             color: var(--nn-white);
@@ -613,13 +633,88 @@
         }
         .blog-listen-cta:hover {
             border-color: var(--show-color);
-            color: var(--show-color);
+            color: var(--show-color-text, var(--show-color));
+        }
+
+        /* Hover-card citations (Phase 3.4 of the May 2026 audit).
+           A small inline pill shows the publisher domain; on hover or
+           keyboard focus a popover reveals the full URL so readers
+           can verify provenance without leaving the page. Pure CSS,
+           no JS — works in every email/RSS-rendered surface that
+           runs the page stylesheet. */
+        .cite {
+            position: relative;
+            display: inline-block;
+        }
+        .cite-pill {
+            display: inline-block;
+            padding: 0.05em 0.55em;
+            margin: 0 0.1em;
+            border-radius: 999px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.78em;
+            line-height: 1.4;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+            white-space: nowrap;
+        }
+        .cite-pill:hover,
+        .cite-pill:focus {
+            border-color: var(--show-color);
+            /* Same AA fix as body links — brand text needs to clear
+               4.5:1 on the dark card surface. */
+            color: var(--show-color-text, var(--show-color));
+            outline: none;
+        }
+        .cite-card {
+            position: absolute;
+            left: 0;
+            bottom: calc(100% + 6px);
+            z-index: 10;
+            min-width: 240px;
+            max-width: 360px;
+            padding: var(--sp-2) var(--sp-3);
+            border-radius: 8px;
+            background: var(--nn-bg);
+            border: 1px solid var(--nn-border);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+            color: var(--nn-text);
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            word-break: break-all;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--duration) var(--ease);
+            pointer-events: none;
+        }
+        .cite:hover .cite-card,
+        .cite-pill:focus + .cite-card,
+        .cite-pill:focus-within + .cite-card {
+            opacity: 1;
+            visibility: visible;
+        }
+        @media (max-width: 600px) {
+            .cite-card {
+                left: auto;
+                right: 0;
+                min-width: 0;
+                max-width: 90vw;
+            }
         }
     </style>
 
 
     
-    <style>:root { --show-color: #8B5CF6; --show-color-dark: #6D28D9; }</style>
+    
+    <style>:root {
+      --show-color: #7C3AED;
+      --show-color-dark: #6D28D9;
+      --show-color-text: color-mix(in srgb, #7C3AED, white 35%);
+    }</style>
     
     <style>
         @media (max-width: 768px) {
@@ -939,7 +1034,7 @@
             <li><a href="../../index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../models-agents.html" style="color:var(--nn-text-muted);text-decoration:none;">Models & Agents</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../blog/models_agents/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
-            <li aria-current="page" style="color:var(--show-color);">Episode 17</li>
+            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 17</li>
         </ol>
     </nav>
 
@@ -1012,40 +1107,40 @@
 <p><strong>What You Need to Know:</strong> Picsart's new AI agent marketplace lets creators "hire" specialized AI assistants via an integrated platform, launching with four agents and expanding weekly, which could democratize access to agentic tools for design workflows. A wave of arXiv papers highlights advancements in multi-agent systems, from safety auditing in LLMs to climate analysis agents and negotiation benchmarks, pointing to more robust coordination in agent ecosystems. Pay attention this week to how these research frameworks could inspire practical agent deployments, especially in areas like environmental modeling and decentralized decision-making.</p>
 <h4 id="top-story">Top Story</h4>
 <p>Picsart has launched an AI agent marketplace that allows creators to "hire" AI assistants, starting with four agents and planning to add more each week. This builds on existing agent frameworks like LangChain or CrewAI but focuses on creative tools, potentially offering seamless integration for tasks such as image editing or design automation without needing custom setups. Compared to general-purpose agents, this marketplace emphasizes user-friendly, domain-specific helpers that could lower barriers for non-technical creators. Developers and designers should care as it enables quick prototyping of agent-assisted workflows in visual arts. To get started, explore the marketplace for hiring agents in Picsart's ecosystem and test how they handle real-time creative tasks. Watch for weekly agent additions, which might include more advanced capabilities like multi-modal interactions.</p>
-<p>Source: <a href="https://techcrunch.com/2026/03/16/picsart-now-allows-creators-to-hire-ai-assistants-through-agent-marketplace/" target="_blank" rel="noopener">techcrunch.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://techcrunch.com/2026/03/16/picsart-now-allows-creators-to-hire-ai-assistants-through-agent-marketplace/" target="_blank" rel="noopener" aria-describedby="cite-card">techcrunch.com</a><span class="cite-card" id="cite-card" role="tooltip">https://techcrunch.com/2026/03/16/picsart-now-allows-creators-to-hire-ai-assistants-through-agent-marketplace/</span></span></p>
 <h4 id="model-updates">Model Updates</h4>
 <p><strong>Auditing Cascading Risks in Multi-Agent Systems via Semantic-Geometric Co-evolution: cs.MA updates on arXiv.org</strong></p>
 <p>This paper introduces a framework for detecting cascading risks in LLM-based multi-agent systems using Ollivier-Ricci Curvature to monitor graph dynamics and flag early instabilities. It improves on traditional semantic auditing by being proactive and interpretable, potentially enhancing safety in systems like those built with Microsoft AutoGen. For AI practitioners, this matters for building more reliable agent networks, especially in high-stakes scenarios where misalignment could amplify over time.</p>
-<p>Source: <a href="https://arxiv.org/abs/2603.13325" target="_blank" rel="noopener">arxiv.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://arxiv.org/abs/2603.13325" target="_blank" rel="noopener" aria-describedby="cite-card">arxiv.org</a><span class="cite-card" id="cite-card" role="tooltip">https://arxiv.org/abs/2603.13325</span></span></p>
 <p><strong>Beyond Self-Interest: Modeling Social-Oriented Motivation for Human-like Multi-Agent Interactions: cs.MA updates on arXiv.org</strong></p>
 <p>The Autonomous Social Value-Oriented agents (ASVO) framework integrates LLM-based agents with Social Value Orientation theory to model desire-driven behaviors and adaptive altruism in interactions. Unlike purely self-interested agents in frameworks like AutoGPT, this adds social motivation layers for more natural simulations in contexts like workplaces or families. It helps developers create human-like agent systems, though it requires careful tuning for non-stationary environments.</p>
-<p>Source: <a href="https://arxiv.org/abs/2603.13890" target="_blank" rel="noopener">arxiv.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://arxiv.org/abs/2603.13890" target="_blank" rel="noopener" aria-describedby="cite-card">arxiv.org</a><span class="cite-card" id="cite-card" role="tooltip">https://arxiv.org/abs/2603.13890</span></span></p>
 <p><strong>SAGE: Multi-Agent Self-Evolution for LLM Reasoning: cs.MA updates on arXiv.org</strong></p>
 <p>SAGE is a closed-loop framework where four agents evolve from a shared LLM backbone using verifiable rewards to improve reasoning, tested on Qwen-2.5-7B with gains on benchmarks like LiveCodeBench. It advances self-play methods by incorporating explicit planning and quality control, outperforming baselines in math and code tasks. This is exciting for fine-tuning enthusiasts but limited by reliance on external verifiers for stability.</p>
-<p>Source: <a href="https://arxiv.org/abs/2603.15255" target="_blank" rel="noopener">arxiv.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://arxiv.org/abs/2603.15255" target="_blank" rel="noopener" aria-describedby="cite-card">arxiv.org</a><span class="cite-card" id="cite-card" role="tooltip">https://arxiv.org/abs/2603.15255</span></span></p>
 <h4 id="agent-tool-developments">Agent & Tool Developments</h4>
 <p><strong>ClimateAgents: A Multi-Agent Research Assistant for Social-Climate Dynamics Analysis: cs.MA updates on arXiv.org</strong></p>
 <p>ClimateAgents is a multi-agent system for analyzing socio-environmental dynamics by integrating multimodal data, statistical modeling, and reasoning across agents. It's a step up from traditional predictive tools, enabling adaptive exploration without large training datasets, though it assumes access to sources like UN data. Try it today by implementing the framework for scenario analysis in environmental projects via the arXiv code if available.</p>
-<p>Source: <a href="https://arxiv.org/abs/2603.13840" target="_blank" rel="noopener">arxiv.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://arxiv.org/abs/2603.13840" target="_blank" rel="noopener" aria-describedby="cite-card">arxiv.org</a><span class="cite-card" id="cite-card" role="tooltip">https://arxiv.org/abs/2603.13840</span></span></p>
 <p><strong>REDE REF: Training-Free Agentic AI: Probabilistic Control and Coordination in Multi-Agent LLM Systems: cs.MA updates on arXiv.org</strong></p>
 <p>REDE REF is a lightweight controller for multi-agent LLM collaboration that uses belief-guided delegation and reflection to cut token usage by up to 28% in tasks. It improves on naive routing in systems like LangGraph by adding probabilistic efficiency without training. Developers can experiment with it for split-knowledge tasks to boost robustness in agent teams.</p>
-<p>Source: <a href="https://arxiv.org/abs/2603.13256" target="_blank" rel="noopener">arxiv.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://arxiv.org/abs/2603.13256" target="_blank" rel="noopener" aria-describedby="cite-card">arxiv.org</a><span class="cite-card" id="cite-card" role="tooltip">https://arxiv.org/abs/2603.13256</span></span></p>
 <p><strong>Design and evaluation of an agentic workflow for crisis-related synthetic tweet datasets: cs.MA updates on arXiv.org</strong></p>
 <p>This agentic workflow generates synthetic tweet datasets for crisis informatics, using multi-agent iteration to create labeled data for AI tasks like damage assessment. It addresses data scarcity post-Twitter API changes, offering a scalable alternative to real data curation. Test it for generating custom datasets in social media analysis workflows.</p>
-<p>Source: <a href="https://arxiv.org/abs/2603.13625" target="_blank" rel="noopener">arxiv.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://arxiv.org/abs/2603.13625" target="_blank" rel="noopener" aria-describedby="cite-card">arxiv.org</a><span class="cite-card" id="cite-card" role="tooltip">https://arxiv.org/abs/2603.13625</span></span></p>
 <p><strong>Intelligent Co-Design: An Interactive LLM Framework for Interior Spatial Design via Multi-Modal Agents: cs.MA updates on arXiv.org</strong></p>
 <p>Intelligent Co-Design is a multi-agent LLM framework for interactive 3D interior design, converting language and images into layouts with agents for reference, spatial planning, and grading. It outperforms traditional tools in user satisfaction, enabling non-designers to participate. Try the GitHub repo for prototyping room designs with natural language prompts.</p>
-<p>Source: <a href="https://arxiv.org/abs/2603.15341" target="_blank" rel="noopener">arxiv.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://arxiv.org/abs/2603.15341" target="_blank" rel="noopener" aria-describedby="cite-card">arxiv.org</a><span class="cite-card" id="cite-card" role="tooltip">https://arxiv.org/abs/2603.15341</span></span></p>
 <h4 id="practical-community">Practical & Community</h4>
 <p><strong>A Benchmark for Multi-Party Negotiation Games from Real Negotiation Data: cs.MA updates on arXiv.org</strong></p>
 <p>This benchmark generates configurable negotiation games from real data like the Harvard Negotiation Challenge, testing value-function approximations for long-horizon planning. It solves gaps in evaluating decentralized agents under binding commitments. Get started by using it to benchmark your multi-agent RL models on negotiation tasks.</p>
-<p>Source: <a href="https://arxiv.org/abs/2603.14066" target="_blank" rel="noopener">arxiv.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://arxiv.org/abs/2603.14066" target="_blank" rel="noopener" aria-describedby="cite-card">arxiv.org</a><span class="cite-card" id="cite-card" role="tooltip">https://arxiv.org/abs/2603.14066</span></span></p>
 <p><strong>EcoFair-CH-MARL: Scalable Constrained Hierarchical Multi-Agent RL with Real-Time Emission Budgets and Fairness Guarantees: cs.MA updates on arXiv.org</strong></p>
 <p>EcoFair-CH-MARL is a framework for maritime logistics with emission constraints and fairness, scaling to 50 agents and cutting emissions by up to 15%. It's practical for safety-critical domains but requires a digital twin for simulation. Explore it for optimizing fleet coordination in constrained environments.</p>
-<p>Source: <a href="https://arxiv.org/abs/2603.14625" target="_blank" rel="noopener">arxiv.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://arxiv.org/abs/2603.14625" target="_blank" rel="noopener" aria-describedby="cite-card">arxiv.org</a><span class="cite-card" id="cite-card" role="tooltip">https://arxiv.org/abs/2603.14625</span></span></p>
 <p><strong>MedPriv-Bench: Benchmarking the Privacy-Utility Trade-off of Large Language Models in Medical Open-End Question Answering: cs.MA updates on arXiv.org</strong></p>
 <p>MedPriv-Bench evaluates LLMs on privacy in medical QA using a multi-agent pipeline to synthesize sensitive contexts. It reveals trade-offs in RAG systems under regulations like HIPAA. Developers can use it to test model safety in healthcare apps, though it focuses on open-ended queries.</p>
-<p>Source: <a href="https://arxiv.org/abs/2603.14265" target="_blank" rel="noopener">arxiv.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://arxiv.org/abs/2603.14265" target="_blank" rel="noopener" aria-describedby="cite-card">arxiv.org</a><span class="cite-card" id="cite-card" role="tooltip">https://arxiv.org/abs/2603.14265</span></span></p>
 <h4 id="things-to-try-this-week">Things to Try This Week</h4>
 <ul>
 <li>Try Picsart's AI agent marketplace for hiring assistants in creative tasks — it's a low-barrier way to integrate agents into design workflows without building from scratch.</li>
@@ -1194,6 +1289,34 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
             </nav>
             
             <!-- Cross-show Recommendations -->
+            
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/fascinating_frontiers/ep062.html" class="blog-related-card" style="--card-show-color: #6B47FF">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #6B47FF, white 35%)">Fascinating Frontiers</span>
+                        <h3>Fascinating Frontiers</h3>
+                        <p>Astronomers identify 27 candidate planets orbiting binary stars in distant solar systems.</p>
+                    </a>
+                    
+                    <a href="../../blog/tesla/ep462.html" class="blog-related-card" style="--card-show-color: #E31937">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #E31937, white 35%)">Tesla Shorts Time</span>
+                        <h3>Tesla Shorts Time</h3>
+                        <p>Tesla has started producing its Semi electric trucks at a dedicated factory in Nevada.</p>
+                    </a>
+                    
+                    <a href="../../blog/modern_investing/ep034.html" class="blog-related-card" style="--card-show-color: #047857">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #047857, white 35%)">Modern Investing Techniques</span>
+                        <h3>Modern Investing Techniques</h3>
+                        <p>US companies have announced $665 billion in share buybacks year-to-date, offering a potential support level for equities&hellip;</p>
+                    </a>
+                    
+                </div>
+            </section>
             
         </article>
     </div>

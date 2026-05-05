@@ -22,172 +22,68 @@ Usage:
 import json
 import os
 import re
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 import xml.etree.ElementTree as ET
 
+# Use the canonical NETWORK_SHOWS registry from ``generate_html.py``
+# as the single source of truth for show metadata. The previous
+# hardcoded ``SHOWS`` list in this file drifted out of sync — by
+# May 2026 it had wrong brand colors (PT showed Omni View's blue,
+# OV showed FF's purple, FF/EI both showed an unrelated #16A34A
+# green) and wrong descriptions (PT was tagged "World news"). The
+# mobile app was therefore serving incorrect data network-wide.
+# Import-from-canonical eliminates the drift permanently.
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+from generate_html import NETWORK_SHOWS  # noqa: E402  (after sys.path fix)
 
-# Show configuration with all metadata
-SHOWS = [
-    {
-        "id": "models_agents",
-        "name": "Models & Agents",
-        "tagline": "Daily AI models, agents, and practical developments",
-        "description": "Stay current with the latest developments in AI models and agents. "
-                       "We cover breakthroughs in large language models, agent frameworks, and practical AI applications.",
-        "schedule": "Daily",
-        "duration": "~15 min",
-        "category": "Technology",
-        "brand_color": "#7C3AED",
-        "cover_slug": "models-agents",
-        "rss_file": "models_agents_podcast.rss",
-        "digest_slug": "models_agents",
-    },
-    {
-        "id": "planetterrian",
-        "name": "Planetterrian Daily",
-        "tagline": "World news and geopolitical analysis",
-        "description": "Global news coverage with in-depth analysis of geopolitical developments, "
-                       "international affairs, and world events.",
-        "schedule": "Daily",
-        "duration": "~15 min",
-        "category": "News",
-        "brand_color": "#0B6FD6",
-        "cover_slug": "planetterrian",
-        "rss_file": "planetterrian_podcast.rss",
-        "digest_slug": "planetterrian",
-    },
-    {
-        "id": "omni_view",
-        "name": "Omni View",
-        "tagline": "Multi-perspective deep dives into complex topics",
-        "description": "Explore complex issues from multiple angles. Each episode provides comprehensive analysis "
-                       "from diverse perspectives.",
-        "schedule": "Daily",
-        "duration": "~20 min",
-        "category": "Analysis",
-        "brand_color": "#6B47FF",
-        "cover_slug": "omni-view",
-        "rss_file": "omni_view_podcast.rss",
-        "digest_slug": "omni_view",
-    },
-    {
-        "id": "models_agents_beginners",
-        "name": "Models & Agents for Beginners",
-        "tagline": "AI explained simply for everyone",
-        "description": "Make AI accessible. Complex AI concepts broken down for beginners without sacrificing accuracy. "
-                       "Perfect for anyone new to artificial intelligence.",
-        "schedule": "Daily",
-        "duration": "~10 min",
-        "category": "Technology",
-        "brand_color": "#017A99",
-        "cover_slug": "models-agents-beginners",
-        "rss_file": "models_agents_beginners_podcast.rss",
-        "digest_slug": "models_agents_beginners",
-    },
-    {
-        "id": "fascinating_frontiers",
-        "name": "Fascinating Frontiers",
-        "tagline": "Space exploration and scientific breakthroughs",
-        "description": "Discover the frontiers of space exploration, scientific research, and technological innovation. "
-                       "From Mars missions to quantum computing.",
-        "schedule": "Daily",
-        "duration": "~15 min",
-        "category": "Science",
-        "brand_color": "#16A34A",
-        "cover_slug": "fascinating-frontiers",
-        "rss_file": "fascinating_frontiers_podcast.rss",
-        "digest_slug": "fascinating_frontiers",
-    },
-    {
-        "id": "modern_investing",
-        "name": "Modern Investing Techniques",
-        "tagline": "Canadian investing strategies and market analysis",
-        "description": "Investment insights tailored for Canadian investors. Modern portfolio strategies, "
-                       "market analysis, and financial planning.",
-        "schedule": "Weekdays",
-        "duration": "~12 min",
-        "category": "Finance",
-        "brand_color": "#047857",
-        "cover_slug": "modern-investing",
-        "rss_file": "modern_investing_podcast.rss",
-        "digest_slug": "modern_investing",
-    },
-    {
-        "id": "tesla",
-        "name": "Tesla Shorts Time",
-        "tagline": "Tesla news, analysis, and industry insights",
-        "description": "In-depth coverage of Tesla news, products, market position, and the broader EV and tech landscape. "
-                       "For Tesla enthusiasts and investors.",
-        "schedule": "Daily",
-        "duration": "~15 min",
-        "category": "Business",
-        "brand_color": "#E31937",
-        "cover_slug": "tesla-shorts",
-        "rss_file": "tesla_podcast.rss",
-        "digest_slug": "tesla",
-    },
-    {
-        "id": "env_intel",
-        "name": "Environmental Intelligence",
-        "tagline": "Environmental compliance and sustainability insights",
-        "description": "Critical insights for environmental compliance, sustainability practices, and regulatory developments. "
-                       "Essential for businesses and environmental professionals.",
-        "schedule": "Weekdays",
-        "duration": "~10 min",
-        "category": "Environment",
-        "brand_color": "#16A34A",
-        "cover_slug": "env-intel",
-        "rss_file": "env_intel_podcast.rss",
-        "digest_slug": "env_intel",
-    },
-    {
-        "id": "finansy_prosto",
-        "name": "Финансы Просто",
-        "tagline": "Финансы и инвестиции на русском языке",
-        "description": "Доступное объяснение финансовых концепций, инвестиционных стратегий и экономических новостей "
-                       "для русскоговорящей аудитории.",
-        "schedule": "Daily",
-        "duration": "~12 min",
-        "category": "Finance",
-        "brand_color": "#BE185D",
-        "cover_slug": "finansy-prosto",
-        "rss_file": "finansy_prosto_podcast.rss",
-        "digest_slug": "finansy_prosto",
-    },
-    {
-        "id": "privet_russian",
-        "name": "Привет, Русский!",
-        "tagline": "Learn Russian language and culture",
-        "description": "Russian language learning with cultural insights. Designed for learners of all levels, "
-                       "combining grammar, vocabulary, and cultural context.",
-        "schedule": "Daily",
-        "duration": "~10 min",
-        "category": "Education",
-        "brand_color": "#4F46E5",
-        "cover_slug": "privet-russian",
-        "rss_file": "privet_russian_podcast.rss",
-        "digest_slug": "privet_russian",
-    },
-    {
-        "id": "unintended_consequences",
-        "name": "Unintended Consequences",
-        "tagline": "Good intentions. Surprising results. Real lessons.",
-        "description": "A daily narrative podcast profiling inventions, policies, and systems that were "
-                       "designed with good intentions — but triggered surprising, unintended consequences. "
-                       "From the Cobra Effect to social media algorithms, every episode follows a single "
-                       "case study through good intentions, implementation, unexpected fallout, and the "
-                       "lessons we can learn.",
-        "schedule": "Weekdays",
-        "duration": "~15-18 min",
-        "category": "Education",
-        "brand_color": "#B45309",
-        "cover_slug": "unintended-consequences",
-        "rss_file": "unintended_consequences_podcast.rss",
-        "digest_slug": "unintended_consequences",
-    },
-]
+
+def _shows_from_network() -> List[Dict[str, Any]]:
+    """Project ``NETWORK_SHOWS`` into the shape this script expects.
+
+    Adds the API-only fields (``schedule``, ``duration``, ``category``,
+    ``cover_slug``, ``digest_slug``) that ``generate_html.py`` doesn't
+    care about. Per-show overrides live here in one place.
+    """
+    api_extras = {
+        "tesla":                   ("Daily",         "~15 min", "Business"),
+        "omni_view":               ("Daily",         "~12 min", "News"),
+        "fascinating_frontiers":   ("Daily",         "~15 min", "Science"),
+        "planetterrian":           ("Daily",         "~15 min", "Science"),
+        "env_intel":               ("Odd weekdays",  "~10 min", "Environment"),
+        "models_agents":           ("Daily",         "~15 min", "Technology"),
+        "models_agents_beginners": ("Daily",         "~10 min", "Technology"),
+        "modern_investing":        ("Weekdays",      "~12 min", "Finance"),
+        "finansy_prosto":          ("Even days",     "~12 min", "Finance"),
+        "privet_russian":          ("Even days",     "~10 min", "Education"),
+        "unintended_consequences": ("Weekdays",      "~12 min", "Education"),
+    }
+    out: List[Dict[str, Any]] = []
+    for slug, cfg in NETWORK_SHOWS.items():
+        sched, duration, category = api_extras.get(slug, ("Daily", "~15 min", ""))
+        out.append({
+            "id": slug,
+            "name": cfg["name"],
+            "tagline": cfg.get("tagline", ""),
+            "description": cfg.get("description_long", cfg.get("description", "")),
+            "schedule": sched,
+            "duration": duration,
+            "category": category,
+            "brand_color": cfg["brand_color"],
+            "cover_slug": cfg.get("podcast_image", "").replace("assets/covers/", "").replace(".jpg", ""),
+            "rss_file": cfg.get("rss_file", f"{slug}_podcast.rss"),
+            "digest_slug": slug,
+        })
+    return out
+
+
+# Show configuration — single source of truth is generate_html.NETWORK_SHOWS.
+# See _shows_from_network() above for the projection.
+SHOWS = _shows_from_network()
 
 # Base URL for the Nerra Network website
 BASE_URL = "https://nerranetwork.com"

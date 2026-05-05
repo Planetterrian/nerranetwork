@@ -34,9 +34,23 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%237C5CFF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%236B47FF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/></svg>">
 
     
+    
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="../../assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
     
     
     
@@ -185,7 +199,8 @@
             padding: 2px 10px;
             border-radius: 100px;
             background: color-mix(in srgb, var(--show-color) 15%, transparent);
-            color: var(--show-color);
+            /* AA-compliant text on dark page bg — see --show-color-text in base.html.j2 */
+            color: var(--show-color-text, var(--show-color));
             font-weight: 600;
         }
         .post-author {
@@ -282,7 +297,8 @@
         }
         .blog-toc a:hover,
         .blog-toc a.active {
-            color: var(--show-color);
+            /* AA-compliant text on dark sidebar bg */
+            color: var(--show-color-text, var(--show-color));
             border-left-color: var(--show-color);
         }
         .blog-toc a.toc-h3 {
@@ -327,14 +343,18 @@
             margin: 0 0 var(--sp-4);
         }
         .blog-article a {
-            color: var(--show-color);
+            /* Body links — AA-compliant lightened brand on dark bg.
+               Saturated brand colors fail 4.5:1 on `--nn-bg`; the
+               `--show-color-text` variable lightens by 35 % white so
+               every show clears AA. */
+            color: var(--show-color-text, var(--show-color));
             text-decoration: underline;
             text-underline-offset: 2px;
-            text-decoration-color: color-mix(in srgb, var(--show-color) 40%, transparent);
+            text-decoration-color: color-mix(in srgb, var(--show-color-text, var(--show-color)) 40%, transparent);
             transition: text-decoration-color var(--duration) var(--ease);
         }
         .blog-article a:hover {
-            text-decoration-color: var(--show-color);
+            text-decoration-color: var(--show-color-text, var(--show-color));
         }
         .blog-article strong {
             color: var(--nn-white);
@@ -613,13 +633,88 @@
         }
         .blog-listen-cta:hover {
             border-color: var(--show-color);
-            color: var(--show-color);
+            color: var(--show-color-text, var(--show-color));
+        }
+
+        /* Hover-card citations (Phase 3.4 of the May 2026 audit).
+           A small inline pill shows the publisher domain; on hover or
+           keyboard focus a popover reveals the full URL so readers
+           can verify provenance without leaving the page. Pure CSS,
+           no JS — works in every email/RSS-rendered surface that
+           runs the page stylesheet. */
+        .cite {
+            position: relative;
+            display: inline-block;
+        }
+        .cite-pill {
+            display: inline-block;
+            padding: 0.05em 0.55em;
+            margin: 0 0.1em;
+            border-radius: 999px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.78em;
+            line-height: 1.4;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+            white-space: nowrap;
+        }
+        .cite-pill:hover,
+        .cite-pill:focus {
+            border-color: var(--show-color);
+            /* Same AA fix as body links — brand text needs to clear
+               4.5:1 on the dark card surface. */
+            color: var(--show-color-text, var(--show-color));
+            outline: none;
+        }
+        .cite-card {
+            position: absolute;
+            left: 0;
+            bottom: calc(100% + 6px);
+            z-index: 10;
+            min-width: 240px;
+            max-width: 360px;
+            padding: var(--sp-2) var(--sp-3);
+            border-radius: 8px;
+            background: var(--nn-bg);
+            border: 1px solid var(--nn-border);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+            color: var(--nn-text);
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            word-break: break-all;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--duration) var(--ease);
+            pointer-events: none;
+        }
+        .cite:hover .cite-card,
+        .cite-pill:focus + .cite-card,
+        .cite-pill:focus-within + .cite-card {
+            opacity: 1;
+            visibility: visible;
+        }
+        @media (max-width: 600px) {
+            .cite-card {
+                left: auto;
+                right: 0;
+                min-width: 0;
+                max-width: 90vw;
+            }
         }
     </style>
 
 
     
-    <style>:root { --show-color: #1B5E20; --show-color-dark: #0D3B0F; }</style>
+    
+    <style>:root {
+      --show-color: #1B5E20;
+      --show-color-dark: #0D3B0F;
+      --show-color-text: color-mix(in srgb, #1B5E20, white 35%);
+    }</style>
     
     <style>
         @media (max-width: 768px) {
@@ -939,7 +1034,7 @@
             <li><a href="../../index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../env-intel.html" style="color:var(--nn-text-muted);text-decoration:none;">Environmental Intelligence</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../blog/env_intel/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
-            <li aria-current="page" style="color:var(--show-color);">Episode 4</li>
+            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 4</li>
         </ol>
     </nav>
 
@@ -1008,13 +1103,13 @@
 <h4 id="deep-dive-practice-intelligence">Deep Dive & Practice Intelligence</h4>
 <p><strong>Deep Analysis: Antarctic Meltwater Iron Release Findings</strong></p>
 <p>New field data from West Antarctica indicates glacial meltwater provides negligible bioavailable iron for algal blooms, with concentrations below 0.1 nmol/L compared to prior estimates of 1-10 nmol/L; instead, up to 90% of iron originates from deep ocean currents and sediments. This challenges CCME environmental quality guidelines for marine systems and federal CEPA climate modeling, as reduced algal CO2 sequestration could accelerate sea-level rise projections by 10-20% in models like those used for BC CSR coastal site assessments. For practitioners, this means recalibrating risk assessments under Ontario EPA O. Reg. 153/04 or Alberta EPEA for sites with marine exposure, potentially requiring enhanced flood risk mapping; cross-reference with Fisheries Act habitat protections where ocean productivity affects species at risk. In Quebec under LQE/RPRT, update contaminant transport models to account for lower iron-driven carbon sinks. Watch for CCME guideline revisions in Q2 2026, as this data may prompt interprovincial harmonization on climate adaptation thresholds.</p>
-<p>Source: <a href="https://www.sciencedaily.com/releases/2026/02/260228082714.htm" target="_blank" rel="noopener">sciencedaily.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.sciencedaily.com/releases/2026/02/260228082714.htm" target="_blank" rel="noopener" aria-describedby="cite-card">sciencedaily.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.sciencedaily.com/releases/2026/02/260228082714.htm</span></span></p>
 <p><strong>Deep Analysis: Ocean Warming Impacts on Whale Populations</strong></p>
 <p>Research highlights that rising ocean temperatures disrupt whale migration and feeding, with Antarctic krill declines of 20-30% linked to warmer waters, threatening rebounding populations under international protections. For Canadian contexts, this intersects with federal Species at Risk Act (SARA) listings for species like North Atlantic right whales, where habitat assessments under Fisheries Act must now factor in accelerated warming projections; compare to BC EMA protocols for marine mammal risk in contaminated sites near pipelines. Practitioners handling oil sands or Atlantic offshore projects should integrate these findings into IAA environmental impact statements, potentially increasing mitigation costs by 15% for acoustic monitoring or habitat offsets; Saskatchewan EMPA mine tailings assessments may need similar updates for indirect aquatic impacts.</p>
-<p>Source: <a href="https://insideclimatenews.org/news/01032026/icn-sunday-morning-ocean-warming-whales/" target="_blank" rel="noopener">insideclimatenews.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://insideclimatenews.org/news/01032026/icn-sunday-morning-ocean-warming-whales/" target="_blank" rel="noopener" aria-describedby="cite-card">insideclimatenews.org</a><span class="cite-card" id="cite-card" role="tooltip">https://insideclimatenews.org/news/01032026/icn-sunday-morning-ocean-warming-whales/</span></span></p>
 <p><strong>Deep Analysis: Assisted Tree Migration for Urban Climate Adaptation</strong></p>
 <p>Field efforts in the US demonstrate assisted migration of tree species to counter climate shifts, with survival rates of 70-85% for relocated oaks and maples in warming zones, informing wildfire interface planning. In Canada, this aligns with Alberta EPEA and Manitoba Environment Act requirements for reforestation in remediation, where practitioners can apply similar techniques to enhance monitored natural attenuation in fire-prone sites; reference CCME soil guidelines for root zone contaminant uptake. For BC CSR projects, incorporate into Protocol 1 risk assessments to mitigate heat island effects, potentially reducing long-term monitoring timelines by 2-3 years through resilient vegetation barriers.</p>
-<p>Source: <a href="https://insideclimatenews.org/news/01032026/assisted-migration-trees-climate-change/" target="_blank" rel="noopener">insideclimatenews.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://insideclimatenews.org/news/01032026/assisted-migration-trees-climate-change/" target="_blank" rel="noopener" aria-describedby="cite-card">insideclimatenews.org</a><span class="cite-card" id="cite-card" role="tooltip">https://insideclimatenews.org/news/01032026/assisted-migration-trees-climate-change/</span></span></p>
 <p><strong>Regulatory Calendar Review</strong></p>
 <p>Federal CEPA 2024 amendments require toxic substance list updates by March 15, 2026—submit comments on proposed PFAS additions via Canada Gazette Part I, impacting all provinces with harmonized thresholds. Alberta EPEA contaminated sites reporting deadlines close March 31, 2026, for Tier 1 assessments; ensure Phase II ESAs align with updated groundwater standards. Ontario EPA O. Reg. 153/04 record of site condition filings are due April 1, 2026, for Q1 completions—verify ISO 17025 lab accreditation for analytical results. BC CSR Protocol 13 vapour intrusion guidance consultation ends March 20, 2026, affecting remediation designs in urban areas.</p>
 <p><strong>Practice Spotlight</strong></p>
@@ -1199,6 +1294,34 @@ That's Environmental Intelligence for March third, twenty twenty-six. If this br
             </nav>
             
             <!-- Cross-show Recommendations -->
+            
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/fascinating_frontiers/ep063.html" class="blog-related-card" style="--card-show-color: #6B47FF">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #6B47FF, white 35%)">Fascinating Frontiers</span>
+                        <h3>Fascinating Frontiers</h3>
+                        <p>Firefly Aerospace plans to debut its upgraded Alpha Block 2 rocket late this summer amid rising demand.</p>
+                    </a>
+                    
+                    <a href="../../blog/models_agents_beginners/ep028.html" class="blog-related-card" style="--card-show-color: #C2410C">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #C2410C, white 35%)">Models & Agents for Beginners</span>
+                        <h3>Three AIs debating your toughest questions on a shared canvas could make getting...</h3>
+                        <p>Three AIs debating your toughest questions on a shared canvas could make getting reliable advice from AI much easier.</p>
+                    </a>
+                    
+                    <a href="../../blog/tesla/ep462.html" class="blog-related-card" style="--card-show-color: #E31937">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #E31937, white 35%)">Tesla Shorts Time</span>
+                        <h3>Tesla Shorts Time</h3>
+                        <p>Tesla has started producing its Semi electric trucks at a dedicated factory in Nevada.</p>
+                    </a>
+                    
+                </div>
+            </section>
             
         </article>
     </div>

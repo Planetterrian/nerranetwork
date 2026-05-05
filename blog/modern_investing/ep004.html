@@ -7,7 +7,7 @@
     
     <meta name="keywords" content="investing podcast, stock market, ETF, TFSA, RRSP, AI investing, market analysis, modern investing, Canadian investing">
     <title>Modern Investing Techniques — Ep4 | Modern Investing Techniques Blog</title>
-    <meta name="theme-color" content="#059669">
+    <meta name="theme-color" content="#047857">
 
     <!-- Open Graph -->
     <meta property="og:title" content="Modern Investing Techniques — Ep4 | Modern Investing Techniques Blog">
@@ -34,9 +34,23 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%237C5CFF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%236B47FF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/></svg>">
 
     
+    
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="../../assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
     
     
     
@@ -185,7 +199,8 @@
             padding: 2px 10px;
             border-radius: 100px;
             background: color-mix(in srgb, var(--show-color) 15%, transparent);
-            color: var(--show-color);
+            /* AA-compliant text on dark page bg — see --show-color-text in base.html.j2 */
+            color: var(--show-color-text, var(--show-color));
             font-weight: 600;
         }
         .post-author {
@@ -282,7 +297,8 @@
         }
         .blog-toc a:hover,
         .blog-toc a.active {
-            color: var(--show-color);
+            /* AA-compliant text on dark sidebar bg */
+            color: var(--show-color-text, var(--show-color));
             border-left-color: var(--show-color);
         }
         .blog-toc a.toc-h3 {
@@ -327,14 +343,18 @@
             margin: 0 0 var(--sp-4);
         }
         .blog-article a {
-            color: var(--show-color);
+            /* Body links — AA-compliant lightened brand on dark bg.
+               Saturated brand colors fail 4.5:1 on `--nn-bg`; the
+               `--show-color-text` variable lightens by 35 % white so
+               every show clears AA. */
+            color: var(--show-color-text, var(--show-color));
             text-decoration: underline;
             text-underline-offset: 2px;
-            text-decoration-color: color-mix(in srgb, var(--show-color) 40%, transparent);
+            text-decoration-color: color-mix(in srgb, var(--show-color-text, var(--show-color)) 40%, transparent);
             transition: text-decoration-color var(--duration) var(--ease);
         }
         .blog-article a:hover {
-            text-decoration-color: var(--show-color);
+            text-decoration-color: var(--show-color-text, var(--show-color));
         }
         .blog-article strong {
             color: var(--nn-white);
@@ -613,13 +633,88 @@
         }
         .blog-listen-cta:hover {
             border-color: var(--show-color);
-            color: var(--show-color);
+            color: var(--show-color-text, var(--show-color));
+        }
+
+        /* Hover-card citations (Phase 3.4 of the May 2026 audit).
+           A small inline pill shows the publisher domain; on hover or
+           keyboard focus a popover reveals the full URL so readers
+           can verify provenance without leaving the page. Pure CSS,
+           no JS — works in every email/RSS-rendered surface that
+           runs the page stylesheet. */
+        .cite {
+            position: relative;
+            display: inline-block;
+        }
+        .cite-pill {
+            display: inline-block;
+            padding: 0.05em 0.55em;
+            margin: 0 0.1em;
+            border-radius: 999px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.78em;
+            line-height: 1.4;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+            white-space: nowrap;
+        }
+        .cite-pill:hover,
+        .cite-pill:focus {
+            border-color: var(--show-color);
+            /* Same AA fix as body links — brand text needs to clear
+               4.5:1 on the dark card surface. */
+            color: var(--show-color-text, var(--show-color));
+            outline: none;
+        }
+        .cite-card {
+            position: absolute;
+            left: 0;
+            bottom: calc(100% + 6px);
+            z-index: 10;
+            min-width: 240px;
+            max-width: 360px;
+            padding: var(--sp-2) var(--sp-3);
+            border-radius: 8px;
+            background: var(--nn-bg);
+            border: 1px solid var(--nn-border);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+            color: var(--nn-text);
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            word-break: break-all;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--duration) var(--ease);
+            pointer-events: none;
+        }
+        .cite:hover .cite-card,
+        .cite-pill:focus + .cite-card,
+        .cite-pill:focus-within + .cite-card {
+            opacity: 1;
+            visibility: visible;
+        }
+        @media (max-width: 600px) {
+            .cite-card {
+                left: auto;
+                right: 0;
+                min-width: 0;
+                max-width: 90vw;
+            }
         }
     </style>
 
 
     
-    <style>:root { --show-color: #059669; --show-color-dark: #047857; }</style>
+    
+    <style>:root {
+      --show-color: #047857;
+      --show-color-dark: #047857;
+      --show-color-text: color-mix(in srgb, #047857, white 35%);
+    }</style>
     
     <style>
         @media (max-width: 768px) {
@@ -939,7 +1034,7 @@
             <li><a href="../../index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../modern-investing.html" style="color:var(--nn-text-muted);text-decoration:none;">Modern Investing Techniques</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../blog/modern_investing/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
-            <li aria-current="page" style="color:var(--show-color);">Episode 4</li>
+            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 4</li>
         </ol>
     </nav>
 
@@ -1013,7 +1108,7 @@
 <p>Today’s announcement that Brookfield Asset Management and La Caisse will acquire all outstanding Boralex (TSX: BLX) shares for $37.25 cash per share illustrates the setup perfectly. The deal provides a clean exit at a fixed price, removing equity-market volatility for holders who tender.</p>
 <p>To implement, use your broker’s screener to filter for announced cash takeovers with premiums of 20-40%, then check the expected closing date (typically 3-9 months). Calculate the annualized spread return: (offer price – current price) ÷ current price ÷ months to close × 12. Monitor regulatory approvals and material adverse change clauses.</p>
 <p>This strategy has historically worked best in stable interest-rate environments with strong buyer balance sheets. Risks include deal break fees, regulatory blocks, or a superior competing bid. Always size the position to 3-5% of portfolio to limit event risk.</p>
-<p>Source: <a href="https://www.bnnbloomberg.ca/press-releases/2026/03/25/boralex-enters-into-definitive-agreement-to-be-acquired-by-brookfield-alongside-la-caisse-supporting-its-next-phase-of-growth-as-a-standalone-private-company/" target="_blank" rel="noopener">bnnbloomberg.ca</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.bnnbloomberg.ca/press-releases/2026/03/25/boralex-enters-into-definitive-agreement-to-be-acquired-by-brookfield-alongside-la-caisse-supporting-its-next-phase-of-growth-as-a-standalone-private-company/" target="_blank" rel="noopener" aria-describedby="cite-card">bnnbloomberg.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://www.bnnbloomberg.ca/press-releases/2026/03/25/boralex-enters-into-definitive-agreement-to-be-acquired-by-brookfield-alongside-la-caisse-supporting-its-next-phase-of-growth-as-a-standalone-private-company/</span></span></p>
 <h4 id="investor-education-bid-ask-spreads-and-liquidity-in-takeover-situations">Investor Education: Bid-Ask Spreads and Liquidity in Takeover Situations</h4>
 <p>Imagine you saw the Boralex headline this morning, jumped into your TFSA, and placed a market order for BLX at 10:05 a.m. ET. Your order filled at $36.80 — eight cents above the previous last trade. What actually happened is that the sudden surge in volume widened the bid-ask spread from its normal 3-5 cents to 12-18 cents in the first 45 minutes of trading.</p>
 <p>On lower-liquidity Canadian names, the spread can represent 0.3-0.5% of the share price during event-driven volume spikes. Professional traders use limit orders placed between the bid and ask or wait for the first 30 minutes of volatility to subside before entering.</p>
@@ -1034,27 +1129,27 @@
 <li><strong>Confidence Level:</strong> Low — single-factor setups (news only) without technical confirmation do not meet the threshold for a high-probability weekly hold.</li>
 </ul>
 <p><strong>Why This Teaches:</strong> Patience is the most under-taught skill in modern investing. By publicly showing the exact criteria we require (catalyst + technical alignment + volume confirmation), listeners learn that saying “no” to marginal setups is how consistent outperformance is built. Next Monday we will return with a fully qualified weekly hold using this same disciplined framework.</p>
-<p>Source: <a href="https://www.bnnbloomberg.ca/press-releases/2026/03/25/cartier-discovers-new-porphyritic-intrusion-related-gold-system-in-pontiac-sediments-with-52-gt-au-over-50-m-and-12-gt-au-over-255-m-at-hope-target-cadillac-large-scale-gold-mineralization-exploration-potential/" target="_blank" rel="noopener">bnnbloomberg.ca</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.bnnbloomberg.ca/press-releases/2026/03/25/cartier-discovers-new-porphyritic-intrusion-related-gold-system-in-pontiac-sediments-with-52-gt-au-over-50-m-and-12-gt-au-over-255-m-at-hope-target-cadillac-large-scale-gold-mineralization-exploration-potential/" target="_blank" rel="noopener" aria-describedby="cite-card">bnnbloomberg.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://www.bnnbloomberg.ca/press-releases/2026/03/25/cartier-discovers-new-porphyritic-intrusion-related-gold-system-in-pontiac-sediments-with-52-gt-au-over-50-m-and-12-gt-au-over-255-m-at-hope-target-cadillac-large-scale-gold-mineralization-exploration-potential/</span></span></p>
 <h4 id="tools-techniques">Tools & Techniques</h4>
 <p><strong>Water Tower Research Institutional-Style Coverage</strong></p>
 <p>Aduro Clean Technologies (Nasdaq: ADUR) has engaged Water Tower Research to provide comprehensive research coverage and strategic investor engagement. Individual investors can access the resulting reports directly on the WTR website or through major financial terminals. This gives retail investors access to the same style of deep-dive analysis that institutions receive, helping identify whether management’s growth narrative on chemical recycling of waste plastics holds up under scrutiny. Free reports are typically posted within weeks of engagement.</p>
-<p>Source: <a href="https://www.bnnbloomberg.ca/press-releases/2026/03/25/aduro-clean-technologies-engages-water-tower-research/" target="_blank" rel="noopener">bnnbloomberg.ca</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.bnnbloomberg.ca/press-releases/2026/03/25/aduro-clean-technologies-engages-water-tower-research/" target="_blank" rel="noopener" aria-describedby="cite-card">bnnbloomberg.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://www.bnnbloomberg.ca/press-releases/2026/03/25/aduro-clean-technologies-engages-water-tower-research/</span></span></p>
 <p><strong>NetraMark’s NetraAI Platform for Clinical Trial Analysis</strong></p>
 <p>NetraMark announced a collaboration with Fondazione per la Medicina Personalizzata to apply its proprietary NetraAI platform to a landmark Phase II oncology dataset. While the tool is primarily for pharmaceutical companies, the underlying technique — using AI to uncover hidden patient subgroups — is a reminder that individual investors should examine whether AI-driven precision medicine companies are gaining real traction with large research partners. Early validation of such platforms can precede meaningful re-ratings in healthcare subsectors.</p>
-<p>Source: <a href="https://www.bnnbloomberg.ca/press-releases/2026/03/25/netramark-announces-strategic-oncology-research-collaboration-with-fondazione-per-la-medicina-personalizzata-to-analyze-landmark-rome-trial-dataset/" target="_blank" rel="noopener">bnnbloomberg.ca</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.bnnbloomberg.ca/press-releases/2026/03/25/netramark-announces-strategic-oncology-research-collaboration-with-fondazione-per-la-medicina-personalizzata-to-analyze-landmark-rome-trial-dataset/" target="_blank" rel="noopener" aria-describedby="cite-card">bnnbloomberg.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://www.bnnbloomberg.ca/press-releases/2026/03/25/netramark-announces-strategic-oncology-research-collaboration-with-fondazione-per-la-medicina-personalizzata-to-analyze-landmark-rome-trial-dataset/</span></span></p>
 <h4 id="quick-hits">Quick Hits</h4>
 <p><strong>All Ontario buyers eligible for expanded HST rebate on new homes</strong></p>
 <p>Ontario and the federal government will temporarily allow every buyer — not just first-time purchasers — to claim up to $130,000 in HST rebate on new homes for one year. This dramatically widens the pool of potential buyers and could support homebuilder equities and related real-estate service companies in the province over the next 12 months.</p>
-<p>Source: <a href="https://www.bnnbloomberg.ca/business/real-estate/2026/03/25/all-ontario-buyers-will-be-eligible-for-hst-rebate-on-new-homes-for-one-year-as-province-feds-expand-relief/" target="_blank" rel="noopener">bnnbloomberg.ca</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.bnnbloomberg.ca/business/real-estate/2026/03/25/all-ontario-buyers-will-be-eligible-for-hst-rebate-on-new-homes-for-one-year-as-province-feds-expand-relief/" target="_blank" rel="noopener" aria-describedby="cite-card">bnnbloomberg.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://www.bnnbloomberg.ca/business/real-estate/2026/03/25/all-ontario-buyers-will-be-eligible-for-hst-rebate-on-new-homes-for-one-year-as-province-feds-expand-relief/</span></span></p>
 <p><strong>Aecon joint venture locks in US$691 million dam contract</strong></p>
 <p>Aecon Group’s joint venture has finalized a major contract with the U.S. Army Corps of Engineers in Washington state. The win adds visibility to Aecon’s backlog and highlights continued strength in North American infrastructure spending — a theme Canadian investors can access through TSX-listed construction and engineering names.</p>
-<p>Source: <a href="https://www.bnnbloomberg.ca/business/2026/03/25/aecon-joint-venture-finalizes-dam-project-contract-in-washington-state/" target="_blank" rel="noopener">bnnbloomberg.ca</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.bnnbloomberg.ca/business/2026/03/25/aecon-joint-venture-finalizes-dam-project-contract-in-washington-state/" target="_blank" rel="noopener" aria-describedby="cite-card">bnnbloomberg.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://www.bnnbloomberg.ca/business/2026/03/25/aecon-joint-venture-finalizes-dam-project-contract-in-washington-state/</span></span></p>
 <p><strong>Skyharbour adds uranium veteran Rob Chang to board</strong></p>
 <p>Skyharbour Resources appointed Rob Chang, former Head of Metals & Mining at Cantor Fitzgerald and a recognized uranium analyst, as an independent director. The move strengthens governance and sector expertise at a time when uranium fundamentals remain constructive.</p>
-<p>Source: <a href="https://www.bnnbloomberg.ca/press-releases/2026/03/25/skyharbour-announces-appointment-of-rob-chang-to-board-of-directors-and-amanda-chow-as-chief-financial-officer/" target="_blank" rel="noopener">bnnbloomberg.ca</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.bnnbloomberg.ca/press-releases/2026/03/25/skyharbour-announces-appointment-of-rob-chang-to-board-of-directors-and-amanda-chow-as-chief-financial-officer/" target="_blank" rel="noopener" aria-describedby="cite-card">bnnbloomberg.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://www.bnnbloomberg.ca/press-releases/2026/03/25/skyharbour-announces-appointment-of-rob-chang-to-board-of-directors-and-amanda-chow-as-chief-financial-officer/</span></span></p>
 <p><strong>Most Canadians can legally avoid tax on investment gains</strong></p>
 <p>A timely reminder from BNN Bloomberg that the majority of typical Canadian investors have access to TFSA, RRSP, or other registered accounts that can shelter capital gains entirely when used correctly. With new 2026 contribution limits and benefit changes approaching, reviewing your registered account strategy now is essential.</p>
-<p>Source: <a href="https://www.bnnbloomberg.ca/investing/opinion/2026/03/20/most-canadians-have-the-power-to-avoid-paying-tax-on-their-investment-gains-dale-jackson/" target="_blank" rel="noopener">bnnbloomberg.ca</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.bnnbloomberg.ca/investing/opinion/2026/03/20/most-canadians-have-the-power-to-avoid-paying-tax-on-their-investment-gains-dale-jackson/" target="_blank" rel="noopener" aria-describedby="cite-card">bnnbloomberg.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://www.bnnbloomberg.ca/investing/opinion/2026/03/20/most-canadians-have-the-power-to-avoid-paying-tax-on-their-investment-gains-dale-jackson/</span></span></p>
 <p><strong>Financial Disclaimer:</strong> This podcast is for EDUCATIONAL and ENTERTAINMENT purposes only. Nothing discussed constitutes financial advice, investment recommendations, or solicitations to buy or sell securities. The "Practice Investment of the Day" uses SIMULATED trades with NO real money — it is a learning exercise to demonstrate analytical techniques. Past performance does not predict future results. Markets involve risk of loss. Always do your own research and consult a licensed financial advisor before making investment decisions. The host and Nerra Network have no fiduciary relationship with listeners.</p>
 
             <!-- Sources -->
@@ -1252,6 +1347,34 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
             </nav>
             
             <!-- Cross-show Recommendations -->
+            
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/tesla/ep462.html" class="blog-related-card" style="--card-show-color: #E31937">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #E31937, white 35%)">Tesla Shorts Time</span>
+                        <h3>Tesla Shorts Time</h3>
+                        <p>Tesla has started producing its Semi electric trucks at a dedicated factory in Nevada.</p>
+                    </a>
+                    
+                    <a href="../../blog/tesla/ep463.html" class="blog-related-card" style="--card-show-color: #E31937">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #E31937, white 35%)">Tesla Shorts Time</span>
+                        <h3>Tesla Shorts Time</h3>
+                        <p>Tesla’s Spring Update now links the car’s accent lights directly to blind spot monitoring.</p>
+                    </a>
+                    
+                    <a href="../../blog/planetterrian/ep055.html" class="blog-related-card" style="--card-show-color: #017A99">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #017A99, white 35%)">Planetterrian Daily</span>
+                        <h3>Planetterrian Daily</h3>
+                        <p>Centenarians maintain immune systems far less prone to chronic inflammation than typical older adults.</p>
+                    </a>
+                    
+                </div>
+            </section>
             
         </article>
     </div>

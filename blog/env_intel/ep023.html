@@ -34,9 +34,23 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%237C5CFF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%236B47FF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/></svg>">
 
     
+    
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="../../assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
     
     
     
@@ -185,7 +199,8 @@
             padding: 2px 10px;
             border-radius: 100px;
             background: color-mix(in srgb, var(--show-color) 15%, transparent);
-            color: var(--show-color);
+            /* AA-compliant text on dark page bg — see --show-color-text in base.html.j2 */
+            color: var(--show-color-text, var(--show-color));
             font-weight: 600;
         }
         .post-author {
@@ -282,7 +297,8 @@
         }
         .blog-toc a:hover,
         .blog-toc a.active {
-            color: var(--show-color);
+            /* AA-compliant text on dark sidebar bg */
+            color: var(--show-color-text, var(--show-color));
             border-left-color: var(--show-color);
         }
         .blog-toc a.toc-h3 {
@@ -327,14 +343,18 @@
             margin: 0 0 var(--sp-4);
         }
         .blog-article a {
-            color: var(--show-color);
+            /* Body links — AA-compliant lightened brand on dark bg.
+               Saturated brand colors fail 4.5:1 on `--nn-bg`; the
+               `--show-color-text` variable lightens by 35 % white so
+               every show clears AA. */
+            color: var(--show-color-text, var(--show-color));
             text-decoration: underline;
             text-underline-offset: 2px;
-            text-decoration-color: color-mix(in srgb, var(--show-color) 40%, transparent);
+            text-decoration-color: color-mix(in srgb, var(--show-color-text, var(--show-color)) 40%, transparent);
             transition: text-decoration-color var(--duration) var(--ease);
         }
         .blog-article a:hover {
-            text-decoration-color: var(--show-color);
+            text-decoration-color: var(--show-color-text, var(--show-color));
         }
         .blog-article strong {
             color: var(--nn-white);
@@ -613,13 +633,88 @@
         }
         .blog-listen-cta:hover {
             border-color: var(--show-color);
-            color: var(--show-color);
+            color: var(--show-color-text, var(--show-color));
+        }
+
+        /* Hover-card citations (Phase 3.4 of the May 2026 audit).
+           A small inline pill shows the publisher domain; on hover or
+           keyboard focus a popover reveals the full URL so readers
+           can verify provenance without leaving the page. Pure CSS,
+           no JS — works in every email/RSS-rendered surface that
+           runs the page stylesheet. */
+        .cite {
+            position: relative;
+            display: inline-block;
+        }
+        .cite-pill {
+            display: inline-block;
+            padding: 0.05em 0.55em;
+            margin: 0 0.1em;
+            border-radius: 999px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.78em;
+            line-height: 1.4;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+            white-space: nowrap;
+        }
+        .cite-pill:hover,
+        .cite-pill:focus {
+            border-color: var(--show-color);
+            /* Same AA fix as body links — brand text needs to clear
+               4.5:1 on the dark card surface. */
+            color: var(--show-color-text, var(--show-color));
+            outline: none;
+        }
+        .cite-card {
+            position: absolute;
+            left: 0;
+            bottom: calc(100% + 6px);
+            z-index: 10;
+            min-width: 240px;
+            max-width: 360px;
+            padding: var(--sp-2) var(--sp-3);
+            border-radius: 8px;
+            background: var(--nn-bg);
+            border: 1px solid var(--nn-border);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+            color: var(--nn-text);
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            word-break: break-all;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--duration) var(--ease);
+            pointer-events: none;
+        }
+        .cite:hover .cite-card,
+        .cite-pill:focus + .cite-card,
+        .cite-pill:focus-within + .cite-card {
+            opacity: 1;
+            visibility: visible;
+        }
+        @media (max-width: 600px) {
+            .cite-card {
+                left: auto;
+                right: 0;
+                min-width: 0;
+                max-width: 90vw;
+            }
         }
     </style>
 
 
     
-    <style>:root { --show-color: #1B5E20; --show-color-dark: #0D3B0F; }</style>
+    
+    <style>:root {
+      --show-color: #1B5E20;
+      --show-color-dark: #0D3B0F;
+      --show-color-text: color-mix(in srgb, #1B5E20, white 35%);
+    }</style>
     
     <style>
         @media (max-width: 768px) {
@@ -939,7 +1034,7 @@
             <li><a href="../../index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../env-intel.html" style="color:var(--nn-text-muted);text-decoration:none;">Environmental Intelligence</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../blog/env_intel/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
-            <li aria-current="page" style="color:var(--show-color);">Episode 23</li>
+            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 23</li>
         </ol>
     </nav>
 
@@ -1011,37 +1106,37 @@
 <h4 id="lead-story">Lead Story</h4>
 <p><strong>Ontario Backs 14 Renewable Energy Projects Under Provincial Procurement</strong></p>
 <p>Ontario has announced support for 14 renewable energy projects as part of its strategy to deliver clean, affordable electricity. The initiative advances provincial objectives to displace higher-emitting generation and aligns with long-term capacity needs under the Electricity Act framework. For environmental professionals supporting proponent compliance or municipal approvals, this directly affects baseline emissions forecasting and cumulative effects assessments in current or upcoming Impact Assessment Act processes where electricity supply forms part of the project description. Practitioners working on contaminated sites or industrial facilities in Ontario should evaluate whether these new supply contracts can be incorporated into corporate decarbonization plans or renewable energy attribute tracking for provincial reporting. Next steps include monitoring contract award details and grid connection timelines for integration into client compliance roadmaps.</p>
-<p>Source: <a href="https://news.google.com/rss/articles/CBMiwAFBVV95cUxNTUdaYXFlbk9mRy1rZzhxLU03SVlkRFhELVpxa0RSY1dGbGdidG9qRDJhOW5OYlJzU3hYMzF1d2tFZmN5elp4WTVoMVhUYkl2SEtWVXlidlBqYTRrSkg0bHBpaWRCMTRudno3Q3RSRzMybUV0aURqaFhqa0d6RTZpV1ZMN2plZmlraGtHNmVOZGhlbHBuVFpXTXJ4QVc0UEtaMktmMUxoUTkxdjNmU1FXb0o0bDZpVmtRUFc5Z2NTbF8?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMiwAFBVV95cUxNTUdaYXFlbk9mRy1rZzhxLU03SVlkRFhELVpxa0RSY1dGbGdidG9qRDJhOW5OYlJzU3hYMzF1d2tFZmN5elp4WTVoMVhUYkl2SEtWVXlidlBqYTRrSkg0bHBpaWRCMTRudno3Q3RSRzMybUV0aURqaFhqa0d6RTZpV1ZMN2plZmlraGtHNmVOZGhlbHBuVFpXTXJ4QVc0UEtaMktmMUxoUTkxdjNmU1FXb0o0bDZpVmtRUFc5Z2NTbF8?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMiwAFBVV95cUxNTUdaYXFlbk9mRy1rZzhxLU03SVlkRFhELVpxa0RSY1dGbGdidG9qRDJhOW5OYlJzU3hYMzF1d2tFZmN5elp4WTVoMVhUYkl2SEtWVXlidlBqYTRrSkg0bHBpaWRCMTRudno3Q3RSRzMybUV0aURqaFhqa0d6RTZpV1ZMN2plZmlraGtHNmVOZGhlbHBuVFpXTXJ4QVc0UEtaMktmMUxoUTkxdjNmU1FXb0o0bDZpVmtRUFc5Z2NTbF8?oc=5</span></span></p>
 <h4 id="regulatory-policy-watch">Regulatory & Policy Watch</h4>
 <p><strong>Hamilton Steelmaker Decommissions Coke Plant: CBC News</strong></p>
 <p>ArcelorMittal Dofasco will push its last coke from one of two remaining coke plants in Hamilton on April 13 as part of its long-term decarbonization pathway. The move reduces coke oven gas and associated air emissions subject to Ontario EPA approvals and aligns with provincial expectations for industrial emissions intensity reductions. Consultants supporting the facility or nearby contaminated sites should update air quality and groundwater monitoring programs to reflect changed source terms; the company has indicated continued work toward full decarbonization.</p>
-<p>Source: <a href="https://www.cbc.ca/news/canada/hamilton/arcelormittal-dofasco-9.7158885?cmp=rss" target="_blank" rel="noopener">cbc.ca</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.cbc.ca/news/canada/hamilton/arcelormittal-dofasco-9.7158885?cmp=rss" target="_blank" rel="noopener" aria-describedby="cite-card">cbc.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://www.cbc.ca/news/canada/hamilton/arcelormittal-dofasco-9.7158885?cmp=rss</span></span></p>
 <p><strong>US EPA Mission Shift Under Lee Zeldin: r/climate</strong></p>
 <p>Lee Zeldin has reoriented EPA messaging toward industry support and fossil fuel exports rather than traditional environmental protection mandates. Canadian practitioners managing cross-border contaminated sites, particularly in the Great Lakes basin, should track resulting US policy shifts that may slow bilateral initiatives or alter expectations for harmonized standards under CEPA or the Great Lakes Water Quality Agreement. This could affect timelines for joint remediation projects or data-sharing protocols.</p>
-<p>Source: <a href="https://www.reddit.com/r/climate/comments/1sjvisz/how_lee_zeldin_shifted_the_mission_and_the/" target="_blank" rel="noopener">reddit.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.reddit.com/r/climate/comments/1sjvisz/how_lee_zeldin_shifted_the_mission_and_the/" target="_blank" rel="noopener" aria-describedby="cite-card">reddit.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reddit.com/r/climate/comments/1sjvisz/how_lee_zeldin_shifted_the_mission_and_the/</span></span></p>
 <p><strong>Irish Government Cuts Fuel Taxes and Defers Carbon Tax Increase: r/climate</strong></p>
 <p>Following protests, Ireland will reduce petrol and diesel prices by 10c per litre and defer a planned carbon tax increase within a €505m package. While outside Canada, the precedent is relevant for federal and provincial carbon pricing reviews under the Greenhouse Gas Pollution Pricing Act; practitioners advising on offset markets or corporate carbon compliance should note political sensitivity around rapid price changes when modelling Canadian client exposure.</p>
-<p>Source: <a href="https://www.reddit.com/r/climate/comments/1sjpn0w/irish_government_to_cut_petrol_and_diesel_by_10c/" target="_blank" rel="noopener">reddit.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.reddit.com/r/climate/comments/1sjpn0w/irish_government_to_cut_petrol_and_diesel_by_10c/" target="_blank" rel="noopener" aria-describedby="cite-card">reddit.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reddit.com/r/climate/comments/1sjpn0w/irish_government_to_cut_petrol_and_diesel_by_10c/</span></span></p>
 <h4 id="science-technical">Science & Technical</h4>
 <p><strong>Cancer Rates Higher Near Large Livestock Feeding Operations: Inside Climate News</strong></p>
 <p>A study published in Environmental Research found elevated cancer incidence in populations living near large livestock feeding operations in California, Iowa, and Texas. The analysis leveraged cancer registry data and facility locations to identify statistically significant associations. For Canadian practitioners conducting human health risk assessments near intensive agricultural operations under BC CSR, Alberta EPEA or Ontario O. Reg. 153/04, the findings reinforce the need to evaluate bioaerosols, nitrates and volatile organics as cumulative stressors beyond standard CCME soil and groundwater pathways.</p>
-<p>Source: <a href="https://insideclimatenews.org/news/12042026/cancer-rates-higher-near-livestock-operations-study-finds/" target="_blank" rel="noopener">insideclimatenews.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://insideclimatenews.org/news/12042026/cancer-rates-higher-near-livestock-operations-study-finds/" target="_blank" rel="noopener" aria-describedby="cite-card">insideclimatenews.org</a><span class="cite-card" id="cite-card" role="tooltip">https://insideclimatenews.org/news/12042026/cancer-rates-higher-near-livestock-operations-study-finds/</span></span></p>
 <p><strong>Unusual Airborne Toxin Detected in the U.S. for the First Time: Science Daily</strong></p>
 <p>Scientists identified medium-chain chlorinated paraffins (MCCPs) in North American air samples for the first time, with sewage sludge-derived fertilizer identified as the likely source. The discovery establishes a previously unquantified atmospheric transport pathway for these persistent compounds. Canadian labs accredited to ISO 17025 should anticipate future demand for MCCP analysis in air and soil matrices at sites near biosolids application under provincial contaminated sites regimes; risk assessors may need to expand conceptual site models accordingly.</p>
-<p>Source: <a href="https://www.sciencedaily.com/releases/2026/04/260411084441.htm" target="_blank" rel="noopener">sciencedaily.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.sciencedaily.com/releases/2026/04/260411084441.htm" target="_blank" rel="noopener" aria-describedby="cite-card">sciencedaily.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.sciencedaily.com/releases/2026/04/260411084441.htm</span></span></p>
 <p><strong>Does Burning Wood Actually Fight Climate Change?: The Tyee</strong></p>
 <p>Scientists state that wood pellet combustion offers little climate benefit over fossil fuels when full lifecycle emissions, including foregone forest sequestration, are considered. The analysis challenges biomass carbon neutrality assumptions used in some provincial and federal offset protocols. Practitioners validating renewable energy attributes or preparing corporate GHG inventories under BC or federal carbon pricing programs should revisit biomass substitution factors in current client portfolios.</p>
-<p>Source: <a href="https://thetyee.ca/Analysis/2026/04/13/Does-Burning-Wood-Fight-Climate-Change/" target="_blank" rel="noopener">thetyee.ca</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://thetyee.ca/Analysis/2026/04/13/Does-Burning-Wood-Fight-Climate-Change/" target="_blank" rel="noopener" aria-describedby="cite-card">thetyee.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://thetyee.ca/Analysis/2026/04/13/Does-Burning-Wood-Fight-Climate-Change/</span></span></p>
 <h4 id="industry-practice">Industry & Practice</h4>
 <p><strong>France Launches €240m Electrification Plan: r/climate</strong></p>
 <p>France is deploying €240 million for EV charging stations and heat pump grants, framing electrification as a matter of national interest. Canadian consultants supporting industrial electrification or building decarbonization projects should note the policy precedent when advising clients on technology incentives under provincial programs or federal tax credits; the scale signals accelerating demand for electrical infrastructure impact assessments.</p>
-<p>Source: <a href="https://www.reddit.com/r/climate/comments/1sjjg1b/from_ev_stations_to_heat_pump_grants_inside/" target="_blank" rel="noopener">reddit.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.reddit.com/r/climate/comments/1sjjg1b/from_ev_stations_to_heat_pump_grants_inside/" target="_blank" rel="noopener" aria-describedby="cite-card">reddit.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reddit.com/r/climate/comments/1sjjg1b/from_ev_stations_to_heat_pump_grants_inside/</span></span></p>
 <p><strong>India Reaches 150 GW Solar Milestone: r/climate</strong></p>
 <p>India added solar and wind capacity at 87.2% and 45.6% year-on-year growth, hitting 150 GW solar. The data provides a benchmark for Canadian practitioners modelling renewable integration costs and grid decarbonization timelines in provinces with similar procurement mechanisms.</p>
-<p>Source: <a href="https://www.reddit.com/r/climate/comments/1sji0rj/india_hits_150_gw_solar_milestone_solar_and_wind/" target="_blank" rel="noopener">reddit.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.reddit.com/r/climate/comments/1sji0rj/india_hits_150_gw_solar_milestone_solar_and_wind/" target="_blank" rel="noopener" aria-describedby="cite-card">reddit.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reddit.com/r/climate/comments/1sji0rj/india_hits_150_gw_solar_milestone_solar_and_wind/</span></span></p>
 <p><strong>Gas Industry Front Group Targets Democrats in Pennsylvania: Inside Climate News</strong></p>
 <p>A Pennsylvania natural gas advocacy group is directing efforts toward Democratic lawmakers to shape clean energy policy discussions. Canadian oil and gas practitioners should monitor similar sub-national advocacy patterns that may influence provincial regulatory consultations in Alberta and British Columbia.</p>
-<p>Source: <a href="https://insideclimatenews.org/news/11042026/pennsylvania-natural-gas-group-targets-democrats/" target="_blank" rel="noopener">insideclimatenews.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://insideclimatenews.org/news/11042026/pennsylvania-natural-gas-group-targets-democrats/" target="_blank" rel="noopener" aria-describedby="cite-card">insideclimatenews.org</a><span class="cite-card" id="cite-card" role="tooltip">https://insideclimatenews.org/news/11042026/pennsylvania-natural-gas-group-targets-democrats/</span></span></p>
 <h4 id="practitioner-deep-dive-interpreting-non-uniform-contaminant-distribution-in-heterogeneous-glacial-soils">Practitioner Deep Dive: Interpreting Non-Uniform Contaminant Distribution in Heterogeneous Glacial Soils</h4>
 <p>You arrive at a former industrial site in the Oak Ridges Moraine or Waterloo moraine complex. Phase II ESA data show TCE exceeding the Ontario O. Reg. 153/04 Table 2 standard in one overburden well but absent in an adjacent well 8 m away, despite clear evidence of a upgradient source. What you are seeing is not sampling error but the reality of discontinuous silt lenses, sand stringers and diamicton facies that create preferential pathways and isolated low-permeability pockets.</p>
 <p>Under BC CSR Protocol 4 or CCME Tier 2 risk assessment, practitioners must characterize this heterogeneity at the facies scale rather than relying on 2-D contouring; experienced teams routinely supplement conventional monitoring wells with drive-point profilers, continuous core logging and high-resolution vertical profiling to map hydraulic conductivity transitions at the centimetre scale. The 20-year practitioner notices that apparent “hot spots” often align with sand lenses that have already flushed, while the real mass remains trapped in low-K matrix that will sustain back-diffusion for decades.</p>
@@ -1266,6 +1361,34 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
             </nav>
             
             <!-- Cross-show Recommendations -->
+            
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/models_agents_beginners/ep028.html" class="blog-related-card" style="--card-show-color: #C2410C">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #C2410C, white 35%)">Models & Agents for Beginners</span>
+                        <h3>Three AIs debating your toughest questions on a shared canvas could make getting...</h3>
+                        <p>Three AIs debating your toughest questions on a shared canvas could make getting reliable advice from AI much easier.</p>
+                    </a>
+                    
+                    <a href="../../blog/tesla/ep462.html" class="blog-related-card" style="--card-show-color: #E31937">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #E31937, white 35%)">Tesla Shorts Time</span>
+                        <h3>Tesla Shorts Time</h3>
+                        <p>Tesla has started producing its Semi electric trucks at a dedicated factory in Nevada.</p>
+                    </a>
+                    
+                    <a href="../../blog/unintended_consequences/ep003.html" class="blog-related-card" style="--card-show-color: #B45309">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #B45309, white 35%)">Unintended Consequences</span>
+                        <h3>In 1921 Thomas Midgley Jr. added tetraethyl lead to gasoline to silence engine k...</h3>
+                        <p>In 1921 Thomas Midgley Jr. added tetraethyl lead to gasoline to silence engine knock, never imagining the additive would&hellip;</p>
+                    </a>
+                    
+                </div>
+            </section>
             
         </article>
     </div>

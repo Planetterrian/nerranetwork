@@ -7,7 +7,7 @@
     
     <meta name="keywords" content="space podcast, astronomy news, NASA discoveries, space exploration, Fascinating Frontiers">
     <title>Fascinating Frontiers — Ep54 | Fascinating Frontiers Blog</title>
-    <meta name="theme-color" content="#7C5CFF">
+    <meta name="theme-color" content="#6B47FF">
 
     <!-- Open Graph -->
     <meta property="og:title" content="Fascinating Frontiers — Ep54 | Fascinating Frontiers Blog">
@@ -34,9 +34,23 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%237C5CFF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%236B47FF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/></svg>">
 
     
+    
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="../../assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
     
     
     
@@ -185,7 +199,8 @@
             padding: 2px 10px;
             border-radius: 100px;
             background: color-mix(in srgb, var(--show-color) 15%, transparent);
-            color: var(--show-color);
+            /* AA-compliant text on dark page bg — see --show-color-text in base.html.j2 */
+            color: var(--show-color-text, var(--show-color));
             font-weight: 600;
         }
         .post-author {
@@ -282,7 +297,8 @@
         }
         .blog-toc a:hover,
         .blog-toc a.active {
-            color: var(--show-color);
+            /* AA-compliant text on dark sidebar bg */
+            color: var(--show-color-text, var(--show-color));
             border-left-color: var(--show-color);
         }
         .blog-toc a.toc-h3 {
@@ -327,14 +343,18 @@
             margin: 0 0 var(--sp-4);
         }
         .blog-article a {
-            color: var(--show-color);
+            /* Body links — AA-compliant lightened brand on dark bg.
+               Saturated brand colors fail 4.5:1 on `--nn-bg`; the
+               `--show-color-text` variable lightens by 35 % white so
+               every show clears AA. */
+            color: var(--show-color-text, var(--show-color));
             text-decoration: underline;
             text-underline-offset: 2px;
-            text-decoration-color: color-mix(in srgb, var(--show-color) 40%, transparent);
+            text-decoration-color: color-mix(in srgb, var(--show-color-text, var(--show-color)) 40%, transparent);
             transition: text-decoration-color var(--duration) var(--ease);
         }
         .blog-article a:hover {
-            text-decoration-color: var(--show-color);
+            text-decoration-color: var(--show-color-text, var(--show-color));
         }
         .blog-article strong {
             color: var(--nn-white);
@@ -613,13 +633,88 @@
         }
         .blog-listen-cta:hover {
             border-color: var(--show-color);
-            color: var(--show-color);
+            color: var(--show-color-text, var(--show-color));
+        }
+
+        /* Hover-card citations (Phase 3.4 of the May 2026 audit).
+           A small inline pill shows the publisher domain; on hover or
+           keyboard focus a popover reveals the full URL so readers
+           can verify provenance without leaving the page. Pure CSS,
+           no JS — works in every email/RSS-rendered surface that
+           runs the page stylesheet. */
+        .cite {
+            position: relative;
+            display: inline-block;
+        }
+        .cite-pill {
+            display: inline-block;
+            padding: 0.05em 0.55em;
+            margin: 0 0.1em;
+            border-radius: 999px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.78em;
+            line-height: 1.4;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+            white-space: nowrap;
+        }
+        .cite-pill:hover,
+        .cite-pill:focus {
+            border-color: var(--show-color);
+            /* Same AA fix as body links — brand text needs to clear
+               4.5:1 on the dark card surface. */
+            color: var(--show-color-text, var(--show-color));
+            outline: none;
+        }
+        .cite-card {
+            position: absolute;
+            left: 0;
+            bottom: calc(100% + 6px);
+            z-index: 10;
+            min-width: 240px;
+            max-width: 360px;
+            padding: var(--sp-2) var(--sp-3);
+            border-radius: 8px;
+            background: var(--nn-bg);
+            border: 1px solid var(--nn-border);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+            color: var(--nn-text);
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            word-break: break-all;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--duration) var(--ease);
+            pointer-events: none;
+        }
+        .cite:hover .cite-card,
+        .cite-pill:focus + .cite-card,
+        .cite-pill:focus-within + .cite-card {
+            opacity: 1;
+            visibility: visible;
+        }
+        @media (max-width: 600px) {
+            .cite-card {
+                left: auto;
+                right: 0;
+                min-width: 0;
+                max-width: 90vw;
+            }
         }
     </style>
 
 
     
-    <style>:root { --show-color: #7C5CFF; --show-color-dark: #6366f1; }</style>
+    
+    <style>:root {
+      --show-color: #6B47FF;
+      --show-color-dark: #4f46e5;
+      --show-color-text: color-mix(in srgb, #6B47FF, white 35%);
+    }</style>
     
     <style>
         @media (max-width: 768px) {
@@ -939,7 +1034,7 @@
             <li><a href="../../index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../fascinating-frontiers.html" style="color:var(--nn-text-muted);text-decoration:none;">Fascinating Frontiers</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../blog/fascinating_frontiers/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
-            <li aria-current="page" style="color:var(--show-color);">Episode 54</li>
+            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 54</li>
         </ol>
     </nav>
 
@@ -1008,28 +1103,28 @@
 <ol>
 <li><strong>NASA selects Falcon Heavy for ESA Mars rover</strong> — SpaceNews</li>
 <p class="blog-list-cont">NASA has chosen SpaceX’s Falcon Heavy to launch ESA’s Rosalind Franklin rover in late 2028. The decision stems from the rover’s use of NASA radioisotope heater units that require a U.S. launcher, even as the agency proposes cancelling its financial support.</p>
-<p class="blog-list-cont">Source: <a href="https://spacenews.com/nasa-selects-falcon-heavy-to-launch-esa-mars-rover-mission-despite-budget-threat/" target="_blank" rel="noopener">spacenews.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://spacenews.com/nasa-selects-falcon-heavy-to-launch-esa-mars-rover-mission-despite-budget-threat/" target="_blank" rel="noopener" aria-describedby="cite-card">spacenews.com</a><span class="cite-card" id="cite-card" role="tooltip">https://spacenews.com/nasa-selects-falcon-heavy-to-launch-esa-mars-rover-mission-despite-budget-threat/</span></span></p>
 <li><strong>Crawler moves Artemis II tower for Artemis III prep</strong> — Florida Today</li>
 <p class="blog-list-cont">NASA transported the mobile launch tower from the Artemis II mission into the Vehicle Assembly Building using Crawler-Transporter 2. This clears the pad and begins stacking operations for Artemis III, the first crewed lunar landing of the program, following the recent successful Artemis II lunar flyby.</p>
-<p class="blog-list-cont">Source: <a href="https://www.floridatoday.com/story/tech/science/space/2026/04/17/nasa-crawler-moves-artemis-ii-launch-tower-indoors-to-prep-for-artemis-iii-at-kennedy-space-center/89657009007/" target="_blank" rel="noopener">floridatoday.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.floridatoday.com/story/tech/science/space/2026/04/17/nasa-crawler-moves-artemis-ii-launch-tower-indoors-to-prep-for-artemis-iii-at-kennedy-space-center/89657009007/" target="_blank" rel="noopener" aria-describedby="cite-card">floridatoday.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.floridatoday.com/story/tech/science/space/2026/04/17/nasa-crawler-moves-artemis-ii-launch-tower-indoors-to-prep-for-artemis-iii-at-kennedy-space-center/89657009007/</span></span></p>
 <li><strong>ISS radiation detectors mark one year in orbit</strong> — American Nuclear Society</li>
 <p class="blog-list-cont">Instruments deployed from the ISS a year ago via SpaceX Dragon are gathering data on the deep-space radiation environment. The results will help engineers design better shielding for future Moon and Mars missions.</p>
-<p class="blog-list-cont">Source: <a href="https://www.ans.org/news/article-7865/a-year-in-orbit-iss-deployment-tests-radiation-detectors-for-future-space-missions/" target="_blank" rel="noopener">ans.org</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.ans.org/news/article-7865/a-year-in-orbit-iss-deployment-tests-radiation-detectors-for-future-space-missions/" target="_blank" rel="noopener" aria-describedby="cite-card">ans.org</a><span class="cite-card" id="cite-card" role="tooltip">https://www.ans.org/news/article-7865/a-year-in-orbit-iss-deployment-tests-radiation-detectors-for-future-space-missions/</span></span></p>
 <li><strong>Artemis II heat shield performed exceptionally</strong> — Space.com</li>
 <p class="blog-list-cont">The Orion spacecraft’s heat shield showed only minimal charring after the record-speed re-entry from Artemis II. Commander Reid Wiseman confirmed its strong performance, clearing a major technical hurdle for crewed lunar landings ahead.</p>
-<p class="blog-list-cont">Source: <a href="https://www.space.com/space-exploration/artemis/artemis-2s-heat-shield-seems-to-have-aced-its-trial-by-fire" target="_blank" rel="noopener">space.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.space.com/space-exploration/artemis/artemis-2s-heat-shield-seems-to-have-aced-its-trial-by-fire" target="_blank" rel="noopener" aria-describedby="cite-card">space.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.space.com/space-exploration/artemis/artemis-2s-heat-shield-seems-to-have-aced-its-trial-by-fire</span></span></p>
 <li><strong>Voyager 1 instrument powered down to save energy</strong> — NASA</li>
 <p class="blog-list-cont">Engineers turned off the Low-Energy Charged Particles instrument on Voyager 1 on April 17 to stretch the spacecraft’s dwindling power supply. Now nearly 49 years old and travelling through interstellar space, it will keep its two remaining science instruments running.</p>
-<p class="blog-list-cont">Source: <a href="https://science.nasa.gov/blogs/voyager/2026/04/17/nasa-shuts-off-instrument-on-voyager-1-to-keep-spacecraft-operating/" target="_blank" rel="noopener">science.nasa.gov</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://science.nasa.gov/blogs/voyager/2026/04/17/nasa-shuts-off-instrument-on-voyager-1-to-keep-spacecraft-operating/" target="_blank" rel="noopener" aria-describedby="cite-card">science.nasa.gov</a><span class="cite-card" id="cite-card" role="tooltip">https://science.nasa.gov/blogs/voyager/2026/04/17/nasa-shuts-off-instrument-on-voyager-1-to-keep-spacecraft-operating/</span></span></p>
 <li><strong>China extends Shenzhou-21 crew stay by one month</strong> — Reuters</li>
 <p class="blog-list-cont">The three astronauts on China’s Shenzhou-21 mission will remain aboard Tiangong for an extra month after careful review. Their total mission length will reach about six months, allowing more time for scientific experiments.</p>
-<p class="blog-list-cont">Source: <a href="https://www.reuters.com/science/chinas-shenzhou-21-astronaut-crew-stay-space-an-extra-month-2026-04-17/" target="_blank" rel="noopener">reuters.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.reuters.com/science/chinas-shenzhou-21-astronaut-crew-stay-space-an-extra-month-2026-04-17/" target="_blank" rel="noopener" aria-describedby="cite-card">reuters.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reuters.com/science/chinas-shenzhou-21-astronaut-crew-stay-space-an-extra-month-2026-04-17/</span></span></p>
 <li><strong>Blue Origin targets New Glenn launch on Sunday</strong> — USA TODAY</li>
 <p class="blog-list-cont">Blue Origin is aiming for a Sunday, April 19 launch of its New Glenn rocket from Cape Canaveral carrying AST SpaceMobile’s BlueBird Block 2 satellite. The mission will mark the first reuse of a New Glenn booster.</p>
-<p class="blog-list-cont">Source: <a href="https://www.usatoday.com/story/news/nation/2026/04/17/blue-origin-new-glenn-rocket-launch-watch/89605388007/" target="_blank" rel="noopener">usatoday.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.usatoday.com/story/news/nation/2026/04/17/blue-origin-new-glenn-rocket-launch-watch/89605388007/" target="_blank" rel="noopener" aria-describedby="cite-card">usatoday.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.usatoday.com/story/news/nation/2026/04/17/blue-origin-new-glenn-rocket-launch-watch/89605388007/</span></span></p>
 <li><strong>Vandenberg Falcon 9 to deploy 25 Starlink satellites</strong> — Desert Sun</li>
 <p class="blog-list-cont">SpaceX is preparing a Falcon 9 launch from Vandenberg Space Force Base on April 18 with a four-hour window opening at 7 a.m. PT. The rocket will place 25 Starlink satellites into orbit and may produce sonic booms audible in parts of California.</p>
-<p class="blog-list-cont">Source: <a href="https://www.desertsun.com/story/news/local/2026/04/17/vandenberg-rocket-launch-today-how-watch-spacex-falcon-9/89641465007/" target="_blank" rel="noopener">desertsun.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.desertsun.com/story/news/local/2026/04/17/vandenberg-rocket-launch-today-how-watch-spacex-falcon-9/89641465007/" target="_blank" rel="noopener" aria-describedby="cite-card">desertsun.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.desertsun.com/story/news/local/2026/04/17/vandenberg-rocket-launch-today-how-watch-spacex-falcon-9/89641465007/</span></span></p>
 </ol>
 <h4 id="cosmic-spotlight">Cosmic Spotlight</h4>
 <p><strong>NASA shuts down Voyager 1 instrument</strong></p>
@@ -1326,6 +1421,34 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
             </nav>
             
             <!-- Cross-show Recommendations -->
+            
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/finansy_prosto/ep031.html" class="blog-related-card" style="--card-show-color: #BE185D">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #BE185D, white 35%)">Финансы Просто</span>
+                        <h3>Как подготовиться к обновлению ипотеки в 2026 году и не потерять контроль над бю...</h3>
+                        <p>Как подготовиться к обновлению ипотеки в 2026 году и не потерять контроль над бюджетом</p>
+                    </a>
+                    
+                    <a href="../../blog/unintended_consequences/ep003.html" class="blog-related-card" style="--card-show-color: #B45309">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #B45309, white 35%)">Unintended Consequences</span>
+                        <h3>In 1921 Thomas Midgley Jr. added tetraethyl lead to gasoline to silence engine k...</h3>
+                        <p>In 1921 Thomas Midgley Jr. added tetraethyl lead to gasoline to silence engine knock, never imagining the additive would&hellip;</p>
+                    </a>
+                    
+                    <a href="../../blog/modern_investing/ep034.html" class="blog-related-card" style="--card-show-color: #047857">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #047857, white 35%)">Modern Investing Techniques</span>
+                        <h3>Modern Investing Techniques</h3>
+                        <p>US companies have announced $665 billion in share buybacks year-to-date, offering a potential support level for equities&hellip;</p>
+                    </a>
+                    
+                </div>
+            </section>
             
         </article>
     </div>

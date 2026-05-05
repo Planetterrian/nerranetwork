@@ -34,9 +34,23 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%237C5CFF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%236B47FF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/></svg>">
 
     
+    
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="../../assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
     
     
     
@@ -185,7 +199,8 @@
             padding: 2px 10px;
             border-radius: 100px;
             background: color-mix(in srgb, var(--show-color) 15%, transparent);
-            color: var(--show-color);
+            /* AA-compliant text on dark page bg — see --show-color-text in base.html.j2 */
+            color: var(--show-color-text, var(--show-color));
             font-weight: 600;
         }
         .post-author {
@@ -282,7 +297,8 @@
         }
         .blog-toc a:hover,
         .blog-toc a.active {
-            color: var(--show-color);
+            /* AA-compliant text on dark sidebar bg */
+            color: var(--show-color-text, var(--show-color));
             border-left-color: var(--show-color);
         }
         .blog-toc a.toc-h3 {
@@ -327,14 +343,18 @@
             margin: 0 0 var(--sp-4);
         }
         .blog-article a {
-            color: var(--show-color);
+            /* Body links — AA-compliant lightened brand on dark bg.
+               Saturated brand colors fail 4.5:1 on `--nn-bg`; the
+               `--show-color-text` variable lightens by 35 % white so
+               every show clears AA. */
+            color: var(--show-color-text, var(--show-color));
             text-decoration: underline;
             text-underline-offset: 2px;
-            text-decoration-color: color-mix(in srgb, var(--show-color) 40%, transparent);
+            text-decoration-color: color-mix(in srgb, var(--show-color-text, var(--show-color)) 40%, transparent);
             transition: text-decoration-color var(--duration) var(--ease);
         }
         .blog-article a:hover {
-            text-decoration-color: var(--show-color);
+            text-decoration-color: var(--show-color-text, var(--show-color));
         }
         .blog-article strong {
             color: var(--nn-white);
@@ -613,13 +633,88 @@
         }
         .blog-listen-cta:hover {
             border-color: var(--show-color);
-            color: var(--show-color);
+            color: var(--show-color-text, var(--show-color));
+        }
+
+        /* Hover-card citations (Phase 3.4 of the May 2026 audit).
+           A small inline pill shows the publisher domain; on hover or
+           keyboard focus a popover reveals the full URL so readers
+           can verify provenance without leaving the page. Pure CSS,
+           no JS — works in every email/RSS-rendered surface that
+           runs the page stylesheet. */
+        .cite {
+            position: relative;
+            display: inline-block;
+        }
+        .cite-pill {
+            display: inline-block;
+            padding: 0.05em 0.55em;
+            margin: 0 0.1em;
+            border-radius: 999px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.78em;
+            line-height: 1.4;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+            white-space: nowrap;
+        }
+        .cite-pill:hover,
+        .cite-pill:focus {
+            border-color: var(--show-color);
+            /* Same AA fix as body links — brand text needs to clear
+               4.5:1 on the dark card surface. */
+            color: var(--show-color-text, var(--show-color));
+            outline: none;
+        }
+        .cite-card {
+            position: absolute;
+            left: 0;
+            bottom: calc(100% + 6px);
+            z-index: 10;
+            min-width: 240px;
+            max-width: 360px;
+            padding: var(--sp-2) var(--sp-3);
+            border-radius: 8px;
+            background: var(--nn-bg);
+            border: 1px solid var(--nn-border);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+            color: var(--nn-text);
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            word-break: break-all;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--duration) var(--ease);
+            pointer-events: none;
+        }
+        .cite:hover .cite-card,
+        .cite-pill:focus + .cite-card,
+        .cite-pill:focus-within + .cite-card {
+            opacity: 1;
+            visibility: visible;
+        }
+        @media (max-width: 600px) {
+            .cite-card {
+                left: auto;
+                right: 0;
+                min-width: 0;
+                max-width: 90vw;
+            }
         }
     </style>
 
 
     
-    <style>:root { --show-color: #1B5E20; --show-color-dark: #0D3B0F; }</style>
+    
+    <style>:root {
+      --show-color: #1B5E20;
+      --show-color-dark: #0D3B0F;
+      --show-color-text: color-mix(in srgb, #1B5E20, white 35%);
+    }</style>
     
     <style>
         @media (max-width: 768px) {
@@ -939,7 +1034,7 @@
             <li><a href="../../index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../env-intel.html" style="color:var(--nn-text-muted);text-decoration:none;">Environmental Intelligence</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../blog/env_intel/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
-            <li aria-current="page" style="color:var(--show-color);">Episode 21</li>
+            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 21</li>
         </ol>
     </nav>
 
@@ -1011,28 +1106,28 @@
 <h4 id="lead-story">Lead Story</h4>
 <p><strong>Ontario’s Endangered Species Act is officially dead. Here’s what that means</strong> — The Narwhal</p>
 <p>Ontario has replaced the Endangered Species Act with the new Species Conservation Act, which removes automatic species protections and leaves many plants and animals—including golden eagles and barn owls—largely unprotected according to experts. The previous statute imposed strict prohibitions on harm, habitat damage and required recovery strategies; the new framework shifts toward discretionary conservation measures with narrower triggers and reduced mandatory safeguards. For contaminated-sites and remediation practitioners, this change reduces Species at Risk Act / provincial overlap constraints on ESA-listed species during soil excavation, groundwater works, or linear infrastructure at brownfield and mining sites in Ontario. Projects that previously required lengthy permits or habitat offsetting under the old Act may now proceed with streamlined or voluntary measures, though federal SARA listing status remains unchanged where it applies. Implementation details and any transitional provisions have not been fully detailed; practitioners should track Ministry of the Environment, Conservation and Parks guidance on how the new Act intersects with O. Reg. 153/04 Records of Site Condition and federal Impact Assessment Act triggers.</p>
-<p>Source: <a href="https://thenarwhal.ca/ontario-species-conservation-act-enforced/" target="_blank" rel="noopener">thenarwhal.ca</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://thenarwhal.ca/ontario-species-conservation-act-enforced/" target="_blank" rel="noopener" aria-describedby="cite-card">thenarwhal.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://thenarwhal.ca/ontario-species-conservation-act-enforced/</span></span></p>
 <h4 id="regulatory-policy-watch">Regulatory & Policy Watch</h4>
 <p><strong>Trump’s Budget Proposes Massive Cuts for Climate and Environmental Programs</strong> — Inside Climate News</p>
 <p>The U.S. administration’s fiscal 2027 budget request slashes funding for the EPA, NOAA and FEMA, continuing the defunding of climate, environmental protection and renewable energy programs. While not a Canadian regulatory change, the move reduces U.S. capacity for cross-border air and water quality modelling, Great Lakes monitoring and PFAS research that Canadian jurisdictions (BC CSR, Alberta EPEA, Ontario EPA) routinely reference for harmonization. Canadian practitioners supporting transboundary contaminated sites or climate adaptation projects should anticipate slower U.S. data releases and potential gaps in joint CCME-aligned datasets.</p>
-<p>Source: <a href="https://insideclimatenews.org/news/06042026/trump-budget-proposes-epa-noaa-fema-cuts/" target="_blank" rel="noopener">insideclimatenews.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://insideclimatenews.org/news/06042026/trump-budget-proposes-epa-noaa-fema-cuts/" target="_blank" rel="noopener" aria-describedby="cite-card">insideclimatenews.org</a><span class="cite-card" id="cite-card" role="tooltip">https://insideclimatenews.org/news/06042026/trump-budget-proposes-epa-noaa-fema-cuts/</span></span></p>
 <p><strong>Suspect in Hacking of Climate Activists Is Extradited to New York</strong> — r/climate</p>
 <p>Amit Forlit has been extradited to New York on charges he ran a global hacking operation on behalf of a Washington lobbying group targeting environmental lawsuits against oil companies. The case has no immediate Canadian regulatory impact but highlights litigation risks around environmental advocacy data that may intersect with Canadian contaminated-sites disclosure obligations or CEPA whistle-blower provisions.</p>
-<p>Source: <a href="https://www.reddit.com/r/climate/comments/1se9kug/suspect_in_hacking_of_climate_activists_is/" target="_blank" rel="noopener">reddit.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.reddit.com/r/climate/comments/1se9kug/suspect_in_hacking_of_climate_activists_is/" target="_blank" rel="noopener" aria-describedby="cite-card">reddit.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reddit.com/r/climate/comments/1se9kug/suspect_in_hacking_of_climate_activists_is/</span></span></p>
 <h4 id="science-technical">Science & Technical</h4>
 <p><strong>Earth’s most powerful ocean current didn’t form the way we thought</strong> — Science Daily</p>
 <p>New research demonstrates that the Antarctic Circumpolar Current required the alignment of shifting continents and powerful winds, not simply the opening of ocean gateways, to reach full strength and drive major atmospheric CO₂ drawdown that contributed to global cooling and ice-sheet formation. While paleoclimate in scope, the findings refine carbon-cycle understanding relevant to long-term climate adaptation modelling used in Canadian sea-level rise projections, coastal flood risk mapping under Fisheries Act authorizations, and British Columbia’s sea-level rise planning guidelines. Practitioners supporting coastal contaminated sites or mine closure plans in Atlantic and Pacific regions should note improved constraints on century-scale carbon sequestration rates.</p>
-<p>Source: <a href="https://www.sciencedaily.com/releases/2026/04/260406192902.htm" target="_blank" rel="noopener">sciencedaily.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.sciencedaily.com/releases/2026/04/260406192902.htm" target="_blank" rel="noopener" aria-describedby="cite-card">sciencedaily.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.sciencedaily.com/releases/2026/04/260406192902.htm</span></span></p>
 <p><strong>Climate change is turning algae at the bottom of the food chain into junk food</strong> — r/climate</p>
 <p>Ongoing research indicates warming waters and altered nutrient regimes are reducing the nutritional quality of foundational algae, with measurable declines in essential fatty acids that propagate up the food web. This has indirect implications for Canadian Fisheries Act authorizations and SARA recovery planning where baseline productivity data underpin habitat offsetting calculations or risk assessments at oil sands, mining or pulp-mill sites. Laboratories holding ISO 17025 accreditation for chlorophyll or fatty-acid profiling may see increased demand for these parameters in future aquatic effects monitoring.</p>
-<p>Source: <a href="https://www.reddit.com/r/climate/comments/1sdw1t5/climate_change_is_turning_algae_at_the_bottom_of/" target="_blank" rel="noopener">reddit.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.reddit.com/r/climate/comments/1sdw1t5/climate_change_is_turning_algae_at_the_bottom_of/" target="_blank" rel="noopener" aria-describedby="cite-card">reddit.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reddit.com/r/climate/comments/1sdw1t5/climate_change_is_turning_algae_at_the_bottom_of/</span></span></p>
 <h4 id="industry-practice">Industry & Practice</h4>
 <p><strong>To know</strong> — r/britishcolumbia</p>
 <p>A European fly-fishing visitor seeks guidance on Alberta and British Columbia trout and salmon regulations, rod suitability, licensing and late-April river choices with explicit emphasis on compliance and environmental respect. The post underscores the need for consultants supporting recreational or eco-tourism clients to maintain current knowledge of provincial fishing licences (Alberta Conservation Association or BC Freshwater Fishing Licence), species-specific closures under the Fisheries Act, and catch-and-release protocols on scheduled waters. Late April in both provinces typically features high water from snowmelt; practitioners should advise clients on site-specific WHMIS and spill-response requirements if guiding near remediation or contaminated-sites projects.</p>
-<p>Source: <a href="https://www.reddit.com/r/britishcolumbia/comments/1seb1p7/to_know/" target="_blank" rel="noopener">reddit.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.reddit.com/r/britishcolumbia/comments/1seb1p7/to_know/" target="_blank" rel="noopener" aria-describedby="cite-card">reddit.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reddit.com/r/britishcolumbia/comments/1seb1p7/to_know/</span></span></p>
 <p><strong>Update on 50cc scooter regulations to 70cc?</strong> — r/britishcolumbia</p>
 <p>A British Columbia resident proposes raising the scooter engine limit from 50 cc to 70–80 cc to improve performance parity. While not an enacted change, any future amendment would intersect with provincial transportation emission inventories used in climate policy and could affect mobile-source VOC and NOx contributions at contaminated sites near urban corridors under BC EMA air-quality objectives.</p>
-<p>Source: <a href="https://www.reddit.com/r/britishcolumbia/comments/1sea0o9/update_on_50cc_scooter_regulations_to_70cc/" target="_blank" rel="noopener">reddit.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.reddit.com/r/britishcolumbia/comments/1sea0o9/update_on_50cc_scooter_regulations_to_70cc/" target="_blank" rel="noopener" aria-describedby="cite-card">reddit.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reddit.com/r/britishcolumbia/comments/1sea0o9/update_on_50cc_scooter_regulations_to_70cc/</span></span></p>
 <h4 id="practitioner-deep-dive-interpreting-non-uniform-contaminant-distribution-in-heterogeneous-glacial-soils">Practitioner Deep Dive: Interpreting Non-Uniform Contaminant Distribution in Heterogeneous Glacial Soils</h4>
 <p>You arrive at a former urban gas station in the GTA or Lower Mainland. The Phase II ESA shows benzene exceeding CSR or O. Reg. 153/04 standards in MW-3 but not in MW-2 only 4 m closer to the apparent source. The pattern looks illogical until you remember you are standing on Wisconsinan glacial till and outwash.</p>
 <p>Glacial soils in Ontario, Alberta and British Columbia are characterized by abrupt facies changes—sand lenses, silt drapes, cobble stringers and diamicton—over distances of centimetres to metres. These create preferential pathways that can transport dissolved BTEX or PFAS plumes tens of metres away from the source while leaving adjacent soil or groundwater untouched. BC CSR Protocol 4 and CCME Tier 2 risk assessment both require practitioners to characterize this heterogeneity rather than assume uniform advection-dispersion.</p>
@@ -1285,6 +1380,34 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
             </nav>
             
             <!-- Cross-show Recommendations -->
+            
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/planetterrian/ep055.html" class="blog-related-card" style="--card-show-color: #017A99">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #017A99, white 35%)">Planetterrian Daily</span>
+                        <h3>Planetterrian Daily</h3>
+                        <p>Centenarians maintain immune systems far less prone to chronic inflammation than typical older adults.</p>
+                    </a>
+                    
+                    <a href="../../blog/fascinating_frontiers/ep063.html" class="blog-related-card" style="--card-show-color: #6B47FF">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #6B47FF, white 35%)">Fascinating Frontiers</span>
+                        <h3>Fascinating Frontiers</h3>
+                        <p>Firefly Aerospace plans to debut its upgraded Alpha Block 2 rocket late this summer amid rising demand.</p>
+                    </a>
+                    
+                    <a href="../../blog/omni_view/ep042.html" class="blog-related-card" style="--card-show-color: #0B6FD6">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #0B6FD6, white 35%)">Omni View</span>
+                        <h3>Omni View — Omni‑View Briefing</h3>
+                        <p>Iran warns the US that it 'has not even begun' as violence escalates in the Strait of Hormuz.</p>
+                    </a>
+                    
+                </div>
+            </section>
             
         </article>
     </div>

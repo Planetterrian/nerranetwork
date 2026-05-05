@@ -158,8 +158,14 @@ tts:
   {}
 
 audio:
-  music_file: assets/music/fascinatingfrontiers.mp3
-  background_music_file: assets/music/fascinatingfrontiers_bg.mp3
+  # Single-track config (May 2026): the long ``_bg`` track is used for
+  # intro AND outro so the open and close share the same musical
+  # identity — operator preferred this over the previous dual-track
+  # setup where ``fascinatingfrontiers.mp3`` (a short intro jingle)
+  # opened the episode and ``fascinatingfrontiers_bg.mp3`` only
+  # appeared at the end. The shorter jingle file remains in the repo
+  # for emergency rollback.
+  music_file: assets/music/fascinatingfrontiers_bg.mp3
   transition_sting: assets/music/transition_sting.mp3
   voice_intro_delay: 15.0
   intro_duration: 15.0

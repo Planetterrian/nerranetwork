@@ -435,8 +435,11 @@ class TestLoadConfigRealFiles:
         # English shows migrated to Grok TTS (sal voice) in May 2026.
         assert cfg.tts.provider == "grok"
         assert cfg.tts.voice_id == "kdif6sqjcyiq"
-        assert cfg.audio.music_file == "assets/music/fascinatingfrontiers.mp3"
-        assert cfg.audio.background_music_file == "assets/music/fascinatingfrontiers_bg.mp3"
+        # May 2026: FF unified intro + outro on the long ``_bg`` track
+        # (operator preferred a single musical identity). Short jingle
+        # file kept in repo for emergency rollback.
+        assert cfg.audio.music_file == "assets/music/fascinatingfrontiers_bg.mp3"
+        assert cfg.audio.background_music_file is None
         # May 2026 podcast-feel bump — 15s music alone before voice.
         assert cfg.audio.voice_intro_delay == 15.0
         assert cfg.publishing.rss_category == "Science"
