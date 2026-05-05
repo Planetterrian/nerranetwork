@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a combined Nerra Network RSS feed from all 9 show feeds."""
+"""Generate a combined Nerra Network RSS feed from all 11 show feeds."""
 
 import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime, format_datetime
