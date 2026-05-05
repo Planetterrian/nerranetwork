@@ -7,7 +7,7 @@
     
     <meta name="keywords" content="AI models, agent frameworks, LLM news, AI briefings, Models and Agents">
     <title>Models & Agents — Ep21 | Models & Agents Blog</title>
-    <meta name="theme-color" content="#8B5CF6">
+    <meta name="theme-color" content="#7C3AED">
 
     <!-- Open Graph -->
     <meta property="og:title" content="Models & Agents — Ep21 | Models & Agents Blog">
@@ -34,9 +34,23 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%237C5CFF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%236B47FF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/></svg>">
 
     
+    
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="../../assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
     
     
     
@@ -185,7 +199,8 @@
             padding: 2px 10px;
             border-radius: 100px;
             background: color-mix(in srgb, var(--show-color) 15%, transparent);
-            color: var(--show-color);
+            /* AA-compliant text on dark page bg — see --show-color-text in base.html.j2 */
+            color: var(--show-color-text, var(--show-color));
             font-weight: 600;
         }
         .post-author {
@@ -282,7 +297,8 @@
         }
         .blog-toc a:hover,
         .blog-toc a.active {
-            color: var(--show-color);
+            /* AA-compliant text on dark sidebar bg */
+            color: var(--show-color-text, var(--show-color));
             border-left-color: var(--show-color);
         }
         .blog-toc a.toc-h3 {
@@ -327,14 +343,18 @@
             margin: 0 0 var(--sp-4);
         }
         .blog-article a {
-            color: var(--show-color);
+            /* Body links — AA-compliant lightened brand on dark bg.
+               Saturated brand colors fail 4.5:1 on `--nn-bg`; the
+               `--show-color-text` variable lightens by 35 % white so
+               every show clears AA. */
+            color: var(--show-color-text, var(--show-color));
             text-decoration: underline;
             text-underline-offset: 2px;
-            text-decoration-color: color-mix(in srgb, var(--show-color) 40%, transparent);
+            text-decoration-color: color-mix(in srgb, var(--show-color-text, var(--show-color)) 40%, transparent);
             transition: text-decoration-color var(--duration) var(--ease);
         }
         .blog-article a:hover {
-            text-decoration-color: var(--show-color);
+            text-decoration-color: var(--show-color-text, var(--show-color));
         }
         .blog-article strong {
             color: var(--nn-white);
@@ -613,13 +633,88 @@
         }
         .blog-listen-cta:hover {
             border-color: var(--show-color);
-            color: var(--show-color);
+            color: var(--show-color-text, var(--show-color));
+        }
+
+        /* Hover-card citations (Phase 3.4 of the May 2026 audit).
+           A small inline pill shows the publisher domain; on hover or
+           keyboard focus a popover reveals the full URL so readers
+           can verify provenance without leaving the page. Pure CSS,
+           no JS — works in every email/RSS-rendered surface that
+           runs the page stylesheet. */
+        .cite {
+            position: relative;
+            display: inline-block;
+        }
+        .cite-pill {
+            display: inline-block;
+            padding: 0.05em 0.55em;
+            margin: 0 0.1em;
+            border-radius: 999px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.78em;
+            line-height: 1.4;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+            white-space: nowrap;
+        }
+        .cite-pill:hover,
+        .cite-pill:focus {
+            border-color: var(--show-color);
+            /* Same AA fix as body links — brand text needs to clear
+               4.5:1 on the dark card surface. */
+            color: var(--show-color-text, var(--show-color));
+            outline: none;
+        }
+        .cite-card {
+            position: absolute;
+            left: 0;
+            bottom: calc(100% + 6px);
+            z-index: 10;
+            min-width: 240px;
+            max-width: 360px;
+            padding: var(--sp-2) var(--sp-3);
+            border-radius: 8px;
+            background: var(--nn-bg);
+            border: 1px solid var(--nn-border);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+            color: var(--nn-text);
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            word-break: break-all;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--duration) var(--ease);
+            pointer-events: none;
+        }
+        .cite:hover .cite-card,
+        .cite-pill:focus + .cite-card,
+        .cite-pill:focus-within + .cite-card {
+            opacity: 1;
+            visibility: visible;
+        }
+        @media (max-width: 600px) {
+            .cite-card {
+                left: auto;
+                right: 0;
+                min-width: 0;
+                max-width: 90vw;
+            }
         }
     </style>
 
 
     
-    <style>:root { --show-color: #8B5CF6; --show-color-dark: #6D28D9; }</style>
+    
+    <style>:root {
+      --show-color: #7C3AED;
+      --show-color-dark: #6D28D9;
+      --show-color-text: color-mix(in srgb, #7C3AED, white 35%);
+    }</style>
     
     <style>
         @media (max-width: 768px) {
@@ -939,7 +1034,7 @@
             <li><a href="../../index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../models-agents.html" style="color:var(--nn-text-muted);text-decoration:none;">Models & Agents</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../blog/models_agents/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
-            <li aria-current="page" style="color:var(--show-color);">Episode 21</li>
+            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 21</li>
         </ol>
     </nav>
 
@@ -1012,37 +1107,37 @@
 <p><strong>What You Need to Know:</strong> Today's cs.CL batch reveals that many impressive medical AI results may be artifacts of interviewer prompts rather than genuine participant signals, while pruning works for classification but breaks generation due to probability-space amplification. Several papers also show that fine-tuning small models on domain data delivers outsized gains in systematic review screening and low-resource medical transcription. Pay attention to the recurring theme: many current evaluation setups are contaminated by dataset artifacts.</p>
 <h4 id="top-story">Top Story</h4>
 <p>A new analysis of three public depression detection datasets (ANDROIDS, DAIC-WOZ, E-DAIC) reveals a systematic bias where models trained on interviewer turns achieve high classification scores by exploiting fixed prompts and positions rather than learning from participant language. The researchers demonstrate that restricting models to only participant utterances forces the model to rely on genuine linguistic cues, distributing decision evidence more broadly across the conversation. This cross-dataset, architecture-agnostic bias appears in semi-structured clinical interviews where consistency in interviewer prompts inadvertently creates exploitable script artifacts. The work emphasizes the need for analyses that localize decision evidence by time and speaker. Practitioners building clinical AI should immediately audit whether their models are listening to patients or interviewers.</p>
-<p>Source: <a href="https://arxiv.org/abs/2603.24651" target="_blank" rel="noopener">arxiv.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://arxiv.org/abs/2603.24651" target="_blank" rel="noopener" aria-describedby="cite-card">arxiv.org</a><span class="cite-card" id="cite-card" role="tooltip">https://arxiv.org/abs/2603.24651</span></span></p>
 <h4 id="model-updates">Model Updates</h4>
 <p><strong>When Consistency Becomes Bias: Interviewer Effects in Semi-Structured Clinical Interviews</strong></p>
 <p>Models achieve strong depression detection performance without using participant language by exploiting fixed interviewer prompts. Restricting to participant utterances reveals the true linguistic signals. This finding has immediate implications for any medical conversation AI.</p>
-<p>Source: <a href="https://arxiv.org/abs/2603.24651" target="_blank" rel="noopener">arxiv.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://arxiv.org/abs/2603.24651" target="_blank" rel="noopener" aria-describedby="cite-card">arxiv.org</a><span class="cite-card" id="cite-card" role="tooltip">https://arxiv.org/abs/2603.24651</span></span></p>
 <p><strong>Demystifying When Pruning Works via Representation Hierarchies</strong></p>
 <p>Pruning works well for non-generative tasks because embedding and logit spaces remain robust, but the nonlinear logit-to-probability transformation amplifies deviations during generation. The categorical-token probability subspace explains why retrieval and multiple-choice tasks survive pruning better. Code is available for further experimentation.</p>
-<p>Source: <a href="https://arxiv.org/abs/2603.24652" target="_blank" rel="noopener">arxiv.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://arxiv.org/abs/2603.24652" target="_blank" rel="noopener" aria-describedby="cite-card">arxiv.org</a><span class="cite-card" id="cite-card" role="tooltip">https://arxiv.org/abs/2603.24652</span></span></p>
 <p><strong>Fine-Tuning A Large Language Model for Systematic Review Screening</strong></p>
 <p>Fine-tuning a 1.2B open-weight LLM on >8500 human-rated titles and abstracts produced an 80.79% improvement in weighted F1 over the base model. On the full 8,277-study dataset it reached 86.40% agreement with humans and 91.18% true positive rate with perfect inference-run consistency. This demonstrates clear value in fine-tuning even small models for high-stakes screening tasks.</p>
-<p>Source: <a href="https://arxiv.org/abs/2603.24767" target="_blank" rel="noopener">arxiv.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://arxiv.org/abs/2603.24767" target="_blank" rel="noopener" aria-describedby="cite-card">arxiv.org</a><span class="cite-card" id="cite-card" role="tooltip">https://arxiv.org/abs/2603.24767</span></span></p>
 <p><strong>Evaluating Fine-Tuned LLM Model For Medical Transcription With Small Low-Resource Languages Validated Dataset</strong></p>
 <p>Fine-tuning LLaMA 3.1-8B on a small Finnish clinical conversation corpus yielded strong semantic similarity (BERTScore F1 = 0.8230) despite low n-gram overlap. The work supports feasibility of privacy-oriented domain-specific models for low-resource languages in clinical documentation.</p>
-<p>Source: <a href="https://arxiv.org/abs/2603.24772" target="_blank" rel="noopener">arxiv.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://arxiv.org/abs/2603.24772" target="_blank" rel="noopener" aria-describedby="cite-card">arxiv.org</a><span class="cite-card" id="cite-card" role="tooltip">https://arxiv.org/abs/2603.24772</span></span></p>
 <h4 id="agent-tool-developments">Agent & Tool Developments</h4>
 <p><strong>LLM-Driven Reasoning for Constraint-Aware Feature Selection in Industrial Systems</strong></p>
 <p>Model Feature Agent (MoFA) uses semantic and quantitative feature information in structured prompts to perform sequential, reasoning-based feature selection under operational constraints. It delivered accuracy gains plus reduced feature complexity in True Interest prediction, discovered high-order interactions improving online engagement, and selected compact subsets that boosted both accuracy and inference speed in notification prediction. Shows practical value of LLM reasoning for production ML systems where labeled data is scarce.</p>
-<p>Source: <a href="https://arxiv.org/abs/2603.24979" target="_blank" rel="noopener">arxiv.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://arxiv.org/abs/2603.24979" target="_blank" rel="noopener" aria-describedby="cite-card">arxiv.org</a><span class="cite-card" id="cite-card" role="tooltip">https://arxiv.org/abs/2603.24979</span></span></p>
 <p><strong>Prompt Attack Detection with LLM-as-a-Judge and Mixture-of-Models</strong></p>
 <p>Lightweight general-purpose LLMs (including gemini-2.0-flash-lite-001) can act as effective low-latency security judges when guided through structured reasoning (intent decomposition, safety-signal verification, harm assessment, self-reflection). The approach is already deployed in production as a centralized guardrail for public service chatbots in Singapore. A Mixture-of-Models variant provided only modest gains.</p>
-<p>Source: <a href="https://arxiv.org/abs/2603.25176" target="_blank" rel="noopener">arxiv.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://arxiv.org/abs/2603.25176" target="_blank" rel="noopener" aria-describedby="cite-card">arxiv.org</a><span class="cite-card" id="cite-card" role="tooltip">https://arxiv.org/abs/2603.25176</span></span></p>
 <h4 id="practical-community">Practical & Community</h4>
 <p><strong>Synthetic Rewriting as a Quality Multiplier: Evidence from Portuguese Continued Pretraining</strong></p>
 <p>Controlled study on Portuguese data shows synthetic rewriting acts primarily as a <em>quality multiplier</em> rather than a substitute for curation. Rewriting high-quality data gave +3.4 NPM at 7B scale while rewriting low-quality data gave only +0.5. Effect is scale-dependent; unmodified low-quality data performed comparably to rewritten high-quality data at 1.1B scale.</p>
-<p>Source: <a href="https://arxiv.org/abs/2603.24826" target="_blank" rel="noopener">arxiv.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://arxiv.org/abs/2603.24826" target="_blank" rel="noopener" aria-describedby="cite-card">arxiv.org</a><span class="cite-card" id="cite-card" role="tooltip">https://arxiv.org/abs/2603.24826</span></span></p>
 <p><strong>Closing the Confidence-Faithfulness Gap in Large Language Models</strong></p>
 <p>Mechanistic interpretability work shows calibration and verbalized confidence are encoded linearly but orthogonally. Prompting models to reason while verbalizing confidence creates a "Reasoning Contamination Effect" that worsens miscalibration. Introduces a two-stage adaptive steering pipeline that substantially improves calibration alignment.</p>
-<p>Source: <a href="https://arxiv.org/abs/2603.25052" target="_blank" rel="noopener">arxiv.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://arxiv.org/abs/2603.25052" target="_blank" rel="noopener" aria-describedby="cite-card">arxiv.org</a><span class="cite-card" id="cite-card" role="tooltip">https://arxiv.org/abs/2603.25052</span></span></p>
 <p><strong>Do LLMs Know What They Know? Measuring Metacognitive Efficiency with Signal Detection Theory</strong></p>
 <p>New evaluation framework using Type-2 Signal Detection Theory (meta-d' and M-ratio) reveals that metacognitive efficiency varies substantially across models even when raw accuracy is similar. Efficiency is domain-specific and temperature mainly shifts criterion rather than sensitivity. AUROC₂ and M-ratio produce completely inverted model rankings, showing they answer different questions.</p>
-<p>Source: <a href="https://arxiv.org/abs/2603.25112" target="_blank" rel="noopener">arxiv.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://arxiv.org/abs/2603.25112" target="_blank" rel="noopener" aria-describedby="cite-card">arxiv.org</a><span class="cite-card" id="cite-card" role="tooltip">https://arxiv.org/abs/2603.25112</span></span></p>
 <h4 id="under-the-hood-representation-hierarchies-in-pruning">Under the Hood: Representation Hierarchies in Pruning</h4>
 <p>Everyone talks about pruning as if it's a simple "remove low-magnitude weights" switch that should work equally everywhere. In reality, it's a story about three distinct representation spaces that respond differently to perturbation.</p>
 <p>The core insight is that embedding (hidden states) and logit (pre-softmax) spaces are surprisingly robust to pruning. The trouble begins in the nonlinear transformation from logits to probabilities. Small deviations in logit space get amplified nonlinearly, then accumulate across autoregressive steps during generation, producing the well-known degradation in generative tasks.</p>
@@ -1250,6 +1345,34 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
             </nav>
             
             <!-- Cross-show Recommendations -->
+            
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/omni_view/ep042.html" class="blog-related-card" style="--card-show-color: #0B6FD6">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #0B6FD6, white 35%)">Omni View</span>
+                        <h3>Omni View — Omni‑View Briefing</h3>
+                        <p>Iran warns the US that it 'has not even begun' as violence escalates in the Strait of Hormuz.</p>
+                    </a>
+                    
+                    <a href="../../blog/tesla/ep462.html" class="blog-related-card" style="--card-show-color: #E31937">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #E31937, white 35%)">Tesla Shorts Time</span>
+                        <h3>Tesla Shorts Time</h3>
+                        <p>Tesla has started producing its Semi electric trucks at a dedicated factory in Nevada.</p>
+                    </a>
+                    
+                    <a href="../../blog/fascinating_frontiers/ep063.html" class="blog-related-card" style="--card-show-color: #6B47FF">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #6B47FF, white 35%)">Fascinating Frontiers</span>
+                        <h3>Fascinating Frontiers</h3>
+                        <p>Firefly Aerospace plans to debut its upgraded Alpha Block 2 rocket late this summer amid rising demand.</p>
+                    </a>
+                    
+                </div>
+            </section>
             
         </article>
     </div>

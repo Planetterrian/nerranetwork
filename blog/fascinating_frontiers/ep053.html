@@ -7,7 +7,7 @@
     
     <meta name="keywords" content="space podcast, astronomy news, NASA discoveries, space exploration, Fascinating Frontiers">
     <title>NASA's SPHEREx has mapped vast "interstellar glaciers" of ice stretching more th... — Ep53 | Fascinating Frontiers Blog</title>
-    <meta name="theme-color" content="#7C5CFF">
+    <meta name="theme-color" content="#6B47FF">
 
     <!-- Open Graph -->
     <meta property="og:title" content="NASA's SPHEREx has mapped vast "interstellar glaciers" of ice stretching more th... — Ep53 | Fascinating Frontiers Blog">
@@ -34,9 +34,23 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%237C5CFF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%236B47FF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/></svg>">
 
     
+    
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="../../assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
     
     
     
@@ -185,7 +199,8 @@
             padding: 2px 10px;
             border-radius: 100px;
             background: color-mix(in srgb, var(--show-color) 15%, transparent);
-            color: var(--show-color);
+            /* AA-compliant text on dark page bg — see --show-color-text in base.html.j2 */
+            color: var(--show-color-text, var(--show-color));
             font-weight: 600;
         }
         .post-author {
@@ -282,7 +297,8 @@
         }
         .blog-toc a:hover,
         .blog-toc a.active {
-            color: var(--show-color);
+            /* AA-compliant text on dark sidebar bg */
+            color: var(--show-color-text, var(--show-color));
             border-left-color: var(--show-color);
         }
         .blog-toc a.toc-h3 {
@@ -327,14 +343,18 @@
             margin: 0 0 var(--sp-4);
         }
         .blog-article a {
-            color: var(--show-color);
+            /* Body links — AA-compliant lightened brand on dark bg.
+               Saturated brand colors fail 4.5:1 on `--nn-bg`; the
+               `--show-color-text` variable lightens by 35 % white so
+               every show clears AA. */
+            color: var(--show-color-text, var(--show-color));
             text-decoration: underline;
             text-underline-offset: 2px;
-            text-decoration-color: color-mix(in srgb, var(--show-color) 40%, transparent);
+            text-decoration-color: color-mix(in srgb, var(--show-color-text, var(--show-color)) 40%, transparent);
             transition: text-decoration-color var(--duration) var(--ease);
         }
         .blog-article a:hover {
-            text-decoration-color: var(--show-color);
+            text-decoration-color: var(--show-color-text, var(--show-color));
         }
         .blog-article strong {
             color: var(--nn-white);
@@ -613,13 +633,88 @@
         }
         .blog-listen-cta:hover {
             border-color: var(--show-color);
-            color: var(--show-color);
+            color: var(--show-color-text, var(--show-color));
+        }
+
+        /* Hover-card citations (Phase 3.4 of the May 2026 audit).
+           A small inline pill shows the publisher domain; on hover or
+           keyboard focus a popover reveals the full URL so readers
+           can verify provenance without leaving the page. Pure CSS,
+           no JS — works in every email/RSS-rendered surface that
+           runs the page stylesheet. */
+        .cite {
+            position: relative;
+            display: inline-block;
+        }
+        .cite-pill {
+            display: inline-block;
+            padding: 0.05em 0.55em;
+            margin: 0 0.1em;
+            border-radius: 999px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.78em;
+            line-height: 1.4;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+            white-space: nowrap;
+        }
+        .cite-pill:hover,
+        .cite-pill:focus {
+            border-color: var(--show-color);
+            /* Same AA fix as body links — brand text needs to clear
+               4.5:1 on the dark card surface. */
+            color: var(--show-color-text, var(--show-color));
+            outline: none;
+        }
+        .cite-card {
+            position: absolute;
+            left: 0;
+            bottom: calc(100% + 6px);
+            z-index: 10;
+            min-width: 240px;
+            max-width: 360px;
+            padding: var(--sp-2) var(--sp-3);
+            border-radius: 8px;
+            background: var(--nn-bg);
+            border: 1px solid var(--nn-border);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+            color: var(--nn-text);
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            word-break: break-all;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--duration) var(--ease);
+            pointer-events: none;
+        }
+        .cite:hover .cite-card,
+        .cite-pill:focus + .cite-card,
+        .cite-pill:focus-within + .cite-card {
+            opacity: 1;
+            visibility: visible;
+        }
+        @media (max-width: 600px) {
+            .cite-card {
+                left: auto;
+                right: 0;
+                min-width: 0;
+                max-width: 90vw;
+            }
         }
     </style>
 
 
     
-    <style>:root { --show-color: #7C5CFF; --show-color-dark: #6366f1; }</style>
+    
+    <style>:root {
+      --show-color: #6B47FF;
+      --show-color-dark: #4f46e5;
+      --show-color-text: color-mix(in srgb, #6B47FF, white 35%);
+    }</style>
     
     <style>
         @media (max-width: 768px) {
@@ -939,7 +1034,7 @@
             <li><a href="../../index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../fascinating-frontiers.html" style="color:var(--nn-text-muted);text-decoration:none;">Fascinating Frontiers</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../blog/fascinating_frontiers/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
-            <li aria-current="page" style="color:var(--show-color);">Episode 53</li>
+            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 53</li>
         </ol>
     </nav>
 
@@ -1003,43 +1098,43 @@
 <ol>
 <li><strong>SPHEREx Maps Galactic Ice Regions: 16 April 2026 • Phys.org</strong></li>
 <p class="blog-list-cont">NASA's SPHEREx mission has mapped interstellar ice inside giant molecular clouds across regions more than 600 light-years wide in our galaxy. The findings, published in The Astrophysical Journal, reveal the distribution of ices that play a key role in star and planet formation.</p>
-<p class="blog-list-cont">Source: <a href="https://phys.org/news/2026-04-interstellar-glaciers-nasa-spherex-vast.html" target="_blank" rel="noopener">phys.org</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://phys.org/news/2026-04-interstellar-glaciers-nasa-spherex-vast.html" target="_blank" rel="noopener" aria-describedby="cite-card">phys.org</a><span class="cite-card" id="cite-card" role="tooltip">https://phys.org/news/2026-04-interstellar-glaciers-nasa-spherex-vast.html</span></span></p>
 <li><strong>Artemis II Redefines Space Exploration: 16 April 2026 • National Today</strong></li>
 <p class="blog-list-cont">The successful Artemis II mission is inspiring a new generation of astronomers and space explorers with its crewed flight around the Moon. It marks a pivotal step in NASA's return to lunar exploration and beyond.</p>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMixwFBVV95cUxQdkd4Yl9lT21GeXZZUURuRnhfRG1tRm95enZCMlFWUXJxX2RONnZ1Q1BIMzd6Zk9VeVhfZi1PRUkxYUY4UzJsVzNpczRvamNfRExHcERoWmo1ODFLR1UtQldhREdmVDJYSWNMcnhBc1FnWk9RbHdZSERqM3EzbU1NWmNxSWxQVGpzVlNHU1NGc1R3SkhJMFNkY3RfM0Rkc0ZXdy1qSTRMVjN6dDd6eFZvT0hhWFlidXpqUVJOemxoT3R1dHQtSy00?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMixwFBVV95cUxQdkd4Yl9lT21GeXZZUURuRnhfRG1tRm95enZCMlFWUXJxX2RONnZ1Q1BIMzd6Zk9VeVhfZi1PRUkxYUY4UzJsVzNpczRvamNfRExHcERoWmo1ODFLR1UtQldhREdmVDJYSWNMcnhBc1FnWk9RbHdZSERqM3EzbU1NWmNxSWxQVGpzVlNHU1NGc1R3SkhJMFNkY3RfM0Rkc0ZXdy1qSTRMVjN6dDd6eFZvT0hhWFlidXpqUVJOemxoT3R1dHQtSy00?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMixwFBVV95cUxQdkd4Yl9lT21GeXZZUURuRnhfRG1tRm95enZCMlFWUXJxX2RONnZ1Q1BIMzd6Zk9VeVhfZi1PRUkxYUY4UzJsVzNpczRvamNfRExHcERoWmo1ODFLR1UtQldhREdmVDJYSWNMcnhBc1FnWk9RbHdZSERqM3EzbU1NWmNxSWxQVGpzVlNHU1NGc1R3SkhJMFNkY3RfM0Rkc0ZXdy1qSTRMVjN6dDd6eFZvT0hhWFlidXpqUVJOemxoT3R1dHQtSy00?oc=5</span></span></p>
 <li><strong>Lessons Learned from Artemis II Mission: 16 April 2026 • London Evening Standard</strong></li>
 <p class="blog-list-cont">Analysis of the Artemis II flight has provided valuable data that will shape the design and execution of future lunar and deep-space missions. Engineers are now applying these insights to refine hardware and procedures for sustained exploration.</p>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMijgFBVV95cUxOQV9fZ0FFQXdBMmV5Zzk5TlRRZHIxVGFLSnpWVW5WeS1MdUFQa2hxNHZTLWNpQS1fNExmd0FBYXU1ZnB0a0VRRFVXOUlnX0F3M2EyTmFjc05aLW9sZl9lTW5xanZ5QXotdE5WUko3UkpGOFhHa3dkeFNVRUNsNjFPbnVFRGpiQ2JEdlNSb1lR?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMijgFBVV95cUxOQV9fZ0FFQXdBMmV5Zzk5TlRRZHIxVGFLSnpWVW5WeS1MdUFQa2hxNHZTLWNpQS1fNExmd0FBYXU1ZnB0a0VRRFVXOUlnX0F3M2EyTmFjc05aLW9sZl9lTW5xanZ5QXotdE5WUko3UkpGOFhHa3dkeFNVRUNsNjFPbnVFRGpiQ2JEdlNSb1lR?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMijgFBVV95cUxOQV9fZ0FFQXdBMmV5Zzk5TlRRZHIxVGFLSnpWVW5WeS1MdUFQa2hxNHZTLWNpQS1fNExmd0FBYXU1ZnB0a0VRRFVXOUlnX0F3M2EyTmFjc05aLW9sZl9lTW5xanZ5QXotdE5WUko3UkpGOFhHa3dkeFNVRUNsNjFPbnVFRGpiQ2JEdlNSb1lR?oc=5</span></span></p>
 <li><strong>Future Directions After Artemis II Success: 16 April 2026 • CSIRO</strong></li>
 <p class="blog-list-cont">With Artemis II completed, space agencies are charting the next phases of lunar exploration including sustained presence and eventual Mars missions. The mission's achievements open pathways for international collaboration and new technologies.</p>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMiigFBVV95cUxPUWJpWGZjOUJtbXRNZUR1YUQ4bGJGYm1xRlE4TmdpM0t1aUR3S2s2dDFFTzFFUUx2dzhHdTk2OHctZDRfMW81V2ZZNV9qcS1lTXFXTEo4LTM1MS1WUlFkUXBlZnZILVVCMjhaSEFqcDZKcjRSZTZDRllDT09xV0hCOW5DS1ZKcHF5UEE?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMiigFBVV95cUxPUWJpWGZjOUJtbXRNZUR1YUQ4bGJGYm1xRlE4TmdpM0t1aUR3S2s2dDFFTzFFUUx2dzhHdTk2OHctZDRfMW81V2ZZNV9qcS1lTXFXTEo4LTM1MS1WUlFkUXBlZnZILVVCMjhaSEFqcDZKcjRSZTZDRllDT09xV0hCOW5DS1ZKcHF5UEE?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMiigFBVV95cUxPUWJpWGZjOUJtbXRNZUR1YUQ4bGJGYm1xRlE4TmdpM0t1aUR3S2s2dDFFTzFFUUx2dzhHdTk2OHctZDRfMW81V2ZZNV9qcS1lTXFXTEo4LTM1MS1WUlFkUXBlZnZILVVCMjhaSEFqcDZKcjRSZTZDRllDT09xV0hCOW5DS1ZKcHF5UEE?oc=5</span></span></p>
 <li><strong>Nuclear-Powered Rockets Discussion: 16 April 2026 • Counterpunch</strong></li>
 <p class="blog-list-cont">Proposals for nuclear propulsion systems are gaining attention as a way to dramatically reduce travel times for deep-space missions. Such technology could enable more ambitious human and robotic exploration of the solar system.</p>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9TaTZ2dEVWd0MyRkVhdVdKVlRocHpCQWF6Zy1JVkM3a3d4TGtUd3JYc1FxQjdtYTNrbzM1LVNqVFRKa3ZrRlYxZG9taXhxYW1NZzdENnJNNExXR1B5dHZUaHVza1hTaFk?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9TaTZ2dEVWd0MyRkVhdVdKVlRocHpCQWF6Zy1JVkM3a3d4TGtUd3JYc1FxQjdtYTNrbzM1LVNqVFRKa3ZrRlYxZG9taXhxYW1NZzdENnJNNExXR1B5dHZUaHVza1hTaFk?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMiZ0FVX3lxTE9TaTZ2dEVWd0MyRkVhdVdKVlRocHpCQWF6Zy1JVkM3a3d4TGtUd3JYc1FxQjdtYTNrbzM1LVNqVFRKa3ZrRlYxZG9taXhxYW1NZzdENnJNNExXR1B5dHZUaHVza1hTaFk?oc=5</span></span></p>
 <li><strong>Fred Haise to Speak at Space Education Summit: 16 April 2026 • Reddit r/space</strong></li>
 <p class="blog-list-cont">Apollo 13 astronaut Fred Haise will join an online panel tomorrow at 8:00am PT as part of a free Space Education Summit. The event offers a rare chance to hear firsthand from someone who flew to the Moon's vicinity during the Apollo era.</p>
-<p class="blog-list-cont">Source: <a href="https://www.reddit.com/r/space/comments/1smu2m5/apollo_13s_fred_haise_online_talk_friday_17th/" target="_blank" rel="noopener">reddit.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.reddit.com/r/space/comments/1smu2m5/apollo_13s_fred_haise_online_talk_friday_17th/" target="_blank" rel="noopener" aria-describedby="cite-card">reddit.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reddit.com/r/space/comments/1smu2m5/apollo_13s_fred_haise_online_talk_friday_17th/</span></span></p>
 <li><strong>Eyeing the Richat Structure from Space: 16 April 2026 • NASA</strong></li>
 <p class="blog-list-cont">NASA's Earth Observatory has released a striking image of the circular Richat Structure in northwestern Africa, a geologic feature best recognized from orbit. The formation's scale and symmetry become obvious only when viewed from space, highlighting how satellite perspectives reveal Earth's hidden geology.</p>
-<p class="blog-list-cont">Source: <a href="https://science.nasa.gov/earth/earth-observatory/eyeing-the-richat-structure/" target="_blank" rel="noopener">science.nasa.gov</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://science.nasa.gov/earth/earth-observatory/eyeing-the-richat-structure/" target="_blank" rel="noopener" aria-describedby="cite-card">science.nasa.gov</a><span class="cite-card" id="cite-card" role="tooltip">https://science.nasa.gov/earth/earth-observatory/eyeing-the-richat-structure/</span></span></p>
 <li><strong>Space Force Reorganizes, Absorbs SDA: 16 April 2026 • SpaceNews</strong></li>
 <p class="blog-list-cont">The U.S. Space Force is restructuring and integrating the Space Development Agency as a standalone organization ends. Officials emphasize that the SDA's rapid "go fast" acquisition approach will continue within the new portfolio-based structure.</p>
-<p class="blog-list-cont">Source: <a href="https://spacenews.com/space-force-reorg-signals-end-of-sda-as-standalone-agency/" target="_blank" rel="noopener">spacenews.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://spacenews.com/space-force-reorg-signals-end-of-sda-as-standalone-agency/" target="_blank" rel="noopener" aria-describedby="cite-card">spacenews.com</a><span class="cite-card" id="cite-card" role="tooltip">https://spacenews.com/space-force-reorg-signals-end-of-sda-as-standalone-agency/</span></span></p>
 <li><strong>DESI Completes 3D Map of the Universe: 16 April 2026 • Reddit r/space</strong></li>
 <p class="blog-list-cont">The Dark Energy Spectroscopic Instrument has finished its planned comprehensive 3D map of the cosmos and is now extending its observations. This detailed survey provides an unprecedented view of large-scale structure that astronomers will mine for years.</p>
-<p class="blog-list-cont">Source: <a href="https://www.reddit.com/r/space/comments/1smq959/desi_completes_planned_3d_map_of_the_universe_and/" target="_blank" rel="noopener">reddit.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.reddit.com/r/space/comments/1smq959/desi_completes_planned_3d_map_of_the_universe_and/" target="_blank" rel="noopener" aria-describedby="cite-card">reddit.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reddit.com/r/space/comments/1smq959/desi_completes_planned_3d_map_of_the_universe_and/</span></span></p>
 <li><strong>Cherenkov Radiation Discovery Story: 16 April 2026 • Universe Today</strong></li>
 <p class="blog-list-cont">In 1934, Soviet physicist Pavel Cherenkov investigated a faint blue glow produced when gamma rays passed through water, leading to the discovery of Cherenkov radiation. This phenomenon, once puzzling, has become a vital tool in particle physics and neutrino detection.</p>
-<p class="blog-list-cont">Source: <a href="https://www.universetoday.com/articles/what-happens-when-light-goes-boom-part-1-the-scientist-who-stared-at-a-glow" target="_blank" rel="noopener">universetoday.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.universetoday.com/articles/what-happens-when-light-goes-boom-part-1-the-scientist-who-stared-at-a-glow" target="_blank" rel="noopener" aria-describedby="cite-card">universetoday.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.universetoday.com/articles/what-happens-when-light-goes-boom-part-1-the-scientist-who-stared-at-a-glow</span></span></p>
 <li><strong>Korea-Canada Space Alliance Announced: 16 April 2026 • Seoul Economic Daily</strong></li>
 <p class="blog-list-cont">Canada and South Korea have launched a new partnership focused on low-Earth orbit satellite communications and broader space exploration efforts. The alliance aims to combine expertise for joint missions and technology development.</p>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMimwFBVV95cUxNWllZTnhubGJCTURONEthTUpPTTA4RTJRWm9jRnF4MWRINnJNYXZIY0ZaMHZWNk5nUmIzU3ladmtnR2l5RlBTeGN0dDNrT2ViS2kzT1hVMnVMaXVBSG1RQWxUM2phbGZmMkdwYXNfdENYY2kxSzlndjQzOEdxU1MxazBsTUVKMzdINlZ1c1NqeWlGbEExX0RjTXpKTQ?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMimwFBVV95cUxNWllZTnhubGJCTURONEthTUpPTTA4RTJRWm9jRnF4MWRINnJNYXZIY0ZaMHZWNk5nUmIzU3ladmtnR2l5RlBTeGN0dDNrT2ViS2kzT1hVMnVMaXVBSG1RQWxUM2phbGZmMkdwYXNfdENYY2kxSzlndjQzOEdxU1MxazBsTUVKMzdINlZ1c1NqeWlGbEExX0RjTXpKTQ?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMimwFBVV95cUxNWllZTnhubGJCTURONEthTUpPTTA4RTJRWm9jRnF4MWRINnJNYXZIY0ZaMHZWNk5nUmIzU3ladmtnR2l5RlBTeGN0dDNrT2ViS2kzT1hVMnVMaXVBSG1RQWxUM2phbGZmMkdwYXNfdENYY2kxSzlndjQzOEdxU1MxazBsTUVKMzdINlZ1c1NqeWlGbEExX0RjTXpKTQ?oc=5</span></span></p>
 <li><strong>Blue Origin Progresses on Vandenberg Launch Site: 16 April 2026 • Santa Maria Times</strong></li>
 <p class="blog-list-cont">Blue Origin is advancing through the early approval stages for a new launch site at Vandenberg Space Force Base in California. The facility would expand options for polar and sun-synchronous orbit missions on the West Coast.</p>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMihgJBVV95cUxNenFHWHdhSmotQ3FrNkNQcHd2RzRmQmUzd1lyRVhWNUVvRm95VHZONDlia3pRQlJmelQ5MmI4RGVfcDgtZ0FfczBlN29QSjZpUmhva1p3azlHb29zSzNEWjh6dFYxS2RtRmUxQlozOHF1a0JTZ09IY2NnNWFva0NjazU1TFZkYjBkOXdteXZQemhQUWhmNUF3TzJSYlFlMjd2YTg5Z1FqMnpJV2RsSEVxd1JYYUQ0bTNvSjZGQllmdWt2TF9TckZfUTM5ZG42Y2l5SUVtS3pxTDFpQ013bkhPVlpKVUV1SGx5YzZPNHktV2NqajNRV2xBMXNYaDcxbUJnWnQweXBn0gGLAkFVX3lxTE15M2lzWGhHeHE4bm5hRVR3cXZkc1FRV2JSUHpsdzg2MkwwWlRTaG9LNkttclBSOVMxc1VBV2NaT3R1Zm5PQTVnRk9DeXo3eDJTNUZrdzh0NkZWTXVVdjNsbTd3Rm9EeXZzRGotOEdMUXlEQXlQOTgwSlNHSmllM0hadms0amw0dzMya1N2TXFoNmpjc0duWUtNcHVNM09jQnF5NFVrNVVIQ0VySUZGaEdScEhmM09sOVI2aldJcHM2YWlqYmpaeW5HeDU2TjU3eXNXeU53RXFZUVdFTURkcExteGsybUNscjVEeEJ5NUFGbXN5V2dQZmt0eHZCWWp1MktGajFVQnhTVWlvOA?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMihgJBVV95cUxNenFHWHdhSmotQ3FrNkNQcHd2RzRmQmUzd1lyRVhWNUVvRm95VHZONDlia3pRQlJmelQ5MmI4RGVfcDgtZ0FfczBlN29QSjZpUmhva1p3azlHb29zSzNEWjh6dFYxS2RtRmUxQlozOHF1a0JTZ09IY2NnNWFva0NjazU1TFZkYjBkOXdteXZQemhQUWhmNUF3TzJSYlFlMjd2YTg5Z1FqMnpJV2RsSEVxd1JYYUQ0bTNvSjZGQllmdWt2TF9TckZfUTM5ZG42Y2l5SUVtS3pxTDFpQ013bkhPVlpKVUV1SGx5YzZPNHktV2NqajNRV2xBMXNYaDcxbUJnWnQweXBn0gGLAkFVX3lxTE15M2lzWGhHeHE4bm5hRVR3cXZkc1FRV2JSUHpsdzg2MkwwWlRTaG9LNkttclBSOVMxc1VBV2NaT3R1Zm5PQTVnRk9DeXo3eDJTNUZrdzh0NkZWTXVVdjNsbTd3Rm9EeXZzRGotOEdMUXlEQXlQOTgwSlNHSmllM0hadms0amw0dzMya1N2TXFoNmpjc0duWUtNcHVNM09jQnF5NFVrNVVIQ0VySUZGaEdScEhmM09sOVI2aldJcHM2YWlqYmpaeW5HeDU2TjU3eXNXeU53RXFZUVdFTURkcExteGsybUNscjVEeEJ5NUFGbXN5V2dQZmt0eHZCWWp1MktGajFVQnhTVWlvOA?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMihgJBVV95cUxNenFHWHdhSmotQ3FrNkNQcHd2RzRmQmUzd1lyRVhWNUVvRm95VHZONDlia3pRQlJmelQ5MmI4RGVfcDgtZ0FfczBlN29QSjZpUmhva1p3azlHb29zSzNEWjh6dFYxS2RtRmUxQlozOHF1a0JTZ09IY2NnNWFva0NjazU1TFZkYjBkOXdteXZQemhQUWhmNUF3TzJSYlFlMjd2YTg5Z1FqMnpJV2RsSEVxd1JYYUQ0bTNvSjZGQllmdWt2TF9TckZfUTM5ZG42Y2l5SUVtS3pxTDFpQ013bkhPVlpKVUV1SGx5YzZPNHktV2NqajNRV2xBMXNYaDcxbUJnWnQweXBn0gGLAkFVX3lxTE15M2lzWGhHeHE4bm5hRVR3cXZkc1FRV2JSUHpsdzg2MkwwWlRTaG9LNkttclBSOVMxc1VBV2NaT3R1Zm5PQTVnRk9DeXo3eDJTNUZrdzh0NkZWTXVVdjNsbTd3Rm9EeXZzRGotOEdMUXlEQXlQOTgwSlNHSmllM0hadms0amw0dzMya1N2TXFoNmpjc0duWUtNcHVNM09jQnF5NFVrNVVIQ0VySUZGaEdScEhmM09sOVI2aldJcHM2YWlqYmpaeW5HeDU2TjU3eXNXeU53RXFZUVdFTURkcExteGsybUNscjVEeEJ5NUFGbXN5V2dQZmt0eHZCWWp1MktGajFVQnhTVWlvOA?oc=5</span></span></p>
 <li><strong>Purdue University Adds Crew to Space Mission: 16 April 2026 • AOL.com</strong></li>
 <p class="blog-list-cont">Purdue has finalized its crew roster for an upcoming student-led space mission, bringing on the last members. The project continues a long tradition of university involvement in hands-on aerospace development.</p>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMiggFBVV95cUxNRjh0cWhuZk5McUd4WDE0bWdObmZfR2YtYVhLU01waWkyQkpwLXJTV1BvaTF0WUwyX3djWTctbUNjeWZubjJJUHM3WEJVQ19VN1ZTbE9WTFRlWGtNTmxNOHB1TjhyVTkzRFJwRm9DWkdHcDNUXzJXUjdKYzlPS2tqaEZB?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMiggFBVV95cUxNRjh0cWhuZk5McUd4WDE0bWdObmZfR2YtYVhLU01waWkyQkpwLXJTV1BvaTF0WUwyX3djWTctbUNjeWZubjJJUHM3WEJVQ19VN1ZTbE9WTFRlWGtNTmxNOHB1TjhyVTkzRFJwRm9DWkdHcDNUXzJXUjdKYzlPS2tqaEZB?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMiggFBVV95cUxNRjh0cWhuZk5McUd4WDE0bWdObmZfR2YtYVhLU01waWkyQkpwLXJTV1BvaTF0WUwyX3djWTctbUNjeWZubjJJUHM3WEJVQ19VN1ZTbE9WTFRlWGtNTmxNOHB1TjhyVTkzRFJwRm9DWkdHcDNUXzJXUjdKYzlPS2tqaEZB?oc=5</span></span></p>
 </ol>
 <h4 id="cosmic-spotlight">Cosmic Spotlight</h4>
 <p><strong>SPHEREx Maps Galactic Ice Regions</strong></p>
@@ -1275,6 +1370,34 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
             </nav>
             
             <!-- Cross-show Recommendations -->
+            
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/models_agents_beginners/ep028.html" class="blog-related-card" style="--card-show-color: #C2410C">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #C2410C, white 35%)">Models & Agents for Beginners</span>
+                        <h3>Three AIs debating your toughest questions on a shared canvas could make getting...</h3>
+                        <p>Three AIs debating your toughest questions on a shared canvas could make getting reliable advice from AI much easier.</p>
+                    </a>
+                    
+                    <a href="../../blog/models_agents/ep040.html" class="blog-related-card" style="--card-show-color: #7C3AED">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #7C3AED, white 35%)">Models & Agents</span>
+                        <h3>Models & Agents</h3>
+                        <p>OpenAI gives 8,000 developers a month of 10x Codex rate limits after the GPT-5.5 party sold out.</p>
+                    </a>
+                    
+                    <a href="../../blog/privet_russian/ep019.html" class="blog-related-card" style="--card-show-color: #4F46E5">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #4F46E5, white 35%)">Привет, Русский!</span>
+                        <h3>Привет, Русский! — Episode Plan</h3>
+                        <p>- Russian (Cyrillic): Космос</p>
+                    </a>
+                    
+                </div>
+            </section>
             
         </article>
     </div>

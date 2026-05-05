@@ -7,7 +7,7 @@
     
     <meta name="keywords" content="space podcast, astronomy news, NASA discoveries, space exploration, Fascinating Frontiers">
     <title>Fascinating Frontiers — Ep51 | Fascinating Frontiers Blog</title>
-    <meta name="theme-color" content="#7C5CFF">
+    <meta name="theme-color" content="#6B47FF">
 
     <!-- Open Graph -->
     <meta property="og:title" content="Fascinating Frontiers — Ep51 | Fascinating Frontiers Blog">
@@ -34,9 +34,23 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%237C5CFF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%236B47FF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/></svg>">
 
     
+    
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="../../assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
     
     
     
@@ -185,7 +199,8 @@
             padding: 2px 10px;
             border-radius: 100px;
             background: color-mix(in srgb, var(--show-color) 15%, transparent);
-            color: var(--show-color);
+            /* AA-compliant text on dark page bg — see --show-color-text in base.html.j2 */
+            color: var(--show-color-text, var(--show-color));
             font-weight: 600;
         }
         .post-author {
@@ -282,7 +297,8 @@
         }
         .blog-toc a:hover,
         .blog-toc a.active {
-            color: var(--show-color);
+            /* AA-compliant text on dark sidebar bg */
+            color: var(--show-color-text, var(--show-color));
             border-left-color: var(--show-color);
         }
         .blog-toc a.toc-h3 {
@@ -327,14 +343,18 @@
             margin: 0 0 var(--sp-4);
         }
         .blog-article a {
-            color: var(--show-color);
+            /* Body links — AA-compliant lightened brand on dark bg.
+               Saturated brand colors fail 4.5:1 on `--nn-bg`; the
+               `--show-color-text` variable lightens by 35 % white so
+               every show clears AA. */
+            color: var(--show-color-text, var(--show-color));
             text-decoration: underline;
             text-underline-offset: 2px;
-            text-decoration-color: color-mix(in srgb, var(--show-color) 40%, transparent);
+            text-decoration-color: color-mix(in srgb, var(--show-color-text, var(--show-color)) 40%, transparent);
             transition: text-decoration-color var(--duration) var(--ease);
         }
         .blog-article a:hover {
-            text-decoration-color: var(--show-color);
+            text-decoration-color: var(--show-color-text, var(--show-color));
         }
         .blog-article strong {
             color: var(--nn-white);
@@ -613,13 +633,88 @@
         }
         .blog-listen-cta:hover {
             border-color: var(--show-color);
-            color: var(--show-color);
+            color: var(--show-color-text, var(--show-color));
+        }
+
+        /* Hover-card citations (Phase 3.4 of the May 2026 audit).
+           A small inline pill shows the publisher domain; on hover or
+           keyboard focus a popover reveals the full URL so readers
+           can verify provenance without leaving the page. Pure CSS,
+           no JS — works in every email/RSS-rendered surface that
+           runs the page stylesheet. */
+        .cite {
+            position: relative;
+            display: inline-block;
+        }
+        .cite-pill {
+            display: inline-block;
+            padding: 0.05em 0.55em;
+            margin: 0 0.1em;
+            border-radius: 999px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.78em;
+            line-height: 1.4;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+            white-space: nowrap;
+        }
+        .cite-pill:hover,
+        .cite-pill:focus {
+            border-color: var(--show-color);
+            /* Same AA fix as body links — brand text needs to clear
+               4.5:1 on the dark card surface. */
+            color: var(--show-color-text, var(--show-color));
+            outline: none;
+        }
+        .cite-card {
+            position: absolute;
+            left: 0;
+            bottom: calc(100% + 6px);
+            z-index: 10;
+            min-width: 240px;
+            max-width: 360px;
+            padding: var(--sp-2) var(--sp-3);
+            border-radius: 8px;
+            background: var(--nn-bg);
+            border: 1px solid var(--nn-border);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+            color: var(--nn-text);
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            word-break: break-all;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--duration) var(--ease);
+            pointer-events: none;
+        }
+        .cite:hover .cite-card,
+        .cite-pill:focus + .cite-card,
+        .cite-pill:focus-within + .cite-card {
+            opacity: 1;
+            visibility: visible;
+        }
+        @media (max-width: 600px) {
+            .cite-card {
+                left: auto;
+                right: 0;
+                min-width: 0;
+                max-width: 90vw;
+            }
         }
     </style>
 
 
     
-    <style>:root { --show-color: #7C5CFF; --show-color-dark: #6366f1; }</style>
+    
+    <style>:root {
+      --show-color: #6B47FF;
+      --show-color-dark: #4f46e5;
+      --show-color-text: color-mix(in srgb, #6B47FF, white 35%);
+    }</style>
     
     <style>
         @media (max-width: 768px) {
@@ -939,7 +1034,7 @@
             <li><a href="../../index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../fascinating-frontiers.html" style="color:var(--nn-text-muted);text-decoration:none;">Fascinating Frontiers</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../blog/fascinating_frontiers/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
-            <li aria-current="page" style="color:var(--show-color);">Episode 51</li>
+            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 51</li>
         </ol>
     </nav>
 
@@ -1008,46 +1103,46 @@
 <ol>
 <li><strong>Artemis II Nears Critical Re-entry Test: 10 April 2026 • Astronomy Magazine</strong></li>
 <p class="blog-list-cont">After slingshotting around the Moon and traveling farther from Earth than any humans before, the four Artemis II astronauts are hours from splashing down off San Diego. The mission’s final phase tests the heat shield under extreme conditions as one of the most perilous moments of the flight.</p>
-<p class="blog-list-cont">Source: <a href="https://www.astronomy.com/space-exploration/artemis-2-what-to-expect-on-missions-critical-final-day/" target="_blank" rel="noopener">astronomy.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.astronomy.com/space-exploration/artemis-2-what-to-expect-on-missions-critical-final-day/" target="_blank" rel="noopener" aria-describedby="cite-card">astronomy.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.astronomy.com/space-exploration/artemis-2-what-to-expect-on-missions-critical-final-day/</span></span></p>
 <li><strong>Earthset Captured from Lunar Far Side: 10 April 2026 • NASA</strong></li>
 <p class="blog-list-cont">The Artemis II crew photographed our home planet rising over the Moon’s far side during their loop around the lunar surface. These images offer a striking new perspective on Earth from deep space and highlight the mission’s observational achievements.</p>
-<p class="blog-list-cont">Source: <a href="https://science.nasa.gov/earth/earth-observatory/earthset-from-the-lunar-far-side/" target="_blank" rel="noopener">science.nasa.gov</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://science.nasa.gov/earth/earth-observatory/earthset-from-the-lunar-far-side/" target="_blank" rel="noopener" aria-describedby="cite-card">science.nasa.gov</a><span class="cite-card" id="cite-card" role="tooltip">https://science.nasa.gov/earth/earth-observatory/earthset-from-the-lunar-far-side/</span></span></p>
 <li><strong>Senator Britt Holds Live Call with Artemis II Crew: 10 April 2026 • U.S. Senate (.gov)</strong></li>
 <p class="blog-list-cont">U.S. Senator Katie Britt spoke directly with the Artemis II astronauts on their final full day in space. The conversation captured the crew’s experiences during humanity’s first crewed flight beyond low Earth orbit in decades.</p>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMi4gFBVV95cUxNTWczSFhMMWV6WHVKN3A1bUg0cWVmSjBzR3ZtWVRvX1NvczdzXzVGUGRpV2dkUGFLamp6UERJVjJnSllERjZaQXBlQzVNbUZSNzVVblhBaFY0QWVCbkN5NWtuU1dkQVBGd0RLakFuWlNfYjNqR3N4TnI1UGk0al83REQ4dWxlSFU5VDQyQTJacUpWQXRUc3AzZXR6MEN1OGpNQnBKNFJ6dmlRNXFDeE5YT05nbWJ2c3pkRm9MTUhUSU5YN2FyeEVnZUZRMnhJeDV2OTc3SlNJNXI2VWNtQTZrWGp3?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMi4gFBVV95cUxNTWczSFhMMWV6WHVKN3A1bUg0cWVmSjBzR3ZtWVRvX1NvczdzXzVGUGRpV2dkUGFLamp6UERJVjJnSllERjZaQXBlQzVNbUZSNzVVblhBaFY0QWVCbkN5NWtuU1dkQVBGd0RLakFuWlNfYjNqR3N4TnI1UGk0al83REQ4dWxlSFU5VDQyQTJacUpWQXRUc3AzZXR6MEN1OGpNQnBKNFJ6dmlRNXFDeE5YT05nbWJ2c3pkRm9MTUhUSU5YN2FyeEVnZUZRMnhJeDV2OTc3SlNJNXI2VWNtQTZrWGp3?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMi4gFBVV95cUxNTWczSFhMMWV6WHVKN3A1bUg0cWVmSjBzR3ZtWVRvX1NvczdzXzVGUGRpV2dkUGFLamp6UERJVjJnSllERjZaQXBlQzVNbUZSNzVVblhBaFY0QWVCbkN5NWtuU1dkQVBGd0RLakFuWlNfYjNqR3N4TnI1UGk0al83REQ4dWxlSFU5VDQyQTJacUpWQXRUc3AzZXR6MEN1OGpNQnBKNFJ6dmlRNXFDeE5YT05nbWJ2c3pkRm9MTUhUSU5YN2FyeEVnZUZRMnhJeDV2OTc3SlNJNXI2VWNtQTZrWGp3?oc=5</span></span></p>
 <li><strong>Senator Cantwell Connects with Returning Artemis II Crew: 10 April 2026 • NonStop Local KHQ</strong></li>
 <p class="blog-list-cont">Senator Cantwell held a live discussion with the Artemis II astronauts as they prepared to return from their lunar mission. The exchange reflected growing national engagement with NASA’s return to crewed lunar exploration.</p>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMi3gFBVV95cUxQQ3FWVHREdjc3SXdLS0ZzWVY0Zml1M2hMYi13Z3V5TmNEVl9NWUVVd3dpWnpCUjdfenBpQ2ZfVUtra3p0NFRIeEZScFRkeUJlZGM0WVowZFYyVHpJNkNyWUZLYldXYWl5ckdzS0duNUxDbkcxUGpPUEZkU1RtRHRnX1dEMURoaDJPTy15cUNTbGF2Uk5SeUQ5ankzcENzTzNtalhvb1NDY3B3WFMtZ3FmWkZKZXcyOHNfSHhVbVM3cXgwUXRQREtuLU40a2pQcEhHQVNnenl2bm85MXRwQlE?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMi3gFBVV95cUxQQ3FWVHREdjc3SXdLS0ZzWVY0Zml1M2hMYi13Z3V5TmNEVl9NWUVVd3dpWnpCUjdfenBpQ2ZfVUtra3p0NFRIeEZScFRkeUJlZGM0WVowZFYyVHpJNkNyWUZLYldXYWl5ckdzS0duNUxDbkcxUGpPUEZkU1RtRHRnX1dEMURoaDJPTy15cUNTbGF2Uk5SeUQ5ankzcENzTzNtalhvb1NDY3B3WFMtZ3FmWkZKZXcyOHNfSHhVbVM3cXgwUXRQREtuLU40a2pQcEhHQVNnenl2bm85MXRwQlE?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMi3gFBVV95cUxQQ3FWVHREdjc3SXdLS0ZzWVY0Zml1M2hMYi13Z3V5TmNEVl9NWUVVd3dpWnpCUjdfenBpQ2ZfVUtra3p0NFRIeEZScFRkeUJlZGM0WVowZFYyVHpJNkNyWUZLYldXYWl5ckdzS0duNUxDbkcxUGpPUEZkU1RtRHRnX1dEMURoaDJPTy15cUNTbGF2Uk5SeUQ5ankzcENzTzNtalhvb1NDY3B3WFMtZ3FmWkZKZXcyOHNfSHhVbVM3cXgwUXRQREtuLU40a2pQcEhHQVNnenl2bm85MXRwQlE?oc=5</span></span></p>
 <li><strong>Artemis Astronaut Salaries Revealed as Modest: 10 April 2026 • National Today</strong></li>
 <p class="blog-list-cont">Details of the Artemis II crew’s compensation have emerged, showing relatively modest pay scales for their historic mission. The contrast between the astronauts’ salaries and the mission’s technical and symbolic importance underscores how spaceflight careers balance dedication with public service.</p>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMivwFBVV95cUxPVllza051bEtRbzNGMEViWWNlUVVWSXB1TWdMNXJCVG5ZWlhsWnJLZTY3MlZVamZIbzBzM1BiWmpmRFkzSVExd0RWS2VCVWhzVnA0SHVMbmt2MzFzdXJ2U2pTTWQ4NVo0anFtTTRoNjg2MTZJbllyajJ4UUNodW5JSTQxd25VclZ4SHlXaUFXWmlWR04xZ2s5eTJNVHBmRVhBNU1qSGhUZ05JZXdOa01NaE5NSF9hMkhUMm91cWVHOA?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMivwFBVV95cUxPVllza051bEtRbzNGMEViWWNlUVVWSXB1TWdMNXJCVG5ZWlhsWnJLZTY3MlZVamZIbzBzM1BiWmpmRFkzSVExd0RWS2VCVWhzVnA0SHVMbmt2MzFzdXJ2U2pTTWQ4NVo0anFtTTRoNjg2MTZJbllyajJ4UUNodW5JSTQxd25VclZ4SHlXaUFXWmlWR04xZ2s5eTJNVHBmRVhBNU1qSGhUZ05JZXdOa01NaE5NSF9hMkhUMm91cWVHOA?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMivwFBVV95cUxPVllza051bEtRbzNGMEViWWNlUVVWSXB1TWdMNXJCVG5ZWlhsWnJLZTY3MlZVamZIbzBzM1BiWmpmRFkzSVExd0RWS2VCVWhzVnA0SHVMbmt2MzFzdXJ2U2pTTWQ4NVo0anFtTTRoNjg2MTZJbllyajJ4UUNodW5JSTQxd25VclZ4SHlXaUFXWmlWR04xZ2s5eTJNVHBmRVhBNU1qSGhUZ05JZXdOa01NaE5NSF9hMkhUMm91cWVHOA?oc=5</span></span></p>
 <li><strong>Comet PanSTARRS Visible This Week: 10 April 2026 • Astronomy Magazine</strong></li>
 <p class="blog-list-cont">Last Quarter Moon occurs on April 10 at 12:52 A.M. EDT, and Comet PanSTARRS becomes a target for evening observers as Hercules rises in the east. The weekly sky guide highlights the comet’s current appearance alongside returning globular clusters like M13.</p>
-<p class="blog-list-cont">Source: <a href="https://www.astronomy.com/the-sky-this-week/the-sky-this-week-from-april-10-to-17-2026/" target="_blank" rel="noopener">astronomy.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.astronomy.com/the-sky-this-week/the-sky-this-week-from-april-10-to-17-2026/" target="_blank" rel="noopener" aria-describedby="cite-card">astronomy.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.astronomy.com/the-sky-this-week/the-sky-this-week-from-april-10-to-17-2026/</span></span></p>
 <li><strong>Surprising Spectral Lines Detected in Solar Flare: 10 April 2026 • Universe Today</strong></li>
 <p class="blog-list-cont">Observations from the Daniel K. Inouye Solar Telescope captured unusually strong calcium II H and hydrogen-epsilon lines in the fading stages of a C-class solar flare on August 19, 2022. Computer models indicate these lines are stronger than predicted and reveal gaps in our understanding of how flares heat the Sun’s atmosphere.</p>
-<p class="blog-list-cont">Source: <a href="https://www.universetoday.com/articles/scientists-spot-a-solar-flare-with-surprising-spectral-behavior" target="_blank" rel="noopener">universetoday.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.universetoday.com/articles/scientists-spot-a-solar-flare-with-surprising-spectral-behavior" target="_blank" rel="noopener" aria-describedby="cite-card">universetoday.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.universetoday.com/articles/scientists-spot-a-solar-flare-with-surprising-spectral-behavior</span></span></p>
 <li><strong>Peregrine Mission Reminds Us Not to Take Space Exploration for Granted: 10 April 2026 • TheDailyNewsOnline.com</strong></li>
 <p class="blog-list-cont">The recent Peregrine lunar lander attempt is cited as a reminder that the achievements of space missions should never feel routine or expected. The piece reflects on how each successful step in exploration builds cumulative knowledge and capability.</p>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMi_wFBVV95cUxQdVlneUFvd2Vrb3lGY3gyN0w1cG5tSXNxR2hKU3Aza1pDWFhLNWFxSWdhTGZZSzZUQ1gtMzJSOFYxLUlJMkdlSEJfTlIxaGNBSHpzdUR0VHEtLXdMYmY2Vkx2TTNwU2l2aGxvaWNqS0pESE8xZFpMaFpRc1BqZ01CUXR2UVBsaXh3MExuc2R0Zmd2dGMtaGxvbmkzV2tvRmtGWEJ2d1h6SEp2cXBZaGlhZUpnVmJzN2FVVWM4NUpMQTJ5ZS02aUZHUXlqS0VDRll3SG5QQzBJMnNLclBhVU4wYUt1cU9FOW9KekFpMUZqSnc2WVdaZm1DcERSbFA3cUU?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMi_wFBVV95cUxQdVlneUFvd2Vrb3lGY3gyN0w1cG5tSXNxR2hKU3Aza1pDWFhLNWFxSWdhTGZZSzZUQ1gtMzJSOFYxLUlJMkdlSEJfTlIxaGNBSHpzdUR0VHEtLXdMYmY2Vkx2TTNwU2l2aGxvaWNqS0pESE8xZFpMaFpRc1BqZ01CUXR2UVBsaXh3MExuc2R0Zmd2dGMtaGxvbmkzV2tvRmtGWEJ2d1h6SEp2cXBZaGlhZUpnVmJzN2FVVWM4NUpMQTJ5ZS02aUZHUXlqS0VDRll3SG5QQzBJMnNLclBhVU4wYUt1cU9FOW9KekFpMUZqSnc2WVdaZm1DcERSbFA3cUU?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMi_wFBVV95cUxQdVlneUFvd2Vrb3lGY3gyN0w1cG5tSXNxR2hKU3Aza1pDWFhLNWFxSWdhTGZZSzZUQ1gtMzJSOFYxLUlJMkdlSEJfTlIxaGNBSHpzdUR0VHEtLXdMYmY2Vkx2TTNwU2l2aGxvaWNqS0pESE8xZFpMaFpRc1BqZ01CUXR2UVBsaXh3MExuc2R0Zmd2dGMtaGxvbmkzV2tvRmtGWEJ2d1h6SEp2cXBZaGlhZUpnVmJzN2FVVWM4NUpMQTJ5ZS02aUZHUXlqS0VDRll3SG5QQzBJMnNLclBhVU4wYUt1cU9FOW9KekFpMUZqSnc2WVdaZm1DcERSbFA3cUU?oc=5</span></span></p>
 <li><strong>Artemis Moon Missions Provide Ongoing Research Benefits: 9 April 2026 • Times Higher Education</strong></li>
 <p class="blog-list-cont">Data and samples from Artemis lunar missions continue to deliver new scientific insights long after the flights conclude. Researchers describe the program as a sustained resource that supports studies ranging from planetary geology to instrumentation development.</p>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMilAFBVV95cUxNdFFZNEkyOXdLQ2NjYk94Q3RyR3FlWnBqQUtNUEwzRDE4TGYyWHV1VDZyR2o3Wlh5UlRUT0p3LVUxekN3d21rREptSXcwTHpCLW1NcTU2cnJaQTlsUVYtbV9ObkZaOG5NN0pBaUFHWmhub1FMNXFYQTNoSE8xaDZhN2o0TnRqcTBtNTRYazBZbE9VV1Az?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMilAFBVV95cUxNdFFZNEkyOXdLQ2NjYk94Q3RyR3FlWnBqQUtNUEwzRDE4TGYyWHV1VDZyR2o3Wlh5UlRUT0p3LVUxekN3d21rREptSXcwTHpCLW1NcTU2cnJaQTlsUVYtbV9ObkZaOG5NN0pBaUFHWmhub1FMNXFYQTNoSE8xaDZhN2o0TnRqcTBtNTRYazBZbE9VV1Az?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMilAFBVV95cUxNdFFZNEkyOXdLQ2NjYk94Q3RyR3FlWnBqQUtNUEwzRDE4TGYyWHV1VDZyR2o3Wlh5UlRUT0p3LVUxekN3d21rREptSXcwTHpCLW1NcTU2cnJaQTlsUVYtbV9ObkZaOG5NN0pBaUFHWmhub1FMNXFYQTNoSE8xaDZhN2o0TnRqcTBtNTRYazBZbE9VV1Az?oc=5</span></span></p>
 <li><strong>Indoor Testing Facilities Open at NASA’s NUARC: 9 April 2026 • NASA</strong></li>
 <p class="blog-list-cont">NASA’s Unmanned Autonomy Research Complex now offers access to its WindShaper fan array and companion WindProbe for low-speed flight and gust research. The facility uses a Python API and OptiTrack motion capture to study wind gradients and hovering dynamics for uncrewed systems.</p>
-<p class="blog-list-cont">Source: <a href="https://www.nasa.gov/aeronautics/indoor-testing-facilities-available-at-the-nasa-unmanned-autonomy-research-complex-nuarc/" target="_blank" rel="noopener">nasa.gov</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.nasa.gov/aeronautics/indoor-testing-facilities-available-at-the-nasa-unmanned-autonomy-research-complex-nuarc/" target="_blank" rel="noopener" aria-describedby="cite-card">nasa.gov</a><span class="cite-card" id="cite-card" role="tooltip">https://www.nasa.gov/aeronautics/indoor-testing-facilities-available-at-the-nasa-unmanned-autonomy-research-complex-nuarc/</span></span></p>
 <li><strong>Tennessee Tech Professor to Support 2028 Lunar Landing: 9 April 2026 • Local 3 News</strong></li>
 <p class="blog-list-cont">A faculty member from Tennessee Tech has been selected to contribute to NASA’s planned 2028 crewed Moon landing mission. The partnership brings academic expertise directly into one of the agency’s upcoming Artemis surface operations.</p>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMi5gFBVV95cUxPTUhRZkdVcnpqajlOR3hLN3M1T25LbTA5OXo3ZW9Ddl83cm5xOG9iLXE4Q1VKSG4wa18tdHBrZ2dNdjlUTk5VS0pOMmNBd2ZHNGM2NzZTVXVRQkNzM3BpQ1c1SUhoNlVzcVYwNFRXYmkwVi12eC1zcjRyVHRuRkUtMjhqbXlGdzVqRlFQQzZ5d0xGa1lud3d1RVpwN1JlM0dvRkJyRm0yQTZsM2w2WXR3WUlHTVExOXdIU3RGWEZTUW9lQ1ZYeWlvSDJ4TmowMG5mTDVqOHFpRnhjUS13ekxUWkdMQlVEUQ?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMi5gFBVV95cUxPTUhRZkdVcnpqajlOR3hLN3M1T25LbTA5OXo3ZW9Ddl83cm5xOG9iLXE4Q1VKSG4wa18tdHBrZ2dNdjlUTk5VS0pOMmNBd2ZHNGM2NzZTVXVRQkNzM3BpQ1c1SUhoNlVzcVYwNFRXYmkwVi12eC1zcjRyVHRuRkUtMjhqbXlGdzVqRlFQQzZ5d0xGa1lud3d1RVpwN1JlM0dvRkJyRm0yQTZsM2w2WXR3WUlHTVExOXdIU3RGWEZTUW9lQ1ZYeWlvSDJ4TmowMG5mTDVqOHFpRnhjUS13ekxUWkdMQlVEUQ?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMi5gFBVV95cUxPTUhRZkdVcnpqajlOR3hLN3M1T25LbTA5OXo3ZW9Ddl83cm5xOG9iLXE4Q1VKSG4wa18tdHBrZ2dNdjlUTk5VS0pOMmNBd2ZHNGM2NzZTVXVRQkNzM3BpQ1c1SUhoNlVzcVYwNFRXYmkwVi12eC1zcjRyVHRuRkUtMjhqbXlGdzVqRlFQQzZ5d0xGa1lud3d1RVpwN1JlM0dvRkJyRm0yQTZsM2w2WXR3WUlHTVExOXdIU3RGWEZTUW9lQ1ZYeWlvSDJ4TmowMG5mTDVqOHFpRnhjUS13ekxUWkdMQlVEUQ?oc=5</span></span></p>
 <li><strong>Artemis II Crew Screened ‘Project Hail Mary’ Before Launch: 9 April 2026 • Space.com</strong></li>
 <p class="blog-list-cont">The Artemis II astronauts received a private pre-launch screening of the film adaptation of Andy Weir’s novel Project Hail Mary. Crew members described the movie as uplifting and inspiring in the context of their own deep-space mission.</p>
-<p class="blog-list-cont">Source: <a href="https://www.space.com/entertainment/space-movies-shows/the-artemis-2-astronauts-got-a-private-project-hail-mary-screening-before-launch-heres-their-verdict" target="_blank" rel="noopener">space.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.space.com/entertainment/space-movies-shows/the-artemis-2-astronauts-got-a-private-project-hail-mary-screening-before-launch-heres-their-verdict" target="_blank" rel="noopener" aria-describedby="cite-card">space.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.space.com/entertainment/space-movies-shows/the-artemis-2-astronauts-got-a-private-project-hail-mary-screening-before-launch-heres-their-verdict</span></span></p>
 <li><strong>Astronomers Find Missing Hydrogen in Early Universe: 9 April 2026 • r/astronomy (via PHYS.org)</strong></li>
 <p class="blog-list-cont">New observations have located the hydrogen previously thought to be missing from the early universe, confirming models of cosmic evolution. The peer-reviewed study published in the Astrophysical Journal resolves a long-standing gap in our understanding of the cosmos shortly after the Big Bang.</p>
-<p class="blog-list-cont">Source: <a href="https://www.reddit.com/r/Astronomy/comments/1sh5dmi/physorg_astronomers_thought_the_early_universe/" target="_blank" rel="noopener">reddit.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.reddit.com/r/Astronomy/comments/1sh5dmi/physorg_astronomers_thought_the_early_universe/" target="_blank" rel="noopener" aria-describedby="cite-card">reddit.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reddit.com/r/Astronomy/comments/1sh5dmi/physorg_astronomers_thought_the_early_universe/</span></span></p>
 <li><strong>Visitor Experience at Alabama Astronaut Training Camp: 10 April 2026 • The Times</strong></li>
 <p class="blog-list-cont">A journalist spent a weekend participating in astronaut-style training at Alabama’s facility and reports that members of the public can do the same. The program offers hands-on insight into the preparation astronauts undergo for space missions.</p>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMi2wFBVV95cUxObjZBVGdsRy0xX2xKWGZ6RzFPTUlIVEhRM0tnOVItSVVBMUozU2VwWFZ2VDVoYjdPQUM4S253NEtHcFRhNnpzWVZfZE5DYlFZMkFTdzB2QTZxMklncUY0V0t2MW11alNuc0NDLUNwbUNUdmJFWW1CRW53aFFJbmI0T2tBTjJ6VGxuamFqZnBEREYtRVFuaTdBd1JxOFhxS0lyN0hxTHhUMHNLaVVDSnh6TW1LX01CMGhTYWRBSWpYM2hTV3V3cnJrLTdQRnVEeEx2Z1dsNWU5ZlgtMlk?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMi2wFBVV95cUxObjZBVGdsRy0xX2xKWGZ6RzFPTUlIVEhRM0tnOVItSVVBMUozU2VwWFZ2VDVoYjdPQUM4S253NEtHcFRhNnpzWVZfZE5DYlFZMkFTdzB2QTZxMklncUY0V0t2MW11alNuc0NDLUNwbUNUdmJFWW1CRW53aFFJbmI0T2tBTjJ6VGxuamFqZnBEREYtRVFuaTdBd1JxOFhxS0lyN0hxTHhUMHNLaVVDSnh6TW1LX01CMGhTYWRBSWpYM2hTV3V3cnJrLTdQRnVEeEx2Z1dsNWU5ZlgtMlk?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMi2wFBVV95cUxObjZBVGdsRy0xX2xKWGZ6RzFPTUlIVEhRM0tnOVItSVVBMUozU2VwWFZ2VDVoYjdPQUM4S253NEtHcFRhNnpzWVZfZE5DYlFZMkFTdzB2QTZxMklncUY0V0t2MW11alNuc0NDLUNwbUNUdmJFWW1CRW53aFFJbmI0T2tBTjJ6VGxuamFqZnBEREYtRVFuaTdBd1JxOFhxS0lyN0hxTHhUMHNLaVVDSnh6TW1LX01CMGhTYWRBSWpYM2hTV3V3cnJrLTdQRnVEeEx2Z1dsNWU5ZlgtMlk?oc=5</span></span></p>
 </ol>
 <h4 id="cosmic-spotlight">Cosmic Spotlight</h4>
 <p><strong>Earthset Captured from Lunar Far Side</strong></p>
@@ -1261,6 +1356,34 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
             </nav>
             
             <!-- Cross-show Recommendations -->
+            
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/finansy_prosto/ep031.html" class="blog-related-card" style="--card-show-color: #BE185D">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #BE185D, white 35%)">Финансы Просто</span>
+                        <h3>Как подготовиться к обновлению ипотеки в 2026 году и не потерять контроль над бю...</h3>
+                        <p>Как подготовиться к обновлению ипотеки в 2026 году и не потерять контроль над бюджетом</p>
+                    </a>
+                    
+                    <a href="../../blog/models_agents_beginners/ep029.html" class="blog-related-card" style="--card-show-color: #C2410C">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #C2410C, white 35%)">Models & Agents for Beginners</span>
+                        <h3>Models & Agents for Beginners</h3>
+                        <p>Google just launched 10 free AI courses anyone can start today — no coding or experience required.</p>
+                    </a>
+                    
+                    <a href="../../blog/modern_investing/ep034.html" class="blog-related-card" style="--card-show-color: #047857">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #047857, white 35%)">Modern Investing Techniques</span>
+                        <h3>Modern Investing Techniques</h3>
+                        <p>US companies have announced $665 billion in share buybacks year-to-date, offering a potential support level for equities&hellip;</p>
+                    </a>
+                    
+                </div>
+            </section>
             
         </article>
     </div>

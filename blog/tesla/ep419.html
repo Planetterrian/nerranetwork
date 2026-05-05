@@ -34,9 +34,23 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%237C5CFF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%236B47FF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/></svg>">
 
     
+    
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="../../assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
     
     
     
@@ -185,7 +199,8 @@
             padding: 2px 10px;
             border-radius: 100px;
             background: color-mix(in srgb, var(--show-color) 15%, transparent);
-            color: var(--show-color);
+            /* AA-compliant text on dark page bg — see --show-color-text in base.html.j2 */
+            color: var(--show-color-text, var(--show-color));
             font-weight: 600;
         }
         .post-author {
@@ -282,7 +297,8 @@
         }
         .blog-toc a:hover,
         .blog-toc a.active {
-            color: var(--show-color);
+            /* AA-compliant text on dark sidebar bg */
+            color: var(--show-color-text, var(--show-color));
             border-left-color: var(--show-color);
         }
         .blog-toc a.toc-h3 {
@@ -327,14 +343,18 @@
             margin: 0 0 var(--sp-4);
         }
         .blog-article a {
-            color: var(--show-color);
+            /* Body links — AA-compliant lightened brand on dark bg.
+               Saturated brand colors fail 4.5:1 on `--nn-bg`; the
+               `--show-color-text` variable lightens by 35 % white so
+               every show clears AA. */
+            color: var(--show-color-text, var(--show-color));
             text-decoration: underline;
             text-underline-offset: 2px;
-            text-decoration-color: color-mix(in srgb, var(--show-color) 40%, transparent);
+            text-decoration-color: color-mix(in srgb, var(--show-color-text, var(--show-color)) 40%, transparent);
             transition: text-decoration-color var(--duration) var(--ease);
         }
         .blog-article a:hover {
-            text-decoration-color: var(--show-color);
+            text-decoration-color: var(--show-color-text, var(--show-color));
         }
         .blog-article strong {
             color: var(--nn-white);
@@ -613,13 +633,88 @@
         }
         .blog-listen-cta:hover {
             border-color: var(--show-color);
-            color: var(--show-color);
+            color: var(--show-color-text, var(--show-color));
+        }
+
+        /* Hover-card citations (Phase 3.4 of the May 2026 audit).
+           A small inline pill shows the publisher domain; on hover or
+           keyboard focus a popover reveals the full URL so readers
+           can verify provenance without leaving the page. Pure CSS,
+           no JS — works in every email/RSS-rendered surface that
+           runs the page stylesheet. */
+        .cite {
+            position: relative;
+            display: inline-block;
+        }
+        .cite-pill {
+            display: inline-block;
+            padding: 0.05em 0.55em;
+            margin: 0 0.1em;
+            border-radius: 999px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.78em;
+            line-height: 1.4;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+            white-space: nowrap;
+        }
+        .cite-pill:hover,
+        .cite-pill:focus {
+            border-color: var(--show-color);
+            /* Same AA fix as body links — brand text needs to clear
+               4.5:1 on the dark card surface. */
+            color: var(--show-color-text, var(--show-color));
+            outline: none;
+        }
+        .cite-card {
+            position: absolute;
+            left: 0;
+            bottom: calc(100% + 6px);
+            z-index: 10;
+            min-width: 240px;
+            max-width: 360px;
+            padding: var(--sp-2) var(--sp-3);
+            border-radius: 8px;
+            background: var(--nn-bg);
+            border: 1px solid var(--nn-border);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+            color: var(--nn-text);
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            word-break: break-all;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--duration) var(--ease);
+            pointer-events: none;
+        }
+        .cite:hover .cite-card,
+        .cite-pill:focus + .cite-card,
+        .cite-pill:focus-within + .cite-card {
+            opacity: 1;
+            visibility: visible;
+        }
+        @media (max-width: 600px) {
+            .cite-card {
+                left: auto;
+                right: 0;
+                min-width: 0;
+                max-width: 90vw;
+            }
         }
     </style>
 
 
     
-    <style>:root { --show-color: #E31937; --show-color-dark: #C4122E; }</style>
+    
+    <style>:root {
+      --show-color: #E31937;
+      --show-color-dark: #C4122E;
+      --show-color-text: color-mix(in srgb, #E31937, white 35%);
+    }</style>
     
     <style>
         @media (max-width: 768px) {
@@ -939,7 +1034,7 @@
             <li><a href="../../index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../tesla.html" style="color:var(--nn-text-muted);text-decoration:none;">Tesla Shorts Time</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../blog/tesla/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
-            <li aria-current="page" style="color:var(--show-color);">Episode 419</li>
+            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 419</li>
         </ol>
     </nav>
 
@@ -1010,46 +1105,46 @@
 <ol>
 <li><strong>Tesla begins Model Y Performance and RWD deliveries in British Columbia, March 28, 2026, 12:44 PM PST, Drive Tesla Canada</strong></li>
 <p class="blog-list-cont">The first deliveries of the updated Tesla Model Y lineup have officially begun in British Columbia after weeks of uncertainty and shifting delivery timelines. Vehicles have finally made their way across the country to customers waiting for the refreshed versions. This matters for Tesla's business because it shows the company is steadily expanding availability of its highest-volume vehicle in key Canadian markets. For customers it means the new Model Y variants with improved features are now becoming a real option in the region.</p>
-<p class="blog-list-cont">Source: <a href="https://driveteslacanada.ca/news/tesla-begins-model-y-performance-and-rwd-deliveries-in-british-columbia/?utm_source=rss&utm_medium=rss&utm_campaign=tesla-begins-model-y-performance-and-rwd-deliveries-in-british-columbia" target="_blank" rel="noopener">driveteslacanada.ca</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://driveteslacanada.ca/news/tesla-begins-model-y-performance-and-rwd-deliveries-in-british-columbia/?utm_source=rss&utm_medium=rss&utm_campaign=tesla-begins-model-y-performance-and-rwd-deliveries-in-british-columbia" target="_blank" rel="noopener" aria-describedby="cite-card">driveteslacanada.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://driveteslacanada.ca/news/tesla-begins-model-y-performance-and-rwd-deliveries-in-british-columbia/?utm_source=rss&utm_medium=rss&utm_campaign=tesla-begins-model-y-performance-and-rwd-deliveries-in-british-columbia</span></span></p>
 <li><strong>Cybercab Manufacturing Leader Mark Lupkey Departs Tesla, March 28, 2026, 12:09 PM PST, Drive Tesla Canada</strong></li>
 <p class="blog-list-cont">Tesla’s Cybercab program is seeing another key departure with Mark Lupkey, the Manufacturing Operations Leader for the Cybercab program in Austin, leaving the company. This comes just weeks after the program reached a major production milestone. It matters for Tesla's technology roadmap because retaining specialized manufacturing talent is critical as the company scales toward volume production of its autonomous vehicle. The departure highlights the challenge of keeping experienced leaders in a fast-moving project.</p>
-<p class="blog-list-cont">Source: <a href="https://driveteslacanada.ca/news/tesla-cybercab-manufacturing-leader-mark-lupkey-departs/?utm_source=rss&utm_medium=rss&utm_campaign=tesla-cybercab-manufacturing-leader-mark-lupkey-departs" target="_blank" rel="noopener">driveteslacanada.ca</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://driveteslacanada.ca/news/tesla-cybercab-manufacturing-leader-mark-lupkey-departs/?utm_source=rss&utm_medium=rss&utm_campaign=tesla-cybercab-manufacturing-leader-mark-lupkey-departs" target="_blank" rel="noopener" aria-describedby="cite-card">driveteslacanada.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://driveteslacanada.ca/news/tesla-cybercab-manufacturing-leader-mark-lupkey-departs/?utm_source=rss&utm_medium=rss&utm_campaign=tesla-cybercab-manufacturing-leader-mark-lupkey-departs</span></span></p>
 <li><strong>Tesla Extends Model 3 and Model Y Financing Offers in China Through April, March 28, 2026, 10:34 AM PST, Drive Tesla Canada</strong></li>
 <p class="blog-list-cont">Tesla has extended its financing incentives in China for the Model 3, Model Y, and Model Y L, with the latest promotion now running through the end of April. The updated offer continues to include attractive terms aimed at boosting demand in the world's largest EV market. This is significant for Tesla's business as it works to maintain competitiveness and sales momentum amid intense local competition. For customers it keeps the vehicles more accessible during a key period.</p>
-<p class="blog-list-cont">Source: <a href="https://driveteslacanada.ca/news/tesla-extends-model-3-and-model-y-financing-offers-in-china-through-april/?utm_source=rss&utm_medium=rss&utm_campaign=tesla-extends-model-3-and-model-y-financing-offers-in-china-through-april" target="_blank" rel="noopener">driveteslacanada.ca</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://driveteslacanada.ca/news/tesla-extends-model-3-and-model-y-financing-offers-in-china-through-april/?utm_source=rss&utm_medium=rss&utm_campaign=tesla-extends-model-3-and-model-y-financing-offers-in-china-through-april" target="_blank" rel="noopener" aria-describedby="cite-card">driveteslacanada.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://driveteslacanada.ca/news/tesla-extends-model-3-and-model-y-financing-offers-in-china-through-april/?utm_source=rss&utm_medium=rss&utm_campaign=tesla-extends-model-3-and-model-y-financing-offers-in-china-through-april</span></span></p>
 <li><strong>Tesla Drops Robotaxi Age Limit, Tightens Rules for Teen Riders, March 28, 2026, 10:19 AM PST, Drive Tesla Canada</strong></li>
 <p class="blog-list-cont">Tesla is continuing to refine how its Robotaxi service will operate with a new policy update that lowers the minimum rider age while adding tighter rules for teen riders. The changes build on a series of recent adjustments aimed at making the service practical and safe for real-world use. This matters for the technology and industry as Tesla works through the operational details of unsupervised autonomy at scale. It shows the company is actively iterating on policy as it prepares broader deployment.</p>
-<p class="blog-list-cont">Source: <a href="https://driveteslacanada.ca/news/tesla-drops-robotaxi-age-limit-tightens-rules-for-teen-riders/?utm_source=rss&utm_medium=rss&utm_campaign=tesla-drops-robotaxi-age-limit-tightens-rules-for-teen-riders" target="_blank" rel="noopener">driveteslacanada.ca</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://driveteslacanada.ca/news/tesla-drops-robotaxi-age-limit-tightens-rules-for-teen-riders/?utm_source=rss&utm_medium=rss&utm_campaign=tesla-drops-robotaxi-age-limit-tightens-rules-for-teen-riders" target="_blank" rel="noopener" aria-describedby="cite-card">driveteslacanada.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://driveteslacanada.ca/news/tesla-drops-robotaxi-age-limit-tightens-rules-for-teen-riders/?utm_source=rss&utm_medium=rss&utm_campaign=tesla-drops-robotaxi-age-limit-tightens-rules-for-teen-riders</span></span></p>
 <li><strong>Tesla Robotaxi gets a small but significant change, March 28, 2026, 9:21 AM PST, Teslarati</strong></li>
 <p class="blog-list-cont">Tesla has made a quiet design update to its Robotaxi that carries more weight than it first appears. In an environment where major battery and autonomy breakthroughs often dominate attention, this incremental change still packs a punch for the vehicle's real-world readiness. It reflects how Tesla continues to refine the product even as larger programs advance. The adjustment could improve usability or efficiency in daily operation.</p>
-<p class="blog-list-cont">Source: <a href="https://www.teslarati.com/tesla-robotaxi-small-but-significant-change/" target="_blank" rel="noopener">teslarati.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.teslarati.com/tesla-robotaxi-small-but-significant-change/" target="_blank" rel="noopener" aria-describedby="cite-card">teslarati.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.teslarati.com/tesla-robotaxi-small-but-significant-change/</span></span></p>
 <li><strong>Tesla makes latest announcement on Model S and Model X, March 28, 2026, 6:29 AM PST, Teslarati</strong></li>
 <p class="blog-list-cont">Tesla has issued its latest update on the Model S and Model X following CEO Elon Musk’s statement on the Q4 2025 earnings call. Musk had described the decision as an “honorable discharge” for the two vehicles, with production winding down in Q2 2026. This matters for Tesla's business as it focuses manufacturing resources on higher-volume models and next-generation vehicles. For loyal customers it signals the end of an era for the flagship sedans and SUVs.</p>
-<p class="blog-list-cont">Source: <a href="https://www.teslarati.com/tesla-makes-latest-announcement-model-s-x/" target="_blank" rel="noopener">teslarati.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.teslarati.com/tesla-makes-latest-announcement-model-s-x/" target="_blank" rel="noopener" aria-describedby="cite-card">teslarati.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.teslarati.com/tesla-makes-latest-announcement-model-s-x/</span></span></p>
 </ol>
 <h3 id="tesla-x-takeover-whats-hot-right-now">Tesla X Takeover: What's Hot Right Now</h3>
 <p>🎙️ Tesla X Takeover - What's breaking in the Tesla world today! Here are the most interesting, fresh Tesla developments that have everyone talking.</p>
 <ol>
 <li><strong>Elon Musk’s Terafab Announcement</strong> - Elon Musk delivered a warm talk about the joint Tesla-SpaceX-xAI plan for a Terawatt of AI compute at a packed event in Austin.</li>
 <p class="blog-list-cont">The full transcript captures his remarks at the historic Seaholm Power Plant, complete with a striking blue laser beam lighting up the sky outside. This stands out because it shows the deep integration across Musk's companies to tackle massive AI infrastructure needs. It's a different angle on how Tesla's energy and compute ambitions are evolving beyond just vehicles.</p>
-<p class="blog-list-cont">Source: <a href="https://whatsuptesla.com/2026/03/28/terafab/" target="_blank" rel="noopener">whatsuptesla.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://whatsuptesla.com/2026/03/28/terafab/" target="_blank" rel="noopener" aria-describedby="cite-card">whatsuptesla.com</a><span class="cite-card" id="cite-card" role="tooltip">https://whatsuptesla.com/2026/03/28/terafab/</span></span></p>
 <li><strong>American Airlines in-flight revamp with Starlink</strong> - American Airlines is exploring a major update to its in-flight offerings on narrow-body planes, potentially partnering with Amazon or Starlink.</li>
 <p class="blog-list-cont">The move aims to boost profits and attract more customers by improving connectivity and entertainment. It's noteworthy because it highlights growing real-world applications for SpaceX's Starlink technology in commercial aviation. This could indirectly benefit Tesla's broader ecosystem through shared innovation in high-reliability connectivity.</p>
-<p class="blog-list-cont">Source: <a href="https://driveteslacanada.ca/news/american-airlines-considers-an-in-flight-revamp-with-amazon-or-starlink/?utm_source=rss&utm_medium=rss&utm_campaign=american-airlines-considers-an-in-flight-revamp-with-amazon-or-starlink" target="_blank" rel="noopener">driveteslacanada.ca</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://driveteslacanada.ca/news/american-airlines-considers-an-in-flight-revamp-with-amazon-or-starlink/?utm_source=rss&utm_medium=rss&utm_campaign=american-airlines-considers-an-in-flight-revamp-with-amazon-or-starlink" target="_blank" rel="noopener" aria-describedby="cite-card">driveteslacanada.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://driveteslacanada.ca/news/american-airlines-considers-an-in-flight-revamp-with-amazon-or-starlink/?utm_source=rss&utm_medium=rss&utm_campaign=american-airlines-considers-an-in-flight-revamp-with-amazon-or-starlink</span></span></p>
 <li><strong>FSD vs Human Drivers at Pedestrian Crossing</strong> - A new video demonstrates how Tesla's FSD handles a pedestrian crossing situation compared to typical human driver behavior.</li>
 <p class="blog-list-cont">It highlights differences in caution and decision-making at the crosswalk. The clip aligns with recent comments from Tesla China VP Grace Tao emphasizing safety as the top priority. This trend in visual comparisons is generating discussion about the practical advantages of the system in everyday scenarios.</p>
-<p class="blog-list-cont">Source: <a href="https://x.com/tslaming/status/2038143748044210590" target="_blank" rel="noopener">x.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://x.com/tslaming/status/2038143748044210590" target="_blank" rel="noopener" aria-describedby="cite-card">x.com</a><span class="cite-card" id="cite-card" role="tooltip">https://x.com/tslaming/status/2038143748044210590</span></span></p>
 <li><strong>Clear FSD Results</strong> - A post argues there's no longer need to debate FSD outcomes, calling the results quite clear based on recent demonstrations.</li>
 <p class="blog-list-cont">It pushes back against ongoing skepticism by pointing to observable performance. This reflects a pattern in the community where users are increasingly sharing side-by-side evidence. It captures the shifting conversation around autonomy validation.</p>
-<p class="blog-list-cont">Source: <a href="https://x.com/tslaming/status/2038158109097828841" target="_blank" rel="noopener">x.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://x.com/tslaming/status/2038158109097828841" target="_blank" rel="noopener" aria-describedby="cite-card">x.com</a><span class="cite-card" id="cite-card" role="tooltip">https://x.com/tslaming/status/2038158109097828841</span></span></p>
 <li><strong>Cybercab Manufacturing Leadership Change</strong> - The departure of Mark Lupkey as Manufacturing Operations Leader for the Cybercab program in Austin comes shortly after a key production milestone.</li>
 <p class="blog-list-cont">This adds to the list of notable exits in the autonomous vehicle effort. What's interesting is the timing, right as the program aims to ramp toward volume. It underscores the human element and retention challenges in Tesla's most ambitious projects.</p>
-<p class="blog-list-cont">Source: <a href="https://driveteslacanada.ca/news/tesla-cybercab-manufacturing-leader-mark-lupkey-departs/?utm_source=rss&utm_medium=rss&utm_campaign=tesla-cybercab-manufacturing-leader-mark-lupkey-departs" target="_blank" rel="noopener">driveteslacanada.ca</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://driveteslacanada.ca/news/tesla-cybercab-manufacturing-leader-mark-lupkey-departs/?utm_source=rss&utm_medium=rss&utm_campaign=tesla-cybercab-manufacturing-leader-mark-lupkey-departs" target="_blank" rel="noopener" aria-describedby="cite-card">driveteslacanada.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://driveteslacanada.ca/news/tesla-cybercab-manufacturing-leader-mark-lupkey-departs/?utm_source=rss&utm_medium=rss&utm_campaign=tesla-cybercab-manufacturing-leader-mark-lupkey-departs</span></span></p>
 </ol>
 <h3 id="short-spot">Short Spot</h3>
 <p><strong>Key Talent Departure in Cybercab Program: March 28, 2026, 12:09 PM PST, Drive Tesla Canada</strong></p>
 <p>Tesla’s Cybercab program lost its Manufacturing Operations Leader Mark Lupkey in Austin, coming just weeks after hitting a major production milestone. This matters because specialized manufacturing expertise is hard to replace quickly when scaling a completely new vehicle platform for unsupervised operation. It highlights the ongoing challenge of retaining top talent in high-pressure, cutting-edge programs. Tesla is positioned to address it through its deep bench of internal promotions and continued focus on attracting engineers who align with the company's first-principles culture, though repeated departures could slow momentum if the pattern continues.</p>
-<p>Source: <a href="https://driveteslacanada.ca/news/tesla-cybercab-manufacturing-leader-mark-lupkey-departs/?utm_source=rss&utm_medium=rss&utm_campaign=tesla-cybercab-manufacturing-leader-mark-lupkey-departs" target="_blank" rel="noopener">driveteslacanada.ca</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://driveteslacanada.ca/news/tesla-cybercab-manufacturing-leader-mark-lupkey-departs/?utm_source=rss&utm_medium=rss&utm_campaign=tesla-cybercab-manufacturing-leader-mark-lupkey-departs" target="_blank" rel="noopener" aria-describedby="cite-card">driveteslacanada.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://driveteslacanada.ca/news/tesla-cybercab-manufacturing-leader-mark-lupkey-departs/?utm_source=rss&utm_medium=rss&utm_campaign=tesla-cybercab-manufacturing-leader-mark-lupkey-departs</span></span></p>
 <h4 id="tesla-first-principles">Tesla First Principles</h4>
 <p>🧠 Tesla First Principles - Cutting Through the Noise</p>
 <p><strong>TOPIC SELECTION:</strong> Choose the topic where conventional wisdom about Tesla is MOST WRONG right now. Look for areas where the popular narrative (from bulls or bears) diverges most from what physics, economics, or engineering data actually show. The best First Principles topics make listeners rethink something they thought they already understood.</p>
@@ -1263,6 +1358,34 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
             </nav>
             
             <!-- Cross-show Recommendations -->
+            
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/models_agents/ep040.html" class="blog-related-card" style="--card-show-color: #7C3AED">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #7C3AED, white 35%)">Models & Agents</span>
+                        <h3>Models & Agents</h3>
+                        <p>OpenAI gives 8,000 developers a month of 10x Codex rate limits after the GPT-5.5 party sold out.</p>
+                    </a>
+                    
+                    <a href="../../blog/privet_russian/ep019.html" class="blog-related-card" style="--card-show-color: #4F46E5">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #4F46E5, white 35%)">Привет, Русский!</span>
+                        <h3>Привет, Русский! — Episode Plan</h3>
+                        <p>- Russian (Cyrillic): Космос</p>
+                    </a>
+                    
+                    <a href="../../blog/unintended_consequences/ep003.html" class="blog-related-card" style="--card-show-color: #B45309">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #B45309, white 35%)">Unintended Consequences</span>
+                        <h3>In 1921 Thomas Midgley Jr. added tetraethyl lead to gasoline to silence engine k...</h3>
+                        <p>In 1921 Thomas Midgley Jr. added tetraethyl lead to gasoline to silence engine knock, never imagining the additive would&hellip;</p>
+                    </a>
+                    
+                </div>
+            </section>
             
         </article>
     </div>

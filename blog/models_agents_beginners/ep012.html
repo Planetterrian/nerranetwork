@@ -7,7 +7,7 @@
     
     <meta name="keywords" content="AI for beginners, AI podcast teens, learn AI, beginner AI, Models and Agents for Beginners">
     <title>Models & Agents for Beginners — Ep12 | Models & Agents for Beginners Blog</title>
-    <meta name="theme-color" content="#F59E0B">
+    <meta name="theme-color" content="#C2410C">
 
     <!-- Open Graph -->
     <meta property="og:title" content="Models & Agents for Beginners — Ep12 | Models & Agents for Beginners Blog">
@@ -34,9 +34,23 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%237C5CFF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%236B47FF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/></svg>">
 
     
+    
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="../../assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
     
     
     
@@ -185,7 +199,8 @@
             padding: 2px 10px;
             border-radius: 100px;
             background: color-mix(in srgb, var(--show-color) 15%, transparent);
-            color: var(--show-color);
+            /* AA-compliant text on dark page bg — see --show-color-text in base.html.j2 */
+            color: var(--show-color-text, var(--show-color));
             font-weight: 600;
         }
         .post-author {
@@ -282,7 +297,8 @@
         }
         .blog-toc a:hover,
         .blog-toc a.active {
-            color: var(--show-color);
+            /* AA-compliant text on dark sidebar bg */
+            color: var(--show-color-text, var(--show-color));
             border-left-color: var(--show-color);
         }
         .blog-toc a.toc-h3 {
@@ -327,14 +343,18 @@
             margin: 0 0 var(--sp-4);
         }
         .blog-article a {
-            color: var(--show-color);
+            /* Body links — AA-compliant lightened brand on dark bg.
+               Saturated brand colors fail 4.5:1 on `--nn-bg`; the
+               `--show-color-text` variable lightens by 35 % white so
+               every show clears AA. */
+            color: var(--show-color-text, var(--show-color));
             text-decoration: underline;
             text-underline-offset: 2px;
-            text-decoration-color: color-mix(in srgb, var(--show-color) 40%, transparent);
+            text-decoration-color: color-mix(in srgb, var(--show-color-text, var(--show-color)) 40%, transparent);
             transition: text-decoration-color var(--duration) var(--ease);
         }
         .blog-article a:hover {
-            text-decoration-color: var(--show-color);
+            text-decoration-color: var(--show-color-text, var(--show-color));
         }
         .blog-article strong {
             color: var(--nn-white);
@@ -613,13 +633,88 @@
         }
         .blog-listen-cta:hover {
             border-color: var(--show-color);
-            color: var(--show-color);
+            color: var(--show-color-text, var(--show-color));
+        }
+
+        /* Hover-card citations (Phase 3.4 of the May 2026 audit).
+           A small inline pill shows the publisher domain; on hover or
+           keyboard focus a popover reveals the full URL so readers
+           can verify provenance without leaving the page. Pure CSS,
+           no JS — works in every email/RSS-rendered surface that
+           runs the page stylesheet. */
+        .cite {
+            position: relative;
+            display: inline-block;
+        }
+        .cite-pill {
+            display: inline-block;
+            padding: 0.05em 0.55em;
+            margin: 0 0.1em;
+            border-radius: 999px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.78em;
+            line-height: 1.4;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+            white-space: nowrap;
+        }
+        .cite-pill:hover,
+        .cite-pill:focus {
+            border-color: var(--show-color);
+            /* Same AA fix as body links — brand text needs to clear
+               4.5:1 on the dark card surface. */
+            color: var(--show-color-text, var(--show-color));
+            outline: none;
+        }
+        .cite-card {
+            position: absolute;
+            left: 0;
+            bottom: calc(100% + 6px);
+            z-index: 10;
+            min-width: 240px;
+            max-width: 360px;
+            padding: var(--sp-2) var(--sp-3);
+            border-radius: 8px;
+            background: var(--nn-bg);
+            border: 1px solid var(--nn-border);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+            color: var(--nn-text);
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            word-break: break-all;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--duration) var(--ease);
+            pointer-events: none;
+        }
+        .cite:hover .cite-card,
+        .cite-pill:focus + .cite-card,
+        .cite-pill:focus-within + .cite-card {
+            opacity: 1;
+            visibility: visible;
+        }
+        @media (max-width: 600px) {
+            .cite-card {
+                left: auto;
+                right: 0;
+                min-width: 0;
+                max-width: 90vw;
+            }
         }
     </style>
 
 
     
-    <style>:root { --show-color: #F59E0B; --show-color-dark: #D97706; }</style>
+    
+    <style>:root {
+      --show-color: #C2410C;
+      --show-color-dark: #9A3412;
+      --show-color-text: color-mix(in srgb, #C2410C, white 35%);
+    }</style>
     
     <style>
         @media (max-width: 768px) {
@@ -939,7 +1034,7 @@
             <li><a href="../../index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../models-agents-beginners.html" style="color:var(--nn-text-muted);text-decoration:none;">Models & Agents for Beginners</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../blog/models_agents_beginners/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
-            <li aria-current="page" style="color:var(--show-color);">Episode 12</li>
+            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 12</li>
         </ol>
     </nav>
 
@@ -1011,7 +1106,7 @@
 <p>Why should you care? Because the apps and content you use every day (TikTok, YouTube, video games, even homework tools) are all trying to keep your attention. An AI that understands real brain reactions could eventually help make better educational videos that actually help you learn, or games that feel more exciting because they match how brains naturally respond. It also raises interesting questions about privacy and how well technology can "read" us without even touching our heads.</p>
 <p>This one's tricky because brain science is complex, but here's the simple version: the model isn't reading anyone's actual brain in real time. It's learned patterns from lots of previous scans so it can make a good guess for new content. That means it works better on average than any one individual's scan would for predicting a typical reaction.</p>
 <p>Right now there isn't a public demo you can play with on your phone. But you can still explore similar ideas for free. Go to the website huggingface.co and search for "brain" or "neuroscience" demos — some open projects let you upload an image and see simple heat-map predictions of attention. Try uploading a photo of your favorite meme and see what parts the model thinks will stand out.</p>
-<p>Source: <a href="https://the-decoder.com/metas-new-ai-model-predicts-how-your-brain-reacts-to-images-sounds-and-speech/" target="_blank" rel="noopener">the-decoder.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://the-decoder.com/metas-new-ai-model-predicts-how-your-brain-reacts-to-images-sounds-and-speech/" target="_blank" rel="noopener" aria-describedby="cite-card">the-decoder.com</a><span class="cite-card" id="cite-card" role="tooltip">https://the-decoder.com/metas-new-ai-model-predicts-how-your-brain-reacts-to-images-sounds-and-speech/</span></span></p>
 <h4 id="explain-like-im-14">Explain Like I'm 14</h4>
 <p><strong>How AI brain-prediction models actually work</strong></p>
 <p>You know how when you're texting, your phone suggests the next word based on what you've typed so far? It’s guessing what comes next by looking at patterns from millions of other messages.</p>
@@ -1019,25 +1114,25 @@
 <p>An AI model can study all those examples the same way your phone learned to suggest words. It learns the pattern: "when people see a smiling face, this area usually lights up… when they hear music with a strong beat, that area usually lights up." After seeing enough examples, the model can look at a brand-new picture or song it has never seen before and draw a heat map of where it thinks a typical brain would react.</p>
 <p>That's basically what Meta's new model is doing. It isn't magic and it isn't reading your mind in real time. It's really good pattern-matching, just like advanced autocomplete, but for brain activity instead of text.</p>
 <p>So next time someone says an AI can "predict brain reactions," you can tell them — it's basically super-advanced autocomplete for your brain's playlist of reactions. Not so scary once you see it that way, right?</p>
-<p>Source: <a href="https://the-decoder.com/metas-new-ai-model-predicts-how-your-brain-reacts-to-images-sounds-and-speech/" target="_blank" rel="noopener">the-decoder.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://the-decoder.com/metas-new-ai-model-predicts-how-your-brain-reacts-to-images-sounds-and-speech/" target="_blank" rel="noopener" aria-describedby="cite-card">the-decoder.com</a><span class="cite-card" id="cite-card" role="tooltip">https://the-decoder.com/metas-new-ai-model-predicts-how-your-brain-reacts-to-images-sounds-and-speech/</span></span></p>
 <h4 id="cool-stuff-try-this">Cool Stuff & Try This</h4>
 <p><strong>New Self-Evolving AI Agent for Tasks: JiuwenClaw</strong> — MarkTechPost</p>
 <p>AI agents are programs that try to get real tasks done instead of just chatting. The new JiuwenClaw is designed to keep improving itself when it fails at a task, which is a big step because many current agents "drop the ball" when moving from conversation to actual work.</p>
 <p>This is exciting because it moves us closer to AI helpers that can handle school projects, organize your study schedule, or manage creative projects without giving up when something goes wrong.</p>
 <p>You can't try the exact new model today without technical setup, but you can experiment with similar free AI agents right now. Go to poe.com or hugginface.co/chat and start a conversation with an agent-style bot (look for "agent" or "task" models). Give it a simple real task like "help me plan a 7-day study schedule for my history test that includes breaks and practice questions." See how well it does and where it gets stuck — this helps you understand the current limits that self-evolving agents are trying to fix.</p>
-<p>Source: <a href="https://www.marktechpost.com/2026/03/27/openjiuwen-community-releases-jiuwenclaw-a-self-evolving-ai-agent-for-task-management/" target="_blank" rel="noopener">marktechpost.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.marktechpost.com/2026/03/27/openjiuwen-community-releases-jiuwenclaw-a-self-evolving-ai-agent-for-task-management/" target="_blank" rel="noopener" aria-describedby="cite-card">marktechpost.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.marktechpost.com/2026/03/27/openjiuwen-community-releases-jiuwenclaw-a-self-evolving-ai-agent-for-task-management/</span></span></p>
 <p><strong>The AI Doc: A Movie About Our AI Future</strong> — Engadget</p>
 <p>A new documentary called <em>The AI Doc: Or How I Became an Apocaloptimist</em> interviews both big AI leaders like the CEOs of OpenAI and Anthropic, and critics who worry about AI's risks. The director explores whether AI will create a utopia or cause serious problems, and he lands on the idea of being an "apocaloptimist" — aware of the dangers but believing humans can still shape where the technology goes.</p>
 <p>This matters because the movie is made for regular people who use ChatGPT sometimes but don't follow every AI debate. It uses animations and clear explanations to show why some people are extremely excited and others are anxious.</p>
 <p>You can watch the trailer or look up short clips on YouTube by searching "The AI Doc trailer" or "Daniel Roher AI documentary." Try this: after watching a clip, write down one thing you're excited about and one thing you're worried about regarding AI. This simple exercise is exactly what the movie encourages — thinking for yourself instead of just believing the hype.</p>
-<p>Source: <a href="https://www.engadget.com/entertainment/tv-movies/the-ai-doc-explores-how-we-can-survive-an-uncertain-ai-future-154341735.html?src=rss" target="_blank" rel="noopener">engadget.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.engadget.com/entertainment/tv-movies/the-ai-doc-explores-how-we-can-survive-an-uncertain-ai-future-154341735.html?src=rss" target="_blank" rel="noopener" aria-describedby="cite-card">engadget.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.engadget.com/entertainment/tv-movies/the-ai-doc-explores-how-we-can-survive-an-uncertain-ai-future-154341735.html?src=rss</span></span></p>
 <h4 id="quick-bits">Quick Bits</h4>
 <p><strong>Judge blocks government ban on Anthropic AI models</strong></p>
 <p>A federal judge stopped the Trump administration from banning Anthropic's AI models, calling the security risk label "Orwellian." The judge said it looked like illegal punishment for the company criticizing the government. This shows how debates about AI safety can get tied up with free speech and politics.</p>
-<p>Source: <a href="https://the-decoder.com/federal-judge-blocks-trumps-ban-on-anthropic-ai-models-calls-security-risk-label-orwellian/" target="_blank" rel="noopener">the-decoder.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://the-decoder.com/federal-judge-blocks-trumps-ban-on-anthropic-ai-models-calls-security-risk-label-orwellian/" target="_blank" rel="noopener" aria-describedby="cite-card">the-decoder.com</a><span class="cite-card" id="cite-card" role="tooltip">https://the-decoder.com/federal-judge-blocks-trumps-ban-on-anthropic-ai-models-calls-security-risk-label-orwellian/</span></span></p>
 <p><strong>Meta's Oversight Board warns about AI disinformation</strong></p>
 <p>Meta's own independent review board says their planned Community Notes system is too slow and easy to fool when facing floods of AI-generated fake content. They suggest it might not be safe to launch in some countries. This is a reminder that fighting AI-powered lies online is still a hard problem.</p>
-<p>Source: <a href="https://the-decoder.com/metas-own-supervisory-body-warns-that-community-notes-are-no-match-for-ai-disinformation/" target="_blank" rel="noopener">the-decoder.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://the-decoder.com/metas-own-supervisory-body-warns-that-community-notes-are-no-match-for-ai-disinformation/" target="_blank" rel="noopener" aria-describedby="cite-card">the-decoder.com</a><span class="cite-card" id="cite-card" role="tooltip">https://the-decoder.com/metas-own-supervisory-body-warns-that-community-notes-are-no-match-for-ai-disinformation/</span></span></p>
 
             <!-- Sources -->
             
@@ -1280,6 +1375,34 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
             </nav>
             
             <!-- Cross-show Recommendations -->
+            
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/tesla/ep462.html" class="blog-related-card" style="--card-show-color: #E31937">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #E31937, white 35%)">Tesla Shorts Time</span>
+                        <h3>Tesla Shorts Time</h3>
+                        <p>Tesla has started producing its Semi electric trucks at a dedicated factory in Nevada.</p>
+                    </a>
+                    
+                    <a href="../../blog/privet_russian/ep019.html" class="blog-related-card" style="--card-show-color: #4F46E5">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #4F46E5, white 35%)">Привет, Русский!</span>
+                        <h3>Привет, Русский! — Episode Plan</h3>
+                        <p>- Russian (Cyrillic): Космос</p>
+                    </a>
+                    
+                    <a href="../../blog/planetterrian/ep055.html" class="blog-related-card" style="--card-show-color: #017A99">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #017A99, white 35%)">Planetterrian Daily</span>
+                        <h3>Planetterrian Daily</h3>
+                        <p>Centenarians maintain immune systems far less prone to chronic inflammation than typical older adults.</p>
+                    </a>
+                    
+                </div>
+            </section>
             
         </article>
     </div>

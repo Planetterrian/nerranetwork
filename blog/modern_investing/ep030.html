@@ -7,7 +7,7 @@
     
     <meta name="keywords" content="investing podcast, stock market, ETF, TFSA, RRSP, AI investing, market analysis, modern investing, Canadian investing">
     <title>Modern Investing Techniques — Ep30 | Modern Investing Techniques Blog</title>
-    <meta name="theme-color" content="#059669">
+    <meta name="theme-color" content="#047857">
 
     <!-- Open Graph -->
     <meta property="og:title" content="Modern Investing Techniques — Ep30 | Modern Investing Techniques Blog">
@@ -34,9 +34,23 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%237C5CFF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%236B47FF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/></svg>">
 
     
+    
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="../../assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
     
     
     
@@ -185,7 +199,8 @@
             padding: 2px 10px;
             border-radius: 100px;
             background: color-mix(in srgb, var(--show-color) 15%, transparent);
-            color: var(--show-color);
+            /* AA-compliant text on dark page bg — see --show-color-text in base.html.j2 */
+            color: var(--show-color-text, var(--show-color));
             font-weight: 600;
         }
         .post-author {
@@ -282,7 +297,8 @@
         }
         .blog-toc a:hover,
         .blog-toc a.active {
-            color: var(--show-color);
+            /* AA-compliant text on dark sidebar bg */
+            color: var(--show-color-text, var(--show-color));
             border-left-color: var(--show-color);
         }
         .blog-toc a.toc-h3 {
@@ -327,14 +343,18 @@
             margin: 0 0 var(--sp-4);
         }
         .blog-article a {
-            color: var(--show-color);
+            /* Body links — AA-compliant lightened brand on dark bg.
+               Saturated brand colors fail 4.5:1 on `--nn-bg`; the
+               `--show-color-text` variable lightens by 35 % white so
+               every show clears AA. */
+            color: var(--show-color-text, var(--show-color));
             text-decoration: underline;
             text-underline-offset: 2px;
-            text-decoration-color: color-mix(in srgb, var(--show-color) 40%, transparent);
+            text-decoration-color: color-mix(in srgb, var(--show-color-text, var(--show-color)) 40%, transparent);
             transition: text-decoration-color var(--duration) var(--ease);
         }
         .blog-article a:hover {
-            text-decoration-color: var(--show-color);
+            text-decoration-color: var(--show-color-text, var(--show-color));
         }
         .blog-article strong {
             color: var(--nn-white);
@@ -613,13 +633,88 @@
         }
         .blog-listen-cta:hover {
             border-color: var(--show-color);
-            color: var(--show-color);
+            color: var(--show-color-text, var(--show-color));
+        }
+
+        /* Hover-card citations (Phase 3.4 of the May 2026 audit).
+           A small inline pill shows the publisher domain; on hover or
+           keyboard focus a popover reveals the full URL so readers
+           can verify provenance without leaving the page. Pure CSS,
+           no JS — works in every email/RSS-rendered surface that
+           runs the page stylesheet. */
+        .cite {
+            position: relative;
+            display: inline-block;
+        }
+        .cite-pill {
+            display: inline-block;
+            padding: 0.05em 0.55em;
+            margin: 0 0.1em;
+            border-radius: 999px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.78em;
+            line-height: 1.4;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+            white-space: nowrap;
+        }
+        .cite-pill:hover,
+        .cite-pill:focus {
+            border-color: var(--show-color);
+            /* Same AA fix as body links — brand text needs to clear
+               4.5:1 on the dark card surface. */
+            color: var(--show-color-text, var(--show-color));
+            outline: none;
+        }
+        .cite-card {
+            position: absolute;
+            left: 0;
+            bottom: calc(100% + 6px);
+            z-index: 10;
+            min-width: 240px;
+            max-width: 360px;
+            padding: var(--sp-2) var(--sp-3);
+            border-radius: 8px;
+            background: var(--nn-bg);
+            border: 1px solid var(--nn-border);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+            color: var(--nn-text);
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            word-break: break-all;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--duration) var(--ease);
+            pointer-events: none;
+        }
+        .cite:hover .cite-card,
+        .cite-pill:focus + .cite-card,
+        .cite-pill:focus-within + .cite-card {
+            opacity: 1;
+            visibility: visible;
+        }
+        @media (max-width: 600px) {
+            .cite-card {
+                left: auto;
+                right: 0;
+                min-width: 0;
+                max-width: 90vw;
+            }
         }
     </style>
 
 
     
-    <style>:root { --show-color: #059669; --show-color-dark: #047857; }</style>
+    
+    <style>:root {
+      --show-color: #047857;
+      --show-color-dark: #047857;
+      --show-color-text: color-mix(in srgb, #047857, white 35%);
+    }</style>
     
     <style>
         @media (max-width: 768px) {
@@ -939,7 +1034,7 @@
             <li><a href="../../index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../modern-investing.html" style="color:var(--nn-text-muted);text-decoration:none;">Modern Investing Techniques</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../blog/modern_investing/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
-            <li aria-current="page" style="color:var(--show-color);">Episode 30</li>
+            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 30</li>
         </ol>
     </nav>
 
@@ -1015,7 +1110,7 @@
 <p><strong>Market Pulse:</strong> Markets retreated modestly with the S&P 500 closing at 7,139 (-0.5%), NASDAQ Composite at 24,664 (-0.9%), and TSX Composite at 33,584 (-0.7%). Sentiment is cautious ahead of quarterly results from four of the world’s most valuable companies and the Fed’s rate decision, with focus on AI revenue growth, cloud performance, and whether rate cuts are now off the table. Our simulated portfolio stands at YTD -0.52% versus the NASDAQ’s YTD +6.15% (alpha -6.67%), and since-inception -0.52% versus +10.23% (alpha -10.75%) — we need a strong week here. This echoes our TMUS relative-value rotation from about 15 days ago that captured +0.61% alpha by spotting superior risk/reward in US telecom.</p>
 <h4 id="strategy-spotlight">Strategy Spotlight</h4>
 <p>Quality triage in challenged sectors involves systematically ranking names by leverage ratios, investment-grade status, portfolio scale, mark-to-model NAV realism, and premium to NAV to identify the “best of a bad lot” rather than avoiding the sector entirely. Today’s conditions make it relevant because Powell dismissed stagflation concerns two years ago with the quip that he saw neither the “stag” nor the “flation,” yet current parallels to the 1970s are harder to ignore, with committee debate now centering on admitting rate cuts are off the table. In practice, screen BDCs using leverage below 1.1×, investment-grade ratings, and premiums to NAV that still leave margin of safety; for example, the largest publicly traded BDC by market cap at $12.8B with a $22B investment portfolio and 1.05× leverage ranks highest among 39 rated names despite 100% private-credit exposure. Historically this approach worked best during late-1970s repricing cycles when quality names with lower leverage survived sector-wide markdowns that hit higher-leverage peers first. Risks include NAV lagging reality by 1-2 quarters and accumulated losses appearing only in Q2 or Q3, so the strategy demands strict position sizing and readiness to reduce exposure on any sector-wide liquidity squeeze. The one-line takeaway: quality mitigates but does not eliminate sector headwinds when mark-to-model accounting delays loss recognition.</p>
-<p>Source: <a href="https://x.com/OptionsPlay/status/2049201987804397946" target="_blank" rel="noopener">x.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://x.com/OptionsPlay/status/2049201987804397946" target="_blank" rel="noopener" aria-describedby="cite-card">x.com</a><span class="cite-card" id="cite-card" role="tooltip">https://x.com/OptionsPlay/status/2049201987804397946</span></span></p>
 <h4 id="investor-education-ex-dividend-adjustments-and-true-cost-basis">Investor Education: Ex-Dividend Adjustments and True Cost Basis</h4>
 <p>Imagine you had been watching STNE around $14 only to see it issue a $2 per share dividend after selling part of its business, sending the quoted price to roughly $11–12; many retail investors immediately think they are getting a “better entry” with a lower breakeven point. What actually happens is that on the ex-dividend date the opening price is mechanically reduced by the dividend amount (all else equal), so the prior owner receives the cash while the new buyer purchases the company at its now-smaller asset base — your total economic position is unchanged. In Canadian tax-advantaged accounts the $2 dividend is received tax-free inside a TFSA, yet the adjusted cost base (ACB) for capital-gains purposes drops by the dividend amount on special distributions, directly affecting future tax calculations on sale. What most retail investors do not realize is that platforms and quote feeds automatically adjust the displayed price, but they rarely flag the simultaneous change in the company’s enterprise value or growth trajectory after an asset sale. The biggest misconception is treating the post-dividend lower share price as an automatic bargain without recalculating valuation multiples on the reduced asset base. Instead, always compare pre- and post-dividend EV/EBITDA or price-to-sales on the core remaining business and adjust your TFSA/RRSP position size accordingly.</p>
 <h4 id="practice-investment-of-the-day">Practice Investment of the Day</h4>
@@ -1036,7 +1131,7 @@
 <li><strong>Confidence Level:</strong> Medium — two factors (cheapest multiple in sector + structural LNG tailwind from merger scale) are aligned, yet one uncertainty remains around broader macro repricing timing.</li>
 </ul>
 <p><strong>Why This Teaches:</strong> This trade demonstrates how to isolate relative valuation and post-merger scale advantages even when absolute price levels are not at multi-year lows, training listeners to compare forward P/E across an entire industry rather than chasing headline momentum. Regardless of outcome, the exercise shows why verifying the same consensus data across multiple providers is required before committing capital, directly addressing the process gaps we have seen in recent simulated results.</p>
-<p>Source: <a href="https://x.com/OptionsPlay/status/2049156051900211420" target="_blank" rel="noopener">x.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://x.com/OptionsPlay/status/2049156051900211420" target="_blank" rel="noopener" aria-describedby="cite-card">x.com</a><span class="cite-card" id="cite-card" role="tooltip">https://x.com/OptionsPlay/status/2049156051900211420</span></span></p>
 <h4 id="yesterdays-trade-review">Yesterday's Trade Review</h4>
 <p><strong>Last Flash Trade:</strong> CLDX — Analyst upgrade play on successful Phase 3 results and accelerated enrollment</p>
 <p><strong>Entry:</strong> $35.79 (market open) → <strong>Exit:</strong> $34.38 (market close)</p>
@@ -1059,26 +1154,26 @@
 </ul>
 <h4 id="tools-techniques">Tools & Techniques</h4>
 <p><strong>Unusual Whales Options Flow:</strong> This platform surfaces real-time unusual options activity and dark-pool prints, letting individual investors see where institutions are positioning ahead of binary events such as FOMC decisions or earnings releases. It gives a measurable edge by quantifying flow size and strike clustering that often precedes price moves by 24–48 hours; Canadian users running TFSA portfolios can overlay the flow with TSX-listed names or U.S. ADRs. Access the free tier at unusualwhales.com for basic alerts or subscribe for full order-flow visuals and scanner.</p>
-<p>Source: <a href="https://x.com/unusual_whales/status/2049360224969269295" target="_blank" rel="noopener">x.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://x.com/unusual_whales/status/2049360224969269295" target="_blank" rel="noopener" aria-describedby="cite-card">x.com</a><span class="cite-card" id="cite-card" role="tooltip">https://x.com/unusual_whales/status/2049360224969269295</span></span></p>
 <p><strong>StashAway Platform Review:</strong> This Canadian robo-advisor builds and rebalances ETF portfolios according to user risk tolerance, automatically harvesting tax losses inside non-registered accounts while keeping TFSA and RRSP allocations fully invested. It delivers an edge for busy professionals by removing emotional decisions and maintaining global diversification at fees competitive with DIY brokerages, though users note opportunities for improved performance reporting and mobile UX. Sign up at stashaway.com, link your accounts, and run a side-by-side comparison of its model portfolio returns versus your own last 12-month DIY results.</p>
-<p>Source: <a href="https://www.reddit.com/r/investing/comments/1sypkok/how_can_stashaway_improve_their_platform/" target="_blank" rel="noopener">reddit.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.reddit.com/r/investing/comments/1sypkok/how_can_stashaway_improve_their_platform/" target="_blank" rel="noopener" aria-describedby="cite-card">reddit.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reddit.com/r/investing/comments/1sypkok/how_can_stashaway_improve_their_platform/</span></span></p>
 <h4 id="quick-hits">Quick Hits</h4>
 <p><strong>Visa Processed $14.2 Trillion in Transaction Volume Last Year</strong></p>
 <p>Visa handled $14.2T in volume over the past year, up from $5.7T a decade ago, indicating sustained strength in consumer and business spending that supports payment-network equities.</p>
 <p><strong>Action:</strong> Add V to your TFSA watchlist and buy on any 2% pullback to the 20-day moving average.</p>
-<p>Source: <a href="https://x.com/StockMKTNewz/status/2049312378211209633" target="_blank" rel="noopener">x.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://x.com/StockMKTNewz/status/2049312378211209633" target="_blank" rel="noopener" aria-describedby="cite-card">x.com</a><span class="cite-card" id="cite-card" role="tooltip">https://x.com/StockMKTNewz/status/2049312378211209633</span></span></p>
 <p><strong>Stock Market's Most Important Day of the Quarter Has Arrived</strong></p>
 <p>Big Tech earnings after the close tomorrow plus the Fed’s interest-rate decision will set the tone for equity performance over the next several months, with particular attention on AI capex guidance and cloud revenue.</p>
 <p><strong>Action:</strong> Trim 10% of any single-tech names exceeding 8% portfolio weight before tomorrow’s close to manage event-driven volatility inside your RRSP.</p>
-<p>Source: <a href="https://www.fool.com/investing/2026/04/29/stock-market-most-important-day-of-quarter-arrived/?source=iedfolrf0000001" target="_blank" rel="noopener">fool.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.fool.com/investing/2026/04/29/stock-market-most-important-day-of-quarter-arrived/?source=iedfolrf0000001" target="_blank" rel="noopener" aria-describedby="cite-card">fool.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.fool.com/investing/2026/04/29/stock-market-most-important-day-of-quarter-arrived/?source=iedfolrf0000001</span></span></p>
 <p><strong>GOOGL Hits $350, The Final Stretch Toward a $5T Valuation</strong></p>
 <p>Shares reached a new all-time high of $350; further gains of roughly $70 per share would push market cap past $5T, with Wednesday’s earnings report expected to focus on AI monetization progress and capex plans.</p>
 <p><strong>Action:</strong> If already long GOOGL in your TFSA, set a limit sell order at $355 to lock in partial gains ahead of the print.</p>
-<p>Source: <a href="https://www.reddit.com/r/stocks/comments/1sx58e1/googl_hits_350the_final_stretch_toward_a_5t/" target="_blank" rel="noopener">reddit.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.reddit.com/r/stocks/comments/1sx58e1/googl_hits_350the_final_stretch_toward_a_5t/" target="_blank" rel="noopener" aria-describedby="cite-card">reddit.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reddit.com/r/stocks/comments/1sx58e1/googl_hits_350the_final_stretch_toward_a_5t/</span></span></p>
 <p><strong>TSX Moves Lower Ahead of Key Earnings Reports</strong></p>
 <p>Canada’s main index finished down more than 100 points while U.S. markets inched toward records, with uncertainty over the Iran situation cited as a factor weighing on sentiment.</p>
 <p><strong>Action:</strong> Avoid adding new Canadian energy exposure this week until the Bank of Canada’s Wednesday rate decision clarifies the domestic policy response.</p>
-<p>Source: <a href="https://www.bnnbloomberg.ca/business/2026/04/27/sptsx-composite-down-more-than-100-points-us-stock-markets-also-lower/" target="_blank" rel="noopener">bnnbloomberg.ca</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.bnnbloomberg.ca/business/2026/04/27/sptsx-composite-down-more-than-100-points-us-stock-markets-also-lower/" target="_blank" rel="noopener" aria-describedby="cite-card">bnnbloomberg.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://www.bnnbloomberg.ca/business/2026/04/27/sptsx-composite-down-more-than-100-points-us-stock-markets-also-lower/</span></span></p>
 <h4 id="listener-challenge">Listener Challenge</h4>
 <p>Open your brokerage account, pull up one stock you already own that has paid a dividend in the past 12 months, note the ex-dividend date and the price drop that occurred, then recalculate its current forward P/E on the post-dividend asset base. Spend under 10 minutes and you will immediately see whether your “cheaper-looking” entry was real or illusory.</p>
 <p><strong>This briefing is for educational and entertainment purposes only. It does not constitute financial advice. The Practice Investment of the Day uses SIMULATED trades — no real money is involved. Always do your own research and consult a licensed financial advisor before making investment decisions.</strong></p>
@@ -1369,6 +1464,34 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
             </nav>
             
             <!-- Cross-show Recommendations -->
+            
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/fascinating_frontiers/ep063.html" class="blog-related-card" style="--card-show-color: #6B47FF">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #6B47FF, white 35%)">Fascinating Frontiers</span>
+                        <h3>Fascinating Frontiers</h3>
+                        <p>Firefly Aerospace plans to debut its upgraded Alpha Block 2 rocket late this summer amid rising demand.</p>
+                    </a>
+                    
+                    <a href="../../blog/planetterrian/ep055.html" class="blog-related-card" style="--card-show-color: #017A99">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #017A99, white 35%)">Planetterrian Daily</span>
+                        <h3>Planetterrian Daily</h3>
+                        <p>Centenarians maintain immune systems far less prone to chronic inflammation than typical older adults.</p>
+                    </a>
+                    
+                    <a href="../../blog/models_agents_beginners/ep029.html" class="blog-related-card" style="--card-show-color: #C2410C">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #C2410C, white 35%)">Models & Agents for Beginners</span>
+                        <h3>Models & Agents for Beginners</h3>
+                        <p>Google just launched 10 free AI courses anyone can start today — no coding or experience required.</p>
+                    </a>
+                    
+                </div>
+            </section>
             
         </article>
     </div>

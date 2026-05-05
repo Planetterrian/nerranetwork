@@ -7,7 +7,7 @@
     
     <meta name="keywords" content="space podcast, astronomy news, NASA discoveries, space exploration, Fascinating Frontiers">
     <title>Fascinating Frontiers — Ep52 | Fascinating Frontiers Blog</title>
-    <meta name="theme-color" content="#7C5CFF">
+    <meta name="theme-color" content="#6B47FF">
 
     <!-- Open Graph -->
     <meta property="og:title" content="Fascinating Frontiers — Ep52 | Fascinating Frontiers Blog">
@@ -34,9 +34,23 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%237C5CFF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%236B47FF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/></svg>">
 
     
+    
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="../../assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
     
     
     
@@ -185,7 +199,8 @@
             padding: 2px 10px;
             border-radius: 100px;
             background: color-mix(in srgb, var(--show-color) 15%, transparent);
-            color: var(--show-color);
+            /* AA-compliant text on dark page bg — see --show-color-text in base.html.j2 */
+            color: var(--show-color-text, var(--show-color));
             font-weight: 600;
         }
         .post-author {
@@ -282,7 +297,8 @@
         }
         .blog-toc a:hover,
         .blog-toc a.active {
-            color: var(--show-color);
+            /* AA-compliant text on dark sidebar bg */
+            color: var(--show-color-text, var(--show-color));
             border-left-color: var(--show-color);
         }
         .blog-toc a.toc-h3 {
@@ -327,14 +343,18 @@
             margin: 0 0 var(--sp-4);
         }
         .blog-article a {
-            color: var(--show-color);
+            /* Body links — AA-compliant lightened brand on dark bg.
+               Saturated brand colors fail 4.5:1 on `--nn-bg`; the
+               `--show-color-text` variable lightens by 35 % white so
+               every show clears AA. */
+            color: var(--show-color-text, var(--show-color));
             text-decoration: underline;
             text-underline-offset: 2px;
-            text-decoration-color: color-mix(in srgb, var(--show-color) 40%, transparent);
+            text-decoration-color: color-mix(in srgb, var(--show-color-text, var(--show-color)) 40%, transparent);
             transition: text-decoration-color var(--duration) var(--ease);
         }
         .blog-article a:hover {
-            text-decoration-color: var(--show-color);
+            text-decoration-color: var(--show-color-text, var(--show-color));
         }
         .blog-article strong {
             color: var(--nn-white);
@@ -613,13 +633,88 @@
         }
         .blog-listen-cta:hover {
             border-color: var(--show-color);
-            color: var(--show-color);
+            color: var(--show-color-text, var(--show-color));
+        }
+
+        /* Hover-card citations (Phase 3.4 of the May 2026 audit).
+           A small inline pill shows the publisher domain; on hover or
+           keyboard focus a popover reveals the full URL so readers
+           can verify provenance without leaving the page. Pure CSS,
+           no JS — works in every email/RSS-rendered surface that
+           runs the page stylesheet. */
+        .cite {
+            position: relative;
+            display: inline-block;
+        }
+        .cite-pill {
+            display: inline-block;
+            padding: 0.05em 0.55em;
+            margin: 0 0.1em;
+            border-radius: 999px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.78em;
+            line-height: 1.4;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+            white-space: nowrap;
+        }
+        .cite-pill:hover,
+        .cite-pill:focus {
+            border-color: var(--show-color);
+            /* Same AA fix as body links — brand text needs to clear
+               4.5:1 on the dark card surface. */
+            color: var(--show-color-text, var(--show-color));
+            outline: none;
+        }
+        .cite-card {
+            position: absolute;
+            left: 0;
+            bottom: calc(100% + 6px);
+            z-index: 10;
+            min-width: 240px;
+            max-width: 360px;
+            padding: var(--sp-2) var(--sp-3);
+            border-radius: 8px;
+            background: var(--nn-bg);
+            border: 1px solid var(--nn-border);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+            color: var(--nn-text);
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            word-break: break-all;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--duration) var(--ease);
+            pointer-events: none;
+        }
+        .cite:hover .cite-card,
+        .cite-pill:focus + .cite-card,
+        .cite-pill:focus-within + .cite-card {
+            opacity: 1;
+            visibility: visible;
+        }
+        @media (max-width: 600px) {
+            .cite-card {
+                left: auto;
+                right: 0;
+                min-width: 0;
+                max-width: 90vw;
+            }
         }
     </style>
 
 
     
-    <style>:root { --show-color: #7C5CFF; --show-color-dark: #6366f1; }</style>
+    
+    <style>:root {
+      --show-color: #6B47FF;
+      --show-color-dark: #4f46e5;
+      --show-color-text: color-mix(in srgb, #6B47FF, white 35%);
+    }</style>
     
     <style>
         @media (max-width: 768px) {
@@ -939,7 +1034,7 @@
             <li><a href="../../index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../fascinating-frontiers.html" style="color:var(--nn-text-muted);text-decoration:none;">Fascinating Frontiers</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../blog/fascinating_frontiers/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
-            <li aria-current="page" style="color:var(--show-color);">Episode 52</li>
+            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 52</li>
         </ol>
     </nav>
 
@@ -1008,43 +1103,43 @@
 <ol>
 <li><strong>Starquakes Reveal Fossil Magnetism</strong> • 14 April 2026 • Phys.org</li>
 <p class="blog-list-cont">New theoretical models published in Astronomy & Astrophysics connect surface magnetism on white dwarfs with magnetism detected in the cores of their red giant progenitors. The work, led by astrophysicists at the Institute of Science and Technology Austria, suggests these fields form early in a star’s life and persist as “fossil fields” through its entire evolution.</p>
-<p class="blog-list-cont">Source: <a href="https://phys.org/news/2026-04-starquakes-theoretical-evidence-fossilized-magnetism.html" target="_blank" rel="noopener">phys.org</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://phys.org/news/2026-04-starquakes-theoretical-evidence-fossilized-magnetism.html" target="_blank" rel="noopener" aria-describedby="cite-card">phys.org</a><span class="cite-card" id="cite-card" role="tooltip">https://phys.org/news/2026-04-starquakes-theoretical-evidence-fossilized-magnetism.html</span></span></p>
 <li><strong>SpaceX Prepares 1,000th Starlink Launch of 2026</strong> • 14 April 2026 • Spaceflight Now</li>
 <p class="blog-list-cont">The Starlink 10-24 mission will deploy another 29 satellites to low Earth orbit aboard a Falcon 9 lifting off from Cape Canaveral’s pad 40. Liftoff is targeted for 5:33:10 a.m. EDT.</p>
-<p class="blog-list-cont">Source: <a href="https://spaceflightnow.com/2026/04/14/live-coverage-spacex-to-launch-1000th-starlink-satellite-of-2026-on-falcon-9-rocket-from-cape-canaveral/" target="_blank" rel="noopener">spaceflightnow.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://spaceflightnow.com/2026/04/14/live-coverage-spacex-to-launch-1000th-starlink-satellite-of-2026-on-falcon-9-rocket-from-cape-canaveral/" target="_blank" rel="noopener" aria-describedby="cite-card">spaceflightnow.com</a><span class="cite-card" id="cite-card" role="tooltip">https://spaceflightnow.com/2026/04/14/live-coverage-spacex-to-launch-1000th-starlink-satellite-of-2026-on-falcon-9-rocket-from-cape-canaveral/</span></span></p>
 <li><strong>NASA Captures Super Typhoon Sinlaku</strong> • 14 April 2026 • NASA Science</li>
 <p class="blog-list-cont">Satellite imagery shows the powerful storm tracking toward the U.S. Northern Mariana Islands and Guam in mid-April 2026. The observatory images highlight the storm’s structure and intensity from orbit.</p>
-<p class="blog-list-cont">Source: <a href="https://science.nasa.gov/earth/earth-observatory/super-typhoon-sinlaku/" target="_blank" rel="noopener">science.nasa.gov</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://science.nasa.gov/earth/earth-observatory/super-typhoon-sinlaku/" target="_blank" rel="noopener" aria-describedby="cite-card">science.nasa.gov</a><span class="cite-card" id="cite-card" role="tooltip">https://science.nasa.gov/earth/earth-observatory/super-typhoon-sinlaku/</span></span></p>
 <li><strong>Trump Signs SBIR Reauthorization</strong> • 14 April 2026 • SpaceNews</li>
 <p class="blog-list-cont">President Donald Trump signed the Small Business Innovation and Economic Security Act on April 13, extending the SBIR and STTR programs through September 30, 2031. The legislation includes enhanced screening for applicants and provides continued early-stage funding pathways for space companies.</p>
-<p class="blog-list-cont">Source: <a href="https://spacenews.com/president-trump-signs-legislation-reauthorizing-sbir/" target="_blank" rel="noopener">spacenews.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://spacenews.com/president-trump-signs-legislation-reauthorizing-sbir/" target="_blank" rel="noopener" aria-describedby="cite-card">spacenews.com</a><span class="cite-card" id="cite-card" role="tooltip">https://spacenews.com/president-trump-signs-legislation-reauthorizing-sbir/</span></span></p>
 <li><strong>Exoplanet and Host Star Share Elemental Makeup</strong> • 14 April 2026 • Universe Today</li>
 <p class="blog-list-cont">Using the Gemini South telescope’s Immersion Grating Infrared Spectrograph, researchers measured magnesium-to-silicon ratios in the atmosphere of the ultra-hot Jupiter WASP-189b. The data reveal strikingly similar chemical compositions between the planet and its parent star.</p>
-<p class="blog-list-cont">Source: <a href="https://www.universetoday.com/articles/exoplanet-host-star-shares-elemental-traits-with-its-hot-jupiter" target="_blank" rel="noopener">universetoday.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.universetoday.com/articles/exoplanet-host-star-shares-elemental-traits-with-its-hot-jupiter" target="_blank" rel="noopener" aria-describedby="cite-card">universetoday.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.universetoday.com/articles/exoplanet-host-star-shares-elemental-traits-with-its-hot-jupiter</span></span></p>
 <li><strong>Saturn’s Magnetic Shield Sits Off-Centre</strong> • 13 April 2026 • Universe Today</li>
 <p class="blog-list-cont">Analysis of NASA’s Cassini data shows Saturn’s magnetic bubble is not centred on the planet as expected. The discovery indicates that giant planets follow different dynamo rules than Earth.</p>
-<p class="blog-list-cont">Source: <a href="https://www.universetoday.com/articles/saturns-magnetic-shield-is-not-where-anyone-expected-it-to-be" target="_blank" rel="noopener">universetoday.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.universetoday.com/articles/saturns-magnetic-shield-is-not-where-anyone-expected-it-to-be" target="_blank" rel="noopener" aria-describedby="cite-card">universetoday.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.universetoday.com/articles/saturns-magnetic-shield-is-not-where-anyone-expected-it-to-be</span></span></p>
 <li><strong>Self-Interacting Dark Matter Explains Multiple Puzzles</strong> • 13 April 2026 • Phys.org</li>
 <p class="blog-list-cont">A UC Riverside-led study published in Physical Review Letters proposes dense clumps of self-interacting dark matter, each roughly a million solar masses, could resolve anomalies seen in gravitational lenses, stellar streams, and satellite galaxies. The model offers one framework that fits observations across vastly different cosmic scales.</p>
-<p class="blog-list-cont">Source: <a href="https://phys.org/news/2026-04-interacting-dark-cosmic-puzzles.html" target="_blank" rel="noopener">phys.org</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://phys.org/news/2026-04-interacting-dark-cosmic-puzzles.html" target="_blank" rel="noopener" aria-describedby="cite-card">phys.org</a><span class="cite-card" id="cite-card" role="tooltip">https://phys.org/news/2026-04-interacting-dark-cosmic-puzzles.html</span></span></p>
 <li><strong>Chang’E-4 Searches for ET from Quietest Spot</strong> • 13 April 2026 • Universe Today</li>
 <p class="blog-list-cont">China’s Chang’E-4 lander on the far side of the Moon conducted the first search for extraterrestrial intelligence signals from a location shielded by the Moon’s bulk from Earth’s radio noise. No signals were detected, but the experiment demonstrates the unique value of the lunar farside for radio-quiet observations.</p>
-<p class="blog-list-cont">Source: <a href="https://www.universetoday.com/articles/the-most-quiet-place-weve-ever-listened-from" target="_blank" rel="noopener">universetoday.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.universetoday.com/articles/the-most-quiet-place-weve-ever-listened-from" target="_blank" rel="noopener" aria-describedby="cite-card">universetoday.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.universetoday.com/articles/the-most-quiet-place-weve-ever-listened-from</span></span></p>
 <li><strong>Two Supermassive Black Holes Caught Spiraling</strong> • 13 April 2026 • Universe Today</li>
 <p class="blog-list-cont">Astronomers have confirmed the first close pair of supermassive black holes orbiting each other every 121 days inside a single distant galaxy. Models suggest the pair could merge within the next century.</p>
-<p class="blog-list-cont">Source: <a href="https://www.universetoday.com/articles/two-monsters-one-galaxy-and-a-collision-100-years-away" target="_blank" rel="noopener">universetoday.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.universetoday.com/articles/two-monsters-one-galaxy-and-a-collision-100-years-away" target="_blank" rel="noopener" aria-describedby="cite-card">universetoday.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.universetoday.com/articles/two-monsters-one-galaxy-and-a-collision-100-years-away</span></span></p>
 <li><strong>Artemis II Crew Updates Apollo-Era Photography</strong> • 13 April 2026 • Phys.org</li>
 <p class="blog-list-cont">Following the completion of their lunar flyby mission, the Artemis II astronauts employed modern digital techniques to document their journey and reinterpret classic Apollo imagery. The new body of work expands the visual record of human spaceflight.</p>
-<p class="blog-list-cont">Source: <a href="https://phys.org/news/2026-04-artemis-ii-crew-modern-photography.html" target="_blank" rel="noopener">phys.org</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://phys.org/news/2026-04-artemis-ii-crew-modern-photography.html" target="_blank" rel="noopener" aria-describedby="cite-card">phys.org</a><span class="cite-card" id="cite-card" role="tooltip">https://phys.org/news/2026-04-artemis-ii-crew-modern-photography.html</span></span></p>
 <li><strong>Stars Near Galactic Centre Defy Expected Destruction</strong> • 13 April 2026 • Phys.org</li>
 <p class="blog-list-cont">Dense stellar populations orbiting close to Sagittarius A* experience extreme gravity, radiation, and dark matter yet some stars persist while others are torn apart. The galactic centre serves as a natural laboratory for testing fundamental astrophysical processes.</p>
-<p class="blog-list-cont">Source: <a href="https://phys.org/news/2026-04-stars-galactic-center-survive-destroyed.html" target="_blank" rel="noopener">phys.org</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://phys.org/news/2026-04-stars-galactic-center-survive-destroyed.html" target="_blank" rel="noopener" aria-describedby="cite-card">phys.org</a><span class="cite-card" id="cite-card" role="tooltip">https://phys.org/news/2026-04-stars-galactic-center-survive-destroyed.html</span></span></p>
 <li><strong>NASA Outlines Permanent Moon Base Roadmap</strong> • 14 April 2026 • Reddit r/space</li>
 <p class="blog-list-cont">A newly released NASA document details plans for a sustained lunar presence that includes 73 additional landings beyond the current Artemis flights. The report’s clean graphic design has drawn particular attention from the space community.</p>
-<p class="blog-list-cont">Source: <a href="https://www.reddit.com/r/space/comments/1skw0zj/nasa_just_published_a_fleshed_out_plan_for_how/" target="_blank" rel="noopener">reddit.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.reddit.com/r/space/comments/1skw0zj/nasa_just_published_a_fleshed_out_plan_for_how/" target="_blank" rel="noopener" aria-describedby="cite-card">reddit.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reddit.com/r/space/comments/1skw0zj/nasa_just_published_a_fleshed_out_plan_for_how/</span></span></p>
 <li><strong>International Effort Refines Universe Expansion Rate</strong> • 14 April 2026 • Reddit r/space</li>
 <p class="blog-list-cont">A global collaboration has produced a more precise measurement of the Hubble constant using complementary observational techniques. The work helps narrow the gap between early-universe and late-universe determinations of cosmic expansion.</p>
-<p class="blog-list-cont">Source: <a href="https://www.reddit.com/r/space/comments/1skssb6/international_collaboration_helps_pinpoint/" target="_blank" rel="noopener">reddit.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.reddit.com/r/space/comments/1skssb6/international_collaboration_helps_pinpoint/" target="_blank" rel="noopener" aria-describedby="cite-card">reddit.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reddit.com/r/space/comments/1skssb6/international_collaboration_helps_pinpoint/</span></span></p>
 </ol>
 <h4 id="cosmic-spotlight">Cosmic Spotlight</h4>
 <p><strong>Starquakes Reveal Fossil Magnetism</strong> • 14 April 2026 • Phys.org</p>
@@ -1255,6 +1350,34 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
             </nav>
             
             <!-- Cross-show Recommendations -->
+            
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/tesla/ep462.html" class="blog-related-card" style="--card-show-color: #E31937">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #E31937, white 35%)">Tesla Shorts Time</span>
+                        <h3>Tesla Shorts Time</h3>
+                        <p>Tesla has started producing its Semi electric trucks at a dedicated factory in Nevada.</p>
+                    </a>
+                    
+                    <a href="../../blog/models_agents/ep040.html" class="blog-related-card" style="--card-show-color: #7C3AED">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #7C3AED, white 35%)">Models & Agents</span>
+                        <h3>Models & Agents</h3>
+                        <p>OpenAI gives 8,000 developers a month of 10x Codex rate limits after the GPT-5.5 party sold out.</p>
+                    </a>
+                    
+                    <a href="../../blog/unintended_consequences/ep003.html" class="blog-related-card" style="--card-show-color: #B45309">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #B45309, white 35%)">Unintended Consequences</span>
+                        <h3>In 1921 Thomas Midgley Jr. added tetraethyl lead to gasoline to silence engine k...</h3>
+                        <p>In 1921 Thomas Midgley Jr. added tetraethyl lead to gasoline to silence engine knock, never imagining the additive would&hellip;</p>
+                    </a>
+                    
+                </div>
+            </section>
             
         </article>
     </div>

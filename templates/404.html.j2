@@ -75,7 +75,9 @@
 {% endblock %}
 
 {% block content %}
-    <main class="error-page">
+    {# base.html.j2 already wraps {% block content %} in <main id="main-content">,
+       so this child uses a <div> to avoid the nested-main HTML5 invalidity. #}
+    <div class="error-page">
         <div class="error-code">404</div>
         <h1>Page not found</h1>
         <p>The page you're looking for doesn't exist or has been moved. Try one of these instead:</p>
@@ -83,5 +85,5 @@
             <a href="{{ path_prefix }}index.html" class="primary">Go Home</a>
             <a href="{{ path_prefix }}blog/index.html" class="secondary">Browse Blog</a>
         </div>
-    </main>
+    </div>
 {% endblock %}

@@ -7,7 +7,7 @@
     
     <meta name="keywords" content="space podcast, astronomy news, NASA discoveries, space exploration, Fascinating Frontiers">
     <title>A Falcon Heavy is rolling toward the pad for its first launch in 18 months while... — Ep60 | Fascinating Frontiers Blog</title>
-    <meta name="theme-color" content="#7C5CFF">
+    <meta name="theme-color" content="#6B47FF">
 
     <!-- Open Graph -->
     <meta property="og:title" content="A Falcon Heavy is rolling toward the pad for its first launch in 18 months while... — Ep60 | Fascinating Frontiers Blog">
@@ -34,9 +34,23 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%237C5CFF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%236B47FF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/></svg>">
 
     
+    
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="../../assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
     
     
     
@@ -185,7 +199,8 @@
             padding: 2px 10px;
             border-radius: 100px;
             background: color-mix(in srgb, var(--show-color) 15%, transparent);
-            color: var(--show-color);
+            /* AA-compliant text on dark page bg — see --show-color-text in base.html.j2 */
+            color: var(--show-color-text, var(--show-color));
             font-weight: 600;
         }
         .post-author {
@@ -282,7 +297,8 @@
         }
         .blog-toc a:hover,
         .blog-toc a.active {
-            color: var(--show-color);
+            /* AA-compliant text on dark sidebar bg */
+            color: var(--show-color-text, var(--show-color));
             border-left-color: var(--show-color);
         }
         .blog-toc a.toc-h3 {
@@ -327,14 +343,18 @@
             margin: 0 0 var(--sp-4);
         }
         .blog-article a {
-            color: var(--show-color);
+            /* Body links — AA-compliant lightened brand on dark bg.
+               Saturated brand colors fail 4.5:1 on `--nn-bg`; the
+               `--show-color-text` variable lightens by 35 % white so
+               every show clears AA. */
+            color: var(--show-color-text, var(--show-color));
             text-decoration: underline;
             text-underline-offset: 2px;
-            text-decoration-color: color-mix(in srgb, var(--show-color) 40%, transparent);
+            text-decoration-color: color-mix(in srgb, var(--show-color-text, var(--show-color)) 40%, transparent);
             transition: text-decoration-color var(--duration) var(--ease);
         }
         .blog-article a:hover {
-            text-decoration-color: var(--show-color);
+            text-decoration-color: var(--show-color-text, var(--show-color));
         }
         .blog-article strong {
             color: var(--nn-white);
@@ -613,13 +633,88 @@
         }
         .blog-listen-cta:hover {
             border-color: var(--show-color);
-            color: var(--show-color);
+            color: var(--show-color-text, var(--show-color));
+        }
+
+        /* Hover-card citations (Phase 3.4 of the May 2026 audit).
+           A small inline pill shows the publisher domain; on hover or
+           keyboard focus a popover reveals the full URL so readers
+           can verify provenance without leaving the page. Pure CSS,
+           no JS — works in every email/RSS-rendered surface that
+           runs the page stylesheet. */
+        .cite {
+            position: relative;
+            display: inline-block;
+        }
+        .cite-pill {
+            display: inline-block;
+            padding: 0.05em 0.55em;
+            margin: 0 0.1em;
+            border-radius: 999px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.78em;
+            line-height: 1.4;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+            white-space: nowrap;
+        }
+        .cite-pill:hover,
+        .cite-pill:focus {
+            border-color: var(--show-color);
+            /* Same AA fix as body links — brand text needs to clear
+               4.5:1 on the dark card surface. */
+            color: var(--show-color-text, var(--show-color));
+            outline: none;
+        }
+        .cite-card {
+            position: absolute;
+            left: 0;
+            bottom: calc(100% + 6px);
+            z-index: 10;
+            min-width: 240px;
+            max-width: 360px;
+            padding: var(--sp-2) var(--sp-3);
+            border-radius: 8px;
+            background: var(--nn-bg);
+            border: 1px solid var(--nn-border);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+            color: var(--nn-text);
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            word-break: break-all;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--duration) var(--ease);
+            pointer-events: none;
+        }
+        .cite:hover .cite-card,
+        .cite-pill:focus + .cite-card,
+        .cite-pill:focus-within + .cite-card {
+            opacity: 1;
+            visibility: visible;
+        }
+        @media (max-width: 600px) {
+            .cite-card {
+                left: auto;
+                right: 0;
+                min-width: 0;
+                max-width: 90vw;
+            }
         }
     </style>
 
 
     
-    <style>:root { --show-color: #7C5CFF; --show-color-dark: #6366f1; }</style>
+    
+    <style>:root {
+      --show-color: #6B47FF;
+      --show-color-dark: #4f46e5;
+      --show-color-text: color-mix(in srgb, #6B47FF, white 35%);
+    }</style>
     
     <style>
         @media (max-width: 768px) {
@@ -939,7 +1034,7 @@
             <li><a href="../../index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../fascinating-frontiers.html" style="color:var(--nn-text-muted);text-decoration:none;">Fascinating Frontiers</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../blog/fascinating_frontiers/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
-            <li aria-current="page" style="color:var(--show-color);">Episode 60</li>
+            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 60</li>
         </ol>
     </nav>
 
@@ -1004,72 +1099,72 @@
 <li><strong>Falcon Heavy Prepares for Liftoff</strong> — SpaceX</li>
 </ol>
 <p>Teams completed back-to-back launches of Falcon Heavy and Falcon 9, with the Heavy’s two side boosters successfully returning to Earth and landing at Landing Zones 2 and 40. The milestone marks the vehicle’s return after a year and a half hiatus and confirms continued rapid reusability for heavy-lift missions.</p>
-<p>Source: <a href="https://x.com/SpaceX/status/2049699851147862430" target="_blank" rel="noopener">x.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://x.com/SpaceX/status/2049699851147862430" target="_blank" rel="noopener" aria-describedby="cite-card">x.com</a><span class="cite-card" id="cite-card" role="tooltip">https://x.com/SpaceX/status/2049699851147862430</span></span></p>
 <ol>
 <li><strong>24 Starlink Satellites Deployed</strong> — SpaceX</li>
 </ol>
 <p>A Falcon 9 launched from California and successfully deployed its full complement of 24 Starlink satellites into orbit. This keeps the constellation growing and demonstrates the reliability of the workhorse rocket on dedicated rideshare-class missions.</p>
-<p>Source: <a href="https://x.com/SpaceX/status/2049695655052886259" target="_blank" rel="noopener">x.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://x.com/SpaceX/status/2049695655052886259" target="_blank" rel="noopener" aria-describedby="cite-card">x.com</a><span class="cite-card" id="cite-card" role="tooltip">https://x.com/SpaceX/status/2049695655052886259</span></span></p>
 <ol>
 <li><strong>Falcon 9 Upper Stage to Impact Moon</strong> — Ars Technica</li>
 </ol>
 <p>An expended Falcon 9 upper stage is now on a trajectory that will cause it to strike the Moon in August, creating an artificial impact observable from orbit. The event offers a rare chance to study the Moon’s interior structure through the seismic waves it will generate.</p>
-<p>Source: <a href="https://arstechnica.com/space/2026/04/a-falcon-9-upper-stage-will-strike-the-moon-in-august/" target="_blank" rel="noopener">arstechnica.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://arstechnica.com/space/2026/04/a-falcon-9-upper-stage-will-strike-the-moon-in-august/" target="_blank" rel="noopener" aria-describedby="cite-card">arstechnica.com</a><span class="cite-card" id="cite-card" role="tooltip">https://arstechnica.com/space/2026/04/a-falcon-9-upper-stage-will-strike-the-moon-in-august/</span></span></p>
 <ol>
 <li><strong>Ariane 6 VA268 Launch Scheduled</strong> — European Space Agency</li>
 </ol>
 <p>Europe’s most powerful rocket, Ariane 6, is set for its second flight with four solid boosters, lifting off between 09:08–09:57 BST on 30 April 2026. The mission continues the launcher’s early operational campaign and expands Europe’s independent heavy-lift capability.</p>
-<p>Source: <a href="https://www.esa.int/Enabling_Support/Space_Transportation/Ariane/Another_one_Ariane_6_flies_with_four_boosters_once_more" target="_blank" rel="noopener">esa.int</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.esa.int/Enabling_Support/Space_Transportation/Ariane/Another_one_Ariane_6_flies_with_four_boosters_once_more" target="_blank" rel="noopener" aria-describedby="cite-card">esa.int</a><span class="cite-card" id="cite-card" role="tooltip">https://www.esa.int/Enabling_Support/Space_Transportation/Ariane/Another_one_Ariane_6_flies_with_four_boosters_once_more</span></span></p>
 <ol>
 <li><strong>NASA Astronaut Anil Menon Prepares for ISS</strong> — NASA</li>
 </ol>
 <p>Anil Menon, a former SpaceX flight surgeon and member of NASA’s 2021 astronaut class, will make his first trip to space aboard a mission launching 14 July. His background in aerospace medicine brings unique operational insight to long-duration ISS expeditions.</p>
-<p>Source: <a href="https://www.nasa.gov/people/nasa-astronaut-anil-menon/" target="_blank" rel="noopener">nasa.gov</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.nasa.gov/people/nasa-astronaut-anil-menon/" target="_blank" rel="noopener" aria-describedby="cite-card">nasa.gov</a><span class="cite-card" id="cite-card" role="tooltip">https://www.nasa.gov/people/nasa-astronaut-anil-menon/</span></span></p>
 <ol>
 <li><strong>May Sky Tour Highlights Dippers and Planets</strong> — Sky & Telescope</li>
 </ol>
 <p>This month’s podcast explores the Big and Little Dippers riding high in the northern evening sky while tracking all five bright planets and the Eta Aquariid meteors from Halley’s Comet. The episode offers backyard observers a complete guide to what’s visible right now.</p>
-<p>Source: <a href="https://skyandtelescope.org/stargazing-and-observing/astronomy-podcasts/sky-tour-podcast-may-2026/" target="_blank" rel="noopener">skyandtelescope.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://skyandtelescope.org/stargazing-and-observing/astronomy-podcasts/sky-tour-podcast-may-2026/" target="_blank" rel="noopener" aria-describedby="cite-card">skyandtelescope.org</a><span class="cite-card" id="cite-card" role="tooltip">https://skyandtelescope.org/stargazing-and-observing/astronomy-podcasts/sky-tour-podcast-may-2026/</span></span></p>
 <ol>
 <li><strong>Congress Questions NASA Chief on SLS Future</strong> — Decatur Daily</li>
 </ol>
 <p>Representatives Britt and Strong pressed the NASA administrator on the long-term plans for the Space Launch System during a recent hearing. The discussion reflects ongoing scrutiny of cost and schedule as Artemis moves forward.</p>
-<p>Source: <a href="https://news.google.com/rss/articles/CBMi6wFBVV95cUxPc2ZpdlBVYzRyTHFheGdMYXFlblpPQkF0NEI3eGN4NHViRzNRZ1pBeEhFdjZTYjZxc0NVVExNVnJGb21QVnNKUVZPMThsUFdzM3VsVVl1N0dWVEo5OENXbHp6YkozSVdUbXRwS3l6d2pJQ3ZHWHZPTXhPczNuLTVNMTh1dnlfNm9qYnFPN2lmeDZFdjl3YzRZaFlUaVRTUWxlLXdnUGlNQ19VNkpjRkVIdzNMSTlzd0ZVZV9lZS1WV3F6N3VHeEhZd2ZXb1RpTlZtSHh2M09ZeWtVaWRmYl9lLXJKOUV6bkVVcGZJ?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMi6wFBVV95cUxPc2ZpdlBVYzRyTHFheGdMYXFlblpPQkF0NEI3eGN4NHViRzNRZ1pBeEhFdjZTYjZxc0NVVExNVnJGb21QVnNKUVZPMThsUFdzM3VsVVl1N0dWVEo5OENXbHp6YkozSVdUbXRwS3l6d2pJQ3ZHWHZPTXhPczNuLTVNMTh1dnlfNm9qYnFPN2lmeDZFdjl3YzRZaFlUaVRTUWxlLXdnUGlNQ19VNkpjRkVIdzNMSTlzd0ZVZV9lZS1WV3F6N3VHeEhZd2ZXb1RpTlZtSHh2M09ZeWtVaWRmYl9lLXJKOUV6bkVVcGZJ?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMi6wFBVV95cUxPc2ZpdlBVYzRyTHFheGdMYXFlblpPQkF0NEI3eGN4NHViRzNRZ1pBeEhFdjZTYjZxc0NVVExNVnJGb21QVnNKUVZPMThsUFdzM3VsVVl1N0dWVEo5OENXbHp6YkozSVdUbXRwS3l6d2pJQ3ZHWHZPTXhPczNuLTVNMTh1dnlfNm9qYnFPN2lmeDZFdjl3YzRZaFlUaVRTUWxlLXdnUGlNQ19VNkpjRkVIdzNMSTlzd0ZVZV9lZS1WV3F6N3VHeEhZd2ZXb1RpTlZtSHh2M09ZeWtVaWRmYl9lLXJKOUV6bkVVcGZJ?oc=5</span></span></p>
 <ol>
 <li><strong>Hubble Captures Barred Spiral Galaxy IC 486</strong> — Phys.org</li>
 </ol>
 <p>NASA’s Hubble Space Telescope imaged the luminous barred spiral galaxy IC 486, revealing its soft glow against the blackness of space on 13 April 2026. The photo showcases the graceful structure of a classic spiral and the stellar populations that trace its arms.</p>
-<p>Source: <a href="https://phys.org/news/2026-04-image-gently-galaxy.html" target="_blank" rel="noopener">phys.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://phys.org/news/2026-04-image-gently-galaxy.html" target="_blank" rel="noopener" aria-describedby="cite-card">phys.org</a><span class="cite-card" id="cite-card" role="tooltip">https://phys.org/news/2026-04-image-gently-galaxy.html</span></span></p>
 <ol>
 <li><strong>Historic Supernova of 1006 Recalled</strong> — Reddit r/space</li>
 </ol>
 <p>On 30 April 1006, the brightest supernova in recorded human history flared in the constellation Lupus, reaching 16 times the brightness of Venus and visible across China, Japan, the Middle East, and Europe. The event was reportedly bright enough to read by at night and may appear in North American rock art.</p>
-<p>Source: <a href="https://www.reddit.com/r/space/comments/1szlor3/1020_years_ago_on_april_30_1006_the_brightest/" target="_blank" rel="noopener">reddit.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.reddit.com/r/space/comments/1szlor3/1020_years_ago_on_april_30_1006_the_brightest/" target="_blank" rel="noopener" aria-describedby="cite-card">reddit.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reddit.com/r/space/comments/1szlor3/1020_years_ago_on_april_30_1006_the_brightest/</span></span></p>
 <ol>
 <li><strong>Cloud Formations Mark Winter’s End Over Alaska</strong> — NASA</li>
 </ol>
 <p>As winter gave way to spring, distinct cloud patterns formed textbook examples of various atmospheric phenomena over the Gulf of Alaska. Satellite imagery captured the transition and the dynamic weather systems shaping Earth’s high-latitude skies.</p>
-<p>Source: <a href="https://science.nasa.gov/earth/earth-observatory/winters-end-is-written-in-the-clouds/" target="_blank" rel="noopener">science.nasa.gov</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://science.nasa.gov/earth/earth-observatory/winters-end-is-written-in-the-clouds/" target="_blank" rel="noopener" aria-describedby="cite-card">science.nasa.gov</a><span class="cite-card" id="cite-card" role="tooltip">https://science.nasa.gov/earth/earth-observatory/winters-end-is-written-in-the-clouds/</span></span></p>
 <ol>
 <li><strong>Flexible 3D-Printable Shielding Developed for Space</strong> — Universe Today</li>
 </ol>
 <p>Engineers created hair-thin nanotube shielding that can be 3D-printed to protect lunar rovers from solar storms and radiation. The material could allow autonomous explorers at the lunar south pole to continue operating even when a storm arrives.</p>
-<p>Source: <a href="https://www.universetoday.com/articles/flexible-3d-printable-shielding-for-extreme-environments" target="_blank" rel="noopener">universetoday.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.universetoday.com/articles/flexible-3d-printable-shielding-for-extreme-environments" target="_blank" rel="noopener" aria-describedby="cite-card">universetoday.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.universetoday.com/articles/flexible-3d-printable-shielding-for-extreme-environments</span></span></p>
 <ol>
 <li><strong>Canadian Space Agency Cancels Spire Wildfire Satellite Contract</strong> — SpaceNews</li>
 </ol>
 <p>The Canadian Space Agency terminated last year’s contract with Spire Global to build a fleet of small satellites dedicated to monitoring wildfires. The decision ends one planned contribution to Canada’s Earth-observation capabilities.</p>
-<p>Source: <a href="https://spacenews.com/canadian-space-agency-cancels-spire-satellite-contract/" target="_blank" rel="noopener">spacenews.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://spacenews.com/canadian-space-agency-cancels-spire-satellite-contract/" target="_blank" rel="noopener" aria-describedby="cite-card">spacenews.com</a><span class="cite-card" id="cite-card" role="tooltip">https://spacenews.com/canadian-space-agency-cancels-spire-satellite-contract/</span></span></p>
 <ol>
 <li><strong>Trump Hosts Artemis II Astronauts at White House</strong> — The New York Times</li>
 </ol>
 <p>President Trump welcomed the Artemis II crew to the White House, celebrating the upcoming crewed lunar flyby mission. The event underscored continued high-level political support for NASA’s return to the Moon.</p>
-<p>Source: <a href="https://news.google.com/rss/articles/CBMiiAFBVV95cUxNMGJqemhzMmd0a2ZKUlhKTldQdDlxWHhUUXFPV0VDT1V0Qm5JWGRVZTJZYkR6aWM3ajQ3R3FZTzVzM1VEdEdVeWNKS2Z6WTlvQV8wNWlyZUFULXNxbGVVcFJhWlJaWHBkVWZpSHFWdFJPM21qdndETGtXM1ZkZldicjBVd0tjOXJi?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMiiAFBVV95cUxNMGJqemhzMmd0a2ZKUlhKTldQdDlxWHhUUXFPV0VDT1V0Qm5JWGRVZTJZYkR6aWM3ajQ3R3FZTzVzM1VEdEdVeWNKS2Z6WTlvQV8wNWlyZUFULXNxbGVVcFJhWlJaWHBkVWZpSHFWdFJPM21qdndETGtXM1ZkZldicjBVd0tjOXJi?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMiiAFBVV95cUxNMGJqemhzMmd0a2ZKUlhKTldQdDlxWHhUUXFPV0VDT1V0Qm5JWGRVZTJZYkR6aWM3ajQ3R3FZTzVzM1VEdEdVeWNKS2Z6WTlvQV8wNWlyZUFULXNxbGVVcFJhWlJaWHBkVWZpSHFWdFJPM21qdndETGtXM1ZkZldicjBVd0tjOXJi?oc=5</span></span></p>
 <ol>
 <li><strong>ASTRA Initiative Seminar Held at NASA</strong> — NASA</li>
 </ol>
 <p>Al Nash from the Jet Propulsion Laboratory spoke on moving interesting ideas to selected ASTRA studies during the 30 April seminar. The session explored considerations for advancing early-stage astrophysics technology concepts.</p>
-<p>Source: <a href="https://science.nasa.gov/astrophysics/programs/cosmic-origins/community/astra-initiative-seminar-30-april-2026/" target="_blank" rel="noopener">science.nasa.gov</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://science.nasa.gov/astrophysics/programs/cosmic-origins/community/astra-initiative-seminar-30-april-2026/" target="_blank" rel="noopener" aria-describedby="cite-card">science.nasa.gov</a><span class="cite-card" id="cite-card" role="tooltip">https://science.nasa.gov/astrophysics/programs/cosmic-origins/community/astra-initiative-seminar-30-april-2026/</span></span></p>
 <h4 id="cosmic-spotlight">Cosmic Spotlight</h4>
 <p><strong>Flexible 3D-Printable Shielding Developed for Space</strong></p>
 <p>Picture a fleet of autonomous rovers trundling across the lunar south pole, three kilometres from base, when a solar storm alert suddenly lights up mission control. Instead of scrambling to retrieve them, engineers simply rely on hair-thin nanotube layers printed directly onto the rovers’ electronics and solar panels. The shielding is light enough to add almost no mass yet flexible enough to survive the extreme temperature swings and vibration of launch. Early tests suggest it can deflect the worst of the high-energy particles that would otherwise fry unshielded systems. What comes next is flight qualification on actual lunar hardware, potentially opening the door to long-duration robotic missions in permanently shadowed regions.</p>
@@ -1382,6 +1477,34 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
             </nav>
             
             <!-- Cross-show Recommendations -->
+            
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/env_intel/ep031.html" class="blog-related-card" style="--card-show-color: #1B5E20">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #1B5E20, white 35%)">Environmental Intelligence</span>
+                        <h3>Environmental Intelligence</h3>
+                        <p>Ontario relocates decades-old mine tailings in Nipissing First Nation after prior consultation failures.</p>
+                    </a>
+                    
+                    <a href="../../blog/models_agents_beginners/ep028.html" class="blog-related-card" style="--card-show-color: #C2410C">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #C2410C, white 35%)">Models & Agents for Beginners</span>
+                        <h3>Three AIs debating your toughest questions on a shared canvas could make getting...</h3>
+                        <p>Three AIs debating your toughest questions on a shared canvas could make getting reliable advice from AI much easier.</p>
+                    </a>
+                    
+                    <a href="../../blog/models_agents/ep040.html" class="blog-related-card" style="--card-show-color: #7C3AED">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #7C3AED, white 35%)">Models & Agents</span>
+                        <h3>Models & Agents</h3>
+                        <p>OpenAI gives 8,000 developers a month of 10x Codex rate limits after the GPT-5.5 party sold out.</p>
+                    </a>
+                    
+                </div>
+            </section>
             
         </article>
     </div>

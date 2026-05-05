@@ -7,7 +7,7 @@
     
     <meta name="keywords" content="space podcast, astronomy news, NASA discoveries, space exploration, Fascinating Frontiers">
     <title>Artemis 2 astronauts have successfully repaired their toilet during the first cr... — Ep48 | Fascinating Frontiers Blog</title>
-    <meta name="theme-color" content="#7C5CFF">
+    <meta name="theme-color" content="#6B47FF">
 
     <!-- Open Graph -->
     <meta property="og:title" content="Artemis 2 astronauts have successfully repaired their toilet during the first cr... — Ep48 | Fascinating Frontiers Blog">
@@ -34,9 +34,23 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%237C5CFF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%236B47FF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/></svg>">
 
     
+    
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="../../assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
     
     
     
@@ -185,7 +199,8 @@
             padding: 2px 10px;
             border-radius: 100px;
             background: color-mix(in srgb, var(--show-color) 15%, transparent);
-            color: var(--show-color);
+            /* AA-compliant text on dark page bg — see --show-color-text in base.html.j2 */
+            color: var(--show-color-text, var(--show-color));
             font-weight: 600;
         }
         .post-author {
@@ -282,7 +297,8 @@
         }
         .blog-toc a:hover,
         .blog-toc a.active {
-            color: var(--show-color);
+            /* AA-compliant text on dark sidebar bg */
+            color: var(--show-color-text, var(--show-color));
             border-left-color: var(--show-color);
         }
         .blog-toc a.toc-h3 {
@@ -327,14 +343,18 @@
             margin: 0 0 var(--sp-4);
         }
         .blog-article a {
-            color: var(--show-color);
+            /* Body links — AA-compliant lightened brand on dark bg.
+               Saturated brand colors fail 4.5:1 on `--nn-bg`; the
+               `--show-color-text` variable lightens by 35 % white so
+               every show clears AA. */
+            color: var(--show-color-text, var(--show-color));
             text-decoration: underline;
             text-underline-offset: 2px;
-            text-decoration-color: color-mix(in srgb, var(--show-color) 40%, transparent);
+            text-decoration-color: color-mix(in srgb, var(--show-color-text, var(--show-color)) 40%, transparent);
             transition: text-decoration-color var(--duration) var(--ease);
         }
         .blog-article a:hover {
-            text-decoration-color: var(--show-color);
+            text-decoration-color: var(--show-color-text, var(--show-color));
         }
         .blog-article strong {
             color: var(--nn-white);
@@ -613,13 +633,88 @@
         }
         .blog-listen-cta:hover {
             border-color: var(--show-color);
-            color: var(--show-color);
+            color: var(--show-color-text, var(--show-color));
+        }
+
+        /* Hover-card citations (Phase 3.4 of the May 2026 audit).
+           A small inline pill shows the publisher domain; on hover or
+           keyboard focus a popover reveals the full URL so readers
+           can verify provenance without leaving the page. Pure CSS,
+           no JS — works in every email/RSS-rendered surface that
+           runs the page stylesheet. */
+        .cite {
+            position: relative;
+            display: inline-block;
+        }
+        .cite-pill {
+            display: inline-block;
+            padding: 0.05em 0.55em;
+            margin: 0 0.1em;
+            border-radius: 999px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.78em;
+            line-height: 1.4;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+            white-space: nowrap;
+        }
+        .cite-pill:hover,
+        .cite-pill:focus {
+            border-color: var(--show-color);
+            /* Same AA fix as body links — brand text needs to clear
+               4.5:1 on the dark card surface. */
+            color: var(--show-color-text, var(--show-color));
+            outline: none;
+        }
+        .cite-card {
+            position: absolute;
+            left: 0;
+            bottom: calc(100% + 6px);
+            z-index: 10;
+            min-width: 240px;
+            max-width: 360px;
+            padding: var(--sp-2) var(--sp-3);
+            border-radius: 8px;
+            background: var(--nn-bg);
+            border: 1px solid var(--nn-border);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+            color: var(--nn-text);
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            word-break: break-all;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--duration) var(--ease);
+            pointer-events: none;
+        }
+        .cite:hover .cite-card,
+        .cite-pill:focus + .cite-card,
+        .cite-pill:focus-within + .cite-card {
+            opacity: 1;
+            visibility: visible;
+        }
+        @media (max-width: 600px) {
+            .cite-card {
+                left: auto;
+                right: 0;
+                min-width: 0;
+                max-width: 90vw;
+            }
         }
     </style>
 
 
     
-    <style>:root { --show-color: #7C5CFF; --show-color-dark: #6366f1; }</style>
+    
+    <style>:root {
+      --show-color: #6B47FF;
+      --show-color-dark: #4f46e5;
+      --show-color-text: color-mix(in srgb, #6B47FF, white 35%);
+    }</style>
     
     <style>
         @media (max-width: 768px) {
@@ -939,7 +1034,7 @@
             <li><a href="../../index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../fascinating-frontiers.html" style="color:var(--nn-text-muted);text-decoration:none;">Fascinating Frontiers</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../blog/fascinating_frontiers/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
-            <li aria-current="page" style="color:var(--show-color);">Episode 48</li>
+            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 48</li>
         </ol>
     </nav>
 
@@ -1003,46 +1098,46 @@
 <ol>
 <li><strong>Artemis 2 Crew Fixes Toilet in Orbit: 02 April 2026 • Astronomy Magazine</strong></li>
 <p class="blog-list-cont">The four-person crew of NASA’s Artemis 2 mission troubleshot and repaired their broken toilet on the first flight day. This practical fix ensures crew comfort and demonstrates NASA’s in-flight troubleshooting capability as the spacecraft heads toward the Moon.</p>
-<p class="blog-list-cont">Source: <a href="https://www.astronomy.com/space-exploration/artemis-2-crew-fixes-toilet-can-now-pee-in-it/" target="_blank" rel="noopener">astronomy.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.astronomy.com/space-exploration/artemis-2-crew-fixes-toilet-can-now-pee-in-it/" target="_blank" rel="noopener" aria-describedby="cite-card">astronomy.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.astronomy.com/space-exploration/artemis-2-crew-fixes-toilet-can-now-pee-in-it/</span></span></p>
 <li><strong>Artemis 2 Launches Historic Crewed Lunar Flyby: 01 April 2026 • NASA</strong></li>
 <p class="blog-list-cont">NASA’s SLS rocket lifted off from Kennedy Space Center at 6:35 p.m. EDT on 1 April, sending four astronauts on the first crewed lunar mission in more than 50 years. The flight marks humanity’s return to cis-lunar space and paves the way for future Artemis landings.</p>
-<p class="blog-list-cont">Source: <a href="https://www.nasa.gov/news-release/liftoff-nasa-launches-astronauts-on-historic-artemis-moon-mission/" target="_blank" rel="noopener">nasa.gov</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.nasa.gov/news-release/liftoff-nasa-launches-astronauts-on-historic-artemis-moon-mission/" target="_blank" rel="noopener" aria-describedby="cite-card">nasa.gov</a><span class="cite-card" id="cite-card" role="tooltip">https://www.nasa.gov/news-release/liftoff-nasa-launches-astronauts-on-historic-artemis-moon-mission/</span></span></p>
 <li><strong>Largest Survey Confirms Exoplanet Spin-Mass Relationship: 01 April 2026 • Universe Today</strong></li>
 <p class="blog-list-cont">Astronomers using the W.M. Keck Observatory studied dozens of gas giants and brown dwarfs, confirming the long-predicted link between planetary mass and rotation rate. The results strengthen our understanding of how these distant worlds form and evolve.</p>
-<p class="blog-list-cont">Source: <a href="https://www.universetoday.com/articles/the-largest-survey-of-exoplanet-spins-confirms-a-long-held-theory" target="_blank" rel="noopener">universetoday.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.universetoday.com/articles/the-largest-survey-of-exoplanet-spins-confirms-a-long-held-theory" target="_blank" rel="noopener" aria-describedby="cite-card">universetoday.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.universetoday.com/articles/the-largest-survey-of-exoplanet-spins-confirms-a-long-held-theory</span></span></p>
 <li><strong>SpaceX Files Confidentially for IPO: 01 April 2026 • SpaceNews</strong></li>
 <p class="blog-list-cont">SpaceX has taken the initial step toward going public by confidentially filing for an initial public offering that could be record-breaking. The move is seen by space industry leaders as a potential watershed moment for commercial space.</p>
-<p class="blog-list-cont">Source: <a href="https://spacenews.com/spacex-quietly-files-for-big-bang-ipo/" target="_blank" rel="noopener">spacenews.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://spacenews.com/spacex-quietly-files-for-big-bang-ipo/" target="_blank" rel="noopener" aria-describedby="cite-card">spacenews.com</a><span class="cite-card" id="cite-card" role="tooltip">https://spacenews.com/spacex-quietly-files-for-big-bang-ipo/</span></span></p>
 <li><strong>Astrophotographer’s 400-Hour Nebula Images in ‘Project Hail Mary’ Credits: 01 April 2026 • Space.com</strong></li>
 <p class="blog-list-cont">Stunning nebula photographs captured over 400 hours by one astrophotographer appear in the end credits of the film Project Hail Mary. The images began from an Instagram message and now grace the silver screen.</p>
-<p class="blog-list-cont">Source: <a href="https://www.space.com/stargazing/astrophotography/project-hail-mary-end-credits-showcase-stunning-nebula-photos-captured-over-400-hours-by-a-single-astrophotographer-heres-the-inside-story" target="_blank" rel="noopener">space.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.space.com/stargazing/astrophotography/project-hail-mary-end-credits-showcase-stunning-nebula-photos-captured-over-400-hours-by-a-single-astrophotographer-heres-the-inside-story" target="_blank" rel="noopener" aria-describedby="cite-card">space.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.space.com/stargazing/astrophotography/project-hail-mary-end-credits-showcase-stunning-nebula-photos-captured-over-400-hours-by-a-single-astrophotographer-heres-the-inside-story</span></span></p>
 <li><strong>AI Tool Uncovers Over 100 New Exoplanets in TESS Data: 01 April 2026 • Universe Today</strong></li>
 <p class="blog-list-cont">A new AI system validated more than 100 previously unknown planets while identifying thousands of additional candidates within TESS observations. The work also provides fresh estimates for how common certain planet types are around Sun-like stars.</p>
-<p class="blog-list-cont">Source: <a href="https://www.universetoday.com/articles/scouring-tess-data-with-ai-reveals-a-hundred-new-exoplanets" target="_blank" rel="noopener">universetoday.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.universetoday.com/articles/scouring-tess-data-with-ai-reveals-a-hundred-new-exoplanets" target="_blank" rel="noopener" aria-describedby="cite-card">universetoday.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.universetoday.com/articles/scouring-tess-data-with-ai-reveals-a-hundred-new-exoplanets</span></span></p>
 <li><strong>Debate Continues Over Black Hole Desert: 01 April 2026 • Sky & Telescope</strong></li>
 <p class="blog-list-cont">Astronomers remain divided on whether observations show a genuine gap in the sizes of black holes that stars can produce. The discussion centres on the so-called “desert” between roughly 50 and 150 solar masses.</p>
-<p class="blog-list-cont">Source: <a href="https://skyandtelescope.org/astronomy-news/black-holes/have-we-found-the-black-hole-desert/" target="_blank" rel="noopener">skyandtelescope.org</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://skyandtelescope.org/astronomy-news/black-holes/have-we-found-the-black-hole-desert/" target="_blank" rel="noopener" aria-describedby="cite-card">skyandtelescope.org</a><span class="cite-card" id="cite-card" role="tooltip">https://skyandtelescope.org/astronomy-news/black-holes/have-we-found-the-black-hole-desert/</span></span></p>
 <li><strong>Teledyne Creates Dedicated Space Business Unit: 01 April 2026 • SpaceNews</strong></li>
 <p class="blog-list-cont">Teledyne has combined its imaging, electronics and component lines into a new entity called Teledyne Space to meet growing demand. The reorganisation positions the company to better serve the expanding space sector.</p>
-<p class="blog-list-cont">Source: <a href="https://spacenews.com/teledyne-forms-dedicated-space-unit-to-capture-rising-demand/" target="_blank" rel="noopener">spacenews.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://spacenews.com/teledyne-forms-dedicated-space-unit-to-capture-rising-demand/" target="_blank" rel="noopener" aria-describedby="cite-card">spacenews.com</a><span class="cite-card" id="cite-card" role="tooltip">https://spacenews.com/teledyne-forms-dedicated-space-unit-to-capture-rising-demand/</span></span></p>
 <li><strong>Aspect Aerospace Raises $2.4 Million for Swarm VLEO Satellites: 01 April 2026 • SpaceNews</strong></li>
 <p class="blog-list-cont">University of South Alabama spin-off Aspect Aerospace secured $2.4 million to develop circuit-board-sized satellites deployable in swarms into very low Earth orbit. The tiny spacecraft are designed to monitor the space environment.</p>
-<p class="blog-list-cont">Source: <a href="https://spacenews.com/aspect-aerospace-secures-early-funding-to-advance-swarm-deployable-vleo-satellites/" target="_blank" rel="noopener">spacenews.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://spacenews.com/aspect-aerospace-secures-early-funding-to-advance-swarm-deployable-vleo-satellites/" target="_blank" rel="noopener" aria-describedby="cite-card">spacenews.com</a><span class="cite-card" id="cite-card" role="tooltip">https://spacenews.com/aspect-aerospace-secures-early-funding-to-advance-swarm-deployable-vleo-satellites/</span></span></p>
 <li><strong>Exploding Primordial Black Holes May Have Shaped Early Universe: 01 April 2026 • Universe Today</strong></li>
 <p class="blog-list-cont">A new theoretical paper proposes that microscopic primordial black holes detonating in the quark-gluon plasma could have reshaped the early universe and influenced matter production. The work draws on ideas from researchers at Vrije Universiteit Brussel and MIT.</p>
-<p class="blog-list-cont">Source: <a href="https://www.universetoday.com/articles/exploding-primordial-black-holes-might-have-reshaped-the-early-universe-and-created-all-matter-as-we" target="_blank" rel="noopener">universetoday.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.universetoday.com/articles/exploding-primordial-black-holes-might-have-reshaped-the-early-universe-and-created-all-matter-as-we" target="_blank" rel="noopener" aria-describedby="cite-card">universetoday.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.universetoday.com/articles/exploding-primordial-black-holes-might-have-reshaped-the-early-universe-and-created-all-matter-as-we</span></span></p>
 <li><strong>Saturn’s Magnetic Field Found to Be Warped: 01 April 2026 • Space.com</strong></li>
 <p class="blog-list-cont">Observations show Saturn’s magnetic field is curiously distorted, with one of its moons suspected of playing a role. Understanding this environment has become more urgent as missions to Saturn and Enceladus are planned.</p>
-<p class="blog-list-cont">Source: <a href="https://www.space.com/astronomy/saturn/saturns-magnetic-field-is-curiously-warped-and-one-of-its-moons-may-be-to-blame" target="_blank" rel="noopener">space.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.space.com/astronomy/saturn/saturns-magnetic-field-is-curiously-warped-and-one-of-its-moons-may-be-to-blame" target="_blank" rel="noopener" aria-describedby="cite-card">space.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.space.com/astronomy/saturn/saturns-magnetic-field-is-curiously-warped-and-one-of-its-moons-may-be-to-blame</span></span></p>
 <li><strong>April 2026 Full Moon Calendar Released: 01 April 2026 • Astronomy Magazine</strong></li>
 <p class="blog-list-cont">The 2026 calendar details when the Moon will reach full phase, caused by Earth precisely aligning between the Sun and Moon. It explains how the changing angle of sunlight creates the familiar lunar phases we see from Earth.</p>
-<p class="blog-list-cont">Source: <a href="https://www.astronomy.com/observing/full-moon-calendar-dates-times-types/" target="_blank" rel="noopener">astronomy.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.astronomy.com/observing/full-moon-calendar-dates-times-types/" target="_blank" rel="noopener" aria-describedby="cite-card">astronomy.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.astronomy.com/observing/full-moon-calendar-dates-times-types/</span></span></p>
 <li><strong>Venus and Jupiter Dominate April Evening Skies: 01 April 2026 • Space.com</strong></li>
 <p class="blog-list-cont">The two brightest planets light up April evenings while Mercury, Mars and Saturn appear in the dawn sky. The article provides exact times and locations for spotting all five naked-eye planets this month.</p>
-<p class="blog-list-cont">Source: <a href="https://www.space.com/stargazing/2-bright-planets-light-up-april-evenings-heres-where-and-when-to-look" target="_blank" rel="noopener">space.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.space.com/stargazing/2-bright-planets-light-up-april-evenings-heres-where-and-when-to-look" target="_blank" rel="noopener" aria-describedby="cite-card">space.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.space.com/stargazing/2-bright-planets-light-up-april-evenings-heres-where-and-when-to-look</span></span></p>
 <li><strong>Lessons from Space History for Near-Term Lunar Settlements: 01 April 2026 • SpaceNews</strong></li>
 <p class="blog-list-cont">A new piece draws parallels between Robert Goddard’s 1926 liquid-fuelled rocket flight, Sputnik in 1957, and the Apollo landings to inform future lunar base development. It highlights the rapid pace of progress once key milestones are achieved.</p>
-<p class="blog-list-cont">Source: <a href="https://spacenews.com/creating-near-term-lunar-settlements-lessons-from-space-history/" target="_blank" rel="noopener">spacenews.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://spacenews.com/creating-near-term-lunar-settlements-lessons-from-space-history/" target="_blank" rel="noopener" aria-describedby="cite-card">spacenews.com</a><span class="cite-card" id="cite-card" role="tooltip">https://spacenews.com/creating-near-term-lunar-settlements-lessons-from-space-history/</span></span></p>
 </ol>
 <h4 id="cosmic-spotlight">Cosmic Spotlight</h4>
 <p>The largest survey of exoplanet spins using Keck Observatory has confirmed the long-theorized relationship between a giant planet’s mass and how fast it rotates. By observing dozens of gas giants and brown dwarfs across many systems, astronomers now have solid data showing that more massive worlds tend to spin faster, exactly as models of gravitational collapse and angular momentum conservation predicted. This gives us a clearer window into the physics that governed the birth of these distant objects. The result also helps calibrate computer simulations of planet formation, making future predictions about unseen worlds more reliable. What does this tell us about the range of possible planets still waiting to be found?</p>
@@ -1243,6 +1338,34 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
             </nav>
             
             <!-- Cross-show Recommendations -->
+            
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/planetterrian/ep055.html" class="blog-related-card" style="--card-show-color: #017A99">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #017A99, white 35%)">Planetterrian Daily</span>
+                        <h3>Planetterrian Daily</h3>
+                        <p>Centenarians maintain immune systems far less prone to chronic inflammation than typical older adults.</p>
+                    </a>
+                    
+                    <a href="../../blog/modern_investing/ep034.html" class="blog-related-card" style="--card-show-color: #047857">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #047857, white 35%)">Modern Investing Techniques</span>
+                        <h3>Modern Investing Techniques</h3>
+                        <p>US companies have announced $665 billion in share buybacks year-to-date, offering a potential support level for equities&hellip;</p>
+                    </a>
+                    
+                    <a href="../../blog/models_agents_beginners/ep028.html" class="blog-related-card" style="--card-show-color: #C2410C">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #C2410C, white 35%)">Models & Agents for Beginners</span>
+                        <h3>Three AIs debating your toughest questions on a shared canvas could make getting...</h3>
+                        <p>Three AIs debating your toughest questions on a shared canvas could make getting reliable advice from AI much easier.</p>
+                    </a>
+                    
+                </div>
+            </section>
             
         </article>
     </div>

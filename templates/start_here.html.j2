@@ -118,7 +118,7 @@
 {% block content %}
     <header class="start-hero">
         <h1>Not sure where to <span class="gradient-text">start</span>?</h1>
-        <p>We have 11 shows covering different topics. Pick what interests you most, or explore them all — every show is ad-free and produced daily.</p>
+        <p>We have 11 shows covering different topics. Pick what interests you most, or explore them all — every show is ad-free, and most run daily (a few publish on weekdays or alternating days).</p>
     </header>
 
     <div class="start-categories">
@@ -244,6 +244,34 @@
             </div>
             <div class="start-shows-row">
                 {% for s in all_shows if s.slug in ['env_intel'] %}
+                <a href="{{ path_prefix }}{{ s.show_page }}" class="start-show-card" style="--card-color: {{ s.brand_color }}">
+                    <picture>
+                        <source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp">
+                        <img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400" loading="lazy">
+                    </picture>
+                    <div class="start-card-info">
+                        <h3>{{ s.name }}</h3>
+                        <p>{{ s.tagline }}</p>
+                        <div class="start-card-meta">
+                            <span>{{ s.schedule }}</span>
+                            {% if s.episode_length %}<span>{{ s.episode_length }}</span>{% endif %}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="start-cat">
+            <div class="start-cat-header">
+                <div class="start-cat-icon" style="background: color-mix(in srgb, #B45309 15%, transparent);">&#x1F4DA;</div>
+                <div>
+                    <h2>Stories & Case Studies</h2>
+                    <p>Narrative deep-dives into surprising outcomes — good intentions, real-world results.</p>
+                </div>
+            </div>
+            <div class="start-shows-row">
+                {% for s in all_shows if s.slug in ['unintended_consequences'] %}
                 <a href="{{ path_prefix }}{{ s.show_page }}" class="start-show-card" style="--card-color: {{ s.brand_color }}">
                     <picture>
                         <source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp">

@@ -34,9 +34,23 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%237C5CFF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%236B47FF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/></svg>">
 
     
+    
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="../../assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
     
     
     
@@ -185,7 +199,8 @@
             padding: 2px 10px;
             border-radius: 100px;
             background: color-mix(in srgb, var(--show-color) 15%, transparent);
-            color: var(--show-color);
+            /* AA-compliant text on dark page bg — see --show-color-text in base.html.j2 */
+            color: var(--show-color-text, var(--show-color));
             font-weight: 600;
         }
         .post-author {
@@ -282,7 +297,8 @@
         }
         .blog-toc a:hover,
         .blog-toc a.active {
-            color: var(--show-color);
+            /* AA-compliant text on dark sidebar bg */
+            color: var(--show-color-text, var(--show-color));
             border-left-color: var(--show-color);
         }
         .blog-toc a.toc-h3 {
@@ -327,14 +343,18 @@
             margin: 0 0 var(--sp-4);
         }
         .blog-article a {
-            color: var(--show-color);
+            /* Body links — AA-compliant lightened brand on dark bg.
+               Saturated brand colors fail 4.5:1 on `--nn-bg`; the
+               `--show-color-text` variable lightens by 35 % white so
+               every show clears AA. */
+            color: var(--show-color-text, var(--show-color));
             text-decoration: underline;
             text-underline-offset: 2px;
-            text-decoration-color: color-mix(in srgb, var(--show-color) 40%, transparent);
+            text-decoration-color: color-mix(in srgb, var(--show-color-text, var(--show-color)) 40%, transparent);
             transition: text-decoration-color var(--duration) var(--ease);
         }
         .blog-article a:hover {
-            text-decoration-color: var(--show-color);
+            text-decoration-color: var(--show-color-text, var(--show-color));
         }
         .blog-article strong {
             color: var(--nn-white);
@@ -613,13 +633,88 @@
         }
         .blog-listen-cta:hover {
             border-color: var(--show-color);
-            color: var(--show-color);
+            color: var(--show-color-text, var(--show-color));
+        }
+
+        /* Hover-card citations (Phase 3.4 of the May 2026 audit).
+           A small inline pill shows the publisher domain; on hover or
+           keyboard focus a popover reveals the full URL so readers
+           can verify provenance without leaving the page. Pure CSS,
+           no JS — works in every email/RSS-rendered surface that
+           runs the page stylesheet. */
+        .cite {
+            position: relative;
+            display: inline-block;
+        }
+        .cite-pill {
+            display: inline-block;
+            padding: 0.05em 0.55em;
+            margin: 0 0.1em;
+            border-radius: 999px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.78em;
+            line-height: 1.4;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+            white-space: nowrap;
+        }
+        .cite-pill:hover,
+        .cite-pill:focus {
+            border-color: var(--show-color);
+            /* Same AA fix as body links — brand text needs to clear
+               4.5:1 on the dark card surface. */
+            color: var(--show-color-text, var(--show-color));
+            outline: none;
+        }
+        .cite-card {
+            position: absolute;
+            left: 0;
+            bottom: calc(100% + 6px);
+            z-index: 10;
+            min-width: 240px;
+            max-width: 360px;
+            padding: var(--sp-2) var(--sp-3);
+            border-radius: 8px;
+            background: var(--nn-bg);
+            border: 1px solid var(--nn-border);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+            color: var(--nn-text);
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            word-break: break-all;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--duration) var(--ease);
+            pointer-events: none;
+        }
+        .cite:hover .cite-card,
+        .cite-pill:focus + .cite-card,
+        .cite-pill:focus-within + .cite-card {
+            opacity: 1;
+            visibility: visible;
+        }
+        @media (max-width: 600px) {
+            .cite-card {
+                left: auto;
+                right: 0;
+                min-width: 0;
+                max-width: 90vw;
+            }
         }
     </style>
 
 
     
-    <style>:root { --show-color: #E31937; --show-color-dark: #C4122E; }</style>
+    
+    <style>:root {
+      --show-color: #E31937;
+      --show-color-dark: #C4122E;
+      --show-color-text: color-mix(in srgb, #E31937, white 35%);
+    }</style>
     
     <style>
         @media (max-width: 768px) {
@@ -939,7 +1034,7 @@
             <li><a href="../../index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../tesla.html" style="color:var(--nn-text-muted);text-decoration:none;">Tesla Shorts Time</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../blog/tesla/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
-            <li aria-current="page" style="color:var(--show-color);">Episode 434</li>
+            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 434</li>
         </ol>
     </nav>
 
@@ -1010,53 +1105,53 @@
 <ol>
 <li><strong>Tesla’s FSD Is Finally Approved In Europe. Only Not Everywhere Yet: April 12, 2026, 5:42 AM PST, InsideEVs</strong></li>
 <p class="blog-list-cont">Dutch regulators have cleared Tesla’s supervised Full Self-Driving after more than a year of testing, marking the first European country to do so. This is a meaningful milestone for Tesla’s autonomy ambitions, though expanding the approval across the EU will require additional regulatory wins in other markets. The development signals that Tesla’s vision-only approach can meet European safety standards, even if the current version differs from what’s offered in the US. For customers, it means supervised FSD could soon be available on Dutch roads, potentially accelerating broader adoption if other countries follow.</p>
-<p class="blog-list-cont">Source: <a href="https://insideevs.com/news/792715/tesla-fsd-approved-the-netherlands/" target="_blank" rel="noopener">insideevs.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://insideevs.com/news/792715/tesla-fsd-approved-the-netherlands/" target="_blank" rel="noopener" aria-describedby="cite-card">insideevs.com</a><span class="cite-card" id="cite-card" role="tooltip">https://insideevs.com/news/792715/tesla-fsd-approved-the-netherlands/</span></span></p>
 <li><strong>Tesla is working on a compact SUV, signalling revival of ‘affordable EV’ plans: April 12, 2026, 5:56 AM PST, The Indian Panorama</strong></li>
 <p class="blog-list-cont">Reports indicate Tesla has restarted development of an affordable electric vehicle in the form of a compact SUV, reviving earlier plans that had been sidelined. This move could help Tesla address demand for lower-priced EVs as competition intensifies from manufacturers offering more budget-friendly options. For the business, bringing an accessible model back into the lineup might broaden the customer base beyond premium buyers and support volume growth. It also reflects how Tesla adjusts product strategy in response to market realities and its own shifting priorities.</p>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMivAFBVV95cUxPU2lRWGZiQ1owZnMxdkl2eVN3MTk1WDktc0ltcWFMclEwRVFDNFlhdFhPMlQyYXRxcUNFRTNjWUQyMnRESk54YTJDbWxYWU5DdWNBb2ppcWxwcmZmenZtQjZQZzlNMlFja3pVMWQxTmw2T0pXMVNLRzZmZzJHOXZNTVJBS3VaRUlOYVNSVjRSX2phMG5nSmZKYjBEQ0FhNkJoSDZ5NEoxR0hQNV9NcDRJNGxtNHBhYWF1dk9Mcg?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMivAFBVV95cUxPU2lRWGZiQ1owZnMxdkl2eVN3MTk1WDktc0ltcWFMclEwRVFDNFlhdFhPMlQyYXRxcUNFRTNjWUQyMnRESk54YTJDbWxYWU5DdWNBb2ppcWxwcmZmenZtQjZQZzlNMlFja3pVMWQxTmw2T0pXMVNLRzZmZzJHOXZNTVJBS3VaRUlOYVNSVjRSX2phMG5nSmZKYjBEQ0FhNkJoSDZ5NEoxR0hQNV9NcDRJNGxtNHBhYWF1dk9Mcg?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMivAFBVV95cUxPU2lRWGZiQ1owZnMxdkl2eVN3MTk1WDktc0ltcWFMclEwRVFDNFlhdFhPMlQyYXRxcUNFRTNjWUQyMnRESk54YTJDbWxYWU5DdWNBb2ppcWxwcmZmenZtQjZQZzlNMlFja3pVMWQxTmw2T0pXMVNLRzZmZzJHOXZNTVJBS3VaRUlOYVNSVjRSX2phMG5nSmZKYjBEQ0FhNkJoSDZ5NEoxR0hQNV9NcDRJNGxtNHBhYWF1dk9Mcg?oc=5</span></span></p>
 <li><strong>Tesla Unveils Dedicated Semi Truck Factory in Nevada: April 12, 2026, 5:45 AM PST, National Today</strong></li>
 <p class="blog-list-cont">Tesla has revealed a dedicated factory in Nevada specifically for producing its Semi electric truck. This dedicated facility should help scale manufacturing of the Class 8 truck, which has been a long-promised part of Tesla’s commercial vehicle strategy. For the industry, it underscores growing investment in heavy-duty electrification and could influence how competitors approach battery-electric trucking. Customers in logistics and freight stand to benefit if production ramps successfully and delivers on the promised efficiency gains.</p>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMisgFBVV95cUxNR3FDYjNXWjEyQlJFeTJqNVIxb0VHcWhFaHgtSm1ETnZvTzBGdDBjQWdqcHhEQ2UyMEZVYWp0bHZ5LWZWTWREUm9RbG1xY0hacW1OOGYySkxjVGtTVFc5Vm5BMlNkVjR2VEhsLTk1Um9Bcl96by02elN0bGQycnYwbjdkeVdjVkYxM0o3N3Nscm8xY2tsbS10ZGw3QjAwM0RUbTBlYmUzNFVBTGtrb1N5a2Rn?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMisgFBVV95cUxNR3FDYjNXWjEyQlJFeTJqNVIxb0VHcWhFaHgtSm1ETnZvTzBGdDBjQWdqcHhEQ2UyMEZVYWp0bHZ5LWZWTWREUm9RbG1xY0hacW1OOGYySkxjVGtTVFc5Vm5BMlNkVjR2VEhsLTk1Um9Bcl96by02elN0bGQycnYwbjdkeVdjVkYxM0o3N3Nscm8xY2tsbS10ZGw3QjAwM0RUbTBlYmUzNFVBTGtrb1N5a2Rn?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMisgFBVV95cUxNR3FDYjNXWjEyQlJFeTJqNVIxb0VHcWhFaHgtSm1ETnZvTzBGdDBjQWdqcHhEQ2UyMEZVYWp0bHZ5LWZWTWREUm9RbG1xY0hacW1OOGYySkxjVGtTVFc5Vm5BMlNkVjR2VEhsLTk1Um9Bcl96by02elN0bGQycnYwbjdkeVdjVkYxM0o3N3Nscm8xY2tsbS10ZGw3QjAwM0RUbTBlYmUzNFVBTGtrb1N5a2Rn?oc=5</span></span></p>
 <li><strong>Tesla Cybercab Fleet Spotted at Giga Texas: Mass Production Begins!: April 12, 2026, 12:39 AM PST, National Today</strong></li>
 <p class="blog-list-cont">A fleet of Cybercabs has been spotted at Giga Texas, indicating that mass production of Tesla’s purpose-built robotaxi may be getting underway. This is an important step toward Tesla’s vision of unsupervised autonomy at scale and a dedicated robotaxi network. For the business, successful production ramp of the Cybercab could open a high-margin autonomy revenue stream distinct from vehicle sales. It also gives a tangible sign that the robotaxi timeline is moving from concept to physical vehicles.</p>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMivgFBVV95cUxPZmdubjROSlhaZU43S2hwRHNlZGZXWlhZMlZrWjZiemNQbXZRNnNuaDExLWxHdHlQUnF4T0pJeUFnV3pTMW10bHdYV2syS2o2S0t4VHFwTWpvU1ROMGtIWXRVZjJtTWZyVzh2WDF0Vjh6YkJnQ1VTOVJkWDFnZ2JyR0w5UU03WXI5QUN2RGtVLTc5TzR3LTlaRkE4dU1Hb3IzQ2k4dmktZm9oLUpZLWNqZTNENFprbXFteTJNQjF3?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMivgFBVV95cUxPZmdubjROSlhaZU43S2hwRHNlZGZXWlhZMlZrWjZiemNQbXZRNnNuaDExLWxHdHlQUnF4T0pJeUFnV3pTMW10bHdYV2syS2o2S0t4VHFwTWpvU1ROMGtIWXRVZjJtTWZyVzh2WDF0Vjh6YkJnQ1VTOVJkWDFnZ2JyR0w5UU03WXI5QUN2RGtVLTc5TzR3LTlaRkE4dU1Hb3IzQ2k4dmktZm9oLUpZLWNqZTNENFprbXFteTJNQjF3?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMivgFBVV95cUxPZmdubjROSlhaZU43S2hwRHNlZGZXWlhZMlZrWjZiemNQbXZRNnNuaDExLWxHdHlQUnF4T0pJeUFnV3pTMW10bHdYV2syS2o2S0t4VHFwTWpvU1ROMGtIWXRVZjJtTWZyVzh2WDF0Vjh6YkJnQ1VTOVJkWDFnZ2JyR0w5UU03WXI5QUN2RGtVLTc5TzR3LTlaRkE4dU1Hb3IzQ2k4dmktZm9oLUpZLWNqZTNENFprbXFteTJNQjF3?oc=5</span></span></p>
 <li><strong>NHTSA Ends Tesla Remote Parking Probe: What It Means for Safety and Your Car: April 12, 2026, 12:24 AM PST, National Today</strong></li>
 <p class="blog-list-cont">The U.S. National Highway Traffic Safety Administration has closed its investigation into Tesla’s remote parking feature without taking further action. This removes a regulatory cloud over one of Tesla’s convenience features and signals that the agency found no ongoing safety issue requiring intervention. For owners, it provides reassurance that the feature can continue to be offered and improved through software updates. It also reflects how Tesla’s data-driven approach sometimes helps resolve probes more quickly than traditional manufacturers.</p>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMizAFBVV95cUxOOHZvbmtxTWN0aGtDalNESlFWZk1ORVJ3Z05udWR4eHlzTC1Sb3duY1JqMHJHOW1HbWVsNU1DdkRLVFpFOE5ELUFjNmhBcGFFa1BiN01rb294WGNZVkMyVlR3cU9SYXVwRFp1c3dBaE5uZ0ZoeEkxbmQ0LW9IOFh5MTUzM1ZOSVd1NmFMcDlIT2RLX1VwRDBtSkMtYUpQa1F0N1YyNnpPeE9nX2UyaERJTHpuWUdRVkxGS2h0RFE4OFZRSl9XYVk5eE1sODI?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMizAFBVV95cUxOOHZvbmtxTWN0aGtDalNESlFWZk1ORVJ3Z05udWR4eHlzTC1Sb3duY1JqMHJHOW1HbWVsNU1DdkRLVFpFOE5ELUFjNmhBcGFFa1BiN01rb294WGNZVkMyVlR3cU9SYXVwRFp1c3dBaE5uZ0ZoeEkxbmQ0LW9IOFh5MTUzM1ZOSVd1NmFMcDlIT2RLX1VwRDBtSkMtYUpQa1F0N1YyNnpPeE9nX2UyaERJTHpuWUdRVkxGS2h0RFE4OFZRSl9XYVk5eE1sODI?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMizAFBVV95cUxOOHZvbmtxTWN0aGtDalNESlFWZk1ORVJ3Z05udWR4eHlzTC1Sb3duY1JqMHJHOW1HbWVsNU1DdkRLVFpFOE5ELUFjNmhBcGFFa1BiN01rb294WGNZVkMyVlR3cU9SYXVwRFp1c3dBaE5uZ0ZoeEkxbmQ0LW9IOFh5MTUzM1ZOSVd1NmFMcDlIT2RLX1VwRDBtSkMtYUpQa1F0N1YyNnpPeE9nX2UyaERJTHpuWUdRVkxGS2h0RFE4OFZRSl9XYVk5eE1sODI?oc=5</span></span></p>
 <li><strong>Intel x Tesla Terafab: April 12, 2026, 3:38 AM PST, r/teslainvestorsclub</strong></li>
 <p class="blog-list-cont">Community discussion highlights growing ties between Tesla, xAI, and Intel on advanced chip manufacturing, including potential use of Intel’s foundry capacity for Tesla’s next-generation AI chips. Intel’s U.S.-based 18A process could provide Tesla with leading-edge production that is both more advanced than current Samsung constraints and located domestically. This partnership angle matters for Tesla’s ability to scale Dojo and vehicle AI compute without relying solely on overseas suppliers. It also points to deeper vertical integration in the semiconductor side of autonomy and robotics.</p>
-<p class="blog-list-cont">Source: <a href="https://www.reddit.com/r/teslainvestorsclub/comments/1sjb2yt/intel_x_tesla_terafab/" target="_blank" rel="noopener">reddit.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.reddit.com/r/teslainvestorsclub/comments/1sjb2yt/intel_x_tesla_terafab/" target="_blank" rel="noopener" aria-describedby="cite-card">reddit.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reddit.com/r/teslainvestorsclub/comments/1sjb2yt/intel_x_tesla_terafab/</span></span></p>
 <li><strong>Tesla Model Y leads Germany's electric vehicle sales in March 2026: April 12, 2026, 2:55 AM PST, Автомобильный портал 32CARS.RU</strong></li>
 <p class="blog-list-cont">The Tesla Model Y was the top-selling electric vehicle in Germany for March, continuing its strong performance in Europe’s largest EV market. This leadership shows sustained demand for Tesla’s core product even as overall EV sales face headwinds in some regions. For the industry, it underscores that established models with proven range and charging access still hold significant appeal. Customers benefit from the validation that the Model Y remains a practical choice in competitive European markets.</p>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMirAFBVV95cUxNVTRaa1puWWNvQ3EyS0xHTm1jSVZtck9YbUgtQ19IOTdfS0MtdkdLU2tMa1pmUDJHWVhOa0lNM0drdzRVbGJMd3BoSTJ5VzJOTGswREpqcjQ3TVJmNHdGYmR4OGJzNEUzcXJLSVlDeEpCOTR5cU9jZjRxSmlLT1p4UEZQMk5WZ0d5ZUdQeld3ZjNTVW52ZU9UOTNONzFGWGZQT3Q2dzdiV0pBaG8t0gGsAUFVX3lxTE1VNFprWm5ZY29DcTJLTEdObWNJVm1yT1htSC1DX0g5N19LQy12R0tTa0xrWmZQMkdZWE5rSU0zR2t3NFVsYkx3cGhJMnlXMk5MazBESmpyNDdNUmY0d0ZiZHg4YnM0RTNxcktJWUN4SkI5NHlxT2NmNHFKaUtPWnhQRlAyTlZnR3llR1B6V3dmM1NVbnZlT1Q5M043MUZYZlBPdDZ3N2JXSkFoby0?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMirAFBVV95cUxNVTRaa1puWWNvQ3EyS0xHTm1jSVZtck9YbUgtQ19IOTdfS0MtdkdLU2tMa1pmUDJHWVhOa0lNM0drdzRVbGJMd3BoSTJ5VzJOTGswREpqcjQ3TVJmNHdGYmR4OGJzNEUzcXJLSVlDeEpCOTR5cU9jZjRxSmlLT1p4UEZQMk5WZ0d5ZUdQeld3ZjNTVW52ZU9UOTNONzFGWGZQT3Q2dzdiV0pBaG8t0gGsAUFVX3lxTE1VNFprWm5ZY29DcTJLTEdObWNJVm1yT1htSC1DX0g5N19LQy12R0tTa0xrWmZQMkdZWE5rSU0zR2t3NFVsYkx3cGhJMnlXMk5MazBESmpyNDdNUmY0d0ZiZHg4YnM0RTNxcktJWUN4SkI5NHlxT2NmNHFKaUtPWnhQRlAyTlZnR3llR1B6V3dmM1NVbnZlT1Q5M043MUZYZlBPdDZ3N2JXSkFoby0?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMirAFBVV95cUxNVTRaa1puWWNvQ3EyS0xHTm1jSVZtck9YbUgtQ19IOTdfS0MtdkdLU2tMa1pmUDJHWVhOa0lNM0drdzRVbGJMd3BoSTJ5VzJOTGswREpqcjQ3TVJmNHdGYmR4OGJzNEUzcXJLSVlDeEpCOTR5cU9jZjRxSmlLT1p4UEZQMk5WZ0d5ZUdQeld3ZjNTVW52ZU9UOTNONzFGWGZQT3Q2dzdiV0pBaG8t0gGsAUFVX3lxTE1VNFprWm5ZY29DcTJLTEdObWNJVm1yT1htSC1DX0g5N19LQy12R0tTa0xrWmZQMkdZWE5rSU0zR2t3NFVsYkx3cGhJMnlXMk5MazBESmpyNDdNUmY0d0ZiZHg4YnM0RTNxcktJWUN4SkI5NHlxT2NmNHFKaUtPWnhQRlAyTlZnR3llR1B6V3dmM1NVbnZlT1Q5M043MUZYZlBPdDZ3N2JXSkFoby0?oc=5</span></span></p>
 <li><strong>Tesla Sitting on Record Inventory: April 12, 2026, 8:36 PM PST, CleanTechnica</strong></li>
 <p class="blog-list-cont">Tesla is currently holding higher inventory levels than it has in the past, according to recent observations. This buildup could reflect softening demand in some markets or a deliberate decision to have vehicles ready for quicker delivery. For the business, managing inventory efficiently will be important to avoid pressure on pricing or margins. It also highlights the contrast between Tesla’s production capacity and near-term sales momentum in certain regions.</p>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMie0FVX3lxTE51anM4Z0k2N1E0X0ptVnc2VVRuZ0U4U194RFhWOEVpbUJiV3YzcjQ0RzRmUjBuQ2xqZ3d0YVNEZWEtclhmUFViSXJ5ZW1xWTg0eU1QMkQ4WXNaYmZ4YVdaN1FhaFByTGZYbEo1UVRDUXFqV3NQOXNubmViTdIBgwFBVV95cUxQQnRlWFN5UElYZ0J3SzU0R2ZOQjlIRTh0RXlYT2VXODF5bkU1NXBfb2xnRTlZN0cyNy1nN1RVMVQwdURRakZocUVvZ2VmRjNPYndUcTZfSWl1ejFCYjJwdnVrcHZBU0MzWHRjQ0JSeHk5ZTk1eFFBdzAzeWpDQjNFYTExTQ?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMie0FVX3lxTE51anM4Z0k2N1E0X0ptVnc2VVRuZ0U4U194RFhWOEVpbUJiV3YzcjQ0RzRmUjBuQ2xqZ3d0YVNEZWEtclhmUFViSXJ5ZW1xWTg0eU1QMkQ4WXNaYmZ4YVdaN1FhaFByTGZYbEo1UVRDUXFqV3NQOXNubmViTdIBgwFBVV95cUxQQnRlWFN5UElYZ0J3SzU0R2ZOQjlIRTh0RXlYT2VXODF5bkU1NXBfb2xnRTlZN0cyNy1nN1RVMVQwdURRakZocUVvZ2VmRjNPYndUcTZfSWl1ejFCYjJwdnVrcHZBU0MzWHRjQ0JSeHk5ZTk1eFFBdzAzeWpDQjNFYTExTQ?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMie0FVX3lxTE51anM4Z0k2N1E0X0ptVnc2VVRuZ0U4U194RFhWOEVpbUJiV3YzcjQ0RzRmUjBuQ2xqZ3d0YVNEZWEtclhmUFViSXJ5ZW1xWTg0eU1QMkQ4WXNaYmZ4YVdaN1FhaFByTGZYbEo1UVRDUXFqV3NQOXNubmViTdIBgwFBVV95cUxQQnRlWFN5UElYZ0J3SzU0R2ZOQjlIRTh0RXlYT2VXODF5bkU1NXBfb2xnRTlZN0cyNy1nN1RVMVQwdURRakZocUVvZ2VmRjNPYndUcTZfSWl1ejFCYjJwdnVrcHZBU0MzWHRjQ0JSeHk5ZTk1eFFBdzAzeWpDQjNFYTExTQ?oc=5</span></span></p>
 <li><strong>Tesla and SpaceX deepen vertical integration push for supply chain control: April 12, 2026, 5:50 PM PST, digitimes</strong></li>
 <p class="blog-list-cont">Tesla and SpaceX are expanding efforts to control more of their own supply chains through deeper vertical integration. This strategy aims to reduce reliance on external suppliers for critical components and improve cost and quality consistency. For Tesla’s business, greater control could support faster innovation cycles in vehicles, energy products, and AI hardware. It also reflects a long-term philosophy of owning key technologies rather than depending on the broader industry ecosystem.</p>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMimAFBVV95cUxPV1dUVDA3ZGdza2ptQWFSemRPbk5jYUl1cjZpWVRBZ3ItZENUNktrTnhVWkJyOWtQUEpoVXdZRGV1MHdVR1JVX0Y2dDJmZ3VjYnlUa3gwRXJKNUdyOGlWYVA5Q2JwTDdvSUp2U01DRFNIcU9oRGpzclowWnBWWjdvS2VlbUZxRjY5VWxvVlhYRGhxbnEtRHFmTQ?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMimAFBVV95cUxPV1dUVDA3ZGdza2ptQWFSemRPbk5jYUl1cjZpWVRBZ3ItZENUNktrTnhVWkJyOWtQUEpoVXdZRGV1MHdVR1JVX0Y2dDJmZ3VjYnlUa3gwRXJKNUdyOGlWYVA5Q2JwTDdvSUp2U01DRFNIcU9oRGpzclowWnBWWjdvS2VlbUZxRjY5VWxvVlhYRGhxbnEtRHFmTQ?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMimAFBVV95cUxPV1dUVDA3ZGdza2ptQWFSemRPbk5jYUl1cjZpWVRBZ3ItZENUNktrTnhVWkJyOWtQUEpoVXdZRGV1MHdVR1JVX0Y2dDJmZ3VjYnlUa3gwRXJKNUdyOGlWYVA5Q2JwTDdvSUp2U01DRFNIcU9oRGpzclowWnBWWjdvS2VlbUZxRjY5VWxvVlhYRGhxbnEtRHFmTQ?oc=5</span></span></p>
 <li><strong>Tesla Unveils Zen Grey Interior for Model Y: April 11, 2026, 4:53 PM PST, National Today</strong></li>
 <p class="blog-list-cont">Tesla has introduced a new Zen Grey interior option for the Model Y, giving buyers another aesthetic choice in the popular SUV. The update is relatively straightforward but shows Tesla’s continued attention to refining its volume products even while pursuing robotaxis and robotics. For customers, it adds personalization without major changes to the vehicle’s core appeal or pricing. It also illustrates how Tesla balances incremental improvements with its bigger strategic bets.</p>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMiogFBVV95cUxPN203bGo5N3lRV2xKMFNSczNpWUwtYy13cmZsa3lHanJQYThqMHVidU9JZy0ycmxEQmFhRVFYdFRPMFpaelcwekFDdEcxOEZ4V201WWNrT3J3R3hpYXlMY1pzdlVwYVVfaS1MR1RhSWZNTUh4T05CSDJjUnRnVEZmZ3lkMUxuSkM1RDNabVRyTXNOY1Z3R2ZOWUtWdTVvallyRHc?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMiogFBVV95cUxPN203bGo5N3lRV2xKMFNSczNpWUwtYy13cmZsa3lHanJQYThqMHVidU9JZy0ycmxEQmFhRVFYdFRPMFpaelcwekFDdEcxOEZ4V201WWNrT3J3R3hpYXlMY1pzdlVwYVVfaS1MR1RhSWZNTUh4T05CSDJjUnRnVEZmZ3lkMUxuSkM1RDNabVRyTXNOY1Z3R2ZOWUtWdTVvallyRHc?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMiogFBVV95cUxPN203bGo5N3lRV2xKMFNSczNpWUwtYy13cmZsa3lHanJQYThqMHVidU9JZy0ycmxEQmFhRVFYdFRPMFpaelcwekFDdEcxOEZ4V201WWNrT3J3R3hpYXlMY1pzdlVwYVVfaS1MR1RhSWZNTUh4T05CSDJjUnRnVEZmZ3lkMUxuSkM1RDNabVRyTXNOY1Z3R2ZOWUtWdTVvallyRHc?oc=5</span></span></p>
 </ol>
 <h3 id="tesla-x-takeover-whats-hot-right-now">Tesla X Takeover: What's Hot Right Now</h3>
 <p>🎙️ Tesla X Takeover - What's breaking in the Tesla world today! Here are the most interesting, fresh Tesla developments that have everyone talking.</p>
 <ol>
 <li><strong>Tesla’s Robotaxi Strategy Gains Analyst Support</strong> - Analysts are highlighting confidence in Tesla’s vision-only approach for robotaxis despite current market challenges. The bullish take focuses on how camera-based systems could scale more cost-effectively than rivals relying on multiple sensor types. This stands out because it suggests the core tech bet may prove right even if near-term sales are softer.</li>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMisAFBVV95cUxNWlZieWR3YzdKZ24tY1dSeWJ3eWhzT0hqN21MSGRyQ0VvYjZLNVotVDZMaUlFRGdiakxKWE5paUFCOFpUYVFGbUZURkl4bHllc2V0eXF3aDh0dG1lQUt1Zk52VDBEQW5FWUlBdEdDZWlTQzFrZnlwX1lDbjVDWjRNOFhtN3pCSDh3ZzRjZEpGS082OUFQQkpPTzViSHVJNFp3QnhHQ0wyX2tuejY0VnNsVA?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMisAFBVV95cUxNWlZieWR3YzdKZ24tY1dSeWJ3eWhzT0hqN21MSGRyQ0VvYjZLNVotVDZMaUlFRGdiakxKWE5paUFCOFpUYVFGbUZURkl4bHllc2V0eXF3aDh0dG1lQUt1Zk52VDBEQW5FWUlBdEdDZWlTQzFrZnlwX1lDbjVDWjRNOFhtN3pCSDh3ZzRjZEpGS082OUFQQkpPTzViSHVJNFp3QnhHQ0wyX2tuejY0VnNsVA?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMisAFBVV95cUxNWlZieWR3YzdKZ24tY1dSeWJ3eWhzT0hqN21MSGRyQ0VvYjZLNVotVDZMaUlFRGdiakxKWE5paUFCOFpUYVFGbUZURkl4bHllc2V0eXF3aDh0dG1lQUt1Zk52VDBEQW5FWUlBdEdDZWlTQzFrZnlwX1lDbjVDWjRNOFhtN3pCSDh3ZzRjZEpGS082OUFQQkpPTzViSHVJNFp3QnhHQ0wyX2tuejY0VnNsVA?oc=5</span></span></p>
 <li><strong>Shift Toward Optimus and Robotaxis Over Traditional Vehicles</strong> - Tesla appears to be placing heavier emphasis on humanoid robots and robotaxi development as car sales face pressure. The move reflects a strategic pivot that prioritizes higher-potential autonomy and robotics businesses. What’s interesting is how this repositioning is happening in plain sight while legacy models like S and X see reduced focus.</li>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMitgFBVV95cUxOdGY1UE5GQUd2UGNTc2ZzUXNyQXVJVGszZmNZQTNWdjBaZHVUQWh2Yy1HZmlCV1k1bFQ1QzVlN2lpUkdON0J5bktpeGFBRHJRS2hPYkVwMkRERmpJb19leWFjVkY3Ry1BSnppX2hNRFdxcUdRQUxMcHJqUzJWT21DYjJ0bUFqeHV5VVBjcUdmZ0VCT1lSOFZ0R21oNjc5eWNQNGpNRWVzcklRcVF3YXh4QVFrYkQ3Zw?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMitgFBVV95cUxOdGY1UE5GQUd2UGNTc2ZzUXNyQXVJVGszZmNZQTNWdjBaZHVUQWh2Yy1HZmlCV1k1bFQ1QzVlN2lpUkdON0J5bktpeGFBRHJRS2hPYkVwMkRERmpJb19leWFjVkY3Ry1BSnppX2hNRFdxcUdRQUxMcHJqUzJWT21DYjJ0bUFqeHV5VVBjcUdmZ0VCT1lSOFZ0R21oNjc5eWNQNGpNRWVzcklRcVF3YXh4QVFrYkQ3Zw?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMitgFBVV95cUxOdGY1UE5GQUd2UGNTc2ZzUXNyQXVJVGszZmNZQTNWdjBaZHVUQWh2Yy1HZmlCV1k1bFQ1QzVlN2lpUkdON0J5bktpeGFBRHJRS2hPYkVwMkRERmpJb19leWFjVkY3Ry1BSnppX2hNRFdxcUdRQUxMcHJqUzJWT21DYjJ0bUFqeHV5VVBjcUdmZ0VCT1lSOFZ0R21oNjc5eWNQNGpNRWVzcklRcVF3YXh4QVFrYkQ3Zw?oc=5</span></span></p>
 <li><strong>Tesla ‘Model 2’ Plans Appear to Be Reviving</strong> - Fresh reporting suggests the long-discussed affordable EV, sometimes called Model 2, is rising again in the form of a compact SUV. This development is noteworthy because many had written off the project after earlier delays and strategic shifts. It could signal Tesla is still committed to expanding its lineup downward once production priorities allow.</li>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMilAFBVV95cUxPSGxLNERYMVFOU29Fandtbm1vT3BDNkV5VS1uMHE3ZDVSeWVvQzNkazFWQlktV2lILVF4MEJCWUZxNjgtanl3d0tyT0w0Slg1SmhjY2tzVWhRRkhYVld0Q09ZQUJXc3l0bmtmejZJR1FQRG8yQlpsVW9KSzZBVi1id1ZvSVliN0c2cVVvNG5ETmRSSWlH?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMilAFBVV95cUxPSGxLNERYMVFOU29Fandtbm1vT3BDNkV5VS1uMHE3ZDVSeWVvQzNkazFWQlktV2lILVF4MEJCWUZxNjgtanl3d0tyT0w0Slg1SmhjY2tzVWhRRkhYVld0Q09ZQUJXc3l0bmtmejZJR1FQRG8yQlpsVW9KSzZBVi1id1ZvSVliN0c2cVVvNG5ETmRSSWlH?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMilAFBVV95cUxPSGxLNERYMVFOU29Fandtbm1vT3BDNkV5VS1uMHE3ZDVSeWVvQzNkazFWQlktV2lILVF4MEJCWUZxNjgtanl3d0tyT0w0Slg1SmhjY2tzVWhRRkhYVld0Q09ZQUJXc3l0bmtmejZJR1FQRG8yQlpsVW9KSzZBVi1id1ZvSVliN0c2cVVvNG5ETmRSSWlH?oc=5</span></span></p>
 <li><strong>Supercharger for Business Tool Shows High All-In Cost</strong> - Tesla’s new configurator tool for commercial Supercharger deployments lists an all-in price around $940,000, giving fleet and site operators clearer expectations. The transparency is helpful but also highlights how expensive fast-charging infrastructure remains at scale. It’s sparking discussion about what level of utilization or partnership is needed to make these installations pay off.</li>
-<p class="blog-list-cont">Source: <a href="https://www.reddit.com/r/teslainvestorsclub/comments/1siyj1v/teslas_new_supercharger_for_business_tool_reveals/" target="_blank" rel="noopener">reddit.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://www.reddit.com/r/teslainvestorsclub/comments/1siyj1v/teslas_new_supercharger_for_business_tool_reveals/" target="_blank" rel="noopener" aria-describedby="cite-card">reddit.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reddit.com/r/teslainvestorsclub/comments/1siyj1v/teslas_new_supercharger_for_business_tool_reveals/</span></span></p>
 <li><strong>BYD Overtakes Tesla in Software Update Leadership</strong> - Despite Tesla popularizing over-the-air updates, BYD has taken the lead in how frequently and effectively vehicles receive new features. This reversal raises questions about execution and speed of iteration. The story stands out because it challenges the assumption that Tesla would always dominate the software-defined vehicle space.</li>
-<p class="blog-list-cont">Source: <a href="https://news.google.com/rss/articles/CBMimAFBVV95cUxPSVJ0OGhIcHBxVERMdktab01ZdzZwenhxQTFIbURGcTNvb3VBeXNHVzlTUnZsX0cyY0ZhaExpRnYtN3dMUkp1U1daQk1IS2RqX2RIQkg0TENDeERIQS1lTndYZmNOMlZOZ1BkdmtXMFdHYUl3U29tc2ZzaWZzWXh1a0lmeDNpRmp4Qk5sNUhwMzFVRHhyaUhrQw?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p class="blog-list-cont">Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMimAFBVV95cUxPSVJ0OGhIcHBxVERMdktab01ZdzZwenhxQTFIbURGcTNvb3VBeXNHVzlTUnZsX0cyY0ZhaExpRnYtN3dMUkp1U1daQk1IS2RqX2RIQkg0TENDeERIQS1lTndYZmNOMlZOZ1BkdmtXMFdHYUl3U29tc2ZzaWZzWXh1a0lmeDNpRmp4Qk5sNUhwMzFVRHhyaUhrQw?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMimAFBVV95cUxPSVJ0OGhIcHBxVERMdktab01ZdzZwenhxQTFIbURGcTNvb3VBeXNHVzlTUnZsX0cyY0ZhaExpRnYtN3dMUkp1U1daQk1IS2RqX2RIQkg0TENDeERIQS1lTndYZmNOMlZOZ1BkdmtXMFdHYUl3U29tc2ZzaWZzWXh1a0lmeDNpRmp4Qk5sNUhwMzFVRHhyaUhrQw?oc=5</span></span></p>
 </ol>
 <h3 id="short-spot">Short Spot</h3>
 <p><strong>Record Inventory Buildup: April 12, 2026, 8:36 PM PST, CleanTechnica</strong></p>
 <p>Tesla is sitting on higher vehicle inventory than it has carried in recent memory. This matters because excess stock can pressure pricing, tie up capital, and signal that production is currently outpacing sales in some regions. The challenge is real given softer demand and increased competition, but Tesla’s ability to adjust output quickly and improve features through software gives it tools to work through the surplus. How management balances build rates with demand over the next few quarters will be telling.</p>
-<p>Source: <a href="https://news.google.com/rss/articles/CBMie0FVX3lxTE51anM4Z0k2N1E0X0ptVnc2VVRuZ0U4U194RFhWOEVpbUJiV3YzcjQ0RzRmUjBuQ2xqZ3d0YVNEZWEtclhmUFViSXJ5ZW1xWTg0eU1QMkQ4WXNaYmZ4YVdaN1FhaFByTGZYbEo1UVRDUXFqV3NQOXNubmViTdIBgwFBVV95cUxQQnRlWFN5UElYZ0J3SzU0R2ZOQjlIRTh0RXlYT2VXODF5bkU1NXBfb2xnRTlZN0cyNy1nN1RVMVQwdURRakZocUVvZ2VmRjNPYndUcTZfSWl1ejFCYjJwdnVrcHZBU0MzWHRjQ0JSeHk5ZTk1eFFBdzAzeWpDQjNFYTExTQ?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMie0FVX3lxTE51anM4Z0k2N1E0X0ptVnc2VVRuZ0U4U194RFhWOEVpbUJiV3YzcjQ0RzRmUjBuQ2xqZ3d0YVNEZWEtclhmUFViSXJ5ZW1xWTg0eU1QMkQ4WXNaYmZ4YVdaN1FhaFByTGZYbEo1UVRDUXFqV3NQOXNubmViTdIBgwFBVV95cUxQQnRlWFN5UElYZ0J3SzU0R2ZOQjlIRTh0RXlYT2VXODF5bkU1NXBfb2xnRTlZN0cyNy1nN1RVMVQwdURRakZocUVvZ2VmRjNPYndUcTZfSWl1ejFCYjJwdnVrcHZBU0MzWHRjQ0JSeHk5ZTk1eFFBdzAzeWpDQjNFYTExTQ?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMie0FVX3lxTE51anM4Z0k2N1E0X0ptVnc2VVRuZ0U4U194RFhWOEVpbUJiV3YzcjQ0RzRmUjBuQ2xqZ3d0YVNEZWEtclhmUFViSXJ5ZW1xWTg0eU1QMkQ4WXNaYmZ4YVdaN1FhaFByTGZYbEo1UVRDUXFqV3NQOXNubmViTdIBgwFBVV95cUxQQnRlWFN5UElYZ0J3SzU0R2ZOQjlIRTh0RXlYT2VXODF5bkU1NXBfb2xnRTlZN0cyNy1nN1RVMVQwdURRakZocUVvZ2VmRjNPYndUcTZfSWl1ejFCYjJwdnVrcHZBU0MzWHRjQ0JSeHk5ZTk1eFFBdzAzeWpDQjNFYTExTQ?oc=5</span></span></p>
 <h4 id="tesla-first-principles">Tesla First Principles</h4>
 <p>🧠 Tesla First Principles - Cutting Through the Noise</p>
 <p><strong>TOPIC SELECTION:</strong> Choose the topic where conventional wisdom about Tesla is MOST WRONG right now. Look for areas where the popular narrative (from bulls or bears) diverges most from what physics, economics, or engineering data actually show. The best First Principles topics make listeners rethink something they thought they already understood.</p>
@@ -1282,6 +1377,34 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
             </nav>
             
             <!-- Cross-show Recommendations -->
+            
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/models_agents_beginners/ep028.html" class="blog-related-card" style="--card-show-color: #C2410C">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #C2410C, white 35%)">Models & Agents for Beginners</span>
+                        <h3>Three AIs debating your toughest questions on a shared canvas could make getting...</h3>
+                        <p>Three AIs debating your toughest questions on a shared canvas could make getting reliable advice from AI much easier.</p>
+                    </a>
+                    
+                    <a href="../../blog/models_agents/ep040.html" class="blog-related-card" style="--card-show-color: #7C3AED">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #7C3AED, white 35%)">Models & Agents</span>
+                        <h3>Models & Agents</h3>
+                        <p>OpenAI gives 8,000 developers a month of 10x Codex rate limits after the GPT-5.5 party sold out.</p>
+                    </a>
+                    
+                    <a href="../../blog/omni_view/ep042.html" class="blog-related-card" style="--card-show-color: #0B6FD6">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #0B6FD6, white 35%)">Omni View</span>
+                        <h3>Omni View — Omni‑View Briefing</h3>
+                        <p>Iran warns the US that it 'has not even begun' as violence escalates in the Strait of Hormuz.</p>
+                    </a>
+                    
+                </div>
+            </section>
             
         </article>
     </div>

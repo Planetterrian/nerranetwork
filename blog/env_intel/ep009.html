@@ -34,9 +34,23 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%237C5CFF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%236B47FF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/></svg>">
 
     
+    
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="../../assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
     
     
     
@@ -185,7 +199,8 @@
             padding: 2px 10px;
             border-radius: 100px;
             background: color-mix(in srgb, var(--show-color) 15%, transparent);
-            color: var(--show-color);
+            /* AA-compliant text on dark page bg — see --show-color-text in base.html.j2 */
+            color: var(--show-color-text, var(--show-color));
             font-weight: 600;
         }
         .post-author {
@@ -282,7 +297,8 @@
         }
         .blog-toc a:hover,
         .blog-toc a.active {
-            color: var(--show-color);
+            /* AA-compliant text on dark sidebar bg */
+            color: var(--show-color-text, var(--show-color));
             border-left-color: var(--show-color);
         }
         .blog-toc a.toc-h3 {
@@ -327,14 +343,18 @@
             margin: 0 0 var(--sp-4);
         }
         .blog-article a {
-            color: var(--show-color);
+            /* Body links — AA-compliant lightened brand on dark bg.
+               Saturated brand colors fail 4.5:1 on `--nn-bg`; the
+               `--show-color-text` variable lightens by 35 % white so
+               every show clears AA. */
+            color: var(--show-color-text, var(--show-color));
             text-decoration: underline;
             text-underline-offset: 2px;
-            text-decoration-color: color-mix(in srgb, var(--show-color) 40%, transparent);
+            text-decoration-color: color-mix(in srgb, var(--show-color-text, var(--show-color)) 40%, transparent);
             transition: text-decoration-color var(--duration) var(--ease);
         }
         .blog-article a:hover {
-            text-decoration-color: var(--show-color);
+            text-decoration-color: var(--show-color-text, var(--show-color));
         }
         .blog-article strong {
             color: var(--nn-white);
@@ -613,13 +633,88 @@
         }
         .blog-listen-cta:hover {
             border-color: var(--show-color);
-            color: var(--show-color);
+            color: var(--show-color-text, var(--show-color));
+        }
+
+        /* Hover-card citations (Phase 3.4 of the May 2026 audit).
+           A small inline pill shows the publisher domain; on hover or
+           keyboard focus a popover reveals the full URL so readers
+           can verify provenance without leaving the page. Pure CSS,
+           no JS — works in every email/RSS-rendered surface that
+           runs the page stylesheet. */
+        .cite {
+            position: relative;
+            display: inline-block;
+        }
+        .cite-pill {
+            display: inline-block;
+            padding: 0.05em 0.55em;
+            margin: 0 0.1em;
+            border-radius: 999px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.78em;
+            line-height: 1.4;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+            white-space: nowrap;
+        }
+        .cite-pill:hover,
+        .cite-pill:focus {
+            border-color: var(--show-color);
+            /* Same AA fix as body links — brand text needs to clear
+               4.5:1 on the dark card surface. */
+            color: var(--show-color-text, var(--show-color));
+            outline: none;
+        }
+        .cite-card {
+            position: absolute;
+            left: 0;
+            bottom: calc(100% + 6px);
+            z-index: 10;
+            min-width: 240px;
+            max-width: 360px;
+            padding: var(--sp-2) var(--sp-3);
+            border-radius: 8px;
+            background: var(--nn-bg);
+            border: 1px solid var(--nn-border);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+            color: var(--nn-text);
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            word-break: break-all;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--duration) var(--ease);
+            pointer-events: none;
+        }
+        .cite:hover .cite-card,
+        .cite-pill:focus + .cite-card,
+        .cite-pill:focus-within + .cite-card {
+            opacity: 1;
+            visibility: visible;
+        }
+        @media (max-width: 600px) {
+            .cite-card {
+                left: auto;
+                right: 0;
+                min-width: 0;
+                max-width: 90vw;
+            }
         }
     </style>
 
 
     
-    <style>:root { --show-color: #1B5E20; --show-color-dark: #0D3B0F; }</style>
+    
+    <style>:root {
+      --show-color: #1B5E20;
+      --show-color-dark: #0D3B0F;
+      --show-color-text: color-mix(in srgb, #1B5E20, white 35%);
+    }</style>
     
     <style>
         @media (max-width: 768px) {
@@ -939,7 +1034,7 @@
             <li><a href="../../index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../env-intel.html" style="color:var(--nn-text-muted);text-decoration:none;">Environmental Intelligence</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../blog/env_intel/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
-            <li aria-current="page" style="color:var(--show-color);">Episode 9</li>
+            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 9</li>
         </ol>
     </nav>
 
@@ -1013,28 +1108,28 @@
 <p><strong>Executive Summary:</strong> BC's Environmental Assessment Office is consulting on an expedited assessment process under the Environmental Assessment Act to reduce timelines for public-interest projects, requiring practitioners to review implications for ongoing major project assessments. Ontario finalizes a $20-million plan to merge 36 conservation authorities into nine, altering watershed management and permitting workflows in the province. Professionals should monitor federal climate policy interactions from new Nature studies for synergies in carbon pricing under CEPA and provincial frameworks like Alberta's TIER.</p>
 <h4 id="lead-story">Lead Story</h4>
 <p>BC's Environmental Assessment Office (EAO) released a proposal for an expedited environmental assessment process under the Environmental Assessment Act, targeting major projects in the public interest to streamline decision-making. The previous standard process under the 2018 Act typically spans 3-5 years; the expedited version aims to halve timelines by prioritizing key reviews while maintaining core requirements like Indigenous consultation and impact mitigation. Changes include faster scoping and reduced public comment periods for low-risk elements. For practitioners, this means accelerated schedules for site assessments and remediation planning in BC mining or infrastructure projects, potentially shifting Phase I/II ESA timelines forward by months. Watch for the consultation period closing in April 2026, with potential implementation by Q3 2026; submit feedback to influence final criteria. Cross-reference with federal IAA overlaps for hybrid assessments.</p>
-<p>Source: <a href="https://news.gov.bc.ca/releases/2026ENV0006-000247" target="_blank" rel="noopener">news.gov.bc.ca</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://news.gov.bc.ca/releases/2026ENV0006-000247" target="_blank" rel="noopener" aria-describedby="cite-card">news.gov.bc.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://news.gov.bc.ca/releases/2026ENV0006-000247</span></span></p>
 <h4 id="regulatory-policy-watch">Regulatory & Policy Watch</h4>
 <p><strong>Ontario’s $20-million plan to merge 36 conservation authorities into nine: The Narwhal</strong></p>
 <p>Ontario's government finalized a plan under the Conservation Authorities Act to amalgamate 36 authorities into nine regional entities, incorporating 14,000 public comments and dropping some mergers. This restructures permitting for floodplain development and contaminated site approvals, requiring consultants to adapt to new regional boundaries and potentially consolidated O. Reg. 153/04 compliance reviews. Action: Update client advisories for Ontario projects by end of week, noting Q2 2026 effective date.</p>
-<p>Source: <a href="https://thenarwhal.ca/ontario-conservation-authorities-final-plan/" target="_blank" rel="noopener">thenarwhal.ca</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://thenarwhal.ca/ontario-conservation-authorities-final-plan/" target="_blank" rel="noopener" aria-describedby="cite-card">thenarwhal.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://thenarwhal.ca/ontario-conservation-authorities-final-plan/</span></span></p>
 <p><strong>Trump’s EPA Claims Strong Enforcement. But the Data Tells a Different Story.: Inside Climate News</strong></p>
 <p>US EPA secured a $1.6 billion fine against Hino Motors for emissions data fraud under the Clean Air Act, highlighting enforcement on vehicle emissions testing. For Canadian practitioners, this signals potential harmonization pressures on federal CEPA vehicle standards and cross-border air quality monitoring under CCME guidelines. Monitor for Canada Gazette notices on aligned enforcement in 2026.</p>
-<p>Source: <a href="https://insideclimatenews.org/news/10032026/trumps-epa-claims-strong-enforcement/" target="_blank" rel="noopener">insideclimatenews.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://insideclimatenews.org/news/10032026/trumps-epa-claims-strong-enforcement/" target="_blank" rel="noopener" aria-describedby="cite-card">insideclimatenews.org</a><span class="cite-card" id="cite-card" role="tooltip">https://insideclimatenews.org/news/10032026/trumps-epa-claims-strong-enforcement/</span></span></p>
 <p><strong>One Year After Green Bank’s Demise, Court Mulls Future of Grant-Based Climate Policy: Inside Climate News</strong></p>
 <p>US federal court is reviewing the termination of the $20 billion Greenhouse Gas Reduction Fund under the Inflation Reduction Act, questioning grant allocation legality. Canadian implications include potential shifts in cross-border climate funding models, affecting federal CEPA carbon pricing and provincial programs like BC's CleanBC grants. Watch for court ruling by mid-2026 influencing IAA project funding.</p>
-<p>Source: <a href="https://insideclimatenews.org/news/11032026/epa-greenhouse-gas-reduction-fund-court-case/" target="_blank" rel="noopener">insideclimatenews.org</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://insideclimatenews.org/news/11032026/epa-greenhouse-gas-reduction-fund-court-case/" target="_blank" rel="noopener" aria-describedby="cite-card">insideclimatenews.org</a><span class="cite-card" id="cite-card" role="tooltip">https://insideclimatenews.org/news/11032026/epa-greenhouse-gas-reduction-fund-court-case/</span></span></p>
 <h4 id="science-technical">Science & Technical</h4>
 <p><strong>Policy interactions reshape the outcomes of carbon pricing policies: Nature</strong></p>
 <p>Global analysis shows policy synergies can boost carbon pricing effectiveness by 20-30% when paired with subsidies, per modeled scenarios; conflicts arise with overlapping regulations reducing mitigation cost-effectiveness. For Canadian risk assessors, this informs CEPA carbon pricing integrations with provincial frameworks like Alberta EPEA TIER, aiding compliance modeling for oil sands sites. Reference CCME guidelines for harmonized application in multi-jurisdictional projects.</p>
-<p>Source: <a href="https://www.nature.com/articles/s41558-026-02578-0" target="_blank" rel="noopener">nature.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.nature.com/articles/s41558-026-02578-0" target="_blank" rel="noopener" aria-describedby="cite-card">nature.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.nature.com/articles/s41558-026-02578-0</span></span></p>
 <p><strong>Cross-national comparative assessment of synergies and conflicts in climate policy mixes: Nature</strong></p>
 <p>Study identifies policy interactions yielding up to 15% higher emissions reductions in synergistic mixes, based on global data; conflicts noted in subsidy-carbon tax overlaps. Practitioners should apply this to federal-provincial overlaps under CEPA and Ontario EPA, refining risk assessments for adaptation projects with site-specific carbon thresholds. Align with CCME Canada-wide standards for cross-jurisdictional consistency.</p>
-<p>Source: <a href="https://www.nature.com/articles/s41558-026-02574-4" target="_blank" rel="noopener">nature.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.nature.com/articles/s41558-026-02574-4" target="_blank" rel="noopener" aria-describedby="cite-card">nature.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.nature.com/articles/s41558-026-02574-4</span></span></p>
 <h4 id="industry-practice">Industry & Practice</h4>
 <p><strong>Environmental Assessment Office seeks feedback on proposed expedited process: BC Gov News</strong></p>
 <p>BC EAO's proposal targets efficient assessments for major projects, potentially reducing timelines by 50% via streamlined reviews. Remediation engineers in BC should evaluate impacts on pump-and-treat or permeable reactive barrier designs in mining contexts, factoring shorter consultation windows. Brief teams on feedback submission to shape criteria affecting Q3 2026 project bids.</p>
-<p>Source: <a href="https://news.gov.bc.ca/releases/2026ENV0006-000247" target="_blank" rel="noopener">news.gov.bc.ca</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://news.gov.bc.ca/releases/2026ENV0006-000247" target="_blank" rel="noopener" aria-describedby="cite-card">news.gov.bc.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://news.gov.bc.ca/releases/2026ENV0006-000247</span></span></p>
 <h4 id="action-items">Action Items</h4>
 <ul>
 <li>Review BC Environmental Assessment Act proposal for expedited processes and submit feedback by April 2026 to influence major project timelines in ongoing assessments.</li>
@@ -1189,6 +1284,34 @@ That's Environmental Intelligence for March eleventh, twenty twenty-six. If this
             </nav>
             
             <!-- Cross-show Recommendations -->
+            
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/tesla/ep462.html" class="blog-related-card" style="--card-show-color: #E31937">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #E31937, white 35%)">Tesla Shorts Time</span>
+                        <h3>Tesla Shorts Time</h3>
+                        <p>Tesla has started producing its Semi electric trucks at a dedicated factory in Nevada.</p>
+                    </a>
+                    
+                    <a href="../../blog/models_agents_beginners/ep029.html" class="blog-related-card" style="--card-show-color: #C2410C">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #C2410C, white 35%)">Models & Agents for Beginners</span>
+                        <h3>Models & Agents for Beginners</h3>
+                        <p>Google just launched 10 free AI courses anyone can start today — no coding or experience required.</p>
+                    </a>
+                    
+                    <a href="../../blog/models_agents_beginners/ep028.html" class="blog-related-card" style="--card-show-color: #C2410C">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #C2410C, white 35%)">Models & Agents for Beginners</span>
+                        <h3>Three AIs debating your toughest questions on a shared canvas could make getting...</h3>
+                        <p>Three AIs debating your toughest questions on a shared canvas could make getting reliable advice from AI much easier.</p>
+                    </a>
+                    
+                </div>
+            </section>
             
         </article>
     </div>

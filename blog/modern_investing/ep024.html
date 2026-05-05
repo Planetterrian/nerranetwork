@@ -7,7 +7,7 @@
     
     <meta name="keywords" content="investing podcast, stock market, ETF, TFSA, RRSP, AI investing, market analysis, modern investing, Canadian investing">
     <title>Modern Investing Techniques — Ep24 | Modern Investing Techniques Blog</title>
-    <meta name="theme-color" content="#059669">
+    <meta name="theme-color" content="#047857">
 
     <!-- Open Graph -->
     <meta property="og:title" content="Modern Investing Techniques — Ep24 | Modern Investing Techniques Blog">
@@ -34,9 +34,23 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%237C5CFF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%237C5CFF' stroke-width='1.5' opacity='0.6'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%236B47FF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/></svg>">
 
     
+    
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="../../assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
     
     
     
@@ -185,7 +199,8 @@
             padding: 2px 10px;
             border-radius: 100px;
             background: color-mix(in srgb, var(--show-color) 15%, transparent);
-            color: var(--show-color);
+            /* AA-compliant text on dark page bg — see --show-color-text in base.html.j2 */
+            color: var(--show-color-text, var(--show-color));
             font-weight: 600;
         }
         .post-author {
@@ -282,7 +297,8 @@
         }
         .blog-toc a:hover,
         .blog-toc a.active {
-            color: var(--show-color);
+            /* AA-compliant text on dark sidebar bg */
+            color: var(--show-color-text, var(--show-color));
             border-left-color: var(--show-color);
         }
         .blog-toc a.toc-h3 {
@@ -327,14 +343,18 @@
             margin: 0 0 var(--sp-4);
         }
         .blog-article a {
-            color: var(--show-color);
+            /* Body links — AA-compliant lightened brand on dark bg.
+               Saturated brand colors fail 4.5:1 on `--nn-bg`; the
+               `--show-color-text` variable lightens by 35 % white so
+               every show clears AA. */
+            color: var(--show-color-text, var(--show-color));
             text-decoration: underline;
             text-underline-offset: 2px;
-            text-decoration-color: color-mix(in srgb, var(--show-color) 40%, transparent);
+            text-decoration-color: color-mix(in srgb, var(--show-color-text, var(--show-color)) 40%, transparent);
             transition: text-decoration-color var(--duration) var(--ease);
         }
         .blog-article a:hover {
-            text-decoration-color: var(--show-color);
+            text-decoration-color: var(--show-color-text, var(--show-color));
         }
         .blog-article strong {
             color: var(--nn-white);
@@ -613,13 +633,88 @@
         }
         .blog-listen-cta:hover {
             border-color: var(--show-color);
-            color: var(--show-color);
+            color: var(--show-color-text, var(--show-color));
+        }
+
+        /* Hover-card citations (Phase 3.4 of the May 2026 audit).
+           A small inline pill shows the publisher domain; on hover or
+           keyboard focus a popover reveals the full URL so readers
+           can verify provenance without leaving the page. Pure CSS,
+           no JS — works in every email/RSS-rendered surface that
+           runs the page stylesheet. */
+        .cite {
+            position: relative;
+            display: inline-block;
+        }
+        .cite-pill {
+            display: inline-block;
+            padding: 0.05em 0.55em;
+            margin: 0 0.1em;
+            border-radius: 999px;
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.78em;
+            line-height: 1.4;
+            text-decoration: none;
+            transition: all var(--duration) var(--ease);
+            white-space: nowrap;
+        }
+        .cite-pill:hover,
+        .cite-pill:focus {
+            border-color: var(--show-color);
+            /* Same AA fix as body links — brand text needs to clear
+               4.5:1 on the dark card surface. */
+            color: var(--show-color-text, var(--show-color));
+            outline: none;
+        }
+        .cite-card {
+            position: absolute;
+            left: 0;
+            bottom: calc(100% + 6px);
+            z-index: 10;
+            min-width: 240px;
+            max-width: 360px;
+            padding: var(--sp-2) var(--sp-3);
+            border-radius: 8px;
+            background: var(--nn-bg);
+            border: 1px solid var(--nn-border);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+            color: var(--nn-text);
+            font-family: var(--font-ui);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            word-break: break-all;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--duration) var(--ease);
+            pointer-events: none;
+        }
+        .cite:hover .cite-card,
+        .cite-pill:focus + .cite-card,
+        .cite-pill:focus-within + .cite-card {
+            opacity: 1;
+            visibility: visible;
+        }
+        @media (max-width: 600px) {
+            .cite-card {
+                left: auto;
+                right: 0;
+                min-width: 0;
+                max-width: 90vw;
+            }
         }
     </style>
 
 
     
-    <style>:root { --show-color: #059669; --show-color-dark: #047857; }</style>
+    
+    <style>:root {
+      --show-color: #047857;
+      --show-color-dark: #047857;
+      --show-color-text: color-mix(in srgb, #047857, white 35%);
+    }</style>
     
     <style>
         @media (max-width: 768px) {
@@ -939,7 +1034,7 @@
             <li><a href="../../index.html" style="color:var(--nn-text-muted);text-decoration:none;">Home</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../modern-investing.html" style="color:var(--nn-text-muted);text-decoration:none;">Modern Investing Techniques</a> <span aria-hidden="true">/</span></li>
             <li><a href="../../blog/modern_investing/index.html" style="color:var(--nn-text-muted);text-decoration:none;">Blog</a> <span aria-hidden="true">/</span></li>
-            <li aria-current="page" style="color:var(--show-color);">Episode 24</li>
+            <li aria-current="page" style="color:var(--show-color-text, var(--show-color));">Episode 24</li>
         </ol>
     </nav>
 
@@ -1013,7 +1108,7 @@
 <p><strong>Market Pulse:</strong> Markets traded mixed amid ongoing Iran war developments, with the S&P 500 closing at 7,109 (-0.2%), NASDAQ Composite at 24,404 (-0.3%), and TSX Composite at 34,360 (flat). Our simulated portfolio stands at YTD -0.38% versus the NASDAQ Composite YTD +5.03%, delivering YTD alpha of -5.41%. About 14 days ago in Ep14 we picked SSNLF on an earnings-surprise momentum play on AI memory chip demand that closed +0.00% — a reminder that even clear catalysts can fail to generate alpha when already priced in. Investors should monitor retailer guidance and European sentiment readings for shifts in consumer spending trajectories.</p>
 <h4 id="strategy-spotlight">Strategy Spotlight</h4>
 <p>Market resiliency strategies focus on maintaining core allocations during periods of short-term euphoria or fear, recognizing that markets historically recover from geopolitical shocks and sentiment extremes rather than collapsing indefinitely. This approach treats apparent “sugar highs” from positive developments like potential ceasefires not as reasons to chase momentum but as signals to rebalance toward high-quality names with durable competitive advantages. In today’s environment of mixed retailer outlooks and elevated macro uncertainty, the strategy keeps investors from overreacting to headlines by anchoring decisions to weekly moving average trends and free-cash-flow yields instead of daily price swings. Implementation is straightforward on platforms like Questrade or Wealthsimple: scan for companies whose 200-day moving average has held as support through recent volatility, then deploy capital in 5-10% increments within TFSA or RRSP accounts to avoid superficial loss rules. The approach has historically performed best following geopolitical spikes or rapid sentiment shifts, delivering outperformance by avoiding whipsaw trades. Primary risks include prolonged drawdowns if resiliency assumptions prove incorrect and opportunity cost if markets continue climbing without pause.</p>
-<p>Source: <a href="https://www.theglobeandmail.com/investing/article-trade-secrets-investing-stock-markets-sugar-high/" target="_blank" rel="noopener">theglobeandmail.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.theglobeandmail.com/investing/article-trade-secrets-investing-stock-markets-sugar-high/" target="_blank" rel="noopener" aria-describedby="cite-card">theglobeandmail.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.theglobeandmail.com/investing/article-trade-secrets-investing-stock-markets-sugar-high/</span></span></p>
 <h4 id="investor-education-options-101-calls-puts-and-covered-strategies">Investor Education: Options 101: Calls, Puts, and Covered Strategies</h4>
 <p>Imagine you bought protective puts on a broad market ETF last week when the S&P 500 sat near 7,100 amid rising Iran tensions; your $710 strike put filled for a $12 premium on a $700 underlying, yet the position lost 55% of its value in seven days even as the ETF fell 2.8%. Options consist of intrinsic value (for a put, the amount by which strike exceeds spot price) and time value, with theta representing daily decay that typically accelerates from 0.05 to 0.25 per day in the final two weeks before expiration. A covered call, by contrast, involves owning 100 shares of the underlying and selling an out-of-the-money call—collecting, for example, $3.50 premium on a $100 stock to boost annualized income by roughly 3.5% if the call expires worthless. Greeks such as delta (approximately 0.40–0.60 for at-the-money options, indicating 40–60% chance of finishing in-the-money) and theta help quantify sensitivity to price and time. The pro tip most retail investors miss is always calculating breakeven (strike plus net premium for calls, strike minus net premium for puts) and maximum loss before entry; professionals cross-reference implied volatility rank against the past 30-day realized move. The biggest mistake with options is using naked positions that expose portfolios to theoretically unlimited risk on the short side. Instead, always begin with defined-risk structures like covered calls for income or cash-secured puts for entry and size positions to no more than 2–3% of total portfolio capital.</p>
 <h4 id="practice-investment-of-the-day">Practice Investment of the Day</h4>
@@ -1034,7 +1129,7 @@
 <li><strong>Confidence Level:</strong> Medium — single strong fundamental catalyst and positive price reaction are aligned, but broader European and Middle East sentiment uncertainty prevents high conviction.</li>
 </ul>
 <p><strong>Why This Teaches:</strong> This demonstrates how to isolate company-specific earnings strength from macro noise for short-term opportunistic execution. Listeners should practice scanning earnings reactions in non-tech sectors to build discipline distinguishing signal from broader market moves, regardless of whether this specific flash trade captures the full move.</p>
-<p>Source: <a href="https://www.investing.com/news/earnings/nestle-india-shares-climb-55-on-strong-quarterly-profit-growth-93CH-4625319" target="_blank" rel="noopener">investing.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.investing.com/news/earnings/nestle-india-shares-climb-55-on-strong-quarterly-profit-growth-93CH-4625319" target="_blank" rel="noopener" aria-describedby="cite-card">investing.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.investing.com/news/earnings/nestle-india-shares-climb-55-on-strong-quarterly-profit-growth-93CH-4625319</span></span></p>
 <h4 id="yesterdays-trade-review">Yesterday's Trade Review</h4>
 <p><strong>Last Flash Trade:</strong> CLDX — Analyst upgrade play on successful Phase 3 results and accelerated enrollment</p>
 <p><strong>Entry:</strong> $35.79 (market open) → <strong>Exit:</strong> $34.38 (market close)</p>
@@ -1059,27 +1154,27 @@
 <h4 id="tools-techniques">Tools & Techniques</h4>
 <p><strong>Finviz Technical Screener:</strong> Reddit</p>
 <p>This free platform delivers real-time charts, fundamental overlays, and technical scans including RSI, MACD, moving averages, and volume filters that help identify support or resistance levels across TSX, NYSE, and NASDAQ names. Individual investors gain an edge by running custom screens for oversold conditions or breakout setups that used to require expensive Bloomberg terminals. Canadian users can filter for CAD-denominated stocks suitable for TFSA portfolios and set alerts for moving-average crosses. Access at finviz.com.</p>
-<p>Source: <a href="https://www.reddit.com/r/stocks/comments/1srinim/rstocks_daily_discussion_technicals_tuesday_apr/" target="_blank" rel="noopener">reddit.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.reddit.com/r/stocks/comments/1srinim/rstocks_daily_discussion_technicals_tuesday_apr/" target="_blank" rel="noopener" aria-describedby="cite-card">reddit.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reddit.com/r/stocks/comments/1srinim/rstocks_daily_discussion_technicals_tuesday_apr/</span></span></p>
 <p><strong>Investing.com Earnings Transcript Tool:</strong> Reddit</p>
 <p>The site publishes full earnings call transcripts within hours of release, enabling investors to search executive commentary for forward guidance, margin trends, and competitive mentions that headlines often omit. This provides a measurable edge in assessing whether an earnings beat is sustainable or likely to fade. Particularly useful during volatile periods for cross-referencing management tone against price action on platforms like Interactive Brokers. Free basic access with optional premium for faster updates.</p>
-<p>Source: <a href="https://news.google.com/rss/articles/CBMi0AFBVV95cUxQSUloZ2VUU0E2c1EwUElSRnBQRXl3VFVnV3RhaXV4cEZGZ29US25ubUJJRVF4RGo2LVl1U04zTjNZNER0d3dpelVEWGluYlEtcHZCN2wwa3hMOXRJam1JMlZYMUtuWkFIemRVRXdwcGpQSkRjRXhBbWl0N3FmWDBTYm95MU5VZUh1Q0tHdmMzdk55SGY0cVd5Y3ZVY2pmU1lTT09rVG1kNUlFM3h0VE9neHVac2RfZHpNUldsaVBJLXFXODd6aHdidFg0aEE3R05M?oc=5" target="_blank" rel="noopener">news.google.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://news.google.com/rss/articles/CBMi0AFBVV95cUxQSUloZ2VUU0E2c1EwUElSRnBQRXl3VFVnV3RhaXV4cEZGZ29US25ubUJJRVF4RGo2LVl1U04zTjNZNER0d3dpelVEWGluYlEtcHZCN2wwa3hMOXRJam1JMlZYMUtuWkFIemRVRXdwcGpQSkRjRXhBbWl0N3FmWDBTYm95MU5VZUh1Q0tHdmMzdk55SGY0cVd5Y3ZVY2pmU1lTT09rVG1kNUlFM3h0VE9neHVac2RfZHpNUldsaVBJLXFXODd6aHdidFg0aEE3R05M?oc=5" target="_blank" rel="noopener" aria-describedby="cite-card">news.google.com</a><span class="cite-card" id="cite-card" role="tooltip">https://news.google.com/rss/articles/CBMi0AFBVV95cUxQSUloZ2VUU0E2c1EwUElSRnBQRXl3VFVnV3RhaXV4cEZGZ29US25ubUJJRVF4RGo2LVl1U04zTjNZNER0d3dpelVEWGluYlEtcHZCN2wwa3hMOXRJam1JMlZYMUtuWkFIemRVRXdwcGpQSkRjRXhBbWl0N3FmWDBTYm95MU5VZUh1Q0tHdmMzdk55SGY0cVd5Y3ZVY2pmU1lTT09rVG1kNUlFM3h0VE9neHVac2RfZHpNUldsaVBJLXFXODd6aHdidFg0aEE3R05M?oc=5</span></span></p>
 <h4 id="quick-hits">Quick Hits</h4>
 <p><strong>Fertilizer Price Hikes Worry P.E.I. Farmers, Threaten Food Prices</strong></p>
 <p>Global supply pressures are raising input costs for Canadian grain growers, which could squeeze margins and ultimately flow through to higher consumer food prices.</p>
 <p><strong>Action:</strong> Reduce position size in Canadian agriculture-exposed stocks within RRSP accounts this quarter.</p>
-<p>Source: <a href="https://www.bnnbloomberg.ca/business/economics/2026/04/21/fertilizer-price-hikes-worry-pei-farmers-threaten-food-prices/" target="_blank" rel="noopener">bnnbloomberg.ca</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.bnnbloomberg.ca/business/economics/2026/04/21/fertilizer-price-hikes-worry-pei-farmers-threaten-food-prices/" target="_blank" rel="noopener" aria-describedby="cite-card">bnnbloomberg.ca</a><span class="cite-card" id="cite-card" role="tooltip">https://www.bnnbloomberg.ca/business/economics/2026/04/21/fertilizer-price-hikes-worry-pei-farmers-threaten-food-prices/</span></span></p>
 <p><strong>Primark Owner Warns of Impact of War in Iran on Outlook</strong></p>
 <p>Associated British Foods reported an 18% decline in operating profit and flagged potential consumer spending weakness tied to the Middle East conflict, one of the first major European retailers to do so.</p>
 <p><strong>Action:</strong> Trim exposure to European consumer discretionary stocks in diversified portfolios.</p>
-<p>Source: <a href="https://www.marketwatch.com/story/primark-owner-warns-of-impact-of-war-in-iran-on-outlook-making-it-one-of-the-first-european-retailers-to-do-so-f4c8cac4?mod=mw_rss_topstories" target="_blank" rel="noopener">marketwatch.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.marketwatch.com/story/primark-owner-warns-of-impact-of-war-in-iran-on-outlook-making-it-one-of-the-first-european-retailers-to-do-so-f4c8cac4?mod=mw_rss_topstories" target="_blank" rel="noopener" aria-describedby="cite-card">marketwatch.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.marketwatch.com/story/primark-owner-warns-of-impact-of-war-in-iran-on-outlook-making-it-one-of-the-first-european-retailers-to-do-so-f4c8cac4?mod=mw_rss_topstories</span></span></p>
 <p><strong>‘This is unbelievable’: My adviser made $300,000 trading options. Now I’m being killed by taxes. Do I complain?</strong></p>
 <p>Large options gains have triggered substantial ordinary income taxes plus future IRMAA surcharges on Medicare premiums for the client.</p>
 <p><strong>Action:</strong> Consult a tax advisor to utilize TFSA for future options strategies where possible to minimize taxable events.</p>
-<p>Source: <a href="https://www.marketwatch.com/story/this-is-unbelievable-my-adviser-made-300-000-trading-options-now-im-being-killed-by-taxes-do-i-complain-e30873b7?mod=mw_rss_topstories" target="_blank" rel="noopener">marketwatch.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://www.marketwatch.com/story/this-is-unbelievable-my-adviser-made-300-000-trading-options-now-im-being-killed-by-taxes-do-i-complain-e30873b7?mod=mw_rss_topstories" target="_blank" rel="noopener" aria-describedby="cite-card">marketwatch.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.marketwatch.com/story/this-is-unbelievable-my-adviser-made-300-000-trading-options-now-im-being-killed-by-taxes-do-i-complain-e30873b7?mod=mw_rss_topstories</span></span></p>
 <p><strong>UK Homebuilder Crest Drops Most on Record After Guidance Cut</strong></p>
 <p>Crest Nicholson slashed earnings guidance citing elevated economic uncertainty from the Iran war, triggering the largest single-day share drop in company history.</p>
 <p><strong>Action:</strong> Avoid adding exposure to homebuilder or cyclical industrials until geopolitical premium decays.</p>
-<p>Source: <a href="https://financialpost.com/pmn/business-pmn/uk-homebuilder-crest-drops-most-on-record-after-guidance-cut" target="_blank" rel="noopener">financialpost.com</a></p>
+<p>Source: <span class="cite"><a class="cite-pill" href="https://financialpost.com/pmn/business-pmn/uk-homebuilder-crest-drops-most-on-record-after-guidance-cut" target="_blank" rel="noopener" aria-describedby="cite-card">financialpost.com</a><span class="cite-card" id="cite-card" role="tooltip">https://financialpost.com/pmn/business-pmn/uk-homebuilder-crest-drops-most-on-record-after-guidance-cut</span></span></p>
 <p><strong>This briefing is for EDUCATIONAL and ENTERTAINMENT purposes only. Nothing discussed constitutes financial advice, investment recommendations, or solicitations to buy or sell securities. The "Practice Investment of the Day" uses SIMULATED trades with NO real money — it is a learning exercise to demonstrate analytical techniques. Past performance does not predict future results. Markets involve risk of loss. Always do your own research and consult a licensed financial advisor before making investment decisions. The host and Nerra Network have no fiduciary relationship with listeners.</strong></p>
 
             <!-- Sources -->
@@ -1391,6 +1486,34 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
             </nav>
             
             <!-- Cross-show Recommendations -->
+            
+            <section class="blog-related">
+                <h2>You Might Also Like</h2>
+                <div class="blog-related-grid">
+                    
+                    <a href="../../blog/unintended_consequences/ep003.html" class="blog-related-card" style="--card-show-color: #B45309">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #B45309, white 35%)">Unintended Consequences</span>
+                        <h3>In 1921 Thomas Midgley Jr. added tetraethyl lead to gasoline to silence engine k...</h3>
+                        <p>In 1921 Thomas Midgley Jr. added tetraethyl lead to gasoline to silence engine knock, never imagining the additive would&hellip;</p>
+                    </a>
+                    
+                    <a href="../../blog/omni_view/ep042.html" class="blog-related-card" style="--card-show-color: #0B6FD6">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #0B6FD6, white 35%)">Omni View</span>
+                        <h3>Omni View — Omni‑View Briefing</h3>
+                        <p>Iran warns the US that it 'has not even begun' as violence escalates in the Strait of Hormuz.</p>
+                    </a>
+                    
+                    <a href="../../blog/fascinating_frontiers/ep062.html" class="blog-related-card" style="--card-show-color: #6B47FF">
+                        
+                        <span class="blog-related-show" style="color: color-mix(in srgb, #6B47FF, white 35%)">Fascinating Frontiers</span>
+                        <h3>Fascinating Frontiers</h3>
+                        <p>Astronomers identify 27 candidate planets orbiting binary stars in distant solar systems.</p>
+                    </a>
+                    
+                </div>
+            </section>
             
         </article>
     </div>
