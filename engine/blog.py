@@ -306,10 +306,14 @@ def _md_inline(text: str) -> str:
         r'<a href="\2" target="_blank" rel="noopener">\1</a>',
         text,
     )
-    # Bare URLs on Source: lines
+    # Bare URLs on Source: lines — render as hover-card citation pill
+    # (Phase 3.4 of the May 2026 audit). The pill shows the publisher
+    # domain inline; on hover/focus, a CSS-only popover reveals the
+    # full URL so readers can verify provenance without leaving the
+    # page or chasing a tab.
     text = re.sub(
         r'(Source:\s*)(https?://\S+)',
-        lambda m: f'{m.group(1)}<a href="{m.group(2)}" target="_blank" rel="noopener">{_domain_from_url(m.group(2))}</a>',
+        lambda m: m.group(1) + _cite_html(m.group(2)),
         text,
     )
     return text
@@ -325,6 +329,27 @@ def _domain_from_url(url: str) -> str:
         return domain
     except Exception:
         return url
+
+
+def _cite_html(url: str) -> str:
+    """Render a citation as a hover-card pill.
+
+    The visible chip shows the publisher domain; the popover (revealed
+    on hover or keyboard focus by the CSS in templates/blog_post.html.j2)
+    shows the full URL. Pure CSS — no JavaScript required.
+
+    ``aria-describedby`` ties the pill to the popover so screen readers
+    announce the full URL when the pill receives focus.
+    """
+    domain = _domain_from_url(url)
+    return (
+        f'<span class="cite">'
+        f'<a class="cite-pill" href="{url}" '
+        f'target="_blank" rel="noopener" '
+        f'aria-describedby="cite-card">{domain}</a>'
+        f'<span class="cite-card" id="cite-card" role="tooltip">{url}</span>'
+        f'</span>'
+    )
 
 
 def convert_md_to_blog_html(md_text: str) -> tuple[str, list[dict]]:
