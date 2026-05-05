@@ -36,7 +36,15 @@ def _strip_markdown(text: str) -> str:
     """Strip the markdown that shows up in our digests.
 
     Keeps URLs as bare text, removes header markers, bold/italic, and
-    inline code fences.
+    inline code fences. Also drops leading blockquote markers and
+    strips raw ``<`` / ``>`` characters because YouTube's ``videos.insert``
+    API rejects descriptions that contain either character (HTTP 400
+    ``invalidDescription``). This was hitting every long-form upload
+    in May 2026 because the daily digest opens with a
+    ``> **Hook**`` blockquote — bold strip left a literal ``>`` at
+    the start of the description, killing the YouTube upload while
+    the Shorts upload (which uses a separate metadata path) still
+    succeeded.
     """
     if not text:
         return ""
@@ -44,6 +52,10 @@ def _strip_markdown(text: str) -> str:
     text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
     # Headers
     text = re.sub(r"^#+\s+", "", text, flags=re.MULTILINE)
+    # Blockquote markers at line start — these are the chief source of
+    # stray ``>`` characters in our descriptions (every digest opens
+    # with ``> **Hook**``).
+    text = re.sub(r"^[ \t]*>[ \t]*", "", text, flags=re.MULTILINE)
     # Bold + italic
     text = re.sub(r"\*\*(.*?)\*\*", r"\1", text)
     text = re.sub(r"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)", r"\1", text)
@@ -52,6 +64,11 @@ def _strip_markdown(text: str) -> str:
     text = re.sub(r"`([^`]+)`", r"\1", text)
     # Markdown links → plain URL
     text = re.sub(r"\[([^\]]+)\]\((https?://[^\)]+)\)", r"\1: \2", text)
+    # Final defense-in-depth: drop any remaining ``<`` / ``>`` so
+    # YouTube doesn't 400 on stray angle-bracket content (math like
+    # ``<2030``, escaped speech tags that survived earlier passes,
+    # decorative arrows, etc.).
+    text = text.replace("<", "").replace(">", "")
     return text
 
 
@@ -238,7 +255,12 @@ def build_long_form_metadata(
     if disclosure:
         pieces.append(disclosure)
 
-    description = _truncate("\n\n".join(pieces).strip(), YOUTUBE_DESC_MAX)
+    # Final safety strip — YouTube rejects any description containing
+    # ``<`` or ``>`` with HTTP 400 ``invalidDescription``. ``_strip_markdown``
+    # already cleans the body, but the hook + chapter titles flow into
+    # the description verbatim, so we belt-and-braces strip again here.
+    description = "\n\n".join(pieces).strip().replace("<", "").replace(">", "")
+    description = _truncate(description, YOUTUBE_DESC_MAX)
 
     tags = _build_tags(
         list(config.youtube.tags or []),
@@ -294,7 +316,12 @@ def build_short_metadata(
         pieces.append(disclosure)
     pieces.append("#Shorts #podcast")
 
-    description = _truncate("\n\n".join(pieces).strip(), YOUTUBE_DESC_MAX)
+    # Same ``invalidDescription`` defense as build_long_form_metadata —
+    # YouTube rejects ``<`` / ``>`` even though Shorts hasn't tripped
+    # this in production yet (the headline is the only user-supplied
+    # field and hooks rarely contain angle brackets). Belt-and-braces.
+    description = "\n\n".join(pieces).strip().replace("<", "").replace(">", "")
+    description = _truncate(description, YOUTUBE_DESC_MAX)
 
     tags = _build_tags(
         list(config.youtube.tags or []) + ["shorts", "podcast clip"],
