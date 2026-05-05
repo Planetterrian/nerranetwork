@@ -517,10 +517,10 @@ def mix_with_music(
     music_path: Path,
     output_path: Path,
     *,
-    intro_duration: int = 5,
-    overlap_duration: int = 3,
-    fade_duration: int = 18,
-    outro_duration: int = 30,
+    intro_duration: int = 15,
+    overlap_duration: int = 10,
+    fade_duration: int = 15,
+    outro_duration: int = 40,
     intro_volume: float = 0.6,
     overlap_volume: float = 0.5,
     fade_volume: float = 0.4,
@@ -531,17 +531,28 @@ def mix_with_music(
 ) -> Path:
     """Full music mixing pipeline supporting three modes.
 
+    Defaults bumped May 2026 so the open / close feel like a real
+    podcast (NPR / Hard Fork / The Daily). Total intro music
+    presence = intro_duration (alone, before voice) + overlap_duration
+    (alongside voice) + fade_duration (gentle under-voice tail) =
+    15 + 10 + 15 = 40 seconds. Outro = 40 seconds of music after
+    voice ends.
+
     **Standard mode** (voice_intro_delay=0, no background_music_path):
-      0–5 s:  music intro alone (intro_volume)
-      5–15 s: music overlap while voice starts (overlap_volume)
-      15–25 s: music fadeout (fade_volume -> 0, logarithmic)
-      25 s–end: silence (no music under voice)
-      after voice: 30 s outro with fade-in/out
+      0–15 s:  music intro alone (intro_volume)
+      15–25 s: music overlap while voice starts (overlap_volume)
+      25–40 s: music fadeout (fade_volume -> 0, logarithmic)
+      40 s–end: silence (no music under voice)
+      after voice: 40 s outro with fade-in / fade-out
 
     **Delayed-intro mode** (voice_intro_delay > 0):
       Voice is shifted right by *voice_intro_delay* seconds so music plays
-      alone at the start.  Set intro_duration >= voice_intro_delay so the
-      intro music covers the full delay period.
+      alone at the start. Set ``voice_intro_delay >= intro_duration`` so
+      the voice doesn't enter while the music intro is still in its
+      alone-period — the function logs a warning if this invariant
+      breaks. The network baseline pins ``voice_intro_delay = intro_duration
+      = 15s`` so voice enters precisely when the music transitions from
+      alone to overlap.
 
     **Dual-music mode** (background_music_path provided):
       Primary *music_path* is used for intro/overlap/fadeout segments.
