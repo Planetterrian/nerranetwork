@@ -36,7 +36,7 @@ _NETWORK_NAME = "Nerra Network"
 _NETWORK_TAGLINE = (
     "Daily AI-narrated podcasts. Editorial by Patrick."
 )
-_DEFAULT_BRAND = "#7C5CFF"
+_DEFAULT_BRAND = "#6B47FF"
 _DEFAULT_BRAND_DARK = "#4338ca"
 
 
@@ -332,7 +332,7 @@ _DARK_MODE_STYLE = """\
     .brand-text-omni      { color:#60a5fa !important; }   /* was #0B6FD6 */
     .brand-text-ma        { color:#a78bfa !important; }   /* was #8B5CF6 */
     .brand-text-mab       { color:#fbbf24 !important; }   /* was #F59E0B */
-    .brand-text-frontiers { color:#a5b4fc !important; }   /* was #7C5CFF */
+    .brand-text-frontiers { color:#a5b4fc !important; }   /* was #6B47FF */
     .brand-text-envintel  { color:#86efac !important; }   /* was #1B5E20 */
     .brand-text-privet    { color:#a5b4fc !important; }   /* was #6366F1 */
     .brand-text-finansy   { color:#f9a8d4 !important; }   /* was #EC4899 */
@@ -507,37 +507,41 @@ def _build_financial_disclaimer_html(language: str = "en") -> str:
 
 
 def _build_p_s_html(p_s: str, brand: str, slug: str = "") -> str:
-    """Render the P.S. block between the body and the footer.
+    """Render the P.S. block as a high-prominence accent-color callout.
 
-    P.S. is one of the most-read elements of any newsletter; we render
-    it in its own card with a brand-colored left border so it visually
-    separates from the body and footer.
+    Phase 3.3 of the May 2026 audit reshaped the P.S. from a muted
+    italic aside into a full-width brand-color card with white body
+    text and an uppercase "P.S." label. P.S. is consistently one of
+    the most-read elements of any newsletter; the muted treatment
+    was wasting that engagement. The new shape mirrors Tesla's TSLA
+    price block — a single visually loud rectangle the eye is
+    drawn to.
+
+    The accent color (#6B47FF after the May 2026 brand bump) clears
+    WCAG AA against white body text at >5:1, so the contrast
+    validator does not need to relax for this block.
     """
     if not p_s:
         return ""
     safe = p_s.replace("<", "&lt;").replace(">", "&gt;")
-    # Spec §7.7: P.S. gets a dashed top-border separator and italic
-    # treatment so it stands out from the body without competing
-    # with the cross-network card below it. Brand color is reserved
-    # for the "P.S." label only — the body itself is muted slate so
-    # it reads as an aside, not a section header.
     return (
         '<table role="presentation" width="100%" cellpadding="0" '
         'cellspacing="0" border="0" '
-        'class="surface-white" '
         'style="background:#ffffff;">'
-        '<tr><td '
-        'style="padding:8px 24px 24px;'
+        '<tr><td style="padding:12px 24px 24px;">'
+        f'<table role="presentation" width="100%" cellpadding="0" '
+        f'cellspacing="0" border="0" bgcolor="{brand}" '
+        f'class="{_brand_class(slug)}" '
+        f'style="background:{brand};border-radius:10px;">'
+        '<tr><td style="padding:18px 22px;'
         "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
         'Roboto,Helvetica,Arial,sans-serif;">'
-        '<div style="border-top:1px dashed #cbd5e1;padding-top:14px;">'
-        f'<p style="font-size:14px;line-height:1.6;color:#475569;'
-        f'margin:0;font-style:italic;">'
-        f'<strong class="{_brand_class(slug)}" '
-        f'style="font-style:normal;color:{brand};'
-        f'letter-spacing:0.04em;">P.S.</strong>'
-        f'&nbsp;{safe}</p>'
-        '</div>'
+        '<div style="font-size:11px;line-height:1.2;color:#ffffff;'
+        'font-weight:700;letter-spacing:0.12em;text-transform:uppercase;'
+        'margin:0 0 6px 0;">P.S.</div>'
+        f'<p style="font-size:15px;line-height:1.55;color:#ffffff;'
+        f'margin:0;font-weight:600;">{safe}</p>'
+        '</td></tr></table>'
         '</td></tr></table>'
     )
 
@@ -608,7 +612,7 @@ def _render_md_inline_to_html(text: str) -> str:
 
 
 def render_html_table(
-    headers: List[str], rows: List[List[str]], *, brand: str = "#7C5CFF"
+    headers: List[str], rows: List[List[str]], *, brand: str = "#6B47FF"
 ) -> str:
     """Render a mobile-friendly inline-styled HTML table.
 
@@ -654,7 +658,7 @@ def render_html_table(
     )
 
 
-def convert_md_tables_to_html(body_md: str, *, brand: str = "#7C5CFF") -> str:
+def convert_md_tables_to_html(body_md: str, *, brand: str = "#6B47FF") -> str:
     """Replace markdown tables in *body_md* with inline-styled HTML
     tables.
 

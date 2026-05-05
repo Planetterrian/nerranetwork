@@ -551,9 +551,12 @@ class TestAudioConfigDefaults:
     """Verify AudioConfig dataclass has the new fields with correct defaults."""
 
     def test_voice_intro_delay_default(self):
+        """May 2026: dataclass default matches the network baseline of
+        ``intro_duration`` so a no-YAML show still behaves correctly."""
         from engine.config import AudioConfig
         cfg = AudioConfig()
-        assert cfg.voice_intro_delay == 0.0
+        assert cfg.voice_intro_delay == 15.0
+        assert cfg.voice_intro_delay >= cfg.intro_duration
 
     def test_background_music_file_default(self):
         from engine.config import AudioConfig
@@ -561,16 +564,25 @@ class TestAudioConfigDefaults:
         assert cfg.background_music_file is None
 
     def test_all_timing_defaults(self):
+        """May 2026 podcast-feel bump — see AudioConfig docstring.
+        Total intro music presence (alone + overlap + fade) must be
+        >= 30s so the open doesn't feel cut off; outro must also be
+        >= 30s for a real-podcast close."""
         from engine.config import AudioConfig
         cfg = AudioConfig()
-        assert cfg.intro_duration == 5.0
-        assert cfg.overlap_duration == 3.0
-        assert cfg.fade_duration == 18.0
-        assert cfg.outro_duration == 30.0
+        assert cfg.intro_duration == 15.0
+        assert cfg.overlap_duration == 10.0
+        assert cfg.fade_duration == 15.0
+        assert cfg.outro_duration == 40.0
         assert cfg.intro_volume == 0.6
         assert cfg.overlap_volume == 0.5
         assert cfg.fade_volume == 0.4
         assert cfg.outro_volume == 0.4
+        # Operator invariant: ≥30s total intro presence, ≥30s outro.
+        assert (
+            cfg.intro_duration + cfg.overlap_duration + cfg.fade_duration
+        ) >= 30.0
+        assert cfg.outro_duration >= 30.0
 
 
 class TestShowMusicConfigs:
@@ -584,14 +596,17 @@ class TestShowMusicConfigs:
     def test_tesla_has_music(self, load_config):
         cfg = load_config("shows/tesla.yaml")
         assert cfg.audio.music_file == "assets/music/tesla_shorts_time.mp3"
-        assert cfg.audio.voice_intro_delay == 5.0
+        # May 2026 podcast-feel bump — see landmine in AudioConfig.
+        assert cfg.audio.voice_intro_delay == 15.0
         assert cfg.audio.outro_crossfade == 20.0
 
     def test_ff_has_dual_music(self, load_config):
         cfg = load_config("shows/fascinating_frontiers.yaml")
         assert cfg.audio.music_file == "assets/music/fascinatingfrontiers.mp3"
         assert cfg.audio.background_music_file == "assets/music/fascinatingfrontiers_bg.mp3"
-        assert cfg.audio.voice_intro_delay == 5.0
+        assert cfg.audio.voice_intro_delay == 15.0
+        # FF intentionally pins fade_duration at 27s (longer than the
+        # network's 15s baseline) — preserved across the May 2026 bump.
         assert cfg.audio.fade_duration == 27.0
 
     def test_pt_has_music(self, load_config):
@@ -611,9 +626,11 @@ class TestShowMusicConfigs:
         assert cfg.audio.music_file == "assets/music/EnvIntel.mp3"
 
     def test_ei_standard_timing(self, load_config):
-        """EI uses standard intro timing with lower volumes for briefing format."""
+        """EI inherits the network's May 2026 podcast-feel timing
+        (15s intro alone / 40s outro) but pins lower volumes for the
+        briefing format."""
         cfg = load_config("shows/env_intel.yaml")
-        assert cfg.audio.intro_duration == 5.0
-        assert cfg.audio.outro_duration == 30.0
+        assert cfg.audio.intro_duration == 15.0
+        assert cfg.audio.outro_duration == 40.0
         assert cfg.audio.outro_crossfade == 20.0
         assert cfg.audio.intro_volume <= 0.5

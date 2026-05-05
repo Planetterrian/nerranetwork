@@ -81,11 +81,11 @@ def convert_digest_to_email_html(markdown_text: str) -> str:
         'Enjoyed this? Forward it to a friend who would too.'
         '</p>'
         '<p style="margin: 8px 0; font-size: 0.9em; color: #718096;">'
-        '<a href="https://nerranetwork.com" style="color: #7C5CFF;">Listen on nerranetwork.com</a>'
+        '<a href="https://nerranetwork.com" style="color: #6B47FF;">Listen on nerranetwork.com</a>'
         ' &middot; '
-        '<a href="https://nerranetwork.com/player.html" style="color: #7C5CFF;">Open Player</a>'
+        '<a href="https://nerranetwork.com/player.html" style="color: #6B47FF;">Open Player</a>'
         ' &middot; '
-        '<a href="https://nerranetwork.com#subscribe" style="color: #7C5CFF;">Subscribe to more shows</a>'
+        '<a href="https://nerranetwork.com#subscribe" style="color: #6B47FF;">Subscribe to more shows</a>'
         '</p>'
         '<p style="margin: 8px 0; font-size: 0.8em; color: #a0aec0;">'
         'Nerra Network &mdash; 11 daily podcasts, ad-free, from Vancouver, Canada.'
@@ -427,19 +427,12 @@ def send_show_newsletter(
     # Pre-send contrast tripwire (§7.3). Light-mode-only check — the
     # dark-mode <style> block is unit-tested separately.
     #
-    # Phase 2.2 of the May 2026 audit attempted to flip this from
-    # soft warning to hard block. Discovered that the network's
-    # primary brand color ``#7C5CFF`` on white renders at 4.35:1
-    # which fails WCAG AA's 4.5:1 threshold for normal text (passes
-    # 3:1 for large/bold text but the validator is element-blind).
-    # CTA links and engagement-block buttons all use the brand
-    # color, so hard-blocking blocks every newsletter.
-    #
-    # Pre-req before the flip: either (a) bump brand color slightly
-    # darker (e.g. ``#7C5CFF`` → ``#6B47FF`` raises ratio above 4.5),
-    # OR (b) extend the validator to honor ``font-size`` /
-    # ``font-weight: 700`` for the WCAG large-text 3:1 exemption.
-    # Until one of those lands, stay on warning.
+    # Phase 2.2 of the May 2026 audit flipped this from soft warning
+    # to hard block. Pre-req was bumping the network's primary brand
+    # color from ``#7C5CFF`` (4.35:1 on white, fails WCAG AA 4.5:1)
+    # to ``#6B47FF`` (5.29:1, passes). CTA links and engagement-block
+    # buttons all use the brand color, so the bump was the unblocker
+    # for hard-blocking.
     from engine.contrast_validator import (
         ContrastError,
         assert_contrast_ok,
@@ -447,7 +440,8 @@ def send_show_newsletter(
     try:
         assert_contrast_ok(branded_body)
     except ContrastError as exc:
-        logger.warning("Newsletter contrast issues (sending anyway): %s", exc)
+        logger.error("Newsletter contrast issues (blocking send): %s", exc)
+        return None
 
     # Buttondown slug — explicit transliterated form for Russian
     # shows so the archive URL doesn't end up as

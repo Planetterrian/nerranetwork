@@ -79,11 +79,19 @@ tts:
 audio:
   min_audio_duration: 180
   transition_sting: assets/music/transition_sting.mp3
-  voice_intro_delay: 5.0
-  intro_duration: 5.0
+  # Music timing — bumped May 2026 so the intro and outro feel like a
+  # real podcast (NPR / Hard Fork / The Daily) instead of cutting off
+  # after a few seconds. Total intro music presence = intro_duration
+  # (alone) + overlap_duration (with voice) + fade_duration (gentle
+  # tail-out under voice) = 15 + 10 + 15 = 40s. Outro = 40s after
+  # voice ends. ``voice_intro_delay`` MUST stay >= ``intro_duration``
+  # so the voice doesn't start before the music intro alone-period
+  # finishes.
+  voice_intro_delay: 15.0
+  intro_duration: 15.0
   overlap_duration: 10.0
-  fade_duration: 10.0
-  outro_duration: 30.0
+  fade_duration: 15.0
+  outro_duration: 40.0
   outro_crossfade: 20.0
   intro_volume: 0.5
   overlap_volume: 0.4

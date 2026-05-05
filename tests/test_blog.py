@@ -207,3 +207,54 @@ class TestAIDisclosureProviderAgnostic:
         assert "ElevenLabs" not in _AI_DISCLOSURE_RSS
         assert "Grok" not in _AI_DISCLOSURE_RSS
         assert "AI Disclosure" in _AI_DISCLOSURE_RSS
+
+
+class TestCitationHoverCards:
+    """Phase 3.4 of the May 2026 audit — bare ``Source: <url>`` lines
+    in the digest now render as a small pill showing the publisher
+    domain, with a CSS-only hover/focus popover that reveals the full
+    URL. Pure CSS, no JS — works everywhere the page stylesheet runs."""
+
+    def test_md_inline_renders_source_url_as_cite_pill(self):
+        from engine.blog import _md_inline
+
+        out = _md_inline(
+            "Some claim. Source: https://example.com/article/path?q=1"
+        )
+        # The visible chip + its popover wrapper.
+        assert 'class="cite-pill"' in out
+        assert 'class="cite-card"' in out
+        # ARIA wiring: the pill describes the popover so screen readers
+        # announce the full URL on focus.
+        assert 'aria-describedby="cite-card"' in out
+        assert 'role="tooltip"' in out
+        # Domain shown inline (no scheme, no trailing path).
+        assert ">example.com<" in out
+        # Full URL preserved INSIDE the popover for verification.
+        assert "https://example.com/article/path?q=1" in out
+        # Pill is still a real link — opens in new tab, no referrer leak.
+        assert 'target="_blank"' in out
+        assert 'rel="noopener"' in out
+
+    def test_md_inline_strips_www_from_pill_label(self):
+        from engine.blog import _md_inline
+
+        out = _md_inline("Source: https://www.bbc.co.uk/news/world-12345")
+        # Pill label drops "www." — but the full URL stays intact in
+        # the cite-card.
+        assert ">bbc.co.uk<" in out
+        assert "https://www.bbc.co.uk/news/world-12345" in out
+
+    def test_md_inline_leaves_other_inline_markdown_untouched(self):
+        from engine.blog import _md_inline
+
+        out = _md_inline(
+            "**Bold** and *italic* and [link](https://x.com). "
+            "Source: https://example.com/page"
+        )
+        assert "<strong>Bold</strong>" in out
+        assert "<em>italic</em>" in out
+        # Markdown link preserved as a normal anchor.
+        assert '<a href="https://x.com"' in out
+        # Cite pill still rendered for the bare Source: URL.
+        assert 'class="cite-pill"' in out

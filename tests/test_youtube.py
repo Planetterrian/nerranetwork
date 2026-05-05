@@ -78,6 +78,34 @@ def test_strip_markdown_drops_code_fences():
     assert "After." in out
 
 
+def test_strip_markdown_drops_blockquote_marker():
+    """May 2026 fix — every Tesla / FF / OV digest opens with a
+    ``> **Hook**`` blockquote. The bold strip used to leave a literal
+    ``>`` at the start of the YouTube description, and ``videos.insert``
+    rejects any description containing ``<`` or ``>`` with HTTP 400
+    ``invalidDescription``. Every long-form upload was failing while
+    Shorts (which uses a separate metadata path) still succeeded."""
+    raw = "> **Cybercab production begins in Texas.**\n\nBody continues."
+    out = vm._strip_markdown(raw)
+    # No leading ``>``; bold also stripped.
+    assert ">" not in out
+    assert "**" not in out
+    assert "Cybercab production begins in Texas." in out
+    assert "Body continues." in out
+
+
+def test_strip_markdown_removes_stray_angle_brackets():
+    """Defense-in-depth — math expressions like ``<2030`` and any
+    speech tags that slipped past upstream sanitization must not
+    reach the YouTube description."""
+    raw = "Population <2030 reached 8B. <emphasis>Critical</emphasis> shift."
+    out = vm._strip_markdown(raw)
+    assert "<" not in out
+    assert ">" not in out
+    assert "Population" in out
+    assert "Critical" in out
+
+
 # ---------------------------------------------------------------------------
 # Chapter formatting
 # ---------------------------------------------------------------------------
@@ -172,6 +200,32 @@ def test_build_long_form_metadata_includes_disclosure_and_utm():
     assert "utm_campaign=ep42" in meta["description"]
     assert meta["category_id"] == 28
     assert meta["default_language"] == "en"
+
+
+def test_build_long_form_metadata_strips_angle_brackets_from_hook():
+    """Defense-in-depth final strip — even if the hook contains
+    ``<`` / ``>`` (a chapter title quoting math, an unfortunate
+    LLM artifact, etc.) the YouTube description must come out clean
+    so ``videos.insert`` doesn't 400."""
+    config = _make_config()
+    meta = vm.build_long_form_metadata(
+        config,
+        episode_num=10,
+        today_str="2026-05-05",
+        hook="Robotaxi market share <5% in Q1 — <emphasis>but climbing</emphasis>",
+        digest_text="> **Hook here.**\n\nBody paragraph one.",
+        audio_url="https://audio.nerranetwork.com/tesla/ep010.mp3",
+    )
+    assert "<" not in meta["description"], (
+        "YouTube rejects descriptions containing '<' — strip leaked"
+    )
+    assert ">" not in meta["description"], (
+        "YouTube rejects descriptions containing '>' — strip leaked"
+    )
+    # Content survives the strip — words are preserved, only the
+    # angle brackets are removed.
+    assert "Robotaxi" in meta["description"]
+    assert "Body paragraph one." in meta["description"]
 
 
 def test_build_long_form_metadata_chapter_block_appears(tmp_path):

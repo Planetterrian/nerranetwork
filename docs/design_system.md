@@ -30,7 +30,7 @@ a token.
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `--nn-purple` | `#7C5CFF` | Primary brand accent, gradient anchor |
+| `--nn-purple` | `#6B47FF` | Primary brand accent, gradient anchor |
 | `--nn-cyan` | `#00D4FF` | Secondary brand accent, link hover, gradient end |
 | `--nn-white` | Near-white | Hero headings, emphasis on dark surfaces |
 | `--nn-text` | Light neutral | Body copy |
@@ -45,7 +45,7 @@ a token.
 ### Gradient
 
 ```
-linear-gradient(135deg, #7C5CFF 0%, #00D4FF 100%)
+linear-gradient(135deg, #6B47FF 0%, #00D4FF 100%)
 ```
 
 Used for: hero headings (text-fill), stat-value emphasis, primary CTA accents,
