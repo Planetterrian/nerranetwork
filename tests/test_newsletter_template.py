@@ -228,22 +228,35 @@ def test_by_the_numbers_empty_list_renders_nothing():
 # P.S. block
 # ---------------------------------------------------------------------------
 
-def test_p_s_html_renders_with_dashed_top_border():
-    """Spec v2 §7.7: P.S. moved from a brand-color left border to a
-    dashed top-border separator with italic body + brand-only label."""
+def test_p_s_html_renders_as_bold_accent_callout():
+    """Phase 3.3 of the May 2026 audit: the P.S. block went from a
+    muted italic dashed-border aside to a high-prominence accent-
+    color callout — full-width brand background, white body text,
+    uppercase "P.S." label, rounded corners. Mirrors Tesla's TSLA
+    price block; promotes the P.S. (one of the most-read elements)
+    instead of demoting it."""
     out = nt._build_p_s_html(
         "If you've been on the fence about FSD…",
         "#E31937", slug="tesla",
     )
+    # Content present.
     assert "P.S." in out
     assert "FSD" in out
-    # New dashed top-border separator (replaces brand-color left border).
-    assert "border-top:1px dashed #cbd5e1" in out
-    # Brand color is reserved for the "P.S." label only.
-    assert "color:#E31937" in out
-    # Italic body — aside, not section header.
-    assert "font-style:italic" in out
-    # Brand class for dark-mode override.
+    # Full-width brand-color background (both inline + bgcolor for
+    # Outlook).
+    assert 'bgcolor="#E31937"' in out
+    assert "background:#E31937" in out
+    # White body text — high contrast on the brand background.
+    assert "color:#ffffff" in out
+    # Uppercase "P.S." label — short, high-prominence, letter-spaced.
+    assert "text-transform:uppercase" in out
+    # Rounded callout shape, mirrors the TSLA price card.
+    assert "border-radius:10px" in out
+    # Old muted treatment must be GONE — would visually regress the
+    # callout if it sneaked back in.
+    assert "border-top:1px dashed" not in out
+    assert "font-style:italic" not in out
+    # Brand class kept for dark-mode override targeting.
     assert 'class="brand-text-tesla"' in out
 
 
