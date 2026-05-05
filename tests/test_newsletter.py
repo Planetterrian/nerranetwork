@@ -559,3 +559,70 @@ def test_send_newsletter_sets_live_dangerously_header(monkeypatch):
         subject="s", body="b", api_key="key", tags=None,
     )
     assert captured["headers"].get("X-Buttondown-Live-Dangerously") == "true"
+
+
+# ---------------------------------------------------------------------------
+# Pre-send contrast tripwire — Phase 2.2 (May 2026 audit) hard-block
+# ---------------------------------------------------------------------------
+
+def test_contrast_failure_blocks_send_and_logs_error(monkeypatch, caplog):
+    """A rendered body with a guaranteed WCAG AA failure must cause
+    ``send_show_newsletter`` to return ``None`` and emit a
+    ``logger.error`` so the operator notices. Pre-bump (#7C5CFF) the
+    block was a soft warning; post-bump (#6B47FF) it is a hard block."""
+    import logging
+
+    from engine import newsletter
+
+    bad_html = (
+        "<html><body>"
+        "<p style=\"color:#cccccc;background:#ffffff\">low contrast</p>"
+        "</body></html>"
+    )
+
+    monkeypatch.setattr(newsletter, "_can_send_now", lambda *a, **kw: True)
+    monkeypatch.setattr(newsletter.os, "getenv", lambda *a, **kw: "k")
+    monkeypatch.setattr(
+        newsletter, "_adjacent_shows_for", lambda *a, **kw: [],
+    )
+
+    from engine import newsletter_template as _nt
+    monkeypatch.setattr(_nt, "wrap_with_branding", lambda *a, **kw: bad_html)
+    monkeypatch.setattr(
+        _nt, "build_subject_line", lambda *a, **kw: "Subject",
+    )
+
+    sent = {}
+
+    def _no_send(**kw):
+        sent["called"] = True
+        return "should-not-happen"
+
+    monkeypatch.setattr(newsletter, "send_newsletter", _no_send)
+
+    config = SimpleNamespace(
+        newsletter=SimpleNamespace(
+            enabled=True,
+            api_key_env="BUTTONDOWN_KEY",
+            tag="",
+            requires_financial_disclaimer=False,
+            status="about_to_send",
+        ),
+        name="Test Show",
+        slug="testshow",
+    )
+
+    with caplog.at_level(logging.ERROR, logger="engine.newsletter"):
+        result = newsletter.send_show_newsletter(
+            "digest", config, 1, "2026-05-05",
+        )
+
+    assert result is None, "Hard-block must return None on contrast failure"
+    assert "called" not in sent, (
+        "send_newsletter must NOT be invoked when contrast blocks the send"
+    )
+    assert any(
+        "contrast issues" in rec.getMessage().lower()
+        and rec.levelno >= logging.ERROR
+        for rec in caplog.records
+    ), "Expected a logger.error for the blocking contrast failure"
