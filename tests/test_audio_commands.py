@@ -555,7 +555,7 @@ class TestAudioConfigDefaults:
         ``intro_duration`` so a no-YAML show still behaves correctly."""
         from engine.config import AudioConfig
         cfg = AudioConfig()
-        assert cfg.voice_intro_delay == 15.0
+        assert cfg.voice_intro_delay == 25.0
         assert cfg.voice_intro_delay >= cfg.intro_duration
 
     def test_background_music_file_default(self):
@@ -570,10 +570,10 @@ class TestAudioConfigDefaults:
         >= 30s for a real-podcast close."""
         from engine.config import AudioConfig
         cfg = AudioConfig()
-        assert cfg.intro_duration == 15.0
+        assert cfg.intro_duration == 25.0
         assert cfg.overlap_duration == 10.0
-        assert cfg.fade_duration == 15.0
-        assert cfg.outro_duration == 40.0
+        assert cfg.fade_duration == 20.0
+        assert cfg.outro_duration == 60.0
         assert cfg.intro_volume == 0.6
         assert cfg.overlap_volume == 0.5
         assert cfg.fade_volume == 0.4
@@ -597,7 +597,7 @@ class TestShowMusicConfigs:
         cfg = load_config("shows/tesla.yaml")
         assert cfg.audio.music_file == "assets/music/tesla_shorts_time.mp3"
         # May 2026 podcast-feel bump — see landmine in AudioConfig.
-        assert cfg.audio.voice_intro_delay == 15.0
+        assert cfg.audio.voice_intro_delay == 25.0
         assert cfg.audio.outro_crossfade == 20.0
 
     def test_ff_has_unified_music(self, load_config):
@@ -611,7 +611,7 @@ class TestShowMusicConfigs:
         # Dual-music override removed — the runner now uses the same
         # track for intro / overlap / fadeout / outro.
         assert cfg.audio.background_music_file is None
-        assert cfg.audio.voice_intro_delay == 15.0
+        assert cfg.audio.voice_intro_delay == 25.0
         # FF intentionally pins fade_duration at 27s (longer than the
         # network's 15s baseline) — preserved across the May 2026 bump.
         assert cfg.audio.fade_duration == 27.0
@@ -637,7 +637,7 @@ class TestShowMusicConfigs:
         (15s intro alone / 40s outro) but pins lower volumes for the
         briefing format."""
         cfg = load_config("shows/env_intel.yaml")
-        assert cfg.audio.intro_duration == 15.0
-        assert cfg.audio.outro_duration == 40.0
+        assert cfg.audio.intro_duration == 25.0
+        assert cfg.audio.outro_duration == 60.0
         assert cfg.audio.outro_crossfade == 20.0
         assert cfg.audio.intro_volume <= 0.5

@@ -115,24 +115,26 @@ class AudioConfig:
     music_file: Optional[str] = None
     background_music_file: Optional[str] = None
     transition_sting: Optional[str] = None
-    # Music timing — May 2026 podcast-feel bump. Aligned with
+    # Music timing — May 2026 podcast-feel bump (revised). Aligned with
     # ``shows/_defaults.yaml`` so a show running with the dataclass
     # defaults (no YAML) gets the same behaviour as a show inheriting
     # from the network baseline. Total intro music presence =
     # intro_duration (alone) + overlap_duration (with voice) +
-    # fade_duration (under-voice tail) = 15 + 10 + 15 = 40s. Outro =
-    # 40s after voice ends. ``voice_intro_delay`` MUST stay >=
-    # ``intro_duration`` so the voice doesn't enter while the music
-    # intro is still in its alone-period.
-    intro_duration: float = 15.0
+    # fade_duration (under-voice tail) = 25 + 10 + 20 = 55s. Outro =
+    # 60s after voice ends with a 6s graceful fade-out close.
+    # ``voice_intro_delay`` MUST stay >= ``intro_duration`` so the
+    # voice doesn't enter while the music intro is still in its
+    # alone-period. Operator's stated minimum is >= 30s on both ends.
+    intro_duration: float = 25.0
     overlap_duration: float = 10.0
-    fade_duration: float = 15.0
-    outro_duration: float = 40.0
+    fade_duration: float = 20.0
+    outro_duration: float = 60.0
+    outro_fade_out_duration: float = 6.0
     intro_volume: float = 0.6
     overlap_volume: float = 0.5
     fade_volume: float = 0.4
     outro_volume: float = 0.4
-    voice_intro_delay: float = 15.0
+    voice_intro_delay: float = 25.0
     outro_crossfade: float = 0.0
 
 

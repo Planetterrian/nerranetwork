@@ -205,17 +205,17 @@ class TestDefaultValues:
         c = AudioConfig()
         assert c.music_file is None
         assert c.background_music_file is None
-        assert c.intro_duration == 15.0
+        assert c.intro_duration == 25.0
         assert c.overlap_duration == 10.0
-        assert c.fade_duration == 15.0
-        assert c.outro_duration == 40.0
+        assert c.fade_duration == 20.0
+        assert c.outro_duration == 60.0
         assert c.intro_volume == 0.6
         assert c.overlap_volume == 0.5
         assert c.fade_volume == 0.4
         assert c.outro_volume == 0.4
         # voice_intro_delay must be >= intro_duration so the voice
         # doesn't start before the music intro alone-period finishes.
-        assert c.voice_intro_delay == 15.0
+        assert c.voice_intro_delay == 25.0
         assert c.voice_intro_delay >= c.intro_duration
 
     def test_publishing_defaults(self):
@@ -441,7 +441,7 @@ class TestLoadConfigRealFiles:
         assert cfg.audio.music_file == "assets/music/fascinatingfrontiers_bg.mp3"
         assert cfg.audio.background_music_file is None
         # May 2026 podcast-feel bump — 15s music alone before voice.
-        assert cfg.audio.voice_intro_delay == 15.0
+        assert cfg.audio.voice_intro_delay == 25.0
         assert cfg.publishing.rss_category == "Science"
         assert cfg.publishing.x_env_prefix == "PLANETTERRIAN_X_"
         assert cfg.episode.prefix == "Fascinating_Frontiers"
@@ -456,7 +456,7 @@ class TestLoadConfigRealFiles:
         assert cfg.audio.music_file == "assets/music/oilers-pride.mp3"
         # May 2026 podcast-feel bump — outro is 40s of music after
         # voice ends so the close doesn't feel cut off.
-        assert cfg.audio.outro_duration == 40.0
+        assert cfg.audio.outro_duration == 60.0
         assert cfg.publishing.guid_prefix == "planetterrian-daily"
         assert cfg.episode.prefix == "Planetterrian_Daily"
         assert cfg.episode.output_dir == "digests/planetterrian"
@@ -556,8 +556,8 @@ class TestNestedConfigOverrides:
         # Network defaults inherited from shows/_defaults.yaml — see
         # the May 2026 podcast-feel bump (40s total intro music
         # presence, 40s outro after voice).
-        assert cfg.audio.intro_duration == 15.0
-        assert cfg.audio.outro_duration == 40.0
+        assert cfg.audio.intro_duration == 25.0
+        assert cfg.audio.outro_duration == 60.0
 
     def test_partial_publishing_override(self, tmp_path):
         data = {"publishing": {"rss_title": "Custom Title", "x_enabled": False}}
