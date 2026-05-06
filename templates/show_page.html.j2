@@ -39,21 +39,27 @@
 </style>
 {% endblock %}
 
+{# Show-page–specific i18n strings. base.html.j2's `t` dict is in the
+   body scope but Jinja blocks defined at the {% extends %} level
+   render outside the body's `set` scope, so per-template ternaries
+   are the most reliable approach. #}
+{%- set _is_ru = (page_lang | default('en')) == 'ru' -%}
+
 {% block nav_links %}
-<li><a href="{{ path_prefix }}{{ blog_page }}">Blog</a></li>
-<li><a href="{{ path_prefix }}{{ summaries_page }}">Summaries</a></li>
+<li><a href="{{ path_prefix }}{{ blog_page }}">{% if _is_ru %}Блог{% else %}Blog{% endif %}</a></li>
+<li><a href="{{ path_prefix }}{{ summaries_page }}">{% if _is_ru %}Выпуски{% else %}Summaries{% endif %}</a></li>
 <li><a href="{{ path_prefix }}{{ rss_file }}">RSS</a></li>
 {% if x_account %}<li><a href="https://x.com/{{ x_account }}" target="_blank" rel="noopener">@{{ x_account }}</a></li>{% endif %}
 {% endblock %}
 
 {% block mobile_nav_links %}
-<a href="{{ path_prefix }}{{ show_page }}" onclick="document.getElementById('mobileMenu').classList.remove('open')">Home</a>
-<a href="{{ path_prefix }}{{ blog_page }}" onclick="document.getElementById('mobileMenu').classList.remove('open')">Blog</a>
-<a href="{{ path_prefix }}{{ summaries_page }}" onclick="document.getElementById('mobileMenu').classList.remove('open')">Summaries</a>
-<a href="#episodes" onclick="document.getElementById('mobileMenu').classList.remove('open')">Episodes</a>
-<a href="#about" onclick="document.getElementById('mobileMenu').classList.remove('open')">About</a>
-<a href="#resources" onclick="document.getElementById('mobileMenu').classList.remove('open')">Resources</a>
-<a href="#faq" onclick="document.getElementById('mobileMenu').classList.remove('open')">FAQ</a>
+<a href="{{ path_prefix }}{{ show_page }}" onclick="document.getElementById('mobileMenu').classList.remove('open')">{% if _is_ru %}Главная{% else %}Home{% endif %}</a>
+<a href="{{ path_prefix }}{{ blog_page }}" onclick="document.getElementById('mobileMenu').classList.remove('open')">{% if _is_ru %}Блог{% else %}Blog{% endif %}</a>
+<a href="{{ path_prefix }}{{ summaries_page }}" onclick="document.getElementById('mobileMenu').classList.remove('open')">{% if _is_ru %}Выпуски{% else %}Summaries{% endif %}</a>
+<a href="#episodes" onclick="document.getElementById('mobileMenu').classList.remove('open')">{% if _is_ru %}Эпизоды{% else %}Episodes{% endif %}</a>
+<a href="#about" onclick="document.getElementById('mobileMenu').classList.remove('open')">{% if _is_ru %}О подкасте{% else %}About{% endif %}</a>
+<a href="#resources" onclick="document.getElementById('mobileMenu').classList.remove('open')">{% if _is_ru %}Ресурсы{% else %}Resources{% endif %}</a>
+<a href="#faq" onclick="document.getElementById('mobileMenu').classList.remove('open')">{% if _is_ru %}Вопросы{% else %}FAQ{% endif %}</a>
 {% endblock %}
 
 {% block content %}
@@ -72,7 +78,15 @@
                 <h1>{{ show_name }}</h1>
                 <p class="show-hero-tagline">{{ hero_tagline }}</p>
                 <div style="display:flex;gap:var(--sp-2);align-items:center;margin-bottom:var(--sp-3);font-family:var(--font-ui);font-size:0.85rem;color:var(--nn-text-muted);">
-                    <span style="background:var(--nn-card);border:1px solid var(--nn-border);padding:2px 10px;border-radius:6px;">{{ schedule | default('Daily') }}</span>
+                    {%- set _sched = schedule | default('Daily') -%}
+                    {%- set _sched_ru = {
+                        'Daily': 'Ежедневно',
+                        'Weekdays': 'По будням',
+                        'Odd weekdays': 'По нечётным будням',
+                        'Even days': 'По чётным дням',
+                        'Even weekdays': 'По чётным будням',
+                    } -%}
+                    <span style="background:var(--nn-card);border:1px solid var(--nn-border);padding:2px 10px;border-radius:6px;">{% if _is_ru %}{{ _sched_ru.get(_sched, _sched) }}{% else %}{{ _sched }}{% endif %}</span>
                     {% if episode_length %}<span style="background:var(--nn-card);border:1px solid var(--nn-border);padding:2px 10px;border-radius:6px;">{{ episode_length }}</span>{% endif %}
                 </div>
                 <p class="show-hero-desc">{{ show_description }}</p>
@@ -80,18 +94,18 @@
                 <p style="font-family:var(--font-ui);font-size:0.88rem;color:var(--nn-text-muted);margin-bottom:var(--sp-4);font-style:italic;">{{ audience }}</p>
                 {% endif %}
                 <div class="show-hero-actions">
-                    <a href="#episodes" class="nn-btn nn-btn-primary">Listen Now</a>
-                    <a href="{{ path_prefix }}{{ blog_page }}" class="nn-btn">Read Blog</a>
-                    <a href="{{ path_prefix }}{{ summaries_page }}" class="nn-btn">View Summaries</a>
+                    <a href="#episodes" class="nn-btn nn-btn-primary">{% if _is_ru %}Слушать{% else %}Listen Now{% endif %}</a>
+                    <a href="{{ path_prefix }}{{ blog_page }}" class="nn-btn">{% if _is_ru %}Читать блог{% else %}Read Blog{% endif %}</a>
+                    <a href="{{ path_prefix }}{{ summaries_page }}" class="nn-btn">{% if _is_ru %}Все выпуски{% else %}View Summaries{% endif %}</a>
                     {% if apple_podcasts_url %}
                     <a href="{{ apple_podcasts_url | with_utm(campaign=show_slug) }}" class="nn-btn" target="_blank" rel="noopener" data-show="{{ show_slug }}">Apple Podcasts</a>
                     {% endif %}
                     {% if spotify_url %}
                     <a href="{{ spotify_url | with_utm(campaign=show_slug) }}" class="nn-btn" target="_blank" rel="noopener" data-show="{{ show_slug }}">Spotify</a>
                     {% endif %}
-                    <a href="{{ path_prefix }}{{ rss_file }}" class="nn-btn" data-show="{{ show_slug }}">RSS Feed</a>
+                    <a href="{{ path_prefix }}{{ rss_file }}" class="nn-btn" data-show="{{ show_slug }}">{% if _is_ru %}RSS-канал{% else %}RSS Feed{% endif %}</a>
                     {% if youtube_playlist_url %}
-                    <a href="{{ youtube_playlist_url }}" class="nn-btn" target="_blank" rel="noopener" data-show="{{ show_slug }}">Watch on YouTube</a>
+                    <a href="{{ youtube_playlist_url }}" class="nn-btn" target="_blank" rel="noopener" data-show="{{ show_slug }}">{% if _is_ru %}YouTube{% else %}Watch on YouTube{% endif %}</a>
                     {% endif %}
                     {% if x_account %}
                     <a href="https://x.com/{{ x_account }}" class="nn-btn" target="_blank" rel="noopener">@{{ x_account }}</a>
@@ -112,7 +126,7 @@
     <section class="nn-section" style="padding-top: var(--sp-8);">
         <div class="container">
             <div class="latest-episode glass-card" id="latest-player">
-                <div class="latest-episode-label">Latest Episode</div>
+                <div class="latest-episode-label">{% if _is_ru %}Последний выпуск{% else %}Latest Episode{% endif %}</div>
                 <div class="latest-episode-title" id="latest-title">Loading...</div>
                 <div class="latest-episode-date" id="latest-date"></div>
                 <audio id="latest-audio" controls preload="none" aria-label="Latest episode audio player" style="width:100%;height:42px;border-radius:8px;"></audio>
@@ -364,7 +378,7 @@
     <section id="episodes" class="nn-section" style="padding-top: 0;">
         <div class="container">
             <div class="nn-section-header" style="text-align:left;">
-                <h2>Recent Episodes</h2>
+                <h2>{% if _is_ru %}Свежие выпуски{% else %}Recent Episodes{% endif %}</h2>
             </div>
             <div id="episodes-grid" class="episodes-grid">
                 {% if static_episodes %}
@@ -384,7 +398,7 @@
                 {% endif %}
             </div>
             <div style="text-align:center;margin-top:var(--sp-6);">
-                <a href="{{ path_prefix }}{{ summaries_page }}" class="nn-btn">View All Episodes</a>
+                <a href="{{ path_prefix }}{{ summaries_page }}" class="nn-btn">{% if _is_ru %}Все выпуски{% else %}View All Episodes{% endif %}</a>
             </div>
         </div>
     </section>
@@ -409,7 +423,7 @@
     <section id="resources" class="nn-section" style="padding-top:0;">
         <div class="container">
             <div class="nn-section-header" style="text-align:left;">
-                <h2>Resources &amp; Further Reading</h2>
+                <h2>{% if _is_ru %}Ресурсы и материалы{% else %}Resources &amp; Further Reading{% endif %}</h2>
             </div>
             {% for cat in resource_categories %}
             <div class="resource-category">
@@ -432,7 +446,7 @@
     <section id="resources" class="nn-section" style="padding-top:0;">
         <div class="container">
             <div class="nn-section-header" style="text-align:left;">
-                <h2>Resources &amp; Further Reading</h2>
+                <h2>{% if _is_ru %}Ресурсы и материалы{% else %}Resources &amp; Further Reading{% endif %}</h2>
             </div>
             <div class="resources-grid">
                 {% for r in resources %}
@@ -452,7 +466,7 @@
     <section class="nn-section" style="padding-top:0;">
         <div class="container">
             <div class="nn-section-header" style="text-align:left;">
-                <h2>Recommended Tools</h2>
+                <h2>{% if _is_ru %}Рекомендуемые инструменты{% else %}Recommended Tools{% endif %}</h2>
             </div>
             <div class="tools-grid">
                 {% for t in tools %}
@@ -524,7 +538,7 @@
     <section id="faq" class="nn-section" style="padding-top:0;">
         <div class="container" style="max-width:800px;">
             <div class="nn-section-header" style="text-align:left;">
-                <h2>Key Concepts</h2>
+                <h2>{% if _is_ru %}Ключевые понятия{% else %}Key Concepts{% endif %}</h2>
             </div>
             {% for item in faq %}
             <details class="faq-item glass-card">
@@ -555,7 +569,7 @@
     <section class="nn-section" style="padding-top:0;padding-bottom:var(--sp-8);">
         <div class="container" style="max-width:700px;">
             <div class="glass-card" style="padding:var(--sp-6);border-color:color-mix(in srgb, var(--show-color) 30%, var(--nn-border));">
-                <div style="font-family:var(--font-ui);font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--show-color-text, var(--show-color));margin-bottom:var(--sp-3);">Recommended for you</div>
+                <div style="font-family:var(--font-ui);font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--show-color-text, var(--show-color));margin-bottom:var(--sp-3);">{% if _is_ru %}Рекомендуем{% else %}Recommended for you{% endif %}</div>
                 <a href="{{ path_prefix }}{{ related_show.show_page }}" style="display:flex;align-items:center;gap:var(--sp-4);text-decoration:none;">
                     <picture>
                         <source type="image/webp" srcset="{{ path_prefix }}{{ related_show.podcast_image[:-4] if related_show.podcast_image.endswith('.jpg') else related_show.podcast_image }}-400.webp">
@@ -576,7 +590,7 @@
     <section class="nn-section">
         <div class="container">
             <div class="nn-section-header">
-                <h2>Latest from the Blog</h2>
+                <h2>{% if _is_ru %}Свежие статьи блога{% else %}Latest from the Blog{% endif %}</h2>
                 <p>Read in-depth articles from recent episodes.</p>
             </div>
             <div class="blog-idx-grid" style="max-width:900px;padding-bottom:var(--sp-8)">
@@ -596,7 +610,7 @@
                 {% endfor %}
             </div>
             <div style="text-align:center">
-                <a href="{{ path_prefix }}{{ blog_page }}" class="nn-btn nn-btn-primary" style="font-size:0.9rem;padding:var(--sp-3) var(--sp-8)">View all blog posts</a>
+                <a href="{{ path_prefix }}{{ blog_page }}" class="nn-btn nn-btn-primary" style="font-size:0.9rem;padding:var(--sp-3) var(--sp-8)">{% if _is_ru %}Все статьи блога{% else %}View all blog posts{% endif %}</a>
             </div>
         </div>
     </section>
