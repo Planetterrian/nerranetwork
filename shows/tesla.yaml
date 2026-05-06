@@ -12,8 +12,10 @@ sources:
     label: CleanTechnica
   - url: https://whatsuptesla.com/feed
     label: WhatsUpTesla
-  - url: https://driveteslacanada.ca/feed/
-    label: Drive Tesla Canada
+  # driveteslacanada.ca returns persistent HTTP 403 (anti-bot block)
+  # on the GitHub Actions runner — removed May 6 2026 after every
+  # TST run logged the same warning. Re-add if/when their CDN
+  # whitelists CI ranges or we move to a residential-proxy fetch.
   - url: https://carbuzz.com/feed
     label: CarBuzz
   - url: https://insideevs.com/rss/articles/all/

@@ -754,6 +754,15 @@ def _build_featured_episode_html(
     if num is None or not hook:
         return ""
     brand = show["brand_color"]
+    # Eyebrow text uses the deeper ``brand_color_dark`` because the
+    # card background is ``#f8fafc`` (luminance 0.967), which makes
+    # several brand colors fall just below WCAG AA. Tesla red
+    # ``#E31937`` lands at exactly 4.4999:1 on `#f8fafc` (operator
+    # caught this in the TST Ep465 newsletter contrast hard-block,
+    # May 6 2026). The dark variants all clear ≥5.5:1 so this
+    # robustly fixes the boundary case for every show without
+    # touching the brand color used elsewhere.
+    eyebrow_color = show.get("brand_color_dark") or brand
     slug = featured.get("show_slug", "")
     listen = featured.get("listen_url") or (
         episode_blog_url(slug, int(num)) if slug else show["show_page"]
@@ -780,7 +789,7 @@ def _build_featured_episode_html(
         f'style="background:#f8fafc;border-left:3px solid {brand};'
         f'border-radius:8px;padding:18px 18px 16px;">'
         '<div style="font-size:11px;font-weight:700;'
-        f'color:{brand};letter-spacing:0.08em;'
+        f'color:{eyebrow_color};letter-spacing:0.08em;'
         'text-transform:uppercase;margin-bottom:6px;">'
         '🎧 If you only have 10 minutes this week'
         '</div>'

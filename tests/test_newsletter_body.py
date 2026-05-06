@@ -68,17 +68,26 @@ class TestBoxRulesEmail:
 class TestTeslaPriceBlock:
 
     def test_renders_up_arrow_green(self):
+        """May 6 2026: bumped emerald-500 (#10b981, 2.32:1 on cream)
+        to emerald-700 (#047857, 5.01:1) so the up arrow clears WCAG
+        AA on the TSLA price block's cream background. The prior
+        color triggered the newsletter contrast hard-block on
+        TST Ep465."""
         text = "**REAL-TIME TSLA price:** $390.82 ▲ $9.44 (2.5%)"
         out = render_tsla_price_block(text)
         assert "TSLA today" in out
         assert "$390.82" in out
-        assert "#10b981" in out
+        assert "#047857" in out
+        assert "#10b981" not in out  # old color must not regress
 
     def test_renders_down_arrow_red(self):
+        """Same fix for the down arrow: red-500 (#ef4444, 3.44:1) →
+        red-700 (#b91c1c, 5.91:1)."""
         text = "**TSLA today:** $372.80 ▼ $5.20 (-1.4%)"
         out = render_tsla_price_block(text)
         assert "$372.80" in out
-        assert "#ef4444" in out
+        assert "#b91c1c" in out
+        assert "#ef4444" not in out  # old color must not regress
 
     def test_no_match_returns_unchanged(self):
         text = "Some prose, no TSLA price line here."
@@ -539,3 +548,55 @@ class TestCanonicalScrubIntegration:
         assert "California closed a loophole" in emailed
         assert "Story body." in emailed
         assert "Brand-New Cybertruck Crashed" in emailed
+
+
+# ---------------------------------------------------------------------------
+# TSLA-arrow contrast guard (May 6 2026 — operator caught hard-block fire)
+# ---------------------------------------------------------------------------
+
+class TestTeslaArrowAaGuard:
+    """Both arrow colors must clear WCAG AA (4.5:1) on the price
+    block's cream `#fef2f2` background so the newsletter contrast
+    hard-block doesn't fire on any future TST send. Pin the arrow
+    colors AND the AA result so a future palette tweak can't drop
+    below the threshold without CI flagging it."""
+
+    CREAM_BG = "#fef2f2"
+
+    def _ratio(self, fg, bg):
+        from engine.contrast_validator import contrast_ratio
+        def _rgb(h):
+            h = h.lstrip("#")
+            return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+        return contrast_ratio(_rgb(fg), _rgb(bg))
+
+    def test_up_arrow_color_clears_aa_on_price_block(self):
+        text = "**TSLA today:** $390.82 ▲ $9.44 (2.5%)"
+        out = render_tsla_price_block(text)
+        import re
+        # Span surrounding the arrow carries the color. The render
+        # places the color span BEFORE the arrow text, so search
+        # backward from the ▲ for the nearest preceding ``color:#...``.
+        i = out.find("▲")
+        assert i >= 0, f"▲ not found: {out[:200]}"
+        m = re.search(r"color:(#[0-9a-fA-F]{6})[^>]*>[^<]*$", out[:i])
+        assert m, f"up arrow color not found near ▲: {out[max(0,i-200):i]!r}"
+        ratio = self._ratio(m.group(1), self.CREAM_BG)
+        assert ratio >= 4.5, (
+            f"Up arrow {m.group(1)} measures {ratio:.2f}:1 on cream — "
+            f"would trigger newsletter contrast hard-block."
+        )
+
+    def test_down_arrow_color_clears_aa_on_price_block(self):
+        text = "**TSLA today:** $372.80 ▼ $5.20 (-1.4%)"
+        out = render_tsla_price_block(text)
+        import re
+        i = out.find("▼")
+        assert i >= 0, f"▼ not found: {out[:200]}"
+        m = re.search(r"color:(#[0-9a-fA-F]{6})[^>]*>[^<]*$", out[:i])
+        assert m, f"down arrow color not found near ▼: {out[max(0,i-200):i]!r}"
+        ratio = self._ratio(m.group(1), self.CREAM_BG)
+        assert ratio >= 4.5, (
+            f"Down arrow {m.group(1)} measures {ratio:.2f}:1 on cream — "
+            f"would trigger newsletter contrast hard-block."
+        )
