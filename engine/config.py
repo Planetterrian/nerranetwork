@@ -149,6 +149,16 @@ class PublishingConfig:
     rss_email: str = "contact@example.com"
     rss_image: str = ""
     rss_category: str = "Technology"
+    # Apple Podcasts allows a category + sub-category pair; the
+    # sub-category drives the curated charts inside Apple. Operator
+    # caught (May 6 2026 audit) every show emitting a single-level
+    # category and missing the sub. Per-show YAML supplies the value.
+    rss_subcategory: str = ""
+    # ``itunes:keywords`` was officially deprecated by Apple but is
+    # still indexed by every other major aggregator (Spotify, Pocket
+    # Casts, Fountain, Podcast Index). Cheap SEO win — comma-separated
+    # list of 5-10 phrases per show.
+    rss_keywords: str = ""
     rss_language: str = "en-us"
     guid_prefix: str = "podcast"
     base_url: str = "https://nerranetwork.com"
