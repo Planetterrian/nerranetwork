@@ -1,0 +1,122 @@
+Glad you're here. Welcome to Models and Agents, episode 41 on May 6, 2026. Let's see what
+shipped. Let's see what happened in the AI world today, and trust me, it's been busy.
+Open AI rolls out GPT 5.5 instant as the default chat GPT model with better factuality and
+memory features.
+Here's what you need to know at a glance. Open AI is pushing GPT 5.5 instant to every chat GPT
+user over the next two days. The same model is available in the API under the name GPT 5.5
+chat latest. Anthropic published research on model spec mid-training that improves safety
+generalization in agentic settings. Google released MTP drafters that deliver up to three
+times faster Gemma 4 inference without quality loss. A detailed community benchmark explores
+practical quantization trade-off for 23.627b. Open AI is rolling out GPT 5.5 instant as the
+default model for all chat GPT users over the next two days. The same lighter variant is
+available in the API as GPT 5.5 chat latest. It brings measurable gains in factuality. Those
+gains show up especially in medicine, law, and finance. Image analysis improves as well, so
+to a stem question answering. The model also gets better at knowing when to trigger web search.
+Improved memory pulls contacts from saved memories, past chats, files, and connected gmail accounts.
+Visible memory sources let users inspect, edit, or disconnect what the model used. Simon Willis
+noted the model is less capable than the full GPT 5.5. This appears to be a deliberate cost-saving choice.
+Sam Oldman described the combined speed, intelligence, personality, and memory upgrades as feeling
+more than the sum of the parts. Developers should test the new default immediately in both consumer
+chat GPT and the API. See where the capability and speed tradeoff lands for your workloads.
+Watch for further rollout of personalization features to mobile. Community feedback might prompt
+open AI to adjust the instant variant and tropic released research on model spec mid-training.
+The technique inserts a mid-training phase using a detailed model spec or constitution before standard
+alignment. It teaches models broad underlying values rather than narrow rules.
+That improves generalization to agentic settings. Chat only harmlessness training often fails in
+those settings. A toy example shows that training on cheese preferences tied to pro-America values
+causes the model to adopt broader pro-America stances. Swapping the spec to affordability produces
+different value generalization instead. The full paper is available on archive.
+Google AI open-sourced multi-token prediction drafters. These use speculative decoding to deliver
+up to three times faster inference on the Gemma 4 family. Output quality stays the same.
+The drafters generate multiple tokens in parallel and verify them with the target model.
+This cuts latency without the usual quality penalty seen in the aggressive speculative methods.
+Developers running Gemma 4 workloads can integrate the new drafters immediately.
+They work especially well for throughput sensitive applications. A detailed local L-L-A-M
+test compared quantization levels for twin 3.627b. The levels included BF-16, Q8, 0, Q8,
+Q6K, Q5K XL, Q4K XL, IQ4XS, and lower quants. Tests use the chessboard state tracking task
+and an SVG rendering task. IQ4XS emerged as the practical sweet spot on 16 GBVR-AM hardware.
+It retains correct piece placement, board orientation, and move highlighting.
+Speed stay usable, especially with turboquant KV cache tweaks.
+Anything below IQ4XS showed noticeable degradation in board orientation or piece positioning.
+Caltura released open source machine readable AI skills.
+These target agent first development workflows. The skills provide structured,
+parsable capability descriptions. Agents can discover and compose them without brittle prompt
+engineering. Developers building autonomous agents can pull the library today. It should
+improve tool selection and orchestration reliability. New research evaluates same model
+self-verification against strong likelihood baselines. The baselines include L-L-A-V-G and L-L-S-U-M.
+Tests ran on ARC challenge and truthful Q-A-M-C. The technique improves
+abstention quality for some model families. It helps notably with Q7B.
+Results remain task and prompt sensitive. Sometimes it underperforms simple likelihood sums.
+Agent builders can use it as one signal among several. It is not a universal uncertainty estimator.
+A new argiv paper demonstrates a geometric deviation for pre-generation reliability.
+It measures hidden state deviation from an answerable reference set.
+This gives a lightweight pre-generation signal on whether a query is answerable.
+The approach works reliably on mathematical prompts. It reaches ROCAUC scores between 0.78 and 0.84.
+It shows little signal on factual prompts. Representation geometry encodes task form
+more than universal knowledge boundaries. The signal could help agents decide when to refuse
+or search before generating. Researchers built a benchmark of queries containing varying
+degrees of false presuppositions. The queries span health, science, and general knowledge.
+Reasoning models only modestly outperform non-reasoning ones.
+Accuracy gains sit between 2 and 11%. Models still fail to challenge 26 to 42% of false assumptions.
+Performance stays sensitive to how strongly the presupposition is worded.
+Anyone building agents that answer user questions should test against this style of input.
+Mechanistic interpretability work on Mestral 7b and Lama 3.18b examined negation processing.
+Models implement both suppressive attention and constructive mechanisms.
+Suppressive attention attends to the negated phrase and dampens related concept.
+Constructive mechanisms build a representation of the full negated concept.
+Ablating late layer attention shortcuts dramatically improves negation accuracy.
+Poor performance often stems from simple heuristics rather than missing capability.
+A new 3,582 page benchmark evaluates semi-structured information extraction from OCR clinical reports.
+It uses unknown keys and realistic noise.
+Encoder only models surprisingly outperform much larger decoder only models on key condition QA.
+fine-tuned decoder only models win on end-to-end extraction when scale is not controlled.
+This applies a practical baseline for anyone working with medical document pipelines.
+Now let's pop the hood on how language models actually implement negation.
+Everyone talks about the model understands negation as if it were a single learned skill.
+In practice, models implement at least two competing mechanisms that coexist inside the same network.
+The first mechanism is suppressive.
+Specific attention heads learn to attend to the phrase being negated.
+They dampen related concepts downstream.
+The second mechanism is constructive.
+The model builds an explicit representation of the negated state.
+For example, turning not gas into a vector that promotes liquids and solids.
+Ablation studies show the constructive root is more prominent in the models examined.
+Yet both mechanisms are present.
+Late layer attention often overrides the correct internal representation with a simple shortcut.
+That produces the wrong answer.
+Removing those heads can raise negation accuracy dramatically even though the knowledge was already there.
+The effect is strongest in mid layers and fades toward the output.
+This explains why prompting tricks that force step-by-step reasoning sometimes help.
+The practical takeaway is that negation failures are frequently fixable with targeted interventions.
+You do not necessarily need more data or scale.
+Teams hitting negation bugs should first check whether late layer attention
+is the culprit before reaching for fine tuning.
+Here are some things to try this week.
+Switch your default chat GPT conversations to GPT 5.5 instant.
+Test factuality on medical, legal, or financial props.
+See where the speed and accuracy trade-off feels acceptable.
+Pull the new Gemma 4 MTP drafters.
+Benchmark latency on your current workloads.
+The three times speed up without quality loss makes it worth testing even if you only use Gemma occasionally.
+Run the trend 3.627 BIQ4 XQuant on your 16GB hardware.
+Use the chessboard style state tracking prompt.
+Verify whether it meets your reliability needs before committing to production.
+Experiment with self-verification prompts on ARC challenge-style tasks.
+Use 2N or 5 models to see if the conditional confidence signal improves your agent's
+abstention behavior. Read the full Anthropic MSM paper.
+Try writing a short model spec for a narrow domain.
+Test whether value-level instructions generalize better than rule lists in your own fine tunes.
+On the horizon, the full ARC's feedback and follow-up experiments on model spec mid-training
+are expected to clarify which constitution styles produce the strongest
+agentic safety gains. Further mobile rollout of chat GPT memory sources and personalization features
+should land in the coming weeks. Additional quantization and speculative decoding results for the
+new Gemma 4 family will likely appear as the MTP drafters see wider adoption.
+More Benchmarks testing reasoning models on presupposition heavy queries are likely as the
+community adopts the new evaluation set. Before we go, tomorrow keep an eye on any fresh community
+benchmarks that test those MTP drafters on production workloads. That wraps up today's AI briefing.
+Share this with a developer or builder who wants to stay current.
+Subscribe wherever you listen. See you tomorrow.
+This podcast is curated by Patrick, but generated using AI voice synthesis of my voice.
+The primary reason to do this is I unfortunately don't have the time to be consistent with generating
+all the content and wanted to focus on creating consistent and regular episodes for all the themes
+that I enjoy and I hope others do as well.
