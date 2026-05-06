@@ -49,6 +49,69 @@ def apply_op3_prefix(url: str, prefix_url: str = "https://op3.dev/e/") -> str:
 # RSS feed helpers
 # ---------------------------------------------------------------------------
 
+def _markdown_to_rss_html(md: str) -> str:
+    """Convert podcast-script markdown to lightly-formatted HTML
+    suitable for ``<description>`` and ``<itunes:summary>``.
+
+    Apple Podcasts and Spotify render the description with limited
+    HTML support: paragraph wrapping, bold, italic, links, line breaks.
+    They render markdown *literally* — `**HOOK:**` shows as
+    asterisks, `## Top 10 News Items` shows as hash signs, which
+    looks broken to anyone browsing on a podcast app. Operator caught
+    this on the May 6 2026 audit (every show ships markdown into RSS).
+
+    This helper:
+      - strips block-level markdown (`#`, `>`, list markers)
+      - converts inline `**bold**` → `<b>`, `*italic*` → `<i>`
+      - converts `[label](url)` → `<a href="url">label</a>`
+      - preserves paragraph structure (blank lines → `</p><p>`)
+      - leaves bare URLs and ordinary punctuation alone
+
+    Idempotent: HTML in, HTML out (the only inline-markdown patterns
+    we replace don't appear inside attributes that we generate).
+    """
+    if not md:
+        return ""
+    import re as _re
+
+    text = md.strip()
+
+    # Strip block-level headers and blockquotes; keep the text content.
+    text = _re.sub(r"^[ \t]*#{1,6}[ \t]+", "", text, flags=_re.MULTILINE)
+    text = _re.sub(r"^[ \t]*>[ \t]?", "", text, flags=_re.MULTILINE)
+    # Convert list markers to bullet points (· keeps it readable in plain
+    # podcast-app contexts that don't render <ul>).
+    text = _re.sub(r"^[ \t]*[-*][ \t]+", "• ", text, flags=_re.MULTILINE)
+    text = _re.sub(r"^[ \t]*\d+\.[ \t]+", "", text, flags=_re.MULTILINE)
+
+    # Strip horizontal-rule markdown (━━━ runs and `---` lines).
+    text = _re.sub(r"^[ \t]*[-—━_]{3,}[ \t]*$", "", text, flags=_re.MULTILINE)
+
+    # Markdown links → real anchors.
+    text = _re.sub(
+        r"\[([^\]]+)\]\((https?://[^\)]+)\)",
+        r'<a href="\2">\1</a>',
+        text,
+    )
+    # Bold / italic. Order matters — handle ** before * so bold doesn't
+    # eat the italic markers.
+    text = _re.sub(r"\*\*([^*\n]+)\*\*", r"<b>\1</b>", text)
+    text = _re.sub(
+        r"(?<![*\w])\*([^*\n]+)\*(?!\w)",
+        r"<i>\1</i>",
+        text,
+    )
+
+    # Strip stray remaining single-asterisk artifacts (operator-caught:
+    # malformed bold pairs left odd ``*`` characters in feed previews).
+    text = text.replace("**", "")
+
+    # Paragraph wrap. Collapse 3+ blank lines to 2, then split on \n\n.
+    text = _re.sub(r"\n{3,}", "\n\n", text)
+    paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
+    return "\n\n".join(paragraphs)
+
+
 def _add_existing_entry_to_feed(fg, ep_data: dict, channel_image: str = "") -> None:
     """Re-add a parsed existing episode to the feed generator."""
     entry = fg.add_entry()
@@ -110,7 +173,11 @@ def _add_new_episode(
     entry = fg.add_entry()
     entry.id(new_guid)
     entry.title(episode_title)
-    entry.description(episode_description)
+    # Render the markdown digest to lightweight HTML before publishing
+    # so Apple Podcasts / Spotify don't show literal ``**`` and ``##``
+    # to listeners (operator caught this on May 6 2026 audit).
+    rss_description = _markdown_to_rss_html(episode_description)
+    entry.description(rss_description)
 
     if audio_url:
         mp3_url = audio_url
@@ -129,7 +196,7 @@ def _add_new_episode(
     entry.enclosure(url=mp3_url, type="audio/mpeg", length=str(mp3_size))
 
     entry.podcast.itunes_title(episode_title)
-    entry.podcast.itunes_summary(episode_description)
+    entry.podcast.itunes_summary(rss_description)
     entry.podcast.itunes_duration(format_duration_func(mp3_duration))
     entry.podcast.itunes_episode(str(episode_num))
     entry.podcast.itunes_season("1")
@@ -165,6 +232,7 @@ def update_rss_feed(
     channel_image: str = "",
     channel_category: str = "Technology",
     channel_subcategory: str = "",
+    channel_keywords: str = "",
     guid_prefix: str = "podcast",
     format_duration_func=None,
     chapters_url: Optional[str] = None,
@@ -363,6 +431,17 @@ def update_rss_feed(
         fg.podcast.itunes_category({"cat": channel_category, "sub": channel_subcategory})
     else:
         fg.podcast.itunes_category(channel_category)
+    # ``itunes:keywords`` — Apple deprecated but Spotify / Pocket Casts /
+    # Fountain / Podcast Index still index it. Cheap SEO. Operator
+    # caught (May 6 2026 audit) every show shipping with no keywords.
+    if channel_keywords:
+        try:
+            fg.podcast.itunes_keywords(channel_keywords)
+        except Exception:  # pragma: no cover — older feedgen lacks setter
+            # Newer feedgen versions also expose the keyword via the
+            # generic ``meta`` extension; if both fail, the field is
+            # optional anyway.
+            pass
     fg.podcast.itunes_explicit("no")
 
     # --- Migrate legacy GitHub raw URLs to R2 CDN --------------------------

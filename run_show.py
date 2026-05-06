@@ -2084,9 +2084,18 @@ def run(args: argparse.Namespace) -> None:
                 f"/{_ep_prefix}_transcript.json"
             )
 
-        # Append AI disclosure to channel description for RSS metadata
+        # Channel description shape (May 2026 audit): Apple Podcasts /
+        # Spotify list pages truncate around 150 characters, so the
+        # FIRST sentence has to sell the show. Putting the AI disclosure
+        # ahead of (or inline with) the show pitch ate the entire
+        # truncation window. Now: show pitch first, AI disclosure
+        # appended in parentheses at the end. Apple's full-detail page
+        # still shows everything; the listing-card preview shows the
+        # punchy line.
         channel_desc_with_disclosure = (
-            config.publishing.rss_description.rstrip() + " " + _AI_DISCLOSURE_RSS
+            config.publishing.rss_description.rstrip()
+            + "\n\n"
+            + _AI_DISCLOSURE_RSS
         )
 
         logger.info("Updating RSS feed: %s", config.publishing.rss_file)
@@ -2110,6 +2119,7 @@ def run(args: argparse.Namespace) -> None:
             channel_image=config.publishing.rss_image,
             channel_category=config.publishing.rss_category,
             channel_subcategory=getattr(config.publishing, "rss_subcategory", ""),
+            channel_keywords=getattr(config.publishing, "rss_keywords", ""),
             guid_prefix=config.publishing.guid_prefix,
             format_duration_func=format_duration,
             audio_url=feed_audio_url,  # Use R2/OP3-prefixed URL if available

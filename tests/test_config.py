@@ -419,7 +419,9 @@ class TestLoadConfigRealFiles:
         assert cfg.tts.provider == "grok"
         assert cfg.tts.voice_id == "kdif6sqjcyiq"
         assert cfg.audio.music_file == "assets/music/tesla_shorts_time.mp3"
-        assert cfg.publishing.rss_title == "Tesla Shorts Time Daily"
+        # rss_title aligned to "Tesla Shorts Time" in May 2026 audit
+        # to match Apple Podcasts listing exactly.
+        assert cfg.publishing.rss_title == "Tesla Shorts Time"
         assert cfg.publishing.x_enabled is True
         assert cfg.episode.prefix == "Tesla_Shorts_Time_Pod"
         assert cfg.episode.output_dir == "digests/tesla_shorts_time"
