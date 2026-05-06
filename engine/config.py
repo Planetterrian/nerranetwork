@@ -286,6 +286,26 @@ class YouTubeConfig:
         "silhouette-of-woman", "woman-in-spotlight",
         "model-in", "topless-model",
     ])
+    # ---- Image provider (May 2026 rollout) ----
+    # ``pexels``  — free Pexels search (default; safe / well-tested).
+    # ``grok``    — fresh per-episode images via Grok Imagine for both
+    #               long-form AND Shorts, with separate prompt sets so
+    #               the two formats no longer share imagery (operator's
+    #               complaint May 6 2026). Costs ~$0.32 / episode at
+    #               the standard ``grok-imagine-image`` model rate.
+    # ``hybrid``  — Pexels for long-form, Grok for Shorts. Halfway
+    #               option for shows that want unique Shorts content
+    #               without paying for long-form re-rendering.
+    image_provider: str = "pexels"
+    # ``grok-imagine-image`` ($0.02/image, 300 req/min) is the safe
+    # default. ``grok-imagine-image-pro`` ($0.07/image, 30 req/min)
+    # is the higher-quality tier — use only on a show flagged for
+    # quality emphasis since it's 3.5× the cost.
+    grok_image_model: str = "grok-imagine-image"
+    # Optional one-line tone descriptor injected into every Grok prompt.
+    # Defaults to a generic photojournalism cue; shows can override
+    # (e.g. UC's narrative tone might want "documentary archival photo").
+    grok_image_descriptor: str = "photorealistic news photo"
 
 
 @dataclass

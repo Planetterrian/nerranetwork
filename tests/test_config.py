@@ -641,3 +641,56 @@ class TestNestedConfigOverrides:
         assert cfg.sources[1].url == "https://raw.com"
         assert cfg.name == ""
         assert cfg.llm == LLMConfig()
+
+
+# ---------------------------------------------------------------------------
+# YouTube image provider — May 2026 Grok Imagine rollout
+# ---------------------------------------------------------------------------
+
+class TestYouTubeImageProviderConfig:
+    """Phase 1 of the Grok Imagine rollout. The new fields default to
+    the old Pexels behaviour so any show that doesn't opt in keeps its
+    current pipeline; only Tesla + MAB are flipped to ``grok`` in this
+    PR (per CLAUDE.md landmine #20 those are the only YouTube-enabled
+    shows). Pin the defaults so a future YAML refactor doesn't
+    silently regress to a different provider."""
+
+    def test_default_image_provider_is_pexels(self):
+        from engine.config import YouTubeConfig
+        c = YouTubeConfig()
+        assert c.image_provider == "pexels"
+        # Per-show overrides are the only path to non-default providers.
+
+    def test_default_grok_image_model_is_standard(self):
+        """Standard model is $0.02/img; pro is $0.07/img. Default to
+        the cheaper one so a misconfigured show doesn't surprise-bill."""
+        from engine.config import YouTubeConfig
+        c = YouTubeConfig()
+        assert c.grok_image_model == "grok-imagine-image"
+        assert "pro" not in c.grok_image_model
+
+    def test_tesla_yaml_uses_grok_image_provider(self):
+        """Tesla is one of the two shows opting in to Grok Imagine in
+        this PR. If the YAML drifts back to ``pexels`` (or worse, the
+        field disappears) we want CI to flag it before next deploy."""
+        cfg = load_config(SHOWS_DIR / "tesla.yaml")
+        assert cfg.youtube.image_provider == "grok"
+
+    def test_mab_yaml_uses_grok_image_provider(self):
+        cfg = load_config(SHOWS_DIR / "models_agents_beginners.yaml")
+        assert cfg.youtube.image_provider == "grok"
+
+    def test_other_shows_remain_on_pexels(self):
+        """Every other show (the 9 that aren't YouTube-enabled today,
+        plus any future YouTube-enabled show) must stay on Pexels
+        until the operator explicitly flips them. Pexels is free;
+        Grok costs $0.32/episode."""
+        for slug in ("omni_view", "fascinating_frontiers", "planetterrian",
+                     "env_intel", "models_agents", "modern_investing",
+                     "finansy_prosto", "privet_russian",
+                     "unintended_consequences"):
+            cfg = load_config(SHOWS_DIR / f"{slug}.yaml")
+            assert cfg.youtube.image_provider == "pexels", (
+                f"{slug} drifted off pexels — would silently incur Grok "
+                f"Imagine cost"
+            )
