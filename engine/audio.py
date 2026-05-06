@@ -517,10 +517,10 @@ def mix_with_music(
     music_path: Path,
     output_path: Path,
     *,
-    intro_duration: int = 15,
+    intro_duration: int = 25,
     overlap_duration: int = 10,
-    fade_duration: int = 15,
-    outro_duration: int = 40,
+    fade_duration: int = 20,
+    outro_duration: int = 60,
     intro_volume: float = 0.6,
     overlap_volume: float = 0.5,
     fade_volume: float = 0.4,
@@ -528,15 +528,17 @@ def mix_with_music(
     voice_intro_delay: float = 0.0,
     background_music_path: Optional[Path] = None,
     outro_crossfade: float = 0.0,
+    outro_fade_out_duration: float = 6.0,
 ) -> Path:
     """Full music mixing pipeline supporting three modes.
 
-    Defaults bumped May 2026 so the open / close feel like a real
-    podcast (NPR / Hard Fork / The Daily). Total intro music
-    presence = intro_duration (alone, before voice) + overlap_duration
+    Defaults bumped (revised May 2026) so the open / close feel like
+    a real podcast — operator reported the previous 15s/40s timing
+    still cut off too quickly. Total intro music presence =
+    intro_duration (alone, before voice) + overlap_duration
     (alongside voice) + fade_duration (gentle under-voice tail) =
-    15 + 10 + 15 = 40 seconds. Outro = 40 seconds of music after
-    voice ends.
+    25 + 10 + 20 = 55 seconds. Outro = 60 seconds of music after
+    voice ends with a 6-second graceful fade-out close.
 
     **Standard mode** (voice_intro_delay=0, no background_music_path):
       0–15 s:  music intro alone (intro_volume)
@@ -636,25 +638,27 @@ def mix_with_music(
             subprocess.run(cmd, check=True, capture_output=True)
             return name
 
-        # Calculate outro segment parameters with crossfade support
+        # Calculate outro segment parameters with crossfade support.
+        # ``outro_fade_out_duration`` is operator-tunable so the close
+        # can taper gracefully — the previous hardcoded 3s felt abrupt
+        # on long podcast outros (operator reported May 6, 2026).
+        outro_fade_out_dur = max(int(outro_fade_out_duration), 1)
         total_outro_duration = int(outro_crossfade + outro_duration)
         if outro_crossfade > 0:
-            # Fade-in over the crossfade period, fade-out over 3s at end
+            # Fade-in over the crossfade period, configurable fade-out at end
             outro_fade_in = int(outro_crossfade)
-            outro_fade_out_start = max(total_outro_duration - 3, 0)
-            outro_fade_out_dur = 3
+            outro_fade_out_start = max(total_outro_duration - outro_fade_out_dur, 0)
             logger.info(
                 "Outro crossfade: music starts %.0fs before voice ends, "
-                "%ds total outro (%ds fade-in, %ds tail).",
+                "%ds total outro (%ds fade-in, %ds tail-out).",
                 outro_crossfade, total_outro_duration,
-                outro_fade_in, outro_duration,
+                outro_fade_in, outro_fade_out_dur,
             )
         else:
-            # Default: short 2s fade-in, 3s fade-out at end
+            # Default: short 2s fade-in, configurable fade-out at end
             total_outro_duration = outro_duration
             outro_fade_in = 2
-            outro_fade_out_start = max(outro_duration - 3, 0)
-            outro_fade_out_dur = 3
+            outro_fade_out_start = max(outro_duration - outro_fade_out_dur, 0)
 
         segment_cmds = [
             ("intro", _music_intro_cmd(

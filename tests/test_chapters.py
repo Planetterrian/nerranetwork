@@ -568,3 +568,88 @@ class TestPreambleBehavior:
         for s in sections:
             section_words.update(s.split())
         assert original_words == section_words
+
+
+# ---------------------------------------------------------------------------
+# Auto-segmentation fallback (May 2026 fix — TST chapter quality)
+# ---------------------------------------------------------------------------
+
+class TestAutoSegmentFallback:
+    """Operator caught a regression where TST episodes ship with only
+    ``Introduction`` + ``Closing`` chapters because the per-show regex
+    don't tolerate Whisper transcription variations. The auto-segment
+    fallback splits the head chapter into roughly-90-second segments
+    when the matched chapter count is below the floor."""
+
+    def _long_script(self, paragraphs: int) -> str:
+        # Each paragraph has ~50 words → ~18s of speech at 165wpm.
+        # Five paragraphs ≈ 90s, the auto-segment target.
+        para = (
+            "This is a fairly long paragraph that contains roughly fifty "
+            "words spread across several sentences. The intent is to give "
+            "the auto-segmenter enough material to choose paragraph "
+            "breaks at sensible boundaries inside the head chapter, "
+            "without exceeding the configured words-per-segment threshold."
+        )
+        return "Welcome back to the show. " + (
+            "\n\n".join([para] * paragraphs)
+        ) + "\n\nThanks for listening."
+
+    def test_auto_segment_fires_when_marker_count_below_min(self):
+        from engine.chapters import parse_chapters
+        # Only the Welcome marker matches — should yield 1 chapter
+        # without auto-segmentation. Auto-segment lifts that to >=4.
+        markers = [{"pattern": "Welcome", "title": "Introduction"}]
+        chapters = parse_chapters(
+            self._long_script(paragraphs=20),
+            markers,
+            show_name="test_show",
+            min_chapters=4,
+            auto_segment_target_seconds=90.0,
+        )
+        assert len(chapters) >= 4, (
+            f"Auto-segment fallback should produce >=4 chapters, got "
+            f"{len(chapters)} — titles: {[c.title for c in chapters]}"
+        )
+        # First chapter keeps the operator-supplied title; later ones
+        # are generic.
+        assert chapters[0].title == "Introduction"
+        assert chapters[1].title.startswith("Segment ")
+
+    def test_auto_segment_skips_when_enough_chapters_already(self):
+        from engine.chapters import parse_chapters
+        # Three markers all match — three chapters, above min. No auto
+        # segments should be added.
+        markers = [
+            {"pattern": "Welcome", "title": "Introduction"},
+            {"pattern": "fifty", "title": "Body"},
+            {"pattern": "Thanks for listening", "title": "Closing"},
+        ]
+        chapters = parse_chapters(
+            "Welcome to the show.\n\nThis paragraph has the word fifty.\n\nThanks for listening to the show.",
+            markers,
+            show_name="test_show",
+            min_chapters=2,
+        )
+        # Three matched chapters, no auto-segmentation.
+        assert len(chapters) == 3
+        assert all(not c.title.startswith("Segment ") for c in chapters)
+
+    def test_auto_segment_word_boundaries_remain_consistent(self):
+        """Word boundaries on the rebuilt chapter list must still cover
+        the entire script — no gaps, no overlaps."""
+        from engine.chapters import parse_chapters
+
+        markers = [{"pattern": "Welcome", "title": "Introduction"}]
+        chapters = parse_chapters(
+            self._long_script(paragraphs=12),
+            markers,
+            show_name="test_show",
+            min_chapters=4,
+            auto_segment_target_seconds=60.0,
+        )
+        for i in range(len(chapters) - 1):
+            assert chapters[i].word_end == chapters[i + 1].word_start, (
+                f"Gap or overlap between chapter {i} ({chapters[i].title}) "
+                f"and {i+1} ({chapters[i+1].title})"
+            )

@@ -42,6 +42,9 @@ def parse_chapters(
     section_markers: list,
     *,
     show_name: str = "",
+    min_chapters: int = 4,
+    auto_segment_target_seconds: float = 90.0,
+    estimated_words_per_minute: float = 165.0,
 ) -> List[Chapter]:
     """Parse a podcast script to identify section boundaries.
 
@@ -126,6 +129,82 @@ def parse_chapters(
             char_start=c_start,
             char_end=c_end,
         ))
+
+    # ------------------------------------------------------------------
+    # Auto-segmentation fallback. Operator caught (May 2026) that TST
+    # episodes ship with only ``Introduction`` + ``Closing`` chapters
+    # because the per-show ``section_markers`` regex don't tolerate the
+    # variations the LLM and Whisper produce. The result was a 7-minute
+    # block called "Introduction" with no nav. When the matched chapter
+    # count is below ``min_chapters`` AND the first chapter spans most
+    # of the script, we splice extra chapters at paragraph boundaries
+    # roughly every ``auto_segment_target_seconds`` of speech so
+    # listeners always get useful navigation. The auto-titles are
+    # numeric (``Segment 2``, ``Segment 3`` …) — kept generic so they
+    # don't mislead about content.
+    if len(chapters) < min_chapters and total_words > 0:
+        words_per_segment = max(
+            int(estimated_words_per_minute * (auto_segment_target_seconds / 60.0)),
+            120,
+        )
+        # Find paragraph break offsets (blank-line-separated chunks).
+        para_break_word_idx: list[tuple[int, int]] = []  # (word_index, char_offset)
+        idx = 0
+        char_idx = 0
+        for line in lines:
+            line_word_count = len(line.split())
+            if line.strip() == "" and idx > 0:
+                para_break_word_idx.append((idx, char_idx))
+            idx += line_word_count
+            char_idx += len(line)
+
+        # Build augmented chapter list — splice auto-segments into the
+        # FIRST chapter (the long "Introduction") only. Splitting later
+        # chapters tends to cut hand-titled sections.
+        if chapters and para_break_word_idx:
+            head = chapters[0]
+            tail = chapters[1:]
+            head_w_end = head.word_end
+            head_c_end = head.char_end
+
+            # Accept paragraph breaks inside the head chapter that are at
+            # least ``words_per_segment`` words apart.
+            insertions: list[tuple[int, int]] = []
+            last_w = head.word_start
+            for w, c in para_break_word_idx:
+                if w <= head.word_start or w >= head_w_end:
+                    continue
+                if w - last_w >= words_per_segment:
+                    insertions.append((w, c))
+                    last_w = w
+
+            if insertions:
+                rebuilt: list[Chapter] = [Chapter(
+                    title=head.title,
+                    word_start=head.word_start,
+                    word_end=insertions[0][0],
+                    char_start=head.char_start,
+                    char_end=insertions[0][1],
+                )]
+                for n, (w, c) in enumerate(insertions, start=2):
+                    next_w = insertions[n - 1][0] if n - 1 < len(insertions) else head_w_end
+                    next_c = insertions[n - 1][1] if n - 1 < len(insertions) else head_c_end
+                    rebuilt.append(Chapter(
+                        title=f"Segment {n}",
+                        word_start=w,
+                        word_end=next_w,
+                        char_start=c,
+                        char_end=next_c,
+                    ))
+                chapters = rebuilt + tail
+                logger.info(
+                    "Auto-segmented head chapter for %s into %d segments "
+                    "(target %.0fs each, ~%d words)",
+                    show_name or "show",
+                    len(insertions) + 1,
+                    auto_segment_target_seconds,
+                    words_per_segment,
+                )
 
     logger.info(
         "Parsed %d chapters for %s: %s",

@@ -253,6 +253,31 @@ def update_rss_feed(
                             ep_data["itunes_season"] = elem.text or ""
                         elif tag == "{http://www.itunes.com/dtds/podcast-1.0.dtd}episodeType":
                             ep_data["itunes_episode_type"] = elem.text or ""
+                        elif tag == "{https://podcastindex.org/namespace/1.0}chapters":
+                            # Preserve Podcasting 2.0 chapters URL across
+                            # rebuilds. Without this every regen drops the
+                            # tag from prior episodes — Apple Podcasts then
+                            # shows chapters only on the latest episode.
+                            url = elem.get("url", "")
+                            if url:
+                                ep_data["podcast_chapters_url"] = url
+                                ep_data["podcast_chapters_type"] = elem.get(
+                                    "type", "application/json+chapters"
+                                )
+                        elif tag == "{https://podcastindex.org/namespace/1.0}transcript":
+                            # Same preservation logic as chapters — the
+                            # operator caught Apple Podcasts dropping
+                            # transcripts from every TST episode except
+                            # the very latest after this regression.
+                            url = elem.get("url", "")
+                            if url:
+                                ep_data["podcast_transcript_url"] = url
+                                ep_data["podcast_transcript_type"] = elem.get(
+                                    "type", "application/json"
+                                )
+                                lang = elem.get("language", "")
+                                if lang:
+                                    ep_data["podcast_transcript_language"] = lang
                     if ep_data.get("guid"):
                         existing_episodes.append(ep_data)
         except Exception as exc:
@@ -408,6 +433,17 @@ def update_rss_feed(
         # Add <podcast:transcript> for Podcasting 2.0 support
         if transcript_url:
             _inject_transcript_tag(Path(tmp_path), new_guid, transcript_url)
+
+        # Re-inject Podcasting 2.0 chapters/transcript tags for every
+        # episode the operator already published. ``feedgen`` doesn't
+        # know about the ``podcast:`` namespace, so each rebuild
+        # silently dropped these tags from prior items — Apple Podcasts
+        # then showed transcripts only on the latest episode (regression
+        # caught in May 2026 by the operator). Parsed URLs come from the
+        # existing-RSS pass at the top of update_rss_feed.
+        _reinject_preserved_podcast_tags(
+            Path(tmp_path), episodes_by_number, exclude_guid=new_guid,
+        )
 
         # Add <podcast:locked> to prevent unauthorized feed imports
         _inject_podcast_locked_tag(
@@ -622,6 +658,105 @@ def _inject_transcript_tag(rss_path: Path, guid: str, transcript_url: str) -> No
 
     except Exception as exc:
         logger.error("Failed to inject <podcast:transcript> tag: %s", exc)
+
+
+def _reinject_preserved_podcast_tags(
+    rss_path: Path,
+    episodes_by_number: dict,
+    *,
+    exclude_guid: str = "",
+) -> None:
+    """Walk every parsed episode in *episodes_by_number* and re-emit its
+    Podcasting 2.0 ``<podcast:chapters>`` / ``<podcast:transcript>`` tags
+    onto the matching ``<item>`` in *rss_path*.
+
+    Single-pass batch version of ``_inject_chapters_tag`` /
+    ``_inject_transcript_tag`` so a 100+ episode feed isn't re-parsed
+    once per episode. *exclude_guid* skips the episode just published —
+    its tags were already injected upstream and re-emitting would
+    duplicate them.
+    """
+    PODCAST_NS = "https://podcastindex.org/namespace/1.0"
+
+    # Build a guid → preserved-tag-data map. Episodes that didn't have
+    # the tags in the parsed feed simply contribute no entry, which means
+    # nothing happens for them. Skip the just-published episode.
+    by_guid: dict = {}
+    for ep_data in episodes_by_number.values():
+        guid = (ep_data.get("guid") or "").strip()
+        if not guid or guid == exclude_guid:
+            continue
+        chapters_url = ep_data.get("podcast_chapters_url")
+        transcript_url = ep_data.get("podcast_transcript_url")
+        if not chapters_url and not transcript_url:
+            continue
+        by_guid[guid] = ep_data
+
+    if not by_guid:
+        return
+
+    try:
+        ET.register_namespace("podcast", PODCAST_NS)
+        ET.register_namespace("itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd")
+        ET.register_namespace("atom", "http://www.w3.org/2005/Atom")
+
+        tree = ET.parse(str(rss_path))
+        root = tree.getroot()
+
+        # Strip any duplicate xmlns:podcast attributes that ET would
+        # otherwise emit twice on serialization.
+        for attr in list(root.attrib):
+            if attr == "xmlns:podcast" or (
+                attr.startswith("xmlns:") and root.attrib[attr] == PODCAST_NS
+            ):
+                del root.attrib[attr]
+
+        channel = root.find("channel")
+        if channel is None:
+            return
+
+        injected = 0
+        for item in channel.findall("item"):
+            guid_el = item.find("guid")
+            if guid_el is None or not guid_el.text:
+                continue
+            ep_data = by_guid.get(guid_el.text.strip())
+            if not ep_data:
+                continue
+
+            chapters_url = ep_data.get("podcast_chapters_url")
+            if chapters_url and item.find(f"{{{PODCAST_NS}}}chapters") is None:
+                el = ET.SubElement(item, f"{{{PODCAST_NS}}}chapters")
+                el.set("url", chapters_url)
+                el.set(
+                    "type",
+                    ep_data.get(
+                        "podcast_chapters_type", "application/json+chapters"
+                    ),
+                )
+
+            transcript_url = ep_data.get("podcast_transcript_url")
+            if transcript_url and item.find(f"{{{PODCAST_NS}}}transcript") is None:
+                el = ET.SubElement(item, f"{{{PODCAST_NS}}}transcript")
+                el.set("url", transcript_url)
+                el.set(
+                    "type",
+                    ep_data.get("podcast_transcript_type", "application/json"),
+                )
+                lang = ep_data.get("podcast_transcript_language")
+                if lang:
+                    el.set("language", lang)
+
+            injected += 1
+
+        tree.write(str(rss_path), xml_declaration=True, encoding="UTF-8")
+        logger.info(
+            "Re-injected Podcasting 2.0 tags for %d preserved episode(s)",
+            injected,
+        )
+
+    except Exception as exc:
+        logger.error("Failed to re-inject preserved podcast tags: %s", exc)
 
 
 # ---------------------------------------------------------------------------

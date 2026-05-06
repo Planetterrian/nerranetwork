@@ -1869,6 +1869,9 @@ def run(args: argparse.Namespace) -> None:
                         voice_intro_delay=config.audio.voice_intro_delay,
                         background_music_path=bg_music_path,
                         outro_crossfade=config.audio.outro_crossfade,
+                        outro_fade_out_duration=getattr(
+                            config.audio, "outro_fade_out_duration", 6.0,
+                        ),
                     )
                 else:
                     logger.warning("Music file not found: %s — using voice only", music_path)
