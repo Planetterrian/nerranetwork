@@ -604,17 +604,18 @@
 
     <!-- Newsletter Subscribe -->
     {% if newsletter_tag %}
+    {%- set _is_ru = (page_lang | default('en')) == 'ru' -%}
     <section class="nn-section" style="padding-top:0;">
         <div class="container" style="max-width:700px;">
             <div class="show-subscribe-inline">
-                <h3>Get {{ show_name }} in your inbox</h3>
-                <p>New episode alerts delivered straight to your email — no spam, unsubscribe anytime.</p>
+                <h3>{% if _is_ru %}Получайте {{ show_name }} на почту{% else %}Get {{ show_name }} in your inbox{% endif %}</h3>
+                <p>{% if _is_ru %}Уведомления о новых выпусках прямо на email — без спама, отписаться можно в любой момент.{% else %}New episode alerts delivered straight to your email — no spam, unsubscribe anytime.{% endif %}</p>
                 <form action="https://buttondown.com/api/emails/embed-subscribe/patricknovak1" method="post" target="popupwindow">
                     <input type="hidden" name="tag" value="{{ newsletter_tag }}">
                     <input type="hidden" value="1" name="embed">
                     <div class="nn-subscribe-row">
-                        <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address">
-                        <button type="submit">Subscribe</button>
+                        <input type="email" name="email" placeholder="{% if _is_ru %}ваш@email.ru{% else %}your@email.com{% endif %}" required aria-label="{% if _is_ru %}Адрес электронной почты{% else %}Email address{% endif %}">
+                        <button type="submit">{% if _is_ru %}Подписаться{% else %}Subscribe{% endif %}</button>
                     </div>
                 </form>
             </div>
