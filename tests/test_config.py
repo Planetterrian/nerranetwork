@@ -404,7 +404,7 @@ class TestLoadConfigRealFiles:
         cfg = load_config(SHOWS_DIR / "tesla.yaml")
         assert cfg.name == "Tesla Shorts Time"
         assert cfg.slug == "tesla"
-        assert len(cfg.sources) >= 17  # electrek.co removed (blocked source)
+        assert len(cfg.sources) >= 16  # electrek.co + driveteslacanada.ca removed (blocked sources)
         assert cfg.sources[0].label == "Teslarati"
         assert "tsla" in cfg.keywords
         assert len(cfg.web_search_queries) == 4

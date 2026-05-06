@@ -441,10 +441,30 @@ def upload_caption_track(
         ).execute()
     except HttpError as exc:
         status = getattr(getattr(exc, "resp", None), "status", "?")
-        logger.warning(
-            "Failed to upload caption track for %s (HTTP %s): %s",
-            video_id, status, exc,
-        )
+        # ``captions.insert`` requires the ``youtube.force-ssl`` OAuth
+        # scope — most existing channel tokens were issued with only
+        # ``youtube.upload`` and ``youtube`` (no force-ssl). Operator
+        # caught this on TST Ep465 (May 6 2026): every long-form
+        # upload logs HTTP 403 ``Insufficient Permission`` for the
+        # caption track. Fix is to re-run the OAuth consent flow with
+        # ``--scope https://www.googleapis.com/auth/youtube.force-ssl``
+        # added (typically ``scripts/auth_youtube.py``) and replace
+        # the channel refresh tokens in the GitHub Actions secrets.
+        # The video upload itself still succeeds; this is best-effort.
+        if status in (403, "403"):
+            logger.warning(
+                "Caption track upload rejected for %s (HTTP 403 — "
+                "OAuth missing youtube.force-ssl scope). Re-run the "
+                "channel auth flow with that scope added; the video "
+                "upload itself succeeded so this is non-blocking. "
+                "Underlying: %s",
+                video_id, exc,
+            )
+        else:
+            logger.warning(
+                "Failed to upload caption track for %s (HTTP %s): %s",
+                video_id, status, exc,
+            )
         return False
     except Exception as exc:  # noqa: BLE001 — never crash the run
         logger.warning(

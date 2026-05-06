@@ -103,10 +103,15 @@ def render_tsla_price_block(body: str) -> str:
         arrow = match.group(2) or ""
         delta = match.group(3) or ""
         # Up = green, Down = red, no arrow = neutral slate.
+        # Operator caught (TST Ep465, May 6 2026) the prior #10b981
+        # / #ef4444 pair failing the newsletter contrast hard-block:
+        # both clear AA on white but fall to 2.32 / 3.44 on the
+        # cream `#fef2f2` price-block surface. Bumped to Tailwind
+        # emerald-700 / red-700 so the arrows clear AA on cream.
         if arrow == "▲":
-            delta_color = "#10b981"
+            delta_color = "#047857"  # emerald-700, 5.01:1 on cream
         elif arrow == "▼":
-            delta_color = "#ef4444"
+            delta_color = "#b91c1c"  # red-700, 5.91:1 on cream
         else:
             delta_color = "#475569"
         delta_html = ""

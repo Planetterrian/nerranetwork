@@ -757,7 +757,21 @@ def _sanitize_podcast_script(text: str) -> str:
     # (identically or near-identically) to open the next paragraph.
     cleaned = _dedup_transition_sentences(cleaned)
 
-    return "\n".join(cleaned)
+    # Strip ``Patrick:`` (or other speaker-prefix) leakage at the
+    # start of paragraphs. Operator caught this on TST Ep465 (May 6
+    # 2026): the script had ``Patrick: Tesla...`` opening 5 of the
+    # news segments — the LLM was treating the prompt's host name
+    # as a literal speaker tag. The TTS would then SAY "Patrick" out
+    # loud as a name. Stripping here keeps the host's voice
+    # consistent without forcing prompts to play whack-a-mole with
+    # the model's habit.
+    text_joined = "\n".join(cleaned)
+    text_joined = re.sub(
+        r"(?im)^\s*(?:host|patrick|оля|olya|olia)\s*[:：]\s+",
+        "",
+        text_joined,
+    )
+    return text_joined
 
 
 # ---------------------------------------------------------------------------
@@ -1124,6 +1138,15 @@ def generate_digest(
     # generator doesn't inherit them.
     text = _strip_duplicate_stories(text, show_name=config.name)
 
+    # Strip the LLM's hallucinated timestamp suffixes from headlines.
+    # Operator caught this on TST Ep465 (May 6 2026): the digest ended
+    # up with "Tesla Semi Incentives Available Across Multiple States:
+    # May 06, 2026, 9:04 AM PDT" repeating in 11 of the headlines.
+    # The repetition guard caught it and tried to retry, but the model
+    # kept appending the same stamp. Post-processing is the
+    # belt-and-braces fix.
+    text = _strip_hallucinated_timestamps(text)
+
     return text
 
 
@@ -1175,6 +1198,60 @@ def _strip_duplicate_stories(
 
     kept = [b for i, b in enumerate(blocks) if i not in drop_indices]
     return "\n\n".join(kept)
+
+
+# Match the LLM's hallucinated timestamp stamps that appear inside
+# headlines. Two shapes seen in production:
+#   ": May 06, 2026, 9:04 AM PDT"
+#   ": Friday, May 6, 2026 at 9:04 PM"
+# The leading ``: `` (or ``: ``-with-space) plus the date+time pattern
+# is what we want to strip — keep the headline body, drop the stamp.
+_TIMESTAMP_STAMP_RE = re.compile(
+    r"""
+    \s*[:\-—]\s*                # leading separator (colon, dash, em-dash)
+    (?:[A-Z][a-z]+,?\s+)?       # optional weekday like ``Monday,``
+    [A-Z][a-z]+\s+\d{1,2},?     # month + day-number
+    \s+\d{4}                    # year
+    (?:[,\s]+\s*\d{1,2}:\d{2}   # optional hh:mm
+       (?:\s*[AP]M)?            # optional AM/PM
+       (?:\s+[A-Z]{2,4})?       # optional timezone abbrev like PDT
+    )?
+    """,
+    re.VERBOSE,
+)
+
+
+def _strip_hallucinated_timestamps(text: str) -> str:
+    """Strip the LLM's hallucinated ``: May 06, 2026, 9:04 AM PDT``
+    suffixes from headlines.
+
+    Tesla's grok-4.3 occasionally pads every Top-N headline with a
+    "publication" timestamp it invents from the current date/time
+    (operator caught 11 occurrences in TST Ep465 — every Top-10
+    item plus the deep-dive). The repetition guard catches it and
+    triggers a retry, but the retry often produces the same stamp.
+    Post-processing strips the suffix at the end of the digest
+    pipeline so downstream consumers (podcast script generation,
+    blog rendering, RSS show notes) never see them.
+
+    Conservative — only matches headline-tail stamps, not legitimate
+    in-body date references like "On May 6, 2026, Tesla announced..."
+    """
+    if not text or "20" not in text:
+        return text
+    cleaned_lines = []
+    for line in text.splitlines():
+        # Only strip from headline-shaped lines: bullet, numbered,
+        # or markdown-bold lines. Leave body prose untouched.
+        is_headline = bool(re.match(r"^\s*([-*•]|\d+\.|\*\*)", line))
+        if is_headline:
+            stripped = _TIMESTAMP_STAMP_RE.sub("", line).rstrip()
+            # Don't strip if it'd leave the line empty or just punctuation.
+            if stripped and re.search(r"\w", stripped):
+                cleaned_lines.append(stripped)
+                continue
+        cleaned_lines.append(line)
+    return "\n".join(cleaned_lines)
 
 
 def _generate_podcast_outline(

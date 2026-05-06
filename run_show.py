@@ -2182,11 +2182,17 @@ def run(args: argparse.Namespace) -> None:
             logger.info("Newsletter sent: %s", email_id)
         else:
             # send_show_newsletter returns None for several distinct
-            # reasons. Help the operator diagnose by surfacing which
-            # one applied on this run.
-            tag = (
-                getattr(config.newsletter, "tag", "") or ""
-            ).strip()
+            # reasons (api key missing, contrast hard-block, scaffold
+            # leak, same-day double-send guard, Buttondown rejection,
+            # tag filter matched zero subscribers). engine.newsletter
+            # logs the SPECIFIC reason at ERROR/WARNING level just
+            # above — pointing the operator there is more accurate
+            # than guessing here. Operator caught (TST Ep465, May 6
+            # 2026) the prior speculative ``tag filter matched zero
+            # subscribers OR Buttondown rejected the send`` warning
+            # being printed when the actual block was a contrast
+            # hard-block, which is plainly logged on the preceding
+            # line.
             api_key_env = getattr(
                 config.newsletter, "api_key_env", "BUTTONDOWN_API_KEY",
             )
@@ -2196,18 +2202,12 @@ def run(args: argparse.Namespace) -> None:
                     "Add the secret in GitHub Actions to enable "
                     "newsletters.", api_key_env,
                 )
-            elif tag:
-                logger.warning(
-                    "Newsletter not sent: tag filter %r matched zero "
-                    "Buttondown subscribers, OR Buttondown rejected "
-                    "the send. Check Buttondown subscriber tags + "
-                    "the previous log lines from engine.newsletter.",
-                    tag,
-                )
             else:
                 logger.warning(
-                    "Newsletter not sent: see preceding "
-                    "engine.newsletter log lines for the API response.",
+                    "Newsletter not sent — see the preceding "
+                    "engine.newsletter log line for the specific "
+                    "reason (contrast block, scaffold leak, send "
+                    "guardrail, or Buttondown response).",
                 )
 
     # 13. Post to X
