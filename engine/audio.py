@@ -366,10 +366,15 @@ def concatenate_with_stings(
 
 def _music_intro_cmd(music_in: str, intro_out: str,
                      duration: int = 5, volume: float = 0.6) -> list:
-    fade_start = max(0, duration - 2)
+    """Intro segment plays at *volume* throughout; the smooth taper
+    into the overlap segment is now handled by ``acrossfade`` at the
+    timeline-build stage instead of a 2s tail-fade here. The old
+    tail-fade left the music dropping to silence right when voice
+    started — operator caught this as ``music cuts off too soon``
+    on TST Ep465 (May 6 2026)."""
     return [
         "ffmpeg", "-y", "-threads", "0", "-i", music_in, "-t", str(duration),
-        "-af", f"volume={volume},afade=t=out:curve=log:st={fade_start}:d=2",
+        "-af", f"volume={volume}",
         "-ar", "44100", "-ac", "2",
         "-c:a", "libmp3lame", "-b:a", "192k", "-preset", "fast",
         intro_out,
@@ -379,14 +384,15 @@ def _music_intro_cmd(music_in: str, intro_out: str,
 def _music_overlap_cmd(music_in: str, overlap_out: str,
                        start: int = 5, duration: int = 3,
                        volume: float = 0.5) -> list:
-    # Fade-out over the last 0.5s so the transition to the fadeout segment
-    # is smooth (avoids a volume discontinuity at the concat boundary).
-    fade_out_start = max(0, duration - 0.5)
+    """Overlap segment plays at *volume* throughout. Boundary fades
+    (intro→overlap and overlap→fadeout) are handled by ``acrossfade``
+    at the timeline-build stage — see ``_music_acrossfade_cmd``.
+    The previous 1s fade-in / 0.5s fade-out at the segment edges
+    produced the audible micro-cuts the operator heard."""
     return [
         "ffmpeg", "-y", "-threads", "0", "-i", music_in,
         "-ss", str(start), "-t", str(duration),
-        "-af", f"afade=t=in:curve=log:st=0:d=1,volume={volume},"
-               f"afade=t=out:curve=log:st={fade_out_start}:d=0.5",
+        "-af", f"volume={volume}",
         "-ar", "44100", "-ac", "2",
         "-c:a", "libmp3lame", "-b:a", "192k", "-preset", "fast",
         overlap_out,
@@ -464,6 +470,67 @@ def _music_concat_cmd(concat_list: str, music_full_out: str) -> list:
         "ffmpeg", "-y", "-threads", "0",
         "-f", "concat", "-safe", "0", "-i", concat_list,
     ] + codec + [music_full_out]
+
+
+def _music_acrossfade_cmd(
+    segment_files: List[Path],
+    crossfade_seconds: float,
+    music_full_out: str,
+) -> list:
+    """Stitch *segment_files* using ``acrossfade`` so the boundaries
+    overlap and crossfade rather than butting against each other.
+
+    The pure ``-f concat`` approach produces audible cuts at every
+    segment boundary because each segment ends and the next starts
+    *instantly* — even short internal fades inside the segments
+    aren't enough to mask the level discontinuity. Operator caught
+    this on TST Ep465 (May 6 2026): the intro→overlap and
+    overlap→fadeout transitions sounded like the music was being
+    chopped. ``acrossfade`` fixes it by playing the tail of segment
+    A simultaneously with the head of segment B over a
+    ``crossfade_seconds`` window, with equal-power ``qsin`` curves
+    on both sides so the perceived loudness stays flat across the
+    boundary.
+
+    Note: each segment must be at least ``crossfade_seconds`` long.
+    With current defaults (intro=25, overlap=10, fadeout=20, outro=60)
+    a 2-second crossfade is comfortably under all of them. Silence
+    segments are typically minutes long.
+    """
+    if not segment_files:
+        raise ValueError("Need at least one segment file")
+    if len(segment_files) == 1:
+        # Single segment — nothing to crossfade. Just transcode.
+        return [
+            "ffmpeg", "-y", "-threads", "0",
+            "-i", str(segment_files[0]),
+        ] + list(_ENCODE_ARGS) + [music_full_out]
+
+    cmd = ["ffmpeg", "-y", "-threads", "0"]
+    for fp in segment_files:
+        cmd.extend(["-i", str(fp)])
+
+    # Build a chained acrossfade filter. Each step crossfades the
+    # accumulator with the next input.
+    parts = []
+    prev_label = "[0:a]"
+    for i in range(1, len(segment_files)):
+        out_label = "[mix]" if i == len(segment_files) - 1 else f"[a{i}]"
+        parts.append(
+            f"{prev_label}[{i}:a]"
+            f"acrossfade=d={crossfade_seconds}:c1=qsin:c2=qsin"
+            f"{out_label}"
+        )
+        prev_label = out_label
+    filter_complex = ";".join(parts)
+
+    cmd.extend([
+        "-filter_complex", filter_complex,
+        "-map", "[mix]",
+    ])
+    cmd.extend(list(_ENCODE_ARGS))
+    cmd.append(music_full_out)
+    return cmd
 
 
 def _final_mix_cmd(voice_in: str, music_in: str, final_out: str) -> list:
@@ -655,9 +722,12 @@ def mix_with_music(
                 outro_fade_in, outro_fade_out_dur,
             )
         else:
-            # Default: short 2s fade-in, configurable fade-out at end
+            # Default: graceful 6s fade-in (operator caught May 6 2026
+            # that the prior 2s outro fade-in sounded like the music
+            # ``popped in`` after the voice ended). Configurable
+            # fade-out at end.
             total_outro_duration = outro_duration
-            outro_fade_in = 2
+            outro_fade_in = 6
             outro_fade_out_start = max(outro_duration - outro_fade_out_dur, 0)
 
         segment_cmds = [
@@ -701,19 +771,25 @@ def mix_with_music(
                 future.result()  # propagate any exceptions
                 logger.info("Generated music segment: %s", name)
 
-        # --- Concatenate music segments ---
+        # --- Stitch music segments with acrossfade ---
+        # ``acrossfade`` overlaps the tail of each segment with the
+        # head of the next over a 2-second window, with equal-power
+        # ``qsin`` curves so the perceived loudness stays flat
+        # across the boundary. This replaces the pure ``-f concat``
+        # demuxer approach which butted segments end-to-end and
+        # produced audible cuts at every transition (operator's
+        # complaint May 6 2026 — TST Ep465).
         concat_files = [music_intro_f, music_overlap_f, music_fadeout_f]
         if middle_silence_duration > 0.1:
             concat_files.append(music_silence_f)
         concat_files.append(music_outro_f)
 
         music_full = tmp_dir / "music_full.mp3"
-        music_concat_list = tmp_dir / "music_concat.txt"
-        with open(music_concat_list, "w") as f:
-            for fp in concat_files:
-                f.write(f"file '{_ffmpeg_escape(fp)}'\n")
-
-        cmd = _music_concat_cmd(str(music_concat_list), str(music_full))
+        cmd = _music_acrossfade_cmd(
+            concat_files,
+            crossfade_seconds=2.0,
+            music_full_out=str(music_full),
+        )
         subprocess.run(cmd, check=True, capture_output=True)
 
         # --- Final mix: voice + music ---

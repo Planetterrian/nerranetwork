@@ -52,10 +52,14 @@ def voice_normalization_fallback(voice_in: str, voice_out: str) -> list:
 
 
 def music_intro(music_in: str, intro_out: str) -> list:
-    """5-second intro at 0.6 volume with 2s fade-out at the end."""
+    """5-second intro at 0.6 volume — flat, no internal boundary
+    fades. The intro→overlap transition is handled by ``acrossfade``
+    at the timeline-build stage (see ``_music_acrossfade_cmd``).
+    The previous 2s tail-fade was removed May 6 2026 because it
+    dropped the music to silence right when voice started."""
     return [
         "ffmpeg", "-y", "-threads", "0", "-i", music_in, "-t", "5",
-        "-af", "volume=0.6,afade=t=out:curve=log:st=3:d=2",
+        "-af", "volume=0.6",
         "-ar", "44100", "-ac", "2",
         "-c:a", "libmp3lame", "-b:a", "192k", "-preset", "fast",
         intro_out,
@@ -63,11 +67,13 @@ def music_intro(music_in: str, intro_out: str) -> list:
 
 
 def music_overlap(music_in: str, overlap_out: str) -> list:
-    """3-second overlap starting at 5s mark, 0.5 volume with 1s fade-in and 0.5s fade-out."""
+    """3-second overlap starting at 5s mark, 0.5 volume — flat, no
+    internal boundary fades. Both the intro→overlap and the
+    overlap→fadeout transitions are handled by ``acrossfade`` at the
+    timeline-build stage."""
     return [
         "ffmpeg", "-y", "-threads", "0", "-i", music_in, "-ss", "5", "-t", "3",
-        "-af", "afade=t=in:curve=log:st=0:d=1,volume=0.5,"
-               "afade=t=out:curve=log:st=2.5:d=0.5",
+        "-af", "volume=0.5",
         "-ar", "44100", "-ac", "2",
         "-c:a", "libmp3lame", "-b:a", "192k", "-preset", "fast",
         overlap_out,
@@ -199,7 +205,9 @@ class TestMusicSegments:
         assert cmd[cmd.index("-t") + 1] == "5"
         af = cmd[cmd.index("-af") + 1]
         assert "volume=0.6" in af
-        assert "afade=t=out:curve=log:st=3:d=2" in af
+        # Internal boundary fades removed May 6 2026 — acrossfade
+        # at the timeline-build stage handles transitions now.
+        assert "afade=t=out" not in af
 
     def test_intro_stereo(self):
         cmd = music_intro("/m.mp3", "/i.mp3")
@@ -211,7 +219,10 @@ class TestMusicSegments:
         assert cmd[cmd.index("-t") + 1] == "3"
         af = cmd[cmd.index("-af") + 1]
         assert "volume=0.5" in af
-        assert "afade=t=in:curve=log:st=0:d=1" in af
+        # Internal boundary fades removed May 6 2026 — acrossfade
+        # at the timeline-build stage handles transitions now.
+        assert "afade=t=in" not in af
+        assert "afade=t=out" not in af
 
     def test_fadeout_timing_and_curve(self):
         cmd = music_fadeout("/music.mp3", "/fadeout.mp3")
@@ -641,3 +652,79 @@ class TestShowMusicConfigs:
         assert cfg.audio.outro_duration == 60.0
         assert cfg.audio.outro_crossfade == 20.0
         assert cfg.audio.intro_volume <= 0.5
+
+
+# ---------------------------------------------------------------------------
+# acrossfade timeline (May 6 2026 — fixes audible cuts at segment boundaries)
+# ---------------------------------------------------------------------------
+
+class TestMusicAcrossfadeCmd:
+    """``_music_acrossfade_cmd`` replaces the pure ``-f concat``
+    demuxer approach so segment boundaries crossfade smoothly. The
+    operator caught audible cuts at every transition (TST Ep465)
+    because concat doesn't overlap and the internal segment fades
+    were too short to mask the level discontinuity."""
+
+    def test_single_segment_falls_back_to_simple_transcode(self, tmp_path):
+        from engine.audio import _music_acrossfade_cmd
+        seg = tmp_path / "only.mp3"
+        seg.write_bytes(b"")
+        cmd = _music_acrossfade_cmd([seg], 2.0, str(tmp_path / "out.mp3"))
+        # No filter_complex — just an encode pass.
+        assert "-filter_complex" not in cmd
+        assert "-i" in cmd
+        assert str(tmp_path / "out.mp3") == cmd[-1]
+
+    def test_two_segments_use_acrossfade(self, tmp_path):
+        from engine.audio import _music_acrossfade_cmd
+        a = tmp_path / "a.mp3"
+        b = tmp_path / "b.mp3"
+        for p in (a, b):
+            p.write_bytes(b"")
+        cmd = _music_acrossfade_cmd([a, b], 2.0, str(tmp_path / "out.mp3"))
+        fc = cmd[cmd.index("-filter_complex") + 1]
+        assert "acrossfade=d=2.0" in fc
+        # Equal-power qsin curves on both sides keeps perceived loudness
+        # flat across the boundary — operator's complaint was about
+        # perceived level dips at transitions.
+        assert "c1=qsin:c2=qsin" in fc
+        assert "[mix]" in fc
+        assert "-map" in cmd and cmd[cmd.index("-map") + 1] == "[mix]"
+
+    def test_five_segments_chain_four_crossfades(self, tmp_path):
+        from engine.audio import _music_acrossfade_cmd
+        files = []
+        for name in ("intro", "overlap", "fadeout", "silence", "outro"):
+            p = tmp_path / f"{name}.mp3"
+            p.write_bytes(b"")
+            files.append(p)
+        cmd = _music_acrossfade_cmd(files, 2.0, str(tmp_path / "out.mp3"))
+        fc = cmd[cmd.index("-filter_complex") + 1]
+        # 4 acrossfade ops between 5 segments.
+        assert fc.count("acrossfade=d=2.0") == 4
+        # Intermediate labels [a1] [a2] [a3] before the final [mix]
+        # are in the right order so the chain composes correctly.
+        for label in ("[a1]", "[a2]", "[a3]", "[mix]"):
+            assert label in fc
+
+
+class TestOutroFadeInBumpForNonCrossfadeShows:
+    """Operator caught (May 6 2026) that the 2s outro fade-in default
+    sounded like the music ``popped in`` after the voice ended.
+    Bumped to 6s so the outro entry is graceful on every show that
+    doesn't already use ``outro_crossfade > 0`` (Tesla / FF / OV).
+    Pin the new default so a future refactor doesn't regress."""
+
+    def test_default_outro_fade_in_for_non_crossfade(self):
+        # Walk the source for the literal ``outro_fade_in = 6`` line
+        # in the non-crossfade branch of mix_with_music. Cheap and
+        # deterministic — avoids spinning up ffmpeg.
+        import inspect
+        from engine import audio
+        src = inspect.getsource(audio.mix_with_music)
+        # Confirm the new value is present (not just commented).
+        assert "outro_fade_in = 6" in src, (
+            "outro_fade_in default for non-crossfade shows must be 6s; "
+            "the prior 2s default sounded like the music ``popped in`` "
+            "after the voice ended."
+        )

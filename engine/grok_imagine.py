@@ -158,6 +158,24 @@ def _api_size_for_aspect(aspect: str) -> str:
     return "1792x1024"
 
 
+def _post_image_request(
+    payload: dict,
+    api_key: str,
+    timeout_s: int,
+) -> requests.Response:
+    """One-shot POST. Caller decides whether to retry / fall back."""
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    return requests.post(
+        GROK_IMAGINE_ENDPOINT,
+        headers=headers,
+        json=payload,
+        timeout=timeout_s,
+    )
+
+
 @retry(
     retry=retry_if_exception_type(requests.exceptions.RequestException),
     stop=stop_after_attempt(3),
@@ -176,11 +194,19 @@ def _request_one_image(
     the raw image bytes. Wrapped in tenacity retry for transient
     network errors. Caller is responsible for swallowing
     ``GrokImagineError`` if it wants to fall back to a different
-    provider."""
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-    }
+    provider.
+
+    Resilient against the two most common 400-class request-format
+    issues with xAI's image endpoint:
+
+      - ``size`` parameter not accepted (some xAI image revisions only
+        return a fixed 1024×1024 — when the first call fails with
+        ``invalid request`` and ``size`` in the message, we retry
+        without ``size``).
+      - ``response_format`` not accepted (some endpoints only return
+        URLs, not base64 — when the first call returns ``url`` data
+        instead of ``b64_json`` we follow the URL and download).
+    """
     payload = {
         "model": model,
         "prompt": prompt,
@@ -188,26 +214,47 @@ def _request_one_image(
         "size": size,
         "response_format": "b64_json",
     }
-    resp = requests.post(
-        GROK_IMAGINE_ENDPOINT,
-        headers=headers,
-        json=payload,
-        timeout=timeout_s,
-    )
+    resp = _post_image_request(payload, api_key, timeout_s)
+
+    # Retry without ``size`` if the API rejected it. Cover the two
+    # plausible error shapes — error.message or top-level message.
+    if resp.status_code == 400:
+        body_text = resp.text.lower()
+        if "size" in body_text or "invalid_request" in body_text:
+            payload.pop("size", None)
+            resp = _post_image_request(payload, api_key, timeout_s)
+
     if resp.status_code >= 400:
         # Surface the API error message; HTTP 4xx isn't retried by
         # tenacity (only RequestException) so a bad prompt fails fast.
         raise GrokImagineError(
             f"Grok Imagine HTTP {resp.status_code}: {resp.text[:300]}"
         )
+
     body = resp.json()
     try:
-        b64 = body["data"][0]["b64_json"]
+        first = body["data"][0]
     except (KeyError, IndexError) as exc:
         raise GrokImagineError(
-            f"Grok Imagine response missing b64_json: {body!r}"
+            f"Grok Imagine response missing data: {body!r}"
         ) from exc
-    return base64.b64decode(b64)
+
+    # Prefer b64_json (single round-trip). Fall back to ``url`` if
+    # the endpoint returned URLs instead — happens on some xAI
+    # revisions that ignore ``response_format``.
+    if "b64_json" in first and first["b64_json"]:
+        return base64.b64decode(first["b64_json"])
+    if "url" in first and first["url"]:
+        url_resp = requests.get(first["url"], timeout=timeout_s)
+        if url_resp.status_code >= 400:
+            raise GrokImagineError(
+                f"Grok Imagine URL fetch HTTP {url_resp.status_code}"
+            )
+        return url_resp.content
+
+    raise GrokImagineError(
+        f"Grok Imagine response had neither b64_json nor url: {first!r}"
+    )
 
 
 # ---------------------------------------------------------------------------
