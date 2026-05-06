@@ -610,6 +610,10 @@
     </style>
 {% endblock %}
 
+{# Page-language flag — Russian shows render localized chrome
+   (Phase 1 audit + Phase 4 retention surfaces). #}
+{%- set _is_ru = (page_lang | default('en')) == 'ru' -%}
+
 {% block content %}
     <!-- Breadcrumb -->
     <nav aria-label="Breadcrumb" style="max-width:900px;margin:calc(72px + var(--sp-4)) auto 0;padding:0 var(--sp-6);font-family:var(--font-ui);font-size:0.82rem;">
@@ -719,12 +723,26 @@
                 <span>Share:</span>
                 <a href="https://twitter.com/intent/tweet?url={{ canonical_url }}&text={{ page_title | urlencode }}" target="_blank" rel="noopener" aria-label="Share on Twitter">&#120143; Post</a>
                 <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ canonical_url }}" target="_blank" rel="noopener" aria-label="Share on LinkedIn">in LinkedIn</a>
+                <a href="https://wa.me/?text={{ (page_title ~ ' \u2014 ' ~ canonical_url) | urlencode }}" target="_blank" rel="noopener" aria-label="Share on WhatsApp">WhatsApp</a>
+                <a href="https://t.me/share/url?url={{ canonical_url }}&amp;text={{ page_title | urlencode }}" target="_blank" rel="noopener" aria-label="Share on Telegram">Telegram</a>
                 <button onclick="navigator.clipboard.writeText(window.location.href).then(function(){this.textContent='\u2713 Copied'}.bind(this))" aria-label="Copy link">&#128279; Copy link</button>
+            </div>
+
+            {#- Per-episode feedback surface (Phase 4 of May 2026 audit).
+                The strategic review found NO per-episode listener-voice
+                affordance \u2014 no thumbs-up, no comments, no community.
+                Mailto with prefilled subject/body is dependency-free,
+                privacy-respecting, and gives Patrick a real signal of
+                what episodes resonate. -#}
+            <div class="episode-feedback" style="display:flex;gap:var(--sp-3);align-items:center;justify-content:center;flex-wrap:wrap;margin:var(--sp-6) 0;padding:var(--sp-4);border-top:1px solid var(--nn-border);border-bottom:1px solid var(--nn-border);font-family:var(--font-ui);font-size:0.95rem;color:var(--nn-text-muted);">
+                <span>{{ '\ud83d\udc4b ' if not _is_ru else '\ud83d\udc4b ' }}{% if _is_ru %}\u041f\u043e\u043d\u0440\u0430\u0432\u0438\u043b\u0441\u044f \u0432\u044b\u043f\u0443\u0441\u043a?{% else %}Did this episode land?{% endif %}</span>
+                <a href="mailto:patrick@planetterrian.com?subject={{ ('I liked ' ~ show_name ~ ' Ep' ~ episode_num) | urlencode }}&body={{ ('Re: ' ~ canonical_url ~ '%0A%0A') }}" style="padding:6px 14px;border:1px solid var(--show-color);border-radius:100px;color:var(--show-color-text, var(--show-color));text-decoration:none;font-weight:600;">{% if _is_ru %}\ud83d\udc4d \u041e\u0442\u0437\u044b\u0432{% else %}\ud83d\udc4d Tell Patrick{% endif %}</a>
+                <a href="mailto:patrick@planetterrian.com?subject={{ ('Suggestion for ' ~ show_name) | urlencode }}&body={{ ('Re: ' ~ canonical_url ~ '%0A%0A') }}" style="padding:6px 14px;border:1px solid var(--nn-border);border-radius:100px;color:var(--nn-text-muted);text-decoration:none;font-weight:600;">{% if _is_ru %}\ud83d\udca1 \u0418\u0434\u0435\u044f{% else %}\ud83d\udca1 Suggest a story{% endif %}</a>
             </div>
 
             <!-- Subscribe CTA -->
             {% if newsletter_tag %}
-            <div class="show-subscribe-inline" style="margin-top:var(--sp-6);margin-bottom:var(--sp-6);">
+            <div id="subscribe-cta" class="show-subscribe-inline" style="margin-top:var(--sp-6);margin-bottom:var(--sp-6);">
                 <h3>Enjoy this episode? Get {{ show_name }} in your inbox</h3>
                 <p>New episode alerts — no spam, unsubscribe anytime.</p>
                 <form action="https://buttondown.com/api/emails/embed-subscribe/patricknovak1" method="post" target="popupwindow"
@@ -755,6 +773,20 @@
                     <span class="nav-label">Next &rarr;</span>
                     <span class="nav-title">Episode {{ next_post.episode_num }}</span>
                 </a>
+                {% else %}
+                {#- Phase 4 of May 2026 audit: when this is the latest
+                    episode, ``next_post`` is None and the listener
+                    dead-ends. Show a "next episode tomorrow" placeholder
+                    that captures email instead of a blank space. -#}
+                {% if newsletter_tag %}
+                <div class="next nav-next-placeholder" style="text-align:right;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.92rem;">
+                    <span class="nav-label">{% if _is_ru %}Завтра →{% else %}Tomorrow &rarr;{% endif %}</span>
+                    <span class="nav-title">{% if _is_ru %}Новый выпуск утром{% else %}New episode tomorrow{% endif %}</span>
+                    <a href="#subscribe-cta" style="font-size:0.82rem;color:var(--show-color-text, var(--show-color));text-decoration:none;display:block;margin-top:4px;">{% if _is_ru %}Подписаться, чтобы не пропустить →{% else %}Subscribe so you don't miss it &rarr;{% endif %}</a>
+                </div>
+                {% else %}
+                <div></div>
+                {% endif %}
                 {% endif %}
             </nav>
             {% endif %}
