@@ -638,14 +638,26 @@
     {% endif %}
 
     <!-- More from Nerra Network -->
+    {#- Filter cross-network grid by page language so Russian readers
+        don't get recommendations they can't consume. Russian-language
+        shows are finansy_prosto + privet_russian; everything else is
+        English. Operator caught (May 2026 audit) the prior grid listing
+        9 English shows on every Russian show page. -#}
+    {%- set _ru_show_slugs = ['finansy_prosto', 'privet_russian'] -%}
+    {%- set _is_ru_page = (page_lang | default('en')) == 'ru' -%}
+    {%- if _is_ru_page -%}
+        {%- set _network_shows = all_shows | selectattr('slug', 'in', _ru_show_slugs) | list -%}
+    {%- else -%}
+        {%- set _network_shows = all_shows | rejectattr('slug', 'in', _ru_show_slugs) | list -%}
+    {%- endif -%}
     <section class="cross-network nn-section">
         <div class="container">
             <div class="nn-section-header">
-                <h2>More from Nerra Network</h2>
-                <p>Ten daily shows keeping you informed.</p>
+                <h2>{% if _is_ru_page %}Другие подкасты Nerra Network{% else %}More from Nerra Network{% endif %}</h2>
+                <p>{% if _is_ru_page %}Подкасты на русском языке.{% else %}{{ _network_shows | length }} shows keeping you informed.{% endif %}</p>
             </div>
             <div class="cross-network-grid">
-                {% for s in all_shows %}
+                {% for s in _network_shows %}
                 {% if s.slug != show_slug %}
                 <div class="cross-network-card" style="display:flex;flex-direction:column;">
                     <a href="{{ path_prefix }}{{ s.show_page }}" style="display:flex;align-items:center;gap:var(--sp-3);text-decoration:none;flex:1;">
@@ -658,7 +670,7 @@
                             <div class="cross-network-card-tagline">{{ s.tagline }}</div>
                         </div>
                     </a>
-                    <a href="{{ path_prefix }}{{ s.blog_page }}" style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);text-decoration:none;margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--nn-border);">Read blog &rarr;</a>
+                    <a href="{{ path_prefix }}{{ s.blog_page }}" style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);text-decoration:none;margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--nn-border);">{% if _is_ru_page %}Читать блог{% else %}Read blog{% endif %} &rarr;</a>
                 </div>
                 {% endif %}
                 {% endfor %}
