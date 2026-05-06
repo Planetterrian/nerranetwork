@@ -1994,6 +1994,21 @@ def run(args: argparse.Namespace) -> None:
         if youtube_urls.get("short_error"):
             metrics.record("youtube_short_error", youtube_urls["short_error"])
         metrics.record("pexels_photos_filtered", youtube_pexels_filtered)
+        # Grok Imagine cost tracking (May 2026). Always recorded so the
+        # dashboard can plot $0 for pexels-only runs and the actual
+        # spend for grok / hybrid runs.
+        metrics.record(
+            "grok_image_cost_usd",
+            float(youtube_urls.get("grok_image_cost_usd", 0.0) or 0.0),
+        )
+        metrics.record(
+            "grok_images_generated",
+            int(youtube_urls.get("grok_images_generated", 0) or 0),
+        )
+        metrics.record(
+            "image_provider",
+            youtube_urls.get("image_provider", "pexels"),
+        )
     except Exception:
         pass
 
@@ -2743,27 +2758,94 @@ def _publish_youtube(
         except Exception as exc:  # pragma: no cover — best-effort
             logger.warning("Caption generation failed: %s", exc)
 
-    # ---- Resolve scene slideshow (Pexels-backed; falls back to cover) ----
-    scene_paths = [cover_path]
+    # ---- Resolve scene slideshow ----
+    # ``image_provider`` selects between three paths (May 2026 rollout):
+    #   pexels  — free Pexels search; same set used for long-form + Shorts
+    #   grok    — Grok Imagine generates two distinct sets per episode
+    #             (long-form 16:9 + Shorts 9:16) prompted from the hook
+    #   hybrid  — Pexels for long-form, Grok for Shorts only
+    yt = config.youtube
+    image_provider = (getattr(yt, "image_provider", "pexels") or "pexels").lower()
+
+    long_scene_paths = [cover_path]
+    short_scene_paths = [cover_path]
     pexels_attribution: list = []
     pexels_filtered = 0
-    try:
-        yt = config.youtube
-        scene_set = fetch_scene_images(
-            work_dir=work_dir,
-            episode_num=episode_num,
-            keywords=list(getattr(config, "keywords", []) or []),
-            fallback_cover=cover_path,
-            image_queries=list(getattr(yt, "image_queries", []) or []),
-            image_query_prefix=getattr(yt, "image_query_prefix", "") or "",
-            safe_skip_terms=list(getattr(yt, "image_safe_skip_terms", []) or []),
+    grok_image_cost = 0.0
+    grok_images_generated = 0
+    grok_image_failures: list = []
+
+    def _run_pexels_path(into_long: bool, into_short: bool):
+        nonlocal pexels_attribution, pexels_filtered
+        try:
+            scene_set = fetch_scene_images(
+                work_dir=work_dir,
+                episode_num=episode_num,
+                keywords=list(getattr(config, "keywords", []) or []),
+                fallback_cover=cover_path,
+                image_queries=list(getattr(yt, "image_queries", []) or []),
+                image_query_prefix=getattr(yt, "image_query_prefix", "") or "",
+                safe_skip_terms=list(getattr(yt, "image_safe_skip_terms", []) or []),
+            )
+            if not scene_set.is_fallback and len(scene_set) >= 2:
+                if into_long:
+                    nonlocal_paths = scene_set.paths()
+                    long_scene_paths[:] = nonlocal_paths
+                if into_short:
+                    short_scene_paths[:] = scene_set.paths()
+                pexels_attribution = scene_set.attribution_lines()
+            pexels_filtered = int(getattr(scene_set, "photos_filtered", 0) or 0)
+        except Exception as exc:  # pragma: no cover — best-effort
+            logger.warning("Pexels scene fetch failed: %s", exc)
+
+    def _run_grok_path(*, aspect: str, label_suffix: str) -> "list[Path]":
+        from engine.grok_imagine import (
+            build_image_prompts,
+            fetch_scene_images_grok,
         )
-        if not scene_set.is_fallback and len(scene_set) >= 2:
-            scene_paths = scene_set.paths()
-            pexels_attribution = scene_set.attribution_lines()
-        pexels_filtered = int(getattr(scene_set, "photos_filtered", 0) or 0)
-    except Exception as exc:  # pragma: no cover — best-effort
-        logger.warning("Scene fetch failed (using cover only): %s", exc)
+        nonlocal grok_image_cost, grok_images_generated, grok_image_failures
+        try:
+            prompts = build_image_prompts(
+                hook=hook or "",
+                image_queries=list(getattr(yt, "image_queries", []) or []),
+                aspect=aspect,
+                count=8,
+                show_descriptor=getattr(
+                    yt, "grok_image_descriptor", "photorealistic news photo",
+                ),
+            )
+            result = fetch_scene_images_grok(
+                work_dir=work_dir,
+                episode_num=episode_num,
+                prompts=prompts,
+                fallback_cover=cover_path,
+                aspect=aspect,
+                label_suffix=label_suffix,
+                model=getattr(yt, "grok_image_model", "grok-imagine-image"),
+            )
+            grok_image_cost += result.cost_usd
+            grok_images_generated += result.images_generated
+            grok_image_failures.extend(result.failures)
+            if not result.scene_set.is_fallback and len(result.scene_set) >= 2:
+                # Grok-generated images are royalty-free under xAI's
+                # terms; we still credit the model in the description
+                # so listeners know it's AI-generated imagery.
+                pexels_attribution.append(
+                    "Imagery generated by Grok Imagine (xAI)."
+                )
+                return result.scene_set.paths()
+        except Exception as exc:  # pragma: no cover — best-effort
+            logger.warning("Grok Imagine scene fetch failed: %s", exc)
+        return [cover_path]
+
+    if image_provider == "grok":
+        long_scene_paths = _run_grok_path(aspect="16:9", label_suffix="")
+        short_scene_paths = _run_grok_path(aspect="9:16", label_suffix="_short")
+    elif image_provider == "hybrid":
+        _run_pexels_path(into_long=True, into_short=False)
+        short_scene_paths = _run_grok_path(aspect="9:16", label_suffix="_short")
+    else:  # pexels (default)
+        _run_pexels_path(into_long=True, into_short=True)
 
     # ---- Long-form ----
     long_url = ""
@@ -2771,7 +2853,7 @@ def _publish_youtube(
         try:
             build_long_form_video(
                 final_mp3, cover_path, long_video_path,
-                scene_paths=scene_paths if len(scene_paths) >= 2 else None,
+                scene_paths=long_scene_paths if len(long_scene_paths) >= 2 else None,
                 subtitles_path=srt_path,
             )
             meta = build_long_form_metadata(
@@ -2862,7 +2944,7 @@ def _publish_youtube(
                 start_offset=short_offset,
                 duration=duration,
                 hook=hook or None,
-                scene_paths=scene_paths if len(scene_paths) >= 2 else None,
+                scene_paths=short_scene_paths if len(short_scene_paths) >= 2 else None,
             )
             meta = build_short_metadata(
                 config,
@@ -2924,6 +3006,14 @@ def _publish_youtube(
     # it as a metric. A spike here is the operator's signal that the
     # show's image_queries / safe_skip_terms need tightening.
     result["pexels_photos_filtered"] = pexels_filtered
+    # Grok Imagine cost-tracking. Recorded as a metric so the
+    # management dashboard can surface monthly spend on per-episode
+    # image generation. Zero when image_provider != grok / hybrid.
+    result["grok_image_cost_usd"] = round(grok_image_cost, 4)
+    result["grok_images_generated"] = grok_images_generated
+    if grok_image_failures:
+        result["grok_image_failures"] = grok_image_failures[:5]
+    result["image_provider"] = image_provider
     return result
 
 
