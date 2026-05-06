@@ -241,6 +241,13 @@ class SlowNewsConfig:
     cooldown_days: int = 30         # Don't reuse a segment within this window
     selection_mode: str = "round_robin"  # "round_robin" or "random"
     repeat_trigger_threshold: int = 3  # Cross-episode repeats that trigger slow news
+    # Ratio gate added in the May 2026 content audit. Slow-news mode
+    # only fires when BOTH the absolute threshold above AND the
+    # repeats-as-fraction-of-digest ratio are exceeded. Raised from
+    # 0.40 → 0.55 so daily news shows that legitimately revisit 3-6
+    # ongoing stories don't fall back to evergreen segments on
+    # healthy news days.
+    repeat_trigger_ratio: float = 0.55
 
 
 @dataclass
