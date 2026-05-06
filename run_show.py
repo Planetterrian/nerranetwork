@@ -52,12 +52,14 @@ if hasattr(signal, "SIGALRM"):
 # ---------------------------------------------------------------------------
 # AI disclosure — appended to every episode's spoken script and RSS metadata
 # ---------------------------------------------------------------------------
+# Tightened May 2026 (content audit). Previous disclosure was a 35-second
+# Patrick-talking-about-Patrick monologue at the close of every episode,
+# diluting each show's distinctive sign-off. New disclosure is one
+# sentence — just enough to satisfy the AI-disclosure obligation without
+# eating the listener's last memory of the show.
 _AI_DISCLOSURE = (
-    "This podcast is curated by Patrick but generated using AI voice "
-    "synthesis of my voice. The primary reason to do this is I "
-    "unfortunately don't have the time to be consistent with generating all "
-    "the content and wanted to focus on creating consistent and regular "
-    "episodes for all the themes that I enjoy and I hope others do as well."
+    "This episode used AI voice synthesis of my voice — "
+    "editorial selection and analysis are my own."
 )
 
 _AI_DISCLOSURE_RSS = (
@@ -1122,9 +1124,22 @@ def run(args: argparse.Namespace) -> None:
                 total_digest_items = max(1, len(articles))
                 repeat_ratio = len(_repeat_issues) / total_digest_items
                 metrics.record("cross_episode_repeat_ratio", round(repeat_ratio, 3))
+                # Ratio gate raised from 0.40 → 0.55 in the May 2026
+                # content audit. TST/FF/PT were tripping slow-news
+                # mode on 60-87% of episodes despite shipping plenty
+                # of unique stories — the previous gate ate cycles
+                # where, say, 10 of 22 articles overlapped with a
+                # week of Tesla-FSD coverage. 0.55 lets healthy news
+                # cycles ship and only falls back when the digest is
+                # genuinely majority-recycled. Per-show override via
+                # ``slow_news.repeat_trigger_ratio`` for shows that
+                # want to keep tighter constraints.
+                _repeat_ratio_threshold = float(
+                    getattr(config.slow_news, "repeat_trigger_ratio", 0.55) or 0.55
+                )
                 if (
                     len(_repeat_issues) >= _repeat_threshold
-                    and repeat_ratio >= 0.40
+                    and repeat_ratio >= _repeat_ratio_threshold
                 ):
                     # If slow news mode is available, fall back to it instead
                     # of skipping entirely — the repeat articles are stale but

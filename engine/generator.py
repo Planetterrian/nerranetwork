@@ -771,6 +771,18 @@ def _sanitize_podcast_script(text: str) -> str:
         "",
         text_joined,
     )
+    # Strip consecutive same-sentence duplicates within a single line.
+    # Operator caught (Финансы Просто Ep32, May 6 2026) the LLM
+    # producing ``Давайте разберёмся! Давайте разберёмся в самых
+    # важных финансовых новостях`` — same opener twice in one
+    # narration line. The TTS then said it twice, which sounds
+    # broken. Match a sentence (ending in . ! ? or Cyrillic
+    # equivalents) that immediately repeats verbatim.
+    text_joined = re.sub(
+        r"([^.!?…\n]+[.!?…])\s+\1(?=\s)",
+        r"\1",
+        text_joined,
+    )
     return text_joined
 
 
