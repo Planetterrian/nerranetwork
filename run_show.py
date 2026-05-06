@@ -2009,6 +2009,16 @@ def run(args: argparse.Namespace) -> None:
             "image_provider",
             youtube_urls.get("image_provider", "pexels"),
         )
+        # Surface the first 5 Grok Imagine failure messages when the
+        # provider is grok / hybrid AND the run produced 0 images. Tells
+        # the operator WHY the slideshow fell back to the cover (bad
+        # API key, model identifier, request format, rate limit, etc.)
+        # instead of having to dig through GitHub Actions logs.
+        if youtube_urls.get("grok_image_failures"):
+            metrics.record(
+                "grok_image_failures",
+                youtube_urls["grok_image_failures"],
+            )
     except Exception:
         pass
 
