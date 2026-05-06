@@ -2018,20 +2018,36 @@ def generate_sitemap(*, dry_run=False):
         except Exception:
             return today
 
-    # Landing page
-    urls.append((f"{base}/", "1.0", today))
+    # ``lastmod`` is per-file modification time wherever possible —
+    # Google uses it as a freshness signal. The previous sitemap
+    # used ``today`` for everything (build date), defeating the
+    # signal because every URL claimed to have changed every day
+    # whether it had or not (May 2026 audit Phase 5).
+    def _lm_or_today(rel: str) -> str:
+        path = ROOT / rel
+        return _file_lastmod(path) if path.exists() else today
 
-    # Show pages, summaries pages, blog indices
+    # Landing page
+    urls.append((f"{base}/", "1.0", _lm_or_today("index.html")))
+
+    # Show pages, summaries pages, blog indices — file mtime reflects
+    # when each was last regenerated (typically when a new episode
+    # publishes for that show).
     for slug, cfg in NETWORK_SHOWS.items():
-        urls.append((f"{base}/{cfg['show_page']}", "0.8", today))
-        urls.append((f"{base}/{cfg['summaries_page']}", "0.7", today))
-        urls.append((f"{base}/blog/{slug}/index.html", "0.7", today))
+        urls.append((f"{base}/{cfg['show_page']}", "0.8",
+                     _lm_or_today(cfg["show_page"])))
+        urls.append((f"{base}/{cfg['summaries_page']}", "0.7",
+                     _lm_or_today(cfg["summaries_page"])))
+        urls.append((f"{base}/blog/{slug}/index.html", "0.7",
+                     _lm_or_today(f"blog/{slug}/index.html")))
 
     # Network blog hub
-    urls.append((f"{base}/blog/index.html", "0.7", today))
+    urls.append((f"{base}/blog/index.html", "0.7",
+                 _lm_or_today("blog/index.html")))
 
     # Russian hub
-    urls.append((f"{base}/ru/index.html", "0.7", today))
+    urls.append((f"{base}/ru/index.html", "0.7",
+                 _lm_or_today("ru/index.html")))
 
     # Legal pages
     for legal in ["privacy-policy.html", "terms-of-service.html", "ai-disclosure.html"]:
@@ -2041,7 +2057,8 @@ def generate_sitemap(*, dry_run=False):
     # Special pages
     for extra in ["modern-investing-resources.html", "start-here.html",
                   "about.html", "how-to-listen.html", "faq.html",
-                  "press.html", "contact.html", "404.html"]:
+                  "press.html", "contact.html", "editorial.html",
+                  "404.html"]:
         if (ROOT / extra).exists():
             urls.append((f"{base}/{extra}", "0.5", _file_lastmod(ROOT / extra)))
 
@@ -2229,6 +2246,42 @@ def generate_press_page(*, dry_run=False):
 
     html = template.render(**context)
     out_path = ROOT / "press.html"
+
+    if dry_run:
+        print(f"[dry-run] Would write {out_path}")
+        return None
+
+    out_path.write_text(html, encoding="utf-8")
+    print(f"Wrote {out_path}")
+    return out_path
+
+
+def generate_editorial_page(*, dry_run=False):
+    """Generate ``editorial.html`` — the methodology / editorial-process
+    page added in Phase 5 of the May 2026 strategic audit. It's the
+    highest-leverage trust artifact for an AI-narrated network because
+    listeners can see *how* stories are selected, *how* the LLM is
+    constrained, and *how* fallback paths work, separate from the
+    AI-disclosure page (which only covers *that* AI is used)."""
+    env = _get_jinja_env()
+    template = env.get_template("editorial.html.j2")
+
+    context = {
+        "path_prefix": "",
+        "page_title": "Editorial process — Nerra Network",
+        "page_description": "How Nerra Network selects, fact-checks, and produces every episode. The editorial process behind 11 AI-narrated podcasts.",
+        "meta_description": "How Nerra Network selects, fact-checks, and produces every episode. The editorial process behind 11 AI-narrated podcasts.",
+        "meta_keywords": "Nerra Network editorial, podcast methodology, AI podcast process, how AI podcasts are made",
+        "theme_color": "#6B47FF",
+        "og_image": "",
+        "canonical_url": "https://nerranetwork.com/editorial.html",
+        "show_color": "",
+        "show_color_dark": "",
+        "all_shows": _build_all_shows_list(),
+    }
+
+    html = template.render(**context)
+    out_path = ROOT / "editorial.html"
 
     if dry_run:
         print(f"[dry-run] Would write {out_path}")
@@ -2459,6 +2512,7 @@ def main():
         generate_how_to_listen_page(dry_run=args.dry_run)
         generate_press_page(dry_run=args.dry_run)
         generate_contact_page(dry_run=args.dry_run)
+        generate_editorial_page(dry_run=args.dry_run)
         generate_faq_page(dry_run=args.dry_run)
         # Sitemap last so it picks up every page generated above
         generate_sitemap(dry_run=args.dry_run)
