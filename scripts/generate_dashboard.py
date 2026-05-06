@@ -485,6 +485,99 @@ def item_13_youtube_health(shows: List[Dict[str, Any]]) -> Dict[str, Any]:
     )
 
 
+def item_22_grok_imagine_health(
+    shows: List[Dict[str, Any]],
+    metrics: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Every show opted in to ``image_provider: grok|hybrid`` is
+    actually generating images. Operator caught (TST Ep465, May 6
+    2026) the Grok Imagine API rejecting the OpenAI-style ``size``
+    parameter — both Tesla and MAB were configured for grok but
+    silently fell back to the show cover for every long-form / Shorts
+    upload. Without this landmine the failure stayed invisible until
+    the operator looked at a video on YouTube.
+
+    Fail when an opted-in show's last 30 episodes show <50%
+    grok-image generation success. Warn at <90%. OK above.
+    """
+    opted_in: List[str] = []
+    for s in shows:
+        cfg = s.get("cfg")
+        if not cfg:
+            continue
+        yt = getattr(cfg, "youtube", None)
+        if not yt or not getattr(yt, "enabled", False):
+            continue
+        provider = (getattr(yt, "image_provider", "pexels") or "pexels").lower()
+        if provider in ("grok", "hybrid"):
+            opted_in.append(s["slug"])
+
+    if not opted_in:
+        return _mk(
+            "item_22_grok_imagine_health",
+            "Grok Imagine generates images for opted-in shows",
+            "ok",
+            "No show is on image_provider=grok|hybrid — nothing to validate.",
+        )
+
+    # ``aggregate_metrics`` returns the per-show dict directly (keyed by
+    # slug). It's NOT wrapped in a ``per_show`` layer.
+    per_show = metrics or {}
+    failing: List[Dict[str, Any]] = []
+    warning: List[Dict[str, Any]] = []
+    healthy_count = 0
+    for slug in opted_in:
+        show_metrics = per_show.get(slug) or {}
+        gi = show_metrics.get("grok_imagine") or {}
+        attempts = int(gi.get("attempts") or 0)
+        rate = float(gi.get("generation_success_rate") or 0.0)
+        if attempts == 0:
+            # Show is opted in but hasn't run yet (or no metrics history).
+            continue
+        sample = (gi.get("recent_failures") or [])[:1]
+        first_fail = sample[0]["first_failure"] if sample else ""
+        if rate < 0.5:
+            failing.append({
+                "slug": slug,
+                "attempts": attempts,
+                "success_rate": rate,
+                "first_failure": first_fail,
+            })
+        elif rate < 0.9:
+            warning.append({"slug": slug, "success_rate": rate})
+        else:
+            healthy_count += 1
+
+    if failing:
+        return _mk(
+            "item_22_grok_imagine_health",
+            "Grok Imagine generates images for opted-in shows",
+            "fail",
+            f"{len(failing)} of {len(opted_in)} opted-in show(s) are "
+            f"generating <50% of expected images. First failure for "
+            f"{failing[0]['slug']}: {failing[0].get('first_failure', '(no detail)')[:160]}",
+            {"failing": failing, "warning": warning, "opted_in": opted_in},
+        )
+    if warning:
+        return _mk(
+            "item_22_grok_imagine_health",
+            "Grok Imagine generates images for opted-in shows",
+            "warn",
+            f"{len(warning)} of {len(opted_in)} opted-in show(s) are "
+            f"generating between 50% and 90% of expected images. Spot-"
+            f"check the recent_failures samples in per_show.<slug>."
+            f"grok_imagine.recent_failures.",
+            {"warning": warning, "opted_in": opted_in},
+        )
+    return _mk(
+        "item_22_grok_imagine_health",
+        "Grok Imagine generates images for opted-in shows",
+        "ok",
+        f"All {len(opted_in)} opted-in show(s) are generating ≥90% of "
+        f"expected images.",
+    )
+
+
 # ---------------------------------------------------------------------------
 # Item 2 — RSS integrity + R2 / LFS audit
 # ---------------------------------------------------------------------------
@@ -792,6 +885,15 @@ def aggregate_metrics(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]
         recap_attempts = 0  # Sundays where this show's runner ticked
         recap_synthesised = 0  # Sundays where the recap actually built
         tag_leak_episodes = 0  # episodes with tag_leaks > 0
+        # Grok Imagine health (May 2026 rollout). Tracks per-show:
+        #   - cost (USD spent generating images this 30-ep window)
+        #   - generation success rate (episodes where ≥1 image generated)
+        #   - failure samples for recent runs (operator can see WHY 0 imgs)
+        # Pexels-only shows have all-zero values here.
+        grok_image_cost_total = 0.0
+        grok_image_attempts = 0    # episodes whose provider was grok/hybrid
+        grok_image_success_eps = 0  # episodes that generated >=1 image
+        grok_image_fail_samples: List[Dict[str, Any]] = []
         tag_leak_total = 0  # sum of leak counts across recent episodes
         tag_leak_pattern_counts: Dict[str, int] = {}
         yt_long_errors: List[Dict[str, Any]] = []  # last few error payloads
@@ -840,6 +942,26 @@ def aggregate_metrics(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]
                             tag_leak_pattern_counts[_name] = (
                                 tag_leak_pattern_counts.get(_name, 0) + _cnt
                             )
+
+            # Grok Imagine roll-up. Only counts toward attempts/success
+            # rate when this episode actually used the grok / hybrid
+            # path; pexels-only episodes are excluded from the
+            # denominator so the rate doesn't get diluted.
+            _ip = (counters.get("image_provider") or "pexels").lower()
+            if _ip in ("grok", "hybrid"):
+                grok_image_attempts += 1
+                _gen = counters.get("grok_images_generated")
+                if isinstance(_gen, int) and _gen > 0:
+                    grok_image_success_eps += 1
+                _cost = counters.get("grok_image_cost_usd")
+                if isinstance(_cost, (int, float)):
+                    grok_image_cost_total += float(_cost)
+                _fails = counters.get("grok_image_failures")
+                if isinstance(_fails, list) and _fails and _gen == 0:
+                    grok_image_fail_samples.append({
+                        "episode_num": data.get("episode_num"),
+                        "first_failure": str(_fails[0])[:200],
+                    })
             recent_samples.append({
                 "episode_num": data.get("episode_num"),
                 "total_duration_s": total,
@@ -892,6 +1014,26 @@ def aggregate_metrics(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]
                     round(recap_synthesised / recap_attempts, 3)
                     if recap_attempts else 0.0
                 ),
+            },
+            # Grok Imagine roll-up (May 2026 rollout). Per-show:
+            #   - cost_usd_recent: USD spent on image gen in the
+            #     last-30-eps window
+            #   - generation_success_rate: episodes (of those opted in
+            #     to grok/hybrid) that actually got >=1 image. A drop
+            #     here usually means an API request-format change or
+            #     auth lapse — the recent_failures samples will
+            #     pinpoint why.
+            #   - recent_failures: first failure message from each of
+            #     the last 5 episodes that ran grok and got 0 imgs
+            "grok_imagine": {
+                "attempts": grok_image_attempts,
+                "successful_episodes": grok_image_success_eps,
+                "generation_success_rate": (
+                    round(grok_image_success_eps / grok_image_attempts, 3)
+                    if grok_image_attempts else 0.0
+                ),
+                "cost_usd_recent": round(grok_image_cost_total, 4),
+                "recent_failures": grok_image_fail_samples[-5:],
             },
             # Tag-leak rate (Phase 1.6 of the audit). Aggregates the
             # `tag_leaks` and `tag_leaks_by_pattern` per-episode
@@ -1225,6 +1367,9 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
     rss = audit_rss_enclosures(root, offline=offline)
     voice = audit_voice_config(shows, root)
 
+    metrics = aggregate_metrics(root, shows)
+    costs = aggregate_costs(root, shows)
+
     landmines: List[Dict[str, Any]] = [
         item_1_repo_size(root),
         item_2_rss_integrity(rss),
@@ -1237,10 +1382,11 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
         item_11_tts_provider(shows),
         item_12_summaries_location(shows),
         item_13_youtube_health(shows),
+        # item_22 depends on metrics, so it goes last (and metrics is
+        # computed above so the dependency holds).
+        item_22_grok_imagine_health(shows, metrics),
     ]
 
-    metrics = aggregate_metrics(root, shows)
-    costs = aggregate_costs(root, shows)
     network = build_network_rollup(shows, landmines, metrics, costs, rss)
 
     # Strip the ShowConfig object out of per-show entries before serialising.

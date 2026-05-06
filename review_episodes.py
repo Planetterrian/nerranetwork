@@ -903,6 +903,48 @@ def check_pipeline_metrics(ep: EpisodeReview) -> None:
             f"Only {article_count} article(s) were available. Content may be thin.",
         ))
 
+    # Grok Imagine generated 0 images while the show was opted in.
+    # Operator caught (TST Ep465, May 6 2026) the slideshow silently
+    # falling back to the cover when the API rejected the ``size``
+    # parameter. The fix landed in PR #322; this check makes any
+    # future failure mode (auth lapse, rate limit, model retirement)
+    # surface as a daily-review warning instead of needing a manual
+    # log dive.
+    image_provider = (counters.get("image_provider") or "pexels").lower()
+    if image_provider in ("grok", "hybrid"):
+        gen_count = counters.get("grok_images_generated")
+        if isinstance(gen_count, int) and gen_count == 0:
+            failures = counters.get("grok_image_failures") or []
+            sample = failures[0] if failures else "(no failure detail)"
+            ep.issues.append(Issue(
+                ep.show_slug, ep.episode_num, "warning",
+                "Grok Imagine produced 0 images (slideshow fell back to cover)",
+                f"The show is configured with image_provider={image_provider!r} "
+                f"but the Grok Imagine API generated 0 images on this run, so "
+                f"the YouTube long-form / Shorts slideshow used only the show "
+                f"cover. First failure: {sample}. Check engine.grok_imagine "
+                f"logs and the API response shape.",
+            ))
+
+    # YouTube upload failures — long-form is the larger surface so a
+    # silent failure there matters. ``youtube_long_error`` / `_short_error`
+    # are surfaced into metrics by ``_publish_youtube`` so the operator
+    # gets daily visibility without log-diving. Operator caught the
+    # ``invalidDescription`` regression (May 2026) on a manual metrics
+    # check; this check makes it automatic.
+    for kind in ("long", "short"):
+        err = counters.get(f"youtube_{kind}_error")
+        if not err:
+            continue
+        msg = err.get("message", "")[:200] if isinstance(err, dict) else str(err)[:200]
+        ep.issues.append(Issue(
+            ep.show_slug, ep.episode_num, "warning",
+            f"YouTube {kind}-form upload failed",
+            f"The {kind}-form video upload failed: {msg}. Check the "
+            f"engine.youtube logs for the full stack trace and the YouTube "
+            f"Data API quota dashboard.",
+        ))
+
 
 def check_story_duplication(ep: EpisodeReview) -> None:
     """Detect the same story being told twice within a single episode.
