@@ -327,8 +327,13 @@
                         <label><input type="checkbox" name="tag" value="Models & Agents for Beginners"> Models & Agents for Beginners</label>
                         <label><input type="checkbox" name="tag" value="Environmental Intelligence"> Environmental Intelligence</label>
                         <label><input type="checkbox" name="tag" value="Modern Investing Techniques"> Modern Investing Techniques</label>
-                        <label><input type="checkbox" name="tag" value="Финансы Просто"> Финансы Просто</label>
-                        <label><input type="checkbox" name="tag" value="Привет, Русский!"> Привет, Русский!</label>
+                        {#- Use ASCII tags here so they match the per-show YAML
+                            ``newsletter.tag`` values exactly. Buttondown rejects
+                            non-ASCII tags; mismatches between this footer form
+                            and the YAML split subscribers across two never-merged
+                            tags (operator caught this on FP, May 2026 audit). -#}
+                        <label><input type="checkbox" name="tag" value="Finansy Prosto"> Финансы Просто</label>
+                        <label><input type="checkbox" name="tag" value="Privet Russian"> Привет, Русский!</label>
                     </div>
                     <div class="nn-subscribe-row">
                         <input type="email" name="email" placeholder="{{ t.subscribe_email_placeholder }}" required aria-label="{{ t.subscribe_email_aria }}">

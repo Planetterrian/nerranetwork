@@ -578,6 +578,9 @@ def _transliterate_cyrillic(text: str) -> str:
 # Adjacent-shows lookup (cross-network module data)
 # ---------------------------------------------------------------------------
 
+_RU_SHOW_SLUGS = frozenset({"finansy_prosto", "privet_russian"})
+
+
 def _adjacent_shows_for(
     slug: str, today_str: str,
 ) -> Optional[List[Dict[str, str]]]:
@@ -587,6 +590,14 @@ def _adjacent_shows_for(
     Best-effort: reads ``shows/_defaults.yaml``'s
     ``newsletter.network_adjacencies`` map. Returns None if the lookup
     fails or finds nothing.
+
+    Language filtering (May 2026 audit): Russian-language shows
+    (Финансы Просто, Привет Русский!) only ever recommend each other
+    — never an English show their subscribers can't consume.
+    Conversely English shows skip Russian sisters. This drops the
+    ``finansy_prosto → modern_investing`` adjacency from the map's
+    behaviour without forcing the operator to maintain two separate
+    YAML maps.
     """
     try:
         import yaml as _yaml
@@ -597,9 +608,24 @@ def _adjacent_shows_for(
         data = _yaml.safe_load(defaults_path.read_text(encoding="utf-8")) or {}
         nl = data.get("newsletter") or {}
         adj_map = (nl.get("network_adjacencies") or {})
-        sister_slugs = list(adj_map.get(slug) or [])[:2]
+        sister_slugs = list(adj_map.get(slug) or [])[:6]  # take more, filter
         if not sister_slugs:
             return None
+        # Language filter: Russian shows recommend Russian shows only,
+        # English shows recommend English shows only.
+        is_ru = slug in _RU_SHOW_SLUGS
+        sister_slugs = [
+            s for s in sister_slugs
+            if (s in _RU_SHOW_SLUGS) == is_ru and s != slug
+        ][:2]
+        if not sister_slugs:
+            # Fall back to the other Russian show for FP/PR if the YAML
+            # map doesn't have a same-language sister.
+            if is_ru:
+                fallback = "privet_russian" if slug == "finansy_prosto" else "finansy_prosto"
+                sister_slugs = [fallback]
+            else:
+                return None
         out: List[Dict[str, str]] = []
         for sister_slug in sister_slugs:
             sister = _last_episode_for_show(sister_slug)

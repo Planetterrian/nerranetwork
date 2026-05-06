@@ -1593,6 +1593,16 @@ def run(args: argparse.Namespace) -> None:
         # number-to-words conversion made it invisible to earlier regex passes)
         podcast_script = _strip_post_pronunciation_artifacts(podcast_script)
 
+        # Russian-show date Russification — operator caught (Финансы
+        # Просто Ep32, May 6 2026) the LLM emitting English-form dates
+        # like "May sixth, twenty twenty-six" inside otherwise-Russian
+        # sentences. Grok TTS reads the English literally with the
+        # Russian voice, which sounds awful. Helper is idempotent and
+        # narrowly targeted so it's safe to run on every Russian script.
+        if args.show in ("finansy_prosto", "privet_russian"):
+            from engine.russian_text import russify_english_dates
+            podcast_script = russify_english_dates(podcast_script)
+
         # Append AI disclosure at the end of the episode
         podcast_script = podcast_script.rstrip() + "\n\n" + _AI_DISCLOSURE
 
