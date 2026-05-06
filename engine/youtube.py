@@ -292,9 +292,25 @@ def upload_video(
 
     if thumbnail_path and thumbnail_path.exists():
         try:
+            # Wrap in MediaFileUpload with explicit ``mimetype`` to silence
+            # the ``googleapiclient.discovery: media_mime_type argument
+            # not specified: trying to auto-detect`` warning that fires
+            # on every YouTube run otherwise. The thumbnail is a JPEG by
+            # convention (``engine.video`` writes ``*_thumb.jpg``); fall
+            # back to the suffix-derived value if the operator swaps in
+            # a PNG / WebP later.
+            _ext = thumbnail_path.suffix.lower()
+            mime = (
+                "image/png" if _ext == ".png"
+                else "image/webp" if _ext == ".webp"
+                else "image/jpeg"
+            )
+            thumb_media = MediaFileUpload(
+                str(thumbnail_path), mimetype=mime, resumable=False,
+            )
             youtube.thumbnails().set(
                 videoId=video_id,
-                media_body=str(thumbnail_path),
+                media_body=thumb_media,
             ).execute()
             logger.info("Thumbnail set for %s", video_id)
         except Exception as exc:  # pragma: no cover - thumbnail is best-effort

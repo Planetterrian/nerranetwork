@@ -970,21 +970,16 @@ def notify_directories(rss_url: str, show_name: str = "Podcast") -> dict:
         logger.warning("[%s] PubSubHubbub notification failed: %s", show_name, e)
         results["pubsubhubbub"] = False
 
-    # 2. Podcast Index API ping — feeds Pocket Casts, Fountain, Podfriend, etc.
-    try:
-        resp = requests.get(
-            "https://api.podcastindex.org/api/1.0/hub/pubnotify",
-            params={"url": rss_url},
-            timeout=15,
-        )
-        results["podcast_index"] = resp.status_code == 200
-        if resp.status_code == 200:
-            logger.info("[%s] Podcast Index notified successfully", show_name)
-        else:
-            logger.warning("[%s] Podcast Index returned %s", show_name, resp.status_code)
-    except Exception as e:
-        logger.warning("[%s] Podcast Index notification failed: %s", show_name, e)
-        results["podcast_index"] = False
+    # 2. Podcast Index — historically pinged directly via
+    # ``api.podcastindex.org/api/1.0/hub/pubnotify``, but Podcast Index
+    # deprecated that endpoint in favour of relying on the WebSub hub
+    # (Step 1 above already notifies Google's pubsubhubbub.appspot.com,
+    # which Podcast Index subscribes to). The direct call now returns
+    # HTTP 403 on every run — see TST Ep465 log (May 6 2026) and
+    # countless prior episodes. Skipping the direct call removes the
+    # noise; Podcast Index still picks up the feed via WebSub
+    # (typically within minutes of PubSubHubbub publish).
+    results["podcast_index"] = "via_websub"
 
     # 3. Ping-O-Matic — notifies multiple blog/podcast search engines at once
     try:

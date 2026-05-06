@@ -57,7 +57,23 @@ def generate_transcript(
 
     logger.info("Generating transcript from %s (model=%s) ...", audio_path.name, model_size)
 
+    # Pass through ``HF_TOKEN`` if present so the faster-whisper model
+    # download uses authenticated requests to Hugging Face Hub. Without
+    # it every run logs ``Warning: You are sending unauthenticated
+    # requests to the HF Hub. Please set a HF_TOKEN to enable higher
+    # rate limits and faster downloads.`` (TST Ep465 log, May 6 2026
+    # — recurring on every show). Optional — anonymous still works,
+    # just slower and rate-limited.
+    import os
+    hf_token = os.getenv("HF_TOKEN", "").strip()
+
     try:
+        # ``faster-whisper`` reads ``HF_TOKEN`` directly from the env via
+        # huggingface_hub. We export it explicitly here so the value
+        # picked up matches whatever the operator sets — and so the
+        # absence is logged once per run instead of once per HTTP call.
+        if hf_token:
+            os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
         model = WhisperModel(model_size, device="cpu", compute_type="int8")
         segments, info = model.transcribe(
             str(audio_path),
