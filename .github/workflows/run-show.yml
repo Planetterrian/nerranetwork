@@ -434,7 +434,18 @@ jobs:
           "
 
       - name: Commit and push output
-        if: steps.pipeline.outputs.skipped != 'true'
+        # Run on `always()` so a failure in a *peripheral* later step
+        # (HTML regen, RSS regen, podcast-directory notify) doesn't
+        # block the commit. The actual episode artifacts — digest .md,
+        # transcripts, metrics — were produced by the pipeline step
+        # and must reach git regardless. Operator caught (May 7 2026)
+        # an entire day of episodes lost from the repo because
+        # generate_html.py --blogs hit a UnicodeEncodeError on a lone
+        # surrogate; GitHub Actions' implicit `success()` guard then
+        # skipped this commit step, the runner shut down, and the
+        # work was gone. Gate on `pipeline.outcome == 'success'` so
+        # we only commit when the pipeline itself succeeded.
+        if: always() && steps.pipeline.outcome == 'success' && steps.pipeline.outputs.skipped != 'true'
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
