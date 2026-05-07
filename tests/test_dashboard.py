@@ -74,6 +74,31 @@ def test_landmine_items_7_and_10_excluded():
         assert forbidden not in ids, f"{forbidden} must not be emitted"
 
 
+def test_item_11_expects_grok_provider_post_may_2026():
+    """The May 2026 full-network migration moved every show to Grok TTS
+    (CLAUDE.md landmine #17). The dashboard's item_11 invariant flipped
+    from `provider == elevenlabs` (pre-migration) to `provider == grok`
+    (current). This test pins the post-migration state so a copy-paste
+    from the old YAML wouldn't silently revert the dashboard signal."""
+    data = gd.build_dashboard(ROOT, offline=True)
+    item_11 = next(
+        (lm for lm in data["landmines"] if lm["id"] == "item_11_tts_provider"),
+        None,
+    )
+    assert item_11 is not None, "item_11_tts_provider must be emitted"
+    # Title and details must reflect Grok, not the old ElevenLabs check.
+    assert "Grok" in item_11["title"], (
+        f"item_11 title still references the pre-May-2026 expectation: "
+        f"{item_11['title']!r}"
+    )
+    assert "grok" in item_11["details"].lower()
+    # All 11 shows currently resolve to grok → status is ok.
+    assert item_11["status"] == "ok", (
+        f"All shows should resolve tts.provider == grok post-May 2026; "
+        f"got status={item_11['status']!r}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Test 3 — item 1 passes on a clean-ish repo
 # ---------------------------------------------------------------------------
