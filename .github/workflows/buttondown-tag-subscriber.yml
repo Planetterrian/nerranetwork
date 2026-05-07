@@ -1,35 +1,49 @@
 name: Tag Buttondown Subscriber
 
-# Manual one-off workflow to add (or remove) a Nerra Network subscriber's
-# per-show tags in Buttondown. Necessary because the public website
-# signup form historically didn't tag subscribers per show — newsletters
-# filter by tag, so untagged subscribers receive nothing.
+# Manual one-off workflow to add / remove / inspect Nerra Network
+# Buttondown subscribers without needing the operator to set
+# BUTTONDOWN_API_KEY locally. Two flavours:
 #
-# Trigger from the Actions UI: pick the show(s), pass an email, run.
-# The actual subscriber CRUD lives in scripts/buttondown_tag_subscriber.py.
+#   * Per-user modes (add-all / add-shows / remove-shows / list)
+#     require the ``email`` input.
+#   * Bulk read modes (list-all / list-show) ignore ``email`` and
+#     print the full roster (or one show's roster) into the workflow
+#     log. With ``csv: true`` the script's CSV output is also
+#     uploaded as a workflow artifact for download.
+#
+# Trigger from the Actions UI. The actual subscriber CRUD lives in
+# scripts/buttondown_tag_subscriber.py.
 
 on:
   workflow_dispatch:
     inputs:
-      email:
-        description: 'Subscriber email address'
-        required: true
-        type: string
       mode:
         description: 'What to do'
         required: true
         type: choice
         options:
-          - 'add-all'        # tag for every Nerra Network show
-          - 'add-shows'      # tag for the comma-separated shows in `shows`
-          - 'remove-shows'   # untag for the comma-separated shows in `shows`
-          - 'list'           # print the subscriber's current tags
-        default: 'add-all'
-      shows:
-        description: 'Comma-separated show slugs (used by add-shows / remove-shows)'
+          - 'list-all'        # print every subscriber + their tags
+          - 'list-show'       # print every subscriber on one show
+          - 'add-all'         # tag the email for every Nerra Network show
+          - 'add-shows'       # tag the email for `shows`
+          - 'remove-shows'    # untag the email for `shows`
+          - 'list'            # print the email's current tags
+        default: 'list-all'
+      email:
+        description: 'Subscriber email (required for per-user modes; ignored for list-all / list-show)'
         required: false
         type: string
         default: ''
+      shows:
+        description: 'Show slug(s) — comma-separated for add-shows / remove-shows; single slug for list-show'
+        required: false
+        type: string
+        default: ''
+      csv:
+        description: 'list-all / list-show only: write CSV instead of a pretty table'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -50,6 +64,7 @@ jobs:
         run: pip install requests pyyaml
 
       - name: Apply tag change
+        id: run_tool
         env:
           BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
         run: |
@@ -57,26 +72,55 @@ jobs:
           MODE='${{ github.event.inputs.mode }}'
           EMAIL='${{ github.event.inputs.email }}'
           SHOWS='${{ github.event.inputs.shows }}'
+          CSV='${{ github.event.inputs.csv }}'
           ARGS=()
+          OUTPUT_FILE=""
+
           case "$MODE" in
-            add-all)
-              ARGS+=(--all)
+            list-all)
+              ARGS+=(--list-all)
+              if [ "$CSV" = "true" ]; then
+                ARGS+=(--csv)
+                OUTPUT_FILE='subscribers.csv'
+              fi
               ;;
-            add-shows)
+            list-show)
               if [ -z "$SHOWS" ]; then
-                echo "::error::add-shows requires the 'shows' input"
+                echo "::error::list-show requires the 'shows' input (one slug)"
                 exit 2
               fi
+              # list-show takes exactly one slug — pass as --show <slug>.
+              SLUG="$(echo "$SHOWS" | cut -d',' -f1 | xargs)"
+              ARGS+=(--list-all --show "$SLUG")
+              if [ "$CSV" = "true" ]; then
+                ARGS+=(--csv)
+                OUTPUT_FILE="subscribers-${SLUG}.csv"
+              fi
+              ;;
+            add-all)
+              if [ -z "$EMAIL" ]; then
+                echo "::error::add-all requires the 'email' input"
+                exit 2
+              fi
+              ARGS+=("$EMAIL" --all)
+              ;;
+            add-shows)
+              if [ -z "$EMAIL" ] || [ -z "$SHOWS" ]; then
+                echo "::error::add-shows requires both 'email' and 'shows' inputs"
+                exit 2
+              fi
+              ARGS+=("$EMAIL")
               IFS=',' read -ra _slugs <<< "$SHOWS"
               for s in "${_slugs[@]}"; do
                 ARGS+=(--show "$(echo "$s" | xargs)")
               done
               ;;
             remove-shows)
-              if [ -z "$SHOWS" ]; then
-                echo "::error::remove-shows requires the 'shows' input"
+              if [ -z "$EMAIL" ] || [ -z "$SHOWS" ]; then
+                echo "::error::remove-shows requires both 'email' and 'shows' inputs"
                 exit 2
               fi
+              ARGS+=("$EMAIL")
               IFS=',' read -ra _slugs <<< "$SHOWS"
               for s in "${_slugs[@]}"; do
                 ARGS+=(--show "$(echo "$s" | xargs)")
@@ -84,11 +128,36 @@ jobs:
               ARGS+=(--remove)
               ;;
             list)
-              ARGS+=(--list)
+              if [ -z "$EMAIL" ]; then
+                echo "::error::list requires the 'email' input"
+                exit 2
+              fi
+              ARGS+=("$EMAIL" --list)
               ;;
             *)
               echo "::error::Unknown mode: $MODE"
               exit 2
               ;;
           esac
-          python scripts/buttondown_tag_subscriber.py "$EMAIL" "${ARGS[@]}"
+
+          if [ -n "$OUTPUT_FILE" ]; then
+            # CSV path: write to file AND echo to log so the run is
+            # self-documenting even if the artifact upload step is
+            # skipped on failure.
+            python scripts/buttondown_tag_subscriber.py "${ARGS[@]}" | tee "$OUTPUT_FILE"
+            echo "output_file=$OUTPUT_FILE" >> "$GITHUB_OUTPUT"
+          else
+            python scripts/buttondown_tag_subscriber.py "${ARGS[@]}"
+          fi
+
+      - name: Upload CSV artifact
+        # Only upload when the previous step produced a CSV file. The
+        # artifact gives the operator a downloadable spreadsheet for
+        # bulk roster work without copy-pasting from the log.
+        if: steps.run_tool.outputs.output_file != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: buttondown-${{ github.run_id }}
+          path: ${{ steps.run_tool.outputs.output_file }}
+          if-no-files-found: error
+          retention-days: 30
