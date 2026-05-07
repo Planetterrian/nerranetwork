@@ -1574,6 +1574,13 @@ def run(args: argparse.Namespace) -> None:
                 _script_word_count, _TARGET_WORDS,
             )
             metrics.record("script_below_target", True)
+        # Always log the raw word count + target so post-hoc audits can
+        # validate calibration without grepping workflow logs. The May
+        # 2026 Phase-3 recalibration was hard to validate post-merge
+        # because only the boolean was preserved; the raw counts now
+        # let us compute the actual/target ratio over time.
+        metrics.record("podcast_script_word_count", _script_word_count)
+        metrics.record("podcast_script_target_words", _TARGET_WORDS)
 
         # 8c. Pre-TTS duration estimate — skip obviously doomed episodes before
         #     burning TTS credits.  ~150 words/minute for podcast speech.
