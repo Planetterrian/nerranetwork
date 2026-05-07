@@ -62,8 +62,26 @@ def _strip_markdown(text: str) -> str:
     text = re.sub(r"__(.*?)__", r"\1", text)
     # Inline code
     text = re.sub(r"`([^`]+)`", r"\1", text)
-    # Markdown links → plain URL
-    text = re.sub(r"\[([^\]]+)\]\((https?://[^\)]+)\)", r"\1: \2", text)
+    # Markdown links → keep the LABEL only, drop the URL.
+    #
+    # Operator caught (Tesla Ep459-465 long-form, May 2-5 2026)
+    # YouTube rejecting every Tesla long-form upload with
+    # ``invalidDescription``. Tesla digests embed Google News redirect
+    # URLs of the form
+    # ``https://news.google.com/rss/articles/CBMimgFBVV95cUx...?oc=5``
+    # — 200+ char base64-encoded paths. Five such URLs in the body
+    # paragraphs trips YouTube's "looks-like-spam" classifier on
+    # ``body.snippet.description``. Shorts uploads (which use a
+    # separate metadata path with no body content) were unaffected.
+    #
+    # The chapters block + subscribe link + audio URL still ship
+    # clean URLs to listeners; readers don't lose navigation. The
+    # source citations remain in the digest .md / blog post / RSS,
+    # which is where readers actually click them.
+    text = re.sub(r"\[([^\]]+)\]\(https?://[^\)]+\)", r"\1", text)
+    # Belt-and-braces: strip any bare URL longer than 80 chars that
+    # survived (e.g. a non-markdown raw URL pasted into the digest).
+    text = re.sub(r"https?://[^\s)]{80,}", "", text)
     # Final defense-in-depth: drop any remaining ``<`` / ``>`` so
     # YouTube doesn't 400 on stray angle-bracket content (math like
     # ``<2030``, escaped speech tags that survived earlier passes,

@@ -2989,7 +2989,11 @@ def _publish_youtube(
             # ``reason`` (quotaExceeded / authError / etc.) — capture
             # both that and the generic str fallback.
             err_type = type(exc).__name__
-            err_msg = str(exc)[:300]
+            # 1000 chars (was 300) — YouTube's invalidDescription
+            # carries a ``locationType`` and the offending location at
+            # the END of the message; the prior cap was truncating
+            # exactly that detail when post-mortem debugging.
+            err_msg = str(exc)[:1000]
             err_status = getattr(exc, "status_code", None) or getattr(
                 getattr(exc, "resp", None), "status", None
             )
@@ -3050,9 +3054,11 @@ def _publish_youtube(
         except Exception as exc:
             logger.exception("YouTube Shorts publish failed: %s", exc)
             # Mirror the long-form error capture so metrics.json
-            # carries actionable context for the operator.
+            # carries actionable context for the operator. 1000 chars
+            # (was 300) — YouTube errors include the offending
+            # location at the END of the message.
             err_type = type(exc).__name__
-            err_msg = str(exc)[:300]
+            err_msg = str(exc)[:1000]
             err_status = getattr(exc, "status_code", None) or getattr(
                 getattr(exc, "resp", None), "status", None
             )

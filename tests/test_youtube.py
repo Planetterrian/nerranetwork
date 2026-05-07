@@ -60,6 +60,18 @@ def _make_config(**overrides):
 # ---------------------------------------------------------------------------
 
 def test_strip_markdown_removes_headers_bold_and_links():
+    """Markdown links are stripped to their LABEL ONLY (the URL is dropped).
+
+    Tesla Ep459-465 (May 2-5 2026) — every long-form upload failed with
+    ``invalidDescription`` because Tesla digests embed Google News
+    redirect URLs of the form
+    ``https://news.google.com/rss/articles/CBMimgFB...?oc=5`` (200+
+    char base64-encoded paths). YouTube's spam classifier flagged the
+    description, and Shorts (which use a separate metadata path
+    without body content) were unaffected. Drop the URL portion of
+    every markdown link so the description stays clean — readers
+    still get citation links via the .md / blog post / RSS, all of
+    which are unchanged."""
     raw = (
         "# Big news\n"
         "**Tesla** delivers on Q3.\n"
@@ -68,7 +80,43 @@ def test_strip_markdown_removes_headers_bold_and_links():
     out = vm._strip_markdown(raw)
     assert "**" not in out
     assert "#" not in out.split("\n")[0]
-    assert "https://example.com/post" in out
+    # Label survives, URL gone.
+    assert "the announcement" in out
+    assert "https://example.com" not in out
+
+
+def test_strip_markdown_drops_long_google_news_redirect_urls():
+    """Tesla Ep459-465 specific — the actual production trigger for the
+    May 2026 invalidDescription regression. Confirms a realistic
+    Google News redirect URL is removed from the body."""
+    raw = (
+        "1. **California Opens Roads to Autonomous Semi Trucks**: "
+        "Source: [Google News](https://news.google.com/rss/articles/"
+        "CBMimgFBVV95cUxNRWRNMzJUNTVYWURwdjh2ckxST2dpelFHSzBycFBsQXFD"
+        "eHI0S0RjREUza0I2TU5VNW9KWGhnVWJBOC1OX0VLXzBGZkVocFhiYzFyNmVp"
+        "TlRtSjBsUFlOMlloQ0lob2c4RlZYaHBLaUJCaTN3Z3dNakNDdy13TEU4TF80"
+        "eUJ0aTlOLVhnSHNxaGVXTWNCSktMQ013?oc=5)"
+    )
+    out = vm._strip_markdown(raw)
+    # The base64-looking redirect path must be gone.
+    assert "CBMimgFBVV95" not in out
+    # And the prose around it survives.
+    assert "California Opens Roads" in out
+    assert "Source: Google News" in out
+
+
+def test_strip_markdown_strips_bare_long_urls():
+    """Belt-and-braces: any non-markdown raw URL longer than 80 chars
+    also gets dropped, so a hand-written digest with a bare redirect
+    URL doesn't sneak past."""
+    raw = (
+        "See https://news.google.com/rss/articles/" + "x" * 200 + "?oc=5 "
+        "for context, but the short link https://x.com/y stays."
+    )
+    out = vm._strip_markdown(raw)
+    # Long URL gone; short URL survives.
+    assert "x" * 200 not in out
+    assert "https://x.com/y" in out
 
 
 def test_strip_markdown_drops_code_fences():
