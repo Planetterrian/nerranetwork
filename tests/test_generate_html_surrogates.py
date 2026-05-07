@@ -1,4 +1,4 @@
-"""Drift guard for the lone-surrogate scrubber in ``generate_html``.
+"""Drift guard for the lone-surrogate scrubber.
 
 Operator caught (UC + Tesla blog generation, May 7 2026) the daily site
 rebuild aborting with::
@@ -6,14 +6,16 @@ rebuild aborting with::
     UnicodeEncodeError: 'utf-8' codec can't encode characters in position
     73685-73686: surrogates not allowed
 
-at ``generate_html.py:1850`` (``out_path.write_text(html, encoding="utf-8")``).
+at ``generate_html.py`` (``out_path.write_text(html, encoding="utf-8")``).
 A single LLM-emitted lone UTF-16 surrogate killed the whole blog
 regeneration — losing every other show's blog post in the same run.
 
-The fix scrubs lone surrogates (U+D800–U+DFFF) at every HTML/XML write
-boundary in ``generate_html``. These tests pin that the scrubber exists
-and is correct; if the regex is removed or weakened, daily builds break
-silently the next time an LLM emits a malformed surrogate.
+The fix scrubs lone surrogates (U+D800–U+DFFF) at every text-write
+boundary across the pipeline. The canonical helper lives in
+``engine.utils.strip_lone_surrogates`` so every component that writes
+LLM-touched text (digests, TTS scripts, blog posts, RSS feeds, HTML)
+scrubs at the same boundary. ``generate_html._strip_lone_surrogates``
+is the legacy alias.
 """
 
 from __future__ import annotations
@@ -21,9 +23,22 @@ from __future__ import annotations
 
 class TestStripLoneSurrogates:
 
+    def test_helper_exists_in_engine_utils(self):
+        from engine.utils import strip_lone_surrogates
+        assert callable(strip_lone_surrogates)
+
     def test_helper_exists(self):
         from generate_html import _strip_lone_surrogates
         assert callable(_strip_lone_surrogates)
+
+    def test_engine_utils_and_generate_html_helpers_agree(self):
+        """generate_html re-exports engine.utils' helper, not a parallel
+        implementation. If a future refactor accidentally fork them, the
+        two scrubbers could drift and one of them would silently let
+        surrogates through."""
+        from engine.utils import strip_lone_surrogates as canonical
+        from generate_html import _strip_lone_surrogates as alias
+        assert alias is canonical
 
     def test_strips_high_surrogate(self):
         from generate_html import _strip_lone_surrogates

@@ -1337,9 +1337,12 @@ def run(args: argparse.Namespace) -> None:
     x_thread = scrub_scaffold(x_thread)
     x_thread = transform_daily_body(x_thread, slug=getattr(config, "slug", ""))
 
-    # Save digest to file
+    # Save digest to file. Strip lone UTF-16 surrogates (the LLM
+    # occasionally emits one); ``write_text`` would otherwise abort the
+    # whole pipeline on ``UnicodeEncodeError``. See engine.utils.
+    from engine.utils import strip_lone_surrogates as _scrub
     digest_md = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}.md"
-    digest_md.write_text(x_thread, encoding="utf-8")
+    digest_md.write_text(_scrub(x_thread), encoding="utf-8")
     logger.info("Digest saved: %s", digest_md)
 
     # Narrative-mode shows: mark the topic as produced in the queue so
@@ -1641,8 +1644,9 @@ def run(args: argparse.Namespace) -> None:
         podcast_script = _re.sub(r"\n{3,}", "\n\n", podcast_script).strip()
 
         # Save TTS-ready script for debugging pronunciation/intro issues
+        from engine.utils import strip_lone_surrogates as _scrub
         tts_script_path = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}_tts.txt"
-        tts_script_path.write_text(podcast_script, encoding="utf-8")
+        tts_script_path.write_text(_scrub(podcast_script), encoding="utf-8")
         logger.info("TTS script saved: %s", tts_script_path)
 
         # 9. TTS — provider-aware (ElevenLabs default; Grok for Russian shows)
@@ -2186,7 +2190,8 @@ def run(args: argparse.Namespace) -> None:
             _blog_dir = PROJECT_ROOT / "blog" / config.slug
             _blog_dir.mkdir(parents=True, exist_ok=True)
             _blog_path = _blog_dir / f"ep{episode_num:03d}.html"
-            _blog_path.write_text(_blog_html, encoding="utf-8")
+            from engine.utils import strip_lone_surrogates as _scrub
+            _blog_path.write_text(_scrub(_blog_html), encoding="utf-8")
             logger.info("Blog post written: %s", _blog_path)
 
             # Regenerate blog index (per-show + network)

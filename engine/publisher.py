@@ -1616,6 +1616,10 @@ def update_blog_rss(
 """
 
     rss_path.parent.mkdir(parents=True, exist_ok=True)
-    rss_path.write_text(rss_xml, encoding="utf-8")
+    # Scrub lone UTF-16 surrogates the LLM occasionally emits — see
+    # engine.utils.strip_lone_surrogates. Without this, a single bad
+    # code point in a blog hook would abort RSS feed regeneration.
+    from engine.utils import strip_lone_surrogates as _scrub
+    rss_path.write_text(_scrub(rss_xml), encoding="utf-8")
     logger.info("Blog RSS written: %s (%d entries)", rss_path, len(entries))
     return rss_path

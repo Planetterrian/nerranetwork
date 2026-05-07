@@ -2,8 +2,12 @@ name: Daily Episode Review
 
 on:
   schedule:
-    # Run at 12:00 UTC — after all shows have finished (last show: TST at 9:30 UTC + 45min pipeline)
-    - cron: '0 12 * * *'
+    # Run at 12:15 UTC — after all shows have finished. May 2026 schedule
+    # overhaul moved the last show (UC) to 11:30 UTC + ~30 min pipeline ≈
+    # 12:00 UTC; an earlier 12:00 trigger left no buffer for GitHub Actions
+    # cron jitter and was racing UC every weekday. 15 extra minutes of
+    # slack stops the review from declaring UC "missed" on a normal day.
+    - cron: '15 12 * * *'
 
   workflow_dispatch:
     inputs:
