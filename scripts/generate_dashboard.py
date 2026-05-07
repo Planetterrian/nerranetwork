@@ -15,7 +15,7 @@ Landmines covered (per CLAUDE.md "Known Landmines"):
   6  - *_formatted.md duplicate files absent
   8  - publishing.x_enabled is a boolean on every show
   9  - TTS voice settings consistency vs shows/_defaults.yaml
-  11 - every show resolves tts.provider == elevenlabs
+  11 - every show resolves tts.provider == grok (network default since May 2026)
   12 - every summaries JSON lives under digests/<slug>/
 
 Items 7 (NEWSAPI dead secret) and 10 (early-episode deletion) are deliberately
@@ -377,27 +377,37 @@ def item_8_feature_flags(shows: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 def item_11_tts_provider(shows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Network-wide TTS provider invariant.
+
+    All 11 shows migrated to Grok TTS in the May 2026 full-network
+    flip (CLAUDE.md landmine #17). ElevenLabs is the rollback path,
+    not the live provider — accidental drift back to it would be a
+    cost regression (Grok is ~36× cheaper per character) and a voice-
+    consistency regression (the entire English network shares one
+    custom-trained Grok voice). Pin grok as the expected provider so
+    a copy-paste from old YAML lights up the dashboard.
+    """
     wrong = []
     for s in shows:
         cfg = s.get("cfg")
         if not cfg:
             continue
         prov = (cfg.tts.provider or "").lower()
-        if prov != "elevenlabs":
+        if prov != "grok":
             wrong.append({"slug": s["slug"], "provider": prov or "<unset>"})
     if wrong:
         return _mk(
             "item_11_tts_provider",
-            "All shows use ElevenLabs TTS",
+            "All shows use Grok TTS",
             "fail",
-            f"{len(wrong)} show(s) do not resolve to elevenlabs",
+            f"{len(wrong)} show(s) do not resolve to grok",
             {"wrong": wrong},
         )
     return _mk(
         "item_11_tts_provider",
-        "All shows use ElevenLabs TTS",
+        "All shows use Grok TTS",
         "ok",
-        f"All {len(shows)} shows resolve tts.provider == elevenlabs.",
+        f"All {len(shows)} shows resolve tts.provider == grok.",
     )
 
 
