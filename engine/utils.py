@@ -558,3 +558,31 @@ def strip_speech_tags(text: str) -> str:
     # which leave a stray double-newline-with-space artifact.
     out = re.sub(r"\n[ \t]+\n", "\n\n", out)
     return out
+
+
+# ---------------------------------------------------------------------------
+# Lone-surrogate scrubbing
+# ---------------------------------------------------------------------------
+#
+# Operator caught (UC + Tesla blog generation, May 7 2026) the daily site
+# rebuild aborting with ``UnicodeEncodeError: surrogates not allowed``
+# inside ``Path.write_text(encoding="utf-8")``. An LLM-rendered string
+# carried a lone UTF-16 surrogate code point (U+D800–U+DFFF), the UTF-8
+# encoder refuses them, and a single bad code point then aborted the
+# entire blog regeneration — losing every other show's blog post in the
+# same run.
+#
+# The scrubber is the same regex used at every HTML/XML write boundary
+# in ``generate_html.py``. Promoted here from that module so every
+# component that writes LLM-touched text to disk (digest .md, TTS
+# script, blog post HTML, blog RSS feeds) can scrub at the boundary.
+_LONE_SURROGATE_RE = re.compile(r"[\ud800-\udfff]")
+
+
+def strip_lone_surrogates(text: str) -> str:
+    """Remove unpaired UTF-16 surrogate code points (U+D800–U+DFFF).
+
+    Properly paired emoji are unaffected — they're a single non-BMP
+    code point in Python strings, not two separate surrogates.
+    """
+    return _LONE_SURROGATE_RE.sub("", text)

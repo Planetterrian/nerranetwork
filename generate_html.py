@@ -15,29 +15,22 @@ Usage:
 
 import argparse
 import os
-import re
 import sys
 from pathlib import Path
 from urllib.parse import quote
 
 from jinja2 import Environment, FileSystemLoader
 
+# Lone-surrogate scrubber lives in engine.utils so every component that
+# writes LLM-touched text to disk (digests, TTS scripts, blog posts,
+# RSS feeds, network HTML) scrubs at the same boundary. See utils.py
+# for the May 7 2026 operator-caught regression that prompted this.
+from engine.utils import strip_lone_surrogates as _strip_lone_surrogates
+
 ROOT = Path(__file__).resolve().parent
 TEMPLATES_DIR = ROOT / "templates"
 SHOWS_DIR = ROOT / "shows"
 GITHUB_RAW = "https://nerranetwork.com"
-
-# Operator caught (UC + Tesla, May 7 2026) blog generation aborting on
-# `UnicodeEncodeError: surrogates not allowed` because an LLM-rendered
-# string carried an unpaired UTF-16 surrogate (U+D800–U+DFFF). Python's
-# UTF-8 encoder rejects them, and a single bad code point would kill the
-# whole site rebuild — losing every blog post for every show in the run.
-# Scrub lone surrogates at the boundary of every HTML/XML file write.
-_LONE_SURROGATE_RE = re.compile(r"[\ud800-\udfff]")
-
-
-def _strip_lone_surrogates(text: str) -> str:
-    return _LONE_SURROGATE_RE.sub("", text)
 
 # Channel handles for the YouTube CTA on show pages. The handle is
 # determined per-show by youtube.channel in the YAML (en → @NerraNetwork,
