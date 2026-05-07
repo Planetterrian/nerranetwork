@@ -15,6 +15,7 @@ Usage:
 
 import argparse
 import os
+import re
 import sys
 from pathlib import Path
 from urllib.parse import quote
@@ -25,6 +26,18 @@ ROOT = Path(__file__).resolve().parent
 TEMPLATES_DIR = ROOT / "templates"
 SHOWS_DIR = ROOT / "shows"
 GITHUB_RAW = "https://nerranetwork.com"
+
+# Operator caught (UC + Tesla, May 7 2026) blog generation aborting on
+# `UnicodeEncodeError: surrogates not allowed` because an LLM-rendered
+# string carried an unpaired UTF-16 surrogate (U+D800–U+DFFF). Python's
+# UTF-8 encoder rejects them, and a single bad code point would kill the
+# whole site rebuild — losing every blog post for every show in the run.
+# Scrub lone surrogates at the boundary of every HTML/XML file write.
+_LONE_SURROGATE_RE = re.compile(r"[\ud800-\udfff]")
+
+
+def _strip_lone_surrogates(text: str) -> str:
+    return _LONE_SURROGATE_RE.sub("", text)
 
 # Channel handles for the YouTube CTA on show pages. The handle is
 # determined per-show by youtube.channel in the YAML (en → @NerraNetwork,
@@ -1434,7 +1447,7 @@ def generate_summaries_page(slug, *, dry_run=False):
         print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
         return None
 
-    out_path.write_text(html, encoding="utf-8")
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
     print(f"Wrote {out_path} ({len(html):,} bytes)")
     return out_path
 
@@ -1579,7 +1592,7 @@ def generate_show_page(slug, *, dry_run=False):
         print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
         return None
 
-    out_path.write_text(html, encoding="utf-8")
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
     print(f"Wrote {out_path} ({len(html):,} bytes)")
     return out_path
 
@@ -1735,7 +1748,7 @@ def generate_network_page(*, dry_run=False):
         print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
         return None
 
-    out_path.write_text(html, encoding="utf-8")
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
     print(f"Wrote {out_path} ({len(html):,} bytes)")
     return out_path
 
@@ -1847,7 +1860,7 @@ def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None):
             print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
         else:
             blog_dir.mkdir(parents=True, exist_ok=True)
-            out_path.write_text(html, encoding="utf-8")
+            out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
             print(f"Wrote {out_path}")
 
         results.append((meta, out_path))
@@ -1897,7 +1910,7 @@ def generate_blog_index(slug, *, dry_run=False, posts=None):
         return None
 
     blog_dir.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(html, encoding="utf-8")
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
     print(f"Wrote {out_path}")
     return out_path
 
@@ -1946,7 +1959,7 @@ def generate_network_blog_index(*, dry_run=False, all_posts=None):
         return None
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(html, encoding="utf-8")
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
     print(f"Wrote {out_path}")
     return out_path
 
@@ -2091,7 +2104,7 @@ def generate_sitemap(*, dry_run=False):
         print(f"[dry-run] Would write {out_path} ({len(urls)} URLs)")
         return None
 
-    out_path.write_text(xml, encoding="utf-8")
+    out_path.write_text(_strip_lone_surrogates(xml), encoding="utf-8")
     print(f"Wrote {out_path} ({len(urls)} URLs)")
     return out_path
 
@@ -2125,7 +2138,7 @@ def generate_404_page(*, dry_run=False):
         print(f"[dry-run] Would write {out_path}")
         return None
 
-    out_path.write_text(html, encoding="utf-8")
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
     print(f"Wrote {out_path}")
     return out_path
 
@@ -2156,7 +2169,7 @@ def generate_start_here_page(*, dry_run=False):
         print(f"[dry-run] Would write {out_path}")
         return None
 
-    out_path.write_text(html, encoding="utf-8")
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
     print(f"Wrote {out_path}")
     return out_path
 
@@ -2218,7 +2231,7 @@ def generate_about_page(*, dry_run=False):
         print(f"[dry-run] Would write {out_path}")
         return None
 
-    out_path.write_text(html, encoding="utf-8")
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
     print(f"Wrote {out_path}")
     return out_path
 
@@ -2251,7 +2264,7 @@ def generate_press_page(*, dry_run=False):
         print(f"[dry-run] Would write {out_path}")
         return None
 
-    out_path.write_text(html, encoding="utf-8")
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
     print(f"Wrote {out_path}")
     return out_path
 
@@ -2287,7 +2300,7 @@ def generate_editorial_page(*, dry_run=False):
         print(f"[dry-run] Would write {out_path}")
         return None
 
-    out_path.write_text(html, encoding="utf-8")
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
     print(f"Wrote {out_path}")
     return out_path
 
@@ -2318,7 +2331,7 @@ def generate_contact_page(*, dry_run=False):
         print(f"[dry-run] Would write {out_path}")
         return None
 
-    out_path.write_text(html, encoding="utf-8")
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
     print(f"Wrote {out_path}")
     return out_path
 
@@ -2349,7 +2362,7 @@ def generate_faq_page(*, dry_run=False):
         print(f"[dry-run] Would write {out_path}")
         return None
 
-    out_path.write_text(html, encoding="utf-8")
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
     print(f"Wrote {out_path}")
     return out_path
 
@@ -2380,7 +2393,7 @@ def generate_how_to_listen_page(*, dry_run=False):
         print(f"[dry-run] Would write {out_path}")
         return None
 
-    out_path.write_text(html, encoding="utf-8")
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
     print(f"Wrote {out_path}")
     return out_path
 
@@ -2423,7 +2436,7 @@ def generate_player_page(*, dry_run=False):
         print(f"[dry-run] Would write {out_path}")
         return None
 
-    out_path.write_text(html, encoding="utf-8")
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
     print(f"Wrote {out_path}")
     return out_path
 
