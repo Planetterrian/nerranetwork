@@ -114,6 +114,54 @@ class TestExtractBoldHeadlines:
         headlines = _extract_bold_headlines(text)
         assert len(headlines) == 1
 
+    def test_prose_section_falls_back_to_first_sentence(self):
+        """Operator caught (MAB Ep031, May 7 2026) ``The Big Story``
+        section emitting zero headlines because it's pure prose — no
+        bold, no numbered list, no sub-headers. Cross-episode dedup
+        then missed yesterday's mention and the LLM retold the same
+        story (Perplexity Personal Computer) in two blocks of one
+        episode. The prose-fallback captures the topic via the first
+        substantive sentence."""
+        text = (
+            "Google DeepMind just unveiled Aletheia, an AI agent that "
+            "moves from competition-style math problems to professional "
+            "research-level discoveries. It iterates on proofs in plain "
+            "language and verifies them against known facts."
+        )
+        headlines = _extract_bold_headlines(text)
+        assert len(headlines) == 1
+        assert "Google DeepMind" in headlines[0]
+        assert "Aletheia" in headlines[0]
+
+    def test_prose_fallback_strips_inline_markdown(self):
+        """First-sentence fallback must clean up residual inline bold /
+        italic / code so the dedup signature is plain text."""
+        text = (
+            "OpenAI announced **Codex** today, a new *coding* assistant "
+            "that integrates with `vscode`. It runs locally."
+        )
+        headlines = _extract_bold_headlines(text)
+        # Either the bold ``Codex`` is captured by the bold pass (if the
+        # 10-char min still matches) OR the prose fallback fires. Either
+        # way the topic gets a signature; the test pins SOMETHING is
+        # extracted so cross-episode dedup never silently sees zero.
+        assert len(headlines) >= 1
+        # No inline markdown leaks through the prose path.
+        for h in headlines:
+            assert "*" not in h
+            assert "`" not in h
+
+    def test_prose_fallback_handles_cyrillic(self):
+        """Russian shows (FP, PR) might also benefit from the fallback —
+        confirm the regex anchors on Cyrillic capitals too."""
+        text = (
+            "Канадский фондовый рынок открылся ростом сегодня утром, "
+            "несмотря на падение технологического сектора в США."
+        )
+        headlines = _extract_bold_headlines(text)
+        assert len(headlines) == 1
+        assert "Канадский" in headlines[0]
+
 
 class TestExtractQuoteAuthor:
     def test_standard_format(self):

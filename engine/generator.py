@@ -122,7 +122,13 @@ def _call_grok(
     meta: Dict[str, Any] = {"provider": "openai_compat", "model": model}
     finish_reason = getattr(resp.choices[0], "finish_reason", None)
     meta["finish_reason"] = finish_reason
-    if finish_reason == "length":
+    # Only warn on length-truncation when the caller is actually trying
+    # to produce content. Pre-flight LLM ping uses max_tokens=10 by
+    # design — "truncated" is the expected outcome, not a regression.
+    # Threshold of 200 is well below any legitimate digest/podcast
+    # completion (smallest digest path uses >= 4000) but above every
+    # health-check / classifier call we make today.
+    if finish_reason == "length" and max_tokens >= 200:
         logger.warning(
             "LLM response truncated (finish_reason=length, max_tokens=%d) — "
             "output may end mid-sentence",

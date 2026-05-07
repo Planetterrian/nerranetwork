@@ -383,6 +383,27 @@ def _extract_bold_headlines(text: str, max_items: int = 20) -> List[str]:
             if len(headlines) >= max_items:
                 return headlines
 
+    # Fallback 3: pure prose sections (e.g. MAB's "The Big Story" — no
+    # bold, no numbered list, no sub-headers, just a paragraph). Use
+    # the first substantive sentence as a topic signature so cross-
+    # episode dedup catches "we covered this story yesterday" via
+    # proper-noun overlap. Operator caught (MAB Ep031, May 7 2026)
+    # the LLM retelling the Perplexity Personal Computer story in
+    # blocks 2 AND 4 of the same episode — cross-episode dedup
+    # silently missed yesterday's mention because The Big Story
+    # extracts to zero headlines.
+    if not headlines:
+        # Strip leading list markers / metadata lines that aren't real
+        # prose; first sentence ending in . ! ? wins.
+        cleaned = re.sub(r"^\s*(\d+\.\s+|[-*]\s+)", "", text, flags=re.MULTILINE)
+        sentence_match = re.search(r"([A-ZА-Я][^.!?\n]{30,200}[.!?])", cleaned)
+        if sentence_match:
+            t = sentence_match.group(1).strip()
+            # Strip inline markdown that survived (bold, italic, code).
+            t = re.sub(r"[*_`]+", "", t).strip()
+            if t and t not in headlines:
+                headlines.append(t)
+
     if not headlines:
         logger.warning(
             "Could not extract any headlines from digest section (%d chars). "
