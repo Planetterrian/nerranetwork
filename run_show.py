@@ -2843,6 +2843,17 @@ def _publish_youtube(
         except Exception as exc:  # pragma: no cover — best-effort
             logger.warning("Pexels scene fetch failed: %s", exc)
 
+    # Pull per-story headlines from the digest once, then reuse for both
+    # 16:9 and 9:16 prompt builds. Operator caught (Tesla long-form +
+    # Shorts, May 7 2026) every Grok slide rendering the same headline
+    # because every prompt previously embedded the lone episode hook.
+    # Per-scene headlines = visually diverse slideshow.
+    try:
+        from engine.grok_imagine import extract_story_headlines as _extract_headlines
+        _scene_contexts = _extract_headlines(digest_text or "", max_count=12)
+    except Exception:  # pragma: no cover — best-effort
+        _scene_contexts = []
+
     def _run_grok_path(*, aspect: str, label_suffix: str) -> "list[Path]":
         from engine.grok_imagine import (
             build_image_prompts,
@@ -2858,6 +2869,7 @@ def _publish_youtube(
                 show_descriptor=getattr(
                     yt, "grok_image_descriptor", "photorealistic news photo",
                 ),
+                per_scene_contexts=_scene_contexts,
             )
             result = fetch_scene_images_grok(
                 work_dir=work_dir,

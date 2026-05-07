@@ -95,6 +95,190 @@ class TestBuildImagePrompts:
         )
         assert prompts and "tesla car" in prompts[0]
 
+    def test_no_text_hint_blocks_banner_overlay(self):
+        """Operator caught (Tesla YouTube long-form + Shorts, May 7
+        2026) Grok Imagine rendering the prompt's headline as a chyron
+        across every slide. Every prompt now ships an explicit
+        ``no text or words`` instruction to suppress the overlay."""
+        from engine.grok_imagine import build_image_prompts
+        prompts = build_image_prompts(
+            hook="hook", image_queries=["q1", "q2"], count=2,
+        )
+        for p in prompts:
+            assert "no text" in p or "no words" in p
+
+
+# ---------------------------------------------------------------------------
+# Per-scene context diversity (May 2026 — fix for repeated banner overlay)
+# ---------------------------------------------------------------------------
+
+
+class TestPerSceneContexts:
+    """When ``per_scene_contexts`` is passed, each prompt uses a different
+    headline as its image context. This directly fixes the operator-
+    reported bug where every Grok-generated slide rendered the same
+    hook as a banner because every prompt had embedded the same hook.
+
+    The legacy single-hook path (no per_scene_contexts argument) still
+    works — verified by the older ``TestBuildImagePrompts`` cases."""
+
+    def test_each_prompt_uses_distinct_context(self):
+        from engine.grok_imagine import build_image_prompts
+        contexts = [
+            "California opens roads to autonomous semi trucks",
+            "Tesla sales rebound across Europe",
+            "BYD overtakes Tesla in overseas markets",
+        ]
+        prompts = build_image_prompts(
+            hook="lead hook line",
+            image_queries=["tesla car", "tesla factory", "cybertruck"],
+            count=3,
+            per_scene_contexts=contexts,
+        )
+        # Each headline appears in exactly one prompt, in document order.
+        for ctx, prompt in zip(contexts, prompts):
+            assert ctx in prompt
+        # The lone episode hook is NOT repeated as a banner across slides.
+        assert sum(1 for p in prompts if "lead hook line" in p) == 0
+
+    def test_contexts_cycle_when_count_exceeds_list(self):
+        """Eight images, three headlines: the headline list cycles
+        (image 4 reuses headline 1, image 5 reuses headline 2, …).
+        Pairing recycled queries with different contexts still yields
+        distinct prompt strings."""
+        from engine.grok_imagine import build_image_prompts
+        prompts = build_image_prompts(
+            hook="h",
+            image_queries=["a", "b", "c"],
+            count=8,
+            per_scene_contexts=["story-1", "story-2", "story-3"],
+        )
+        assert len(prompts) == 8
+        assert len(set(prompts)) == 8
+
+    def test_empty_contexts_falls_back_to_hook(self):
+        """Backward-compat — runs without per_scene_contexts (or with an
+        empty list) keep the legacy single-hook behaviour so existing
+        callers never regress."""
+        from engine.grok_imagine import build_image_prompts
+        prompts = build_image_prompts(
+            hook="lead hook",
+            image_queries=["q"],
+            count=1,
+            per_scene_contexts=[],
+        )
+        assert prompts and "lead hook" in prompts[0]
+
+    def test_none_contexts_falls_back_to_hook(self):
+        from engine.grok_imagine import build_image_prompts
+        prompts = build_image_prompts(
+            hook="lead hook",
+            image_queries=["q"],
+            count=1,
+            per_scene_contexts=None,
+        )
+        assert prompts and "lead hook" in prompts[0]
+
+
+# ---------------------------------------------------------------------------
+# Story-headline extraction from digest markdown
+# ---------------------------------------------------------------------------
+
+
+class TestExtractStoryHeadlines:
+    """Reads per-story headlines straight out of the show's digest
+    markdown so the YouTube slideshow can show one image per story."""
+
+    def test_tesla_format_blockquote_plus_numbered_bold(self):
+        from engine.grok_imagine import extract_story_headlines
+        digest = (
+            "# Tesla Shorts Time\n"
+            "**REAL-TIME TSLA price:** $394.89\n"
+            "> **California has opened its roads to autonomous semi trucks.**\n"
+            "---\n"
+            "### Top 10 News Items\n"
+            "1. **California Opens Roads to Autonomous Semi Trucks**: details\n"
+            "2. **Tesla Sales Up in Europe With Several Countries Doubling Sales**: details\n"
+            "3. **Tesla Model 3 Costs $8,000 Less in Canada Than in the U.S.**: details\n"
+        )
+        out = extract_story_headlines(digest, max_count=12)
+        # Lead hook first, then the three numbered headlines, in order.
+        assert out[0].startswith("California has opened")
+        assert "Tesla Sales Up in Europe" in out[1] or "Tesla Sales Up in Europe" in " ".join(out)
+        assert any("Tesla Model 3 Costs" in h for h in out)
+
+    def test_omni_view_numbered_h3_format(self):
+        from engine.grok_imagine import extract_story_headlines
+        digest = (
+            "# Omni View\n"
+            "**HOOK:** Pakistan bombs Kabul.\n"
+            "## Top stories (5)\n"
+            "### 1) Pakistan launches airstrikes on Afghanistan\n"
+            "details\n"
+            "### 2) UN convenes emergency session\n"
+            "details\n"
+        )
+        out = extract_story_headlines(digest, max_count=5)
+        assert any("Pakistan launches airstrikes" in h for h in out)
+        assert any("UN convenes emergency session" in h for h in out)
+
+    def test_mab_bracketed_titles(self):
+        from engine.grok_imagine import extract_story_headlines
+        digest = (
+            "**[Xbox Gets Its Own AI Sidekick: Gaming Just Got Smarter]: AI | The Verge**\n"
+            "**[Google Releases Free Image Tools for Students]: AI | Google Blog**\n"
+        )
+        out = extract_story_headlines(digest, max_count=5)
+        assert any("Xbox" in h for h in out)
+        assert any("Google" in h for h in out)
+
+    def test_dedupes_case_insensitively(self):
+        """Tesla digests sometimes carry the same story in two sections
+        (Top-10 list AND X Takeover). Don't generate two slides for the
+        same story."""
+        from engine.grok_imagine import extract_story_headlines
+        digest = (
+            "1. **Tesla Sales Up In Europe**: details\n"
+            "2. **Tesla Sales Up in Europe**: same story, different casing\n"
+            "3. **BYD Overtakes Tesla**: details\n"
+        )
+        out = extract_story_headlines(digest, max_count=12)
+        lower = [h.lower() for h in out]
+        assert lower.count("tesla sales up in europe") == 1
+        assert any("byd overtakes tesla" in h.lower() for h in out)
+
+    def test_respects_max_count(self):
+        from engine.grok_imagine import extract_story_headlines
+        digest = "\n".join(
+            f"{i}. **Story number {i}**: details"
+            for i in range(1, 20)
+        )
+        out = extract_story_headlines(digest, max_count=5)
+        assert len(out) == 5
+
+    def test_empty_digest_returns_empty_list(self):
+        from engine.grok_imagine import extract_story_headlines
+        assert extract_story_headlines("", max_count=12) == []
+
+    def test_no_matching_structure_returns_empty(self):
+        from engine.grok_imagine import extract_story_headlines
+        digest = "Plain prose with no markdown structure at all."
+        assert extract_story_headlines(digest, max_count=12) == []
+
+    def test_drops_too_short_and_too_long_headlines(self):
+        """Filter out single-word noise and absurdly long lines that
+        would blow up an image prompt's token budget."""
+        from engine.grok_imagine import extract_story_headlines
+        digest = (
+            "1. **Yes**: too short\n"
+            f"2. **{'x' * 250}**: too long\n"
+            "3. **Tesla unveils new robotaxi service**: keep\n"
+        )
+        out = extract_story_headlines(digest, max_count=10)
+        # Only the legitimate headline survives.
+        assert len(out) == 1
+        assert "Tesla unveils new robotaxi" in out[0]
+
 
 # ---------------------------------------------------------------------------
 # Cost table — pin the May 2026 published prices
