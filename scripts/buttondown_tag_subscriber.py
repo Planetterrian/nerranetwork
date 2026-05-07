@@ -8,6 +8,8 @@ Used to:
   - Add an existing subscriber to a new show's mailing list without
     asking them to re-subscribe.
   - Audit which shows a subscriber is on, by passing ``--list``.
+  - Audit the full subscriber roster across the network with
+    ``--list-all`` (optionally filtered to one show with ``--show``).
 
 Reads ``BUTTONDOWN_API_KEY`` from the environment. Tag values come from
 each show's ``newsletter.tag`` in ``shows/<slug>.yaml``.
@@ -21,12 +23,21 @@ Usage::
     python scripts/buttondown_tag_subscriber.py user@example.com \\
         --show tesla --show fascinating_frontiers
 
-    # Print what tags they have today
+    # Print what tags one user has today
     python scripts/buttondown_tag_subscriber.py user@example.com --list
 
     # Remove the user from a show's mailing list
     python scripts/buttondown_tag_subscriber.py user@example.com \\
         --show tesla --remove
+
+    # Print the full roster: every subscriber + their tags
+    python scripts/buttondown_tag_subscriber.py --list-all
+
+    # Print only subscribers on a specific show's tag
+    python scripts/buttondown_tag_subscriber.py --list-all --show tesla
+
+    # CSV output (for spreadsheet import)
+    python scripts/buttondown_tag_subscriber.py --list-all --csv > roster.csv
 
 The Buttondown API key needs ``subscribers:read`` and
 ``subscribers:write`` permissions (the default API key has both).
@@ -109,6 +120,96 @@ def _create_subscriber(email: str, tags: List[str], api_key: str) -> dict:
     return resp.json() or {}
 
 
+def _list_all_subscribers(api_key: str) -> List[dict]:
+    """Return every subscriber Buttondown has on file (paginated).
+
+    Buttondown caps page size at 100. We follow the cursor-style
+    ``next`` URL the API returns until exhausted. Network is on the
+    order of a few hundred subscribers per show today; even if that
+    grows 100x this is still cheap (a handful of HTTP GETs cached
+    in-memory).
+    """
+    subs: List[dict] = []
+    url: Optional[str] = f"{BUTTONDOWN_API_BASE}/subscribers"
+    params: Optional[Dict[str, str]] = {"page_size": "100"}
+    while url:
+        resp = requests.get(
+            url,
+            headers={"Authorization": f"Token {api_key}"},
+            params=params,
+            timeout=30,
+        )
+        resp.raise_for_status()
+        payload = resp.json() or {}
+        subs.extend(payload.get("results") or [])
+        url = payload.get("next") or None
+        # The ``next`` URL is fully qualified — the server already
+        # encoded the cursor as a query arg. Drop our local params
+        # so we don't accidentally override page_size on subsequent
+        # requests.
+        params = None
+    return subs
+
+
+def _print_roster(
+    subs: List[dict],
+    *,
+    filter_tag: Optional[str] = None,
+    csv: bool = False,
+) -> None:
+    """Pretty-print all subscribers with their Buttondown tags.
+
+    *filter_tag*: when set, only subscribers whose ``tags`` array
+    contains this exact string are shown. Useful for "who's on Tesla
+    Shorts Time" queries.
+
+    *csv*: emit machine-readable comma-separated rows (email, type,
+    tag1;tag2;…) for spreadsheet import.
+    """
+    rows: List[tuple[str, str, List[str]]] = []
+    for s in subs:
+        email = (s.get("email_address") or s.get("email") or "").strip()
+        if not email:
+            continue
+        sub_type = (s.get("type") or "regular").strip()
+        tags = sorted(s.get("tags") or [])
+        if filter_tag and filter_tag not in tags:
+            continue
+        rows.append((email, sub_type, tags))
+
+    rows.sort(key=lambda r: r[0].lower())
+
+    if csv:
+        # Emit a header row so the file is self-describing on import.
+        print("email,type,tags")
+        for email, sub_type, tags in rows:
+            # Use ``;`` between tags so the row stays one column.
+            print(f"{email},{sub_type},{';'.join(tags)}")
+        return
+
+    if not rows:
+        if filter_tag:
+            print(f"No subscribers tagged {filter_tag!r}.")
+        else:
+            print("No subscribers on file.")
+        return
+
+    # Table output. Column widths from the data so the email column
+    # doesn't truncate; tags wrap visually but stay on one line.
+    email_w = max(len("EMAIL"), max(len(r[0]) for r in rows))
+    type_w = max(len("TYPE"), max(len(r[1]) for r in rows))
+    print(f"{'EMAIL':<{email_w}}  {'TYPE':<{type_w}}  TAGS")
+    print(f"{'-' * email_w}  {'-' * type_w}  {'-' * 4}")
+    for email, sub_type, tags in rows:
+        tag_str = ", ".join(tags) if tags else "(none)"
+        print(f"{email:<{email_w}}  {sub_type:<{type_w}}  {tag_str}")
+    print()
+    if filter_tag:
+        print(f"Total: {len(rows)} subscriber(s) tagged {filter_tag!r}.")
+    else:
+        print(f"Total: {len(rows)} subscriber(s).")
+
+
 def _patch_subscriber_tags(sub_id: str, tags: List[str], api_key: str) -> dict:
     """Replace a subscriber's tag list."""
     resp = requests.patch(
@@ -129,12 +230,20 @@ def _patch_subscriber_tags(sub_id: str, tags: List[str], api_key: str) -> dict:
 
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    parser.add_argument("email", help="Subscriber email address")
+    parser.add_argument(
+        "email",
+        nargs="?",
+        default=None,
+        help="Subscriber email address (omit when using --list-all).",
+    )
     parser.add_argument(
         "--show",
         action="append",
         default=[],
-        help="Show slug to tag (can pass multiple). Conflicts with --all.",
+        help=(
+            "Show slug to tag (can pass multiple). With --list-all, "
+            "filters the roster to subscribers tagged for that show."
+        ),
     )
     parser.add_argument(
         "--all",
@@ -152,6 +261,20 @@ def main(argv: Optional[List[str]] = None) -> int:
         help="Print the subscriber's current tags and exit.",
     )
     parser.add_argument(
+        "--list-all",
+        action="store_true",
+        help=(
+            "Print every Buttondown subscriber and the tags they have. "
+            "With --show, filters to one show's tag. With --csv, emits "
+            "comma-separated rows for spreadsheet import."
+        ),
+    )
+    parser.add_argument(
+        "--csv",
+        action="store_true",
+        help="Use CSV output for --list-all (defaults to a pretty table).",
+    )
+    parser.add_argument(
         "--api-key",
         default=os.getenv("BUTTONDOWN_API_KEY", "").strip(),
         help="Buttondown API key (defaults to BUTTONDOWN_API_KEY env var).",
@@ -163,6 +286,36 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 2
 
     show_tags = _load_show_tags()
+
+    # Bulk roster path — short-circuits the per-email flow.
+    if args.list_all:
+        if args.email:
+            print("Error: --list-all takes no email argument.", file=sys.stderr)
+            return 2
+        filter_tag: Optional[str] = None
+        if args.show:
+            if len(args.show) != 1:
+                print(
+                    "Error: --list-all --show takes exactly one show slug.",
+                    file=sys.stderr,
+                )
+                return 2
+            slug = args.show[0]
+            if slug not in show_tags:
+                print(f"Unknown show slug: {slug!r}", file=sys.stderr)
+                print(f"Known: {sorted(show_tags)}", file=sys.stderr)
+                return 2
+            filter_tag = show_tags[slug]
+        subs = _list_all_subscribers(args.api_key)
+        _print_roster(subs, filter_tag=filter_tag, csv=args.csv)
+        return 0
+
+    if not args.email:
+        print(
+            "Error: subscriber email is required (or pass --list-all).",
+            file=sys.stderr,
+        )
+        return 2
 
     # Resolve which tags the operator wants to mutate.
     if args.list:
