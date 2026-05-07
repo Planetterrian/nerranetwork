@@ -1,4 +1,65 @@
+# Nerra Network — robots.txt
+# Updated May 2026 (Phase 5 of the strategic audit) to declare a
+# deliberate stance for AI training crawlers and to block internal
+# admin / raw-output paths from search-engine indexing.
+
+# Default: allow general-purpose search crawlers everywhere except
+# the internal admin + raw-output paths below.
 User-agent: *
 Allow: /
+Disallow: /management.html
+Disallow: /api/
+Disallow: /digests/
+
+# AI training crawlers — Nerra Network is an AI-narrated network
+# that already discloses its use of AI publicly. We allow these
+# crawlers to index content for retrieval-augmented search use
+# (Perplexity, ChatGPT browsing, Claude search) but disallow
+# bulk training-data ingestion. This stance is deliberate; review
+# annually as model providers evolve their crawler taxonomies.
+
+# OpenAI — separate crawlers for training vs. real-time browsing.
+User-agent: GPTBot
+Disallow: /
+User-agent: OAI-SearchBot
+Allow: /
+User-agent: ChatGPT-User
+Allow: /
+
+# Anthropic — Claude.
+User-agent: ClaudeBot
+Disallow: /
+User-agent: anthropic-ai
+Disallow: /
+User-agent: Claude-Web
+Allow: /
+
+# Google — separate the training crawler (Google-Extended) from
+# the standard search crawler. Standard search is allowed; training
+# is disallowed.
+User-agent: Google-Extended
+Disallow: /
+
+# Perplexity — primarily real-time retrieval; allow.
+User-agent: PerplexityBot
+Allow: /
+
+# Common Crawl — bulk-archive crawler used by many trainers.
+User-agent: CCBot
+Disallow: /
+
+# ByteDance / TikTok.
+User-agent: Bytespider
+Disallow: /
+
+# Apple Intelligence.
+User-agent: Applebot-Extended
+Disallow: /
+
+# Meta AI.
+User-agent: FacebookBot
+Disallow: /
+User-agent: Meta-ExternalAgent
+Disallow: /
 
 Sitemap: https://nerranetwork.com/sitemap.xml

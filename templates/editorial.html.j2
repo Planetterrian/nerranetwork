@@ -1,0 +1,246 @@
+{% extends "base.html.j2" %}
+
+{% block head_extra %}
+    <meta name="description" content="How Nerra Network selects, fact-checks, and produces every episode. The editorial process behind 11 AI-narrated podcasts.">
+    <link rel="canonical" href="https://nerranetwork.com/editorial.html">
+    <style>
+        .editorial-hero {
+            padding: calc(var(--nav-height) + var(--sp-12)) var(--sp-6) var(--sp-8);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .editorial-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 0%, rgba(107, 71, 255, 0.15), transparent 70%);
+            pointer-events: none;
+        }
+        .editorial-hero h1 {
+            font-family: var(--font-heading);
+            font-size: clamp(2rem, 4.5vw, 2.8rem);
+            font-weight: 700;
+            color: var(--nn-white);
+            margin: 0 0 var(--sp-4);
+            line-height: 1.15;
+        }
+        .editorial-hero p.lede {
+            font-family: var(--font-body);
+            font-size: clamp(1rem, 1.8vw, 1.18rem);
+            color: var(--nn-text);
+            line-height: 1.6;
+            max-width: 660px;
+            margin: 0 auto;
+        }
+        .editorial-section {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: var(--sp-8) var(--sp-6);
+        }
+        .editorial-section h2 {
+            font-family: var(--font-heading);
+            font-size: clamp(1.3rem, 2.5vw, 1.7rem);
+            font-weight: 700;
+            color: var(--nn-white);
+            margin: 0 0 var(--sp-4);
+        }
+        .editorial-section p,
+        .editorial-section li {
+            font-family: var(--font-body);
+            font-size: 1rem;
+            color: var(--nn-text);
+            line-height: 1.7;
+            margin: 0 0 var(--sp-3);
+        }
+        .editorial-section ul {
+            padding-left: var(--sp-6);
+            margin: 0 0 var(--sp-4);
+        }
+        .editorial-section li {
+            margin-bottom: var(--sp-2);
+        }
+        .editorial-section strong {
+            color: var(--nn-white);
+        }
+        .editorial-step {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-5);
+            margin-bottom: var(--sp-3);
+        }
+        .editorial-step .step-num {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6B47FF 0%, #00D4FF 100%);
+            color: white;
+            font-family: var(--font-heading);
+            font-weight: 700;
+            text-align: center;
+            line-height: 32px;
+            margin-right: var(--sp-3);
+            font-size: 0.95rem;
+            vertical-align: middle;
+        }
+        .editorial-step h3 {
+            display: inline;
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--nn-white);
+        }
+        .editorial-step p {
+            margin-top: var(--sp-3);
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="page-main">
+    <section class="editorial-hero">
+        <h1>How we make every episode</h1>
+        <p class="lede">
+            Nerra Network produces eleven podcasts using AI voice
+            synthesis. We're transparent about how that works — and
+            equally transparent about where the human judgment
+            (story selection, source curation, editorial standards)
+            comes in.
+        </p>
+    </section>
+
+    <section class="editorial-section">
+        <h2>The pipeline, top to bottom</h2>
+
+        <div class="editorial-step">
+            <span class="step-num">1</span>
+            <h3>Source selection</h3>
+            <p>
+                Each show pulls from a hand-curated list of RSS feeds
+                (typically 15–25), x-account handles, and topical web
+                searches. Source lists live in the public repository
+                so anyone can audit which outlets feed each show.
+                Sources known for unreliability or persistent paywalls
+                are removed; new sources go in only after a 5-episode
+                trial.
+            </p>
+        </div>
+
+        <div class="editorial-step">
+            <span class="step-num">2</span>
+            <h3>Article dedup + freshness gate</h3>
+            <p>
+                We pull articles published within a configurable window
+                (24-72 hours), deduplicate by URL and entity (no more
+                than 2 stories per company per episode), and filter
+                stories that closely resemble past episodes' content.
+                If fewer than the show's minimum threshold survive,
+                the run skips that day rather than ship filler.
+            </p>
+        </div>
+
+        <div class="editorial-step">
+            <span class="step-num">3</span>
+            <h3>Digest generation (Grok-4.3)</h3>
+            <p>
+                The fresh-article set + a per-show prompt flow through
+                xAI's Grok-4.3. Prompts are show-specific: Tesla's
+                tone is news-show; Models &amp; Agents for Beginners
+                explains jargon to teens; Финансы Просто speaks
+                Russian-Canadian financial terminology (TFSA, RRSP,
+                BoC). A repetition guard catches LLM hallucinations
+                and triggers a lower-temperature retry; a content
+                tracker prevents recycling the prior week's stories.
+            </p>
+        </div>
+
+        <div class="editorial-step">
+            <span class="step-num">4</span>
+            <h3>Slow-news fallback</h3>
+            <p>
+                On genuinely slow news days, the pipeline detects high
+                cross-episode overlap and falls back to evergreen
+                segments curated per show (e.g. battery chemistry
+                deep-dives for Tesla, supernova archive pieces for
+                Fascinating Frontiers). Listeners always hear new
+                content, never silence.
+            </p>
+        </div>
+
+        <div class="editorial-step">
+            <span class="step-num">5</span>
+            <h3>Voice synthesis (Grok TTS)</h3>
+            <p>
+                The script renders to audio via xAI's Grok TTS using
+                Patrick's custom-trained voice for English shows
+                (``kdif6sqjcyiq``) and a custom Russian voice for
+                Финансы Просто and Привет, Русский! Speech tags
+                (<code>&lt;fast&gt;</code>, <code>[breath]</code>,
+                <code>&lt;emphasis&gt;</code>) shape pacing without
+                being read aloud. The audio is post-processed with
+                EBU R128 loudness normalization to broadcast spec
+                (-16 LUFS).
+            </p>
+        </div>
+
+        <div class="editorial-step">
+            <span class="step-num">6</span>
+            <h3>Music + final mix</h3>
+            <p>
+                Show theme music is layered around the voice with a
+                sidechain-ducked compressor and graceful fades —
+                25 seconds of music alone before voice enters, 60
+                seconds of music close after voice ends. Each show
+                has its own theme; the timing is consistent
+                network-wide.
+            </p>
+        </div>
+
+        <div class="editorial-step">
+            <span class="step-num">7</span>
+            <h3>Transcript + chapter publication</h3>
+            <p>
+                Every episode ships with a Whisper-generated transcript
+                and chapter markers in the RSS feed (Podcasting 2.0
+                <code>&lt;podcast:transcript&gt;</code> +
+                <code>&lt;podcast:chapters&gt;</code>). Apple Podcasts,
+                Pocket Casts, Fountain, and Podcast Index surface them
+                automatically. Transcripts are searchable on the blog.
+            </p>
+        </div>
+    </section>
+
+    <section class="editorial-section">
+        <h2>What we don't do</h2>
+        <ul>
+            <li><strong>No undisclosed AI.</strong> Every show, every episode, every page declares the use of AI voice synthesis upfront.</li>
+            <li><strong>No paid placement.</strong> Stories are not sponsored. Tools/resources mentioned are recommended on merit.</li>
+            <li><strong>No tracking listeners.</strong> The site uses no third-party analytics that profile visitors. Episode play data comes from podcast aggregators (which subscribers can disable).</li>
+            <li><strong>No filler.</strong> If the day's news is thin, the slow-news fallback runs an evergreen deep-dive — but if even that fails the threshold, the run skips entirely rather than pad with low-quality content.</li>
+        </ul>
+    </section>
+
+    <section class="editorial-section">
+        <h2>Corrections + feedback</h2>
+        <p>
+            Find a factual error? Heard something off? Got a story
+            we should cover? Email
+            <a href="mailto:patrick@planetterrian.com">patrick@planetterrian.com</a>
+            — Patrick reads every message. Substantive corrections
+            are noted in the next episode's show notes.
+        </p>
+    </section>
+
+    <section class="editorial-section">
+        <h2>Open infrastructure</h2>
+        <p>
+            The <a href="https://github.com/patricknovak/nerranetworks">Nerra Network repository</a>
+            is public. Source lists, prompts, music timing, contrast
+            thresholds, RSS feed generation — all of it lives there.
+            Anyone can audit how a particular episode was made.
+        </p>
+    </section>
+</div>
+{% endblock %}
