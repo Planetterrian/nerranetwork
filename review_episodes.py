@@ -1446,6 +1446,171 @@ def create_github_issue(
 
 
 # ---------------------------------------------------------------------------
+# Auto-close stale missed-episode issues
+# ---------------------------------------------------------------------------
+
+# Issue title shapes created by ``create_github_issue``:
+#   ``Daily Review YYYY-MM-DD: N critical issue(s) across M show(s)``
+#   ``Daily Review YYYY-MM-DD: N warning(s) across M show(s)``
+_DAILY_TITLE_RE = re.compile(
+    r"^Daily Review (\d{4}-\d{2}-\d{2}): \d+ "
+    r"(?:critical issue|warning)\(s\) across \d+ show\(s\)"
+)
+
+# Body shape used by ``create_github_issue`` for missed-episode lines:
+#   ``- **Show Name** (`slug`): detail text...``
+# Captures the slug — matching only when the show was reported as missed
+# (not just any boldface mention).
+_MISSED_SHOW_RE = re.compile(r"^- \*\*[^*]+\*\* \(`([^`]+)`\):", re.MULTILINE)
+
+
+def _has_per_episode_findings(body: str) -> bool:
+    """Heuristic: did the issue body include any per-episode rows?
+
+    The Episodes Reviewed section uses a markdown table; an issue with no
+    per-episode findings has the header row but no data rows. We look for
+    a row that starts with ``| `` and is not the header / separator.
+    """
+    in_episodes_section = False
+    for line in body.splitlines():
+        stripped = line.strip()
+        if "Episodes Reviewed" in stripped:
+            in_episodes_section = True
+            continue
+        if in_episodes_section and stripped.startswith("|"):
+            # Skip header (`| Show | …`) and divider (`|---|---|---|`).
+            if stripped.startswith("| Show ") or set(stripped) <= set("|-: "):
+                continue
+            return True
+    return False
+
+
+def close_resolved_missed_episode_issues(today: datetime.date) -> int:
+    """Close prior daily-review issues whose missed shows have since shipped.
+
+    Operator caught (May 7 2026) issue #330 staying open after the
+    underlying infrastructure bug was fixed and tomorrow's runs would
+    have re-shipped the missed shows. Manual issue cleanup is busywork;
+    auto-close keeps the issue queue meaningful.
+
+    Conservative gates:
+      * Title must match the daily-review template.
+      * Issue must be from a date strictly BEFORE *today* — never auto-
+        close today's issue (today's review is happening now).
+      * Body must have NO per-episode findings (only missed-episode lines).
+        Per-episode issues might still need human action even if the show
+        replayed; leave them.
+      * Every missed slug listed in the body must now have at least one
+        ``*{date}.md`` file in its output directory (i.e. the run replayed).
+
+    Returns the number of issues closed.
+    """
+    if not subprocess:  # pragma: no cover — defensive
+        return 0
+
+    try:
+        # gh issue list returns JSON with at most 30 issues by default.
+        # We only need open daily-review issues, so the label filter
+        # keeps the page small.
+        result = subprocess.run(
+            [
+                "gh", "issue", "list",
+                "--state", "open",
+                "--label", "automated-review",
+                "--json", "number,title,body,createdAt",
+                "--limit", "50",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if result.returncode != 0:
+            logger.warning(
+                "gh issue list failed (auto-close skipped): %s",
+                result.stderr.strip()[:200],
+            )
+            return 0
+        items = json.loads(result.stdout or "[]")
+    except FileNotFoundError:
+        logger.info("gh CLI not found — skipping auto-close.")
+        return 0
+    except (json.JSONDecodeError, subprocess.TimeoutExpired) as exc:
+        logger.warning("Auto-close lookup failed: %s", exc)
+        return 0
+
+    closed = 0
+    for issue in items:
+        title = issue.get("title") or ""
+        match = _DAILY_TITLE_RE.match(title)
+        if not match:
+            continue
+
+        # Only consider issues from BEFORE today.
+        try:
+            issue_date = datetime.date.fromisoformat(match.group(1))
+        except ValueError:
+            continue
+        if issue_date >= today:
+            continue
+
+        body = issue.get("body") or ""
+        if _has_per_episode_findings(body):
+            continue  # Real per-episode finding survives — don't close.
+
+        missed_slugs = _MISSED_SHOW_RE.findall(body)
+        if not missed_slugs:
+            continue  # Nothing concrete to verify — leave it.
+
+        # Did every missed slug now produce output for its date?
+        date_str = match.group(1).replace("-", "")
+        all_replayed = True
+        for slug in missed_slugs:
+            info = SHOW_REGISTRY.get(slug)
+            if not info:
+                all_replayed = False
+                break
+            output_dir = PROJECT_ROOT / info["output_dir"]
+            if not list(output_dir.glob(f"*{date_str}.md")):
+                all_replayed = False
+                break
+
+        if not all_replayed:
+            continue
+
+        number = issue.get("number")
+        comment = (
+            f"Auto-closing — every missed show ({', '.join(missed_slugs)}) "
+            f"on {match.group(1)} now has output committed to "
+            f"`digests/<slug>/`. Resolved by replay or infrastructure fix."
+        )
+        try:
+            close_result = subprocess.run(
+                [
+                    "gh", "issue", "close", str(number),
+                    "--reason", "completed",
+                    "--comment", comment,
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            if close_result.returncode == 0:
+                logger.info("Auto-closed resolved issue #%s (%s)", number, match.group(1))
+                closed += 1
+            else:
+                logger.warning(
+                    "gh issue close failed for #%s: %s",
+                    number, close_result.stderr.strip()[:200],
+                )
+        except Exception as exc:  # pragma: no cover — best-effort
+            logger.warning("Failed to close issue #%s: %s", number, exc)
+
+    if closed:
+        logger.info("Auto-closed %d stale missed-episode issue(s)", closed)
+    return closed
+
+
+# ---------------------------------------------------------------------------
 # Claude Code output format
 # ---------------------------------------------------------------------------
 
@@ -1604,6 +1769,17 @@ def run_review(
 ) -> int:
     """Run the full review pipeline. Returns exit code."""
     logger.info("=== Episode Review for %s ===", target_date.isoformat())
+
+    # Close any stale "missed episode" issues from prior days where the
+    # affected shows have since shipped output. Operator caught (May 7
+    # 2026) the queue accumulating issues that were resolved the next
+    # morning; humans don't need to chase the cleanup. Best-effort —
+    # failures here never block the actual review.
+    if create_issues and not show_filter:
+        try:
+            close_resolved_missed_episode_issues(target_date)
+        except Exception as exc:  # pragma: no cover — defensive
+            logger.warning("Auto-close encountered an error: %s", exc)
 
     episodes = discover_episodes(target_date, show_filter)
 
