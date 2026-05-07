@@ -122,6 +122,26 @@
         </div>
     </section>
 
+    {#- Compact above-fold newsletter capture (May 2026 audit). The
+        full multi-show form lives in the footer; this single-input row
+        reaches scroll-and-bail visitors who never make it past the
+        latest-episode card. Tag pre-filled to this show. -#}
+    {% if newsletter_tag %}
+    <section style="padding:var(--sp-3) var(--sp-6);background:var(--nn-card);border-bottom:1px solid var(--nn-border);">
+        <div class="container" style="max-width:760px;display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-3);justify-content:center;">
+            <span style="font-family:var(--font-ui);font-size:0.92rem;color:var(--nn-text);">
+                {% if _is_ru %}📬 Получайте новые выпуски на почту:{% else %}📬 Get tomorrow's episode in your inbox:{% endif %}
+            </span>
+            <form action="https://buttondown.com/api/emails/embed-subscribe/patricknovak1" method="post" target="popupwindow" style="display:flex;gap:var(--sp-2);flex-wrap:wrap;">
+                <input type="hidden" name="tag" value="{{ newsletter_tag }}">
+                <input type="hidden" value="1" name="embed">
+                <input type="email" name="email" placeholder="{% if _is_ru %}ваш@email.ru{% else %}your@email.com{% endif %}" required aria-label="{% if _is_ru %}Адрес электронной почты{% else %}Email address{% endif %}" style="padding:6px 12px;border-radius:6px;border:1px solid var(--nn-border);background:var(--nn-bg);color:var(--nn-text);font-size:0.92rem;min-width:200px;">
+                <button type="submit" style="padding:6px 14px;border-radius:6px;background:var(--show-color);color:#ffffff;border:none;font-size:0.92rem;font-weight:600;cursor:pointer;">{% if _is_ru %}Подписаться{% else %}Subscribe{% endif %}</button>
+            </form>
+        </div>
+    </section>
+    {% endif %}
+
     <!-- Latest Episode -->
     <section class="nn-section" style="padding-top: var(--sp-8);">
         <div class="container">
