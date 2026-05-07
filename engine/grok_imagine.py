@@ -31,6 +31,7 @@ from __future__ import annotations
 import base64
 import logging
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional
@@ -70,6 +71,68 @@ MODEL_COST_USD = {
 # Prompt construction
 # ---------------------------------------------------------------------------
 
+# Headline-extractor regexes — one per markdown shape used across the
+# network. Order matters: blockquote hooks first (they're the lead),
+# then numbered list items, then numbered H3 sections.
+_HEADLINE_PATTERNS = (
+    # Tesla / FF / PT lead hook: ``> **Hook line.**``
+    re.compile(r"^>\s*\*\*([^*\n]+)\*\*", re.MULTILINE),
+    # Tesla / FF Top-N + X-Takeover items: ``1. **Headline**: ...``
+    # also matches ``1. **Headline** - ...``.
+    re.compile(r"^\s*\d+\.\s+\*\*([^*\n]+)\*\*", re.MULTILINE),
+    # Omni View top stories: ``### 1) Headline`` / ``### 1. Headline``
+    re.compile(r"^###\s+\d+[.)]\s+(.+?)\s*$", re.MULTILINE),
+    # MAB / M&A item heads: ``**[Title]: source**``
+    re.compile(r"\*\*\[([^\]\n]+)\]"),
+)
+
+
+def extract_story_headlines(digest_text: str, max_count: int = 12) -> List[str]:
+    """Pull per-story headlines out of an episode digest's markdown.
+
+    Operator caught (Tesla YouTube long-form + Shorts, May 7 2026) every
+    Grok-generated slide rendering the same headline as a text banner —
+    because :func:`build_image_prompts` repeated the episode's lead hook
+    in every prompt. Real episodes have 5–11 distinct stories; using each
+    one as its own per-image context makes the slideshow visually
+    diverse (and, paired with an explicit "no text" instruction, removes
+    the duplicated banner).
+
+    Recognises the markdown shapes used across the network:
+
+      * Tesla / FF / PT lead-hook blockquote (``> **...**``)
+      * Numbered bold list items (``1. **Headline**: ...``)
+      * Numbered H3 sections (``### 1) Headline``)
+      * MAB bracketed item titles (``**[Title]: source**``)
+
+    Returns up to *max_count* distinct headlines in document order. Empty
+    list if nothing matches — caller falls back to hook-only behaviour.
+    """
+    if not digest_text:
+        return []
+
+    headlines: List[str] = []
+    seen: set[str] = set()
+
+    def _add(raw: str) -> bool:
+        h = raw.strip().rstrip(":.,;").strip()
+        # Drop obvious junk: too short, too long, or already seen
+        # (case-insensitive — same story sometimes appears in two
+        # sections with slight casing changes).
+        key = h.lower()
+        if 8 <= len(h) <= 200 and key not in seen:
+            seen.add(key)
+            headlines.append(h)
+        return len(headlines) >= max_count
+
+    for pattern in _HEADLINE_PATTERNS:
+        for match in pattern.finditer(digest_text):
+            if _add(match.group(1)):
+                return headlines
+
+    return headlines
+
+
 def build_image_prompts(
     *,
     hook: str,
@@ -77,12 +140,19 @@ def build_image_prompts(
     aspect: str = "16:9",
     count: int = 8,
     show_descriptor: str = "",
+    per_scene_contexts: Optional[List[str]] = None,
 ) -> List[str]:
-    """Build *count* image prompts that combine each query with the hook.
+    """Build *count* image prompts that combine each query with a context.
 
     Image queries are the show's curated phrases (Tesla → "tesla
-    factory", "tesla cybertruck on highway", etc.). The hook makes each
-    episode's image set unique — same query shape, different content.
+    factory", "tesla cybertruck on highway", etc.).
+
+    *per_scene_contexts* (NEW, May 2026): when provided, each prompt
+    uses its own per-scene context cycled from the list, so the
+    slideshow shows a different story per slide instead of every slide
+    repeating the episode's lead hook. ``run_show.py`` passes the output
+    of :func:`extract_story_headlines` here. Falls back to *hook* for
+    every prompt when *per_scene_contexts* is empty / None.
 
     Aspect is encoded in the prompt as a hint; Grok Imagine's actual
     output dimensions depend on the ``size`` parameter sent at the API
@@ -100,34 +170,56 @@ def build_image_prompts(
         if is_vertical
         else "wide cinematic 16:9 framing, photojournalism style"
     )
+    # Operator caught: Grok Imagine renders any free-text "context" hint
+    # as a banner / on-image text overlay. Telling it explicitly to
+    # produce a clean image stops the headline appearing as a chyron
+    # across every slide. This is a soft signal — Grok still occasionally
+    # emits text, but compliance is dramatically better with the cue.
+    no_text_hint = "clean photographic composition, no text or words rendered in the image"
 
-    prompts: List[str] = []
     safe_hook = (hook or "").strip().rstrip(".")
     descriptor = (show_descriptor or "photorealistic news photo").strip()
 
+    # Normalise per-scene contexts. Drop empties. If empty/missing, every
+    # prompt uses the lone hook (legacy behaviour).
+    contexts: List[str] = [
+        c.strip().rstrip(".")
+        for c in (per_scene_contexts or [])
+        if c and c.strip()
+    ]
+
+    def _context_for(i: int) -> str:
+        if contexts:
+            return contexts[i % len(contexts)]
+        return safe_hook
+
+    prompts: List[str] = []
+
+    # First pass: one image per query, up to count.
     for i, raw_query in enumerate(image_queries):
         if i >= count:
             break
         q = (raw_query or "").strip()
         if not q:
             continue
-        parts = [q, descriptor, framing_hint]
-        if safe_hook:
-            parts.append(f"contextually related to: {safe_hook}")
+        parts = [q, descriptor, framing_hint, no_text_hint]
+        ctx = _context_for(len(prompts))
+        if ctx:
+            parts.append(f"depicting: {ctx}")
         prompts.append(", ".join(parts))
 
-    # If the operator's image_queries list is shorter than count,
-    # cycle through it so we always hit ``count`` distinct prompts.
-    # The hook makes the recycled prompt produce a different image each
-    # episode, so this isn't pure duplication.
+    # Second pass: cycle queries until we hit count. Per-scene contexts
+    # keep advancing through the headline list, so recycled queries still
+    # produce different images.
     while 0 < len(prompts) < count:
         idx = len(prompts) % len(image_queries)
         q = (image_queries[idx] or "").strip()
         if not q:
             break
-        parts = [q, descriptor, framing_hint, f"variant {len(prompts) + 1}"]
-        if safe_hook:
-            parts.append(f"contextually related to: {safe_hook}")
+        parts = [q, descriptor, framing_hint, no_text_hint, f"variant {len(prompts) + 1}"]
+        ctx = _context_for(len(prompts))
+        if ctx:
+            parts.append(f"depicting: {ctx}")
         prompts.append(", ".join(parts))
 
     return prompts
