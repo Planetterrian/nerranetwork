@@ -639,6 +639,17 @@ def mix_with_music(
         logger.warning("Music file %s not found — returning voice-only.", music_path)
         return normalize_voice(voice_path, output_path)
 
+    # Voice file must exist AND be non-empty before we hand it to ffmpeg.
+    # A 0-byte / missing voice file produces a cryptic ffmpeg error
+    # (``Invalid data found when processing input``) that doesn't tell
+    # the operator the upstream TTS step actually failed. Surface a
+    # clear message instead.
+    if not voice_path.exists() or voice_path.stat().st_size == 0:
+        raise FileNotFoundError(
+            f"Voice audio missing or empty at {voice_path} — "
+            f"upstream TTS step likely failed before reaching mix."
+        )
+
     voice_duration = get_audio_duration(voice_path) or 0.0
     timeout_seconds = max(int(voice_duration * 3) + 120, 600)
 
