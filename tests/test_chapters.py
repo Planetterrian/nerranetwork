@@ -611,10 +611,15 @@ class TestAutoSegmentFallback:
             f"Auto-segment fallback should produce >=4 chapters, got "
             f"{len(chapters)} — titles: {[c.title for c in chapters]}"
         )
-        # First chapter keeps the operator-supplied title; later ones
-        # are generic.
+        # First chapter keeps the operator-supplied title.
         assert chapters[0].title == "Introduction"
-        assert chapters[1].title.startswith("Segment ")
+        # Auto-segments now derive their title from the segment's first
+        # sentence (May 8 2026 — was generic "Segment N" before; Apple
+        # Podcasts surfaces these in the player UI). The title must be
+        # non-empty and either the legacy ``Segment N`` placeholder OR
+        # a content-derived sentence — never blank.
+        for c in chapters[1:]:
+            assert c.title.strip(), f"Chapter has empty title: {c}"
 
     def test_auto_segment_skips_when_enough_chapters_already(self):
         from engine.chapters import parse_chapters

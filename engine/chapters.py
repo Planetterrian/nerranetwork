@@ -37,6 +37,46 @@ class Chapter:
     char_end: int = 0
 
 
+# Sentence terminators that close a chapter title. ``…`` and Russian
+# ``.`` style markers are included so Russian shows benefit too.
+_SENTENCE_END_RE = re.compile(r"([.!?…])\s+")
+
+
+def _first_sentence_as_title(text: str, max_chars: int = 60) -> str:
+    """Extract the first sentence of *text* and return a chapter-title
+    string (max ``max_chars``).
+
+    Used by the chapter auto-segmentation fallback. Apple Podcasts and
+    Pocket Casts surface chapter titles in the player UI, so a title
+    derived from actual content (e.g. "Tesla unveils robotaxi service
+    in Texas") is dramatically more useful than the previous
+    "Segment 2" placeholder. Returns "" if no clean sentence is
+    extractable — caller falls back to the numeric placeholder.
+    """
+    if not text:
+        return ""
+    # Trim leading whitespace/markdown fragments and pick the first
+    # non-blank line so headers/blank gaps don't poison the title.
+    cleaned = text.lstrip().lstrip("*_-•> ").lstrip()
+    if not cleaned:
+        return ""
+    # First sentence — anything up to the first . ! ? … plus space.
+    match = _SENTENCE_END_RE.split(cleaned, maxsplit=1)
+    candidate = match[0].strip() if match else cleaned.strip()
+    if not candidate:
+        return ""
+    # Strip residual inline markdown so the title reads cleanly.
+    candidate = re.sub(r"[*_`]+", "", candidate).strip()
+    # Truncate to max_chars on a word boundary (no mid-word ellipses).
+    if len(candidate) > max_chars:
+        truncated = candidate[: max_chars - 1].rsplit(" ", 1)[0]
+        candidate = truncated.rstrip(",;:") + "…"
+    # Sanity: titles shouldn't be one-word fragments or just a number.
+    if len(candidate) < 8 or candidate.replace(".", "").isdigit():
+        return ""
+    return candidate
+
+
 def parse_chapters(
     script: str,
     section_markers: list,
@@ -139,9 +179,12 @@ def parse_chapters(
     # count is below ``min_chapters`` AND the first chapter spans most
     # of the script, we splice extra chapters at paragraph boundaries
     # roughly every ``auto_segment_target_seconds`` of speech so
-    # listeners always get useful navigation. The auto-titles are
-    # numeric (``Segment 2``, ``Segment 3`` …) — kept generic so they
-    # don't mislead about content.
+    # listeners always get useful navigation. May 8 2026: titles now
+    # derive from each segment's first sentence (truncated to ~50
+    # chars) instead of the previous generic ``Segment N`` placeholder
+    # — Apple Podcasts and Pocket Casts surface chapter titles in the
+    # player UI, and "Segment 2" tells the listener nothing about
+    # whether to skip ahead.
     if len(chapters) < min_chapters and total_words > 0:
         words_per_segment = max(
             int(estimated_words_per_minute * (auto_segment_target_seconds / 60.0)),
@@ -189,8 +232,13 @@ def parse_chapters(
                 for n, (w, c) in enumerate(insertions, start=2):
                     next_w = insertions[n - 1][0] if n - 1 < len(insertions) else head_w_end
                     next_c = insertions[n - 1][1] if n - 1 < len(insertions) else head_c_end
+                    # Title from the first sentence of the segment text.
+                    # Falls back to "Segment N" if extraction fails (very
+                    # short text, no sentence-ending punctuation, etc).
+                    seg_text = script[c:next_c]
+                    title = _first_sentence_as_title(seg_text) or f"Segment {n}"
                     rebuilt.append(Chapter(
-                        title=f"Segment {n}",
+                        title=title,
                         word_start=w,
                         word_end=next_w,
                         char_start=c,
