@@ -349,6 +349,28 @@ def test_wrap_caption_empty_returns_empty():
     assert _wrap_caption("") == ""
 
 
+def test_wrap_caption_default_budget_fits_realistic_hook():
+    """Operator caught (Tesla Ep466, May 8 2026) the default ``22 × 3``
+    budget (66 chars) truncating realistic 90+ char hooks to
+    ``...batter…`` mid-word. The new ``26 × 4`` defaults give a
+    104-char budget — enough headroom for the longest hooks the LLM
+    actually produces. Pin so a future "tighter wrap" change doesn't
+    silently re-introduce the truncation."""
+    hook = (
+        "California regulators just disclosed the Tesla Semi's battery "
+        "sizes at 822 kWh and 548 kWh."
+    )
+    out = _wrap_caption(hook)  # use defaults
+    # No truncation marker.
+    assert "..." not in out, (
+        f"Realistic 90+ char hook truncated under default wrap "
+        f"budget: {out!r}"
+    )
+    # Every word from the original survived (case-preserving).
+    for word in hook.split():
+        assert word in out, f"Word {word!r} dropped during wrap: {out!r}"
+
+
 # ---------------------------------------------------------------------------
 # Slideshow (stage 1) — multi-scene Ken Burns + concat
 # ---------------------------------------------------------------------------
