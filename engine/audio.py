@@ -128,13 +128,29 @@ def _voice_norm_full_cmd(voice_in: str, voice_out: str) -> list:
     duller without removing audible sibilance, so the dip was retired.
     Re-add it if a future voice clone reintroduces "s" / "sh" hiss.
     See landmine #17.
+
+    May 8 2026 retune: operator caught ("bad audio artifacts that
+    make it sound terrible in parts") the chain crushing voice
+    dynamics. Two changes:
+
+    - ``attack=1`` → ``attack=10`` (ms). The 1 ms attack was clamping
+      down on every plosive / consonant transient before the ear
+      could register them, leaving a lifeless "compressed-to-mush"
+      delivery. 10 ms lets transients pass and only catches sustained
+      energy — standard voice-compressor practice (NPR / podcast
+      mastering chains land between 5–15 ms).
+    - ``makeup=2`` → ``makeup=1`` (dB). The +2 dB makeup combined
+      with the 4:1 compressor was lifting voice peaks above the
+      ``alimiter`` ceiling (0.95), causing a hard limiter knee that
+      sounded like clipping on enthusiastic delivery. +1 dB keeps
+      perceived loudness without slamming the limiter.
     """
     return [
         "ffmpeg", "-y", "-threads", "0", "-i", voice_in,
         "-af",
         "highpass=f=80,lowpass=f=15000,"
         "loudnorm=I=-18:TP=-1.5:LRA=11:linear=true,"
-        "acompressor=threshold=-20dB:ratio=4:attack=1:release=100:makeup=2,"
+        "acompressor=threshold=-20dB:ratio=4:attack=10:release=100:makeup=1,"
         "alimiter=level_in=1:level_out=0.95:limit=0.95",
         "-ar", "44100", "-ac", "1",
     ] + _voice_norm_codec_args(voice_out) + [voice_out]
@@ -543,10 +559,19 @@ def _final_mix_cmd(voice_in: str, music_in: str, final_out: str) -> list:
       2. ``sidechaincompress`` — when voice is present, music is pulled
          down 8 dB; when voice pauses, music rises smoothly. ``threshold=-30 dB``
          and ``ratio=8`` mean even modest voice levels duck the music; the
-         ``attack=20 ms`` / ``release=300 ms`` pair gives broadcast feel
-         (fast enough to catch syllable transients, slow enough not to pump).
+         ``attack=50 ms`` / ``release=600 ms`` pair gives broadcast feel
+         (slow enough not to clamp mid-syllable, long enough to hold
+         through natural pauses without "pumping" back in).
          ``level_sc=2`` doubles the trigger sensitivity so quieter narration
          still ducks the bed reliably.
+
+         May 8 2026 retune: was ``attack=20 / release=300``. The 20 ms
+         attack ducked music DURING vowel onsets so listeners heard
+         music dip right when a word started — the audible "pumping"
+         operator complained about. 50 ms attack tracks vowel envelope
+         instead of transient. 600 ms release holds ducking through
+         pauses between sentences, eliminating the "music comes back
+         then dips again" cycle that broke immersion.
       3. ``amix`` — sums voice + ducked music with longest-duration semantics.
       4. ``loudnorm I=-16`` — final integrated-loudness target. Apple
          Podcasts and Spotify both auto-normalize listener-side, so episodes
@@ -564,7 +589,7 @@ def _final_mix_cmd(voice_in: str, music_in: str, final_out: str) -> list:
         "-filter_complex",
         "[0:a]asplit=2[voice_mix][voice_sc];"
         "[1:a][voice_sc]sidechaincompress="
-        "threshold=-30dB:ratio=8:attack=20:release=300:level_sc=2"
+        "threshold=-30dB:ratio=8:attack=50:release=600:level_sc=2"
         "[music_ducked];"
         "[voice_mix][music_ducked]amix=inputs=2:duration=longest:dropout_transition=2[mixed];"
         "[mixed]loudnorm=I=-16:TP=-1.5:LRA=11[out]",

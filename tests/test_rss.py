@@ -107,7 +107,11 @@ class TestEpisodeCounts:
 
 EXPECTED_CHANNEL_METADATA = {
     "tesla": {
-        "title": "Tesla Shorts Time Daily",
+        # Aligned with shows/tesla.yaml:rss_title in PR #326 (Phase 2 RSS
+        # metadata polish, May 6 2026). Apple Podcasts shows the channel
+        # title verbatim; "Daily" was redundant with the cadence already
+        # set by ``itunes_type=episodic``.
+        "title": "Tesla Shorts Time",
         "language": "en-us",
         "generator": "python-feedgen",
         "itunes_category": "Technology",

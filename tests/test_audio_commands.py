@@ -32,7 +32,7 @@ def voice_normalization_full(voice_in: str, voice_out: str) -> list:
         "-af",
         "highpass=f=80,lowpass=f=15000,"
         "loudnorm=I=-18:TP=-1.5:LRA=11:linear=true,"
-        "acompressor=threshold=-20dB:ratio=4:attack=1:release=100:makeup=2,"
+        "acompressor=threshold=-20dB:ratio=4:attack=10:release=100:makeup=1,"
         "alimiter=level_in=1:level_out=0.95:limit=0.95",
         "-ar", "44100", "-ac", "1",
         "-c:a", "libmp3lame", "-b:a", "192k", "-preset", "fast",
@@ -133,7 +133,7 @@ def final_mix(voice_in: str, music_in: str, final_out: str) -> list:
         "-filter_complex",
         "[0:a]asplit=2[voice_mix][voice_sc];"
         "[1:a][voice_sc]sidechaincompress="
-        "threshold=-30dB:ratio=8:attack=20:release=300:level_sc=2"
+        "threshold=-30dB:ratio=8:attack=50:release=600:level_sc=2"
         "[music_ducked];"
         "[voice_mix][music_ducked]amix=inputs=2:duration=longest:dropout_transition=2[mixed];"
         "[mixed]loudnorm=I=-16:TP=-1.5:LRA=11[out]",
@@ -164,7 +164,10 @@ class TestVoiceNormalization:
         assert "highpass=f=80" in af_value
         assert "lowpass=f=15000" in af_value
         assert "loudnorm=I=-18:TP=-1.5:LRA=11:linear=true" in af_value
-        assert "acompressor=threshold=-20dB:ratio=4:attack=1:release=100:makeup=2" in af_value
+        # May 8 2026 retune: attack 1ms→10ms (let transients breathe),
+        # makeup 2dB→1dB (avoid limiter clipping). See engine/audio.py
+        # _voice_norm_full_cmd docstring.
+        assert "acompressor=threshold=-20dB:ratio=4:attack=10:release=100:makeup=1" in af_value
         assert "alimiter=level_in=1:level_out=0.95:limit=0.95" in af_value
 
         # Filter order matters — verify sequencing
@@ -278,6 +281,21 @@ class TestFinalMix:
         assert "threshold=-30dB" in fc
         assert "ratio=8" in fc
         assert "[music_ducked]" in fc
+        # May 8 2026 retune: attack 20ms→50ms, release 300ms→600ms.
+        # The 20 ms attack ducked DURING vowel onsets (audible pumping
+        # at every word). 50ms tracks vowel envelope; 600 ms holds
+        # ducking through inter-sentence pauses. See _final_mix_cmd
+        # docstring for the operator-caught regression that drove this.
+        assert "attack=50" in fc, (
+            "Sidechain attack must stay at 50 ms — fast attacks (≤20ms) "
+            "duck mid-syllable and cause the 'pumping' artifact operator "
+            "caught on May 8 2026."
+        )
+        assert "release=600" in fc, (
+            "Sidechain release must stay at 600 ms — short releases "
+            "(≤300ms) cause music to 'pump back in' between sentences, "
+            "breaking immersion."
+        )
         # Voice + ducked music summed.
         assert "amix=inputs=2" in fc
         assert "duration=longest" in fc
