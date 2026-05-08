@@ -567,8 +567,28 @@ def build_long_form_video(
     bg_is_video = False
     if scene_paths and len(scene_paths) >= 2:
         slideshow_path = work_dir / f"{output_path.stem}_slides.mp4"
+        # Stretch each scene so the slideshow naturally spans the full
+        # audio duration. Operator caught (May 8 2026) the previous
+        # fixed 12 s/scene behaviour producing a 96 s slideshow that
+        # ``-stream_loop -1`` cycled 3-6× across a typical 5-10 min
+        # episode — listeners noticed the same eight photos on repeat.
+        # Floor at 8 s so a very short episode doesn't whip through
+        # scenes; no upper cap (long-form episodes get longer holds
+        # which the Ken Burns zoom keeps watchable).
+        from engine.audio import get_audio_duration as _get_duration
         try:
-            _render_slideshow(scene_paths, slideshow_path, fps=fps)
+            audio_duration_s = _get_duration(str(audio_path)) or 0.0
+        except Exception:
+            audio_duration_s = 0.0
+        if audio_duration_s > 0:
+            scene_duration_s = max(8.0, audio_duration_s / len(scene_paths))
+        else:
+            scene_duration_s = _SCENE_DURATION_SECONDS  # legacy 12 s
+        try:
+            _render_slideshow(
+                scene_paths, slideshow_path,
+                scene_duration=scene_duration_s, fps=fps,
+            )
             bg_path = slideshow_path
             bg_is_video = True
         except subprocess.CalledProcessError as exc:
