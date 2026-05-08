@@ -557,6 +557,13 @@ def test_build_long_form_video_renders_slideshow_for_multi_scene(tmp_path,
         return type("R", (), {"returncode": 0})()
 
     monkeypatch.setattr("engine.video.subprocess.run", fake_run)
+    # ``build_long_form_video`` now probes audio duration via
+    # ``engine.audio.get_audio_duration`` (May 8 2026 — stretches scene
+    # duration to span audio). Stub it so the ffprobe subprocess that
+    # function would otherwise spawn doesn't show up in ``captured_cmds``.
+    monkeypatch.setattr(
+        "engine.audio.get_audio_duration", lambda _path: 360.0,
+    )
     build_long_form_video(audio, cover, out, scene_paths=scenes)
 
     # Two ffmpeg invocations: stage-1 slideshow, stage-2 composite.
