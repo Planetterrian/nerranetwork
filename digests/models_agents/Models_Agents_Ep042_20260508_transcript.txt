@@ -1,0 +1,68 @@
+Good to have you on Models and Agents episode 42, it's May 8th, 2026.
+Let's see what happened in the AI world today.
+And trust me, it's been busy.
+Open AI ships three specialized real-time audio models for voice agents, translation and transcription.
+Open AI just pushed three new audio models into its real-time API.
+They target live voice reasoning translation across more than 70 languages
+and streaming transcription.
+Developers now get granular choices instead of routing every audio task through one general model.
+This arrives while broader chat GPT voice features stay in preview,
+so API users will feel the impact first.
+The top story today is open AI releasing three purpose-built audio models.
+GPT real-time two handles reasoning agents that work with live voice.
+GPT real-time translate manages speech-to-speech translation in over 70 languages.
+GPT real-time whisper focuses on streaming transcription.
+These sit alongside existing real-time API endpoints rather than replacing base models.
+Teams building voice agents or real-time customer tools can now mix reasoning,
+translation and transcription in a single session without extra layers.
+Expect quick experiments around multi-language conversations and background audio handling.
+In model updates, Gemini 3.1 flashlight has moved out of preview.
+The stable version looks functionally identical to the March preview and keeps the same pricing.
+It gives developers a reliable low-cost option for lighter workloads.
+Sam Altman also shared that younger users tend to prefer voice interaction with AI
+while older users lean toward typing.
+Middle-age users split more evenly, which could shape how future voice features get designed.
+Moving to agent and tool developments, Codex now ships with a native Chrome extension.
+The extension runs directly in the browser on Mac OS and Windows.
+It handles logged-in sites, parallel background tabs, and tasks like dashboard checks or CRM
+updates without taking over the foreground window. It routes intelligently between plugins,
+sessions and other tools depending on the step.
+You can install it today from the Codex app if you are outside the EU and UK.
+Anthropic has opened source and transferred its Petri alignment testing framework to Meridian Labs.
+The updated version improves test adaptability, realism, and depth.
+Researchers can now run the suite independently while Anthropic focuses elsewhere.
+On the practical side, AWS now supports USDC micro-payments for AI agents through partnerships
+with Coinbase and Stripe. Developers building autonomous agents on AWS can add on-chain settlement
+without custom payment infrastructure. The Stam optimizer from token AI promises more stable
+training than Adam W. Its lighter, stoplight variant cuts optimizer state memory roughly in half
+while matching or beating accuracy on several long horizon benchmarks.
+It is worth testing if you train from scratch on limited GPUs.
+A new hugging face walkthrough shows how to fine tune a clinical QA model on AMD ROC M hardware
+without CUDA. Practitioners stuck on non-invideous stacks now have a clear path for domain-specific
+medical models. If you have not tried the Codex Chrome extension yet, this week is a great time
+to test browser flows like dashboard monitoring. Experiment with the new real-time API audio models
+to build a voice agent that mixes reasoning and translation in one session. Swap Stamlight into
+a small training run and compare memory use against your current setup. Run the updated Petra
+tests on a misaligned model to check how the realism improvements affect auditing.
+Fine-tune a clinical QA model on ROC M following the hugging face guide
+if you lack Nvidia GPUs. Keep an eye on Codex support expanding to the EU and UK in the coming weeks.
+Additional NLAs on open models are arriving through the new near-on-pedia partnership.
+Further chat GPT voice mode upgrades remain pending after this real-time API drop.
+AWS agent payment tooling will keep expanding with more stablecoin integrations.
+Okay, let's pop the hood on the Stam optimizer. Most people treat optimizer choice as a simple
+hyperparameter swap. In practice, Adam family methods carry fixed momentum decay that can drag
+stale gradient information forward for thousands of steps. Stam measures the residual between the
+current gradient and running momentum at each update. When the gap spikes, it lowers beta one on
+the fly, so the optimizer avoids pushing in an outdated direction. This adds a small amount of
+per step arithmetic, but removes the need for the second full momentum buffer that Adam W keeps.
+Optimizer state drops from roughly two times model size down to one times in the light variant.
+The quality gain shows up clearest on long non-stationary runs where data distribution shifts.
+Above roughly 70 billion parameters, the relative benefit shrinks because gradient noise averages
+out anyway. Most teams should default to Stam light when GPU memory is the bottleneck and fall back
+to Adam W, only of heavy regularization pipelines are already tuned around its exact momentum behavior.
+Early training can look noisier until the adaptive schedule stabilizes, so learning rate schedules
+may need a slightly longer warmup. Tomorrow, keep an eye on further chat GPT voice mode upgrades
+and the codex roll out to the EU and UK. That's models and agents for today. If you found this useful,
+share it with someone who's trying to keep up with all these changes and subscribe so you don't
+miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow.
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.
