@@ -110,9 +110,18 @@ def _subtitles_path_escape(p: str) -> str:
     )
 
 
-def _wrap_caption(text: str, max_chars_per_line: int = 22,
-                  max_lines: int = 3) -> str:
-    """Greedy word-wrap for a Shorts caption, capped at *max_lines*."""
+def _wrap_caption(text: str, max_chars_per_line: int = 26,
+                  max_lines: int = 4) -> str:
+    """Greedy word-wrap for a Shorts caption, capped at *max_lines*.
+
+    May 8 2026: bumped defaults from ``22 × 3`` (66-char budget) to
+    ``26 × 4`` (104-char budget). Operator caught Tesla Ep466's
+    91-char hook ("California regulators just disclosed the Tesla
+    Semi's battery sizes at 822 kWh and 548 kWh.") truncating to
+    "...batter…" mid-word. The 9:16 1920-pixel vertical Shorts
+    canvas has plenty of room for 4 lines at 64 px (≈ 304 px stack);
+    ``y=240`` start position still leaves the brand pill above and
+    plenty of clear space below."""
     if not text:
         return ""
     words = text.split()
