@@ -1,6 +1,6 @@
 {
   "show": "models_agents",
-  "last_updated": "2026-05-08",
+  "last_updated": "2026-05-09",
   "episodes": [
     {
       "date": "2026-04-25",
@@ -522,6 +522,72 @@
         "deep_dive": "### Under the Hood: Adaptive Momentum in LLM Optimizers\nEveryone treats the choice of optimizer as a simple hyperparameter swap. In practice, Adam-family methods bake in a fixed momentum decay that can drag stale gradient information forward for thousands of steps. STAM measures the residual between current gradient and running momentum at each update; when the gap spikes, it lowers beta1 on the fly so the optimizer does not keep pushing in an outdated direction. This adaptive schedule adds a sm"
       },
       "deep_dive_topic": "Adaptive Momentum in LLM Optimizers"
+    },
+    {
+      "date": "2026-05-09",
+      "headlines": [
+        "Seek dropped the full V4 paper this week, expanding the April preview with detailed sections on FP4 quantization-aware training applied directly in late-stage training for its trillion-parameter MoE.",
+        "Improving CoT-grading detection and safeguards for model training",
+        "Third-party AI safety orgs provide feedback on CoT analysis",
+        "Automated system identifies accidental CoT grading in prior models",
+        "Avoiding CoT grading during RL to preserve monitorability",
+        "Shared an image",
+        "Explains pasting into GitHub Gist for gisthost.github.io",
+        "Asks if Claude commented on article fear about /html skill",
+        "Welcoming new team member @alexolegimas to DeepMind",
+        "Teaching Claude why: full research post",
+        "Simple training data updates reduce blackmail",
+        "Aligned training interventions stack with RL",
+        "Constitutional docs cut agentic misalignment 3x",
+        "Sam quotes ChatGPT with \"call me maybe\"",
+        "Sam asks \"why?\"",
+        "Sam reacts with \"?!\" to a post",
+        "Sam says that sounds pretty cool",
+        "Has anyone set a local LLM up as a language learning tool?",
+        "DeepSeek V4 paper full version is out, FP4 QAT details and stability tricks [D]",
+        "9 Best AI Tools for Spec-Driven Development in 2026: Kiro, BMAD, GSD, and More Compare",
+        "We built and open-sourced Caliby: An embedded, high-performance vector database for AI Agents (Beats pgvector by 4x, outperforms FAISS on disk)",
+        "What llamacpp's webui has and what it lacks",
+        "Meet GitHub Spec-Kit: An Open Source Toolkit for Spec-Driven Development with AI Coding Agents",
+        "479 Blog Posts To Learn About Large Language Models - HackerNoon",
+        "Exodus Launches XO Cash Stablecoin for AI Agent Payments on Solana - MEXC",
+        "Qwen3.6 35B A3B uncensored heretic Native MTP Preserved is Out Now With KLD 0.0015, 10/100 Refusals and the Full 19 MTPs Preserved and Retained, Available in Safetensors, GGUFs. NVFP4, NVFP4 GGUFs and GPTQ-Int4 Formats"
+      ],
+      "urls": [
+        "https://www.reddit.com/r/MachineLearning/comments/1t7yrvr/deepseek_v4_paper_full_version_is_out_fp4_qat/",
+        "https://www.reddit.com/r/LocalLLaMA/comments/1t7qfaq/qwen36_35b_a3b_uncensored_heretic_native_mtp/",
+        "https://x.com/AnthropicAI/status/2052808801040859392",
+        "https://www.reddit.com/r/LocalLLaMA/comments/1t7vumj/we_built_and_opensourced_caliby_an_embedded/",
+        "https://www.marktechpost.com/2026/05/08/meet-github-spec-kit-an-open-source-toolkit-for-spec-driven-development-with-ai-coding-agents/",
+        "https://www.reddit.com/r/LocalLLaMA/comments/1t7zlod/has_anyone_set_a_local_llm_up_as_a_language/",
+        "https://www.marktechpost.com/2026/05/08/9-best-ai-tools-for-spec-driven-development-in-2026-kiro-bmad-gsd-and-more-compare/",
+        "https://x.com/OpenAI/status/2052845770056073216",
+        "https://x.com/OpenAI/status/2052845768567066907",
+        "https://x.com/OpenAI/status/2052845767417835551",
+        "https://x.com/OpenAI/status/2052845765874327943",
+        "https://x.com/simonw/status/2052945860032647578",
+        "https://x.com/simonw/status/2052883359081324627",
+        "https://x.com/simonw/status/2052883069057835257",
+        "https://x.com/demishassabis/status/2052949334715502775",
+        "https://x.com/AnthropicAI/status/2052808809182060581",
+        "https://x.com/AnthropicAI/status/2052808806782964072",
+        "https://x.com/AnthropicAI/status/2052808804018909248",
+        "https://x.com/sama/status/2052887698717986956",
+        "https://x.com/sama/status/2052886933244973131",
+        "https://x.com/sama/status/2052886789690691904",
+        "https://x.com/sama/status/2052867135668686862",
+        "https://www.reddit.com/r/LocalLLaMA/comments/1t7vp9v/what_llamacpps_webui_has_and_what_it_lacks/",
+        "https://news.google.com/rss/articles/CBMif0FVX3lxTFBkUk81S2UzVkN5Wk5XNE1Tc0VFNU9sZlBYVWJ3a1RSdFlwbFdsOFI5NUQ0VVZIWnNCeHZLckQ5UUtjbGtqaXhmMWFxZ3ktTElTMHlmLTRTaC0zelNlTkt0dGUxRmhGZ1ItSzFYdVhMb25FcjkzbXJvRXlWX0xWYms?oc=5",
+        "https://news.google.com/rss/articles/CBMiSEFVX3lxTFBseElQd0pCZ0NDNV82VUN6NjhIbXoycUhQSXBiV0dhdWg4VHZaaW1ndTJnekMzdkFXaXc4ZTllWkRGVUpZN1dTbA?oc=5"
+      ],
+      "quote_author": null,
+      "sections": {
+        "model_updates": "### Model Updates\n**Qwen3.6 35B A3B Uncensored Release: r/LocalLLaMA**\nA new uncensored fine-tune of Qwen3.6-35B-A3B preserves all 19 native MTP tensors while achieving KLD of 0.0015 and only 10/100 refusals. Releases include safetensors, GGUF, NVFP4-Experts-Only, and GPTQ-Int4 variants, with benchmarks confirming retention of the full MTP structure. This gives developers an open option for less-restricted reasoning traces without sacrificing the base model's multi-token prediction capabilities.",
+        "agent_developments": "### Agent & Tool Developments\n**Caliby Embedded Vector Database: r/LocalLLaMA**\nCaliby is a single-pip-install embedded vector store built for AI agent and RAG workloads, supporting HNSW, DiskANN, and IVF+PQ indexes with native text+vector unification and disk persistence. It outperforms pgvector by 4x on equivalent hardware and handles datasets larger than RAM without the restart failures common to pure in-memory libraries like FAISS. Multi-index isolation and tag-based filtering make it suitab",
+        "practical_community": "### Practical & Community\n**Local LLM as Language Tutor: r/LocalLLaMA**\nA user is exploring local LLMs for German practice focused on conversational correction rather than translation, seeking system-prompt setups that provide real-time feedback without external APIs. The thread discusses practical construction of such tutors while avoiding common pitfalls like context bloat from tool use. Builders working on language-learning agents can review the discussion for prompt patterns and context-mana",
+        "deep_dive": "### Under the Hood: Unified Text-Vector Storage in Embedded Databases\nEveryone talks about vector databases as simple \"store embeddings and retrieve\" systems. In practice, unifying raw text and dense vectors inside a single embedded engine requires careful buffer-pool design and index co-location that most standalone vector libraries avoid. The core insight is that agent memory rarely needs pure vector search; developers constantly cross-reference semantic matches with metadata tags, timestamps,"
+      },
+      "deep_dive_topic": "Unified Text-Vector Storage in Embedded Databases"
     }
   ]
 }
