@@ -86,12 +86,42 @@ def _find_font() -> str:
 
 
 def _drawtext_escape(value: str) -> str:
-    """Escape a string for ffmpeg ``drawtext text=`` value."""
+    """Escape a string for ffmpeg ``drawtext text=`` value.
+
+    The text= value gets embedded inside a single-quoted region of
+    a ``-filter_complex`` graph. ffmpeg's filter_complex parser:
+
+      * Treats ``\\`` as a literal backslash.
+      * Treats ``\\'`` as a literal apostrophe inside the quoted region.
+      * **Terminates the quoted region on a literal line feed** —
+        which means a real newline character in our wrapped Shorts
+        caption truncates the text= value mid-string and the rest of
+        the filter graph parses as garbage.
+
+    Operator caught (Tesla Ep466, May 8 2026): the Shorts ffmpeg
+    invocation failed because the wrapped 4-line hook contained real
+    ``\\n`` newlines inside ``text='...'``. ffmpeg saw the first
+    newline, closed the quoted region, then choked on what looked
+    like a stray filter argument. Resulting metric:
+    ``youtube_short_uploaded: false`` with a
+    ``CalledProcessError`` containing the broken command.
+
+    Fix: escape real newlines to the literal two-character sequence
+    ``\\n`` (backslash + n). ffmpeg's drawtext text-expansion phase
+    runs *after* filter_complex parsing and recognises ``\\n`` as a
+    line break — so the rendered caption still wraps to multiple
+    lines, but the parser no longer terminates the quoted region
+    prematurely.
+
+    Order matters: escape backslashes FIRST so the new escapes don't
+    get re-escaped on the way out.
+    """
     return (
         value.replace("\\", "\\\\")
              .replace(":", r"\:")
              .replace("'", r"\'")
              .replace("%", r"\%")
+             .replace("\n", r"\n")
     )
 
 
