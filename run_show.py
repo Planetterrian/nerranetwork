@@ -2924,6 +2924,7 @@ def _publish_youtube(
                 final_mp3, cover_path, long_video_path,
                 scene_paths=long_scene_paths if len(long_scene_paths) >= 2 else None,
                 subtitles_path=srt_path,
+                show_name=config.name,
             )
             meta = build_long_form_metadata(
                 config,
@@ -3018,6 +3019,7 @@ def _publish_youtube(
                 duration=duration,
                 hook=hook or None,
                 scene_paths=short_scene_paths if len(short_scene_paths) >= 2 else None,
+                show_name=config.name,
             )
             meta = build_short_metadata(
                 config,

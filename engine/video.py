@@ -177,15 +177,36 @@ def _wrap_caption(text: str, max_chars_per_line: int = 26,
 
 
 # ---------------------------------------------------------------------------
-# Brand pill PNG
+# Brand pill PNGs
 # ---------------------------------------------------------------------------
+#
+# Operator (May 8 2026) asked for branded corner overlays on YouTube
+# videos: the show name + logo in one corner, ``nerranetwork.com`` in
+# another, so listeners always know what they're watching and where
+# to find it. The legacy ``_make_brand_pill`` rendered a single
+# "Nerra Network" pill with no per-show identity.
+#
+# New shape: ``_make_brand_pill(output_path, text=...)`` accepts any
+# text, so callers can render either a per-show pill (e.g.
+# ``Tesla Shorts Time``) or the canonical ``nerranetwork.com`` pill.
+# The default text stays "Nerra Network" so existing call sites keep
+# working unchanged.
 
 _BRAND_PILL_TEXT = "Nerra Network"
+_NETWORK_URL_PILL_TEXT = "nerranetwork.com"
 
 
 def _make_brand_pill(output_path: Path,
-                     *, width: int = 220, height: int = 60) -> Path:
-    """Render the network brand pill as an RGBA PNG. Idempotent."""
+                     *, text: str = _BRAND_PILL_TEXT,
+                     width: int = 220, height: int = 60) -> Path:
+    """Render a rounded-rect brand pill as an RGBA PNG. Idempotent.
+
+    *text* is the displayed string. Width auto-fits via font shrink
+    (font tries 30 → 12 px until the text fits with a 32 px side
+    margin). Show names up to ~30 chars fit comfortably at the
+    default 220 × 60; longer names get the smaller font, still
+    legible against the cover background.
+    """
     if output_path.exists():
         return output_path
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -204,27 +225,47 @@ def _make_brand_pill(output_path: Path,
 
     font_path = _find_font()
     font = None
-    for size in range(22, 12, -1):
+    # Wider top range than legacy (was 22 → 12) to accommodate longer
+    # show names that previously got clamped to the smallest font even
+    # when more horizontal room was available.
+    for size in range(28, 11, -1):
         try:
             candidate = ImageFont.truetype(font_path, size)
         except (IOError, OSError):
             continue
-        bbox = candidate.getbbox(_BRAND_PILL_TEXT)
+        bbox = candidate.getbbox(text)
         if bbox[2] - bbox[0] <= width - 32:
             font = candidate
             break
     if font is None:
         font = ImageFont.load_default()
 
-    bbox = font.getbbox(_BRAND_PILL_TEXT)
+    bbox = font.getbbox(text)
     text_w = bbox[2] - bbox[0]
     text_h = bbox[3] - bbox[1]
     x = (width - text_w) // 2 - bbox[0]
     y = (height - text_h) // 2 - bbox[1]
-    draw.text((x, y), _BRAND_PILL_TEXT, font=font, fill=(255, 255, 255, 235))
+    draw.text((x, y), text, font=font, fill=(255, 255, 255, 235))
 
     img.save(output_path, "PNG")
     return output_path
+
+
+def _make_show_pill(show_name: str, output_path: Path,
+                    *, width: int = 320, height: int = 60) -> Path:
+    """Render a per-show branded pill. Wider default (320) so longer
+    show names fit at a readable font size. Used in conjunction with
+    ``_make_url_pill`` for two-corner network branding."""
+    return _make_brand_pill(output_path, text=show_name,
+                            width=width, height=height)
+
+
+def _make_url_pill(output_path: Path,
+                   *, width: int = 260, height: int = 60) -> Path:
+    """Render the ``nerranetwork.com`` corner pill that points listeners
+    at the network homepage. Companion to ``_make_show_pill``."""
+    return _make_brand_pill(output_path, text=_NETWORK_URL_PILL_TEXT,
+                            width=width, height=height)
 
 
 # ---------------------------------------------------------------------------
@@ -347,7 +388,8 @@ _SUBTITLES_FORCE_STYLE = (
 def _long_form_filter_graph(*, width: int = 1920, height: int = 1080,
                             fps: int = 30,
                             bg_is_video: bool = False,
-                            subtitles_path: Optional[str] = None) -> str:
+                            subtitles_path: Optional[str] = None,
+                            with_url_pill: bool = False) -> str:
     """filter_complex for stage 2.
 
     Inputs:
@@ -356,7 +398,9 @@ def _long_form_filter_graph(*, width: int = 1920, height: int = 1080,
       baked in; we just scale to fill).
       ``[1:a]`` — episode audio (passed through via ``-map 1:a``;
       doesn't participate in the filter graph).
-      ``[2:v]`` — brand pill PNG, looped.
+      ``[2:v]`` — show brand pill PNG, looped (top-left).
+      ``[3:v]`` — (optional, when ``with_url_pill=True``)
+      ``nerranetwork.com`` URL pill PNG, looped (top-right).
 
     Earlier revisions overlaid a ``showcqt`` audio-spectrum band along
     the bottom 25% of the frame. For speech-heavy podcasts the
@@ -389,29 +433,39 @@ def _long_form_filter_graph(*, width: int = 1920, height: int = 1080,
     # status.containsSyntheticMedia=True on the API upload (renders
     # YouTube's own "Altered or synthetic content" label) plus the
     # synthetic_disclosure footer in the description. The brand pill
-    # in the top-left already carries "AI-narrated" text as a subtle
-    # corner marker.
+    # in the top-left carries the show name; the optional URL pill
+    # in the top-right carries ``nerranetwork.com`` so listeners
+    # always see where to find the network.
     graph = (
         f"{bg_chain};"
         f"[2:v]format=rgba[brand];"
         f"[bg][brand]overlay=x=24:y=24[branded]"
     )
+    if with_url_pill:
+        graph += (
+            ";[3:v]format=rgba[urlpill];"
+            "[branded][urlpill]overlay=x=W-w-24:y=24[stamped]"
+        )
+        post_brand_label = "[stamped]"
+    else:
+        post_brand_label = "[branded]"
 
     if subtitles_path:
         escaped = _subtitles_path_escape(subtitles_path)
         graph += (
-            f";[branded]subtitles='{escaped}'"
+            f";{post_brand_label}subtitles='{escaped}'"
             f":force_style='{_SUBTITLES_FORCE_STYLE}'[v]"
         )
     else:
-        graph += ";[branded]null[v]"
+        graph += f";{post_brand_label}null[v]"
     return graph
 
 
 def _short_form_filter_graph(width: int = 1080, height: int = 1920,
                              fps: int = 30,
                              hook: Optional[str] = None,
-                             bg_is_video: bool = False) -> str:
+                             bg_is_video: bool = False,
+                             with_url_pill: bool = False) -> str:
     """filter_complex for the 1080x1920 Shorts build.
 
     Inputs:
@@ -436,17 +490,30 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
         f"crop={width}:{height},setsar=1,format=yuv420p[bg]"
     )
 
+    # Show brand pill goes top-right (anchor point for vertical Shorts).
     base = (
         f"{bg_chain};"
         f"[2:v]format=rgba[brand];"
         f"[bg][brand]overlay=x=W-w-24:y=24[branded]"
     )
+    if with_url_pill:
+        # URL pill at the BOTTOM (centered horizontally) so the show
+        # pill at top + URL pill at bottom give clear top/bottom
+        # network branding without crowding the hook caption that
+        # sits in the middle for the first 3 s.
+        base += (
+            ";[3:v]format=rgba[urlpill];"
+            "[branded][urlpill]overlay=x=(W-w)/2:y=H-h-100[stamped]"
+        )
+        post_brand_label = "[stamped]"
+    else:
+        post_brand_label = "[branded]"
 
     if hook:
         wrapped = _wrap_caption(hook)
         escaped = _drawtext_escape(wrapped)
         caption = (
-            f";[branded]drawtext=fontfile='{font_path}':"
+            f";{post_brand_label}drawtext=fontfile='{font_path}':"
             f"text='{escaped}':"
             f"fontsize=64:fontcolor=white:"
             f"x=(w-text_w)/2:y=240:"
@@ -456,7 +523,7 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
             f"[v]"
         )
         return base + caption
-    return base + ";[branded]null[v]"
+    return base + f";{post_brand_label}null[v]"
 
 
 # ---------------------------------------------------------------------------
@@ -467,28 +534,41 @@ def _long_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                    output: str, *,
                    fps: int = 30,
                    bg_is_video: bool = False,
-                   subtitles_path: Optional[str] = None) -> List[str]:
+                   subtitles_path: Optional[str] = None,
+                   url_pill_in: Optional[str] = None) -> List[str]:
     """Full ffmpeg command for stage 2.
 
     When *bg_is_video* is True, *bg_in* is a pre-rendered slideshow
     MP4; we ``-stream_loop -1`` it so it loops to match the audio
     length, and we don't apply ``-loop 1 -framerate``.
+
+    When *url_pill_in* is provided, a 4th input (the
+    ``nerranetwork.com`` URL pill) is added as input ``[3:v]`` and
+    overlaid in the filter graph at the top-right corner.
     """
     if bg_is_video:
         bg_input = ["-stream_loop", "-1", "-i", bg_in]
     else:
         bg_input = ["-loop", "1", "-framerate", str(fps), "-i", bg_in]
 
+    extra_inputs: List[str] = []
+    if url_pill_in:
+        extra_inputs = [
+            "-loop", "1", "-framerate", str(fps), "-i", url_pill_in,
+        ]
+
     return [
         "ffmpeg", "-y", "-threads", "0",
         *bg_input,
         "-i", audio_in,
         "-loop", "1", "-framerate", str(fps), "-i", brand_in,
+        *extra_inputs,
         "-filter_complex",
         _long_form_filter_graph(
             fps=fps,
             bg_is_video=bg_is_video,
             subtitles_path=subtitles_path,
+            with_url_pill=bool(url_pill_in),
         ),
         "-map", "[v]", "-map", "1:a",
         *_VIDEO_ENCODE,
@@ -506,18 +586,28 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                     duration: float = 55.0,
                     fps: int = 30,
                     hook: Optional[str] = None,
-                    bg_is_video: bool = False) -> List[str]:
+                    bg_is_video: bool = False,
+                    url_pill_in: Optional[str] = None) -> List[str]:
     """ffmpeg command for the 1080x1920 Shorts build.
 
     When *bg_is_video* is True, *bg_in* is a pre-rendered vertical
     slideshow MP4; we ``-stream_loop -1`` it so it loops to match the
     Shorts clip length, and we drop the ``-loop 1 -framerate``
     image-input flags.
+
+    When *url_pill_in* is provided, a 4th input is added (the
+    ``nerranetwork.com`` URL pill PNG) and overlaid at bottom-center.
     """
     if bg_is_video:
         bg_input = ["-stream_loop", "-1", "-i", bg_in]
     else:
         bg_input = ["-loop", "1", "-framerate", str(fps), "-i", bg_in]
+
+    extra_inputs: List[str] = []
+    if url_pill_in:
+        extra_inputs = [
+            "-loop", "1", "-framerate", str(fps), "-i", url_pill_in,
+        ]
 
     return [
         "ffmpeg", "-y", "-threads", "0",
@@ -526,9 +616,11 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
         "-t", f"{duration:.2f}",
         "-i", audio_in,
         "-loop", "1", "-framerate", str(fps), "-i", brand_in,
+        *extra_inputs,
         "-filter_complex",
         _short_form_filter_graph(1080, 1920, fps, hook,
-                                 bg_is_video=bg_is_video),
+                                 bg_is_video=bg_is_video,
+                                 with_url_pill=bool(url_pill_in)),
         "-map", "[v]", "-map", "1:a",
         *_VIDEO_ENCODE,
         "-r", str(fps),
@@ -551,6 +643,7 @@ def build_long_form_video(
     fps: int = 30,
     scene_paths: Optional[Sequence[Path]] = None,
     subtitles_path: Optional[Path] = None,
+    show_name: Optional[str] = None,
 ) -> Path:
     """Render a 1920x1080 long-form podcast video.
 
@@ -574,6 +667,13 @@ def build_long_form_video(
         Optional path to an SRT file. When provided, ``ffmpeg``'s
         ``subtitles`` filter burns the cues onto the video using a
         styled box just above the spectrum band.
+    show_name:
+        Display name of the show (e.g. "Tesla Shorts Time"). When
+        provided (May 8 2026): renders TWO branded corner pills — the
+        show name in the top-left + ``nerranetwork.com`` in the
+        top-right. When ``None``: legacy single "Nerra Network" pill
+        in the top-left only. Tests + back-compat callers omit this
+        kwarg and keep the legacy behaviour.
 
     Returns
     -------
@@ -587,11 +687,22 @@ def build_long_form_video(
 
     work_dir = output_path.parent
     # Bumped filename when the pill text changed (was
-    # "Nerra Network · AI-narrated", now "Nerra Network"). The new
+    # "Nerra Network · AI-narrated", now per-show name). The new
     # filename forces regeneration even on persistent work dirs that
     # still hold an old cached pill.
-    brand_path = work_dir / "_brand_pill_v2.png"
-    _make_brand_pill(brand_path)
+    if show_name:
+        # Per-show pill — sluggified so different shows get distinct
+        # cached PNGs (otherwise the pill from the first show to run
+        # on a persistent work dir would be reused for everyone).
+        slug = "".join(c if c.isalnum() else "_" for c in show_name.lower()).strip("_")
+        brand_path = work_dir / f"_show_pill_{slug}.png"
+        _make_show_pill(show_name, brand_path)
+        url_pill_path = work_dir / "_url_pill_v1.png"
+        _make_url_pill(url_pill_path)
+    else:
+        brand_path = work_dir / "_brand_pill_v2.png"
+        _make_brand_pill(brand_path)
+        url_pill_path = None
 
     bg_path: Path = cover_path
     bg_is_video = False
@@ -633,6 +744,7 @@ def build_long_form_video(
         fps=fps,
         bg_is_video=bg_is_video,
         subtitles_path=str(subtitles_path) if subtitles_path else None,
+        url_pill_in=str(url_pill_path) if url_pill_path else None,
     )
     logger.info("Building long-form video → %s (slideshow=%s, captions=%s)",
                 output_path.name, bg_is_video, bool(subtitles_path))
@@ -646,7 +758,8 @@ def build_short_video(audio_path: Path, cover_path: Path,
                       duration: float = 55.0,
                       fps: int = 30,
                       hook: Optional[str] = None,
-                      scene_paths: Optional[Sequence[Path]] = None) -> Path:
+                      scene_paths: Optional[Sequence[Path]] = None,
+                      show_name: Optional[str] = None) -> Path:
     """Render a 1080x1920 vertical YouTube Shorts video.
 
     Parameters
@@ -667,6 +780,11 @@ def build_short_video(audio_path: Path, cover_path: Path,
         two-stage pipeline (vertical slideshow MP4 first, then
         composite). A single-element list (or ``None``) keeps the
         existing static-cover path.
+    show_name:
+        Display name of the show. When provided (May 8 2026):
+        renders the show name in the top-right pill and a
+        ``nerranetwork.com`` pill at bottom-center. When ``None``:
+        legacy "Nerra Network" single pill in the top-right.
     """
     if duration >= 60:
         raise ValueError(
@@ -678,12 +796,16 @@ def build_short_video(audio_path: Path, cover_path: Path,
         raise FileNotFoundError(f"cover not found: {cover_path}")
 
     work_dir = output_path.parent
-    # Bumped filename when the pill text changed (was
-    # "Nerra Network · AI-narrated", now "Nerra Network"). The new
-    # filename forces regeneration even on persistent work dirs that
-    # still hold an old cached pill.
-    brand_path = work_dir / "_brand_pill_v2.png"
-    _make_brand_pill(brand_path)
+    if show_name:
+        slug = "".join(c if c.isalnum() else "_" for c in show_name.lower()).strip("_")
+        brand_path = work_dir / f"_show_pill_{slug}.png"
+        _make_show_pill(show_name, brand_path)
+        url_pill_path = work_dir / "_url_pill_v1.png"
+        _make_url_pill(url_pill_path)
+    else:
+        brand_path = work_dir / "_brand_pill_v2.png"
+        _make_brand_pill(brand_path)
+        url_pill_path = None
 
     bg_path: Path = cover_path
     bg_is_video = False
@@ -709,6 +831,7 @@ def build_short_video(audio_path: Path, cover_path: Path,
         start_offset=start_offset,
         duration=duration, fps=fps, hook=hook,
         bg_is_video=bg_is_video,
+        url_pill_in=str(url_pill_path) if url_pill_path else None,
     )
     logger.info(
         "Building Shorts video (%.1fs from %.1fs) → %s",
