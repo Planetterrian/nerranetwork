@@ -250,6 +250,53 @@ def test_build_long_form_metadata_includes_disclosure_and_utm():
     assert meta["default_language"] == "en"
 
 
+def test_build_long_form_metadata_includes_show_page_link_above_fold():
+    """Operator (May 8 2026) asked for a direct link to the show
+    webpage in every YouTube description so listeners can click
+    through to nerranetwork.com from the video. The link must appear
+    BEFORE the body paragraphs so it's visible above YouTube's
+    "Show more" fold (~150 chars on mobile).
+    """
+    config = _make_config()
+    meta = vm.build_long_form_metadata(
+        config,
+        episode_num=42,
+        today_str="2026-04-26",
+        hook="Robotaxi expands to Vancouver",
+        digest_text="Tesla announced robotaxi expansion today...",
+        audio_url="https://audio.nerranetwork.com/tesla/ep042.mp3",
+    )
+    desc = meta["description"]
+    # A visible "Show page:" line carries the bare canonical URL.
+    assert "Show page:" in desc
+    # The link itself (no UTM — that's the subscribe line below).
+    assert "https://nerranetwork.com/tesla.html" in desc
+    # Above-the-fold ordering: show page line appears before the body.
+    sp_idx = desc.index("Show page:")
+    body_idx = desc.index("robotaxi expansion")
+    assert sp_idx < body_idx, (
+        "Show page link must come before body paragraphs to stay above "
+        "YouTube's 'Show more' fold."
+    )
+
+
+def test_build_short_metadata_includes_show_page_link():
+    """Shorts descriptions are brief; the show page link must still
+    appear so a listener tapping into the description can reach the
+    show webpage."""
+    config = _make_config()
+    meta = vm.build_short_metadata(
+        config,
+        episode_num=42,
+        today_str="2026-04-26",
+        hook="Robotaxi expands to Vancouver",
+        long_form_url="https://www.youtube.com/watch?v=abcd1234",
+    )
+    desc = meta["description"]
+    assert "Show page:" in desc
+    assert "https://nerranetwork.com/tesla.html" in desc
+
+
 def test_build_long_form_metadata_strips_angle_brackets_from_hook():
     """Defense-in-depth final strip — even if the hook contains
     ``<`` / ``>`` (a chapter title quoting math, an unfortunate

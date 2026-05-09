@@ -254,10 +254,20 @@ def build_long_form_metadata(
     subscribe_line = (
         f"🎧 Subscribe to {show_label} on the Nerra Network: {utm_link}"
     )
+    # Direct, no-frills show-page line at the top of the description.
+    # YouTube auto-hyperlinks the URL; keeps the show page one click away
+    # for any viewer who scrolls into "Show more". The bare URL (no UTM)
+    # is the canonical identity of the show on the network — operators
+    # use this URL on flyers, podcast directories, and so on, so it
+    # should match exactly when listeners cross-reference. The
+    # ``subscribe_line`` below carries the UTM-tracked variant for
+    # attribution.
+    show_page_line = f"🌐 Show page: {rss_link}"
 
     pieces: List[str] = []
     if hook:
         pieces.append(hook.strip())
+    pieces.append(show_page_line)
     pieces.append(subscribe_line)
     if body:
         pieces.append(body)
@@ -328,6 +338,10 @@ def build_short_metadata(
         f"{rss_link}{'&' if '?' in rss_link else '?'}"
         f"utm_source=youtube&utm_medium=shorts&utm_campaign=ep{episode_num}"
     )
+    # Show page link near the top — YouTube Shorts descriptions are
+    # short by design, so listeners who tap the title or "more" want
+    # the show page one click away.
+    pieces.append(f"🌐 Show page: {rss_link}")
     pieces.append(f"Subscribe to the podcast: {utm_link}")
     disclosure = (config.youtube.synthetic_disclosure or "").strip()
     if disclosure:
