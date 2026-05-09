@@ -25,21 +25,42 @@ import pytest
 # ---------------------------------------------------------------------------
 
 class TestRecalibratedMinPodcastWords:
-    """Operator caught (May 6 2026 audit) ``script_below_target: true``
-    firing on 9 of 11 shows because the per-show ``min_podcast_words``
-    was set ~40 % above what the LLM actually delivered. New values
-    are roughly 1.1× rolling-7-day median, so the flag becomes a real
-    alarm again."""
+    """Operator caught (May 6 2026 Phase-3 audit) ``script_below_target:
+    true`` firing on 9 of 11 shows because the per-show
+    ``min_podcast_words`` was set ~40 % above what the LLM actually
+    delivered. Phase-3 dropped the targets to ~1.1× rolling-7-day
+    median.
+
+    May 9 2026 follow-up retune: with PR #335's raw-word-count metric
+    now feeding actual delivery data into the audit, the Phase-3
+    targets STILL fired ``script_below_target`` on every show every
+    day — Phase 3 estimated median delivery from logs but the actual
+    median (now visible in metrics_ep*.json) was lower. Targets
+    dropped a second time to ~1.05× empirical median:
+
+      tesla            : 1700 → 1200  (median 1129)
+      omni_view        : 1300 → 900   (median  867)
+      planetterrian    : 1400 → 950   (median  887)
+      fascinating_fron : 1500 → 1050  (median  985)
+      modern_investing : 1500 → 1300  (median 1224)
+      models_agents_b… : 1100 → 900   (median  878)
+      privet_russian   : 700  → 650   (median  601)
+
+    ``models_agents`` and ``unintended_consequences`` retain their
+    Phase-3 values until at least 5 post-Phase-3 episodes have
+    committed (insufficient data to retune confidently). FP keeps
+    its 900 target because the median 836 is close enough that the
+    flag should fire occasionally, which is the desired behaviour."""
 
     EXPECTED = {
-        "tesla":                   1700,
-        "fascinating_frontiers":   1500,
-        "planetterrian":           1400,
-        "modern_investing":        1500,
-        "omni_view":               1300,
+        "tesla":                   1200,
+        "fascinating_frontiers":   1050,
+        "planetterrian":           950,
+        "modern_investing":        1300,
+        "omni_view":               900,
         "unintended_consequences": 1300,
         "finansy_prosto":          900,
-        "privet_russian":          700,
+        "privet_russian":          650,
     }
 
     @pytest.mark.parametrize("slug,expected", list(EXPECTED.items()))
