@@ -327,6 +327,58 @@ def test_drawtext_escape_handles_metacharacters():
     assert _drawtext_escape("path\\to") == "path\\\\to"
 
 
+def test_drawtext_escape_escapes_real_newlines():
+    """Operator caught (Tesla Ep466, May 8 2026) the Shorts ffmpeg
+    invocation failing because the wrapped 4-line hook contained
+    real ``\\n`` characters inside ``text='...'``. ffmpeg's
+    filter_complex parser terminates a single-quoted region on a
+    real line feed, which truncated the text= value mid-string.
+
+    The fix escapes real newlines to the literal two-char sequence
+    ``\\n``. ffmpeg's drawtext text-expansion (which runs *after*
+    filter_complex parsing) recognises ``\\n`` as a line break, so
+    the caption still wraps visually."""
+    # Real newline → literal \n (backslash + n)
+    assert _drawtext_escape("line one\nline two") == r"line one\nline two"
+    # Multi-line with apostrophe — the actual Tesla Ep466 case
+    out = _drawtext_escape("Tesla Semi's\nbattery sizes")
+    assert "\n" not in out, (
+        f"Real newlines must be escaped to literal \\n; got {out!r}"
+    )
+    assert r"\n" in out
+    assert r"\'" in out
+
+
+def test_short_form_filter_graph_caption_has_no_real_newlines():
+    """End-to-end pin: the rendered Shorts filter graph for a
+    realistic multi-line hook MUST NOT contain real newline
+    characters inside the drawtext text= region. A real newline
+    there terminates ffmpeg's single-quoted parsing region and
+    breaks the entire filter graph — exactly what failed Tesla
+    Ep466's Shorts upload on May 8 2026."""
+    hook = (
+        "California regulators just disclosed the Tesla Semi's "
+        "battery sizes at 822 kWh and 548 kWh."
+    )
+    graph = _short_form_filter_graph(hook=hook)
+    # Find the drawtext text= region.
+    import re as _re
+    m = _re.search(r"text='([^']*(?:\\'[^']*)*)'", graph)
+    assert m is not None, "drawtext text= region not found in graph"
+    text_value = m.group(1)
+    # No real newlines may appear inside the quoted region.
+    assert "\n" not in text_value, (
+        f"Real newline survived into drawtext text= value (would break "
+        f"ffmpeg parsing): {text_value!r}"
+    )
+    # But the literal escape sequence \n MUST be present so the rendered
+    # caption still wraps to multiple lines.
+    assert r"\n" in text_value, (
+        f"Multi-line hook should produce literal \\n breaks; got "
+        f"{text_value!r}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Caption wrapping for Shorts
 # ---------------------------------------------------------------------------
