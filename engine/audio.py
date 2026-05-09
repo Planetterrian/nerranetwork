@@ -355,18 +355,56 @@ def concatenate_with_stings(
             if i < len(section_files) - 1:
                 interleaved.append(padded_sting)
 
-        # Concatenate with re-encoding for seamless joins
-        concat_list = tmp_dir / "sting_concat.txt"
-        with open(concat_list, "w", encoding="utf-8") as f:
+        # Concatenate with chained acrossfades. Operator caught
+        # (May 8 2026) audible clicks/ticks at every section boundary
+        # — Grok TTS chunks frequently end at non-zero amplitude (no
+        # trailing fade-out), and the previous ``-f concat`` demuxer
+        # joined them straight into the silent leading edge of
+        # ``padded_sting`` with no smoothing. The amplitude
+        # discontinuity at each junction was the audible "click".
+        # Chained ``acrossfade`` operations crossfade every junction
+        # by 30 ms — long enough to mask the discontinuity, short
+        # enough to be imperceptible as content overlap.
+        #
+        # The total output is shorter than the naive sum by
+        # (n_inputs - 1) * 0.03 s. For a typical 5-section episode
+        # with 4 stings, that's 8 junctions × 30 ms = 240 ms ≈ 0.24 s
+        # off a 6-minute mix — well within natural pacing variance.
+        n_inputs = len(interleaved)
+        if n_inputs >= 2:
+            input_args: List[str] = []
             for fp in interleaved:
-                f.write(f"file '{_ffmpeg_escape(fp)}'\n")
-
-        cmd = [
-            "ffmpeg", "-y", "-threads", "0",
-            "-f", "concat", "-safe", "0", "-i", str(concat_list),
-            "-c:a", "libmp3lame", "-q:a", "2",
-            str(output_path),
-        ]
+                input_args.extend(["-i", str(fp)])
+            # Build the chained acrossfade filter graph.
+            # First pair: [0:a][1:a]acrossfade...[a1]
+            # Subsequent: [a{i}][{i+1}:a]acrossfade...[a{i+1}]
+            xfade = "acrossfade=d=0.03:c1=tri:c2=tri"
+            chain_parts: List[str] = [
+                f"[0:a][1:a]{xfade}[a1]"
+            ]
+            for i in range(2, n_inputs):
+                prev = f"[a{i - 1}]"
+                this = f"[{i}:a]"
+                label = "[out]" if i == n_inputs - 1 else f"[a{i}]"
+                chain_parts.append(f"{prev}{this}{xfade}{label}")
+            filter_complex = ";".join(chain_parts)
+            cmd = [
+                "ffmpeg", "-y", "-threads", "0",
+                *input_args,
+                "-filter_complex", filter_complex,
+                "-map", "[out]",
+                "-c:a", "libmp3lame", "-q:a", "2",
+                str(output_path),
+            ]
+        else:
+            # Single input — just re-encode (preserves prior behaviour
+            # for the n=1 corner case the outer guard mostly handles).
+            cmd = [
+                "ffmpeg", "-y", "-threads", "0",
+                "-i", str(interleaved[0]),
+                "-c:a", "libmp3lame", "-q:a", "2",
+                str(output_path),
+            ]
         subprocess.run(cmd, check=True, capture_output=True)
 
     logger.info(

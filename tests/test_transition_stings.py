@@ -366,3 +366,153 @@ class TestEndToEndSectionPipeline:
 
         # Sting should be configured
         assert cfg.audio.transition_sting is not None
+
+
+# =========================================================================
+# 8. TestSectionConcatAcrossfade
+# =========================================================================
+
+class TestSectionConcatAcrossfade:
+    """Pin the May 8 2026 fix that replaced ``-f concat`` demuxer with
+    chained ``acrossfade`` operations on section boundaries.
+
+    Operator caught audible clicks/ticks at every section boundary —
+    Grok TTS chunks frequently end at non-zero amplitude (no trailing
+    fade-out), and the demuxer joined them straight into the silent
+    leading edge of ``padded_sting`` with no smoothing. The amplitude
+    discontinuity at each junction was the audible click.
+
+    These tests verify the new ffmpeg command structure carries the
+    acrossfade filter chain so a future "let's go back to demuxer for
+    speed" refactor surfaces with a specific error.
+    """
+
+    def test_uses_acrossfade_filter_complex_for_multi_section(self, tmp_path):
+        """The ffmpeg command MUST use ``-filter_complex`` with chained
+        ``acrossfade=...:c1=tri:c2=tri`` operations, not ``-f concat``."""
+        sections = [tmp_path / f"sec_{i}.mp3" for i in range(3)]
+        for s in sections:
+            s.write_bytes(b"fake mp3")
+        sting = tmp_path / "sting.mp3"
+        sting.write_bytes(b"fake sting")
+        output = tmp_path / "out.mp3"
+
+        captured_cmds: list[list[str]] = []
+
+        def _fake_run(cmd, **kwargs):
+            captured_cmds.append(list(cmd))
+            # Make output file exist so the function returns cleanly.
+            for i, arg in enumerate(cmd):
+                if arg.endswith(".mp3") and i == len(cmd) - 1:
+                    Path(arg).parent.mkdir(parents=True, exist_ok=True)
+                    Path(arg).write_bytes(b"\x00")
+            class _R:
+                returncode = 0
+                stderr = b""
+                stdout = b""
+            return _R()
+
+        with patch("engine.audio.subprocess.run", _fake_run):
+            concatenate_with_stings(sections, output, sting_path=sting)
+
+        # The FINAL ffmpeg invocation (the section concat) must use
+        # acrossfade-based filter_complex, not the demuxer concat.
+        # Filter the captured commands to find the one that produced
+        # the output path.
+        section_concat = next(
+            c for c in captured_cmds
+            if any(arg.endswith(output.name) for arg in c)
+        )
+        assert "-filter_complex" in section_concat, (
+            "Section concat must use -filter_complex (acrossfade chain), "
+            "not -f concat demuxer. The demuxer joins at sample "
+            "boundaries with no smoothing — produces clicks at every "
+            "section boundary."
+        )
+        assert "-f" not in section_concat or "concat" not in section_concat, (
+            "Section concat must NOT use -f concat demuxer."
+        )
+        fc_idx = section_concat.index("-filter_complex")
+        graph = section_concat[fc_idx + 1]
+        # Acrossfade with tri/tri curves is the smoothing primitive.
+        assert "acrossfade" in graph
+        assert "c1=tri" in graph and "c2=tri" in graph
+
+    def test_acrossfade_duration_is_30ms(self, tmp_path):
+        """The crossfade duration is 30 ms — long enough to mask the
+        amplitude discontinuity, short enough to be imperceptible as
+        content overlap. Pinning so a future "smaller" tweak doesn't
+        regress to a value that re-introduces audible clicks."""
+        sections = [tmp_path / f"sec_{i}.mp3" for i in range(2)]
+        for s in sections:
+            s.write_bytes(b"fake mp3")
+        sting = tmp_path / "sting.mp3"
+        sting.write_bytes(b"fake sting")
+        output = tmp_path / "out.mp3"
+
+        captured: list[list[str]] = []
+
+        def _fake_run(cmd, **kwargs):
+            captured.append(list(cmd))
+            for arg in cmd:
+                if arg.endswith(output.name):
+                    Path(arg).parent.mkdir(parents=True, exist_ok=True)
+                    Path(arg).write_bytes(b"\x00")
+            class _R:
+                returncode = 0
+                stderr = b""
+                stdout = b""
+            return _R()
+
+        with patch("engine.audio.subprocess.run", _fake_run):
+            concatenate_with_stings(sections, output, sting_path=sting)
+
+        section_concat = next(
+            c for c in captured if any(arg.endswith(output.name) for arg in c)
+        )
+        graph = section_concat[section_concat.index("-filter_complex") + 1]
+        # 30 ms duration must be present.
+        assert "d=0.03" in graph, (
+            f"Acrossfade duration must be 0.03 s; filter graph: {graph}"
+        )
+
+    def test_chains_acrossfade_for_n_inputs(self, tmp_path):
+        """For N inputs (sections + interleaved padded stings), the
+        graph must chain N-1 acrossfade operations producing a single
+        ``[out]`` label."""
+        # 3 sections + 2 stings = 5 inputs interleaved → 4 acrossfades
+        sections = [tmp_path / f"sec_{i}.mp3" for i in range(3)]
+        for s in sections:
+            s.write_bytes(b"x")
+        sting = tmp_path / "sting.mp3"
+        sting.write_bytes(b"x")
+        output = tmp_path / "out.mp3"
+
+        captured: list[list[str]] = []
+
+        def _fake_run(cmd, **kwargs):
+            captured.append(list(cmd))
+            for arg in cmd:
+                if arg.endswith(output.name):
+                    Path(arg).parent.mkdir(parents=True, exist_ok=True)
+                    Path(arg).write_bytes(b"\x00")
+            class _R:
+                returncode = 0
+                stderr = b""
+                stdout = b""
+            return _R()
+
+        with patch("engine.audio.subprocess.run", _fake_run):
+            concatenate_with_stings(sections, output, sting_path=sting)
+
+        section_concat = next(
+            c for c in captured if any(arg.endswith(output.name) for arg in c)
+        )
+        graph = section_concat[section_concat.index("-filter_complex") + 1]
+        # Final label is [out].
+        assert "[out]" in graph
+        # 4 acrossfade operations for 5 inputs.
+        assert graph.count("acrossfade") == 4
+        # -map [out] used as output target.
+        assert "-map" in section_concat
+        assert section_concat[section_concat.index("-map") + 1] == "[out]"
