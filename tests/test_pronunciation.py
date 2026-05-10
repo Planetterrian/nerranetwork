@@ -457,8 +457,20 @@ class TestApplyPronunciationFixes:
         assert "Cyber-truck" in result
 
     def test_planetterrian(self):
+        """Operator caught (PT Ep059, May 10 2026) the previous
+        respelling ``Planet-terry-an`` being mispronounced — Grok TTS
+        parsed the hyphens as word breaks and the personal name
+        "Terry" got inserted ("PLAN-it · TER-ee · an"). New respelling
+        matches the intended "vegetarian" cadence:
+        PLAN-it-TAIR-ee-uhn. Tail is "uhn" (not "un") because "UN" is
+        in COMMON_ACRONYMS — the case-insensitive acronym pass would
+        otherwise re-substitute "un" → "U N" and break the read."""
         result = apply_pronunciation_fixes("Welcome to Planetterrian")
-        assert "Planet-terry-an" in result
+        assert "plan it TAIR ee uhn" in result
+        # The old hyphenated form must NOT survive.
+        assert "Planet-terry-an" not in result
+        # The acronym-collision side-effect must NOT trigger.
+        assert "U N" not in result
 
     def test_teslarati(self):
         result = apply_pronunciation_fixes("According to Teslarati")
