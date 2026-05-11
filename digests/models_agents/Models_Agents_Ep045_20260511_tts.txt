@@ -1,0 +1,135 @@
+Hey, welcome to Models and Agents, episode forty-five, on May eleventh, twenty twenty-six.
+
+Let's see what shipped.
+
+Monday in the A I world — which means a weekend's worth of announcements to catch up on.
+
+Let's go.
+
+Sakana A I and En-vidia just showed how extreme sparsity in feed-forward layers can deliver real G P U speedups without retraining.
+
+This is not another theoretical paper.
+
+The team turned over ninety nine percent sparsity into measurable gains on actual En-vidia hardware.
+
+What You Need to Know is that they combined simple L1 regularization with new custom koo-dah kernels.
+
+The result is twenty point five percent faster inference and twenty one point nine percent faster training with almost no drop in quality.
+
+Local developers will want to watch the latest ExLlamaV3 updates, while anyone building agents should look at the new persistent memory options now available.
+
+In the top story this week, Sakana A I and En-vidia introduced a method called TwELL.
+
+It applies L1 regularization to push feed-forward layers in large language models past ninety nine percent sparsity.
+
+They then convert that sparsity into real throughput using new sparse data formats and fused koo-dah kernels.
+
+The measured gains sit at twenty point five percent for inference and twenty one point nine percent for training.
+
+Downstream task performance stays essentially unchanged.
+
+Most sparsity research never leaves the lab.
+
+TwELL actually ships usable speedups that teams can test on current En-vidia cards today.
+
+If you run large models on that hardware, it is worth checking whether your workloads can adopt the kernels without accuracy tradeoffs.
+
+Open-source releases of the kernels are expected soon.
+
+On the model side, Chwen three point six thirty five B A three B is showing strong results on niche code understanding tasks.
+
+Community tests show it can now take full academic papers plus code and map the implementation back to the research accurately.
+
+It outperforms earlier small models like Devstral Small two on these specialized workloads.
+
+The model handles long contexts through gated delta net and hybrid attention mechanisms that smaller models lacked just months ago.
+
+Developers working with technical or academic codebases should compare it directly against Gemma four twenty six B A four B and Nemotron three Nano for the same jobs.
+
+ExLlamaV3 added DFlash support along with further quantization improvements in its latest release.
+
+The updates deliver up to three times speedups on coding workloads and two point five times on agentic tasks compared with the previous baseline.
+
+New support is included for Gemma four and Chwen three point five models.
+
+Quantization efficiency improved across three thousand ninety through six thousand Pro G P U's, with some setups now exceeding seventy percent memory savings.
+
+Local runners should grab the latest dev branch to get the newest caching and DFlash fixes.
+
+Moving to agent tools, Memori now provides persistent memory infrastructure for multi-user L L M applications.
+
+An open tutorial shows how to wrap both synchronous and asynchronous Open A I clients so every model call routes automatically through an agent-native memory layer.
+
+It supports multi-session and multi-user scenarios without forcing manual context management.
+
+Builders of long-running agents can follow the Colab example and add memory without touching their existing client code.
+
+Claude Code can now orchestrate local L L M's as sub-agents through a new pattern.
+
+It uses Pi dot dev RPC mode to let Claude delegate tasks to a local model and then review the output inside the same pull request workflow.
+
+The setup keeps the local model inside the agent loop while preserving Claude's orchestration strengths.
+
+Developers hitting usage limits should test whether routing review or generation steps to a local backend cuts costs without losing quality.
+
+On the practical side, a new hands-on series shows how to build small heterogeneous A I clusters from everyday hardware.
+
+The posts walk through networking Mac Minis, Jetson devices, Raspberry Pis, and old laptops into working clusters for distributed inference and training.
+
+Early installments focus on cabling, networking, and basic cluster setup before moving to actual model runs.
+
+Anyone with spare consumer hardware can follow along to test whether mixed-device clusters make sense for their workloads.
+
+OK, let's pop the hood on persistent memory layers for agents.
+
+Everyone talks about giving agents memory as if it is just stuffing conversation history into a vector store.
+
+In practice it requires careful separation between short-term working memory, long-term episodic memory, and user-specific facts.
+
+Without that separation the model starts hallucinating stale context.
+
+The core move is inserting a thin middleware layer that intercepts every model call.
+
+It retrieves relevant memories by session and user ID, then injects them into the prompt.
+
+This adds only a small constant overhead per request.
+
+It removes the need to re-send entire histories, which matters once sessions span days or multiple users.
+
+The common mistake is treating memory as one undifferentiated store.
+
+Without explicit scoping you quickly pollute the context with irrelevant past interactions.
+
+Start with a simple key-value layer scoped by user and session.
+
+Add retrieval only when context length or task complexity justifies the extra latency.
+
+If you have not tried Chwen three point six thirty five B A three B yet, test it this week on your own academic or niche code plus paper pairs.
+
+See whether the long-context improvements actually translate to your domain.
+
+Pull the latest ExLlamaV3 dev build and benchmark DFlash on your coding or agent workloads against your current inference setup.
+
+Follow the Memori Colab tutorial to add persistent memory to an existing Open A I based agent without rewriting client code.
+
+Start the Mac Minis cluster series if you have spare consumer hardware and want to experiment with heterogeneous distributed inference.
+
+On the horizon, more open releases of the sparse koo-dah kernels from the TwELL work are expected in the coming weeks.
+
+Additional quantization and caching updates for ExLlamaV3 are already landing on the dev branch.
+
+Community experiments with local sub-agents behind Claude Code are likely to produce reusable M C P servers soon.
+
+Before we go, keep an eye on those first open-source sparse kernel releases from the TwELL team.
+
+That's Models and Agents for today.
+
+If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update.
+
+The A I world moves fast.
+
+We'll help you keep up.
+
+See you tomorrow.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.

@@ -1,0 +1,74 @@
+Hey, welcome to Models and Agents, episode 45, on May 11, 2026.
+Let's see what shipped Monday in the AI world, which means a weekend's worth of announcements
+to catch up on.
+Let's go.
+Sakana AI and Nvidia just showed how extreme sparsity in feed-forward layers can deliver real
+GPU speed-ups without retraining.
+This is not another theoretical paper.
+The team turned over 99% sparsity into measurable gains on actual Nvidia hardware.
+What you need to know is that they combine simple L1 regularization with new custom CUDA
+kernels.
+The result is 20.5% faster inference and 21.9% faster training with almost no drop in quality.
+Local developers will want to watch the latest XLAMA V3 updates while anyone building
+agents should look at the new persistent memory options now available.
+In the top story this week, Sakana AI and Nvidia introduced a method called 12.
+It applies L1 regularization to push feed-forward layers in large language models past 99% sparsity.
+They then convert that sparsity into real throughput using new sparse data formats and fused
+CUDA kernels. The measured gains sit at 20.5% for inference and 21.9% for training.
+Downstream task performance stays essentially unchanged.
+Most sparsity research never leaves a lab.
+12 actually ships usable speed-ups that teams can test on current Nvidia cards today.
+If you run large models on that hardware, it is worth checking whether your workloads can
+adopt the kernels without accuracy trade-offs.
+Open source releases of the kernels are expected soon.
+On the model side, twin 3.635 BA3B is showing strong results on niche code understanding tasks.
+Community tests show it can now take full academic papers plus code and map the implementation
+back to the research accurately. It outperforms earlier small models like DevStrawl
+small 2 on these specialized workloads. The model handles long contexts through gated
+delta net and hybrid attention mechanisms that smaller models lack just months ago.
+Developers working with technical or academic code bases should compare it directly against
+Gemma 426 BA4B and Nematron 3Nano for the same jobs.
+XLama V3 added deflash support along with further quantization improvements in its latest release.
+Fast. The updates deliver up to three times speed-ups on coding workloads and 2.5 times on
+agentic tasks compared with the previous baseline. New support is included for Gemma 4 and
+twin 3.5 models. Quantization efficiency improved across 3,090 through 6,000 Pro GPUs with some setups
+now exceeding 70% memory savings. Local runners should grab the latest dev branch to get the
+caching and deflash fixes. Moving to agent tools, memory now provides persistent memory infrastructure
+for multi-user LLM applications. An open tutorial shows how to wrap both synchronous and asynchronous
+open AI clients. So every model call routes automatically through an agent native memory layer.
+It supports multi-session and multi-user scenarios without forcing manual context management.
+Builders of long-running agents can follow the colab example and add memory without touching
+their existing client code. Cloud code can now orchestrate local LLMs as sub-agents through a new pattern.
+It uses pi.dev RPC mode to let claw delegate tasks to a local model and then review the output inside
+the same pull request workflow. The setup keeps the local model inside the agent loop while preserving
+clawed's orchestration strengths. Developers hitting usage limits should test whether routing review
+or generation steps to a local back end cuts costs without losing quality.
+On the practical side, a new hands-on series shows how to build small heterogeneous AI clusters from
+everyday hardware. The posts walk through networking, mac minis, jets and devices,
+raspberry pies, and old laptops into working clusters for distributed inference and training.
+Early installments focus on cabling, networking, and basic cluster setup before moving to actual
+model runs. Anyone with spare consumer hardware can follow along to test whether mixed device clusters
+make sense for their workloads. Fast. Okay, let's pop the hood on persistent memory layers for agents.
+Everyone talks about giving agents memory as if it is just stuffing conversation history into a vector
+store. In practice, it requires careful separation between short-term working memory, long-term
+episodic memory, and user-specific facts. Without that separation, the model starts hallucinating
+stale context. The core move is inserting a thin middleware layer that intercepts every model call.
+It retrieves relevant memories by session and user ID. Then injects them into the prompt.
+This adds only a small constant overhead per request. It removes the need to resend entire histories,
+which matters one session span days or multiple users. The common mistake is treating memory as one
+undifferentiated store. Without explicit scoping, you quickly pollute the context with irrelevant
+past interactions. Start with a simple key value layer, scoped by user and session. Add retrieval
+only when context length or task complexity justifies the extra latency. If you have not tried
+paper pairs, see whether the long context improvements actually translate to your domain.
+Pull the latest X-Lama V3 dev build and benchmark deflash on your coding or agent workloads
+against your current inference setup. Follow the memory colab tutorial to add persistent memory
+to an existing open AI-based agent without rewriting client code. Start the Mac Mini's cluster series if
+you have spare consumer hardware and want to experiment with hetrogenuous distributed inference.
+On the horizon, more open releases of the Sparse Coodaw kernels from the 12 work are expected
+in the coming weeks. Additional quantization and caching updates for X-Lama V3 are already landing
+on the dev branch. Community experiments with local subagents behind cloud code are likely to produce
+reusable MCP servers soon. Before we go, keep an eye on those first open source Sparse kernel releases
+from the Twittell team. That's models and agents for today. If you found this useful, share it with
+someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's
+update. The AI world moves fast. We'll help you keep up. See you tomorrow. This episode used AI
+voice synthesis of my voice. Editorial selection and analysis are my own.

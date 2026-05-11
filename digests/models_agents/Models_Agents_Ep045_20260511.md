@@ -1,0 +1,34 @@
+# Models & Agents
+> **Sakana AI and NVIDIA just showed how extreme sparsity in feed-forward layers can deliver real GPU speedups without retraining.**
+
+**What You Need to Know:** Sakana and NVIDIA released TwELL, a sparse inference approach that uses simple L1 regularization plus custom CUDA kernels to hit over 99% sparsity in LLM feed-forward layers. The result is measured 20.5% faster inference and 21.9% faster training with negligible quality loss. Local developers should watch ExLlamaV3’s latest DFlash and quantization updates, while agent builders can explore Memori for persistent memory layers.
+---
+### Top Story
+Sakana AI and NVIDIA introduced TwELL, a technique that applies L1 regularization to induce over 99% sparsity in the feed-forward layers of large language models. They then translate that sparsity into actual throughput gains using new sparse data formats and fused CUDA kernels. The reported speedups are 20.5% for inference and 21.9% for training while downstream performance remains essentially unchanged. This matters because most current sparsity work stays theoretical; TwELL demonstrates concrete GPU-level improvements that developers can measure today. Teams running large models on NVIDIA hardware should test whether their workloads can adopt the new kernels without accuracy tradeoffs. Watch for open-source releases of the kernels and any follow-up work on applying the same sparsity pattern to other model families. Source: [marktechpost.com](https://www.marktechpost.com/2026/05/11/sakana-ai-and-nvidia-introduce-twell-with-cuda-kernels-for-20-5-inference-and-21-9-training-speedup-in-llms/)
+---
+### Model Updates
+**Qwen 3.6 35B A3B shows strong gains on niche code understanding:** Community tests show the model can now ingest full academic papers plus code and accurately map the implementation back to the research, outperforming earlier small models like Devstral Small 2. It handles long contexts via gated delta net and hybrid attention mechanisms that smaller models lacked just months ago. Developers working with specialized technical codebases should compare it against Gemma 4 26B A4B and Nemotron 3 Nano for similar tasks. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1t9whrt/the_qwen_36_35b_a3b_hype_is_real/)
+
+**ExLlamaV3 adds DFlash support and further quantization improvements:** The latest updates deliver up to 3x speedups on coding workloads and 2.5x on agentic tasks compared with baseline, with new support for Gemma 4 and Qwen 3.5 models. Quantization efficiency has improved across 3090 through 6000 Pro GPUs, with some configurations now exceeding 70% memory savings. Local runners should pull the latest dev branch for the newest caching and DFlash fixes. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1t9voxs/exllamav3_major_updates/)
+---
+### Agent & Tool Developments
+**Memori adds persistent memory infrastructure for multi-user LLM apps:** The open tutorial shows how to wrap both synchronous and asynchronous OpenAI clients so every model call automatically routes through an agent-native memory layer. It supports multi-session and multi-user scenarios without manual context management. Builders of long-running agents can follow the Colab example to add memory without changing their existing client code. Source: [marktechpost.com](https://www.marktechpost.com/2026/05/11/a-coding-implementation-to-build-agent-native-memory-infrastructure-with-memori-for-persistent-multi-user-and-multi-session-llm-applications/)
+
+**Claude Code can now orchestrate local LLMs as sub-agents:** A new pattern uses Pi.dev’s RPC mode to let Claude delegate tasks to a local model, then review the output in the same PR workflow. The setup keeps the local model inside the agent loop while preserving Claude’s orchestration strengths. Developers hitting usage limits should test whether routing review or generation steps to a local backend reduces costs without losing quality. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1t9xyku/claude_code_orchestrator_subagent_local_llm/)
+---
+### Practical & Community
+**Building small heterogeneous AI clusters from everyday hardware:** A new hands-on series walks through networking Mac Minis, Jetson devices, Raspberry Pis, and old laptops into working clusters for distributed inference and training. Early posts focus on cabling, networking, and basic cluster setup before moving to actual model runs. Anyone with spare consumer hardware can follow along to test whether mixed-device clusters are practical for their workloads. Source: [reddit.com](https://www.reddit.com/r/LocalLLaMA/comments/1t9wsal/from_mac_minis_to_ai_clusters_learning/)
+---
+### Under the Hood: Persistent Memory Layers for Agents
+Everyone talks about “giving agents memory” as if it’s just stuffing conversation history into a vector store. In practice it requires careful separation between short-term working memory, long-term episodic memory, and user-specific facts so the model doesn’t hallucinate stale context. The core engineering move is inserting a thin middleware layer that intercepts every model call, retrieves relevant memories by session and user ID, and injects them into the prompt without the developer manually managing tokens. This adds a small constant overhead per request but eliminates the need to re-send entire histories, which becomes critical once sessions span days or multiple users. The gotcha most teams hit is treating memory as a single undifferentiated store; without explicit scoping you quickly pollute the context with irrelevant past interactions. Start with a simple key-value layer scoped by user and session, then add retrieval only when context length or task complexity justifies the extra latency.
+---
+### Things to Try This Week
+- Test Qwen 3.6 35B A3B on your own academic or niche code plus paper pairs to see whether the long-context improvements translate to your domain.
+- Pull the latest ExLlamaV3 dev build and benchmark DFlash on your coding or agent workloads against your current inference setup.
+- Follow the Memori Colab tutorial to add persistent memory to an existing OpenAI-based agent without rewriting client code.
+- Start the Mac Minis cluster series if you have spare consumer hardware and want to experiment with heterogeneous distributed inference.
+---
+### On the Horizon
+- More open releases of sparse CUDA kernels from the TwELL work are expected in the coming weeks.
+- Additional quantization and caching updates for ExLlamaV3 are already landing on the dev branch.
+- Community experiments with local sub-agents behind Claude Code are likely to produce reusable MCP servers soon.
