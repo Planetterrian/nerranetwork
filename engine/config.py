@@ -89,21 +89,18 @@ class TTSConfig:
     use_speaker_boost: bool = True
     speed: float = 1.0  # Speech speed (0.7–1.2); Flash v2.5 supports this range
     apply_text_normalization: str = "on"  # "auto", "on", or "off"; helps with number/date pronunciation
-    # Speech-tag wrap applied to every chunk sent to Grok TTS. The
-    # operator A/B'd ``<fast>`` against bare text in May 2026 and the
-    # wrapped read had clearly more energy and dynamic range. Empty
-    # strings = no wrap (back-compat). Grok strips ``<fast>`` tags
-    # before producing audio.
-    #
-    # History: the wrap originally paired ``<fast>`` with
-    # ``<build-intensity>`` (PR #293, May 3 2026). Whisper transcripts
-    # of UC Ep001 and Tesla Ep461 caught Grok occasionally SPEAKING
-    # "build intensity" instead of consuming the tag — it isn't in
-    # Grok's documented tag list. Dropped May 4 2026; ``<fast>`` alone
-    # delivers the energy lift without the leakage. Re-add only with
-    # transcript-level evidence that Grok consumes the new tag.
-    speech_wrap_open: str = "<fast>"
-    speech_wrap_close: str = "</fast>"
+    # No chunk-wrap. Earlier defaults wrapped every Grok TTS chunk in
+    # ``<fast>...</fast>`` for an energy lift. May 2026 audit caught
+    # Grok TTS occasionally **voicing** the opening ``<fast>`` aloud as
+    # "Fast." at section-TTS boundaries (M&A Ep045, May 11) — and
+    # ``<fast>`` isn't on Grok's documented tag list. Emphasis is now
+    # injected programmatically by ``engine.prosody.inject_prosody_tags``
+    # at script-save time, wrapping currency / percentage / cashtag
+    # tokens in the *documented* ``<emphasis>...</emphasis>`` tag.
+    # Re-introduce a chunk wrap only with transcript-level evidence
+    # that Grok consumes it silently at every section boundary.
+    speech_wrap_open: str = ""
+    speech_wrap_close: str = ""
     # Post-TTS transcription validation (opt-in)
     validate_transcription: bool = False
     whisper_model: str = "base"  # "tiny", "base", "small", "medium"

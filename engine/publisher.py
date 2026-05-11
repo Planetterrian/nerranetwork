@@ -73,8 +73,13 @@ def _markdown_to_rss_html(md: str) -> str:
     if not md:
         return ""
     import re as _re
+    from engine.utils import strip_speech_tags as _strip_tags
 
-    text = md.strip()
+    # Defense-in-depth: strip Grok TTS speech tags (``[breath]``,
+    # ``<emphasis>``, etc.) before anything reaches Apple Podcasts /
+    # Spotify show notes. The podcast script intentionally carries
+    # these for the TTS path; readers should see clean prose.
+    text = _strip_tags(md).strip()
 
     # Strip block-level headers and blockquotes; keep the text content.
     text = _re.sub(r"^[ \t]*#{1,6}[ \t]+", "", text, flags=_re.MULTILINE)

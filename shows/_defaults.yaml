@@ -50,20 +50,16 @@ tts:
   voice_id: kdif6sqjcyiq
   language_code: en
   max_chars: 10000
-  # Speech-tag wrap applied to every chunk sent to Grok TTS.
-  # ``<fast>`` is documented and consumed correctly by Grok; the
-  # operator A/B'd it against bare text in May 2026 and the wrapped
-  # read had visibly more energy on the kdif6sqjcyiq voice. To
-  # disable for a show, override both fields to empty strings in
-  # the show's tts: block.
-  #
-  # History: this wrap previously included ``<build-intensity>`` as
-  # an inner pair (``<fast><build-intensity>...</.../>``). Whisper
-  # caught Grok speaking "build intensity" out loud (UC Ep001
-  # opening, Tesla Ep461 mid-script) — the tag isn't in Grok's
-  # documented set. Dropped May 4 2026.
-  speech_wrap_open: "<fast>"
-  speech_wrap_close: "</fast>"
+  # No chunk-wrap. Earlier defaults wrapped every chunk in
+  # ``<fast>...</fast>``; May 2026 audit caught Grok voicing the
+  # opening tag aloud as "Fast." at section-TTS boundaries (M&A
+  # Ep045, May 11). ``<fast>`` is also NOT on Grok's documented
+  # tag list (only ``[breath]``, ``[pause]``, ``[long-pause]``,
+  # ``<emphasis>``, ``<whisper>``, ``<slow>``, ``<soft>`` are).
+  # News-anchor emphasis is now injected at script-save time by
+  # ``engine.prosody.inject_prosody_tags`` using ``<emphasis>``.
+  speech_wrap_open: ""
+  speech_wrap_close: ""
   # ---- Legacy ElevenLabs baseline ----
   # No show currently overrides `provider: elevenlabs`. Kept here so
   # an emergency rollback (e.g. Grok TTS outage) is a one-line YAML

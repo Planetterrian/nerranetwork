@@ -494,17 +494,21 @@ def test_synthesize_sections_succeeds_when_all_sections_synth(tmp_path: Path, mo
 
 
 # ---------------------------------------------------------------------------
-# Speech-tag wrap — <fast>...</fast>
-# (Originally paired with <build-intensity>; dropped May 4 2026 after
-# Whisper caught Grok speaking "build intensity" out loud — see the
-# history block in shows/_defaults.yaml and landmine #17.)
+# Speech-tag wrap — disabled by default (May 2026)
+# ----------------------------------------------------------------------------
+# History: an earlier default wrapped every Grok TTS chunk in
+# ``<fast>...</fast>``. May 11 2026 audit caught Grok occasionally
+# voicing the opening ``<fast>`` aloud as "Fast." at section-TTS
+# boundaries (M&A Ep045, two instances). ``<fast>`` is also NOT on
+# Grok's documented tag list. Wrap dropped; emphasis is injected
+# programmatically by ``engine.prosody.inject_prosody_tags`` using the
+# documented ``<emphasis>`` tag.
 # ---------------------------------------------------------------------------
 
 def test_grok_path_wraps_text_with_speech_tags(tmp_path: Path, monkeypatch):
-    """When ``speech_wrap_open`` / ``close`` are set, every chunk sent
-    to ``grok_speak_chunk`` must arrive wrapped. The kdif6sqjcyiq clone
-    A/B'd cleaner with ``<fast>`` than bare text — this drift guard
-    catches any regression that drops the wrap."""
+    """``speech_wrap_open`` / ``close`` are still honored when passed
+    explicitly (someone might re-enable per-show). Drift guard that
+    the wrap plumbing itself didn't rot."""
     captured_texts: list = []
 
     def fake_chunk(text, *args, **kwargs):
@@ -526,19 +530,19 @@ def test_grok_path_wraps_text_with_speech_tags(tmp_path: Path, monkeypatch):
         api_key="k",
         provider="grok",
         language_code="en",
-        speech_wrap_open="<fast>",
-        speech_wrap_close="</fast>",
+        speech_wrap_open="<emphasis>",
+        speech_wrap_close="</emphasis>",
     )
 
     assert captured_texts, "grok_speak_chunk was never called"
     sent = captured_texts[0]
-    assert sent.startswith("<fast>"), sent
-    assert sent.endswith("</fast>"), sent
+    assert sent.startswith("<emphasis>"), sent
+    assert sent.endswith("</emphasis>"), sent
     assert "Tesla just opened a new Supercharger corridor." in sent
 
 
 def test_grok_path_wrap_is_empty_string_safe(tmp_path: Path, monkeypatch):
-    """No wrap configured = bare text, byte-identical to pre-wrap behavior."""
+    """No wrap configured = bare text. This is the current default."""
     captured_texts: list = []
 
     def fake_chunk(text, *args, **kwargs):
@@ -565,21 +569,21 @@ def test_grok_path_wrap_is_empty_string_safe(tmp_path: Path, monkeypatch):
     assert sent == "Bare sentence."
 
 
-def test_default_tts_config_has_fast_wrap_only():
-    """The network default is ``<fast>...</fast>`` — drift guard.
+def test_default_tts_config_has_no_chunk_wrap():
+    """The network default is **no chunk wrap** — drift guard.
 
-    NB: paired with ``<build-intensity>`` in PR #293 (May 3 2026),
-    dropped May 4 2026 after Whisper showed Grok speaking "build
-    intensity" out loud on UC Ep001 and Tesla Ep461. ``<fast>`` IS
-    in Grok's documented tag list and is consumed correctly; the
-    inner pair was never documented and Grok read it as text.
+    History: paired with ``<build-intensity>`` in PR #293 (May 3 2026),
+    simplified to ``<fast>`` alone May 4, then dropped entirely May 11
+    after M&A Ep045 caught Grok voicing the ``<fast>`` open tag aloud
+    as "Fast." at section-TTS boundaries (transcript lines 18 + 42).
+    Emphasis is now programmatic via ``engine.prosody.inject_prosody_tags``.
+    Re-introduce a chunk wrap ONLY with transcript-level evidence that
+    Grok consumes it silently at every section boundary.
     """
     from engine.config import TTSConfig
     cfg = TTSConfig()
-    assert cfg.speech_wrap_open == "<fast>"
-    assert cfg.speech_wrap_close == "</fast>"
-    assert "build-intensity" not in cfg.speech_wrap_open
-    assert "build-intensity" not in cfg.speech_wrap_close
+    assert cfg.speech_wrap_open == ""
+    assert cfg.speech_wrap_close == ""
 
 
 def test_synthesize_sections_passes_wrap_through(tmp_path: Path, monkeypatch):
