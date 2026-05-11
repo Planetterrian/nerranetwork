@@ -954,10 +954,24 @@ def run(args: argparse.Namespace) -> None:
     # 7b. Post-generation digest validation — catch structure issues before TTS.
     #      If critical sections are missing, retry digest generation once with an
     #      explicit instruction to include them.
+    #
+    # Skip entirely when in Sunday weekly-recap mode. Operator caught
+    # (May 10 2026) the recap digest produced by ``build_weekly_recap_digest``
+    # being silently OVERWRITTEN here: the daily-format validator
+    # rejected the recap (missing "Top 10 News Items", "Tesla First
+    # Principles", etc. — sections that don't apply on a recap day),
+    # the retry path called ``generate_digest`` with the live news
+    # template, and the synthesised recap content got replaced by a
+    # daily digest from TODAY's news. Six of seven recap-eligible
+    # shows shipped daily content on May 10 with the metric still
+    # claiming ``weekly_recap_mode: True``. M&A survived only because
+    # its validator config didn't enforce conflicting sections. Recaps
+    # have their own fixed shape ("This Week's Top Stories") and
+    # don't need the daily-format validator's protection.
     from engine.validation import validate_digest as _validate_digest, SHOW_VALIDATION_CONFIGS
     _val_factory = SHOW_VALIDATION_CONFIGS.get(config.slug)
     _exact_dups: list = []  # Populated by validate_digest for 100% cross-episode matches
-    if _val_factory:
+    if _val_factory and not is_weekly_recap:
         _val_config = _val_factory()
         _recent = content_tracker.get_recent_headlines(days=7)
         _val_passed, _val_issues, _exact_dups = _validate_digest(
