@@ -1,7 +1,11 @@
 """Tesla-specific pre-fetch hook.
 
 Provides extra context that the Tesla Shorts Time digest prompt needs:
-- TSLA stock price and change string via yfinance
+- TSLA stock price and change string via xAI's ``x_search`` built-in
+  tool against X (Twitter). Was yfinance; flipped May 2026 after
+  operator caught yfinance returning ``$0.00 (price unavailable)``
+  repeatedly. X has real-time cashtag data with no rate limits the
+  way Yahoo Finance does.
 - X posts section placeholder (disabled by default)
 - Market movers section (Monday only)
 - Content tracking for freshness
@@ -26,7 +30,7 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     """
     context: dict = {}
 
-    # Stock price via yfinance
+    # Stock price via xAI x_search (queries X for real-time $TSLA cashtag data)
     price, change_str = _fetch_tsla_price()
     context["price"] = f"{price:.2f}"
     context["change_str"] = change_str
@@ -74,77 +78,102 @@ def pronunciation_overrides() -> dict:
 # Internal helpers
 # ---------------------------------------------------------------------------
 
+# Sanity range for parsed prices. A real-time TSLA quote outside this
+# band almost certainly means Grok hallucinated or returned a stale /
+# malformed number; we'd rather ship ``(price unavailable)`` than a
+# garbage figure into the digest.
+_TSLA_PRICE_MIN = 50.0
+_TSLA_PRICE_MAX = 2000.0
+
+
 def _fetch_tsla_price() -> tuple[float, str]:
-    """Get current TSLA price and change string via yfinance.
+    """Get current TSLA price + change string via Grok's ``x_search``.
 
-    Uses multiple fallback strategies with retries to ensure accurate
-    stock data:
-      1. fast_info (lightweight, real-time)
-      2. history fallback (2-day OHLC data)
-      3. Retries up to 3 times with exponential backoff
+    Replaces the previous yfinance path. Operator caught yfinance
+    repeatedly returning ``$0.00 (price unavailable)`` on Tesla
+    runs (May 2026). xAI's Responses API has a built-in ``x_search``
+    tool that queries X (Twitter) for the live ``$TSLA`` cashtag —
+    every cashtag X post carries the real-time quote inline.
+
+    Returns ``(price, change_str)`` in the same shape as the old
+    yfinance path so every downstream consumer (digest template, RSS,
+    blog, newsletter, X teaser) continues to work without changes.
+
+    Failure modes (network down, Grok parse error, out-of-range
+    price): returns ``(0.0, "(price unavailable)")`` — identical to
+    the old code's degraded path.
     """
-    import time as _time
+    import json
+    import re
 
-    price = None
-    prev_close = None
+    try:
+        from digests.xai_grok import grok_generate_text
+    except Exception as exc:  # pragma: no cover — module path guard
+        logger.error("Could not import xai_grok helper: %s", exc)
+        return 0.0, "(price unavailable)"
+
+    prompt = (
+        "Search X (Twitter) for the current real-time TSLA stock price "
+        "from the most recent $TSLA cashtag post. Return ONLY a single "
+        "JSON object (no prose, no code fences):\n"
+        '{"price": <float>, "prev_close": <float>, '
+        '"market_state": "REGULAR"|"POST"|"PRE"}'
+    )
+
+    try:
+        text, _meta = grok_generate_text(
+            prompt=prompt,
+            enable_x_search=True,
+            max_tokens=200,
+            temperature=0.0,
+        )
+    except Exception as exc:
+        logger.error("Grok x_search call for TSLA failed: %s", exc)
+        return 0.0, "(price unavailable)"
+
+    # Grok occasionally wraps the JSON in a code fence or adds a
+    # leading "Here is the data:" sentence despite the prompt. Pull
+    # the first ``{...}`` block out before parsing.
+    m = re.search(r"\{[^{}]*\}", text or "")
+    if not m:
+        logger.error("Grok x_search returned no JSON for TSLA: %r", (text or "")[:200])
+        return 0.0, "(price unavailable)"
+
+    try:
+        data = json.loads(m.group(0))
+    except json.JSONDecodeError as exc:
+        logger.error("TSLA JSON parse error: %s — body=%r", exc, m.group(0))
+        return 0.0, "(price unavailable)"
+
+    try:
+        price = float(data.get("price"))
+        prev_close = float(data.get("prev_close"))
+    except (TypeError, ValueError):
+        logger.error("TSLA fields missing/non-numeric: %r", data)
+        return 0.0, "(price unavailable)"
+
+    # Sanity range — Grok hallucinations sometimes invent low/high numbers.
+    if not (_TSLA_PRICE_MIN <= price <= _TSLA_PRICE_MAX):
+        logger.error("TSLA price %.2f outside sanity band [%.0f, %.0f]",
+                     price, _TSLA_PRICE_MIN, _TSLA_PRICE_MAX)
+        return 0.0, "(price unavailable)"
+    if not (_TSLA_PRICE_MIN <= prev_close <= _TSLA_PRICE_MAX):
+        logger.error("TSLA prev_close %.2f outside sanity band", prev_close)
+        return 0.0, "(price unavailable)"
+
+    market_state = str(data.get("market_state", "REGULAR")).upper()
     market_status = ""
+    if market_state == "POST":
+        market_status = " (After-hours)"
+    elif market_state == "PRE":
+        market_status = " (Pre-market)"
 
-    for attempt in range(3):
-        try:
-            import yfinance as yf
-            ticker = yf.Ticker("TSLA")
-
-            # Strategy 1: fast_info (lightweight real-time data)
-            try:
-                info = ticker.fast_info
-                price = (
-                    getattr(info, "last_price", None)
-                    or getattr(info, "regularMarketPrice", None)
-                    or getattr(info, "postMarketPrice", None)
-                )
-                prev_close = getattr(info, "previous_close", None)
-                market_state = str(
-                    getattr(info, "market_state", "")
-                    or getattr(info, "marketState", "")
-                )
-                if market_state.upper() == "POST":
-                    market_status = " (After-hours)"
-                elif market_state.upper() == "PRE":
-                    market_status = " (Pre-market)"
-            except Exception as e:
-                logger.warning("fast_info failed (attempt %d): %s", attempt + 1, e)
-
-            # Strategy 2: history fallback if fast_info didn't return data
-            if price is None or prev_close is None:
-                try:
-                    hist = ticker.history(period="5d", interval="1d")
-                    if not hist.empty:
-                        price = price or float(hist["Close"].iloc[-1])
-                        if len(hist) > 1 and prev_close is None:
-                            prev_close = float(hist["Close"].iloc[-2])
-                except Exception as e:
-                    logger.warning("History fallback failed (attempt %d): %s", attempt + 1, e)
-
-            if price is not None:
-                if prev_close is None:
-                    prev_close = price  # No change data available
-                change = price - prev_close
-                pct = (change / prev_close) * 100 if prev_close else 0
-                direction = "▲" if change >= 0 else "▼"
-                change_str = f"{direction} ${abs(change):.2f} ({abs(pct):.1f}%){market_status}"
-                logger.info("TSLA: $%.2f %s (attempt %d)", price, change_str, attempt + 1)
-                return price, change_str
-
-        except Exception as exc:
-            logger.warning("yfinance attempt %d failed: %s", attempt + 1, exc)
-
-        if attempt < 2:
-            backoff = 2 ** (attempt + 1)  # 2s, 4s
-            logger.info("Retrying TSLA price in %ds...", backoff)
-            _time.sleep(backoff)
-
-    logger.error("All TSLA price fetch attempts failed — using placeholder")
-    return 0.0, "(price unavailable)"
+    change = price - prev_close
+    pct = (change / prev_close) * 100 if prev_close else 0.0
+    direction = "▲" if change >= 0 else "▼"
+    change_str = f"{direction} ${abs(change):.2f} ({abs(pct):.1f}%){market_status}"
+    logger.info("TSLA via x_search: $%.2f %s", price, change_str)
+    return price, change_str
 
 
 def _format_price_for_speech(price_str: str) -> str:
