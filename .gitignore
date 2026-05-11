@@ -46,6 +46,28 @@ digests/*.mp3
 # Content Lake (regenerated via backfill)
 data/content_lake.db
 
+# YouTube pipeline intermediate render outputs. Operator caught
+# (Tesla Ep469, May 11 2026) GitHub rejecting a push because a
+# 115.98 MB slideshow MP4 in youtube_tmp/ exceeded GitHub's 100 MB
+# per-file limit. PR #346 stretched slideshow scene_duration to
+# span the full audio, which pushed long-episode slideshow MP4s
+# past the cap. These files are regeneratable intermediates — the
+# final long-form / Shorts MP4s are uploaded to YouTube directly
+# and never need git for distribution.
+digests/*/youtube_tmp/*_slides.mp4
+digests/*/youtube_tmp/*_short_slides.mp4
+digests/*/youtube_tmp/*_short_short_slides.mp4
+# Grok Imagine source scene JPEGs — also intermediate, only used to
+# render the slideshow MP4.
+digests/*/youtube_tmp/scenes_*/
+# The composited long-form / Shorts MP4s and the final thumbnail
+# are regenerated every run too and can grow large.
+digests/*/youtube_tmp/*.mp4
+digests/*/youtube_tmp/*_thumb.jpg
+# SRT subtitles for the slideshow burn-in are also derivable from
+# the committed transcript files.
+digests/*/youtube_tmp/*.srt
+
 # Keep data/ and outputs/ directories tracked
 !data/.gitkeep
 !outputs/.gitkeep

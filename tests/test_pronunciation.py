@@ -456,21 +456,34 @@ class TestApplyPronunciationFixes:
         result = apply_pronunciation_fixes("The Cybertruck is here")
         assert "Cyber-truck" in result
 
-    def test_planetterrian(self):
-        """Operator caught (PT Ep059, May 10 2026) the previous
-        respelling ``Planet-terry-an`` being mispronounced — Grok TTS
-        parsed the hyphens as word breaks and the personal name
-        "Terry" got inserted ("PLAN-it · TER-ee · an"). New respelling
-        matches the intended "vegetarian" cadence:
-        PLAN-it-TAIR-ee-uhn. Tail is "uhn" (not "un") because "UN" is
-        in COMMON_ACRONYMS — the case-insensitive acronym pass would
-        otherwise re-substitute "un" → "U N" and break the read."""
+    def test_planetterrian_passes_through_unchanged(self):
+        """Operator caught (PT Ep060, May 11 2026 daily review) the
+        respelling ``plan it TAIR ee uhn`` from PR #355 leaking into
+        the saved ``_tts.txt`` and the daily-review AI flagging the
+        episode as "Incoherent". Worse, Grok TTS rendered the 5
+        tokens as 5 separate stressed words rather than as one
+        5-syllable word — Whisper transcribed the result as "Planet
+        Terra EE and Daily" / "Planet Tier TIA or EUN", confirming
+        the respelling didn't even produce the intended audio.
+
+        Both prior respellings failed:
+          * ``Planet-terry-an`` (pre-PR-355) — hyphens caused Grok to
+            insert "Terry" the personal name.
+          * ``plan it TAIR ee uhn`` (PR #355) — 5 separated tokens.
+
+        Without a listen-tested working respelling, the safer state
+        is no override here. Grok handles the raw "Planetterrian"
+        however it does, but the saved transcript / blog text are
+        no longer garbled. A correct respelling will be added via
+        ``shows/pronunciation_map.yaml`` (TTS-call time) once tested,
+        so a wrong respelling can't leak into reader-facing text.
+        """
         result = apply_pronunciation_fixes("Welcome to Planetterrian")
-        assert "plan it TAIR ee uhn" in result
-        # The old hyphenated form must NOT survive.
+        # No respelling: the canonical name passes through untouched.
+        assert "Planetterrian" in result
+        # Neither old failed respelling survives.
         assert "Planet-terry-an" not in result
-        # The acronym-collision side-effect must NOT trigger.
-        assert "U N" not in result
+        assert "plan it TAIR ee uhn" not in result
 
     def test_teslarati(self):
         result = apply_pronunciation_fixes("According to Teslarati")
