@@ -196,3 +196,71 @@ class TestCliEntryPoints:
         assert rc == 0
         # Custom respelling appears alongside the existing ones.
         assert "Planehtarrian" in seen[0].respellings
+
+
+# ---------------------------------------------------------------------------
+# Pipeline-map loader (--from-pipeline)
+# ---------------------------------------------------------------------------
+
+
+class TestLoadPipelineCandidates:
+    """The full-sweep flag is the operator's tool for deciding which
+    pronunciation overrides still earn their keep. The loader must
+    pull from both production maps and deduplicate sensibly — a
+    silent miss here means a respelling stays in production unreviewed."""
+
+    def test_returns_non_empty_list(self):
+        candidates = tp._load_pipeline_candidates()
+        assert len(candidates) > 0
+        assert all(isinstance(c, tp.Candidate) for c in candidates)
+        assert all(c.target and c.respellings for c in candidates)
+
+    def test_includes_yaml_entries(self):
+        """At least one entry that lives only in pronunciation_map.yaml
+        (e.g. TSLA ticker, LLM acronym) must appear."""
+        candidates = tp._load_pipeline_candidates()
+        targets = {c.target.lower() for c in candidates}
+        # Tickers/acronyms live only in the YAML map.
+        assert "tsla" in targets or "llm" in targets
+
+    def test_includes_word_pronunciations_entries(self):
+        """At least one entry that lives only in WORD_PRONUNCIATIONS
+        (e.g. Cybertruck, Gigafactory) must appear."""
+        candidates = tp._load_pipeline_candidates()
+        targets = {c.target.lower() for c in candidates}
+        assert "cybertruck" in targets or "gigafactory" in targets
+
+    def test_case_variants_dedup_by_lowercase(self):
+        """``tissue`` + ``Tissue`` + ``tissues`` + ``Tissues`` collapse
+        to (at most) one Candidate per lowercased key. Grok TTS is
+        case-insensitive for pronunciation so testing one representative
+        covers the family."""
+        candidates = tp._load_pipeline_candidates()
+        lowercased = [c.target.lower() for c in candidates]
+        # Each lowercased target appears exactly once.
+        assert len(lowercased) == len(set(lowercased))
+
+    def test_from_pipeline_flag_dispatches_loader(self, monkeypatch):
+        """``--from-pipeline`` should call the loader and use its
+        result as the target list — not the baked-in DEFAULT_CANDIDATES."""
+        seen: list[tp.Candidate] = []
+
+        def _fake_evaluate(c, work_dir):
+            seen.append(c)
+            return []
+
+        sentinel = [
+            tp.Candidate(target="SentinelWord", respellings=["sen-tih-nul"]),
+        ]
+        monkeypatch.setattr(tp, "_load_pipeline_candidates", lambda: sentinel)
+        monkeypatch.setattr(tp, "evaluate_candidate", _fake_evaluate)
+        rc = tp.main(["--from-pipeline"])
+        assert rc == 0
+        assert len(seen) == 1
+        assert seen[0].target == "SentinelWord"
+
+    def test_no_args_error_message_mentions_from_pipeline(self, capsys):
+        rc = tp.main([])
+        captured = capsys.readouterr()
+        assert rc == 2
+        assert "--from-pipeline" in captured.err
