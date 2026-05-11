@@ -1664,15 +1664,6 @@ def run(args: argparse.Namespace) -> None:
             podcast_script = _re.sub(r"(?<=[.!?])\s+" + _esc + r"\s*", " ", podcast_script)
         podcast_script = _re.sub(r"\n{3,}", "\n\n", podcast_script).strip()
 
-        # Programmatic prosody: wrap currency / percentage / cashtag
-        # tokens in ``<emphasis>...</emphasis>`` so Grok TTS produces a
-        # news-anchor cadence without depending on LLM compliance with
-        # in-prompt delivery instructions. The tag is documented and
-        # consumed silently by Grok; ``engine.utils.strip_speech_tags``
-        # removes it from every non-TTS surface before publishing.
-        from engine.prosody import inject_prosody_tags
-        podcast_script = inject_prosody_tags(podcast_script)
-
         # Save TTS-ready script for debugging pronunciation/intro issues
         from engine.utils import strip_lone_surrogates as _scrub
         tts_script_path = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}_tts.txt"

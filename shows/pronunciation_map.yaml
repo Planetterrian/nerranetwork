@@ -58,38 +58,30 @@ corrections:
   # to the TTS copy of the script.
   Tesla Shorts Time Daily: "Tesla Shorts Time, Daily"
 
-  # ---------------- Migrated from assets/pronunciation.py:WORD_PRONUNCIATIONS ----------------
-  # Operator caught (PT Ep060, May 11 2026 daily review) the
-  # pronunciation respellings I added to WORD_PRONUNCIATIONS in PR #355
-  # leaking into the saved _tts.txt — the daily review AI flagged the
-  # episode as "Incoherent" because text-form readers (transcript,
-  # script-level review) see "plan it TAIR ee uhn" instead of
-  # "Planetterrian".
+  # ---------------- Phonetic respellings paused (May 11 2026) ----------------
+  # Operator A/B'd phonetic respellings (Planetterrian → "plan it TAIR ee
+  # uhn", tissue → "tish-oo", neurodegenerative → "newro-de-JEN-er-uh-tiv")
+  # on PT Ep060 / Fascinating Frontiers Ep080 and concluded **every
+  # respelling sounded worse than the original word**. Grok TTS's custom
+  # voice (kdif6sqjcyiq) handles these multi-syllable words natively; the
+  # hyphen-separated tokens were read as 4-5 separately stressed
+  # syllables instead of one fluid word.
   #
-  # Root cause: assets.pronunciation.prepare_text_for_tts runs at the
-  # script-save boundary (run_show.py:186) so its substitutions are
-  # baked into the saved file. shows/pronunciation_map.yaml is applied
-  # later by engine.tts.prepare_text_for_tts at TTS-call time — text
-  # is unchanged on disk; only the audio reflects the override.
+  # Decision: pause phonetic respellings entirely. Run raw text through
+  # Grok TTS with ``text_normalization: true`` and let the voice clone
+  # handle pronunciation. Re-introduce a respelling ONLY with listen-test
+  # evidence that the respelled audio is measurably better than the
+  # original on the custom voice — not just on theory.
   #
-  # NOTE: the Planetterrian respelling itself is not yet correct in
-  # production audio (Grok TTS reads the 5 tokens as 5 separate
-  # stressed words). The OLD WORD_PRONUNCIATIONS entry was reverted
-  # in this PR so Grok sees the original "Planetterrian"; finding the
-  # right respelling needs listen-testing. Until then, the show name
-  # may still be mispronounced — but at least the saved text isn't
-  # garbled, which is the more pressing issue.
-  tissue: "tish-oo"
-  Tissue: "Tish-oo"
-  tissues: "tish-ooz"
-  Tissues: "Tish-ooz"
-  neurodegenerative: "newro-de-JEN-er-uh-tiv"
-  Neurodegenerative: "Newro-de-JEN-er-uh-tiv"
-  neurodegeneration: "newro-de-JEN-er-ay-shun"
-  Neurodegeneration: "Newro-de-JEN-er-ay-shun"
+  # Acronyms below are letter-by-letter spellings of all-caps tokens
+  # (LLM → "L L M", TSLA → "T S L A"). These are NOT phonetic guesses —
+  # they're literal letter-spellings, and the operator-verified failure
+  # mode without them is Grok occasionally saying "lum" / "tezz-luh".
+  # Those stay.
 
   # ---------------- AI / tech ----------------
   # LLM and MCP are universally said as letter-by-letter; without this
   # entry Grok occasionally tries "lum" / "mick-pee".
   LLM: "L L M"
   MCP: "M C P"
+
