@@ -388,7 +388,12 @@ def send_show_newsletter(
         assert_clean,
         scrub_scaffold,
     )
-    body_clean = scrub_scaffold(digest_text or "")
+    from engine.utils import strip_speech_tags
+    # Defense-in-depth: scrub Grok TTS speech tags before subscribers
+    # see them. The podcast script keeps these for the TTS path; the
+    # email body must never show ``[breath]`` / ``<emphasis>`` / etc.
+    body_clean = strip_speech_tags(digest_text or "")
+    body_clean = scrub_scaffold(body_clean)
     body_clean = transform_daily_body(body_clean, slug=slug)
     body_clean = transform_email_body(body_clean, slug=slug)
 

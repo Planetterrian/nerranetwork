@@ -48,6 +48,12 @@ def _strip_markdown(text: str) -> str:
     """
     if not text:
         return ""
+    # Defense-in-depth: scrub Grok TTS speech tags before any YouTube
+    # surface (title, description, chapter labels) sees the text. The
+    # podcast script intentionally carries ``[breath]`` / ``<emphasis>``
+    # / etc. for the TTS path; readers should never see them.
+    from engine.utils import strip_speech_tags
+    text = strip_speech_tags(text)
     # Strip code fences first so their contents aren't mis-parsed.
     text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
     # Headers

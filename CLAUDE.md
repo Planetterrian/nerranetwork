@@ -413,13 +413,44 @@ decision); everything else has a live status card.
     line 3 + "build intended to dig" at line 127) and Tesla Ep461 (line
     112) showed Grok occasionally **speaking** "build intensity" out
     loud instead of consuming the tag — `<build-intensity>` was never
-    in Grok's documented tag list. Wrap simplified to `<fast>...</fast>`
-    in `shows/_defaults.yaml` and `engine.config.TTSConfig` defaults.
-    `<fast>` IS documented and consumed correctly; the energy lift
-    survives without the leakage. Drift guard
-    `test_default_tts_config_has_fast_wrap_only` blocks accidental
-    re-introduction. Re-add nested tags only with transcript-level
-    evidence that Grok consumes them.
+    in Grok's documented tag list. Wrap simplified to `<fast>...</fast>`.
+
+    **May 11 2026 update — chunk wrap dropped entirely, programmatic
+    `<emphasis>` injection added.** M&A Ep045 transcript caught Grok
+    voicing the opening `<fast>` aloud as "Fast." at section-TTS
+    boundaries (twice — at "in its latest release. Fast. The updates…"
+    and "make sense for their workloads. Fast. Okay, let's pop the
+    hood…"). Verified against xAI docs: `<fast>` is **not** on Grok's
+    documented tag list (only `[breath]`, `[pause]`, `[long-pause]`,
+    `<emphasis>`, `<whisper>`, `<slow>`, `<soft>` are). The energy
+    lift `<fast>` was supposed to provide was paid for in occasional
+    audible tag leakage at every chunk boundary multi-section TTS
+    creates. Wrap dropped to empty strings in both `engine.config`
+    and `shows/_defaults.yaml`.
+
+    Replacement: `engine/prosody.py:inject_prosody_tags()` runs at
+    script-save time (just before `_tts.txt` is written) and wraps
+    currency amounts (`$390.82`), percentages (`2.5%`), and cashtags
+    (`$TSLA`) in `<emphasis>...</emphasis>`. The result is the same
+    news-anchor cadence operators wanted from `<fast>`, but with the
+    documented tag and at deterministic locations — no LLM compliance
+    needed. The DELIVERY prompt block was also dropped from all 12
+    podcast prompts (`shows/prompts/*_podcast.txt`); 56 recent
+    `_tts.txt` files showed the LLM was ignoring it (only 10 had any
+    tags at all, never reliably). The block was paying prompt-token
+    cost for no measurable audio benefit.
+
+    Defense-in-depth: `engine.utils.strip_speech_tags()` is now
+    wired into RSS show notes (`engine/publisher.py:_markdown_to_rss_html`),
+    newsletter body (`engine/newsletter.py:send_show_newsletter`),
+    and YouTube metadata (`engine/video_metadata.py:_strip_markdown`)
+    so any speech tag that ever enters the digest body is scrubbed
+    before subscribers / readers / YouTube see it. Drift guard
+    `test_default_tts_config_has_no_chunk_wrap` blocks accidental
+    re-introduction of the chunk wrap. Re-introduce a chunk wrap
+    ONLY with transcript-level evidence that Grok consumes it
+    silently at every section boundary (not just on a single
+    one-chunk test).
 
 18. **Newsletter pipeline spec v2 (May 2026)** — multi-day refinement
     pass on the Buttondown send pipeline addressing contrast bugs,
