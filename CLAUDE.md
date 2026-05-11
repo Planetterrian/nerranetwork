@@ -33,7 +33,7 @@ is a standalone X-posting script, not a podcast show.
 
 ### Pipeline (per show, per run)
 
-1. **Fetch** news sources (RSS, xAI/Grok web search, yfinance for Tesla)
+1. **Fetch** news sources (RSS, xAI/Grok web search, xAI ``x_search`` for Tesla stock quote)
 2. **Dedup** via ContentTracker (cross-episode) + entity dedup
 3. **Generate** digest text via xAI/Grok API
 4. **Synthesize** podcast audio via ElevenLabs TTS (`eleven_flash_v2_5`)
@@ -110,7 +110,7 @@ nerranetworks/
 - **FF and PT** are "nearly identical twins" — same structure, same functions,
   different news topics and X account
 - **TST** shares most patterns with FF/PT but adds: complex pronunciation
-  fixes, content tracking, chunked TTS, yfinance stock data, TST-specific
+  fixes, content tracking, chunked TTS, x_search stock data, TST-specific
   emoji formatting via `engine.publisher.format_tst_digest_for_x()`
 - **OV** is structurally different — different TTS approach (no streaming, uses
   env vars for voice settings), simpler functions
@@ -558,3 +558,48 @@ decision); everything else has a live status card.
     `unintended_consequences` value of `0` is load-bearing — that
     show pulls from `shows/topic_queues/unintended_consequences.yaml`
     and never fetches news; raising it would block every episode.
+
+22. **TSLA price source flipped from yfinance to xAI `x_search` (May 2026)**
+    — `shows/hooks/tesla.py:_fetch_tsla_price()` previously called
+    yfinance with three retries and a 5-day history fallback. Operator
+    caught it repeatedly returning `$0.00 (price unavailable)` —
+    yfinance throttles aggressively on the GitHub Actions runner's
+    egress IPs and falls back to empty `fast_info` payloads, which
+    bypassed every retry because the code checked for an exception,
+    not for a missing field.
+
+    Replacement: a single Grok Responses API call with
+    `enable_x_search=True` and a JSON-only prompt. xAI's `x_search`
+    queries X (Twitter) for the latest `$TSLA` cashtag post and
+    returns `{"price": <float>, "prev_close": <float>,
+    "market_state": "REGULAR"|"POST"|"PRE"}`. Reuses `GROK_API_KEY`
+    (already in env for digest generation). No new secret, no
+    additional rate-limit surface.
+
+    **Sanity band:** prices outside `$50 – $2000` are rejected and
+    the fetcher returns `(0.0, "(price unavailable)")` — identical
+    to the old degraded path. Grok occasionally hallucinates low
+    numbers from old historical posts; the band catches those before
+    they reach the digest. Re-tune the band only if TSLA's real price
+    legitimately exits it.
+
+    **No fallback to yfinance.** The May 2026 operator decision was
+    to drop yfinance entirely — adding a fallback would re-introduce
+    the rate-limit surface this PR was designed to remove. If Grok
+    fails, the digest gets `(price unavailable)` exactly the way it
+    did when yfinance failed. The downstream rendering layers
+    (`engine/newsletter_body.py:render_tsla_price_block`,
+    `engine/publisher.py:format_tst_digest_for_x`, blog markdown)
+    all treat this as a graceful placeholder; the rest of the
+    digest ships normally.
+
+    **`yfinance` dependency is still required** because
+    `shows/hooks/modern_investing.py` uses it for trade-execution
+    pricing across many tickers (NVDA, MSFT, etc.). Only the Tesla
+    code path was flipped. 15 unit tests in
+    `tests/test_tesla_hook.py` pin every failure mode (network
+    error, no JSON, malformed JSON, missing fields, non-numeric
+    fields, out-of-band price, out-of-band prev_close) → graceful
+    placeholder, and every happy-path shape (regular session, after-
+    hours, pre-market, negative change, JSON wrapped in code fence
+    / prose).
