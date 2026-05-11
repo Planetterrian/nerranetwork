@@ -428,29 +428,60 @@ decision); everything else has a live status card.
     creates. Wrap dropped to empty strings in both `engine.config`
     and `shows/_defaults.yaml`.
 
-    Replacement: `engine/prosody.py:inject_prosody_tags()` runs at
-    script-save time (just before `_tts.txt` is written) and wraps
-    currency amounts (`$390.82`), percentages (`2.5%`), and cashtags
-    (`$TSLA`) in `<emphasis>...</emphasis>`. The result is the same
-    news-anchor cadence operators wanted from `<fast>`, but with the
-    documented tag and at deterministic locations — no LLM compliance
-    needed. The DELIVERY prompt block was also dropped from all 12
-    podcast prompts (`shows/prompts/*_podcast.txt`); 56 recent
-    `_tts.txt` files showed the LLM was ignoring it (only 10 had any
-    tags at all, never reliably). The block was paying prompt-token
-    cost for no measurable audio benefit.
+    Programmatic `<emphasis>` injection was added in the same PR
+    (`engine/prosody.py:inject_prosody_tags()` wrapping currency /
+    percentages / cashtags at script-save time) — and **paused the
+    same day** (see below).
 
-    Defense-in-depth: `engine.utils.strip_speech_tags()` is now
-    wired into RSS show notes (`engine/publisher.py:_markdown_to_rss_html`),
+    The DELIVERY prompt block was also dropped from all 12 podcast
+    prompts (`shows/prompts/*_podcast.txt`); 56 recent `_tts.txt`
+    files showed the LLM was ignoring it (only 10 had any tags at
+    all, never reliably). The block was paying prompt-token cost
+    for no measurable audio benefit.
+
+    Defense-in-depth: `engine.utils.strip_speech_tags()` is wired
+    into RSS show notes (`engine/publisher.py:_markdown_to_rss_html`),
     newsletter body (`engine/newsletter.py:send_show_newsletter`),
     and YouTube metadata (`engine/video_metadata.py:_strip_markdown`)
-    so any speech tag that ever enters the digest body is scrubbed
-    before subscribers / readers / YouTube see it. Drift guard
+    so any speech tag that enters the digest body is scrubbed before
+    subscribers / readers / YouTube see it. Drift guard
     `test_default_tts_config_has_no_chunk_wrap` blocks accidental
-    re-introduction of the chunk wrap. Re-introduce a chunk wrap
-    ONLY with transcript-level evidence that Grok consumes it
-    silently at every section boundary (not just on a single
-    one-chunk test).
+    re-introduction of the chunk wrap.
+
+    **May 11 2026 update (later same day) — pause all TTS
+    modifications, run raw Grok TTS.** Operator A/B-listened to
+    Planetterrian Ep060 and Fascinating Frontiers (with the phonetic
+    respellings for "Planetterrian", "tissue", "neurodegenerative"
+    active) against raw audio and concluded **every phonetic
+    respelling sounded worse than the original word** on the custom
+    voice `kdif6sqjcyiq`. Same call for the just-shipped programmatic
+    `<emphasis>` injector — adding any modification risked regressing
+    a voice that already handles these tokens naturally.
+
+    Pause decision:
+    - `engine/prosody.py` and its tests **deleted**. The
+      `inject_prosody_tags()` call in `run_show.py` reverted.
+    - Phonetic respellings (`tissue`/`Tissue`/`tissues`/`Tissues`,
+      `neurodegenerative` and 3 case/inflection variants) **removed**
+      from `shows/pronunciation_map.yaml`. The Planetterrian
+      WORD_PRONUNCIATIONS entry was already removed in PR #355.
+    - **Kept**: letter-by-letter acronym expansions in
+      `shows/pronunciation_map.yaml` (`TSLA` → `T S L A`, `LLM` → `L
+      L M`, `TFSA` / `RRSP` / `FHSA` / `RESP`, `HW4` / `HW5` / `AI5`,
+      `MCP`). Those are NOT phonetic guesses — they're literal
+      letter-spellings, and the operator-verified failure mode
+      without them is Grok saying "lum" / "tezz-luh".
+    - **Kept**: `<fast>` chunk-wrap removal + DELIVERY-block removal
+      + `strip_speech_tags()` defense (those are removals of broken
+      modifications + a no-op safety net, not modifications).
+
+    Re-introduce ANY phonetic respelling or programmatic tag
+    injection ONLY with A/B listen-test evidence on the custom voice
+    that the modified audio is measurably better than raw on at
+    least 3 different show contexts. Theory-driven "this should
+    sound better" changes have a 100% regression rate on this voice
+    so far (Planetterrian, tissue, neurodegenerative, `<fast>` wrap,
+    `<build-intensity>` wrap — every one made it worse).
 
 18. **Newsletter pipeline spec v2 (May 2026)** — multi-day refinement
     pass on the Buttondown send pipeline addressing contrast bugs,
