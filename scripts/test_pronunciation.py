@@ -27,6 +27,11 @@ Usage:
     # Test all baked-in candidates and write a markdown report
     python scripts/test_pronunciation.py --all --report calibration.md
 
+    # Full sweep: load every entry currently in the production maps
+    # (shows/pronunciation_map.yaml + assets/pronunciation.py) and
+    # score each respelling vs. raw Grok rendering.
+    python scripts/test_pronunciation.py --from-pipeline --report sweep.md
+
     # Try a custom respelling alongside the existing ones
     python scripts/test_pronunciation.py --word Alnylam \\
         --respelling "al-NEE-lum"
@@ -110,6 +115,66 @@ DEFAULT_CANDIDATES: List[Candidate] = [
         respellings=["Tesla-rah-tee"],
     ),
 ]
+
+
+# ---------------------------------------------------------------------------
+# Pipeline-map loader (--from-pipeline)
+# ---------------------------------------------------------------------------
+
+
+PRONUNCIATION_MAP_YAML = PROJECT_ROOT / "shows" / "pronunciation_map.yaml"
+
+
+def _load_pipeline_candidates() -> List[Candidate]:
+    """Load every entry currently in the two production pronunciation maps.
+
+    Sources:
+      * ``shows/pronunciation_map.yaml`` (``corrections`` dict) — applied at
+        TTS-call time by ``engine.tts.prepare_text_for_tts``.
+      * ``assets/pronunciation.py:WORD_PRONUNCIATIONS`` — applied at
+        script-save time by ``assets.pronunciation.prepare_text_for_tts``.
+
+    Entries are deduplicated by lowercased target — the two maps often
+    carry case-variants of the same word (``tissue`` + ``Tissue`` +
+    ``tissues`` + ``Tissues``); since Grok TTS pronunciation is case-
+    insensitive, testing one representative covers all four. When the
+    same target appears in both maps with different respellings, both
+    respellings are kept so the sweep compares all options against raw.
+    """
+    import yaml  # local import; only needed for --from-pipeline
+
+    seen: dict[str, Candidate] = {}
+
+    # Layer 1: YAML map (TTS-call-time overrides)
+    if PRONUNCIATION_MAP_YAML.is_file():
+        data = yaml.safe_load(PRONUNCIATION_MAP_YAML.read_text(encoding="utf-8")) or {}
+        corrections = data.get("corrections") or {}
+        for target, respelling in corrections.items():
+            key = str(target).strip().lower()
+            if not key:
+                continue
+            c = seen.get(key)
+            if c is None:
+                seen[key] = Candidate(target=str(target), respellings=[str(respelling)])
+            elif str(respelling) not in c.respellings:
+                c.respellings.append(str(respelling))
+
+    # Layer 2: WORD_PRONUNCIATIONS dict (script-save-time overrides)
+    try:
+        from assets.pronunciation import WORD_PRONUNCIATIONS
+    except Exception:  # pragma: no cover — defensive
+        WORD_PRONUNCIATIONS = {}
+    for target, respelling in WORD_PRONUNCIATIONS.items():
+        key = str(target).strip().lower()
+        if not key:
+            continue
+        c = seen.get(key)
+        if c is None:
+            seen[key] = Candidate(target=str(target), respellings=[str(respelling)])
+        elif str(respelling) not in c.respellings:
+            c.respellings.append(str(respelling))
+
+    return list(seen.values())
 
 
 # ---------------------------------------------------------------------------
@@ -345,14 +410,23 @@ def main(argv: Optional[List[str]] = None) -> int:
         help="Test every candidate in the baked-in list.",
     )
     parser.add_argument(
+        "--from-pipeline",
+        action="store_true",
+        help=(
+            "Sweep every entry currently in shows/pronunciation_map.yaml "
+            "+ assets/pronunciation.py:WORD_PRONUNCIATIONS. Use to "
+            "calibrate which overrides still earn their keep."
+        ),
+    )
+    parser.add_argument(
         "--report",
         help="Write a markdown report to this path (in addition to the table on stdout).",
     )
     args = parser.parse_args(argv)
 
-    if not args.word and not args.all:
+    if not args.word and not args.all and not args.from_pipeline:
         print(
-            "Pass --word <name> for a single word or --all to sweep the baked-in list.",
+            "Pass --word <name>, --all, or --from-pipeline.",
             file=sys.stderr,
         )
         return 2
@@ -370,6 +444,12 @@ def main(argv: Optional[List[str]] = None) -> int:
                 respellings=existing.respellings + args.respelling,
             )
         targets = [existing]
+    elif args.from_pipeline:
+        targets = _load_pipeline_candidates()
+        logger.info(
+            "Loaded %d candidates from production pronunciation maps.",
+            len(targets),
+        )
     else:
         targets = DEFAULT_CANDIDATES
 
