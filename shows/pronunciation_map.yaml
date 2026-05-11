@@ -58,6 +58,36 @@ corrections:
   # to the TTS copy of the script.
   Tesla Shorts Time Daily: "Tesla Shorts Time, Daily"
 
+  # ---------------- Migrated from assets/pronunciation.py:WORD_PRONUNCIATIONS ----------------
+  # Operator caught (PT Ep060, May 11 2026 daily review) the
+  # pronunciation respellings I added to WORD_PRONUNCIATIONS in PR #355
+  # leaking into the saved _tts.txt — the daily review AI flagged the
+  # episode as "Incoherent" because text-form readers (transcript,
+  # script-level review) see "plan it TAIR ee uhn" instead of
+  # "Planetterrian".
+  #
+  # Root cause: assets.pronunciation.prepare_text_for_tts runs at the
+  # script-save boundary (run_show.py:186) so its substitutions are
+  # baked into the saved file. shows/pronunciation_map.yaml is applied
+  # later by engine.tts.prepare_text_for_tts at TTS-call time — text
+  # is unchanged on disk; only the audio reflects the override.
+  #
+  # NOTE: the Planetterrian respelling itself is not yet correct in
+  # production audio (Grok TTS reads the 5 tokens as 5 separate
+  # stressed words). The OLD WORD_PRONUNCIATIONS entry was reverted
+  # in this PR so Grok sees the original "Planetterrian"; finding the
+  # right respelling needs listen-testing. Until then, the show name
+  # may still be mispronounced — but at least the saved text isn't
+  # garbled, which is the more pressing issue.
+  tissue: "tish-oo"
+  Tissue: "Tish-oo"
+  tissues: "tish-ooz"
+  Tissues: "Tish-ooz"
+  neurodegenerative: "newro-de-JEN-er-uh-tiv"
+  Neurodegenerative: "Newro-de-JEN-er-uh-tiv"
+  neurodegeneration: "newro-de-JEN-er-ay-shun"
+  Neurodegeneration: "Newro-de-JEN-er-ay-shun"
+
   # ---------------- AI / tech ----------------
   # LLM and MCP are universally said as letter-by-letter; without this
   # entry Grok occasionally tries "lum" / "mick-pee".

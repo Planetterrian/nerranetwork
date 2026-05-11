@@ -320,11 +320,39 @@ def test_build_long_form_video_generates_brand_pill(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 
 def test_drawtext_escape_handles_metacharacters():
-    # Colons are option separators; backslashes, single quotes, and
-    # percent signs are drawtext metachars.
+    # Colons are option separators; backslashes and percent signs are
+    # drawtext metachars; straight apostrophes are mapped to typographic
+    # U+2019 (Tesla Ep469 May 11 fix — see test below).
     assert _drawtext_escape("It's 5:30 PM (50% off)") == \
-        r"It\'s 5\:30 PM (50\% off)"
+        "It’s 5\\:30 PM (50\\% off)"
     assert _drawtext_escape("path\\to") == "path\\\\to"
+
+
+def test_drawtext_escape_swaps_straight_apostrophe_for_curly():
+    """Operator caught (Tesla Ep469, May 11 2026) the Shorts ffmpeg
+    invocation failing on a hook containing "Tesla's …".
+
+    Inside ffmpeg's filter_complex single-quoted region, the
+    backslash is LITERAL — not an escape character. So our previous
+    ``'`` → ``\\'`` escape produced ``\\'`` (backslash + apostrophe);
+    the apostrophe then terminated the ``text='...'`` quoted region
+    and the rest of the filter graph parsed as garbage. Exit status
+    8, Tesla Ep469 Shorts didn't ship.
+
+    Fix: replace straight ``'`` with the typographic apostrophe
+    ``’`` (U+2019). It's not a quote character to ffmpeg's parser
+    so no escaping needed, AND it renders more professionally as
+    burned-in caption text."""
+    # No backslash-apostrophe in the output; straight ' becomes ’.
+    out = _drawtext_escape("Tesla's zero-intervention drive")
+    assert "\\'" not in out, (
+        "Straight apostrophe must NOT be escaped with backslash inside "
+        "ffmpeg filter_complex single-quoted regions — the backslash is "
+        "literal there, so the apostrophe terminates the quote and "
+        "breaks parsing. Use typographic U+2019 instead."
+    )
+    assert "’" in out
+    assert "Tesla’s" in out
 
 
 def test_drawtext_escape_escapes_real_newlines():
@@ -346,7 +374,11 @@ def test_drawtext_escape_escapes_real_newlines():
         f"Real newlines must be escaped to literal \\n; got {out!r}"
     )
     assert r"\n" in out
-    assert r"\'" in out
+    # Apostrophe now uses typographic U+2019 (see test above) — verify
+    # there's no backslash-apostrophe sequence that would close the
+    # ffmpeg quoted region.
+    assert "\\'" not in out
+    assert "’" in out
 
 
 def test_short_form_filter_graph_caption_has_no_real_newlines():

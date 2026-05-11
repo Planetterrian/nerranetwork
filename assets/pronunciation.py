@@ -338,19 +338,24 @@ COMMON_ACRONYMS: Dict[str, str] = {
 # Proper names and terms that TTS commonly mispronounces
 WORD_PRONUNCIATIONS: Dict[str, str] = {
     # --- Show names ---
-    # Operator caught (PT Ep059, May 10 2026) "Planetterrian" being
-    # mispronounced — the previous respelling "Planet-terry-an"
-    # parsed the hyphens as word breaks and the TTS inserted "Terry"
-    # the personal name in the middle ("PLAN-it · TER-ee · an").
-    # Intended pronunciation rhymes with "vegetarian":
-    # /ˌplæn.ɪˈtɛr.i.ən/ → PLAN-it-TAIR-ee-uhn. Spaces (no hyphens)
-    # let Grok TTS read the syllables as a single word with natural
-    # stress on the third syllable. Tail is "uhn" not "un" because
-    # "UN" is in COMMON_ACRONYMS and would be re-substituted to
-    # "U N" by the case-insensitive acronym pass that runs after
-    # this dict.
-    "Planetterrian": "plan it TAIR ee uhn",
-    "planetterrian": "plan it tair ee uhn",
+    # ``Planetterrian`` respelling removed (May 11 2026). Two prior
+    # attempts both failed in production audio:
+    #
+    #   * ``Planet-terry-an`` (legacy) — hyphens parsed as word breaks;
+    #     Grok inserted "Terry" the personal name in the middle.
+    #   * ``plan it TAIR ee uhn`` (PR #355) — Grok read the 5 tokens
+    #     as 5 separate stressed words. Whisper transcribed the audio
+    #     as "Planet Terra EE and" / "Planet Tier TIA or EUN" —
+    #     inconsistent across one episode and clearly not a smooth
+    #     5-syllable word.
+    #
+    # Without a listen-tested working respelling, the safer state is
+    # no override here. Grok handles the raw "Planetterrian" however
+    # it does, but the saved transcript / blog text show the canonical
+    # spelling instead of garbled respellings. Next attempt should be
+    # made via ``shows/pronunciation_map.yaml`` (TTS-call time) not
+    # this dict (script-save time), so a wrong respelling doesn't leak
+    # into reader-facing text.
 
     # --- Tesla product names ---
     "Robotaxis": "Robo-taxis",
@@ -419,26 +424,15 @@ WORD_PRONUNCIATIONS: Dict[str, str] = {
     "epigenetic": "epi-genetic",
     "epigenetics": "epi-genetics",
 
-    # Operator caught (PT Ep059, May 10 2026) Grok TTS mispronouncing
-    # both of these on a science-heavy episode:
-    #
-    #   "tissue" — Grok renders the /ʃ/ ("sh") incorrectly, producing
-    #     something like "TISS-yoo" or "TYE-soo" instead of "TISH-oo".
-    #     Standard pronunciation: /ˈtɪʃ.uː/.
-    #
-    #   "neurodegenerative" — long compound; Grok places stress
-    #     incorrectly and the middle "degen" gets glided. Standard:
-    #     /ˌnʊr.oʊ.dɪˈdʒɛn.ər.ə.tɪv/ → "NEW-row-de-JEN-er-uh-tiv".
-    #     The capitalised JEN hints stress to Grok; the explicit
-    #     hyphenation matches the syllable break.
-    "tissue": "tish-oo",
-    "tissues": "tish-ooz",
-    "Tissue": "Tish-oo",
-    "Tissues": "Tish-ooz",
-    "neurodegenerative": "newro-de-JEN-er-uh-tiv",
-    "Neurodegenerative": "Newro-de-JEN-er-uh-tiv",
-    "neurodegeneration": "newro-de-JEN-er-ay-shun",
-    "Neurodegeneration": "Newro-de-JEN-er-ay-shun",
+    # ``tissue`` / ``neurodegenerative`` and related respellings used to
+    # live here (PR #355). Operator caught (May 11 2026 daily review)
+    # that ``assets.pronunciation.prepare_text_for_tts`` runs at the
+    # script-save boundary, so the respellings were leaking into the
+    # saved ``_tts.txt`` — readers (and the daily review AI) saw
+    # "newro-de-JEN-er-uh-tiv" instead of "neurodegenerative". Moved
+    # to ``shows/pronunciation_map.yaml`` which is applied at TTS-call
+    # time inside ``engine.tts.prepare_text_for_tts`` — saved text is
+    # untouched, only the audio reflects the override.
 
     # --- AI model names ---
     "Qwen": "Chwen",
