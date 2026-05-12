@@ -112,26 +112,34 @@ class AudioConfig:
     music_file: Optional[str] = None
     background_music_file: Optional[str] = None
     transition_sting: Optional[str] = None
-    # Music timing — May 2026 podcast-feel bump (revised). Aligned with
-    # ``shows/_defaults.yaml`` so a show running with the dataclass
-    # defaults (no YAML) gets the same behaviour as a show inheriting
-    # from the network baseline. Total intro music presence =
-    # intro_duration (alone) + overlap_duration (with voice) +
-    # fade_duration (under-voice tail) = 25 + 10 + 20 = 55s. Outro =
-    # 60s after voice ends with a 6s graceful fade-out close.
+    # Music timing — May 12 2026 retune. Operator caught (TST Ep470)
+    # that the 25 s music-alone intro felt too long ("when's the host
+    # going to talk?") and the 60 s post-voice outro felt too long /
+    # ended abruptly. New shape:
+    #   * intro_duration 10 s — music plays alone for 10 s before voice
+    #   * overlap_duration 15 s — music sits with voice
+    #   * fade_duration 30 s — slow log-fade under voice (no abrupt
+    #     cut; total intro music presence = 10+15+30 = 55 s, same
+    #     total as before, just front-shifted so voice enters sooner)
+    #   * outro_duration 20 s — music plays for 20 s after voice ends
+    #   * outro_fade_out_duration 15 s — most of the 20 s post-voice
+    #     outro is a graceful fade (5 s sustain + 15 s log-fade-out)
+    #   * outro_crossfade 20 s preserved — music begins ramping under
+    #     the last 20 s of voice, so the transition into the outro is
+    #     graceful rather than the music popping in cold.
     # ``voice_intro_delay`` MUST stay >= ``intro_duration`` so the
     # voice doesn't enter while the music intro is still in its
-    # alone-period. Operator's stated minimum is >= 30s on both ends.
-    intro_duration: float = 25.0
-    overlap_duration: float = 10.0
-    fade_duration: float = 20.0
-    outro_duration: float = 60.0
-    outro_fade_out_duration: float = 6.0
+    # alone-period (10 >= 10 holds).
+    intro_duration: float = 10.0
+    overlap_duration: float = 15.0
+    fade_duration: float = 30.0
+    outro_duration: float = 20.0
+    outro_fade_out_duration: float = 15.0
     intro_volume: float = 0.6
     overlap_volume: float = 0.5
     fade_volume: float = 0.4
     outro_volume: float = 0.4
-    voice_intro_delay: float = 25.0
+    voice_intro_delay: float = 10.0
     outro_crossfade: float = 0.0
 
 

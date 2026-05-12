@@ -580,11 +580,13 @@ class TestAudioConfigDefaults:
     """Verify AudioConfig dataclass has the new fields with correct defaults."""
 
     def test_voice_intro_delay_default(self):
-        """May 2026: dataclass default matches the network baseline of
-        ``intro_duration`` so a no-YAML show still behaves correctly."""
+        """May 12 2026 retune: dataclass default matches the network
+        baseline (10 s music alone before voice). ``voice_intro_delay``
+        must stay >= ``intro_duration`` so the voice never enters
+        before the music intro's alone-period finishes."""
         from engine.config import AudioConfig
         cfg = AudioConfig()
-        assert cfg.voice_intro_delay == 25.0
+        assert cfg.voice_intro_delay == 10.0
         assert cfg.voice_intro_delay >= cfg.intro_duration
 
     def test_background_music_file_default(self):
@@ -593,25 +595,30 @@ class TestAudioConfigDefaults:
         assert cfg.background_music_file is None
 
     def test_all_timing_defaults(self):
-        """May 2026 podcast-feel bump — see AudioConfig docstring.
-        Total intro music presence (alone + overlap + fade) must be
-        >= 30s so the open doesn't feel cut off; outro must also be
-        >= 30s for a real-podcast close."""
+        """May 12 2026 retune — see AudioConfig docstring. Voice enters
+        at 10 s, total intro music presence remains 55 s (10 alone +
+        15 overlap + 30 fade), post-voice outro is 20 s with a slow
+        15 s fade-out. Operator invariant: ≥30 s total intro music
+        presence preserved."""
         from engine.config import AudioConfig
         cfg = AudioConfig()
-        assert cfg.intro_duration == 25.0
-        assert cfg.overlap_duration == 10.0
-        assert cfg.fade_duration == 20.0
-        assert cfg.outro_duration == 60.0
+        assert cfg.intro_duration == 10.0
+        assert cfg.overlap_duration == 15.0
+        assert cfg.fade_duration == 30.0
+        assert cfg.outro_duration == 20.0
+        assert cfg.outro_fade_out_duration == 15.0
         assert cfg.intro_volume == 0.6
         assert cfg.overlap_volume == 0.5
         assert cfg.fade_volume == 0.4
         assert cfg.outro_volume == 0.4
-        # Operator invariant: ≥30s total intro presence, ≥30s outro.
+        # Operator invariant: ≥30 s total intro music presence so the
+        # open doesn't feel cut off (now 55 s).
         assert (
             cfg.intro_duration + cfg.overlap_duration + cfg.fade_duration
         ) >= 30.0
-        assert cfg.outro_duration >= 30.0
+        # outro_duration is now 20 s post-voice (was 60 s); most of
+        # it is the slow fade-out, so the close still feels graceful.
+        assert cfg.outro_duration >= 20.0
 
 
 class TestShowMusicConfigs:
@@ -625,8 +632,8 @@ class TestShowMusicConfigs:
     def test_tesla_has_music(self, load_config):
         cfg = load_config("shows/tesla.yaml")
         assert cfg.audio.music_file == "assets/music/tesla_shorts_time.mp3"
-        # May 2026 podcast-feel bump — see landmine in AudioConfig.
-        assert cfg.audio.voice_intro_delay == 25.0
+        # May 12 2026 retune — see AudioConfig docstring.
+        assert cfg.audio.voice_intro_delay == 10.0
         assert cfg.audio.outro_crossfade == 20.0
 
     def test_ff_has_unified_music(self, load_config):
@@ -634,16 +641,17 @@ class TestShowMusicConfigs:
         ``fascinatingfrontiers.mp3`` intro jingle + long ``_bg`` outro)
         to a single track for both. Operator preferred the open and
         close to share the same musical identity. The short jingle
-        file is kept in the repo for emergency rollback."""
+        file is kept in the repo for emergency rollback. May 12 2026
+        retune folded FF's per-show ``fade_duration: 27`` override
+        back to the network baseline (now 30 s) — the +7 offset was
+        tuned against the old 20 s baseline and doesn't carry forward."""
         cfg = load_config("shows/fascinating_frontiers.yaml")
         assert cfg.audio.music_file == "assets/music/fascinatingfrontiers_bg.mp3"
         # Dual-music override removed — the runner now uses the same
         # track for intro / overlap / fadeout / outro.
         assert cfg.audio.background_music_file is None
-        assert cfg.audio.voice_intro_delay == 25.0
-        # FF intentionally pins fade_duration at 27s (longer than the
-        # network's 15s baseline) — preserved across the May 2026 bump.
-        assert cfg.audio.fade_duration == 27.0
+        assert cfg.audio.voice_intro_delay == 10.0
+        assert cfg.audio.fade_duration == 30.0
 
     def test_pt_has_music(self, load_config):
         cfg = load_config("shows/planetterrian.yaml")
@@ -662,12 +670,12 @@ class TestShowMusicConfigs:
         assert cfg.audio.music_file == "assets/music/EnvIntel.mp3"
 
     def test_ei_standard_timing(self, load_config):
-        """EI inherits the network's May 2026 podcast-feel timing
-        (15s intro alone / 40s outro) but pins lower volumes for the
-        briefing format."""
+        """EI inherits the network's May 12 2026 retune (10 s intro
+        alone, 20 s post-voice outro with a slow 15 s fade) but pins
+        lower volumes for the briefing format."""
         cfg = load_config("shows/env_intel.yaml")
-        assert cfg.audio.intro_duration == 25.0
-        assert cfg.audio.outro_duration == 60.0
+        assert cfg.audio.intro_duration == 10.0
+        assert cfg.audio.outro_duration == 20.0
         assert cfg.audio.outro_crossfade == 20.0
         assert cfg.audio.intro_volume <= 0.5
 
