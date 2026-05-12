@@ -775,6 +775,22 @@ def mix_with_music(
 
         fade_start = intro_duration + overlap_duration
 
+        # Acrossfade window between consecutive music segments. Each
+        # segment's source-time slice is shifted back by this amount
+        # (and its duration extended by the same) so the crossfade
+        # region plays *identical* source content from both segments —
+        # just at different volume curves. Before May 12 2026 the
+        # overlap segment started at source second ``intro_duration``
+        # and the fadeout at ``intro_duration + overlap_duration``,
+        # which made the crossfade region sum two TEMPORALLY ADJACENT
+        # but DIFFERENT source passages (e.g. seconds 23–25 against
+        # seconds 25–27 of the music). The two passages had unrelated
+        # drum hits / chord changes, so the crossfade window sounded
+        # like two songs playing on top of each other for 2 s —
+        # operator caught this as "music gets garbled right before
+        # speech starts" on TST Ep470.
+        _MUSIC_XFADE_S = 2.0
+
         def _run_segment(name: str, cmd: list) -> str:
             subprocess.run(cmd, check=True, capture_output=True)
             return name
@@ -804,17 +820,26 @@ def mix_with_music(
             outro_fade_in = 6
             outro_fade_out_start = max(outro_duration - outro_fade_out_dur, 0)
 
+        # Coherent acrossfade: overlap and fadeout source slices are
+        # shifted back by ``_MUSIC_XFADE_S`` and extended by the same
+        # amount so the crossfade window plays identical source
+        # content from both segments. See _MUSIC_XFADE_S docstring above.
+        overlap_src_start = max(intro_duration - _MUSIC_XFADE_S, 0)
+        overlap_src_duration = overlap_duration + _MUSIC_XFADE_S
+        fadeout_src_start = max(fade_start - _MUSIC_XFADE_S, 0)
+        fadeout_src_duration = fade_duration + _MUSIC_XFADE_S
+
         segment_cmds = [
             ("intro", _music_intro_cmd(
                 str(music_path), str(music_intro_f),
                 duration=intro_duration, volume=intro_volume)),
             ("overlap", _music_overlap_cmd(
                 str(music_path), str(music_overlap_f),
-                start=intro_duration, duration=overlap_duration,
+                start=overlap_src_start, duration=overlap_src_duration,
                 volume=overlap_volume)),
             ("fadeout", _music_fadeout_cmd(
                 str(music_path), str(music_fadeout_f),
-                start=fade_start, duration=fade_duration,
+                start=fadeout_src_start, duration=fadeout_src_duration,
                 volume=fade_volume)),
             ("outro", _music_outro_cmd(
                 str(outro_music), str(music_outro_f),
