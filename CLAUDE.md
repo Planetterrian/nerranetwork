@@ -483,6 +483,58 @@ decision); everything else has a live status card.
     so far (Planetterrian, tissue, neurodegenerative, `<fast>` wrap,
     `<build-intensity>` wrap — every one made it worse).
 
+    **May 13 2026 update — `<fast>` wrap re-enabled via single-call
+    synthesis.** Operator listened to the May 13 episodes (post-#365
+    editorializing reduction + #366 audio retune + #367 streamline)
+    and asked for whole-script `<fast>` energy on every podcast
+    ("Option B for all podcasts please"). The historical chunk-wrap
+    leak (M&A Ep045 voicing "Fast." at section-TTS boundaries) was
+    a *multi-call* problem: section-TTS + chunked synthesis meant
+    every chunk got its own `<fast>...</fast>` wrap as an
+    independent Grok API call, and Grok occasionally voiced the
+    opening tag aloud at the boundary between calls.
+
+    Leak-safe implementation (the only safe path):
+    - Network default `shows/_defaults.yaml`: `speech_wrap_open:
+      "<fast>"`, `speech_wrap_close: "</fast>"`, `use_section_tts:
+      false`, `max_chars: 14000`.
+    - The four fields are a *coupled set* — flipping any one
+      without the others re-introduces the leak.
+    - `run_show.py:1714` gates section-TTS on `config.tts.use_section_tts`
+      so the network-wide flip is one YAML field.
+    - `engine/tts.py:_speak_with_grok` has a May 13 safety guard:
+      if a script overflows `max_chars` and splits into multiple
+      chunks, it DROPS the wrap (with a loud warning) rather than
+      apply it per-chunk. Episode loses the energy lift but ships
+      clean audio.
+
+    Trade-off: section-TTS off means **no transition stings between
+    chapter markers**. Chapter markers themselves still work in
+    podcast apps (Apple, Spotify, Pocket Casts) because they come
+    from `chapters.json` not from section-TTS. The brief musical
+    stings between chapters are gone — most listeners won't notice;
+    one-line revert (`use_section_tts: true` + drop the wrap) if
+    desired.
+
+    Drift guards in `tests/test_tts_grok.py`:
+    - `test_default_tts_config_dataclass_has_no_chunk_wrap` —
+      dataclass default stays empty (backwards compat for callers
+      that bypass YAML).
+    - `test_network_default_has_fast_wrap_and_single_call` — pins
+      the four coupled fields on the loaded Tesla YAML so a partial
+      revert (e.g. re-enabling section-TTS without dropping the
+      wrap) fails CI.
+    - `test_speak_with_grok_drops_wrap_on_multi_chunk` — verifies
+      the safety guard fires when a script overflows.
+    - `test_speak_with_grok_keeps_wrap_on_single_chunk` — verifies
+      the happy path applies the wrap as expected.
+
+    The policy above (no theory-driven tag changes) still stands
+    for any FUTURE additions. The May 13 `<fast>` re-enable was an
+    *operator override* with explicit awareness of the historical
+    risk; it ships as a single coherent infrastructure change
+    (single-call synthesis) rather than as a tag-injection retry.
+
 18. **Newsletter pipeline spec v2 (May 2026)** — multi-day refinement
     pass on the Buttondown send pipeline addressing contrast bugs,
     LLM scaffold leaks, and daily-vs-weekly template parity. Files:

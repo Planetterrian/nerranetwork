@@ -511,7 +511,11 @@ class TestLoadConfigRealFiles:
         assert cfg.tts.voice_id == "kdif6sqjcyiq"
         assert cfg.tts.stability == 0.5  # Inherited from legacy ElevenLabs baseline
         assert cfg.tts.style == 0.0
-        assert cfg.tts.max_chars == 10000
+        # max_chars bumped to 14000 (May 13 2026) so the typical
+        # 6-12k podcast script fits in a single Grok TTS call —
+        # required for the network-wide ``<fast>`` wrap to apply
+        # safely without leaking at chunk boundaries.
+        assert cfg.tts.max_chars == 14000
         # EI got its own dedicated theme in May 2026
         # (replaced the shared tesla_shorts_time.mp3).
         assert cfg.audio.music_file == "assets/music/EnvIntel.mp3"

@@ -89,18 +89,29 @@ class TTSConfig:
     use_speaker_boost: bool = True
     speed: float = 1.0  # Speech speed (0.7–1.2); Flash v2.5 supports this range
     apply_text_normalization: str = "on"  # "auto", "on", or "off"; helps with number/date pronunciation
-    # No chunk-wrap. Earlier defaults wrapped every Grok TTS chunk in
-    # ``<fast>...</fast>`` for an energy lift. May 2026 audit caught
-    # Grok TTS occasionally **voicing** the opening ``<fast>`` aloud as
-    # "Fast." at section-TTS boundaries (M&A Ep045, May 11) — and
-    # ``<fast>`` isn't on Grok's documented tag list. Emphasis is now
-    # injected programmatically by ``engine.prosody.inject_prosody_tags``
-    # at script-save time, wrapping currency / percentage / cashtag
-    # tokens in the *documented* ``<emphasis>...</emphasis>`` tag.
-    # Re-introduce a chunk wrap only with transcript-level evidence
-    # that Grok consumes it silently at every section boundary.
+    # ---- Speech tag wrap (May 13 2026: re-enabled via single-call path) ----
+    # The chunk wrap previously got dropped because Grok TTS occasionally
+    # voiced "Fast." aloud at section-TTS boundaries (M&A Ep045, May 11).
+    # Re-enabled May 13 2026 via the network ``_defaults.yaml`` after the
+    # operator asked for whole-script ``<fast>`` energy on all podcasts.
+    # The leak-safe implementation pairs the wrap with
+    # ``use_section_tts: False`` and a larger ``max_chars`` so each
+    # episode synthesises in a single Grok API call — no boundaries, no
+    # leak surface. If ``use_section_tts`` is True AND the wrap is set,
+    # the wrap will be applied per-section per-chunk and CAN leak (the
+    # historical failure mode). The defaults below preserve backwards-
+    # compat at the dataclass level; the network-wide flip lives in
+    # ``shows/_defaults.yaml``.
     speech_wrap_open: str = ""
     speech_wrap_close: str = ""
+    # When True, the runner splits the script at chapter boundaries
+    # and synthesises each section as a separate Grok TTS call,
+    # stitching transition stings between. When False, the whole
+    # script goes through ``synthesize()`` as a single call (no
+    # stings, no boundaries — required for whole-script speech wrap
+    # to apply safely). The network default in ``_defaults.yaml`` is
+    # False as of May 13 2026.
+    use_section_tts: bool = True
     # Post-TTS transcription validation (opt-in)
     validate_transcription: bool = False
     whisper_model: str = "base"  # "tiny", "base", "small", "medium"

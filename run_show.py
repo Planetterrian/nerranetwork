@@ -1711,8 +1711,16 @@ def run(args: argparse.Namespace) -> None:
             if config.audio.transition_sting:
                 sting_path = PROJECT_ROOT / config.audio.transition_sting
 
+            # ``config.tts.use_section_tts`` is the network-wide opt-in.
+            # As of May 13 2026 the default is False — episodes are
+            # synthesised as a single Grok TTS call so the network-wide
+            # ``<fast>...</fast>`` wrap from ``_defaults.yaml`` is
+            # applied exactly once per episode (no chunk/section
+            # boundaries that could leak the tag aloud). See landmine
+            # #17 + the TTSConfig docstring.
             use_section_tts = (
-                episode_chapters
+                getattr(config.tts, "use_section_tts", True)
+                and episode_chapters
                 and len(episode_chapters) >= 2
                 and sting_path
             )
