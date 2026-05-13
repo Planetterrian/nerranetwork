@@ -760,6 +760,30 @@ def _speak_with_grok(
     effective_max = min(max_chars, GROK_MAX_CHARS_PER_REQUEST - wrap_overhead)
     chunks = chunk_text(text, max_chars=effective_max)
 
+    # Multi-chunk + speech wrap = the chunk-boundary leak that M&A
+    # Ep045 caught (May 11 2026: Grok voiced "Fast." aloud at each
+    # boundary because every chunk got its own ``<fast>...</fast>``
+    # wrap as an independent API call).  May 13 2026 safety: if a
+    # script overflows ``max_chars`` and gets split, DROP the wrap
+    # rather than re-introduce the boundary leak.  The episode loses
+    # the energy lift but ships clean audio.  Operator sees a loud
+    # warning so they can decide whether to shorten the script or
+    # accept the trade-off.
+    if len(chunks) > 1 and (speech_wrap_open or speech_wrap_close):
+        logger.warning(
+            "Grok TTS: script split into %d chunks (%d chars total > "
+            "%d effective_max) — DROPPING speech wrap to avoid the "
+            "chunk-boundary leak (Grok voicing the opening tag aloud "
+            "at section boundaries — landmine #17). Audio will be "
+            "raw without the ``%s%s`` wrap.  Shorten the script or "
+            "bump tts.max_chars (current cap is Grok's 15000) to "
+            "keep wrap active.",
+            len(chunks), len(text), effective_max,
+            speech_wrap_open, speech_wrap_close,
+        )
+        speech_wrap_open = ""
+        speech_wrap_close = ""
+
     def _wrap(s: str) -> str:
         if not (speech_wrap_open or speech_wrap_close):
             return s

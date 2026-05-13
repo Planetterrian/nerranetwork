@@ -49,17 +49,34 @@ tts:
   provider: grok
   voice_id: kdif6sqjcyiq
   language_code: en
-  max_chars: 10000
-  # No chunk-wrap. Earlier defaults wrapped every chunk in
-  # ``<fast>...</fast>``; May 2026 audit caught Grok voicing the
-  # opening tag aloud as "Fast." at section-TTS boundaries (M&A
-  # Ep045, May 11). ``<fast>`` is also NOT on Grok's documented
-  # tag list (only ``[breath]``, ``[pause]``, ``[long-pause]``,
-  # ``<emphasis>``, ``<whisper>``, ``<slow>``, ``<soft>`` are).
-  # News-anchor emphasis is now injected at script-save time by
-  # ``engine.prosody.inject_prosody_tags`` using ``<emphasis>``.
-  speech_wrap_open: ""
-  speech_wrap_close: ""
+  # Bumped from 10000 → 14000 (May 13 2026) so the typical 6-12k-char
+  # podcast script fits in a single Grok TTS API call. With
+  # ``use_section_tts: false`` (below) and a network-wide ``<fast>``
+  # wrap, single-chunk synthesis is the leak-safe path: one wrap, one
+  # API call, zero internal boundaries that could voice the tag aloud.
+  # Grok's hard per-request cap is 15000 so 14000 leaves room for the
+  # wrap overhead.
+  max_chars: 14000
+  # ---- Speech-tag wrap (re-enabled May 13 2026) ----
+  # Operator chose Option B from the May 13 TST review: whole-script
+  # ``<fast>`` wrap on every podcast to lift voice energy.  Previous
+  # chunk-wrap experiments leaked "Fast." aloud at section-TTS
+  # boundaries (M&A Ep045, May 11); the leak-safe implementation is
+  # pairing the wrap with ``use_section_tts: false`` so each episode
+  # is one Grok API call.  Tag-leak detector still scans Whisper
+  # transcripts for any audible "fast" / "</fast>" recurrence and
+  # records the count in metrics.
+  speech_wrap_open: "<fast>"
+  speech_wrap_close: "</fast>"
+  # Force single-call synthesis network-wide so the ``<fast>`` wrap
+  # above is applied exactly once per episode.  Trade-off: the brief
+  # musical "stings" between chapter markers (transition_sting) no
+  # longer play, because their insertion point was BETWEEN section-
+  # TTS calls.  Listener-facing change is small; chapter markers in
+  # podcast apps (Apple, Spotify, Pocket Casts) still work because
+  # they come from the chapters.json sidecar, not from section-TTS.
+  # To re-enable section-TTS + drop the wrap, flip both fields here.
+  use_section_tts: false
   # ---- Legacy ElevenLabs baseline ----
   # No show currently overrides `provider: elevenlabs`. Kept here so
   # an emergency rollback (e.g. Grok TTS outage) is a one-line YAML

@@ -569,21 +569,134 @@ def test_grok_path_wrap_is_empty_string_safe(tmp_path: Path, monkeypatch):
     assert sent == "Bare sentence."
 
 
-def test_default_tts_config_has_no_chunk_wrap():
-    """The network default is **no chunk wrap** — drift guard.
+def test_default_tts_config_dataclass_has_no_chunk_wrap():
+    """The ``TTSConfig`` dataclass default (no YAML) keeps the wrap
+    empty for backwards compat — any caller that constructs
+    ``TTSConfig()`` directly gets the safe legacy behaviour. The
+    network-wide wrap is set in ``shows/_defaults.yaml`` (see
+    ``test_network_default_has_fast_wrap_and_single_call`` below)
+    so the dataclass default and the network default deliberately
+    diverge as of May 13 2026.
 
-    History: paired with ``<build-intensity>`` in PR #293 (May 3 2026),
-    simplified to ``<fast>`` alone May 4, then dropped entirely May 11
-    after M&A Ep045 caught Grok voicing the ``<fast>`` open tag aloud
-    as "Fast." at section-TTS boundaries (transcript lines 18 + 42).
-    Emphasis is now programmatic via ``engine.prosody.inject_prosody_tags``.
-    Re-introduce a chunk wrap ONLY with transcript-level evidence that
-    Grok consumes it silently at every section boundary.
+    History: chunk wrap paired with ``<build-intensity>`` in PR #293
+    (May 3 2026), simplified to ``<fast>`` alone May 4, dropped
+    entirely May 11 after M&A Ep045 caught Grok voicing the
+    ``<fast>`` open tag aloud as "Fast." at section-TTS boundaries
+    (transcript lines 18 + 42). Re-enabled May 13 2026 via the
+    network default paired with ``use_section_tts: False`` so each
+    episode synthesises in a single Grok API call — no chunk/section
+    boundaries that could leak the tag aloud.
     """
     from engine.config import TTSConfig
     cfg = TTSConfig()
     assert cfg.speech_wrap_open == ""
     assert cfg.speech_wrap_close == ""
+    # use_section_tts also defaults True at the dataclass level
+    # (matches pre-May-13 behaviour for callers that bypass YAML).
+    assert cfg.use_section_tts is True
+
+
+def test_network_default_has_fast_wrap_and_single_call():
+    """The network ``shows/_defaults.yaml`` baseline (loaded by every
+    show that doesn't override) MUST carry the May 13 2026 retune:
+
+      * ``speech_wrap_open: "<fast>"`` and matching close — operator-
+        requested Option B from the May 13 listen-test review.
+      * ``use_section_tts: false`` — required for the wrap to apply
+        safely (single Grok API call, no chunk/section boundaries).
+      * ``max_chars: 14000`` — headroom for the typical 6-12k podcast
+        script to fit in one Grok request (cap is 15000).
+
+    If any one of these drifts away from the others, the wrap can
+    leak at chunk boundaries (the historical M&A Ep045 failure).
+    Pinning them as a triple here so a partial revert (e.g.
+    re-enabling section-TTS without dropping the wrap) is caught
+    in CI."""
+    from engine.config import load_config
+
+    cfg = load_config("shows/tesla.yaml")
+    assert cfg.tts.speech_wrap_open == "<fast>"
+    assert cfg.tts.speech_wrap_close == "</fast>"
+    assert cfg.tts.use_section_tts is False
+    assert cfg.tts.max_chars == 14000
+
+
+def test_speak_with_grok_drops_wrap_on_multi_chunk(tmp_path: Path, monkeypatch):
+    """Safety guard: if a script overflows ``max_chars`` and splits
+    into multiple chunks, ``_speak_with_grok`` MUST drop the wrap
+    rather than apply it per-chunk (the historical leak).
+
+    This is the May 13 2026 defence-in-depth against the chunk-
+    boundary leak. The network default pairs the wrap with
+    ``use_section_tts: false`` + ``max_chars: 14000`` so single-chunk
+    is the normal path; this guard catches the rare case where a
+    script grows past the cap."""
+    captured_texts: list[str] = []
+
+    def fake_chunk(text, voice_id, out_path, **kwargs):
+        captured_texts.append(text)
+        Path(out_path).write_bytes(b"\xff\xfb\x90")
+
+    monkeypatch.setattr(tts, "grok_speak_chunk", fake_chunk)
+    monkeypatch.setattr(
+        tts.subprocess, "run",
+        lambda *a, **kw: MagicMock(returncode=0),
+    )
+
+    # Force a 2-chunk script: 6000 chars at max_chars=3000.
+    long_text = "Sentence one. " * 500  # ~7000 chars
+    tts._speak_with_grok(
+        long_text,
+        voice_id="kdif6sqjcyiq",
+        filename=str(tmp_path / "out.mp3"),
+        api_key="k",
+        max_chars=3000,
+        language_code="en",
+        speech_wrap_open="<fast>",
+        speech_wrap_close="</fast>",
+    )
+
+    # At least 2 chunks were sent; NONE carry the wrap.
+    assert len(captured_texts) >= 2
+    for sent in captured_texts:
+        assert "<fast>" not in sent, (
+            "Multi-chunk path leaked the wrap — the May 13 safety "
+            "guard should drop the wrap when len(chunks) > 1."
+        )
+        assert "</fast>" not in sent
+
+
+def test_speak_with_grok_keeps_wrap_on_single_chunk(tmp_path: Path, monkeypatch):
+    """Counterpart to the multi-chunk guard: when the script fits in
+    one chunk, the wrap MUST be applied (single API call, no leak
+    surface). This is the happy-path that delivers Option B."""
+    captured_texts: list[str] = []
+
+    def fake_chunk(text, voice_id, out_path, **kwargs):
+        captured_texts.append(text)
+        Path(out_path).write_bytes(b"\xff\xfb\x90")
+
+    monkeypatch.setattr(tts, "grok_speak_chunk", fake_chunk)
+    monkeypatch.setattr(
+        tts.subprocess, "run",
+        lambda *a, **kw: MagicMock(returncode=0),
+    )
+
+    tts._speak_with_grok(
+        "Short script that fits in one chunk.",
+        voice_id="kdif6sqjcyiq",
+        filename=str(tmp_path / "out.mp3"),
+        api_key="k",
+        max_chars=14000,
+        language_code="en",
+        speech_wrap_open="<fast>",
+        speech_wrap_close="</fast>",
+    )
+
+    assert len(captured_texts) == 1
+    sent = captured_texts[0]
+    assert sent.startswith("<fast>")
+    assert sent.endswith("</fast>")
 
 
 def test_synthesize_sections_passes_wrap_through(tmp_path: Path, monkeypatch):
