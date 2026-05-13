@@ -559,6 +559,47 @@ def strip_financial_parentheses(text: str) -> str:
     return text
 
 
+def replace_canadian_currency(text: str) -> str:
+    """Convert ``C$X,XXX`` Canadian-dollar amounts to spoken form.
+
+    Grok TTS's text_normalization treats ``$X,XXX`` as a USD amount
+    and emits "X dollars XXX" — the comma is read as a separator
+    instead of a thousands marker. With a leading "C", the "C" is
+    left stranded as a one-letter syllable, producing the audible
+    bug operator caught on TST Ep471 (May 13 2026):
+
+        Markdown:  ``C$39,490``
+        Audio:     "C thirty-nine dollars four hundred ninety"
+
+    This transform pre-rewrites ``C$N,NNN`` and ``C$N,NNN.NN`` to
+    ``N,NNN Canadian dollars`` (with the comma intact) so the
+    downstream :func:`replace_currency` converter handles the
+    whole thing as a normal currency amount.
+
+    Must run BEFORE :func:`replace_currency` so the "C" prefix is
+    consumed before standard ``$`` handling.
+
+    Examples:
+        'C$39,490'    → '39,490 Canadian dollars'
+        'C$1,250.50'  → '1,250.50 Canadian dollars'
+        'C$15'        → '15 Canadian dollars'
+        'CAD$100'     → '100 Canadian dollars'
+    """
+    def _canadian(m: re.Match) -> str:
+        amount = m.group(1)
+        return f"{amount} Canadian dollars"
+
+    # CAD$ / Cad$ / C$ — case-insensitive on the prefix. The trailing
+    # amount captures integers, comma-thousands, and optional decimal.
+    text = re.sub(
+        r"\b(?:CAD\$|C\$)(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)",
+        _canadian,
+        text,
+        flags=re.IGNORECASE,
+    )
+    return text
+
+
 def replace_signed_currency(text: str) -> str:
     """Convert signed currency amounts to natural spoken form.
 
@@ -1380,7 +1421,14 @@ def prepare_text_for_tts(
     text = replace_hashtag_numbers(text)
 
     # ── 3. Financial notation (before standard currency handler) ──
-    # Signed currency first: +$1.11 → "up $1.11", -$5.75 → "down $5.75"
+    # Canadian dollar prefix FIRST — converts "C$39,490" to
+    # "39,490 Canadian dollars" so the downstream USD handler
+    # doesn't mis-parse it and strand the "C" syllable.
+    # See replace_canadian_currency() docstring for the operator-
+    # caught bug this prevents (TST Ep471, May 13 2026).
+    if do_currency:
+        text = replace_canadian_currency(text)
+    # Signed currency next: +$1.11 → "up $1.11", -$5.75 → "down $5.75"
     # Must run BEFORE price ranges so "-$5.75" isn't misread as a range endpoint.
     if do_currency:
         text = replace_signed_currency(text)

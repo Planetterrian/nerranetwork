@@ -21,6 +21,7 @@ from assets.pronunciation import (
     clean_social_handles,
     clean_text_for_tts,
     strip_financial_parentheses,
+    replace_canadian_currency,
     replace_signed_currency,
     replace_signed_numbers,
     replace_multiplier_notation,
@@ -182,6 +183,63 @@ class TestYearToWords:
 
     def test_1900(self):
         assert _year_to_words(1900) == "nineteen hundred"
+
+
+class TestReplaceCanadianCurrency:
+    """Operator caught (TST Ep471, May 13 2026) Grok TTS reading
+    'C$39,490' as 'C thirty-nine dollars four hundred ninety' — the
+    leading 'C' got stranded as a syllable and the comma was treated
+    as a separator rather than a thousands marker. The transform
+    pre-rewrites C$ amounts to a form the downstream currency
+    handler reads correctly."""
+
+    def test_canadian_dollars_with_thousands_comma(self):
+        result = replace_canadian_currency("Tesla sells the Model 3 for C$39,490 in Canada")
+        # No stranded "C" left; comma intact for downstream currency expansion.
+        assert "C$" not in result
+        assert "39,490 Canadian dollars" in result
+
+    def test_canadian_dollars_with_decimal(self):
+        result = replace_canadian_currency("Listed at C$1,250.50 today")
+        assert "C$" not in result
+        assert "1,250.50 Canadian dollars" in result
+
+    def test_canadian_dollars_small_amount(self):
+        result = replace_canadian_currency("Charged C$15 for the part")
+        assert "15 Canadian dollars" in result
+
+    def test_cad_prefix_variant(self):
+        result = replace_canadian_currency("MSRP CAD$100,000 nationwide")
+        assert "100,000 Canadian dollars" in result
+
+    def test_cad_prefix_case_insensitive(self):
+        result = replace_canadian_currency("Selling for cad$500 used")
+        assert "500 Canadian dollars" in result
+
+    def test_us_dollars_untouched(self):
+        """US dollar amounts MUST pass through — only the C$/CAD$
+        prefix triggers the transform."""
+        result = replace_canadian_currency("Sticker price is $79,990 in California")
+        assert "$79,990" in result
+        assert "Canadian" not in result
+
+    def test_no_currency_no_op(self):
+        """Plain text is returned unchanged."""
+        text = "There were no prices mentioned in this sentence."
+        assert replace_canadian_currency(text) == text
+
+    def test_runs_in_prepare_text_for_tts_pipeline(self):
+        """End-to-end: C$X,XXX through the full TTS pipeline produces
+        the correct spoken form (Canadian context preserved, comma
+        absorbed by the standard currency handler)."""
+        result = prepare_text_for_tts("Tesla sells the Model 3 for C$39,490 in Canada.")
+        assert "C$" not in result
+        assert "Canadian" in result
+        # The downstream replace_currency handles "39,490 Canadian
+        # dollars" → "thirty-nine thousand four hundred ninety
+        # Canadian dollars" (or similar). Confirm no stranded comma.
+        assert ",490" not in result
+        assert "thirty-nine thousand" in result
 
 
 class TestReplaceCurrency:
