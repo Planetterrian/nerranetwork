@@ -491,7 +491,13 @@ def run(args: argparse.Namespace) -> None:
         )
 
     def _run_x_fetch():
-        if not config.x_accounts:
+        # Skip the X API call if X posting is disabled for this show —
+        # before May 12 2026 the fetch ran whenever ``x_accounts`` was
+        # configured, regardless of ``x_enabled``, so shows with X
+        # posting off still paid for X API calls and ingested X posts
+        # that were never used. Operator-caught during the May 12 2026
+        # pipeline audit.
+        if not config.x_accounts or not config.publishing.x_enabled:
             return []
         from engine.fetcher import fetch_x_posts
         return fetch_x_posts(config.x_accounts, keywords=config.keywords)
@@ -1810,7 +1816,30 @@ def run(args: argparse.Namespace) -> None:
             from engine.tracking import record_tts_usage
             record_tts_usage(tracker, len(podcast_script), provider=config.tts.provider)
 
-            # 9a. Post-TTS transcription validation (opt-in)
+            # 9a. Generate transcript from raw TTS audio (non-fatal).
+            # Runs FIRST so the Whisper output can also feed the
+            # post-TTS validation step below without a second
+            # transcribe pass. Before May 12 2026 these two stages
+            # each loaded Whisper independently and re-transcribed
+            # the same audio — operator-caught during the pipeline
+            # audit.
+            _transcript_result = None
+            try:
+                from engine.transcripts import generate_transcript
+                _lang = "ru" if args.show in ("finansy_prosto", "privet_russian") else "en"
+                _ep_prefix = f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}"
+                _transcript_result = generate_transcript(
+                    raw_mp3, digests_dir, _ep_prefix,
+                    model_size=config.tts.whisper_model, language=_lang,
+                )
+            except Exception as exc:
+                logger.warning("Transcript generation failed (non-fatal): %s", exc)
+
+            # 9b. Post-TTS transcription validation (opt-in). Reuses the
+            # transcript text from 9a when available so Whisper only
+            # runs once per episode. Falls back to its own transcribe
+            # call if the transcript step couldn't produce text (e.g.
+            # faster-whisper missing on the runner).
             if config.tts.validate_transcription:
                 import json as _json
                 from engine.tts_validation import validate_tts_transcription
@@ -1824,6 +1853,9 @@ def run(args: argparse.Namespace) -> None:
                     raw_mp3, strip_speech_tags(podcast_script),
                     model_size=config.tts.whisper_model,
                     threshold=config.tts.whisper_threshold,
+                    transcription=(
+                        _transcript_result.text if _transcript_result else None
+                    ),
                 )
                 if tts_val["passed"]:
                     logger.info("TTS validation PASSED (%.1f%% match)", tts_val["match_score"] * 100)
@@ -1838,18 +1870,6 @@ def run(args: argparse.Namespace) -> None:
                 val_path = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}_tts_validation.json"
                 val_path.write_text(_json.dumps(tts_val, indent=2))
                 logger.info("TTS validation report saved: %s", val_path.name)
-
-            # 9b. Generate transcript from raw TTS audio (non-fatal)
-            try:
-                from engine.transcripts import generate_transcript
-                _lang = "ru" if args.show in ("finansy_prosto", "privet_russian") else "en"
-                _ep_prefix = f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}"
-                generate_transcript(
-                    raw_mp3, digests_dir, _ep_prefix,
-                    model_size="base", language=_lang,
-                )
-            except Exception as exc:
-                logger.warning("Transcript generation failed (non-fatal): %s", exc)
 
             # 9c. Tag-leak regression detector — scan the Whisper
             # transcript for tag-as-text bleeds (the May 2026
@@ -2891,7 +2911,16 @@ def _publish_youtube(
                 hook=hook or "",
                 image_queries=list(getattr(yt, "image_queries", []) or []),
                 aspect=aspect,
-                count=8,
+                # 4 prompts per aspect × 2 aspects (16:9 + 9:16) = 8
+                # distinct images per episode. Down from 8 per aspect
+                # (16 total) — May 12 2026 retune. Each scene now
+                # holds ~2 minutes on long-form (vs ~75 s previously),
+                # which is fine for podcast-style YouTube where the
+                # imagery is decorative B-roll under voice. Halves
+                # the Grok Imagine spend on YouTube-enabled shows
+                # (Tesla + MAB). Compliance is unaffected — the
+                # ``containsSyntheticMedia`` flag is binary.
+                count=4,
                 show_descriptor=getattr(
                     yt, "grok_image_descriptor", "photorealistic news photo",
                 ),

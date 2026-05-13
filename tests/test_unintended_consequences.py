@@ -52,8 +52,11 @@ class TestShowYaml:
         assert cfg.get("weekly_recap_on_sunday", False) is False
         # YouTube disabled — quota cap (only TST + MAB).
         assert cfg["youtube"]["enabled"] is False
-        # X disabled — narrative show, not news.
-        assert cfg["publishing"]["x_enabled"] is False
+        # X posting enabled May 12 2026 — UC shares the @planetterrian
+        # account (Option B from pipeline-streamline plan). UC has no
+        # ``x_accounts`` configured so the X-fetch path stays empty.
+        assert cfg["publishing"]["x_enabled"] is True
+        assert cfg["publishing"]["x_env_prefix"] == "PLANETTERRIAN_X_"
 
     def test_resolves_to_default_voice(self):
         """Inheritance from ``_defaults.yaml`` should give it the
