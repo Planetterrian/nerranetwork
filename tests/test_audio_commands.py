@@ -597,16 +597,18 @@ class TestAudioConfigDefaults:
     def test_all_timing_defaults(self):
         """May 12 2026 retune — see AudioConfig docstring. Voice enters
         at 10 s, total intro music presence remains 55 s (10 alone +
-        15 overlap + 30 fade), post-voice outro is 20 s with a slow
-        15 s fade-out. Operator invariant: ≥30 s total intro music
-        presence preserved."""
+        15 overlap + 30 fade). Post-voice outro is 30 s with a 10 s
+        log-fade-out tail (May 13 2026 retune — music now plays alone
+        after voice ends rather than ramping under final voice).
+        Operator invariant: ≥30 s total intro music presence preserved."""
         from engine.config import AudioConfig
         cfg = AudioConfig()
         assert cfg.intro_duration == 10.0
         assert cfg.overlap_duration == 15.0
         assert cfg.fade_duration == 30.0
-        assert cfg.outro_duration == 20.0
-        assert cfg.outro_fade_out_duration == 15.0
+        assert cfg.outro_duration == 30.0
+        assert cfg.outro_fade_out_duration == 10.0
+        assert cfg.outro_crossfade == 0.0
         assert cfg.intro_volume == 0.6
         assert cfg.overlap_volume == 0.5
         assert cfg.fade_volume == 0.4
@@ -632,9 +634,10 @@ class TestShowMusicConfigs:
     def test_tesla_has_music(self, load_config):
         cfg = load_config("shows/tesla.yaml")
         assert cfg.audio.music_file == "assets/music/tesla_shorts_time.mp3"
-        # May 12 2026 retune — see AudioConfig docstring.
+        # May 13 2026 retune — see AudioConfig docstring. Outro
+        # crossfade dropped to 0 so music plays alone after voice ends.
         assert cfg.audio.voice_intro_delay == 10.0
-        assert cfg.audio.outro_crossfade == 20.0
+        assert cfg.audio.outro_crossfade == 0.0
 
     def test_ff_has_unified_music(self, load_config):
         """May 2026: FF moved off the dual-track open/close (short
@@ -670,13 +673,14 @@ class TestShowMusicConfigs:
         assert cfg.audio.music_file == "assets/music/EnvIntel.mp3"
 
     def test_ei_standard_timing(self, load_config):
-        """EI inherits the network's May 12 2026 retune (10 s intro
-        alone, 20 s post-voice outro with a slow 15 s fade) but pins
-        lower volumes for the briefing format."""
+        """EI inherits the network's May 13 2026 retune (10 s intro
+        alone, 30 s post-voice outro with music alone after voice +
+        a 10 s fade-out tail) but pins lower volumes for the briefing
+        format."""
         cfg = load_config("shows/env_intel.yaml")
         assert cfg.audio.intro_duration == 10.0
-        assert cfg.audio.outro_duration == 20.0
-        assert cfg.audio.outro_crossfade == 20.0
+        assert cfg.audio.outro_duration == 30.0
+        assert cfg.audio.outro_crossfade == 0.0
         assert cfg.audio.intro_volume <= 0.5
 
 

@@ -112,29 +112,36 @@ class AudioConfig:
     music_file: Optional[str] = None
     background_music_file: Optional[str] = None
     transition_sting: Optional[str] = None
-    # Music timing — May 12 2026 retune. Operator caught (TST Ep470)
-    # that the 25 s music-alone intro felt too long ("when's the host
-    # going to talk?") and the 60 s post-voice outro felt too long /
-    # ended abruptly. New shape:
-    #   * intro_duration 10 s — music plays alone for 10 s before voice
+    # Music timing — May 13 2026 outro retune (intro shape unchanged
+    # from May 12). Operator listened to TST Ep471 and asked for the
+    # outro to "let music run by itself for 20 seconds more and fade
+    # out" rather than ramping under the final 20 s of voice +
+    # sustaining only 5 s + fading 15 s. Outro now starts AFTER voice
+    # ends (no pre-voice-end crossfade), gives ~20 s of clearly-
+    # audible music alone, then fades.
+    #
+    # Intro (unchanged May 12 shape):
+    #   * intro_duration 10 s — music alone before voice
     #   * overlap_duration 15 s — music sits with voice
-    #   * fade_duration 30 s — slow log-fade under voice (no abrupt
-    #     cut; total intro music presence = 10+15+30 = 55 s, same
-    #     total as before, just front-shifted so voice enters sooner)
-    #   * outro_duration 20 s — music plays for 20 s after voice ends
-    #   * outro_fade_out_duration 15 s — most of the 20 s post-voice
-    #     outro is a graceful fade (5 s sustain + 15 s log-fade-out)
-    #   * outro_crossfade 20 s preserved — music begins ramping under
-    #     the last 20 s of voice, so the transition into the outro is
-    #     graceful rather than the music popping in cold.
+    #   * fade_duration 30 s — slow log-fade under voice
+    #   * Total intro music presence = 10+15+30 = 55 s
+    #
+    # Outro (May 13 retune):
+    #   * outro_crossfade 0 s — music does NOT ramp under final voice
+    #   * outro_duration 30 s — total post-voice music presence
+    #   * outro_fade_out_duration 10 s — clean log-fade-out tail
+    #   * Resulting shape: 6 s fade-in + ~14 s sustain + 10 s fade-out
+    #     ≈ 20 s music "by itself" before fading, matching operator
+    #     direction.
+    #
     # ``voice_intro_delay`` MUST stay >= ``intro_duration`` so the
     # voice doesn't enter while the music intro is still in its
     # alone-period (10 >= 10 holds).
     intro_duration: float = 10.0
     overlap_duration: float = 15.0
     fade_duration: float = 30.0
-    outro_duration: float = 20.0
-    outro_fade_out_duration: float = 15.0
+    outro_duration: float = 30.0
+    outro_fade_out_duration: float = 10.0
     intro_volume: float = 0.6
     overlap_volume: float = 0.5
     fade_volume: float = 0.4

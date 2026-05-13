@@ -210,8 +210,11 @@ class TestDefaultValues:
         assert c.intro_duration == 10.0
         assert c.overlap_duration == 15.0
         assert c.fade_duration == 30.0
-        assert c.outro_duration == 20.0
-        assert c.outro_fade_out_duration == 15.0
+        # May 13 2026 retune — outro lengthened to 30s with shorter fade.
+        # Music now starts AFTER voice ends (outro_crossfade=0), plays
+        # ~20s "by itself", then fades over 10s.
+        assert c.outro_duration == 30.0
+        assert c.outro_fade_out_duration == 10.0
         assert c.intro_volume == 0.6
         assert c.overlap_volume == 0.5
         assert c.fade_volume == 0.4
@@ -462,9 +465,10 @@ class TestLoadConfigRealFiles:
         assert cfg.sources[0].label == "Nature"
         assert "longevity" in cfg.keywords
         assert cfg.audio.music_file == "assets/music/oilers-pride.mp3"
-        # May 12 2026 retune — post-voice outro is 20s with a 15s
-        # graceful fade (was 60s, felt too long and ended abruptly).
-        assert cfg.audio.outro_duration == 20.0
+        # May 13 2026 retune — post-voice outro lengthened to 30s
+        # (was 20s), with music now playing alone after voice ends
+        # rather than ramping under the final 20s of voice.
+        assert cfg.audio.outro_duration == 30.0
         assert cfg.publishing.guid_prefix == "planetterrian-daily"
         assert cfg.episode.prefix == "Planetterrian_Daily"
         assert cfg.episode.output_dir == "digests/planetterrian"
@@ -561,10 +565,11 @@ class TestNestedConfigOverrides:
         assert cfg.audio.music_file == "custom.mp3"
         # Per-show override wins.
         assert cfg.audio.voice_intro_delay == 25.0
-        # Network defaults inherited from shows/_defaults.yaml — May 12
-        # 2026 retune (10s intro alone, 20s post-voice outro).
+        # Network defaults inherited from shows/_defaults.yaml — May 13
+        # 2026 retune (10s intro alone, 30s post-voice outro with no
+        # crossfade ramp).
         assert cfg.audio.intro_duration == 10.0
-        assert cfg.audio.outro_duration == 20.0
+        assert cfg.audio.outro_duration == 30.0
 
     def test_partial_publishing_override(self, tmp_path):
         data = {"publishing": {"rss_title": "Custom Title", "x_enabled": False}}

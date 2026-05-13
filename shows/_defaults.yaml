@@ -75,23 +75,26 @@ tts:
 audio:
   min_audio_duration: 180
   transition_sting: assets/music/transition_sting.mp3
-  # Music timing — retuned May 12 2026 after operator listened to
-  # TST Ep470 and called three issues:
-  #   1. music "got garbled" right before speech starts (fixed in
-  #      engine/audio.py: overlap and fadeout source slices now
-  #      overlap by the acrossfade window so the crossfade plays
-  #      identical source content from both segments)
-  #   2. voice should enter at 10 s, not 25 s, with music continuing
-  #      under voice and fading out rather than cutting
-  #   3. post-voice outro should run only 20 s and fade slowly out
-  #      (was 60 s with a 6 s tail-cut, felt abrupt)
-  # New shape: 10 s music alone + 15 s overlap with voice + 30 s
-  # log-fade under voice = 55 s total intro music presence (same
-  # total as before, just front-shifted). Outro = 20 s music after
-  # voice ends, with most of that being a slow 15 s fade-out.
-  # ``outro_crossfade`` stays at 20 s so music ramps into the close
-  # under the last 20 s of voice; combined with the 20 s post-voice
-  # outro that's a 40 s outro segment with 5 s sustain + 15 s fade.
+  # Music timing — retuned May 13 2026 after operator listened to
+  # TST Ep471 audio and asked for the outro to "let music run by
+  # itself for 20 seconds more and fade out" rather than ramping
+  # under the final 20s of voice + sustaining 5s + fading 15s.
+  #
+  # Outro changes (May 13):
+  #   * outro_crossfade: 20 → 0     (no more pre-voice-end ramp;
+  #                                   music starts AFTER voice ends)
+  #   * outro_duration:  20 → 30    (longer total outro segment)
+  #   * outro_fade_out_duration: 15 → 10 (clean tail-out)
+  #
+  # New outro shape after voice ends:
+  #   * 6 s fade-in (music coming up from silence after voice end)
+  #   * ~14 s sustain at full outro_volume (music "by itself")
+  #   * 10 s log-fade-out to silence
+  #   * Total post-voice music presence: 30 s
+  #
+  # Intro shape unchanged (10 s alone + 15 s overlap + 30 s
+  # log-fade under voice = 55 s total intro music presence).
+  #
   # ``voice_intro_delay`` MUST stay >= ``intro_duration`` so the
   # voice doesn't enter while the music intro is still in its
   # alone-period (10 >= 10 holds).
@@ -99,9 +102,9 @@ audio:
   intro_duration: 10.0
   overlap_duration: 15.0
   fade_duration: 30.0
-  outro_duration: 20.0
-  outro_crossfade: 20.0
-  outro_fade_out_duration: 15.0
+  outro_duration: 30.0
+  outro_crossfade: 0.0
+  outro_fade_out_duration: 10.0
   intro_volume: 0.5
   overlap_volume: 0.4
   fade_volume: 0.3
