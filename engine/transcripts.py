@@ -5,16 +5,37 @@ Generates timestamped transcripts from podcast audio files for:
   - RSS <podcast:transcript> tags
   - SEO indexing
   - Accessibility
+
+May 12 2026: now returns a ``TranscriptResult`` carrying both file
+paths AND the in-memory plain text so callers (specifically the
+TTS-validation step) can reuse the Whisper output without a second
+transcribe call. Saves one Whisper pass per episode (~$0.03-0.10).
 """
 
 from __future__ import annotations
 
 import json
 import logging
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class TranscriptResult:
+    """Output of a successful ``generate_transcript()`` call.
+
+    ``txt_path`` and ``json_path`` are written to disk; ``text`` is
+    the same plain-text content as ``txt_path.read_text()`` but
+    available without a second disk round-trip (and lets the
+    TTS-validation stage skip its own Whisper call entirely).
+    """
+
+    txt_path: Path
+    json_path: Path
+    text: str
 
 
 def generate_transcript(
@@ -24,7 +45,7 @@ def generate_transcript(
     *,
     model_size: str = "base",
     language: Optional[str] = None,
-) -> Optional[Path]:
+) -> Optional[TranscriptResult]:
     """Generate a transcript from an MP3 file using faster-whisper.
 
     Parameters
@@ -42,8 +63,11 @@ def generate_transcript(
 
     Returns
     -------
-    Path or None
-        Path to the plain-text transcript file, or None on failure.
+    TranscriptResult or None
+        On success, a ``TranscriptResult`` with ``txt_path``,
+        ``json_path``, and ``text`` (plain-text transcript). On
+        failure (faster-whisper missing, audio missing, transcribe
+        raised), returns None — caller treats as non-fatal.
     """
     try:
         from faster_whisper import WhisperModel
@@ -115,14 +139,17 @@ def generate_transcript(
         json_path.write_text(json.dumps(json_data, indent=2, ensure_ascii=False), encoding="utf-8")
 
         # Write plain-text transcript
+        plain_text = "\n".join(full_text_parts)
         txt_path = output_dir / f"{episode_prefix}_transcript.txt"
-        txt_path.write_text("\n".join(full_text_parts), encoding="utf-8")
+        txt_path.write_text(plain_text, encoding="utf-8")
 
         logger.info(
             "Transcript generated: %s (%d segments, %s detected)",
             txt_path.name, len(transcript_segments), info.language,
         )
-        return txt_path
+        return TranscriptResult(
+            txt_path=txt_path, json_path=json_path, text=plain_text,
+        )
 
     except Exception as exc:
         logger.warning("Transcript generation failed (non-fatal): %s", exc)

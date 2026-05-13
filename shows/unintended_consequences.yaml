@@ -73,8 +73,14 @@ publishing:
   audio_subdir: digests/unintended_consequences
   summaries_json: digests/unintended_consequences/summaries_unintended_consequences.json
   summaries_podcast_name: unintended_consequences
-  x_enabled: false           # X posting deferred — narrative show, not news
-  x_env_prefix: ""
+  # X posting enabled May 12 2026 — shares @planetterrian account
+  # (Option B from the pipeline-streamline plan). UC's narrative /
+  # contemplative tone fits Planetterrian's audience better than the
+  # news-velocity accounts. UC has no ``x_accounts`` configured so
+  # the X-fetch path stays empty (no source ingestion from X), but
+  # posting goes out via the planetterrian creds. Weekday cadence.
+  x_enabled: true
+  x_env_prefix: "PLANETTERRIAN_X_"
 
 episode:
   prefix: Unintended_Consequences

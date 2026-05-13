@@ -95,21 +95,34 @@ def validate_tts_transcription(
     model_size: str = "base",
     language: str = "en",
     threshold: float = 0.7,
+    transcription: Optional[str] = None,
 ) -> dict:
     """Transcribe audio and compare to expected text.
 
     Parameters
     ----------
     audio_path:
-        Path to the raw TTS audio file (MP3 or WAV).
+        Path to the raw TTS audio file (MP3 or WAV). Only consulted
+        when ``transcription`` is not supplied — when the caller
+        already has a Whisper transcription on hand (e.g. from
+        :func:`engine.transcripts.generate_transcript`), the audio is
+        not re-transcribed.
     expected_text:
         The text that was fed to TTS (after pronunciation fixes).
     model_size:
-        Whisper model size: "tiny", "base", "small", "medium".
+        Whisper model size: "tiny", "base", "small", "medium". Only
+        used when ``transcription`` is None.
     language:
-        Language code for transcription.
+        Language code for transcription. Only used when
+        ``transcription`` is None.
     threshold:
         Minimum match score (0.0-1.0) to consider validation passed.
+    transcription:
+        Optional pre-computed transcription. When provided, skips the
+        internal Whisper load + transcribe entirely — the caller is
+        responsible for supplying the Whisper output. Added May 12
+        2026 to consolidate the two Whisper passes that previously
+        ran per episode (validation + transcript) into a single pass.
 
     Returns
     -------
@@ -128,31 +141,35 @@ def validate_tts_transcription(
         "error": None,
     }
 
-    if not audio_path.exists():
-        result["error"] = f"Audio file not found: {audio_path}"
-        logger.error(result["error"])
-        return result
+    if transcription is not None:
+        # Reuse the caller-supplied Whisper output — no second pass.
+        pass
+    else:
+        if not audio_path.exists():
+            result["error"] = f"Audio file not found: {audio_path}"
+            logger.error(result["error"])
+            return result
 
-    model = _get_whisper_model(model_size)
-    if model is None:
-        result["error"] = "Whisper model not available"
-        result["passed"] = True  # Don't block if whisper unavailable
-        return result
+        model = _get_whisper_model(model_size)
+        if model is None:
+            result["error"] = "Whisper model not available"
+            result["passed"] = True  # Don't block if whisper unavailable
+            return result
 
-    # Transcribe
-    try:
-        segments, info = model.transcribe(
-            str(audio_path),
-            language=language,
-            beam_size=5,
-            word_timestamps=False,
-        )
-        transcription = " ".join(seg.text.strip() for seg in segments)
-    except Exception as exc:
-        result["error"] = f"Transcription failed: {exc}"
-        logger.error(result["error"])
-        result["passed"] = True  # Don't block on transcription errors
-        return result
+        # Transcribe
+        try:
+            segments, info = model.transcribe(
+                str(audio_path),
+                language=language,
+                beam_size=5,
+                word_timestamps=False,
+            )
+            transcription = " ".join(seg.text.strip() for seg in segments)
+        except Exception as exc:
+            result["error"] = f"Transcription failed: {exc}"
+            logger.error(result["error"])
+            result["passed"] = True  # Don't block on transcription errors
+            return result
 
     result["transcription"] = transcription
 
