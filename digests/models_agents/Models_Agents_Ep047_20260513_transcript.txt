@@ -1,0 +1,68 @@
+What's up? Welcome to Models and Agents episode 47 for May 13th, 2026, your daily AI briefing.
+Let's see what happened in the AI world today. And trust me, it's been busy.
+Real-time multi-model agents now run full duplex perception and generation without external VAD or frozen states.
+Thinking Machines Lab just dropped a research preview of TML Interaction Dash Small, a native multi-model model built for continuous collaboration.
+The system ingests synchronized 200 millisecond chunks of audio, video, and text through parallel streams and keeps a full duplex exchange going without separate voice activity detection.
+A real-time component handles the live interaction, while an asynchronous background model manages sustained reasoning and tool use, both sharing the full conversation context.
+This setup removes the turn-based freeze that most current agents still carry.
+The release also includes revision, a patch selector that trims visual token usage by roughly 46% on computer use trajectories while adding three points of success rate on OS World, Webtail Bench, and AgentNet Bench.
+Builders can already test the interaction prototype in Google AI Studio and drop the revision selector into their own agent runs this week.
+The core advance is the dual model split that keeps perception fluid while the background process runs longer reasoning without locking the conversation.
+Teams working on desktop or voice first agents will want to watch how that split behaves as context length and tool depth grow.
+Now let's move through the model updates that landed alongside it.
+Hebatron is the first open-weight Hebrew adapted Nematron 3M of experts model.
+It activates only 3 billion parameters inside a 30 billion parameter backbone and hits 73.8% on Hebrew reasoning benchmarks.
+The model supports 65,000 tokens of native context after a three-phase curriculum and two million bilingual fine-tuning examples.
+It outperforms dicta L3-24b thinking and stays competitive with Gemma 327b IT on TS8000, HE and Israeli trivia.
+Developers targeting Semitic language tasks now have a high throughput option that runs roughly nine times faster than dense equivalence at inference time.
+Rad takes a different route to capability distillation.
+It uses an uncertainty-aware contextual banded to allocate a fixed token budget across interdependent capabilities instead of treating each one in isolation.
+The method improves downstream utility while reducing harmful spillover compared with standard distillation baselines.
+The public GitHub implementation is already available for teams running the next round of model compression.
+Big camera hidden state coupling connects two frozen language models through a lightweight neural interface on intermediate activations rather than serialized text.
+On arithmetic and logic tasks the approach lifts accuracy from 36% to 96% and delivers 1.7 times gains on zebra logic when paired with a Z3 solver.
+The added interface uses roughly 1% extra parameters and learns a selective protocol directly from task loss.
+That gives tool augmented systems a route around output vocabulary bottlenecks.
+Turning to agent and tool releases, revision trains multimodal models on trajectories that drop redundant visual patches across consecutive screenshots while preserving spatial structure.
+When applied to quen 2.5 VL7B with five history frames, it cuts token count by about 46% on average and raises success rate three on OS world, web tail bench and agent net bench.
+Agent builders can keep longer visual histories under the same context budget by integrating the patch selector code.
+SAP launch an enterprise platform built around dual agents and an expanded partner ecosystem for autonomous workflows.
+The release packages agent operations directly with existing SAP data and process layers for production grade automation inside large organizations.
+Enterprises already running SAP should compare the new agent runtime against their current RPA stack this quarter.
+Red Hat AI Platform 3.4 adds dedicated agent operations and model as a service capabilities.
+The update supplies managed runtimes for agent orchestration and model serving inside existing open shift environments.
+Teams running containerized AI workloads can now deploy agents without separate infrastructure stacks.
+In the practical and community space, a Reddit user shared the full set of decks from this year's knowledge graph conference.
+The collection highlights live enterprise systems from Bloomberg, ABV, and Morgan Stanley that treat graphs as reasoning infrastructure rather than vector retrieval layers.
+Concrete examples include S-H-C-A-L drift detection, ontology governance, and LLM companions grounded in the graph as source of truth.
+Anyone building retrieval augmented agents should review the ABV arc example for patterns that move beyond simple rag.
+On our slash local alama users are testing quantized vision language models on Apple Silicon to drive GUI actions from screenshots.
+Small icons and dense interfaces remain difficult while visual token counts quickly throttle pre-fill speed.
+Early experiments show basic navigation works and the thread collects model choices and token budget work rounds for on device agents.
+A maintained fork called bilama.cpp adds D-flash and turbo-quant features plus reasoning and vision support.
+It enables 23.627bq5 at 200,000 context on a 3090 at 2 to 3 times baseline speed.
+Users with 8GB VRAM laptops are already running agentic coding loops with the fork.
+The creator's thread contains command examples and performance numbers for anyone limited to modest GPUs.
+Okay, let's pop the hood on diversity collapse in LLM decoding.
+Everyone treats sampling temperature or top P as simple knobs that control variety.
+In practice, the root cause sits inside the model's probability distribution before any sampling rule is applied.
+Order miscalibration means valid tokens are not consistently ranked above invalid ones, forcing any cut off to trade recall for noise.
+Shape miscalibration concentrates mass on a few high probability valid tokens, while a long tail mixes valid and invalid continuations, so preserving validity automatically starves diversity.
+These local failures compound across steps, turning modest per token bias into large sequence level repetition.
+The paper's control diagnostics show the effect persists across 14 models and is not fixed by changing the sampler alone.
+When you need genuine variety, first measure rank and shape calibration on your domain, rather than tuning sampling parameters in isolation.
+The cheapest win is usually fixing the distribution before you touch the decoder.
+If you haven't tried the TML interaction small prototype inside Google AI Studio yet, this week is a good time for any voice plus screen workflow where continuous perception matters.
+Apply the revision patch selector to your existing computer use agent trajectories and measure token savings versus success rate, lift on OS world style tasks.
+Run blimad.cpp on an 8GB laptop with 23.627bq5 to see whether agentic coding loops become usable before the next mainline release.
+Download the KGC 2026 deck folder and study the ABV arch graph architecture if your RAG system still treats the vector store as the only source of truth.
+Compare hebitron against Gemma 3 to 27bit on any Hebrew or bilingual reasoning benchmark you maintain.
+More labs are expected to release native full duplex multimodal models following the thinking machines pattern.
+Production knowledge graph tooling will continue moving from retrieval layer to primary reasoning substrate and enterprise settings.
+Open weight moe adaptations for additional languages will likely appear now that the nematron 3 Hebrew precedent exists.
+Agent identity registries and verification prototypes from infrastructure providers will move from research to early commercial pilots.
+Tomorrow keep an eye on the first follow up releases that test how the dual model split in TML interaction in small scales with deeper tool use.
+That's models and agents for today.
+If you found this useful share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+The AI world most fast will help you keep up. See you tomorrow.
+This episode used AI voice synthesis of my voice, editorial selection and analysis are my own.

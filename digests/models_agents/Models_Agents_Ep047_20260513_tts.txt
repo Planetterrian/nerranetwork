@@ -1,0 +1,129 @@
+What's up — welcome to Models and Agents, episode forty-seven, for May thirteenth, twenty twenty-six. Your daily A I briefing. Let's see what happened in the A I world today. And trust me, it's been busy.
+
+Real-time multimodal agents now run full-duplex perception and generation without external VAD or frozen states.
+
+Thinking Machines Lab just dropped a research preview of TML-Interaction-Small, a native multimodal model built for continuous collaboration.
+
+The system ingests synchronized two hundred millisecond chunks of audio, video, and text through parallel streams and keeps a full-duplex exchange going without separate voice-activity detection.
+
+A real-time component handles the live interaction while an asynchronous background model manages sustained reasoning and tool use, both sharing the full conversation context.
+
+This setup removes the turn-based freeze that most current agents still carry.
+
+The release also includes ReVision, a patch selector that trims visual token usage by roughly forty-six percent on computer-use trajectories while adding three points of success rate on OSWorld, WebTailBench, and AgentNetBench.
+
+Builders can already test the interaction prototype in Google A I Studio and drop the ReVision selector into their own agent runs this week.
+
+The core advance is the dual-model split that keeps perception fluid while the background process runs longer reasoning without locking the conversation.
+
+Teams working on desktop or voice-first agents will want to watch how that split behaves as context length and tool depth grow.
+
+Now let's move through the model updates that landed alongside it.
+
+HEBATRON is the first open-weight Hebrew-adapted Nemotron-3 mixture-of-experts model.
+
+It activates only three billion parameters inside a thirty billion parameter backbone and hits seventy-three point eight percent on Hebrew reasoning benchmarks.
+
+The model supports sixty-five thousand tokens of native context after a three-phase curriculum and two million bilingual fine-tuning examples.
+
+It outperforms DictaLM-three to twenty-fourB-Thinking and stays competitive with Gemma-three to twenty-sevenB-IT on GSMeight thousand-HE and Israeli Trivia.
+
+Developers targeting Semitic-language tasks now have a high-throughput option that runs roughly nine times faster than dense equivalents at inference time.
+
+ReAD takes a different route to capability distillation.
+
+It uses an uncertainty-aware contextual bandit to allocate a fixed token budget across interdependent capabilities instead of treating each one in isolation.
+
+The method improves downstream utility while reducing harmful spillover compared with standard distillation baselines.
+
+The public GitHub implementation is already available for teams running the next round of model compression.
+
+Bicameral hidden-state coupling connects two frozen language models through a lightweight neural interface on intermediate activations rather than serialized text.
+
+On arithmetic and logic tasks the approach lifts accuracy from thirty-six percent to ninety-six percent and delivers one point seven times gains on ZebraLogic when paired with a Z3 solver.
+
+The added interface uses roughly one percent extra parameters and learns a selective protocol directly from task loss.
+
+That gives tool-augmented systems a route around output-vocabulary bottlenecks.
+
+Turning to agent and tool releases, ReVision trains multimodal models on trajectories that drop redundant visual patches across consecutive screenshots while preserving spatial structure.
+
+When applied to Qwen2.5-VL-7B with five history frames it cuts token count by about forty-six percent on average and raises success rate three points on OSWorld, WebTailBench, and AgentNetBench.
+
+Agent builders can keep longer visual histories under the same context budget by integrating the patch selector code.
+
+SAP launched an enterprise platform built around Joule agents and an expanded partner ecosystem for autonomous workflows.
+
+The release packages agent operations directly with existing SAP data and process layers for production-grade automation inside large organizations.
+
+Enterprises already running SAP should compare the new agent runtime against their current RPA stack this quarter.
+
+Red Hat A I Platform 3.4 adds dedicated agent operations and Model-as-a-Service capabilities.
+
+The update supplies managed runtimes for agent orchestration and model serving inside existing OpenShift environments.
+
+Teams running containerized A I workloads can now deploy agents without separate infrastructure stacks.
+
+In the practical and community space, a Reddit user shared the full set of decks from this year's Knowledge Graph Conference.
+
+The collection highlights live enterprise systems from Bloomberg, AbbVie, and Morgan Stanley that treat graphs as reasoning infrastructure rather than vector retrieval layers.
+
+Concrete examples include SHACL drift detection, ontology governance, and L L M companions grounded in the graph as source of truth.
+
+Anyone building retrieval-augmented agents should review the AbbVie ARCH example for patterns that move beyond simple rag.
+
+On r/LocalLLaMA, users are testing quantized vision-language models on Apple Silicon to drive GUI actions from screenshots.
+
+Small icons and dense interfaces remain difficult while visual token counts quickly throttle prefill speed.
+
+Early experiments show basic navigation works and the thread collects model choices and token-budget workarounds for on-device agents.
+
+A maintained fork called BeeLlama.cpp adds DFlash and TurboQuant features plus reasoning and vision support.
+
+It enables Chwen 3.6 27B Q5 at two hundred thousand context on a 3090 at two to three times baseline speed.
+
+Users with eight gigabyte VRAM laptops are already running agentic coding loops with the fork.
+
+The creator's thread contains command examples and performance numbers for anyone limited to modest G P U's.
+
+OK, let's pop the hood on diversity collapse in L L M decoding.
+
+Everyone treats sampling temperature or top-p as simple knobs that control variety.
+
+In practice the root cause sits inside the model's probability distribution before any sampling rule is applied.
+
+Order miscalibration means valid tokens are not consistently ranked above invalid ones, forcing any cutoff to trade recall for noise.
+
+Shape miscalibration concentrates mass on a few high-probability valid tokens while a long tail mixes valid and invalid continuations, so preserving validity automatically starves diversity.
+
+These local failures compound across steps, turning modest per-token bias into large sequence-level repetition.
+
+The paper's controlled diagnostics show the effect persists across fourteen models and is not fixed by changing the sampler alone.
+
+When you need genuine variety, first measure rank and shape calibration on your domain rather than tuning sampling parameters in isolation.
+
+The cheapest win is usually fixing the distribution before you touch the decoder.
+
+If you haven't tried the TML-Interaction-Small prototype inside Google A I Studio yet, this week is a good time for any voice-plus-screen workflow where continuous perception matters.
+
+Apply the ReVision patch selector to your existing computer-use agent trajectories and measure token savings versus success-rate lift on OSWorld-style tasks.
+
+Run BeeLlama.cpp on an eight gigabyte laptop with Chwen 3.6 27B Q5 to see whether agentic coding loops become usable before the next mainline release.
+
+Download the KGC 2026 deck folder and study the AbbVie ARCH graph architecture if your rag system still treats the vector store as the only source of truth.
+
+Compare HEBATRON against Gemma-three to twenty-sevenB-IT on any Hebrew or bilingual reasoning benchmark you maintain.
+
+More labs are expected to release native full-duplex multimodal models following the Thinking Machines pattern.
+
+Production knowledge-graph tooling will continue moving from retrieval layer to primary reasoning substrate in enterprise settings.
+
+Open-weight MoE adaptations for additional languages will likely appear now that the Nemotron-3 Hebrew precedent exists.
+
+Agent identity registries and verification prototypes from infrastructure providers will move from research to early commercial pilots.
+
+Tomorrow, keep an eye on the first follow-up releases that test how the dual-model split in TML-Interaction-Small scales with deeper tool use.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
