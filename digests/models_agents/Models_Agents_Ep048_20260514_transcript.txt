@@ -1,0 +1,174 @@
+Hey, welcome to Models and Agents, episode 48 for May 14, 2026.
+Plenty of model releases and agent benchmarks moving today.
+Faster pre-training without changing model architecture
+just became practical.
+News researches, token superposition training,
+cuts wall clock time by up to 2.5 times on models
+from 270 million to 10 billion parameters.
+The briefing today centers on a new pre-training method
+that delivers real speed-ups.
+Several papers on efficient training and serving
+and fresh agent tools that handle multi-machine control
+and structured evaluation.
+News research released token superposition training,
+a two-phase pre-training technique.
+It averages contiguous token embeddings into bags
+during the first phase before reverting
+to standard next token prediction.
+The method works on dense models from 270 million
+to 3 billion parameters and a 10 billion parameter
+mixture of experts model with 1 billion active parameters.
+No architecture, tokenizer, or optimizer changes are required.
+It delivers up to 2.5 times wall clock speed-ups
+at matched floating point operations
+while preserving downstream performance.
+Teams doing continued pre-training or training
+from scratch on mid-size models
+can cut training time dramatically on the same hardware.
+Watch for follow-up work testing whether
+the same bag averaging trick scales cleanly
+past 10 billion parameters.
+Three new papers on model efficiency landed as well.
+Soma trains a small surrogate model
+on the early turns of a conversation
+to handle the rest of the session.
+It uses soft prompts and localized low rank adaptation
+fine-tuning to keep response quality
+while slashing latency and memory
+compared with always concatenating full history
+to a large model.
+A simple gate handles one time switching
+with rollback on drift.
+Another paper called Freeze Deep, Train Shallow,
+shows that deep layers are both critical
+for task execution and highly stable.
+The recommendation is to freeze them
+and train only shallow layers during continued pre-training.
+This strategy beats full parameter fine-tuning
+on CEVAL and CMM-LU while preserving original knowledge.
+The work gives resource constrained teams
+a concrete rule for layer allocation.
+A third study tested hidden layer distillation at scale.
+It used Gemma 3.4 billion as teacher
+and students up to 735 million parameters
+trained on 168 billion tokens.
+The approach produces consistent perplexity gains
+over standard loja-based distillation
+but does not reliably improve downstream tasks.
+The results suggest latent signals exist
+but need further breakthroughs to matter in practice.
+On the agent side, OpenDesk lets AI agents
+see, click, and type across multiple local machines
+over Wi-Fi.
+No cloud or accounts are required.
+It works with Claude, cursor, codex, or custom harnesses
+and stays fully encrypted on the local network.
+Mac, Linux, and Windows builds are open source.
+EVAL agent encodes evaluation expertise
+as composable skills
+and produces complete evaluation artifacts,
+including metrics, code, and reports.
+It raises first run success from 17.5% to 65%
+and wins 79.5% human preference
+over simple prompting baselines.
+The accompanying agent EVAL bench
+and meta-evaluation framework are now available for testing.
+Agent Brace splits an LLM agent into a belief state model
+that outputs structured natural language claims
+with verbalized certainty and a policy model
+that acts on that compact belief.
+It improves performance by 14.5% on twin 2.53 billion
+and 5.3% on twin 3.4 billion
+in partially observable environments
+while keeping context size constant.
+Builders also shipped an open source
+one prompt to cinematic real pipeline
+that runs end to end on a single AMD MI 300X.
+The pipeline uses flux two-cline, 1.2.2 image to video,
+twin 3.5.35 billion as director,
+a step music, and cacoro text to speech.
+It turns one English sentence into a finished 720p video
+with characters, music, and narration in roughly 10 minutes.
+All components are Apache 2.0 or MIT
+and the full code is public.
+A vision critic with 10 structured failure labels
+enables automatic retries for common artifacts.
+Check up two action introduces a new 2000 report
+multimodal clinical benchmark.
+It tests generation of patient oriented action cards
+that include priority, recommended department, time window,
+and safe questions for clinicians.
+Experiments reveal clear trade-offs between coverage,
+correctness, and safety alignment across general
+and medical large language models.
+The data set and evaluation protocol
+are released for further work.
+Okay, let's pop the hood on continued pre-training.
+Everyone talks about it as a uniform update
+across all parameters.
+In practice, layers behave very differently.
+Deep layers execute the core task logic
+while remaining highly stable against disruptive changes.
+Layer tracer maps this by measuring
+where task execution actually occurs
+and how sensitive each layer is to new gradients.
+The result is a clear rule.
+Freeze the deep stack and train only the shallow layers.
+This consistently beats both full fine tuning
+and the opposite allocation on standard benchmarks.
+Deep representations already encode robust general features
+that new data rarely needs to overwrite.
+The quality gain is largest on mid-size models
+where full updates are most expensive.
+Above roughly 30 billion parameters,
+the relative benefit shrinks because the deep layers
+become even more stable.
+When you have limited compute and want to adapt
+a base model to a new domain,
+start by freezing everything past layer 70%,
+and only tune the early transformer blocks.
+The gacha that bites most teams
+is assuming uniform learning rates across depth.
+Shallow layers need higher rates
+while deep layers need almost none.
+If you have not tried these yet,
+clone the open desk repo and pair two local machines
+to test cross-device computer use agents
+with your existing cloud or cursor workflow.
+Run the open cinematic pipeline
+on a single high memory GPU.
+If you have access to an MI300X or equivalent,
+start with the provided showcase reels
+before modifying the director prompts.
+Apply token superposition training
+to your next one billion to 10 billion pre-training run
+using the release two phase schedule
+and compare wall clock time against your current baseline.
+Test eVal agent on one of your existing agent projects
+using the new agent eVal bench
+to see whether the 65% first run success rate
+holds for your specific evaluation needs.
+Experiment with agent brace style belief claims
+on a long horizon task in a partially observable environment
+to keep context size constant while tracking uncertainty.
+More labs are expected to release layer allocation diagnostics
+following the layer tracer approach
+for continued pre-training.
+Watch for production deployments of SOMA style surrogate models
+in multi-turn agent serving stacks.
+Additional open source computer use tools
+will likely appear as open desk demonstrates
+the local network pattern.
+Further agent evaluation frameworks
+building on eVal agents skill composition model
+are anticipated in the coming weeks.
+Tomorrow keep an eye on more labs releasing
+layer allocation diagnostics
+following the layer tracer approach.
+That wraps up today's AI briefing.
+Share this with a developer or builder
+who wants to stay current.
+Subscribe wherever you listen.
+See you tomorrow.
+This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.

@@ -1,0 +1,83 @@
+Hey, welcome to Models and Agents, episode forty-eight, for May fourteenth, twenty twenty-six. Plenty of model releases and agent benchmarks moving today.
+
+Faster pre-training without changing model architecture just became practical. Nous Research's Token Superposition Training cuts wall-clock time by up to two point five times on models from two hundred seventy million to ten billion parameters.
+
+The briefing today centers on a new pre-training method that delivers real speedups, several papers on efficient training and serving, and fresh agent tools that handle multi-machine control and structured evaluation.
+
+Nous Research released Token Superposition Training, a two-phase pre-training technique. It averages contiguous token embeddings into bags during the first phase before reverting to standard next-token prediction.
+
+The method works on dense models from two hundred seventy million to three billion parameters and a ten billion parameter mixture of experts model with one billion active parameters. No architecture, tokenizer, or optimizer changes are required.
+
+It delivers up to two point five times wall-clock speedups at matched floating point operations while preserving downstream performance. Teams doing continued pre-training or training from scratch on mid-size models can cut training time dramatically on the same hardware.
+
+Watch for follow-up work testing whether the same bag-averaging trick scales cleanly past ten billion parameters.
+
+Three new papers on model efficiency landed as well. SOMA trains a small surrogate model on the early turns of a conversation to handle the rest of the session.
+
+It uses soft prompts and localized low-rank adaptation fine-tuning to keep response quality while slashing latency and memory compared with always concatenating full history to a large model. A simple gate handles one-time switching with rollback on drift.
+
+Another paper called Freeze Deep, Train Shallow shows that deep layers are both critical for task execution and highly stable. The recommendation is to freeze them and train only shallow layers during continued pre-training.
+
+This strategy beats full-parameter fine-tuning on C-Eval and CMMLU while preserving original knowledge. The work gives resource-constrained teams a concrete rule for layer allocation.
+
+A third study tested Hidden Layer Distillation at scale. It used Gemma three point four billion as teacher and students up to seven hundred thirty-five million parameters trained on one hundred sixty-eight billion tokens.
+
+The approach produces consistent perplexity gains over standard logit-based distillation but does not reliably improve downstream tasks. The results suggest latent signals exist but need further breakthroughs to matter in practice.
+
+On the agent side, Opendesk lets A I agents see, click, and type across multiple local machines over Wi-Fi. No cloud or accounts are required.
+
+It works with Claude, Cursor, Codex, or custom harnesses and stays fully encrypted on the local network. Mac, Linux, and Windows builds are open source.
+
+EvalAgent encodes evaluation expertise as composable skills and produces complete evaluation artifacts including metrics, code, and reports. It raises first-run success from seventeen point five percent to sixty-five percent and wins seventy-nine point five percent human preference over simple prompting baselines.
+
+The accompanying AgentEvalBench and meta-evaluation framework are now available for testing.
+
+Agent-BRACE splits an L L M agent into a belief-state model that outputs structured natural-language claims with verbalized certainty and a policy model that acts on that compact belief.
+
+It improves performance by fourteen point five percent on Chwen two point five three billion and five point three percent on Chwen three four billion in partially observable environments while keeping context size constant.
+
+Builders also shipped an open-source one-prompt-to-cinematic-reel pipeline that runs end-to-end on a single AMD MI three hundred X. The pipeline uses FLUX two klein, Wan two point two image to video, Chwen three point five thirty-five billion as director, ACE-Step music, and Kokoro text to speech.
+
+It turns one English sentence into a finished seven hundred twenty p video with characters, music, and narration in roughly ten minutes. All components are Apache two point zero or MIT and the full code is public.
+
+A vision critic with ten structured failure labels enables automatic retries for common artifacts.
+
+Checkup two Action introduces a new two thousand report multimodal clinical benchmark. It tests generation of patient-oriented Action Cards that include priority, recommended department, time window, and safe questions for clinicians.
+
+Experiments reveal clear trade-offs between coverage, correctness, and safety alignment across general and medical large language models. The dataset and evaluation protocol are released for further work.
+
+OK, let's pop the hood on continued pre-training. Everyone talks about it as a uniform update across all parameters. In practice, layers behave very differently.
+
+Deep layers execute the core task logic while remaining highly stable against disruptive changes. LayerTracer maps this by measuring where task execution actually occurs and how sensitive each layer is to new gradients.
+
+The result is a clear rule: freeze the deep stack and train only the shallow layers. This consistently beats both full fine-tuning and the opposite allocation on standard benchmarks.
+
+Deep representations already encode robust, general features that new data rarely needs to overwrite. The quality gain is largest on mid-size models where full updates are most expensive.
+
+Above roughly thirty billion parameters the relative benefit shrinks because the deep layers become even more stable. When you have limited compute and want to adapt a base model to a new domain, start by freezing everything past layer seventy percent and only tune the early transformer blocks.
+
+The gotcha that bites most teams is assuming uniform learning rates across depth. Shallow layers need higher rates while deep layers need almost none.
+
+If you have not tried these yet, clone the opendesk repo and pair two local machines to test cross-device computer-use agents with your existing Claude or Cursor workflow.
+
+Run the open cinematic pipeline on a single high-memory G P U if you have access to an MI three hundred X or equivalent. Start with the provided showcase reels before modifying the director prompts.
+
+Apply Token Superposition Training to your next one billion to ten billion pre-training run using the released two-phase schedule and compare wall-clock time against your current baseline.
+
+Test EvalAgent on one of your existing agent projects using the new AgentEvalBench to see whether the sixty-five percent first-run success rate holds for your specific evaluation needs.
+
+Experiment with Agent-BRACE-style belief claims on a long-horizon task in a partially observable environment to keep context size constant while tracking uncertainty.
+
+More labs are expected to release layer-allocation diagnostics following the LayerTracer approach for continued pre-training.
+
+Watch for production deployments of SOMA-style surrogate models in multi-turn agent serving stacks.
+
+Additional open-source computer-use tools will likely appear as opendesk demonstrates the local-network pattern.
+
+Further agent evaluation frameworks building on EvalAgent's skill-composition model are anticipated in the coming weeks.
+
+Tomorrow, keep an eye on more labs releasing layer-allocation diagnostics following the LayerTracer approach.
+
+That wraps up today's A I briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
