@@ -258,3 +258,26 @@ class TestCitationHoverCards:
         assert '<a href="https://x.com"' in out
         # Cite pill still rendered for the bare Source: URL.
         assert 'class="cite-pill"' in out
+
+    def test_md_inline_renders_source_post_url_as_cite_pill(self):
+        """The Short Spot section in the Tesla digest uses
+        ``Source/Post:`` (not ``Source:``) for its citation line.
+        Before May 14 2026 the cite-pill regex only matched
+        ``Source:``, so Short Spot's URL bled into the rendered HTML
+        as a raw token stream — operator caught a Google News redirect
+        URL spilling across the Tesla blog (Ep472)."""
+        from engine.blog import _md_inline
+
+        out = _md_inline(
+            "**Spot title.** Some text describing the issue. "
+            "Source/Post: https://news.google.com/rss/articles/CBMiabc123?oc=5"
+        )
+        # The cite-pill structure renders just like Source: lines.
+        assert 'class="cite-pill"' in out
+        assert 'class="cite-card"' in out
+        # Pill label is the domain only — no raw URL bleed in visible text.
+        assert ">news.google.com<" in out
+        # Full URL is preserved inside the popover for verification.
+        assert "news.google.com/rss/articles/CBMiabc123?oc=5" in out
+        # The literal "Source/Post:" prefix stays before the pill.
+        assert "Source/Post:" in out

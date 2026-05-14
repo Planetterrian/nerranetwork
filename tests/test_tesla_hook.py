@@ -38,6 +38,17 @@ def _patch_grok(monkeypatch, text: str):
     monkeypatch.setattr(xai_grok, "grok_generate_text", _fake)
 
 
+@pytest.fixture(autouse=True)
+def _stub_persist(monkeypatch):
+    """Default-stub the api/tsla.json write so the test suite doesn't
+    pollute the repo's ``api/`` directory every run. Tests that need
+    to exercise the real persistence (or its failure modes) re-patch
+    this in their own bodies."""
+    monkeypatch.setattr(
+        tesla_hook, "_persist_tsla_price_json", lambda **kwargs: None,
+    )
+
+
 class TestHappyPath:
 
     def test_clean_json_regular_session(self, monkeypatch):
@@ -145,6 +156,90 @@ class TestFailureModes:
         price, change_str = tesla_hook._fetch_tsla_price()
         assert price == 0.0
         assert change_str == "(price unavailable)"
+
+
+class TestTslaJsonCache:
+    """Operator caught (May 14 2026) the tesla.html stock widget
+    showing "Market data unavailable" because every Yahoo Finance
+    CORS proxy was failing — even though the pipeline knew the live
+    price the whole time. ``_fetch_tsla_price`` now persists the
+    last successful fetch to ``api/tsla.json`` so the website can
+    serve a same-origin price without depending on Yahoo Finance.
+    """
+
+    def test_writes_api_tsla_json_on_success(self, monkeypatch, tmp_path):
+        """Successful price fetch writes api/tsla.json with the
+        full payload (price, prev_close, change, change_pct,
+        change_str, market_state, fetched_at, source)."""
+        import json
+        # Redirect ``api/`` directory to a tmp path for isolation.
+        # tesla.py computes the path as
+        # ``Path(__file__).parent.parent.parent / "api"``; we monkey-
+        # patch the persistence helper to use tmp instead.
+        captured: dict = {}
+
+        def fake_persist(**kwargs):
+            captured.update(kwargs)
+            out = tmp_path / "tsla.json"
+            payload = {
+                "price": round(kwargs["price"], 2),
+                "prev_close": round(kwargs["prev_close"], 2),
+                "change": round(kwargs["change"], 2),
+                "change_pct": round(kwargs["pct"], 2),
+                "change_str": kwargs["change_str"],
+                "market_state": kwargs["market_state"],
+            }
+            out.write_text(json.dumps(payload), encoding="utf-8")
+
+        monkeypatch.setattr(tesla_hook, "_persist_tsla_price_json", fake_persist)
+        _patch_grok(
+            monkeypatch,
+            '{"price": 444.57, "prev_close": 445.00, "market_state": "REGULAR"}',
+        )
+
+        price, change_str = tesla_hook._fetch_tsla_price()
+
+        # _persist_tsla_price_json was called with the right kwargs.
+        assert price == 444.57
+        assert captured["price"] == 444.57
+        assert captured["prev_close"] == 445.00
+        assert captured["market_state"] == "REGULAR"
+        assert "$0.43" in captured["change_str"]
+        # The JSON file was actually written and is parseable.
+        out_path = tmp_path / "tsla.json"
+        assert out_path.exists()
+        payload = json.loads(out_path.read_text())
+        assert payload["price"] == 444.57
+        assert payload["prev_close"] == 445.00
+
+    def test_persistence_failure_is_non_fatal(self, monkeypatch):
+        """If ``api/tsla.json`` can't be written (disk full,
+        permission, etc.) the pipeline still gets a usable
+        ``(price, change_str)``. The cache is strictly best-effort
+        — landmine-style failures must not block daily digest
+        generation."""
+        # Force Path.write_text to raise so the inner try/except in
+        # _persist_tsla_price_json fires. Don't monkeypatch the
+        # outer function — we want to exercise the real safety net.
+        from pathlib import Path as _Path
+
+        original_write = _Path.write_text
+
+        def explosive_write(self, *args, **kwargs):
+            if self.name == "tsla.json":
+                raise OSError("simulated disk-full")
+            return original_write(self, *args, **kwargs)
+
+        monkeypatch.setattr(_Path, "write_text", explosive_write)
+        _patch_grok(
+            monkeypatch,
+            '{"price": 400.00, "prev_close": 400.00, "market_state": "REGULAR"}',
+        )
+
+        # Must NOT raise — best-effort wraps the write in try/except.
+        price, change_str = tesla_hook._fetch_tsla_price()
+        assert price == 400.00
+        assert change_str.startswith("▲")
 
 
 class TestMarketStateDefaulting:

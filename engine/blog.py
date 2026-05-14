@@ -306,13 +306,19 @@ def _md_inline(text: str) -> str:
         r'<a href="\2" target="_blank" rel="noopener">\1</a>',
         text,
     )
-    # Bare URLs on Source: lines — render as hover-card citation pill
-    # (Phase 3.4 of the May 2026 audit). The pill shows the publisher
-    # domain inline; on hover/focus, a CSS-only popover reveals the
-    # full URL so readers can verify provenance without leaving the
-    # page or chasing a tab.
+    # Bare URLs on Source: / Source/Post: lines — render as hover-card
+    # citation pill (Phase 3.4 of the May 2026 audit). The pill shows
+    # the publisher domain inline; on hover/focus, a CSS-only popover
+    # reveals the full URL so readers can verify provenance without
+    # leaving the page or chasing a tab.
+    #
+    # The "Source/Post:" prefix was added to the catch May 14 2026
+    # after operator caught raw Google News redirect URLs (the long
+    # ``news.google.com/rss/articles/CBMiyg...?oc=5`` token streams)
+    # bleeding into the rendered Short Spot block on the Tesla blog
+    # because Short Spot uses ``Source/Post:`` not ``Source:``.
     text = re.sub(
-        r'(Source:\s*)(https?://\S+)',
+        r'((?:Source/Post|Source):\s*)(https?://\S+)',
         lambda m: m.group(1) + _cite_html(m.group(2)),
         text,
     )

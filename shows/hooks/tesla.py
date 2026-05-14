@@ -173,7 +173,56 @@ def _fetch_tsla_price() -> tuple[float, str]:
     direction = "▲" if change >= 0 else "▼"
     change_str = f"{direction} ${abs(change):.2f} ({abs(pct):.1f}%){market_status}"
     logger.info("TSLA via x_search: $%.2f %s", price, change_str)
+
+    # Persist the live price to ``api/tsla.json`` so the public website
+    # (tesla.html) can render it without depending on Yahoo Finance.
+    # Operator caught (May 14 2026) that the site's client-side fetch
+    # of ``query2.finance.yahoo.com`` had been failing through both
+    # CORS proxies, leaving "Market data unavailable" on the page even
+    # though the pipeline knew the live price.  Same-origin JSON
+    # avoids the CORS layer entirely; the JS falls back to Yahoo if
+    # this file is somehow missing.
+    _persist_tsla_price_json(
+        price=price, prev_close=prev_close, change=change, pct=pct,
+        change_str=change_str, market_state=market_state,
+    )
     return price, change_str
+
+
+def _persist_tsla_price_json(
+    *, price: float, prev_close: float, change: float, pct: float,
+    change_str: str, market_state: str,
+) -> None:
+    """Write the latest TSLA price to ``api/tsla.json`` (best-effort).
+
+    Same-origin file served by GitHub Pages.  Updated every Tesla
+    pipeline run (daily + the M&A / MIT shows that share this hook
+    in their own pre-fetch loops where applicable).  Failure is
+    non-fatal — the digest pipeline continues even if the write
+    fails, and the website falls back to its Yahoo Finance path.
+    """
+    import json
+    import datetime as _dt
+    from pathlib import Path
+
+    payload = {
+        "price": round(price, 2),
+        "prev_close": round(prev_close, 2),
+        "change": round(change, 2),
+        "change_pct": round(pct, 2),
+        "change_str": change_str,
+        "market_state": market_state,
+        "fetched_at": _dt.datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
+        "source": "grok_x_search",
+    }
+    try:
+        api_dir = Path(__file__).resolve().parent.parent.parent / "api"
+        api_dir.mkdir(exist_ok=True)
+        out_path = api_dir / "tsla.json"
+        out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        logger.info("TSLA price cached to %s", out_path)
+    except Exception as exc:  # pragma: no cover — best-effort
+        logger.warning("Failed to persist tsla.json (non-fatal): %s", exc)
 
 
 def _format_price_for_speech(price_str: str) -> str:

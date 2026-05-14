@@ -853,7 +853,30 @@
                 if (changeEl) changeEl.textContent = msg || 'Market data unavailable';
             }
 
-            // Yahoo Finance v8 chart API — returns real-time + previous close
+            // PRIMARY source: same-origin api/tsla.json written by the
+            // Tesla pipeline (shows/hooks/tesla.py) every run via Grok's
+            // x_search.  No CORS proxy, no Yahoo-Finance flakiness.
+            // Operator caught (May 14 2026) the previous Yahoo-only path
+            // showing "Market data unavailable" on the website because
+            // every CORS proxy was failing — yet the pipeline knew the
+            // live price the whole time.
+            try {
+                const resp = await fetch('/api/tsla.json', {
+                    cache: 'no-cache',
+                    signal: AbortSignal.timeout(4000),
+                });
+                if (resp.ok) {
+                    const cached = await resp.json();
+                    const price = parseFloat(cached.price);
+                    const prev = parseFloat(cached.prev_close);
+                    if (price > 0 && prev > 0) {
+                        displayPrice(price, prev);
+                        return;
+                    }
+                }
+            } catch { /* fall through to Yahoo */ }
+
+            // FALLBACK: Yahoo Finance v8 chart API via CORS proxies.
             const yahooUrl = 'https://query2.finance.yahoo.com/v8/finance/chart/TSLA?interval=1d&range=5d';
             // Yahoo Finance v6 quote API — alternative endpoint
             const yahooQuoteUrl = 'https://query1.finance.yahoo.com/v6/finance/quote?symbols=TSLA';
