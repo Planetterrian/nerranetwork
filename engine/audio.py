@@ -812,12 +812,15 @@ def mix_with_music(
                 outro_fade_in, outro_fade_out_dur,
             )
         else:
-            # Default: graceful 6s fade-in (operator caught May 6 2026
-            # that the prior 2s outro fade-in sounded like the music
-            # ``popped in`` after the voice ended). Configurable
-            # fade-out at end.
+            # Music starts AFTER voice ends.  Quick 1 s fade-in so the
+            # music doesn't pop in cold but listener hears full outro
+            # volume by ~1 s post-voice.  Previous default was 6 s,
+            # which combined with sidechain-release timing made the
+            # post-voice music feel slow and tentative — operator
+            # caught this on TST Ep472 (May 14 2026: "ended abruptly
+            # as soon as the transcript stopped").
             total_outro_duration = outro_duration
-            outro_fade_in = 6
+            outro_fade_in = 1
             outro_fade_out_start = max(outro_duration - outro_fade_out_dur, 0)
 
         # Coherent acrossfade: overlap and fadeout source slices are
@@ -849,10 +852,26 @@ def mix_with_music(
                 fade_out_duration=outro_fade_out_dur)),
         ]
 
-        # Silence between fadeout and outro
+        # Silence between fadeout and outro.
+        #
+        # The +4 adjustment accounts for the 2 s acrossfade window on
+        # EACH side of the silence segment (one between
+        # fadeout→silence, one between silence→outro).  Each crossfade
+        # absorbs 2 s of the silence segment's output length, so
+        # without compensation music_full ends 4 s before
+        # ``effective_voice_duration + outro_duration``.  Operator
+        # caught this on TST Ep472 (May 14 2026): the outro fade-out
+        # got truncated mid-curve, making the file feel like it ended
+        # abruptly. The acrossfade overhead matches the May 12 2026
+        # ``_MUSIC_XFADE_S`` constant on the music_bed side.
         music_bed_duration = intro_duration + overlap_duration + fade_duration
+        _ACROSSFADE_SILENCE_OVERHEAD = 2 * _MUSIC_XFADE_S
         middle_silence_duration = max(
-            effective_voice_duration - music_bed_duration - outro_crossfade, 0.0,
+            effective_voice_duration
+            - music_bed_duration
+            - outro_crossfade
+            + _ACROSSFADE_SILENCE_OVERHEAD,
+            0.0,
         )
 
         if middle_silence_duration > 0.1:

@@ -528,6 +528,39 @@ class TestVoiceIntroDelayTiming:
         # 208 - 49 = 159
         assert silence_dur == pytest.approx(159.0)
 
+    def test_silence_includes_acrossfade_overhead_compensation(self):
+        """May 14 2026: the silence-segment duration is bumped by +4 s
+        (two 2-second acrossfade windows around the silence segment)
+        so the outro lands at ``effective_voice_duration +
+        outro_duration`` instead of 4 seconds early.
+
+        Operator-caught regression on TST Ep472 (audio "ended abruptly
+        as soon as the transcript stopped"): the outro's fade-out
+        was being truncated mid-curve because music_full was 4 s
+        short of the target end-position.
+        """
+        from engine.audio import mix_with_music  # noqa: F401  — import sanity
+        # Run the production formula and assert the +4 adjustment lands.
+        voice_duration = 360.0
+        voice_intro_delay = 10.0
+        intro_duration = 10
+        overlap_duration = 15
+        fade_duration = 30
+        outro_crossfade = 0.0
+        ACROSSFADE_OVERHEAD = 4.0  # 2 × _MUSIC_XFADE_S (2 s each side)
+
+        effective = voice_duration + voice_intro_delay
+        music_bed = intro_duration + overlap_duration + fade_duration
+        # New formula (May 14 2026):
+        silence_dur = max(
+            effective - music_bed - outro_crossfade + ACROSSFADE_OVERHEAD, 0.0,
+        )
+        # Old (broken) formula would have produced silence_dur - 4.
+        old_silence_dur = max(effective - music_bed - outro_crossfade, 0.0)
+        assert silence_dur == old_silence_dur + ACROSSFADE_OVERHEAD
+        # With these inputs: effective=370, music_bed=55, +4 = 319.
+        assert silence_dur == pytest.approx(319.0)
+
     def test_zero_delay_is_standard_mode(self):
         """voice_intro_delay=0 should produce same timeline as original."""
         voice_duration = 180.0
@@ -746,15 +779,21 @@ class TestOutroFadeInBumpForNonCrossfadeShows:
     Pin the new default so a future refactor doesn't regress."""
 
     def test_default_outro_fade_in_for_non_crossfade(self):
-        # Walk the source for the literal ``outro_fade_in = 6`` line
-        # in the non-crossfade branch of mix_with_music. Cheap and
-        # deterministic — avoids spinning up ffmpeg.
+        """May 14 2026: outro_fade_in for the non-crossfade branch
+        dropped from 6 s → 1 s so the music starts audible
+        immediately after voice instead of slowly ramping over 6 s
+        (which combined with sidechain-release timing made the
+        post-voice music feel "tentative" / "ended abruptly" on TST
+        Ep472). 1 s is the minimum needed to avoid an audible pop;
+        any shorter and the music starts as a hard transient."""
         import inspect
         from engine import audio
         src = inspect.getsource(audio.mix_with_music)
-        # Confirm the new value is present (not just commented).
-        assert "outro_fade_in = 6" in src, (
-            "outro_fade_in default for non-crossfade shows must be 6s; "
-            "the prior 2s default sounded like the music ``popped in`` "
-            "after the voice ended."
+        assert "outro_fade_in = 1" in src, (
+            "outro_fade_in default for non-crossfade shows must be 1s "
+            "(May 14 2026 retune). The previous 6s value made the "
+            "post-voice music feel tentative — operator-caught on "
+            "TST Ep472."
         )
+        # Ensure the old 6s default isn't re-introduced silently.
+        assert "outro_fade_in = 6" not in src
