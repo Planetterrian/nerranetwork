@@ -418,6 +418,123 @@ class TestShortenSourceUrls:
         twice = shorten_source_urls(once)
         assert once == twice
 
+    def test_handles_source_post_prefix_bare_url(self):
+        """May 14 2026: Short Spot lines use ``Source/Post:`` (not
+        ``Source:``). Before the fix, those passed through unchanged
+        and the 600-char Google News blob bled into the email body."""
+        long_url = (
+            "https://news.google.com/rss/articles/CBMivg" + "x" * 400
+            + "?oc=5"
+        )
+        text = f"Short Spot body. Source/Post: {long_url}"
+        out = shorten_source_urls(text)
+        assert "Source/Post: [Google News]" in out
+        # Prefix preserved (not silently rewritten to "Source:") so
+        # downstream blog cite-pill rendering still distinguishes.
+        assert "Source/Post:" in out
+        # Original bare URL is no longer dangling after the prefix.
+        assert f"Source/Post: {long_url}" not in out
+
+    def test_handles_markdown_link_form(self):
+        """Top 10 News items already arrive as ``Source: [Label](URL)``
+        markdown. The label should be normalised to the URL's domain
+        so the canonical form is the same as the bare-URL path."""
+        long_url = (
+            "https://news.google.com/rss/articles/CBMivg" + "x" * 400
+            + "?oc=5"
+        )
+        text = f"Story body. Source: [Google News]({long_url})"
+        out = shorten_source_urls(text)
+        # Still labelled "Google News" (we collapse news.google.* to
+        # the literal label).
+        assert "[Google News]" in out
+        # No raw bracketed-link with the long URL leaking through.
+        # The output's markdown link still contains the URL but no
+        # additional ``[Label]`` outside the link.
+        assert out.count("[Google News]") == 1
+
+    def test_handles_source_post_markdown_form(self):
+        """Combined: ``Source/Post: [Label](URL)`` rare but possible."""
+        text = (
+            "Body. Source/Post: [insideevs.com]"
+            "(https://insideevs.com/news/12345/story-path/)"
+        )
+        out = shorten_source_urls(text)
+        assert "Source/Post: [insideevs.com]" in out
+        assert "(https://insideevs.com/news/12345/story-path/)" in out
+
+    def test_rewrites_markdown_label_to_domain(self):
+        """A markdown-form Source with a verbose label (not a domain)
+        gets the label rewritten to the URL's domain for consistency."""
+        text = (
+            "Body. Source: [Read more at this article]"
+            "(https://insideevs.com/foo)"
+        )
+        out = shorten_source_urls(text)
+        # Label collapses to the domain.
+        assert "[insideevs.com]" in out
+        assert "Read more at this article" not in out
+
+
+class TestRenderSourceLinksAsHtml:
+    """Email-stage: convert canonical ``Source: [label](url)``
+    markdown into inline HTML ``<a>`` so Buttondown's markdown
+    renderer doesn't choke on long Google News redirect URLs
+    (operator caught May 14 2026: the markdown source rendered as
+    visible text in Apple Mail, exposing the 600-char URL)."""
+
+    def setup_method(self):
+        from engine.newsletter_body import render_source_links_as_html
+        self._html = render_source_links_as_html
+
+    def test_converts_source_markdown_to_anchor(self):
+        text = "Body. Source: [Google News](https://news.google.com/foo?oc=5)"
+        out = self._html(text)
+        assert 'href="https://news.google.com/foo?oc=5"' in out
+        assert ">Google News</a>" in out
+        # Original markdown syntax is gone.
+        assert "[Google News]" not in out
+        assert "](https://" not in out
+
+    def test_converts_source_post_markdown_to_anchor(self):
+        text = "Body. Source/Post: [news.google.com](https://news.google.com/x)"
+        out = self._html(text)
+        assert "Source/Post:" in out
+        assert 'href="https://news.google.com/x"' in out
+        assert ">news.google.com</a>" in out
+
+    def test_includes_security_attributes(self):
+        """Every Source link must open in a new tab without leaking
+        the referrer (rel=noopener)."""
+        text = "Source: [insideevs.com](https://insideevs.com/foo)"
+        out = self._html(text)
+        assert 'target="_blank"' in out
+        assert 'rel="noopener"' in out
+
+    def test_idempotent(self):
+        text = "Source: [example.com](https://example.com/foo)"
+        once = self._html(text)
+        twice = self._html(once)
+        assert once == twice
+
+    def test_no_match_returns_unchanged(self):
+        text = "Body with no source line at all."
+        assert self._html(text) == text
+
+    def test_leaves_other_markdown_links_alone(self):
+        """The regex anchors on ``Source:`` / ``Source/Post:`` —
+        random markdown links elsewhere in the body must pass
+        through untouched."""
+        text = (
+            "See the [latest update](https://example.com/x) for details. "
+            "Source: [news.google.com](https://news.google.com/y)"
+        )
+        out = self._html(text)
+        # Source line converted.
+        assert 'href="https://news.google.com/y"' in out
+        # Random markdown link still in markdown form.
+        assert "[latest update](https://example.com/x)" in out
+
 
 # ---------------------------------------------------------------------------
 # X handle linkification
