@@ -403,17 +403,79 @@ def transform_email_body(body: str, *, slug: str = "") -> str:
     contain raw HTML — Markdown viewers strip or escape it):
 
       1. Markdown ``---`` → styled ``<hr>`` (dark-mode aware)
-      2. Tesla ``**TSLA today:**`` line → styled stock-watch table
-      3. Privet vocab list → card-stack table
+      2. Source-line markdown links → inline HTML ``<a>`` so
+         Buttondown's markdown renderer doesn't choke on the long
+         Google-News redirect URLs (May 14 2026: operator caught
+         ``[Google News](https://news.google.com/...)`` rendering as
+         literal markdown source text instead of as a clickable
+         label, exposing the 600-char URL inline in the email body)
+      3. Tesla ``**TSLA today:**`` line → styled stock-watch table
+      4. Privet vocab list → card-stack table
 
     Idempotent — repeated runs produce the same HTML output.
     """
     body = upgrade_md_hr_to_html(body)
+    body = render_source_links_as_html(body)
     if slug == "tesla":
         body = render_tsla_price_block(body)
     if slug == "privet_russian":
         body = render_russian_vocab_cards(body)
     return body
+
+
+# ---------------------------------------------------------------------------
+# Source-line markdown → inline HTML (email-stage)
+# ---------------------------------------------------------------------------
+
+# Match the canonical ``<prefix>: [Label](URL)`` shape produced by
+# ``shorten_source_urls()``.  We re-find it at the email stage and
+# rewrite to inline HTML so Buttondown's markdown renderer doesn't get
+# a chance to mishandle the (sometimes 600-char) URL inside the
+# parentheses.  Restricting to the ``Source:`` / ``Source/Post:``
+# prefix avoids rewriting random ``[label](url)`` markdown links
+# elsewhere in the body.
+_SOURCE_HTML_LINK_RE = re.compile(
+    r"(Source/Post|Source):\s*\[([^\]]+)\]\((https?://[^)]+)\)",
+    flags=re.IGNORECASE,
+)
+
+
+def render_source_links_as_html(body: str) -> str:
+    """Convert ``Source: [label](url)`` markdown into inline ``<a>``.
+
+    Why this exists: Buttondown's markdown renderer (May 14 2026
+    audit) emits the LITERAL bracket/paren markdown when the URL
+    inside the parens is "too long" (the threshold isn't documented;
+    it consistently fails on 200-600-char Google News redirect URLs).
+    The reader sees ``Source: [Google News](https://news.google.com/
+    rss/articles/CBMi...?oc=5)`` as raw text with the URL spanning
+    multiple lines — the link IS clickable via Buttondown's bare-URL
+    autolink, but the markdown syntax bleeds through unrendered.
+
+    Inline HTML bypasses the markdown layer entirely.  Buttondown
+    passes through ``<a>`` tags untouched, so the reader sees
+    ``Source: Google News`` (no URL visible) with the link active.
+
+    Idempotent: re-running on already-HTMLified text is a no-op
+    because the regex requires markdown syntax (`[` `]` `(` `)`)
+    that isn't present after the first pass.
+    """
+    if not body or ("Source:" not in body and "Source/Post:" not in body):
+        return body
+
+    def _sub(match: re.Match) -> str:
+        prefix = match.group(1)
+        label = match.group(2)
+        url = match.group(3).rstrip(" ).,;")
+        # ``rel="noopener"`` for security; ``target="_blank"`` so the
+        # reader doesn't lose their place in the email when they click
+        # through to the source.
+        return (
+            f'{prefix}: <a href="{url}" target="_blank" '
+            f'rel="noopener">{label}</a>'
+        )
+
+    return _SOURCE_HTML_LINK_RE.sub(_sub, body)
 
 
 # ---------------------------------------------------------------------------
@@ -458,55 +520,104 @@ def linkify_x_handles(body: str) -> str:
 # "Source: <long-url>" shortening (post-fetch defense)
 # ---------------------------------------------------------------------------
 
-# Match "Source: <url>" emitted by the LLM at the end of a story. The URL
-# can be Google News (`news.google.com/rss/articles/CBMi...`) which is
-# 200-600 chars, or any other publisher URL with utm_*-style noise.
-# Captures (1) the URL itself; we replace the whole "Source: …" tail.
-_SOURCE_URL_RE = re.compile(
-    r"\s*Source:\s*(https?://[^\s)]+)",
+# Source-line URL patterns the LLM emits at the end of each story.
+# Two forms appear in production digests as of May 2026:
+#   * Bare URL:      ``Source: https://news.google.com/rss/articles/CBMi...``
+#                    ``Source/Post: https://news.google.com/rss/articles/CBMi...``
+#   * Markdown link: ``Source: [Google News](https://news.google.com/...)``
+#                    ``Source/Post: [insideevs.com](https://...)``
+#
+# Top 10 News items use the markdown form; Short Spot uses the bare form
+# (``Source/Post:`` because it doubles as a news source and a social
+# post link).  Either form can carry a 200-600-char Google News
+# redirect URL when the fetcher's ``resolve_google_news_url`` couldn't
+# resolve it at fetch time — both forms then bleed the redirect blob
+# into the rendered email (operator caught this on the May 12 Tesla
+# daily in Apple Mail).
+#
+# We canonicalize both forms to one compact shape:
+#   ``<prefix>: [domain](url)``
+#
+# ``<prefix>`` is preserved (Source vs Source/Post) so downstream
+# renderers that care about the distinction (e.g. the blog cite-pill
+# regex) keep working.
+
+# Match ``(Source|Source/Post): https://...`` (bare URL form).
+_SOURCE_BARE_URL_RE = re.compile(
+    r"\s*(Source/Post|Source):\s*(https?://[^\s)]+)",
+    flags=re.IGNORECASE,
+)
+# Match ``(Source|Source/Post): [Label](https://...)`` (markdown-link form).
+# Note: ``[^\)]+`` for the URL because the URL can contain anything
+# except the closing paren — including ``(`` if a publisher gets weird.
+_SOURCE_MD_LINK_RE = re.compile(
+    r"\s*(Source/Post|Source):\s*\[([^\]]+)\]\((https?://[^)]+)\)",
     flags=re.IGNORECASE,
 )
 
 
-def shorten_source_urls(body: str) -> str:
-    """Render long bare-URL "Source:" trailers as compact "Source: <domain>"
-    markdown links. Spec v2 follow-up after the May 2 Tesla daily showed
-    the literal Google News redirect blob `CBMiig...` in the body.
+def _domain_label_for(url: str) -> str:
+    """Pick a short, readable label for a publisher URL.
 
-    The fetcher's ``resolve_google_news_url`` canonicalizes URLs at fetch
-    time, but (a) cached articles from before that fix landed still have
-    the long URLs and (b) network failures during resolution leave the
-    original Google-News URL in the article record. This transform is a
-    final visual cleanup applied to the rendered body so the email never
-    shows the 600-char tracking blob even when the upstream resolver
-    bailed.
+    Strips ``www.``; collapses Google News redirect hosts to the literal
+    string "Google News" so a reader unfamiliar with the redirect format
+    sees what they're clicking on instead of a domain.
     """
-    if not body or "Source:" not in body:
+    try:
+        from urllib.parse import urlparse
+        host = urlparse(url).netloc
+    except Exception:  # noqa: BLE001
+        host = ""
+    if not host:
+        return url
+    host = host.lower()
+    if host.startswith("www."):
+        host = host[4:]
+    if host.startswith("news.google."):
+        return "Google News"
+    return host
+
+
+def shorten_source_urls(body: str) -> str:
+    """Render every ``Source:`` / ``Source/Post:`` line as a compact
+    ``<prefix>: [domain](url)`` markdown link, regardless of the
+    input form.
+
+    Two passes:
+      1. Markdown form ``Source: [Label](URL)`` → rewrite the label to
+         the URL's domain (idempotent when the label already IS the
+         domain).
+      2. Bare form ``Source: https://URL`` → wrap as a markdown link
+         with the URL's domain as the label.
+
+    Both passes preserve the leading prefix verb (Source vs
+    Source/Post).  No-op when neither pattern is present.
+
+    Spec v2 follow-up after the May 2 Tesla daily showed the literal
+    Google News redirect blob ``CBMiig...`` in the body; May 14 audit
+    extended the cover to (a) ``Source/Post:`` prefix and (b) markdown-
+    link form, both of which the prior regex missed.
+    """
+    if not body or ("Source:" not in body and "Source/Post:" not in body):
         return body
 
-    def _sub(match: re.Match) -> str:
-        url = match.group(1).rstrip(" ).,;")
-        # Extract a human-readable domain.
-        try:
-            from urllib.parse import urlparse
-            host = urlparse(url).netloc
-        except Exception:  # noqa: BLE001
-            host = ""
-        if not host:
-            return match.group(0)
-        # Strip leading "www."; if it's still Google News after our
-        # fetch-time resolver bailed, label it that way explicitly so
-        # the reader at least sees what they're getting.
-        host = host.lower()
-        if host.startswith("www."):
-            host = host[4:]
-        if host.startswith("news.google."):
-            label = "Google News"
-        else:
-            label = host
-        return f" Source: [{label}]({url})"
+    def _md_sub(match: re.Match) -> str:
+        prefix = match.group(1)
+        url = match.group(3).rstrip(" ).,;")
+        label = _domain_label_for(url)
+        return f" {prefix}: [{label}]({url})"
 
-    return _SOURCE_URL_RE.sub(_sub, body)
+    def _bare_sub(match: re.Match) -> str:
+        prefix = match.group(1)
+        url = match.group(2).rstrip(" ).,;")
+        label = _domain_label_for(url)
+        return f" {prefix}: [{label}]({url})"
+
+    # Markdown form first — otherwise the bare-URL regex would also
+    # match the URL inside the markdown link and corrupt it.
+    body = _SOURCE_MD_LINK_RE.sub(_md_sub, body)
+    body = _SOURCE_BARE_URL_RE.sub(_bare_sub, body)
+    return body
 
 
 # ---------------------------------------------------------------------------
