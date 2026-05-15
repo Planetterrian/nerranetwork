@@ -323,16 +323,32 @@
                     <h4>{{ t.subscribe_h4 }}</h4>
                     <p>{{ t.subscribe_subtitle }}</p>
                     <div class="nn-subscribe-tags">
+                        {#- All 11 shows. Tag values must match each show's
+                            YAML ``newsletter.tag`` exactly so the same
+                            tag is used by both the daily-send pipeline
+                            AND footer signups (operator caught a 7-of-11
+                            footer gap during the May 14 2026 audit —
+                            Models & Agents, Planetterrian, Omni View,
+                            and Unintended Consequences were missing,
+                            and subscribers who would have ticked those
+                            boxes had no way to opt in from the footer). -#}
                         <label><input type="checkbox" name="tag" value="Tesla Shorts Time"> Tesla Shorts Time</label>
+                        <label><input type="checkbox" name="tag" value="Omni View"> Omni View</label>
                         <label><input type="checkbox" name="tag" value="Fascinating Frontiers"> Fascinating Frontiers</label>
-                        <label><input type="checkbox" name="tag" value="Models & Agents for Beginners"> Models & Agents for Beginners</label>
+                        <label><input type="checkbox" name="tag" value="Planetterrian Daily"> Planetterrian Daily</label>
                         <label><input type="checkbox" name="tag" value="Environmental Intelligence"> Environmental Intelligence</label>
+                        <label><input type="checkbox" name="tag" value="Models & Agents"> Models &amp; Agents</label>
+                        <label><input type="checkbox" name="tag" value="Models & Agents for Beginners"> Models &amp; Agents for Beginners</label>
                         <label><input type="checkbox" name="tag" value="Modern Investing Techniques"> Modern Investing Techniques</label>
-                        {#- Use ASCII tags here so they match the per-show YAML
-                            ``newsletter.tag`` values exactly. Buttondown rejects
-                            non-ASCII tags; mismatches between this footer form
-                            and the YAML split subscribers across two never-merged
-                            tags (operator caught this on FP, May 2026 audit). -#}
+                        <label><input type="checkbox" name="tag" value="Unintended Consequences"> Unintended Consequences</label>
+                        {#- Use ASCII tags for non-English shows so they
+                            match each YAML's ``newsletter.tag`` value
+                            exactly. Buttondown rejects non-ASCII tags;
+                            mismatches between this footer form and the
+                            YAML split subscribers across two
+                            never-merged tags (operator caught this on
+                            FP, May 2026 audit). The visible label
+                            still shows the native script. -#}
                         <label><input type="checkbox" name="tag" value="Finansy Prosto"> Финансы Просто</label>
                         <label><input type="checkbox" name="tag" value="Privet Russian"> Привет, Русский!</label>
                     </div>
