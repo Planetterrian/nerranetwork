@@ -218,7 +218,7 @@ class TestDefaultValues:
         assert c.intro_volume == 0.6
         assert c.overlap_volume == 0.5
         assert c.fade_volume == 0.4
-        assert c.outro_volume == 0.4
+        assert c.outro_volume == 0.6  # May 15 2026: matches intro_volume for clear post-voice cue
         # voice_intro_delay must be >= intro_duration so the voice
         # doesn't start before the music intro alone-period finishes.
         assert c.voice_intro_delay == 10.0

@@ -645,7 +645,7 @@ class TestAudioConfigDefaults:
         assert cfg.intro_volume == 0.6
         assert cfg.overlap_volume == 0.5
         assert cfg.fade_volume == 0.4
-        assert cfg.outro_volume == 0.4
+        assert cfg.outro_volume == 0.6  # May 15 2026: matches intro_volume for clear post-voice cue
         # Operator invariant: ≥30 s total intro music presence so the
         # open doesn't feel cut off (now 55 s).
         assert (
@@ -782,18 +782,22 @@ class TestOutroFadeInBumpForNonCrossfadeShows:
         """May 14 2026: outro_fade_in for the non-crossfade branch
         dropped from 6 s → 1 s so the music starts audible
         immediately after voice instead of slowly ramping over 6 s
-        (which combined with sidechain-release timing made the
-        post-voice music feel "tentative" / "ended abruptly" on TST
-        Ep472). 1 s is the minimum needed to avoid an audible pop;
-        any shorter and the music starts as a hard transient."""
+        (history: 6 s → 1 s → 0 s as operator caught successive
+        regressions of "music outro starts too late" — TST Ep471
+        → Ep472 → Ep473). At 0 s the outro plays at full
+        ``outro_volume`` from the instant voice ends, giving the
+        listener an unambiguous "music is back" cue."""
         import inspect
         from engine import audio
         src = inspect.getsource(audio.mix_with_music)
-        assert "outro_fade_in = 1" in src, (
-            "outro_fade_in default for non-crossfade shows must be 1s "
-            "(May 14 2026 retune). The previous 6s value made the "
-            "post-voice music feel tentative — operator-caught on "
-            "TST Ep472."
+        assert "outro_fade_in = 0" in src, (
+            "outro_fade_in default for non-crossfade shows must be 0s "
+            "(May 15 2026 retune). Any non-zero fade-in combined with "
+            "the sidechain compressor's 600 ms release time made the "
+            "post-voice music feel 'absent' to the operator on TST "
+            "Ep473 — full-volume start eliminates the perceptual gap."
         )
-        # Ensure the old 6s default isn't re-introduced silently.
+        # Ensure the prior 6 s and 1 s defaults aren't re-introduced
+        # silently.
         assert "outro_fade_in = 6" not in src
+        assert "outro_fade_in = 1" not in src
