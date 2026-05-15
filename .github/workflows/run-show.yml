@@ -456,6 +456,14 @@ jobs:
           git add *.html || true
           git add -A blog/ || true
           git add sitemap.xml || true
+          # Tesla cached price for the public website widget. Written
+          # by ``shows/hooks/tesla.py`` every Tesla run, consumed by
+          # ``tesla.html`` JS so the stock pill doesn't depend on
+          # Yahoo Finance CORS proxies.  Without committing this, the
+          # file gets wiped on every fresh runner checkout and the
+          # website shows "Market data unavailable" between runs
+          # (operator caught this May 15 2026, TST Ep473).
+          git add api/tsla.json || true
           # Topic queues — narrative-mode shows mark topics as produced
           # after each successful run. Without committing this, every
           # narrative-show run re-picks the same first-unproduced topic

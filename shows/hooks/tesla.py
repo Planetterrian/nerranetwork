@@ -78,12 +78,27 @@ def pronunciation_overrides() -> dict:
 # Internal helpers
 # ---------------------------------------------------------------------------
 
-# Sanity range for parsed prices. A real-time TSLA quote outside this
-# band almost certainly means Grok hallucinated or returned a stale /
-# malformed number; we'd rather ship ``(price unavailable)`` than a
-# garbage figure into the digest.
-_TSLA_PRICE_MIN = 50.0
-_TSLA_PRICE_MAX = 2000.0
+# Hard sanity range for parsed prices.  A real-time TSLA quote outside
+# this band almost certainly means Grok hallucinated or returned a
+# stale / malformed number; we'd rather ship ``(price unavailable)``
+# than a garbage figure into the digest.
+#
+# Updated May 15 2026: tightened from $50-$2000 to $200-$1500 after
+# operator caught Grok returning $250.35 for Ep473 when TSLA was
+# actually trading near $440.  TSLA hasn't traded below $200 in
+# over a year and is structurally unlikely to drop below $200 in the
+# near term given the post-2024 trading range.
+_TSLA_PRICE_MIN = 200.0
+_TSLA_PRICE_MAX = 1500.0
+
+# Tighter dynamic validation: a new price more than this fraction
+# away from the LAST CACHED price (``api/tsla.json``) gets rejected as
+# a probable hallucination.  TSLA's largest single-day moves over
+# the past 2 years sit around 12-15%; setting the floor at 25% gives
+# a comfortable margin for an unusually volatile earnings day while
+# still catching the May 15 2026 "$444 → $250" hallucination
+# (a ~44% drop) that motivated this guard.
+_TSLA_MAX_PCT_DEVIATION = 0.25  # 25% from last known close
 
 
 def _fetch_tsla_price() -> tuple[float, str]:
@@ -152,7 +167,8 @@ def _fetch_tsla_price() -> tuple[float, str]:
         logger.error("TSLA fields missing/non-numeric: %r", data)
         return 0.0, "(price unavailable)"
 
-    # Sanity range — Grok hallucinations sometimes invent low/high numbers.
+    # Hard sanity range — Grok hallucinations sometimes invent low/high
+    # numbers; reject anything wildly outside TSLA's historical range.
     if not (_TSLA_PRICE_MIN <= price <= _TSLA_PRICE_MAX):
         logger.error("TSLA price %.2f outside sanity band [%.0f, %.0f]",
                      price, _TSLA_PRICE_MIN, _TSLA_PRICE_MAX)
@@ -160,6 +176,24 @@ def _fetch_tsla_price() -> tuple[float, str]:
     if not (_TSLA_PRICE_MIN <= prev_close <= _TSLA_PRICE_MAX):
         logger.error("TSLA prev_close %.2f outside sanity band", prev_close)
         return 0.0, "(price unavailable)"
+
+    # Dynamic deviation check — reject prices that swing more than
+    # 25% from the last cached close.  Catches stale / hallucinated
+    # quotes that pass the wide static band.  Operator caught
+    # ($250 vs real $444, May 15 2026 TST Ep473).  No cache → skip
+    # the check (first-ever run can't compare).
+    last_cached = _load_last_cached_tsla_price()
+    if last_cached is not None and last_cached > 0:
+        deviation = abs(price - last_cached) / last_cached
+        if deviation > _TSLA_MAX_PCT_DEVIATION:
+            logger.error(
+                "TSLA price %.2f deviates %.1f%% from last cached "
+                "$%.2f (cap %.0f%%) — likely Grok hallucination; "
+                "rejecting.",
+                price, deviation * 100, last_cached,
+                _TSLA_MAX_PCT_DEVIATION * 100,
+            )
+            return 0.0, "(price unavailable)"
 
     market_state = str(data.get("market_state", "REGULAR")).upper()
     market_status = ""
@@ -187,6 +221,33 @@ def _fetch_tsla_price() -> tuple[float, str]:
         change_str=change_str, market_state=market_state,
     )
     return price, change_str
+
+
+def _load_last_cached_tsla_price() -> float | None:
+    """Read the last cached TSLA price from ``api/tsla.json``.
+
+    Returns ``None`` if the file doesn't exist, can't be parsed, or
+    has a missing/invalid ``price`` field.  Used by
+    :func:`_fetch_tsla_price` as the baseline for the dynamic
+    deviation guard (rejects new prices that swing > 25% from the
+    last known close).
+
+    First-ever run has no cache; the check is skipped on ``None`` so
+    the very first persist after a deploy isn't blocked.
+    """
+    import json
+    from pathlib import Path
+
+    try:
+        path = Path(__file__).resolve().parent.parent.parent / "api" / "tsla.json"
+        if not path.exists():
+            return None
+        data = json.loads(path.read_text(encoding="utf-8"))
+        price = float(data.get("price", 0))
+        return price if price > 0 else None
+    except Exception as exc:  # pragma: no cover — best-effort
+        logger.warning("Could not read last cached tsla.json: %s", exc)
+        return None
 
 
 def _persist_tsla_price_json(

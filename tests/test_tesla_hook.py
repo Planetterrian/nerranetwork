@@ -41,11 +41,16 @@ def _patch_grok(monkeypatch, text: str):
 @pytest.fixture(autouse=True)
 def _stub_persist(monkeypatch):
     """Default-stub the api/tsla.json write so the test suite doesn't
-    pollute the repo's ``api/`` directory every run. Tests that need
-    to exercise the real persistence (or its failure modes) re-patch
-    this in their own bodies."""
+    pollute the repo's ``api/`` directory every run, AND default-stub
+    the cache LOAD so tests with no explicit deviation-guard setup
+    get a clean ``no cache`` state (deviation check skipped).  Tests
+    that need to exercise the real persistence or specific cache
+    values re-patch these in their own bodies."""
     monkeypatch.setattr(
         tesla_hook, "_persist_tsla_price_json", lambda **kwargs: None,
+    )
+    monkeypatch.setattr(
+        tesla_hook, "_load_last_cached_tsla_price", lambda: None,
     )
 
 
@@ -240,6 +245,126 @@ class TestTslaJsonCache:
         price, change_str = tesla_hook._fetch_tsla_price()
         assert price == 400.00
         assert change_str.startswith("▲")
+
+
+class TestDeviationGuard:
+    """Operator caught (TST Ep473, May 15 2026) Grok returning
+    ``$250.35`` for TSLA when the real price was ~$444 — a 44%
+    deviation that passed the wide ($200-$1500) hard sanity band.
+    The dynamic deviation guard rejects new prices that swing more
+    than 25% from the LAST CACHED price in ``api/tsla.json``."""
+
+    def test_rejects_price_more_than_25pct_below_cached(self, monkeypatch):
+        """Cached at $444, new price $250 = 44% drop → reject."""
+        monkeypatch.setattr(
+            tesla_hook, "_load_last_cached_tsla_price", lambda: 444.57,
+        )
+        _patch_grok(
+            monkeypatch,
+            '{"price": 250.35, "prev_close": 248.12, "market_state": "PRE"}',
+        )
+        price, change_str = tesla_hook._fetch_tsla_price()
+        assert price == 0.0
+        assert change_str == "(price unavailable)"
+
+    def test_rejects_price_more_than_25pct_above_cached(self, monkeypatch):
+        """Cached at $400, new price $600 = 50% spike → reject."""
+        monkeypatch.setattr(
+            tesla_hook, "_load_last_cached_tsla_price", lambda: 400.00,
+        )
+        _patch_grok(
+            monkeypatch,
+            '{"price": 600.00, "prev_close": 595.00, "market_state": "REGULAR"}',
+        )
+        price, _ = tesla_hook._fetch_tsla_price()
+        assert price == 0.0
+
+    def test_accepts_price_within_25pct_band(self, monkeypatch):
+        """Cached at $440, new price $420 = 4.5% drop → accept."""
+        monkeypatch.setattr(
+            tesla_hook, "_load_last_cached_tsla_price", lambda: 440.00,
+        )
+        _patch_grok(
+            monkeypatch,
+            '{"price": 420.00, "prev_close": 425.00, "market_state": "REGULAR"}',
+        )
+        price, _ = tesla_hook._fetch_tsla_price()
+        assert price == 420.00
+
+    def test_accepts_price_at_exactly_25pct_boundary(self, monkeypatch):
+        """At exactly 25% deviation the check is inclusive ( ``> cap``
+        rejects, ``== cap`` accepts) so a 12.5%-up / 12.5%-down day
+        with subsequent volatility doesn't trip the guard on a
+        recovery candle."""
+        monkeypatch.setattr(
+            tesla_hook, "_load_last_cached_tsla_price", lambda: 400.00,
+        )
+        # 400 * 1.25 = 500 — exactly at the upper boundary
+        _patch_grok(
+            monkeypatch,
+            '{"price": 500.00, "prev_close": 498.00, "market_state": "REGULAR"}',
+        )
+        price, _ = tesla_hook._fetch_tsla_price()
+        assert price == 500.00
+
+    def test_no_cache_skips_deviation_check(self, monkeypatch):
+        """First-ever run has no cached price — the deviation guard
+        is skipped (would otherwise block the network's first
+        Tesla run after deploy).  Hard sanity band still applies."""
+        monkeypatch.setattr(
+            tesla_hook, "_load_last_cached_tsla_price", lambda: None,
+        )
+        _patch_grok(
+            monkeypatch,
+            '{"price": 444.57, "prev_close": 445.00, "market_state": "REGULAR"}',
+        )
+        price, _ = tesla_hook._fetch_tsla_price()
+        assert price == 444.57
+
+    def test_zero_cache_treated_as_no_cache(self, monkeypatch):
+        """A degraded cache (``price: 0.0``) is treated as missing —
+        deviation check skipped."""
+        monkeypatch.setattr(
+            tesla_hook, "_load_last_cached_tsla_price", lambda: 0.0,
+        )
+        _patch_grok(
+            monkeypatch,
+            '{"price": 444.57, "prev_close": 445.00, "market_state": "REGULAR"}',
+        )
+        price, _ = tesla_hook._fetch_tsla_price()
+        assert price == 444.57
+
+
+class TestHardSanityBand:
+    """The dynamic deviation guard only fires when a cache exists.
+    The hard sanity band ($200-$1500) catches first-run hallucinations
+    and any price wildly outside TSLA's historical range."""
+
+    def test_rejects_price_below_hard_floor(self, monkeypatch):
+        """May 15 2026: floor raised from $50 to $200.  TSLA hasn't
+        traded below $200 in over a year and is structurally unlikely
+        to in the near term."""
+        monkeypatch.setattr(
+            tesla_hook, "_load_last_cached_tsla_price", lambda: None,
+        )
+        _patch_grok(
+            monkeypatch,
+            '{"price": 150.00, "prev_close": 152.00, "market_state": "REGULAR"}',
+        )
+        price, _ = tesla_hook._fetch_tsla_price()
+        assert price == 0.0
+
+    def test_rejects_price_above_hard_ceiling(self, monkeypatch):
+        """Ceiling lowered from $2000 to $1500."""
+        monkeypatch.setattr(
+            tesla_hook, "_load_last_cached_tsla_price", lambda: None,
+        )
+        _patch_grok(
+            monkeypatch,
+            '{"price": 1600.00, "prev_close": 1580.00, "market_state": "REGULAR"}',
+        )
+        price, _ = tesla_hook._fetch_tsla_price()
+        assert price == 0.0
 
 
 class TestMarketStateDefaulting:
