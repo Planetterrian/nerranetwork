@@ -495,6 +495,14 @@
                 
                 
                 <div class="episode-card glass-card">
+                    <div class="episode-card-title">Ep 473: Kazakhstan's first official use of Cybertrucks for state security shows how the vehicle's off-road and power capabilities are moving into government operations.</div>
+                    <div class="episode-card-date">Fri, May 15, 2026</div>
+                    
+                    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep473_20260515.mp3" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
+                    
+                </div>
+                
+                <div class="episode-card glass-card">
                     <div class="episode-card-title">Ep 472: Tesla's new Bengaluru experience centre puts Model Y and refreshed variants in front of Indian buyers for the first time, testing whether the brand can translate its China playbook to another massive emerging market.</div>
                     <div class="episode-card-date">Thu, May 14, 2026</div>
                     
@@ -579,14 +587,6 @@
                     <div class="episode-card-date">Mon, May 04, 2026</div>
                     
                     <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep462_20260504.mp3" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
-                    
-                </div>
-                
-                <div class="episode-card glass-card">
-                    <div class="episode-card-title">Ep 461: A new Tesla Semi with three cameras per side mirror was spotted at the Las Vegas Convention Center ahead of the ACT Expo.</div>
-                    <div class="episode-card-date">Sun, May 03, 2026</div>
-                    
-                    <audio controls preload="none" src="https://op3.dev/e/audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep461_20260503.mp3" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
                     
                 </div>
                 
@@ -994,6 +994,19 @@
             </div>
             <div class="blog-idx-grid" style="max-width:900px;padding-bottom:var(--sp-8)">
                 
+                <a href="blog/tesla/ep473.html" class="blog-idx-card">
+                    <div class="blog-idx-card-top">
+                        <span class="blog-idx-date">May 15, 2026</span>
+                        <span class="blog-idx-ep">Ep 473</span>
+                        <span class="blog-idx-reading">5 min</span>
+                    </div>
+                    <h2>Tesla Shorts Time</h2>
+                    
+                    <p>Kazakhstan's first official use of Cybertrucks for state security shows how the vehicle's off-road and power capabilities are moving into government operations.</p>
+                    
+                    <span class="blog-idx-read-more">Read article &rarr;</span>
+                </a>
+                
                 <a href="blog/tesla/ep472.html" class="blog-idx-card">
                     <div class="blog-idx-card-top">
                         <span class="blog-idx-date">May 14, 2026</span>
@@ -1016,19 +1029,6 @@
                     <h2>Tesla Shorts Time</h2>
                     
                     <p>Tesla's first use of Canada's new China EV tariff deal brings Shanghai Model 3s to market at half the price of US-built versions.</p>
-                    
-                    <span class="blog-idx-read-more">Read article &rarr;</span>
-                </a>
-                
-                <a href="blog/tesla/ep470.html" class="blog-idx-card">
-                    <div class="blog-idx-card-top">
-                        <span class="blog-idx-date">May 12, 2026</span>
-                        <span class="blog-idx-ep">Ep 470</span>
-                        <span class="blog-idx-reading">3 min</span>
-                    </div>
-                    <h2>Tesla Shorts Time</h2>
-                    
-                    <p>Tesla's robotaxi rollout in Texas is hitting long wait times that expose real-world limits in scaling unsupervised FSD today.</p>
                     
                     <span class="blog-idx-read-more">Read article &rarr;</span>
                 </a>
@@ -1530,7 +1530,30 @@
                 if (changeEl) changeEl.textContent = msg || 'Market data unavailable';
             }
 
-            // Yahoo Finance v8 chart API — returns real-time + previous close
+            // PRIMARY source: same-origin api/tsla.json written by the
+            // Tesla pipeline (shows/hooks/tesla.py) every run via Grok's
+            // x_search.  No CORS proxy, no Yahoo-Finance flakiness.
+            // Operator caught (May 14 2026) the previous Yahoo-only path
+            // showing "Market data unavailable" on the website because
+            // every CORS proxy was failing — yet the pipeline knew the
+            // live price the whole time.
+            try {
+                const resp = await fetch('/api/tsla.json', {
+                    cache: 'no-cache',
+                    signal: AbortSignal.timeout(4000),
+                });
+                if (resp.ok) {
+                    const cached = await resp.json();
+                    const price = parseFloat(cached.price);
+                    const prev = parseFloat(cached.prev_close);
+                    if (price > 0 && prev > 0) {
+                        displayPrice(price, prev);
+                        return;
+                    }
+                }
+            } catch { /* fall through to Yahoo */ }
+
+            // FALLBACK: Yahoo Finance v8 chart API via CORS proxies.
             const yahooUrl = 'https://query2.finance.yahoo.com/v8/finance/chart/TSLA?interval=1d&range=5d';
             // Yahoo Finance v6 quote API — alternative endpoint
             const yahooQuoteUrl = 'https://query1.finance.yahoo.com/v6/finance/quote?symbols=TSLA';
