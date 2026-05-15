@@ -471,13 +471,23 @@ def _music_outro_cmd(music_in: str, outro_out: str,
                      fade_in_duration: int = 2,
                      fade_out_start: int = 27,
                      fade_out_duration: int = 3) -> list:
+    # ``afade=d=0`` is undefined behaviour in ffmpeg; skip the fade-in
+    # filter entirely when ``fade_in_duration <= 0`` so the outro
+    # plays at full ``volume`` from t=0.  Operator preference, May
+    # 15 2026 — any fade-in let listeners interpret the post-voice
+    # silence as "audio ended" before the music ramped up.
+    af_parts = [f"volume={volume}"]
+    if fade_in_duration > 0:
+        af_parts.append(
+            f"afade=t=in:curve=log:st=0:d={fade_in_duration}"
+        )
+    af_parts.append(
+        f"afade=t=out:curve=log:st={fade_out_start}:d={fade_out_duration}"
+    )
     return [
         "ffmpeg", "-y", "-threads", "0",
         "-stream_loop", "-1", "-i", music_in, "-t", str(duration),
-        "-af",
-        f"volume={volume},"
-        f"afade=t=in:curve=log:st=0:d={fade_in_duration},"
-        f"afade=t=out:curve=log:st={fade_out_start}:d={fade_out_duration}",
+        "-af", ",".join(af_parts),
         "-ar", "44100", "-ac", "2",
         "-c:a", "libmp3lame", "-b:a", "192k", "-preset", "fast",
         outro_out,
@@ -812,15 +822,28 @@ def mix_with_music(
                 outro_fade_in, outro_fade_out_dur,
             )
         else:
-            # Music starts AFTER voice ends.  Quick 1 s fade-in so the
-            # music doesn't pop in cold but listener hears full outro
-            # volume by ~1 s post-voice.  Previous default was 6 s,
-            # which combined with sidechain-release timing made the
-            # post-voice music feel slow and tentative — operator
-            # caught this on TST Ep472 (May 14 2026: "ended abruptly
-            # as soon as the transcript stopped").
+            # Music starts AFTER voice ends — NO fade-in.  Music plays
+            # at full ``outro_volume`` from the instant voice ends so
+            # the listener perceives an unambiguous "music outro is
+            # here" cue.
+            #
+            # History:
+            #   May 6 2026 — 6 s fade-in (operator wanted "graceful")
+            #   May 14 2026 — dropped to 1 s (operator caught Ep472:
+            #     post-voice music felt "tentative / ended abruptly")
+            #   May 15 2026 — dropped to 0 s (operator caught Ep473:
+            #     "no music outro at all").
+            #
+            # Root cause of the lingering issue: even with a 1 s
+            # ``afade curve=log`` ramp, the audio is < 50 % of full
+            # volume until t ≈ 0.7 s.  Combined with the sidechain
+            # compressor's 600 ms release time after voice goes silent,
+            # the listener experienced ~1.5 s of near-silence before
+            # the outro became clearly audible.  Many listeners had
+            # already concluded "audio ended" by then.  Starting at
+            # full volume eliminates the perceptual gap.
             total_outro_duration = outro_duration
-            outro_fade_in = 1
+            outro_fade_in = 0
             outro_fade_out_start = max(outro_duration - outro_fade_out_dur, 0)
 
         # Coherent acrossfade: overlap and fadeout source slices are

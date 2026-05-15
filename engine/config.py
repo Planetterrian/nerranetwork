@@ -156,7 +156,15 @@ class AudioConfig:
     intro_volume: float = 0.6
     overlap_volume: float = 0.5
     fade_volume: float = 0.4
-    outro_volume: float = 0.4
+    # ``outro_volume`` matches ``intro_volume`` (May 15 2026) so the
+    # post-voice outro stands out clearly from the ducked-and-fading
+    # music that was playing during voice. Setting it equal to
+    # ``fade_volume`` (the prior default) created the perceptual
+    # equivalence operator caught on TST Ep473: "no music outro at
+    # all" — the music WAS playing, but at the same level the
+    # listener had been hearing it under-voice for the prior 30 s,
+    # so they registered no "music is back" transition.
+    outro_volume: float = 0.6
     voice_intro_delay: float = 10.0
     outro_crossfade: float = 0.0
 
