@@ -124,14 +124,22 @@ def music_concat(concat_list: str, music_full_out: str) -> list:
     ]
 
 
-def final_mix(voice_in: str, music_in: str, final_out: str) -> list:
+def final_mix(
+    voice_in: str, music_in: str, final_out: str,
+    *, voice_pad_seconds: float = 30.0,
+) -> list:
     """Mix voice and music tracks together with sidechain ducking +
-    EBU R128 loudnorm (May 2026 broadcast-quality upgrade)."""
+    EBU R128 loudnorm (May 2026 broadcast-quality upgrade).
+
+    May 16 2026: voice is padded with ``voice_pad_seconds`` of trailing
+    silence so ``sidechaincompress`` + ``amix duration=longest`` produce
+    the full music_full length instead of truncating at voice-end.
+    """
     return [
         "ffmpeg", "-y", "-threads", "0",
         "-i", voice_in, "-i", music_in,
         "-filter_complex",
-        "[0:a]asplit=2[voice_mix][voice_sc];"
+        f"[0:a]apad=pad_dur={voice_pad_seconds},asplit=2[voice_mix][voice_sc];"
         "[1:a][voice_sc]sidechaincompress="
         "threshold=-30dB:ratio=8:attack=50:release=600:level_sc=2"
         "[music_ducked];"
@@ -272,10 +280,23 @@ class TestFinalMix:
     def test_filter_complex_has_sidechain_ducking(self):
         cmd = final_mix("/voice.mp3", "/music.mp3", "/final.mp3")
         fc = cmd[cmd.index("-filter_complex") + 1]
+        # Voice is padded with trailing silence (May 16 2026 fix) so
+        # amix=duration=longest produces the full music_full length
+        # instead of truncating at voice-end.
+        assert "apad=pad_dur=" in fc
         # Voice is split so it can both drive the sidechain compressor AND
         # be summed back into the mix.
         assert "asplit=2" in fc
         assert "[voice_mix]" in fc and "[voice_sc]" in fc
+
+    def test_voice_apad_matches_outro_duration(self):
+        """Voice padding must equal outro_duration so the music outro
+        plays through its full length. Operator caught this network-wide
+        on May 16 2026 — ALL episodes had ~10s post-voice content instead
+        of 30s because sidechaincompress truncated when voice ended."""
+        cmd = final_mix("/v.mp3", "/m.mp3", "/f.mp3", voice_pad_seconds=30.0)
+        fc = cmd[cmd.index("-filter_complex") + 1]
+        assert "apad=pad_dur=30" in fc
         # Music is ducked under voice presence.
         assert "sidechaincompress=" in fc
         assert "threshold=-30dB" in fc
