@@ -188,7 +188,17 @@ llm:
   podcast_prompt_file: shows/prompts/planetterrian_podcast.txt
   digest_temperature: 0.5
   podcast_temperature: 0.70
-  max_tokens: 3500
+  # May 16 2026: bumped 3500 → 5000 after Ep064 / Ep065 aborted at the
+  # 600-word podcast hard floor. Root cause: grok-4.3 reasoning tokens
+  # consumed a growing share of the 3500-token completion budget
+  # (Ep063 digest used 1204 completion tokens; the failed Ep064 used
+  # ~2500), squeezing the visible output down to ~4 stories instead of
+  # the prompt's 12-15 target. The thin digest then had all four
+  # surviving items stripped as 100% cross-episode duplicates, leaving
+  # the podcast LLM with nothing to expand. 5000 matches Tesla; MIT and
+  # Omni View sit at 4000. Re-tune downward only with evidence that the
+  # full digest fits in fewer tokens than grok-4.3 burns on reasoning.
+  max_tokens: 5000
   podcast_max_tokens: 8000
   min_podcast_words: 950
   podcast_chain: true
