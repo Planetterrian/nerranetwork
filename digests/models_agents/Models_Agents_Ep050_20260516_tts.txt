@@ -1,0 +1,147 @@
+What's up — welcome to Models and Agents, episode fifty, on May sixteenth, twenty twenty-six.
+
+Let's see what shipped.
+
+Lots of news to walk through — let's start with what actually matters.
+
+An agent that manages another agent just moved from research demo to production reality at Fin.
+
+Fin, the company formerly known as Intercom, launched Fin Operator.
+
+This new A I system exists only to configure, debug, and monitor the customer-facing Fin agent.
+
+It pulls conversation metrics into charts, ingests product PDFs to refresh help articles, traces failed conversations back to specific guidance rules, and surfaces proposed fixes as reviewable diffs.
+
+Operator runs on Claude instead of Fin's own Apex models because the work resembles software engineering more than customer support.
+
+Every change still needs explicit human approval before it goes live.
+
+Early beta users say it feels like adding five people to the operations team.
+
+General availability is set for summer twenty twenty six inside the Pro tier with usage-based billing.
+
+The launch shows that enterprises will productionize meta-agents when strict human oversight stays in place.
+
+Now let's move to model updates.
+
+On Terminal-Bench 2.0 the Chwen three point six dash thirty five B dash A three B model with the little-coder scaffold scored twenty four point six percent.
+
+That result beats Gemini two point five Pro on the Gemini command-line interface.
+
+The smaller nine B variant reached nine point two percent, showing that models under ten billion parameters can now post measurable scores on hard agentic benchmarks.
+
+The leaderboard entry also highlights that scaffold choice still matters more than raw parameter count.
+
+Zyphra released the Z A Y A one dash eight B diffusion preview.
+
+The team converted an autoregressive mixture-of-experts model into a discrete diffusion model.
+
+The change moved decoding from memory-bandwidth bound to compute-bound and delivered up to seven point seven times faster inference.
+
+Early checks show no systematic loss on standard evaluations.
+
+This marks the first public demonstration of turning an existing mixture-of-experts L L M into a diffusion model at this scale.
+
+Gemma four twenty six B now runs in MLX with a custom turboquant backend and rotating KV cache.
+
+On an M five MacBook Air the setup handles one hundred twenty eight K context and four concurrent batches.
+
+At eight K context it outperforms Lah-mah dot C P P on both prompt processing and generation speed while using less runtime memory.
+
+A custom kernel for sliding-window attention layers preserves the two-bit memory savings even at higher batch sizes.
+
+Allen A I released the Molmo Act two series of five B vision-language-action models.
+
+The models were fine-tuned on robotics datasets including L I B E R O, D R O I D, and bimanual tasks.
+
+All weights, training datasets, code, and papers are fully open.
+
+They target absolute joint-pose control and interactive robotics scenarios.
+
+Let's look at agent and tool developments.
+
+Recursive M A S lets agents collaborate entirely in latent space instead of exchanging text tokens.
+
+The approach yields one point two to two point four times faster inference and up to seventy five percent token reduction.
+
+Only lightweight Recursive Link modules, zero point three one percent of total parameters, are trained while base models stay frozen.
+
+Tests across code, math, and medical reasoning benchmarks used open-weight models.
+
+A new tutorial shows how to build a fully functional M C P style routed agent system.
+
+The system includes dynamic tool discovery, structured planning, and context injection.
+
+It ships with a modular tool server that exposes web search, local retrieval, dataset loading, and Python execution.
+
+The code is built to be extended for custom agent workflows.
+
+Nexidion is an open-source hierarchical Markdown note-taking app.
+
+An autonomous background agent can reorganize notes, summarize subtrees, or extract action items.
+
+All work runs locally against Open A I compatible endpoints and includes built-in version control so every A I edit can be reverted.
+
+A Docker Compose setup spins up the full stack including the task runner.
+
+On the practical side, a developer indexed roughly two hundred K documents on an A S U S Zenbook with Snapdragon X two Elite Extreme.
+
+The setup uses Vec M L's on-device A I database, keeps most data on disk, and maintains a small active buffer.
+
+The N P U delivers about fifty percent of an R T X five zero six zero's embedding speed inside far tighter power and thermal limits.
+
+The little-coder scaffold that powered the top Terminal-Bench 2.0 Chwen entry is now public on GitHub.
+
+It shows that a relatively simple scaffold can lift a thirty five B mixture-of-experts model above larger closed models on agentic coding tasks.
+
+The repo includes the exact configuration used for the twenty four point six percent leaderboard run.
+
+If you want to try something concrete this week, spin up the little-coder scaffold against Chwen three point six dash thirty five B dash A three B on Terminal-Bench 2.0.
+
+Test Recursive M A S on a small code-generation or medical-reasoning benchmark if you already run multiple open-weight models in sequence.
+
+Run the M C P style routed agent tutorial locally and swap in your own tool server to measure planning overhead versus a simple ReAct loop.
+
+Clone Nexidion and point it at a local Chwen or Gemma endpoint to experiment with autonomous note reorganization under version control.
+
+On the horizon, Fin Operator moves from early-access beta to general availability this summer inside the Pro tier.
+
+Zyphra plans to release trained weights and quality benchmarks for the Z A Y A one diffusion model once training completes.
+
+Allen A I continues releasing new Molmo Act two fine-tunes on additional robotics datasets with full training code and data.
+
+OK, let's pop the hood on diffusion decoding for L L M's.
+
+The technique replaces sequential token-by-token sampling with iterative denoising of a full latent sequence.
+
+The model starts with random noise and applies a learned denoiser for a fixed number of steps, refining every position simultaneously.
+
+Expensive operations become matrix multiplies instead of memory-bound KV cache reads, which is why Zyphra saw seven point seven times speedups on the eight B mixture-of-experts model.
+
+Training adds a second loss term and requires careful scheduling of noise levels across diffusion steps.
+
+Quality matches autoregressive baselines only when the schedule is tuned per model size.
+
+Below roughly seven B parameters the gap widens quickly.
+
+When you need maximum tokens per second on short-to-medium outputs and can accept a small quality regression during early training, diffusion decoding is worth trying.
+
+For long coherent generation or when you must stay inside existing autoregressive fine-tunes, the classic next-token approach remains simpler.
+
+The common gotcha is assuming any diffusion schedule works.
+
+Without per-model calibration the output often collapses into repetitive patterns after step four.
+
+Tomorrow, keep an eye on Zyphra's release of the trained Z A Y A one weights and the first full quality benchmarks.
+
+That's Models and Agents for today.
+
+If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update.
+
+The A I world moves fast.
+
+We'll help you keep up.
+
+See you tomorrow.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
