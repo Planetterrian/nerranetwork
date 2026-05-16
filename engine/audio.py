@@ -597,21 +597,36 @@ def _music_acrossfade_cmd(
     return cmd
 
 
-def _final_mix_cmd(voice_in: str, music_in: str, final_out: str) -> list:
+def _final_mix_cmd(
+    voice_in: str, music_in: str, final_out: str,
+    *, voice_pad_seconds: float = 30.0,
+) -> list:
     """Voice + music final mix with sidechain ducking + EBU R128 loudnorm.
 
     Filter graph stages:
 
-      1. ``asplit`` — duplicate the voice signal so it can drive both the
-         sidechain compressor (as the trigger) and the final amix (as audio).
-      2. ``sidechaincompress`` — when voice is present, music is pulled
-         down 8 dB; when voice pauses, music rises smoothly. ``threshold=-30 dB``
-         and ``ratio=8`` mean even modest voice levels duck the music; the
-         ``attack=50 ms`` / ``release=600 ms`` pair gives broadcast feel
-         (slow enough not to clamp mid-syllable, long enough to hold
-         through natural pauses without "pumping" back in).
-         ``level_sc=2`` doubles the trigger sensitivity so quieter narration
-         still ducks the bed reliably.
+      1. ``apad`` — pad the voice input with ``voice_pad_seconds`` of
+         trailing silence so it remains the same length as music_full.
+         Without this pad, ``sidechaincompress`` truncates the output
+         when the voice (sidechain trigger) ends, causing the music
+         outro to be cut short.  Operator caught this network-wide
+         on May 16 2026 (TST Ep474 + every other show that day) —
+         every episode had ~10s of post-voice content instead of the
+         intended ``outro_duration`` (30s).  The pad should equal the
+         configured ``outro_duration`` so the voice "ends" at the
+         same timeline position the music outro ends.
+      2. ``asplit`` — duplicate the (padded) voice signal so it can
+         drive both the sidechain compressor (as the trigger) and
+         the final amix (as audio).
+      3. ``sidechaincompress`` — when voice is present, music is
+         pulled down 8 dB; when voice pauses (or after the pad
+         starts), music rises smoothly. ``threshold=-30 dB`` and
+         ``ratio=8`` mean even modest voice levels duck the music; the
+         ``attack=50 ms`` / ``release=600 ms`` pair gives broadcast
+         feel (slow enough not to clamp mid-syllable, long enough to
+         hold through natural pauses without "pumping" back in).
+         ``level_sc=2`` doubles the trigger sensitivity so quieter
+         narration still ducks the bed reliably.
 
          May 8 2026 retune: was ``attack=20 / release=300``. The 20 ms
          attack ducked music DURING vowel onsets so listeners heard
@@ -620,22 +635,25 @@ def _final_mix_cmd(voice_in: str, music_in: str, final_out: str) -> list:
          instead of transient. 600 ms release holds ducking through
          pauses between sentences, eliminating the "music comes back
          then dips again" cycle that broke immersion.
-      3. ``amix`` — sums voice + ducked music with longest-duration semantics.
-      4. ``loudnorm I=-16`` — final integrated-loudness target. Apple
-         Podcasts and Spotify both auto-normalize listener-side, so episodes
-         well under -16 LUFS get attenuated and feel quiet next to NPR-mastered
-         shows. ``TP=-1.5`` keeps headroom to absorb true-peak intersample
-         peaks without clipping. ``LRA=11`` preserves natural dynamics
-         (a denser LRA flatlines the audio).
+      4. ``amix`` — sums (padded) voice + ducked music. Both inputs
+         now have the same length, so ``duration=longest`` produces
+         the expected full music_full duration.
+      5. ``loudnorm I=-16`` — final integrated-loudness target. Apple
+         Podcasts and Spotify both auto-normalize listener-side, so
+         episodes well under -16 LUFS get attenuated and feel quiet
+         next to NPR-mastered shows. ``TP=-1.5`` keeps headroom to
+         absorb true-peak intersample peaks without clipping.
+         ``LRA=11`` preserves natural dynamics (a denser LRA
+         flatlines the audio).
 
-    Final encode is libmp3lame -q:a 0 (~245 kbps VBR — archival quality
-    spoken-word + music; ~6.5 MB per 30-min episode).
+    Final encode is libmp3lame -q:a 0 (~245 kbps VBR — archival
+    quality spoken-word + music; ~6.5 MB per 30-min episode).
     """
     return [
         "ffmpeg", "-y", "-threads", "0",
         "-i", voice_in, "-i", music_in,
         "-filter_complex",
-        "[0:a]asplit=2[voice_mix][voice_sc];"
+        f"[0:a]apad=pad_dur={voice_pad_seconds},asplit=2[voice_mix][voice_sc];"
         "[1:a][voice_sc]sidechaincompress="
         "threshold=-30dB:ratio=8:attack=50:release=600:level_sc=2"
         "[music_ducked];"
@@ -934,7 +952,13 @@ def mix_with_music(
         subprocess.run(cmd, check=True, capture_output=True)
 
         # --- Final mix: voice + music ---
-        cmd = _final_mix_cmd(str(voice_mix), str(music_full), str(output_path))
+        # Pad voice with trailing silence equal to ``outro_duration`` so
+        # ``sidechaincompress`` + ``amix duration=longest`` produce the
+        # full music_full length (see _final_mix_cmd docstring).
+        cmd = _final_mix_cmd(
+            str(voice_mix), str(music_full), str(output_path),
+            voice_pad_seconds=float(outro_duration),
+        )
         subprocess.run(cmd, check=True, capture_output=True, timeout=timeout_seconds)
 
     logger.info("Final mix complete: %s", output_path)
