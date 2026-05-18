@@ -924,6 +924,57 @@ class TestHookExtraction:
         digest = "**HOOK:** \n\n### News"
         assert _extract_hook(digest) is None
 
+    def test_fallback_extracts_leading_blockquote(self):
+        """When the LLM drops the **HOOK:** label but writes a leading
+        ``> **<text>**`` blockquote before the first ``###`` heading,
+        the fallback should pick it up as the episode title. This is
+        the post-scrub shape of every show's saved .md file."""
+        from run_show import _extract_hook
+        digest = (
+            "# Unintended Consequences\n"
+            "> **Britain offered a bounty for every dead cobra in Delhi — "
+            "and discovered the limits of incentive design the hard way.**\n"
+            "\n"
+            "### Segment 1 — The Cold Open\n"
+            "In the narrow lanes of colonial Delhi...\n"
+        )
+        assert _extract_hook(digest) == (
+            "Britain offered a bounty for every dead cobra in Delhi — "
+            "and discovered the limits of incentive design the hard way."
+        )
+
+    def test_fallback_ignores_blockquote_after_section_heading(self):
+        """A blockquote that sits INSIDE the first segment is scene-
+        setting narration, not the title. The fallback must stop at the
+        first ``###`` heading so it doesn't promote a multi-sentence
+        opening paragraph to be the RSS title (the UC Ep5–10 failure
+        mode this fallback was added for)."""
+        from run_show import _extract_hook
+        digest = (
+            "### Segment 1 — The Cold Open\n"
+            "> **In January 1920, the day after the 18th Amendment banned "
+            "the manufacture and sale of intoxicating liquor, Chicago "
+            "police reported that saloons had simply shuttered their "
+            "front doors.**\n"
+            "\n"
+            "### Segment 2 — The Good Intention\n"
+        )
+        assert _extract_hook(digest) is None
+
+    def test_label_wins_over_fallback(self):
+        """When both ``**HOOK:**`` and a leading blockquote are present
+        the explicit label wins — the blockquote is just the visual
+        rendering of the same line, not a competing field."""
+        from run_show import _extract_hook
+        digest = (
+            "# Tesla Shorts Time\n"
+            "**HOOK:** Cybertruck just broke a sales record.\n"
+            "> **Cybertruck just broke a sales record.**\n"
+            "\n"
+            "### Top 10 News Items\n"
+        )
+        assert _extract_hook(digest) == "Cybertruck just broke a sales record."
+
     def test_clean_digest_strips_hook_line(self):
         """_clean_digest_for_podcast removes the HOOK line so it doesn't leak into the script."""
         from run_show import _clean_digest_for_podcast
