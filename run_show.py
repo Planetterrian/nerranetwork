@@ -2500,6 +2500,13 @@ def _extract_hook(digest: str) -> str | None:
     The digest prompts instruct the LLM to include a line like:
         **HOOK:** Scientists just discovered a new way to...
 
+    Falls back to the first top-of-digest blockquote (``> **<text>**``)
+    that appears before any ``###`` section heading. Narrative shows
+    (Unintended Consequences) occasionally drop the ``**HOOK:**`` label
+    and emit the hook as a leading blockquote instead; without this
+    fallback every UC episode after Ep 4 shipped with a generic
+    "Episode N — Month DD, YYYY" title in podcast apps.
+
     Returns the hook text (without the prefix) or *None* if not found.
     """
     import re
@@ -2510,6 +2517,19 @@ def _extract_hook(digest: str) -> str | None:
             hook = m.group(1).strip()
             # Strip leftover markdown/brackets the LLM sometimes wraps
             hook = re.sub(r"^\[|\]$", "", hook).strip()
+            if hook:
+                return hook
+
+    # Fallback: leading blockquote before the first ### heading.
+    # Matches `> **<text>**` on its own line. Only the first one wins;
+    # blockquotes that appear AFTER a section heading are scene-setting
+    # narration, not the title.
+    for line in digest.splitlines():
+        if line.lstrip().startswith("###"):
+            break
+        m = re.match(r"^\s*>\s*\*{1,3}([^*]{10,300})\*{1,3}\s*$", line)
+        if m:
+            hook = m.group(1).strip()
             if hook:
                 return hook
     return None
