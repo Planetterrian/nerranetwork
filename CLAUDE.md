@@ -673,47 +673,62 @@ decision); everything else has a live status card.
     show pulls from `shows/topic_queues/unintended_consequences.yaml`
     and never fetches news; raising it would block every episode.
 
-22. **TSLA price source flipped from yfinance to xAI `x_search` (May 2026)**
-    — `shows/hooks/tesla.py:_fetch_tsla_price()` previously called
-    yfinance with three retries and a 5-day history fallback. Operator
-    caught it repeatedly returning `$0.00 (price unavailable)` —
-    yfinance throttles aggressively on the GitHub Actions runner's
-    egress IPs and falls back to empty `fast_info` payloads, which
-    bypassed every retry because the code checked for an exception,
-    not for a missing field.
+22. **TSLA price source: Yahoo Finance v8 chart API (May 2026)** —
+    `shows/hooks/tesla.py:_fetch_tsla_price()` calls
+    `https://query2.finance.yahoo.com/v8/finance/chart/TSLA` directly
+    via `requests.get` (no library wrapper, no third-party proxy).
+    Same authoritative endpoint `tesla.html` uses as its in-browser
+    fallback, so the website, podcasts, RSS, blog, and newsletter
+    all derive from one identical source of truth — and the
+    `api/tsla.json` cache the hook writes is the single source the
+    website's primary path reads.
 
-    Replacement: a single Grok Responses API call with
-    `enable_x_search=True` and a JSON-only prompt. xAI's `x_search`
-    queries X (Twitter) for the latest `$TSLA` cashtag post and
-    returns `{"price": <float>, "prev_close": <float>,
-    "market_state": "REGULAR"|"POST"|"PRE"}`. Reuses `GROK_API_KEY`
-    (already in env for digest generation). No new secret, no
-    additional rate-limit surface.
+    Two prior fetchers failed and were retired:
 
-    **Sanity band:** prices outside `$50 – $2000` are rejected and
-    the fetcher returns `(0.0, "(price unavailable)")` — identical
-    to the old degraded path. Grok occasionally hallucinates low
-    numbers from old historical posts; the band catches those before
-    they reach the digest. Re-tune the band only if TSLA's real price
-    legitimately exits it.
+    - **yfinance (early 2026):** the library wraps this same Yahoo
+      endpoint but adds aggressive retry / parallel-fetch logic that
+      triggers Yahoo's rate-limit on the GitHub Actions runner's
+      egress IPs.  Repeatedly returned `$0.00 (price unavailable)`.
+    - **Grok `x_search` (May 1–18 2026):** queried X for the latest
+      `$TSLA` cashtag post.  Failed in two distinct ways operator
+      caught within 48 h of each other.  TST Ep473 (May 15)
+      returned $250 vs a real ~$444 (Grok pulled from a stale post —
+      caught by the 25% deviation guard).  TST Ep474 (May 16)
+      returned `price == prev_close == $415.50` because the X post
+      Grok latched onto only quoted a single number (caught by the
+      operator, not by any code guard).  X posts are not an
+      authoritative quote source.
 
-    **No fallback to yfinance.** The May 2026 operator decision was
-    to drop yfinance entirely — adding a fallback would re-introduce
-    the rate-limit surface this PR was designed to remove. If Grok
-    fails, the digest gets `(price unavailable)` exactly the way it
-    did when yfinance failed. The downstream rendering layers
-    (`engine/newsletter_body.py:render_tsla_price_block`,
-    `engine/publisher.py:format_tst_digest_for_x`, blog markdown)
-    all treat this as a graceful placeholder; the rest of the
-    digest ships normally.
+    **Why direct HTTP works where yfinance didn't:** one call per
+    Tesla cron run (~once / day), no retry storm, no parallel
+    yfinance sub-requests. Well below any practical rate limit when
+    the call shape matches what `finance.yahoo.com` itself sends.
+    Requires a real-browser `User-Agent` header (Yahoo returns 401
+    without one) — a current Firefox UA is hard-coded in
+    `_YAHOO_UA`.
+
+    **Sanity band:** prices outside `$200 – $1500` are rejected and
+    the fetcher returns `(0.0, "(price unavailable)")` — graceful
+    degradation identical to the old paths.
+
+    **Dynamic deviation guard:** new prices that swing more than 25%
+    from the last cached close (`api/tsla.json`) are rejected as
+    probable bad data.  Yahoo is unlikely to return a 25%+ off
+    price, but the guard was load-bearing under the previous Grok
+    fetcher and is cheap to keep as defence-in-depth.
 
     **`yfinance` dependency is still required** because
     `shows/hooks/modern_investing.py` uses it for trade-execution
-    pricing across many tickers (NVDA, MSFT, etc.). Only the Tesla
-    code path was flipped. 15 unit tests in
-    `tests/test_tesla_hook.py` pin every failure mode (network
-    error, no JSON, malformed JSON, missing fields, non-numeric
-    fields, out-of-band price, out-of-band prev_close) → graceful
-    placeholder, and every happy-path shape (regular session, after-
-    hours, pre-market, negative change, JSON wrapped in code fence
-    / prose).
+    pricing across many tickers (NVDA, MSFT, etc.).  Only the Tesla
+    code path is on direct HTTP.
+
+    **Drift guards:** 29 unit tests in `tests/test_tesla_hook.py`
+    pin every failure mode (network error, HTTP 401 / 429, missing
+    fields, out-of-band price, deviation guard) → graceful
+    placeholder, and every happy-path shape (regular session, pre-
+    market, after-hours, `marketState: null`, `marketState:
+    POSTPOST`, `chartPreviousClose: null` fallback to
+    `previousClose`).  The cache file records
+    `"source": "yahoo_finance_v8"` so the dashboard can tell at a
+    glance which fetcher produced the last value — a regression
+    back to Grok would change that string.

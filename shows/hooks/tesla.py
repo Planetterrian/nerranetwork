@@ -1,11 +1,10 @@
 """Tesla-specific pre-fetch hook.
 
 Provides extra context that the Tesla Shorts Time digest prompt needs:
-- TSLA stock price and change string via xAI's ``x_search`` built-in
-  tool against X (Twitter). Was yfinance; flipped May 2026 after
-  operator caught yfinance returning ``$0.00 (price unavailable)``
-  repeatedly. X has real-time cashtag data with no rate limits the
-  way Yahoo Finance does.
+- TSLA stock price and change string via Yahoo Finance's v8 chart API
+  (direct HTTP, no library wrapper). Source of truth for the website,
+  podcasts, RSS, blog, and newsletter — all consume the value this
+  hook returns and the ``api/tsla.json`` cache it writes.
 - X posts section placeholder (disabled by default)
 - Market movers section (Monday only)
 - Content tracking for freshness
@@ -30,7 +29,11 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     """
     context: dict = {}
 
-    # Stock price via xAI x_search (queries X for real-time $TSLA cashtag data)
+    # Stock price via Yahoo Finance v8 chart API (direct HTTP).
+    # Same endpoint the website (`tesla.html`) uses as its fallback —
+    # consolidating everything onto the authoritative real-time quote
+    # source so website / podcasts / RSS / blog / newsletter never
+    # diverge again.
     price, change_str = _fetch_tsla_price()
     context["price"] = f"{price:.2f}"
     context["change_str"] = change_str
@@ -79,96 +82,133 @@ def pronunciation_overrides() -> dict:
 # ---------------------------------------------------------------------------
 
 # Hard sanity range for parsed prices.  A real-time TSLA quote outside
-# this band almost certainly means Grok hallucinated or returned a
-# stale / malformed number; we'd rather ship ``(price unavailable)``
-# than a garbage figure into the digest.
+# this band almost certainly means the upstream API returned a stale /
+# malformed number; we'd rather ship ``(price unavailable)`` than a
+# garbage figure into the digest.
 #
-# Updated May 15 2026: tightened from $50-$2000 to $200-$1500 after
-# operator caught Grok returning $250.35 for Ep473 when TSLA was
-# actually trading near $440.  TSLA hasn't traded below $200 in
-# over a year and is structurally unlikely to drop below $200 in the
-# near term given the post-2024 trading range.
+# Updated May 15 2026: tightened from $50-$2000 to $200-$1500.
+# TSLA hasn't traded below $200 in over a year and is structurally
+# unlikely to drop below $200 in the near term given the post-2024
+# trading range.
 _TSLA_PRICE_MIN = 200.0
 _TSLA_PRICE_MAX = 1500.0
 
 # Tighter dynamic validation: a new price more than this fraction
 # away from the LAST CACHED price (``api/tsla.json``) gets rejected as
-# a probable hallucination.  TSLA's largest single-day moves over
-# the past 2 years sit around 12-15%; setting the floor at 25% gives
-# a comfortable margin for an unusually volatile earnings day while
-# still catching the May 15 2026 "$444 → $250" hallucination
+# a probable bad quote.  TSLA's largest single-day moves over the past
+# 2 years sit around 12-15%; setting the floor at 25% gives a
+# comfortable margin for an unusually volatile earnings day while
+# still catching the May 15 2026 "$444 → $250" regression
 # (a ~44% drop) that motivated this guard.
 _TSLA_MAX_PCT_DEVIATION = 0.25  # 25% from last known close
 
+# Yahoo Finance v8 chart API endpoint — same one tesla.html falls back
+# to via CORS proxies in the browser.  Server-side we call it directly
+# (no proxy, no library wrapper). ``range=5d`` is enough to guarantee
+# a non-null ``chartPreviousClose`` even across long weekends /
+# holidays — ``range=1d`` returns nulls outside RTH.
+_YAHOO_CHART_URL = (
+    "https://query2.finance.yahoo.com/v8/finance/chart/TSLA"
+    "?interval=1d&range=5d"
+)
+
+# Yahoo Finance rejects requests without a real-browser User-Agent
+# header (returns 401 ``Unauthorized``).  Mirror a current Firefox
+# UA so the endpoint treats us as a regular fetch.
+_YAHOO_UA = (
+    "Mozilla/5.0 (X11; Linux x86_64; rv:121.0) "
+    "Gecko/20100101 Firefox/121.0"
+)
+
+# Timeout for the Yahoo call.  GitHub Actions runner egress occasionally
+# stalls; 8 s is the website's own per-proxy timeout and well under the
+# cron-job wall clock budget.
+_YAHOO_TIMEOUT_S = 8.0
+
 
 def _fetch_tsla_price() -> tuple[float, str]:
-    """Get current TSLA price + change string via Grok's ``x_search``.
+    """Get current TSLA price + change string via Yahoo Finance.
 
-    Replaces the previous yfinance path. Operator caught yfinance
-    repeatedly returning ``$0.00 (price unavailable)`` on Tesla
-    runs (May 2026). xAI's Responses API has a built-in ``x_search``
-    tool that queries X (Twitter) for the live ``$TSLA`` cashtag —
-    every cashtag X post carries the real-time quote inline.
+    Calls the v8 chart API (``query2.finance.yahoo.com/v8/finance/chart/TSLA``)
+    directly with ``requests`` — no yfinance library, no CORS proxy,
+    no third-party stock service.  Same authoritative endpoint
+    ``tesla.html`` uses as its in-browser fallback, so the website,
+    podcasts, RSS, blog, and newsletter all derive from one identical
+    source of truth.
 
-    Returns ``(price, change_str)`` in the same shape as the old
-    yfinance path so every downstream consumer (digest template, RSS,
-    blog, newsletter, X teaser) continues to work without changes.
+    History:
+      yfinance (early 2026): the library wrapped this same endpoint
+        but added aggressive retry / parallel-fetch logic that
+        triggered Yahoo's rate-limit on the GitHub Actions runner's
+        egress IPs.  Repeatedly returned ``$0.00 (price unavailable)``.
+      Grok x_search (May 2026): queried X for the latest ``$TSLA``
+        cashtag post.  Failed in two distinct ways operator caught
+        within 48 h of each other — Ep473 (May 15) returned $250 vs
+        a real ~$444 (pulled from a stale post), Ep474 (May 16)
+        returned price == prev_close (single-number post, no change).
+        X posts are not an authoritative quote source.
+      Direct Yahoo (May 18 2026, this fetcher): one HTTP call, real
+        ``regularMarketPrice`` + ``chartPreviousClose`` + ``marketState``
+        from the same data that powers finance.yahoo.com.  One call
+        per Tesla cron run (~once / day) is well below any practical
+        rate limit when we're not using the yfinance retry-storm
+        client.
 
-    Failure modes (network down, Grok parse error, out-of-range
-    price): returns ``(0.0, "(price unavailable)")`` — identical to
-    the old code's degraded path.
+    Returns ``(price, change_str)`` in the same shape as before so
+    every downstream consumer keeps working without changes.
+
+    Failure modes (network down, non-200 response, missing fields,
+    out-of-range price, deviation guard trip): returns
+    ``(0.0, "(price unavailable)")``.
     """
-    import json
-    import re
-
     try:
-        from digests.xai_grok import grok_generate_text
-    except Exception as exc:  # pragma: no cover — module path guard
-        logger.error("Could not import xai_grok helper: %s", exc)
+        import requests
+    except Exception as exc:  # pragma: no cover — requests is in requirements.txt
+        logger.error("Could not import requests for TSLA fetch: %s", exc)
         return 0.0, "(price unavailable)"
 
-    prompt = (
-        "Search X (Twitter) for the current real-time TSLA stock price "
-        "from the most recent $TSLA cashtag post. Return ONLY a single "
-        "JSON object (no prose, no code fences):\n"
-        '{"price": <float>, "prev_close": <float>, '
-        '"market_state": "REGULAR"|"POST"|"PRE"}'
-    )
-
     try:
-        text, _meta = grok_generate_text(
-            prompt=prompt,
-            enable_x_search=True,
-            max_tokens=200,
-            temperature=0.0,
+        resp = requests.get(
+            _YAHOO_CHART_URL,
+            headers={"User-Agent": _YAHOO_UA, "Accept": "application/json"},
+            timeout=_YAHOO_TIMEOUT_S,
         )
     except Exception as exc:
-        logger.error("Grok x_search call for TSLA failed: %s", exc)
+        logger.error("Yahoo Finance request for TSLA failed: %s", exc)
         return 0.0, "(price unavailable)"
 
-    # Grok occasionally wraps the JSON in a code fence or adds a
-    # leading "Here is the data:" sentence despite the prompt. Pull
-    # the first ``{...}`` block out before parsing.
-    m = re.search(r"\{[^{}]*\}", text or "")
-    if not m:
-        logger.error("Grok x_search returned no JSON for TSLA: %r", (text or "")[:200])
-        return 0.0, "(price unavailable)"
-
-    try:
-        data = json.loads(m.group(0))
-    except json.JSONDecodeError as exc:
-        logger.error("TSLA JSON parse error: %s — body=%r", exc, m.group(0))
+    if resp.status_code != 200:
+        logger.error(
+            "Yahoo Finance returned HTTP %s for TSLA (body=%r)",
+            resp.status_code, resp.text[:200],
+        )
         return 0.0, "(price unavailable)"
 
     try:
-        price = float(data.get("price"))
-        prev_close = float(data.get("prev_close"))
-    except (TypeError, ValueError):
-        logger.error("TSLA fields missing/non-numeric: %r", data)
+        data = resp.json()
+    except Exception as exc:
+        logger.error("TSLA Yahoo JSON parse error: %s", exc)
         return 0.0, "(price unavailable)"
 
-    # Hard sanity range — Grok hallucinations sometimes invent low/high
-    # numbers; reject anything wildly outside TSLA's historical range.
+    # Yahoo's chart response shape:
+    #   { "chart": { "result": [ { "meta": { "regularMarketPrice": ...,
+    #     "chartPreviousClose": ..., "previousClose": ...,
+    #     "marketState": "REGULAR"|"PRE"|"POST"|"CLOSED" } } ] } }
+    try:
+        meta = data["chart"]["result"][0]["meta"]
+        price = float(meta["regularMarketPrice"])
+        # Yahoo provides both fields; ``chartPreviousClose`` is the one
+        # the website's fallback path prefers because it's never null
+        # when ``range >= 5d``.  ``previousClose`` is the secondary.
+        prev_close = float(
+            meta.get("chartPreviousClose") or meta.get("previousClose")
+        )
+    except (KeyError, IndexError, TypeError, ValueError) as exc:
+        logger.error("TSLA meta fields missing/malformed: %s", exc)
+        return 0.0, "(price unavailable)"
+
+    # Hard sanity range — guards against Yahoo briefly returning a
+    # stale split-adjusted figure or a malformed payload.
     if not (_TSLA_PRICE_MIN <= price <= _TSLA_PRICE_MAX):
         logger.error("TSLA price %.2f outside sanity band [%.0f, %.0f]",
                      price, _TSLA_PRICE_MIN, _TSLA_PRICE_MAX)
@@ -178,44 +218,50 @@ def _fetch_tsla_price() -> tuple[float, str]:
         return 0.0, "(price unavailable)"
 
     # Dynamic deviation check — reject prices that swing more than
-    # 25% from the last cached close.  Catches stale / hallucinated
-    # quotes that pass the wide static band.  Operator caught
-    # ($250 vs real $444, May 15 2026 TST Ep473).  No cache → skip
-    # the check (first-ever run can't compare).
+    # 25% from the last cached close.  No cache → skip the check
+    # (first-ever run can't compare).  Yahoo is unlikely to return a
+    # 25%+ off price, but the guard is cheap defence-in-depth.
     last_cached = _load_last_cached_tsla_price()
     if last_cached is not None and last_cached > 0:
         deviation = abs(price - last_cached) / last_cached
         if deviation > _TSLA_MAX_PCT_DEVIATION:
             logger.error(
                 "TSLA price %.2f deviates %.1f%% from last cached "
-                "$%.2f (cap %.0f%%) — likely Grok hallucination; "
-                "rejecting.",
+                "$%.2f (cap %.0f%%) — rejecting.",
                 price, deviation * 100, last_cached,
                 _TSLA_MAX_PCT_DEVIATION * 100,
             )
             return 0.0, "(price unavailable)"
 
-    market_state = str(data.get("market_state", "REGULAR")).upper()
-    market_status = ""
-    if market_state == "POST":
-        market_status = " (After-hours)"
-    elif market_state == "PRE":
+    # Yahoo uses ``PRE`` / ``REGULAR`` / ``POST`` / ``CLOSED`` /
+    # ``POSTPOST``, and occasionally returns ``null`` mid-session.
+    # ``None`` and missing both default to REGULAR — that's the
+    # honest fallback for an unknown state (no misleading
+    # after-hours suffix).
+    raw_state_val = meta.get("marketState")
+    raw_state = str(raw_state_val).upper() if raw_state_val else "REGULAR"
+    if raw_state == "PRE":
+        market_state = "PRE"
         market_status = " (Pre-market)"
+    elif raw_state == "REGULAR":
+        market_state = "REGULAR"
+        market_status = ""
+    else:
+        # POST, POSTPOST, CLOSED — all read as after-hours on a podcast
+        # that ships at 8 AM ET (the most common case).
+        market_state = "POST"
+        market_status = " (After-hours)"
 
     change = price - prev_close
     pct = (change / prev_close) * 100 if prev_close else 0.0
     direction = "▲" if change >= 0 else "▼"
     change_str = f"{direction} ${abs(change):.2f} ({abs(pct):.1f}%){market_status}"
-    logger.info("TSLA via x_search: $%.2f %s", price, change_str)
+    logger.info("TSLA via Yahoo Finance: $%.2f %s", price, change_str)
 
-    # Persist the live price to ``api/tsla.json`` so the public website
-    # (tesla.html) can render it without depending on Yahoo Finance.
-    # Operator caught (May 14 2026) that the site's client-side fetch
-    # of ``query2.finance.yahoo.com`` had been failing through both
-    # CORS proxies, leaving "Market data unavailable" on the page even
-    # though the pipeline knew the live price.  Same-origin JSON
-    # avoids the CORS layer entirely; the JS falls back to Yahoo if
-    # this file is somehow missing.
+    # Persist the live price to ``api/tsla.json`` so the public
+    # website (tesla.html) can render it without depending on its own
+    # client-side Yahoo fetch (which is subject to browser CORS and
+    # public proxy availability — see landmine #22).
     _persist_tsla_price_json(
         price=price, prev_close=prev_close, change=change, pct=pct,
         change_str=change_str, market_state=market_state,
@@ -274,7 +320,7 @@ def _persist_tsla_price_json(
         "change_str": change_str,
         "market_state": market_state,
         "fetched_at": _dt.datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
-        "source": "grok_x_search",
+        "source": "yahoo_finance_v8",
     }
     try:
         api_dir = Path(__file__).resolve().parent.parent.parent / "api"
