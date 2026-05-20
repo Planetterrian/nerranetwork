@@ -60,7 +60,8 @@ Run:
 
 ```bash
 python run_show.py tesla --test          # digest only
-python run_show.py tesla --resume-publish  # publish-only retry
+python run_show.py tesla --resume-publish  # publish-only retry (skips YouTube)
+python run_show.py tesla --resume-youtube   # YouTube-only retry
 ```
 
 ---
@@ -86,5 +87,7 @@ python run_show.py tesla --resume-publish  # publish-only retry
 | `--skip-newsletter` | No Buttondown send |
 | `--skip-youtube` | No YouTube upload |
 | `--resume-publish` | Publish from existing MP3 + digest (skips fetch/TTS/YouTube) |
+| `--resume-youtube` | Rebuild/upload YouTube only (skips fetch/TTS/X/newsletter) |
 
 Auto `--resume-publish` when today's MP3 exists but `.published_YYYYMMDD.json` is missing.
+Use `--resume-youtube` when the rest of the pipeline succeeded but YouTube failed.

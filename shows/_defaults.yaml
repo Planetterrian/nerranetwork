@@ -220,9 +220,17 @@ youtube:
   # Per-episode rendering toggles.
   publish_long_form: true
   publish_shorts: true
-  # Shorts clip pulled from the voice track only (skips music intro);
-  # keep < 60s so YouTube treats it as a Short.
+  # Shorts clip starts at voice_intro_delay (skips music-only intro).
+  # Override with shorts_start_offset (seconds) or shorts_start_mode:
+  # first_chapter (jumps to 2nd chapter marker for a stronger hook).
+  shorts_start_mode: voice
+  shorts_upload_schedule: always   # alternate_episodes = Shorts on even ep nums only
   short_duration_seconds: 55
+  description_prompt_file: shows/prompts/youtube_description_intro.txt
+  pinned_comment_template: |
+    🎧 Full episode + show notes: {show_page_url}
+    Subscribe on your favourite podcast app — search "{show_name}" on the Nerra Network.
+  shorts_thumbnail_from_scene: true
   # Network-wide tags appended to per-show tags.
   tags:
     - nerra network

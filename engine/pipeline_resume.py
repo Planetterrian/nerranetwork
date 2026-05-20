@@ -102,6 +102,33 @@ def _marker_complete(marker_path: Path) -> bool:
 def apply_resume_args(args: argparse.Namespace) -> argparse.Namespace:
     """Return args with YouTube skipped on resume (avoid duplicate uploads)."""
     merged = dict(vars(args))
-    merged["skip_youtube"] = True
+    if not merged.get("resume_youtube"):
+        merged["skip_youtube"] = True
     merged["resume_publish"] = True
     return argparse.Namespace(**merged)
+
+
+def apply_resume_youtube_args(args: argparse.Namespace) -> argparse.Namespace:
+    """Publish-only retry: rebuild/upload YouTube without re-running TTS."""
+    merged = dict(vars(args))
+    merged["skip_youtube"] = False
+    merged["resume_youtube"] = True
+    merged["resume_publish"] = True
+    merged["skip_x"] = True
+    merged["skip_newsletter"] = True
+    return argparse.Namespace(**merged)
+
+
+def should_resume_youtube(
+    expected_mp3: Path,
+    digest_md: Path,
+    *,
+    test_mode: bool,
+    dry_run: bool,
+    force: bool = False,
+) -> bool:
+    if test_mode or dry_run:
+        return False
+    if force:
+        return expected_mp3.exists() and digest_md.exists()
+    return expected_mp3.exists() and digest_md.exists()

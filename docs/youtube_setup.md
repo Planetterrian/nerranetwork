@@ -1,146 +1,112 @@
 # YouTube Publishing — Setup & Operator Runbook
 
-The pipeline can publish each episode as a long-form 1920x1080 video and
-a 1080x1920 Shorts teaser, automatically disclosed as AI-narrated and
-monetization-eligible. This document covers the one-time setup work an
-operator (you) does outside the repo: GCP project, OAuth, channels,
-quota.
-
-For day-to-day code locations see:
+The pipeline publishes each enabled episode as a long-form 1920×1080 video and
+a 1080×1920 Shorts teaser, with AI disclosure on every upload. Code paths:
 
 - `engine/video.py` — ffmpeg long-form + Shorts builders
 - `engine/youtube.py` — Google API upload wrapper
-- `engine/video_metadata.py` — title / description / tag construction
-- `run_show.py` — `_publish_youtube()` stage runs after RSS, before X
+- `engine/video_metadata.py` — title / description / tags
+- `engine/youtube_shorts.py` — Shorts start offset + quota stagger
+- `run_show.py` — `_publish_youtube()` at step **10d** (before RSS, so the watch URL can land in show notes)
+
+## Production rollout (May 2026)
+
+| Show | `youtube.enabled` | Notes |
+|------|-------------------|--------|
+| `tesla` | `true` | Grok Imagine imagery |
+| `models_agents_beginners` | `true` | Pexels imagery (A/B month vs Tesla) |
+| All others | `false` | Ready to flip after quota increase |
+
+CI guard: `tests/test_schedule.py::test_only_tst_and_mab_enable_youtube`.
 
 ## Channel topology
 
-We use two channels:
+| Channel | Shows | Refresh-token secret |
+|---------|-------|----------------------|
+| English `@NerraNetwork` | English shows | `YOUTUBE_REFRESH_TOKEN_EN` |
+| Russian `@NerraRU` | `finansy_prosto`, `privet_russian` | `YOUTUBE_REFRESH_TOKEN_RU` |
 
-| Channel | Audience | Shows | Refresh-token secret |
-|---------|----------|-------|----------------------|
-| English Nerra Network | Default | tesla, omni_view, fascinating_frontiers, planetterrian, env_intel, models_agents, models_agents_beginners, modern_investing | `YOUTUBE_REFRESH_TOKEN_EN` |
-| Russian Nerra Network | Russian-speaking | finansy_prosto, privet_russian | `YOUTUBE_REFRESH_TOKEN_RU` |
-
-Per-show YAMLs select the channel via `youtube.channel: en` or
-`youtube.channel: ru`. The channel handle and display names are
-configured in YouTube Studio — the code only needs the OAuth refresh
-token belonging to that channel's account.
+Per-show YAML: `youtube.channel: en` or `ru`.
 
 ## One-time GCP + OAuth setup
 
-1. **Create a Google Cloud project** at <https://console.cloud.google.com/>.
-   Name it something like `nerra-network-youtube`.
-2. **Enable the YouTube Data API v3** under `APIs & Services → Library`.
-3. **Configure the OAuth consent screen** (`APIs & Services → OAuth consent screen`):
-   - User type: External.
-   - Add yourself as a test user (until the screen is verified, only test users can authorize).
-   - Scopes: `youtube.upload`, `youtube`.
-4. **Create OAuth credentials** (`APIs & Services → Credentials → Create Credentials → OAuth client ID`):
-   - Application type: **Desktop app**.
-   - Download the JSON file. Keep it local — never commit it.
-5. **Mint refresh tokens** (one per channel) by running the bootstrap
-   script locally:
+1. Create a Google Cloud project and enable **YouTube Data API v3**.
+2. OAuth consent screen: External, add yourself as test user until verified.
+3. Create **Desktop** OAuth credentials; download JSON (never commit).
+4. Mint refresh tokens locally:
 
    ```bash
    python scripts/youtube_oauth_bootstrap.py ~/Downloads/client_secrets.json
    ```
 
-   The script opens a browser. Sign into the Google account that owns
-   the **English channel** first, then re-run for the **Russian channel**.
-   Each run prints the refresh token; paste it into the matching GitHub
-   secret:
+   Run once per channel (English account, then Russian). The bootstrap script
+   requests `youtube.upload`, `youtube`, and **`youtube.force-ssl`** (required
+   for `captions.insert` / CC track upload).
 
-   - English run → `YOUTUBE_REFRESH_TOKEN_EN`
-   - Russian run → `YOUTUBE_REFRESH_TOKEN_RU`
+5. Paste tokens into GitHub secrets:
 
-   The script also prints `YOUTUBE_CLIENT_ID` and `YOUTUBE_CLIENT_SECRET`
-   — set those once (they're shared across both channels).
+   | Secret | Source |
+   |--------|--------|
+   | `YOUTUBE_CLIENT_ID` | OAuth client JSON |
+   | `YOUTUBE_CLIENT_SECRET` | OAuth client JSON |
+   | `YOUTUBE_REFRESH_TOKEN_EN` | English channel run |
+   | `YOUTUBE_REFRESH_TOKEN_RU` | Russian channel run |
 
-## GitHub secrets
+If captions fail with HTTP 403 after upgrading scopes, **revoke** the app at
+https://myaccount.google.com/permissions and re-run the bootstrap script so
+Google issues a new refresh token with `force-ssl`.
 
-The pipeline reads four secrets:
+## Quota
 
-| Secret | Source |
-|--------|--------|
-| `YOUTUBE_CLIENT_ID` | OAuth client JSON |
-| `YOUTUBE_CLIENT_SECRET` | OAuth client JSON |
-| `YOUTUBE_REFRESH_TOKEN_EN` | Bootstrap script (English channel) |
-| `YOUTUBE_REFRESH_TOKEN_RU` | Bootstrap script (Russian channel) |
+Default project quota: **10,000 units/day**.
 
-If any are missing, the YouTube stage logs a "credentials missing" notice
-and skips the upload — the rest of the pipeline (audio, RSS, X, etc.)
-continues unaffected.
+| API call | Units |
+|----------|------:|
+| `videos.insert` | 1,600 |
+| `thumbnails.set` | 50 |
+| `playlistItems.insert` | 50 |
+| `captions.insert` | 400 |
 
-## Quota — the operational gotcha
+Roughly **~3,400–3,800 units per show per day** (long + Short + thumb + playlist + captions).
 
-The default Google Cloud quota is **10,000 units/day** per project.
-Each `videos.insert` costs **1,600 units**, so the default lets you
-upload roughly six videos per day. With 11 shows × (long-form + Shorts)
-that's 32,000 units — over budget by a factor of three.
+- **2 enabled shows (today):** ~7k units — fits default quota.
+- **7 daily shows × 2 videos:** ~22k+ units on inserts alone — **request quota increase** (~50k/day) or set `youtube.shorts_upload_schedule: alternate_episodes` on some shows (Shorts only on even episode numbers).
 
-Two paths forward:
+`engine/youtube_quota.py` logs a warning at preflight when enabled shows exceed 10k.
 
-1. **Phased rollout** (default in this repo): only `tesla`,
-   `fascinating_frontiers`, and `models_agents` have `youtube.enabled:
-   true` to start. That's 3 × (1,600 + 1,600) = **9,600 units/day** —
-   right under the cap.
-2. **Quota extension request** (file on day 1): in Cloud Console →
-   `APIs & Services → YouTube Data API v3 → Quotas`, request an increase
-   to ~50,000 units/day. Justify with:
-   - Original editorial pipeline (we're not aggregating other creators).
-   - Compliance with `containsSyntheticMedia` disclosure on every upload.
-   - 11 daily shows × 2 video formats × OAuth-authenticated uploads.
+## YouTube Podcasts playlist (manual, once per playlist)
 
-   Reviews typically take 1–2 weeks. Once granted, flip `youtube.enabled`
-   to `true` on the remaining shows.
+The API adds videos to `youtube.podcast_playlist_id`, but the playlist only
+appears under **YouTube Studio → Podcasts** after you choose **Set existing
+playlist as a podcast** for that playlist. One-time per playlist per channel.
 
 ## AI disclosure
 
-Every upload sets `status.containsSyntheticMedia=True` via the API. This
-is the field YouTube introduced in October 2024 specifically for AI/A&S
-disclosure; setting it via the API renders the same "Altered or
-synthetic content" label the Studio UI applies and is required for
-monetization-eligible AI audio uploads.
+Every upload sets `status.containsSyntheticMedia=True` plus the
+`youtube.synthetic_disclosure` footer in `_defaults.yaml` (Grok TTS wording).
 
-In addition, every video description ends with a plain-language
-disclosure (defined in `shows/_defaults.yaml` under
-`youtube.synthetic_disclosure`):
+## Shorts timing
 
-> AI Disclosure: This podcast is curated by Patrick but uses
-> AI-generated voice synthesis (ElevenLabs) for the narration. …
+Shorts audio starts at `audio.voice_intro_delay` (not `intro_duration + delay`).
+Override per show:
 
-Do not remove or weaken this. Both layers (API flag + description text)
-are needed to stay inside YouTube's monetization policy.
+- `youtube.shorts_start_offset: 90` — fixed seconds
+- `youtube.shorts_start_mode: first_chapter` — jump to 2nd chapter marker
 
-## YouTube Analytics vs. Google Analytics
+## Retry / resume
 
-YouTube Studio has its own analytics dashboard and **does not** stream
-data into GA4. What the pipeline does instead: every video description
-links to `nerranetwork.com/<show>.html` with
-`?utm_source=youtube&utm_medium=video&utm_campaign=ep<N>` so when a
-viewer clicks through, GA4 on `nerranetwork.com` attributes the traffic
-to YouTube. Shorts use `utm_medium=shorts` to separate the two
-funnels.
+- **Failed upload after MP3 exists:** `python run_show.py <slug> --resume-youtube`
+  (rebuilds ffmpeg assets and re-uploads; skips TTS/X/newsletter).
+- **Failed RSS but MP3 ok:** `python run_show.py <slug> --resume-publish`
 
-If you want a periodic dump of YouTube Analytics into GA4, that's a
-separate manual integration (third-party connector) — out of scope here.
+## Validation checklist (first uploads)
 
-## Validation steps for the first uploads
+1. Run: `python run_show.py tesla --skip-x --skip-newsletter`
+2. In Studio: title, description, chapters, thumbnail, synthetic label.
+3. Confirm CC track on long-form (if OAuth includes `force-ssl`).
+4. Confirm Shorts uses vertical thumbnail and starts on voice (not mid-sentence skip).
 
-1. Set `youtube.privacy_status: unlisted` in `shows/tesla.yaml` (already
-   the default for phase-1 shows in this repo).
-2. Run locally:
+## Analytics
 
-   ```bash
-   python run_show.py tesla --skip-x --skip-newsletter
-   ```
-
-3. In YouTube Studio, open the new video and confirm:
-   - Title, description, chapters, tags rendered correctly.
-   - Custom thumbnail rendered (1280x720, hook visible).
-   - Under `Details → Altered content`: "Altered or synthetic content"
-     label is visible.
-   - Privacy is "Unlisted".
-4. Flip `youtube.privacy_status: public` in the YAML, re-run.
-5. Once two or three episodes have landed cleanly, repeat for the Shorts.
+Descriptions include UTM links (`utm_source=youtube`, `utm_medium=video` or `shorts`).
+YouTube Analytics does not feed GA4; use site UTMs for cross-funnel attribution.

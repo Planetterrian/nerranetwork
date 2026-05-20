@@ -1236,6 +1236,27 @@ def generate_episode_thumbnail(
     return output_path
 
 
+def generate_shorts_thumbnail(
+    base_image_path: Path,
+    episode_num: int,
+    date_str: str,
+    output_path: Path,
+    *,
+    hook: str = "",
+    show_name: str = "",
+) -> Path:
+    """Render a 1080×1920 vertical thumbnail for YouTube Shorts."""
+    return generate_episode_thumbnail(
+        base_image_path,
+        episode_num,
+        date_str,
+        output_path,
+        hook=hook,
+        show_name=show_name,
+        size=(1080, 1920),
+    )
+
+
 # ---------------------------------------------------------------------------
 # Digest formatting for X posting
 # ---------------------------------------------------------------------------

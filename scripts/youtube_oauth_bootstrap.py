@@ -31,6 +31,8 @@ from pathlib import Path
 SCOPES = [
     "https://www.googleapis.com/auth/youtube.upload",
     "https://www.googleapis.com/auth/youtube",
+    # Required for captions.insert (CC track upload after long-form).
+    "https://www.googleapis.com/auth/youtube.force-ssl",
 ]
 
 
