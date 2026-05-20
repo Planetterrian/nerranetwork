@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3000 3000" width="3000" height="3000">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="35%" stop-color="#334155"/>
+      <stop offset="62%" stop-color="#9A3412"/>
+      <stop offset="100%" stop-color="#EA580C"/>
+    </linearGradient>
+    <radialGradient id="shine" cx="72%" cy="22%" r="62%">
+      <stop offset="0%" stop-color="#FED7AA" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="impact" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="white" stop-opacity="0.9"/>
+      <stop offset="38%" stop-color="#FED7AA" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="titleScrim" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A" stop-opacity="0"/>
+      <stop offset="60%" stop-color="#0F172A" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#0F172A" stop-opacity="0.55"/>
+    </linearGradient>
+    <filter id="ds"><feDropShadow dx="0" dy="24" stdDeviation="50" flood-color="#0F172A" flood-opacity="0.55"/></filter>
+    <filter id="ts"><feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#0F172A" flood-opacity="0.45"/></filter>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="3000" height="3000" rx="500" fill="url(#bg)"/>
+  <rect width="3000" height="3000" rx="500" fill="url(#shine)"/>
+
+  <!-- Subtle cracked-glass shard tessellation -->
+  <g opacity="0.07" stroke="white" stroke-width="3" fill="none">
+    <polygon points="200,400 820,260 1140,620 720,920 260,770"/>
+    <polygon points="820,260 1430,200 1740,520 1140,620"/>
+    <polygon points="1430,200 2120,280 2420,540 1740,520"/>
+    <polygon points="2120,280 2800,420 2760,820 2420,540"/>
+    <polygon points="260,770 720,920 620,1320 220,1120"/>
+    <polygon points="720,920 1140,620 1740,520 1780,1120 1340,1370 820,1320"/>
+    <polygon points="1740,520 2420,540 2760,820 2720,1220 2220,1370 1780,1120"/>
+    <polygon points="220,1120 620,1320 820,1320 1340,1370 1280,1720 820,1770 360,1620"/>
+    <polygon points="1340,1370 2220,1370 2720,1220 2820,1720 2320,1920 1720,1870"/>
+    <polygon points="360,1620 820,1770 1280,1720 1320,2160 760,2270 290,2070"/>
+    <polygon points="1320,2160 1720,1870 2320,1920 2420,2420 1780,2520 1320,2360"/>
+  </g>
+
+  <!-- Impact zone with radiating fracture lines -->
+  <g transform="translate(1500, 1290)">
+    <circle r="320" fill="url(#impact)"/>
+    <circle r="44" fill="white" opacity="0.95" filter="url(#ds)"/>
+
+    <g stroke="white" stroke-linecap="round" fill="none" filter="url(#glow)">
+      <!-- Major radiating cracks -->
+      <path d="M0,0 L-1140,-900" stroke-width="14" opacity="0.85"/>
+      <path d="M-720,-568 L-840,-660 L-720,-760" stroke-width="6" opacity="0.55"/>
+      <path d="M-1140,-900 L-1320,-1090" stroke-width="6" opacity="0.55"/>
+
+      <path d="M0,0 L-1340,-180" stroke-width="13" opacity="0.82"/>
+      <path d="M-900,-120 L-1100,-40" stroke-width="6" opacity="0.5"/>
+
+      <path d="M0,0 L-1240,420" stroke-width="13" opacity="0.8"/>
+      <path d="M-720,244 L-840,344" stroke-width="6" opacity="0.5"/>
+
+      <path d="M0,0 L-260,-1280" stroke-width="12" opacity="0.78"/>
+      <path d="M-130,-640 L-30,-720" stroke-width="6" opacity="0.5"/>
+
+      <path d="M0,0 L320,-1240" stroke-width="14" opacity="0.85"/>
+      <path d="M160,-620 L260,-720" stroke-width="6" opacity="0.5"/>
+
+      <path d="M0,0 L1140,-900" stroke-width="13" opacity="0.82"/>
+      <path d="M660,-520 L780,-620" stroke-width="6" opacity="0.55"/>
+
+      <path d="M0,0 L1380,-100" stroke-width="13" opacity="0.85"/>
+      <path d="M920,-66 L1100,-180" stroke-width="6" opacity="0.55"/>
+
+      <path d="M0,0 L1240,520" stroke-width="13" opacity="0.8"/>
+      <path d="M720,300 L840,420" stroke-width="6" opacity="0.5"/>
+
+      <!-- Downward minor cracks (toward title block) -->
+      <path d="M0,0 L-220,720" stroke-width="9" opacity="0.5"/>
+      <path d="M0,0 L180,720" stroke-width="9" opacity="0.5"/>
+    </g>
+  </g>
+
+  <!-- Horizontal fault-line ridge (the seam between slate and burnt orange) -->
+  <g opacity="0.28" stroke="white" stroke-width="4" fill="none" stroke-linecap="round">
+    <path d="M0,1180 L380,1230 L520,1180 L780,1290 L1050,1230 L1240,1290"/>
+    <path d="M1760,1290 L1980,1230 L2280,1290 L2520,1180 L2700,1230 L3000,1180"/>
+  </g>
+
+  <!-- Subtle dark scrim behind title to lock contrast against the orange band -->
+  <rect x="0" y="1820" width="3000" height="1180" fill="url(#titleScrim)"/>
+
+  <!-- Title -->
+  <g filter="url(#ts)">
+    <text x="1500" y="2080" text-anchor="middle" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-weight="800" font-size="240" fill="white">Unintended</text>
+    <text x="1500" y="2360" text-anchor="middle" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-weight="800" font-size="240" fill="white">Consequences</text>
+  </g>
+
+  <!-- Tagline -->
+  <text x="1500" y="2570" text-anchor="middle" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-weight="500" font-size="78" fill="white" opacity="0.65" letter-spacing="6">SECOND-ORDER EFFECTS, EXPLAINED</text>
+
+  <!-- Nerra Network branding -->
+  <text x="1500" y="2760" text-anchor="middle" font-family="'Helvetica Neue',Helvetica,Arial,sans-serif" font-weight="400" font-size="60" fill="white" opacity="0.35" letter-spacing="12">NERRA NETWORK</text>
+</svg>
