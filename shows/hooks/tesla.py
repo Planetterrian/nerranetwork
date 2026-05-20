@@ -1,10 +1,11 @@
 """Tesla-specific pre-fetch hook.
 
 Provides extra context that the Tesla Shorts Time digest prompt needs:
-- TSLA stock price and change string via Yahoo Finance's v8 chart API
-  (direct HTTP, no library wrapper). Source of truth for the website,
-  podcasts, RSS, blog, and newsletter — all consume the value this
-  hook returns and the ``api/tsla.json`` cache it writes.
+- TSLA stock price and change string via a multi-source fallback chain
+  (yfinance ``history`` → yfinance ``fast_info`` → direct Yahoo HTTP).
+  Source of truth for the website, podcasts, RSS, blog, and newsletter
+  — all consume the value this hook returns and the ``api/tsla.json``
+  cache it writes.  See ``_fetch_tsla_price()`` and landmine #22.
 - X posts section placeholder (disabled by default)
 - Market movers section (Monday only)
 - Content tracking for freshness
@@ -104,9 +105,9 @@ _TSLA_MAX_PCT_DEVIATION = 0.25  # 25% from last known close
 
 # Yahoo Finance v8 chart API endpoint — same one tesla.html falls back
 # to via CORS proxies in the browser.  Server-side we call it directly
-# (no proxy, no library wrapper). ``range=5d`` is enough to guarantee
-# a non-null ``chartPreviousClose`` even across long weekends /
-# holidays — ``range=1d`` returns nulls outside RTH.
+# (no proxy). ``range=5d`` is enough to guarantee a non-null
+# ``chartPreviousClose`` even across long weekends / holidays —
+# ``range=1d`` returns nulls outside RTH.
 _YAHOO_CHART_URL = (
     "https://query2.finance.yahoo.com/v8/finance/chart/TSLA"
     "?interval=1d&range=5d"
@@ -120,153 +121,287 @@ _YAHOO_UA = (
     "Gecko/20100101 Firefox/121.0"
 )
 
-# Timeout for the Yahoo call.  GitHub Actions runner egress occasionally
-# stalls; 8 s is the website's own per-proxy timeout and well under the
-# cron-job wall clock budget.
-_YAHOO_TIMEOUT_S = 8.0
+# Timeout for any single HTTP call.  GitHub Actions runner egress
+# occasionally stalls; 10 s leaves plenty of headroom while staying
+# under the cron-job wall clock budget.
+_HTTP_TIMEOUT_S = 10.0
 
 
 def _fetch_tsla_price() -> tuple[float, str]:
-    """Get current TSLA price + change string via Yahoo Finance.
+    """Get current TSLA price + change string with multi-source fallback.
 
-    Calls the v8 chart API (``query2.finance.yahoo.com/v8/finance/chart/TSLA``)
-    directly with ``requests`` — no yfinance library, no CORS proxy,
-    no third-party stock service.  Same authoritative endpoint
-    ``tesla.html`` uses as its in-browser fallback, so the website,
-    podcasts, RSS, blog, and newsletter all derive from one identical
-    source of truth.
+    Tries sources in priority order until one returns a quote that
+    passes validation (sanity band + deviation guard).  Each source
+    is wrapped in its own try / except so a single failure cannot
+    take down the chain.
+
+    Sources (priority order):
+      1. ``yfinance`` ``Ticker.history(period="5d")`` — proven reliable
+         on GitHub Actions runners (the Modern Investing show uses
+         the same library + endpoint successfully every weekday).
+         yfinance manages its own cookie + crumb-token session, which
+         Yahoo's anti-bot apparently trusts more than a bare
+         ``requests.get``.
+      2. ``yfinance`` ``Ticker.fast_info`` — adds the live last_price
+         (intraday / pre-market / post-market) when history alone only
+         gives end-of-day closes.  Falls through if ``fast_info``
+         returns empty / None fields (its historical failure mode).
+      3. Direct HTTP to Yahoo v8 chart API — works locally and from
+         some egress IPs; useful as a third opinion if the yfinance
+         session can't be established.
+
+    Each source returns ``(price, prev_close, market_state)`` or
+    ``None``.  Validation is applied uniformly.
 
     History:
-      yfinance (early 2026): the library wrapped this same endpoint
-        but added aggressive retry / parallel-fetch logic that
-        triggered Yahoo's rate-limit on the GitHub Actions runner's
-        egress IPs.  Repeatedly returned ``$0.00 (price unavailable)``.
-      Grok x_search (May 2026): queried X for the latest ``$TSLA``
-        cashtag post.  Failed in two distinct ways operator caught
-        within 48 h of each other — Ep473 (May 15) returned $250 vs
-        a real ~$444 (pulled from a stale post), Ep474 (May 16)
-        returned price == prev_close (single-number post, no change).
-        X posts are not an authoritative quote source.
-      Direct Yahoo (May 18 2026, this fetcher): one HTTP call, real
-        ``regularMarketPrice`` + ``chartPreviousClose`` + ``marketState``
-        from the same data that powers finance.yahoo.com.  One call
-        per Tesla cron run (~once / day) is well below any practical
-        rate limit when we're not using the yfinance retry-storm
-        client.
+      yfinance ``fast_info`` only (early 2026): operator caught it
+        repeatedly returning ``$0.00 (price unavailable)``.  The
+        ``or`` chain treated a returned ``0.0`` as falsy and fell
+        through every fallback to no data.  See git blame on
+        commit ``3247317``.
+      Grok ``x_search`` (May 2026): queried X for the latest
+        ``$TSLA`` cashtag post.  Failed twice within 48 h — Ep473
+        (May 15) returned ``$250`` vs real ``~$444`` (stale post),
+        Ep474 (May 16) returned ``price == prev_close`` (single-number
+        post).  X posts are not an authoritative quote source.
+      Direct Yahoo HTTP only (PR #385, May 18 2026): worked locally
+        but Ep477 + Ep478 on GitHub Actions both came back
+        ``(price unavailable)``.  The bare ``requests.get`` call
+        doesn't carry Yahoo's session cookie / crumb, so Yahoo's
+        anti-bot apparently returns a non-200 response for the GHA
+        runner's egress IP range — even though yfinance's session-
+        managed call to the same endpoint works fine in the same
+        environment.  Multi-source chain (this fetcher, PR #386)
+        keeps direct HTTP as the third opinion but leads with
+        yfinance.
 
-    Returns ``(price, change_str)`` in the same shape as before so
-    every downstream consumer keeps working without changes.
-
-    Failure modes (network down, non-200 response, missing fields,
-    out-of-range price, deviation guard trip): returns
+    Returns ``(price, change_str)``.  Failure modes (every source
+    fails, every source returns out-of-band data): returns
     ``(0.0, "(price unavailable)")``.
     """
-    try:
-        import requests
-    except Exception as exc:  # pragma: no cover — requests is in requirements.txt
-        logger.error("Could not import requests for TSLA fetch: %s", exc)
-        return 0.0, "(price unavailable)"
-
-    try:
-        resp = requests.get(
-            _YAHOO_CHART_URL,
-            headers={"User-Agent": _YAHOO_UA, "Accept": "application/json"},
-            timeout=_YAHOO_TIMEOUT_S,
-        )
-    except Exception as exc:
-        logger.error("Yahoo Finance request for TSLA failed: %s", exc)
-        return 0.0, "(price unavailable)"
-
-    if resp.status_code != 200:
-        logger.error(
-            "Yahoo Finance returned HTTP %s for TSLA (body=%r)",
-            resp.status_code, resp.text[:200],
-        )
-        return 0.0, "(price unavailable)"
-
-    try:
-        data = resp.json()
-    except Exception as exc:
-        logger.error("TSLA Yahoo JSON parse error: %s", exc)
-        return 0.0, "(price unavailable)"
-
-    # Yahoo's chart response shape:
-    #   { "chart": { "result": [ { "meta": { "regularMarketPrice": ...,
-    #     "chartPreviousClose": ..., "previousClose": ...,
-    #     "marketState": "REGULAR"|"PRE"|"POST"|"CLOSED" } } ] } }
-    try:
-        meta = data["chart"]["result"][0]["meta"]
-        price = float(meta["regularMarketPrice"])
-        # Yahoo provides both fields; ``chartPreviousClose`` is the one
-        # the website's fallback path prefers because it's never null
-        # when ``range >= 5d``.  ``previousClose`` is the secondary.
-        prev_close = float(
-            meta.get("chartPreviousClose") or meta.get("previousClose")
-        )
-    except (KeyError, IndexError, TypeError, ValueError) as exc:
-        logger.error("TSLA meta fields missing/malformed: %s", exc)
-        return 0.0, "(price unavailable)"
-
-    # Hard sanity range — guards against Yahoo briefly returning a
-    # stale split-adjusted figure or a malformed payload.
-    if not (_TSLA_PRICE_MIN <= price <= _TSLA_PRICE_MAX):
-        logger.error("TSLA price %.2f outside sanity band [%.0f, %.0f]",
-                     price, _TSLA_PRICE_MIN, _TSLA_PRICE_MAX)
-        return 0.0, "(price unavailable)"
-    if not (_TSLA_PRICE_MIN <= prev_close <= _TSLA_PRICE_MAX):
-        logger.error("TSLA prev_close %.2f outside sanity band", prev_close)
-        return 0.0, "(price unavailable)"
-
-    # Dynamic deviation check — reject prices that swing more than
-    # 25% from the last cached close.  No cache → skip the check
-    # (first-ever run can't compare).  Yahoo is unlikely to return a
-    # 25%+ off price, but the guard is cheap defence-in-depth.
     last_cached = _load_last_cached_tsla_price()
+
+    sources = (
+        ("yfinance_history", _fetch_via_yfinance_history),
+        ("yfinance_fast_info", _fetch_via_yfinance_fast_info),
+        ("yahoo_v8_chart", _fetch_via_yahoo_v8_chart),
+    )
+
+    for source_name, source_fn in sources:
+        try:
+            quote = source_fn()
+        except Exception as exc:
+            logger.warning("TSLA source %s raised: %s", source_name, exc)
+            continue
+        if quote is None:
+            logger.warning("TSLA source %s returned no data", source_name)
+            continue
+
+        price, prev_close, market_state = quote
+        if not _validate_quote(price, prev_close, last_cached, source_name):
+            continue
+
+        market_status = _market_status_suffix(market_state)
+        change = price - prev_close
+        pct = (change / prev_close) * 100 if prev_close else 0.0
+        direction = "▲" if change >= 0 else "▼"
+        change_str = (
+            f"{direction} ${abs(change):.2f} ({abs(pct):.1f}%){market_status}"
+        )
+        logger.info("TSLA via %s: $%.2f %s", source_name, price, change_str)
+
+        # Persist the live price to ``api/tsla.json`` so the public
+        # website (tesla.html) can render it without depending on its
+        # own client-side Yahoo fetch (which is subject to browser
+        # CORS and public proxy availability — see landmine #22).
+        _persist_tsla_price_json(
+            price=price, prev_close=prev_close, change=change, pct=pct,
+            change_str=change_str, market_state=market_state,
+            source=source_name,
+        )
+        return price, change_str
+
+    logger.error("All TSLA price sources failed — returning placeholder")
+    return 0.0, "(price unavailable)"
+
+
+def _validate_quote(
+    price: float, prev_close: float, last_cached: float | None,
+    source_name: str,
+) -> bool:
+    """Run sanity band + dynamic deviation guard against a candidate
+    quote.  Returns True if the quote is trustworthy."""
+    if not (_TSLA_PRICE_MIN <= price <= _TSLA_PRICE_MAX):
+        logger.warning(
+            "TSLA via %s: price %.2f outside sanity band [%.0f, %.0f]",
+            source_name, price, _TSLA_PRICE_MIN, _TSLA_PRICE_MAX,
+        )
+        return False
+    if not (_TSLA_PRICE_MIN <= prev_close <= _TSLA_PRICE_MAX):
+        logger.warning(
+            "TSLA via %s: prev_close %.2f outside sanity band",
+            source_name, prev_close,
+        )
+        return False
     if last_cached is not None and last_cached > 0:
         deviation = abs(price - last_cached) / last_cached
         if deviation > _TSLA_MAX_PCT_DEVIATION:
-            logger.error(
-                "TSLA price %.2f deviates %.1f%% from last cached "
-                "$%.2f (cap %.0f%%) — rejecting.",
-                price, deviation * 100, last_cached,
+            logger.warning(
+                "TSLA via %s: price %.2f deviates %.1f%% from last "
+                "cached $%.2f (cap %.0f%%) — rejecting.",
+                source_name, price, deviation * 100, last_cached,
                 _TSLA_MAX_PCT_DEVIATION * 100,
             )
-            return 0.0, "(price unavailable)"
+            return False
+    return True
 
-    # Yahoo uses ``PRE`` / ``REGULAR`` / ``POST`` / ``CLOSED`` /
-    # ``POSTPOST``, and occasionally returns ``null`` mid-session.
-    # ``None`` and missing both default to REGULAR — that's the
-    # honest fallback for an unknown state (no misleading
-    # after-hours suffix).
-    raw_state_val = meta.get("marketState")
-    raw_state = str(raw_state_val).upper() if raw_state_val else "REGULAR"
-    if raw_state == "PRE":
-        market_state = "PRE"
-        market_status = " (Pre-market)"
-    elif raw_state == "REGULAR":
-        market_state = "REGULAR"
-        market_status = ""
-    else:
-        # POST, POSTPOST, CLOSED — all read as after-hours on a podcast
-        # that ships at 8 AM ET (the most common case).
-        market_state = "POST"
-        market_status = " (After-hours)"
 
-    change = price - prev_close
-    pct = (change / prev_close) * 100 if prev_close else 0.0
-    direction = "▲" if change >= 0 else "▼"
-    change_str = f"{direction} ${abs(change):.2f} ({abs(pct):.1f}%){market_status}"
-    logger.info("TSLA via Yahoo Finance: $%.2f %s", price, change_str)
+def _market_status_suffix(market_state: str) -> str:
+    """Render the ``(After-hours)`` / ``(Pre-market)`` suffix
+    appended to the change string."""
+    s = (market_state or "REGULAR").upper()
+    if s == "PRE":
+        return " (Pre-market)"
+    if s == "REGULAR":
+        return ""
+    # POST, POSTPOST, CLOSED, anything unknown → after-hours.
+    return " (After-hours)"
 
-    # Persist the live price to ``api/tsla.json`` so the public
-    # website (tesla.html) can render it without depending on its own
-    # client-side Yahoo fetch (which is subject to browser CORS and
-    # public proxy availability — see landmine #22).
-    _persist_tsla_price_json(
-        price=price, prev_close=prev_close, change=change, pct=pct,
-        change_str=change_str, market_state=market_state,
+
+def _normalize_market_state(raw: object) -> str:
+    """Bucket Yahoo's various ``marketState`` values into the three
+    states our renderers know about (PRE / REGULAR / POST).
+    ``None``, missing, or unknown values default to REGULAR (the
+    honest fallback — no misleading after-hours suffix on a real
+    regular-session quote)."""
+    if not raw:
+        return "REGULAR"
+    s = str(raw).upper()
+    if s == "PRE":
+        return "PRE"
+    if s == "REGULAR":
+        return "REGULAR"
+    return "POST"
+
+
+def _fetch_via_yfinance_history() -> tuple[float, float, str] | None:
+    """Pull TSLA price + previous close from
+    ``yfinance.Ticker.history(period="5d")``.
+
+    yfinance manages a cookie + crumb-token session against Yahoo
+    that the bare ``requests.get`` path doesn't, which is why this
+    works reliably on GitHub Actions egress IPs where direct HTTP
+    has been observed to fail.
+
+    Returns ``None`` on any failure or empty data; the dispatcher
+    then moves on to the next source.
+    """
+    import yfinance as yf
+
+    ticker = yf.Ticker("TSLA")
+    hist = ticker.history(period="5d", interval="1d")
+    if hist is None or hist.empty or len(hist) < 1:
+        return None
+
+    price = float(hist["Close"].iloc[-1])
+    # ``history()`` doesn't expose marketState; default to REGULAR
+    # (close-of-day is by definition a regular-session price).  The
+    # fast_info source below picks up pre/post-market when relevant.
+    prev_close = float(hist["Close"].iloc[-2]) if len(hist) >= 2 else price
+    return price, prev_close, "REGULAR"
+
+
+def _fetch_via_yfinance_fast_info() -> tuple[float, float, str] | None:
+    """Pull TSLA via ``yfinance.Ticker.fast_info``.
+
+    Historically flaky — operator caught it returning ``0.0`` for
+    ``last_price`` mid-2026.  Kept as a secondary source because
+    when it works it carries the live (pre / post-market) price
+    that ``history()`` alone doesn't expose.  Treats ``0.0`` as
+    falsy so a degraded response falls through to the next source.
+    """
+    import yfinance as yf
+
+    ticker = yf.Ticker("TSLA")
+    info = ticker.fast_info
+    price = (
+        getattr(info, "last_price", None)
+        or getattr(info, "regularMarketPrice", None)
+        or getattr(info, "postMarketPrice", None)
     )
-    return price, change_str
+    prev_close = (
+        getattr(info, "previous_close", None)
+        or getattr(info, "regular_market_previous_close", None)
+    )
+    if not price or not prev_close:
+        return None
+
+    raw_state = (
+        getattr(info, "market_state", None)
+        or getattr(info, "marketState", None)
+    )
+    return float(price), float(prev_close), _normalize_market_state(raw_state)
+
+
+def _fetch_via_yahoo_v8_chart() -> tuple[float, float, str] | None:
+    """Direct HTTP call to Yahoo Finance v8 chart API.
+
+    Last-resort source — same endpoint the in-browser fallback on
+    ``tesla.html`` uses.  Works locally and from some egress IPs;
+    on GitHub Actions Yahoo has been observed returning non-200
+    responses to the bare-``requests.get`` call (the yfinance
+    sources above carry a cookie + crumb session that Yahoo trusts
+    more).  Kept for environments where it does work, and as a
+    third opinion the validator can cross-check.
+    """
+    import requests
+
+    resp = requests.get(
+        _YAHOO_CHART_URL,
+        headers={"User-Agent": _YAHOO_UA, "Accept": "application/json"},
+        timeout=_HTTP_TIMEOUT_S,
+    )
+    if resp.status_code != 200:
+        logger.warning(
+            "Yahoo v8 chart returned HTTP %s for TSLA (body=%r)",
+            resp.status_code, resp.text[:200],
+        )
+        return None
+
+    data = resp.json()
+    result = data["chart"]["result"][0]
+    meta = result["meta"]
+    price = float(meta["regularMarketPrice"])
+
+    # Previous close = the close of the bar immediately BEFORE the
+    # latest bar.  ``meta.chartPreviousClose`` looks tempting but it
+    # refers to the close BEFORE the chart's range window starts
+    # (so for ``range=5d`` it's the close from 6 trading days ago) —
+    # not yesterday's close.  Pull the actual previous bar's close
+    # from the ``indicators.quote`` array instead, which mirrors what
+    # ``yfinance.Ticker.history()`` returns.
+    prev_close: float | None = None
+    try:
+        closes = result["indicators"]["quote"][0]["close"]
+        # Skip any trailing None bars (Yahoo sometimes returns a
+        # null placeholder for a not-yet-traded session).
+        valid = [c for c in closes if c is not None]
+        if len(valid) >= 2:
+            prev_close = float(valid[-2])
+    except (KeyError, IndexError, TypeError, ValueError):
+        prev_close = None
+
+    # Final fallback chain for prev_close: meta's previousClose
+    # (yesterday's regular-session close, when populated) → meta's
+    # chartPreviousClose (always populated but anchors before the
+    # range window — usable only when no better option exists).
+    if prev_close is None:
+        prev_close_raw = meta.get("previousClose") or meta.get("chartPreviousClose")
+        if prev_close_raw is None:
+            return None
+        prev_close = float(prev_close_raw)
+
+    return price, prev_close, _normalize_market_state(meta.get("marketState"))
 
 
 def _load_last_cached_tsla_price() -> float | None:
@@ -298,15 +433,21 @@ def _load_last_cached_tsla_price() -> float | None:
 
 def _persist_tsla_price_json(
     *, price: float, prev_close: float, change: float, pct: float,
-    change_str: str, market_state: str,
+    change_str: str, market_state: str, source: str = "unknown",
 ) -> None:
     """Write the latest TSLA price to ``api/tsla.json`` (best-effort).
 
     Same-origin file served by GitHub Pages.  Updated every Tesla
-    pipeline run (daily + the M&A / MIT shows that share this hook
-    in their own pre-fetch loops where applicable).  Failure is
-    non-fatal — the digest pipeline continues even if the write
-    fails, and the website falls back to its Yahoo Finance path.
+    pipeline run.  Failure is non-fatal — the digest pipeline
+    continues even if the write fails, and the website falls back to
+    its in-browser Yahoo Finance path.
+
+    The ``source`` field records which of the multi-source chain
+    actually produced the value (``yfinance_history`` /
+    ``yfinance_fast_info`` / ``yahoo_v8_chart``).  The management
+    dashboard surfaces this so the operator can tell at a glance
+    which path is winning — and notice if a particular source has
+    been silently failing for days.
     """
     import json
     import datetime as _dt
@@ -320,7 +461,7 @@ def _persist_tsla_price_json(
         "change_str": change_str,
         "market_state": market_state,
         "fetched_at": _dt.datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
-        "source": "yahoo_finance_v8",
+        "source": source,
     }
     try:
         api_dir = Path(__file__).resolve().parent.parent.parent / "api"
