@@ -36,7 +36,7 @@ is a standalone X-posting script, not a podcast show.
 1. **Fetch** news sources (RSS, xAI/Grok web search, xAI ``x_search`` for Tesla stock quote)
 2. **Dedup** via ContentTracker (cross-episode) + entity dedup
 3. **Generate** digest text via xAI/Grok API
-4. **Synthesize** podcast audio via ElevenLabs TTS (`eleven_flash_v2_5`)
+4. **Synthesize** podcast audio via Grok TTS (`engine/tts.py`, WAV @ 48 kHz)
 5. **Mix** intro/outro music with voice (ffmpeg) — all shows (configurable per YAML)
 6. **Post** X thread via `engine/publisher.post_to_x()` + update RSS feed + commit output to git
 

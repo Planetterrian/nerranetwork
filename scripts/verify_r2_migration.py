@@ -4,7 +4,7 @@
 Usage:
     python scripts/verify_r2_migration.py
 
-Checks each <enclosure> URL in all 4 RSS feeds:
+Checks each <enclosure> URL in all podcast RSS feeds:
 - HTTP HEAD request (follows redirects)
 - Expects 200 status and audio/mpeg content type
 - Reports broken links
@@ -25,6 +25,14 @@ RSS_FEEDS = [
     "omni_view_podcast.rss",
     "fascinating_frontiers_podcast.rss",
     "planetterrian_podcast.rss",
+    "env_intel_podcast.rss",
+    "models_agents_podcast.rss",
+    "models_agents_beginners_podcast.rss",
+    "finansy_prosto_podcast.rss",
+    "privet_russian_podcast.rss",
+    "modern_investing_podcast.rss",
+    "unintended_consequences_podcast.rss",
+    "network.rss",
 ]
 
 

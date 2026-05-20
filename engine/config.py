@@ -521,7 +521,11 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         web_search_queries=data.get("web_search_queries", []),
         min_articles=data.get("min_articles", 3),
         min_articles_skip=data.get("min_articles_skip", 3),
-        min_audio_duration=data.get("min_audio_duration", 0),
+        min_audio_duration=int(
+            data.get("min_audio_duration")
+            or (data.get("audio") or {}).get("min_audio_duration")
+            or 0
+        ),
         max_weekly_cost_usd=float(data.get("max_weekly_cost_usd", 0.0)),
         llm=_build_nested(LLMConfig, data.get("llm")),
         tts=_build_nested(TTSConfig, data.get("tts")),

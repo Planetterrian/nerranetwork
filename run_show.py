@@ -427,17 +427,36 @@ def run(args: argparse.Namespace) -> None:
     logger.info("Episode number: %d", episode_num)
     metrics.episode_num = episode_num
 
-    # 2b. Checkpoint: skip if today's MP3 already exists (avoids re-running
-    # the full pipeline on retries after partial failures in later steps).
+    # 2b. Checkpoint: skip only when today's episode fully published.
+    # MP3 alone is NOT sufficient — a prior run may have synthesized
+    # audio but failed before RSS / R2 / git commit (May 2026 audit).
     expected_mp3 = digests_dir / config.episode.filename_pattern.format(
         prefix=config.episode.prefix, num=episode_num, date=today,
     )
-    if expected_mp3.exists() and not args.test:
+    from engine.publish_marker import (
+        is_publish_complete,
+        publish_marker_path,
+        write_publish_complete_marker,
+    )
+
+    publish_marker = publish_marker_path(digests_dir, today)
+    if is_publish_complete(publish_marker) and not args.test:
         logger.info(
-            "Checkpoint: %s already exists (%d bytes). Skipping pipeline.",
-            expected_mp3.name, expected_mp3.stat().st_size,
+            "Checkpoint: publish complete for %s (marker %s). Skipping.",
+            today.isoformat(), publish_marker.name,
         )
         return
+
+    if (
+        expected_mp3.exists()
+        and not is_publish_complete(publish_marker)
+        and not args.test
+    ):
+        logger.warning(
+            "MP3 %s exists but publish marker missing — re-running pipeline "
+            "to complete RSS/R2/newsletter (prior run failed mid-publish).",
+            expected_mp3.name,
+        )
 
     # 3. Tracker
     from engine.tracking import create_tracker, save_usage
@@ -1356,6 +1375,9 @@ def run(args: argparse.Namespace) -> None:
     from engine.newsletter_sanitizer import scrub_scaffold
     x_thread = scrub_scaffold(x_thread)
     x_thread = transform_daily_body(x_thread, slug=getattr(config, "slug", ""))
+    if args.show == "tesla":
+        from shows.hooks.tesla import scrub_unavailable_tsla_from_digest
+        x_thread = scrub_unavailable_tsla_from_digest(x_thread)
 
     # Save digest to file. Strip lone UTF-16 surrogates (the LLM
     # occasionally emits one); ``write_text`` would otherwise abort the
@@ -2197,7 +2219,8 @@ def run(args: argparse.Namespace) -> None:
 
         metrics.record("rss_update_duration_s", round(time.monotonic() - _t_rss, 2))
 
-        # 11b. Notify podcast directories (best-effort, non-blocking)
+        # 11b. Notify podcast directories (best-effort, non-blocking).
+        # CI no longer duplicates this ping after commit (May 2026 audit).
         from engine.publisher import notify_directories
         rss_url = f"{config.publishing.base_url}/{config.publishing.rss_file}"
         notify_directories(rss_url, show_name=config.publishing.rss_title)
@@ -2250,13 +2273,39 @@ def run(args: argparse.Namespace) -> None:
             from generate_html import generate_network_blog_index as _gen_net_blog
             _gen_net_blog()
             logger.info("Network blog index regenerated")
+
+            from engine.blog import regenerate_blog_rss_for_show_slug
+            _rss_blog = regenerate_blog_rss_for_show_slug(config.slug, PROJECT_ROOT)
+            if _rss_blog:
+                logger.info("Blog RSS regenerated: %s", _rss_blog.name)
         else:
             logger.debug("Show %s not in NETWORK_SHOWS, skipping blog generation", config.slug)
     except Exception as exc:
         logger.warning("Blog post generation failed (non-fatal): %s", exc)
 
+    # 12a-pre. Post-run validation (before newsletter/X so bad episodes
+    # don't email subscribers or tweet without audio).
+    from engine.post_run_validation import run_post_validation
+    validation_passed = run_post_validation(
+        mp3_path=final_mp3,
+        rss_path=rss_path,
+        digest_text=x_thread,
+        show_name=config.name,
+        episode_num=episode_num,
+    )
+    if not validation_passed:
+        logger.error("Post-run validation FAILED — exiting with error code")
+        save_usage(tracker, digests_dir)
+        sys.exit(1)
+
+    episode_published = bool(final_mp3 and final_mp3.exists())
+
     # 12b. Send newsletter
-    if config.newsletter.enabled and not args.skip_newsletter:
+    if (
+        episode_published
+        and config.newsletter.enabled
+        and not args.skip_newsletter
+    ):
         from engine.newsletter import send_show_newsletter
 
         try:
@@ -2301,7 +2350,7 @@ def run(args: argparse.Namespace) -> None:
 
     # 13. Post to X
     _t_x = time.monotonic()
-    if config.publishing.x_enabled and not args.skip_x:
+    if episode_published and config.publishing.x_enabled and not args.skip_x:
         from engine.publisher import post_to_x
         from engine.tracking import record_x_post
 
@@ -2329,20 +2378,6 @@ def run(args: argparse.Namespace) -> None:
     if config.publishing.x_enabled:
         metrics.record("x_post_duration_s", round(time.monotonic() - _t_x, 2))
 
-    # 14. Post-run validation
-    from engine.post_run_validation import run_post_validation
-    validation_passed = run_post_validation(
-        mp3_path=final_mp3,
-        rss_path=rss_path,
-        digest_text=x_thread,
-        show_name=config.name,
-        episode_num=episode_num,
-    )
-    if not validation_passed:
-        logger.error("Post-run validation FAILED — exiting with error code")
-        save_usage(tracker, digests_dir)
-        sys.exit(1)
-
     # 14b. Cleanup raw audio now that validation has passed
     if not args.skip_podcast and final_mp3 and final_mp3.exists():
         raw_mp3_cleanup = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}_raw.mp3"
@@ -2359,6 +2394,18 @@ def run(args: argparse.Namespace) -> None:
         logger.info("Pipeline summary: %s", metrics.summary())
     except Exception as exc:
         logger.warning("Metrics save failed (non-fatal): %s", exc)
+
+    _digest_marker_md = digests_dir / (
+        f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}.md"
+    )
+    if episode_published or _digest_marker_md.exists():
+        write_publish_complete_marker(
+            publish_marker,
+            show_slug=config.slug,
+            episode_num=episode_num,
+            date_iso=today.isoformat(),
+        )
+
     logger.info("=== %s complete ===", config.name)
 
 

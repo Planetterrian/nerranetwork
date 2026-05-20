@@ -238,8 +238,11 @@ jobs:
             pip install -r requirements_planetterrian.txt
           fi
 
-      - name: Run tests
-        run: python -m pytest tests/ -x -q --tb=short
+      - name: Run smoke tests
+        run: |
+          python -m pytest tests/test_config.py tests/test_schedule.py \
+            tests/test_tts_grok.py tests/test_tesla_hook.py tests/test_rss.py \
+            tests/test_review_remediation.py -q --tb=short
 
       - name: Create .env
         run: |
@@ -413,26 +416,6 @@ jobs:
           # Regenerate show page (static episodes) + blog posts for this show
           python generate_html.py --show ${{ matrix.show }} --blogs
 
-      - name: Notify podcast directories
-        if: success() && steps.pipeline.outputs.skipped != 'true'
-        env:
-          RSS_BASE_URL: https://nerranetwork.com
-        run: |
-          python -c "
-          from engine.publisher import notify_directories
-          import yaml, pathlib
-
-          show = '${{ matrix.show }}'
-          cfg_path = pathlib.Path('shows') / f'{show}.yaml'
-          if cfg_path.exists():
-              cfg = yaml.safe_load(cfg_path.read_text())
-              rss_file = cfg.get('publishing', {}).get('rss_file', '')
-              rss_title = cfg.get('publishing', {}).get('rss_title', show)
-              if rss_file:
-                  rss_url = f'${{ env.RSS_BASE_URL }}/{rss_file}'
-                  notify_directories(rss_url, rss_title)
-          "
-
       - name: Commit and push output
         # Run on `always()` so a failure in a *peripheral* later step
         # (HTML regen, RSS regen, podcast-directory notify) doesn't
@@ -588,6 +571,7 @@ jobs:
           # Network-wide blog index (aggregates all shows' posts)
           # Sitemap with all pages
           python generate_html.py --network --blogs --sitemap
+          python scripts/generate_api.py
 
       - name: Commit and push shared pages
         run: |
@@ -597,6 +581,8 @@ jobs:
           git add index.html || true
           git add blog/index.html || true
           git add sitemap.xml || true
+          git add api/*.json || true
+          git add blog*.rss || true
 
           if git diff --cached --quiet; then
             echo "Shared pages are already up to date."

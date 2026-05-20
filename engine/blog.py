@@ -826,3 +826,146 @@ def generate_network_blog_index_html(
     }
 
     return template.render(**context)
+
+
+# ---------------------------------------------------------------------------
+# Blog RSS regeneration
+# ---------------------------------------------------------------------------
+
+# Slug → digest subdirectory (only ``tesla`` differs from its slug).
+_DIGEST_DIRS = {
+    "tesla": "tesla_shorts_time",
+    "omni_view": "omni_view",
+    "fascinating_frontiers": "fascinating_frontiers",
+    "planetterrian": "planetterrian",
+    "env_intel": "env_intel",
+    "models_agents": "models_agents",
+    "models_agents_beginners": "models_agents_beginners",
+    "finansy_prosto": "finansy_prosto",
+    "modern_investing": "modern_investing",
+    "privet_russian": "privet_russian",
+    "unintended_consequences": "unintended_consequences",
+}
+
+
+def blog_rss_item_title(meta: dict, show_name: str) -> str:
+    """Title for blog RSS items — prefer hook over generic show-name headings."""
+    title = (meta.get("title") or "").strip()
+    hook = (meta.get("hook") or "").strip()
+    if hook and (not title or title == show_name.strip()):
+        return hook[:120] + ("..." if len(hook) > 120 else "")
+    return title or hook or show_name
+
+
+def collect_blog_posts_from_digests(
+    show_slug: str,
+    show_name: str,
+    digest_dir: Path,
+    *,
+    max_files: int = 200,
+) -> list[dict]:
+    """Build blog-RSS post dicts from committed episode markdown files."""
+    if not digest_dir.is_dir():
+        return []
+
+    md_files = sorted(digest_dir.glob("*.md"), reverse=True)[:max_files]
+    posts: list[dict] = []
+    for md_file in md_files:
+        try:
+            md_text = md_file.read_text(encoding="utf-8")
+            meta = extract_blog_metadata(
+                md_text, show_slug, md_file.name, file_path=md_file,
+            )
+            meta["show_slug"] = show_slug
+            meta["title"] = blog_rss_item_title(meta, show_name)
+            posts.append(meta)
+        except Exception as exc:
+            logger.warning("Skipping %s for blog RSS: %s", md_file.name, exc)
+    return posts
+
+
+def regenerate_show_blog_rss(
+    show_slug: str,
+    show_name: str,
+    project_root: Path,
+    *,
+    channel_image: str = "",
+) -> Path | None:
+    """Regenerate ``blog_{slug}.rss`` from digest markdown on disk."""
+    from engine.publisher import update_blog_rss
+
+    digest_dir = project_root / "digests" / _DIGEST_DIRS.get(show_slug, show_slug)
+    posts = collect_blog_posts_from_digests(show_slug, show_name, digest_dir)
+    if not posts:
+        logger.warning("No blog posts found for %s — skipping blog RSS", show_slug)
+        return None
+
+    rss_path = project_root / f"blog_{show_slug}.rss"
+    update_blog_rss(
+        rss_path,
+        posts,
+        channel_title=f"{show_name} Blog",
+        channel_link=f"https://nerranetwork.com/blog/{show_slug}/",
+        channel_description=f"Blog posts from {show_name} podcast episodes.",
+        channel_image=channel_image,
+        base_url="https://nerranetwork.com",
+        show_slug=show_slug,
+    )
+    return rss_path
+
+
+def regenerate_network_blog_rss(
+    project_root: Path,
+    network_shows: dict,
+) -> Path | None:
+    """Regenerate aggregated ``blog.rss`` across all shows."""
+    from engine.publisher import update_blog_rss
+
+    all_posts: list[dict] = []
+    for slug, cfg in network_shows.items():
+        show_name = cfg.get("name", slug)
+        digest_dir = project_root / "digests" / _DIGEST_DIRS.get(slug, slug)
+        for meta in collect_blog_posts_from_digests(slug, show_name, digest_dir):
+            all_posts.append(meta)
+
+    if not all_posts:
+        logger.warning("No posts for network blog RSS")
+        return None
+
+    rss_path = project_root / "blog.rss"
+    update_blog_rss(
+        rss_path,
+        all_posts,
+        channel_title="Nerra Network — Blog",
+        channel_link="https://nerranetwork.com/blog/",
+        channel_description="Blog posts from all Nerra Network podcast shows.",
+        channel_image="assets/nerra-logo-icon.svg",
+        base_url="https://nerranetwork.com",
+        sort_by_date=True,
+    )
+    return rss_path
+
+
+def regenerate_blog_rss_for_show_slug(
+    show_slug: str,
+    project_root: Path,
+) -> Path | None:
+    """Regenerate per-show (+ network) blog RSS using ``NETWORK_SHOWS`` metadata."""
+    try:
+        from generate_html import NETWORK_SHOWS
+    except ImportError:
+        logger.warning("generate_html not importable — cannot regenerate blog RSS")
+        return None
+
+    if show_slug not in NETWORK_SHOWS:
+        return None
+
+    cfg = NETWORK_SHOWS[show_slug]
+    per_show = regenerate_show_blog_rss(
+        show_slug,
+        cfg["name"],
+        project_root,
+        channel_image=cfg.get("podcast_image", ""),
+    )
+    regenerate_network_blog_rss(project_root, NETWORK_SHOWS)
+    return per_show

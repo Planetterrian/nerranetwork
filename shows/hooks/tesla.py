@@ -225,6 +225,34 @@ def _fetch_tsla_price() -> tuple[float, str]:
     return 0.0, "(price unavailable)"
 
 
+def is_price_publishable(price: float, change_str: str) -> bool:
+    """Return True when TSLA price is safe to ship in RSS / newsletter."""
+    if price <= 0:
+        return False
+    if "unavailable" in (change_str or "").lower():
+        return False
+    return _TSLA_PRICE_MIN <= price <= _TSLA_PRICE_MAX
+
+
+_TSLA_BAD_PRICE_LINE = re.compile(
+    r"^\*\*(?:REAL-TIME TSLA price|TSLA today):\*\*.*"
+    r"(?:\(price unavailable\)|\$0\.00\b)",
+    re.MULTILINE | re.IGNORECASE,
+)
+
+
+def scrub_unavailable_tsla_from_digest(text: str) -> str:
+    """Strip broken TSLA price lines before audience-facing publish."""
+    if not text:
+        return text
+    cleaned = _TSLA_BAD_PRICE_LINE.sub("", text)
+    if cleaned != text:
+        logger.warning(
+            "Scrubbed unavailable TSLA price line from digest before publish",
+        )
+    return cleaned
+
+
 def _validate_quote(
     price: float, prev_close: float, last_cached: float | None,
     source_name: str,

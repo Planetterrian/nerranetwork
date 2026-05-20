@@ -2,10 +2,10 @@ name: "Unintended Consequences"
 slug: unintended_consequences
 description: "A daily narrative podcast profiling inventions, policies, and systems that were meant to help — but triggered surprising, unintended consequences. From the Cobra Effect to social media algorithms, every episode follows a single case study through good intentions, implementation, unexpected fallout, and the lessons we can learn. Produced by the Nerra Network in Vancouver."
 
-# Narrative mode: this show is topic-queue-driven, not news-driven.
-# When set, the runner skips RSS fetch, slow-news fallback, and the
-# digest stage, and instead pulls the next unproduced topic from
-# ``topic_queue_file`` to feed straight into the podcast prompt.
+# Narrative mode: topic-queue-driven (no RSS fetch). The runner still
+# runs ``generate_digest()`` with topic template vars from
+# ``topic_queue_file`` (outline via unintended_consequences_episode.txt),
+# then ``podcast_chain`` expands into the full script.
 narrative_mode: true
 topic_queue_file: shows/topic_queues/unintended_consequences.yaml
 

@@ -2000,6 +2000,15 @@ def generate_all_blogs(*, dry_run=False):
     print("\n--- Network Blog Index ---")
     generate_network_blog_index(dry_run=dry_run, all_posts=all_posts)
 
+    if not dry_run:
+        from engine.blog import regenerate_network_blog_rss, regenerate_show_blog_rss
+        for slug, cfg in NETWORK_SHOWS.items():
+            regenerate_show_blog_rss(
+                slug, cfg["name"], ROOT, channel_image=cfg.get("podcast_image", ""),
+            )
+        regenerate_network_blog_rss(ROOT, NETWORK_SHOWS)
+        print("Blog RSS feeds regenerated for all shows")
+
 
 # ---------------------------------------------------------------------------
 # Sitemap generation

@@ -1012,9 +1012,12 @@ class TestHookExtraction:
 class TestRunShowPipeline:
     """Verify run_show.py works for all shows (dry-run only — no API calls)."""
 
-    ALL_SHOWS = ["tesla", "omni_view", "fascinating_frontiers",
-                 "planetterrian", "env_intel", "models_agents",
-                 "unintended_consequences"]
+    ALL_SHOWS = [
+        "tesla", "omni_view", "fascinating_frontiers", "planetterrian",
+        "env_intel", "models_agents", "models_agents_beginners",
+        "finansy_prosto", "modern_investing", "privet_russian",
+        "unintended_consequences",
+    ]
 
     @pytest.mark.parametrize("show", ALL_SHOWS)
     def test_dry_run(self, show):

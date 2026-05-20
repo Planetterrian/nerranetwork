@@ -297,6 +297,17 @@ class TestDefaultValues:
 class TestLoadConfig:
     """Tests for load_config using temporary YAML files."""
 
+    def test_min_audio_duration_from_audio_block(self, tmp_path):
+        data = {
+            "name": "Audio Gate Show",
+            "slug": "audio_gate",
+            "audio": {"min_audio_duration": 240},
+        }
+        p = tmp_path / "audio_gate.yaml"
+        p.write_text(yaml.dump(data), encoding="utf-8")
+        cfg = load_config(p)
+        assert cfg.min_audio_duration == 240
+
     def test_full_yaml(self, tmp_path):
         data = {
             "name": "Test Show",
