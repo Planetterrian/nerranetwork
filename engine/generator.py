@@ -920,6 +920,13 @@ def generate_digest(
     if prompt_suffix:
         prompt += prompt_suffix
 
+    ep_num = int(template_vars.get("episode_num") or 0)
+    if ep_num == 1:
+        from engine.first_episode import first_episode_digest_appendix
+        appendix = first_episode_digest_appendix(ep_num, config.name)
+        if appendix:
+            prompt += "\n\n" + appendix
+
     system_prompt = None
     if config.llm.system_prompt_file:
         sp_path = Path(config.llm.system_prompt_file)
@@ -1350,6 +1357,13 @@ def generate_podcast_script(
         The generated podcast script text.
     """
     prompt = load_prompt(config.llm.podcast_prompt_file, template_vars)
+
+    ep_num = int(template_vars.get("episode_num") or 0)
+    if ep_num == 1:
+        from engine.first_episode import first_episode_podcast_appendix
+        appendix = first_episode_podcast_appendix(ep_num, config.name)
+        if appendix:
+            prompt += "\n\n" + appendix
 
     system_prompt = None
     if config.llm.system_prompt_file:

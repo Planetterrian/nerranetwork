@@ -1187,6 +1187,32 @@ NETWORK_SHOWS = {
 }
 
 
+def _merge_scaffolded_network_registry() -> None:
+    """Overlay shows/network_meta.yaml (from scaffold_show.py) onto registries."""
+    meta_path = SHOWS_DIR / "network_meta.yaml"
+    if not meta_path.exists():
+        return
+    try:
+        import yaml as _yaml
+        extra = _yaml.safe_load(meta_path.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return
+    if not isinstance(extra, dict):
+        return
+    for slug, meta in extra.items():
+        if not isinstance(meta, dict):
+            continue
+        meta = dict(meta)
+        picker = meta.pop("picker_tags", None)
+        if slug not in NETWORK_SHOWS:
+            NETWORK_SHOWS[slug] = meta
+        if picker and slug not in _SHOW_PICKER_TAGS:
+            _SHOW_PICKER_TAGS[slug] = picker
+
+
+_merge_scaffolded_network_registry()
+
+
 # Per-show interest tags used by the "Find Your Show" picker on the
 # network landing page. Intentionally small and curated — every tag is a
 # button on the picker UI, and every show must claim at least one tag

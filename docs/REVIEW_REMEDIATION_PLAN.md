@@ -35,6 +35,8 @@ Tracking implementation of the full-network audit.
 | Blog post template RSS `<link rel="alternate">` | Done |
 | Refresh `docs/env_var_inventory.md` | Done |
 | `run_show.py` resume-publish-only path | Done |
+| New show scaffold (`scripts/scaffold_show.py`) | Done — see `docs/NEW_SHOW.md` |
+| Episode 1 debut LLM guidance | Done — `engine/first_episode.py` |
 | RSS historical show-notes backfill | Deferred |
 | Git history MP3 purge | Deferred (needs operator + `git filter-repo`) |
 | YouTube quota / enable more shows | Deferred (ops / quota request) |

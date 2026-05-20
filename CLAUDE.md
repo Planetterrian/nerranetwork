@@ -137,6 +137,12 @@ nerranetworks/
   standard, delayed-intro, dual-music). Music files in `assets/music/`.
   Shows without music files gracefully fall back to voice-only.
 
+## Adding a new show
+
+Use `python scripts/scaffold_show.py` to generate YAML, prompts, output dirs, and
+`shows/network_meta.yaml` in one step. Episode 1 gets extra debut guidance via
+`engine/first_episode.py`. See [`docs/NEW_SHOW.md`](docs/NEW_SHOW.md).
+
 ## Conventions
 
 ### Environment Variables
