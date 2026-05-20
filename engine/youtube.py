@@ -37,7 +37,7 @@ from typing import List, Optional
 
 from tenacity import (
     retry,
-    retry_if_exception_type,
+    retry_if_exception,
     stop_after_attempt,
     wait_exponential,
 )
@@ -45,10 +45,12 @@ from tenacity import (
 logger = logging.getLogger(__name__)
 
 
-# OAuth scopes required for upload + thumbnail set + channel read.
+# OAuth scopes required for upload + thumbnail set + channel read +
+# caption track upload (``captions.insert`` needs force-ssl).
 YOUTUBE_SCOPES = [
     "https://www.googleapis.com/auth/youtube.upload",
     "https://www.googleapis.com/auth/youtube",
+    "https://www.googleapis.com/auth/youtube.force-ssl",
 ]
 
 # Google's OAuth token endpoint. Held as a constant rather than an env
@@ -171,8 +173,22 @@ def _build_video_body(
     }
 
 
+def _is_retryable_upload_error(exc: BaseException) -> bool:
+    """Retry transient failures only — not 400 invalidDescription / auth."""
+    if _is_retryable_http_error(exc):
+        return True
+    try:
+        from googleapiclient.errors import HttpError
+    except ImportError:  # pragma: no cover
+        return False
+    if isinstance(exc, HttpError):
+        status = getattr(getattr(exc, "resp", None), "status", 0)
+        return status in (429, 500, 502, 503, 504)
+    return False
+
+
 @retry(
-    retry=retry_if_exception_type(Exception) & retry_if_exception_type(Exception),
+    retry=retry_if_exception(_is_retryable_upload_error),
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=2, min=4, max=30),
     reraise=True,

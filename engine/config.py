@@ -305,6 +305,15 @@ class YouTubeConfig:
     publish_long_form: bool = True
     publish_shorts: bool = True
     short_duration_seconds: float = 55.0
+    # Seconds into the final mixed MP3 where the Shorts clip begins.
+    # When unset, ``shorts_start_mode`` picks the offset (default ``voice``
+    # = ``audio.voice_intro_delay`` only — not intro_duration + delay).
+    shorts_start_offset: Optional[float] = None
+    # ``voice`` | ``first_chapter`` — see engine.youtube_shorts.
+    shorts_start_mode: str = "voice"
+    # ``always`` | ``alternate_episodes`` — skip Shorts on odd episode
+    # numbers to halve upload quota during phased rollout.
+    shorts_upload_schedule: str = "always"
     tags: List[str] = field(default_factory=list)
     synthetic_disclosure: str = ""
     podcast_playlist_id: Optional[str] = None
@@ -354,6 +363,16 @@ class YouTubeConfig:
     # Defaults to a generic photojournalism cue; shows can override
     # (e.g. UC's narrative tone might want "documentary archival photo").
     grok_image_descriptor: str = "photorealistic news photo"
+    # Optional path (relative to repo root) to a text template for the
+    # long-form description body. Placeholders: {hook}, {episode_num},
+    # {show_name}, {today_str}. When empty, uses digest paragraphs.
+    description_prompt_file: str = ""
+    # Appended to the description as an operator copy-paste block (YouTube
+    # has no API for pinned comments without extra scopes).
+    pinned_comment_template: str = ""
+    # When true and vertical scene images exist, build a 1080×1920 Shorts
+    # thumbnail instead of reusing the 1280×720 long-form thumb.
+    shorts_thumbnail_from_scene: bool = True
 
 
 @dataclass

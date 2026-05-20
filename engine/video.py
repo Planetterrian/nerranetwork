@@ -40,6 +40,19 @@ from typing import List, Optional, Sequence
 logger = logging.getLogger(__name__)
 
 
+def _run_ffmpeg(cmd: List[str], *, label: str) -> None:
+    """Run ffmpeg and attach stderr to the raised error for CI debugging."""
+    try:
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as exc:
+        stderr = (exc.stderr or exc.stdout or "").strip()
+        if len(stderr) > 2000:
+            stderr = stderr[-2000:]
+        raise RuntimeError(
+            f"{label} failed (exit {exc.returncode}): {stderr or '(no stderr)'}"
+        ) from exc
+
+
 # ---------------------------------------------------------------------------
 # Encoding profile
 # ---------------------------------------------------------------------------
@@ -366,7 +379,7 @@ def _render_slideshow(scene_paths: Sequence[Path], output: Path,
                          width=width, height=height, fps=fps)
     logger.info("Rendering slideshow (%d scenes, %dx%d) → %s",
                 len(scene_paths), width, height, output.name)
-    subprocess.run(cmd, check=True, capture_output=True)
+    _run_ffmpeg(cmd, label="slideshow render")
     return output
 
 
@@ -757,7 +770,7 @@ def build_long_form_video(
     )
     logger.info("Building long-form video → %s (slideshow=%s, captions=%s)",
                 output_path.name, bg_is_video, bool(subtitles_path))
-    subprocess.run(cmd, check=True, capture_output=True)
+    _run_ffmpeg(cmd, label="long-form video")
     return output_path
 
 
@@ -846,5 +859,5 @@ def build_short_video(audio_path: Path, cover_path: Path,
         "Building Shorts video (%.1fs from %.1fs) → %s",
         duration, start_offset, output_path.name,
     )
-    subprocess.run(cmd, check=True, capture_output=True)
+    _run_ffmpeg(cmd, label="shorts video")
     return output_path

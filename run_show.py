@@ -137,6 +137,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Publish only: MP3 + digest on disk, skip fetch/TTS (for mid-publish retries)",
     )
+    parser.add_argument(
+        "--resume-youtube",
+        action="store_true",
+        help="YouTube only: MP3 + digest on disk, rebuild/upload videos (skips TTS/RSS/X)",
+    )
     return parser.parse_args()
 
 
@@ -262,9 +267,12 @@ def _preflight_checks(config, *, dry_run: bool = False) -> None:
             if env_name and not os.environ.get(env_name):
                 logger.warning("R2 env var %s (%s) is empty — upload may fail", env_name, env_attr)
 
-    # YouTube preflight — when publishing is enabled, surface common
-    # misconfigurations as warnings (not fatal — YouTube is non-blocking
-    # for the rest of the pipeline).
+    # YouTube preflight — fatal for enabled shows (catch before API spend).
+    from engine.youtube_preflight import (
+        validate_youtube_show_ready,
+        youtube_network_quota_warning,
+    )
+    issues.extend(validate_youtube_show_ready(config, PROJECT_ROOT))
     yt_cfg = getattr(config, "youtube", None)
     if yt_cfg and getattr(yt_cfg, "enabled", False):
         playlist_id = (
@@ -278,12 +286,9 @@ def _preflight_checks(config, *, dry_run: bool = False) -> None:
                 "in shows/%s.yaml after creating the playlist in Studio.",
                 config.slug, config.slug,
             )
-        privacy = (getattr(yt_cfg, "privacy_status", "public") or "").strip()
-        if privacy not in ("public", "unlisted", "private"):
-            issues.append(
-                f"youtube.privacy_status={privacy!r} is invalid — "
-                "must be public, unlisted, or private."
-            )
+        quota_warn = youtube_network_quota_warning(PROJECT_ROOT)
+        if quota_warn:
+            logger.warning(quota_warn)
 
     # Newsletter preflight — when enabled, validate the status enum
     # before we hit Buttondown with a guaranteed-400 request.
@@ -445,7 +450,12 @@ def run(args: argparse.Namespace) -> None:
     )
 
     publish_marker = publish_marker_path(digests_dir, today)
-    if is_publish_complete(publish_marker) and not args.test:
+    resume_youtube_requested = getattr(args, "resume_youtube", False)
+    if (
+        is_publish_complete(publish_marker)
+        and not args.test
+        and not resume_youtube_requested
+    ):
         logger.info(
             "Checkpoint: publish complete for %s (marker %s). Skipping.",
             today.isoformat(), publish_marker.name,
@@ -454,9 +464,29 @@ def run(args: argparse.Namespace) -> None:
 
     from engine.pipeline_resume import (
         apply_resume_args,
+        apply_resume_youtube_args,
         load_resume_publish_state,
         should_resume_publish,
+        should_resume_youtube,
     )
+
+    digest_md_path = digests_dir / (
+        f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}.md"
+    )
+    resume_youtube = should_resume_youtube(
+        expected_mp3,
+        digest_md_path,
+        test_mode=args.test,
+        dry_run=args.dry_run,
+        force=resume_youtube_requested,
+    )
+    if resume_youtube_requested and not resume_youtube:
+        logger.error(
+            "Resume YouTube requires MP3 and digest on disk (%s, %s).",
+            expected_mp3.name,
+            digest_md_path.name,
+        )
+        sys.exit(1)
 
     resume_publish = should_resume_publish(
         expected_mp3,
@@ -465,7 +495,14 @@ def run(args: argparse.Namespace) -> None:
         dry_run=args.dry_run,
         force=getattr(args, "resume_publish", False),
     )
-    if resume_publish and not getattr(args, "resume_publish", False):
+    if resume_youtube:
+        args = apply_resume_youtube_args(args)
+        resume_publish = True
+        logger.info(
+            "Resume YouTube: rebuilding/uploading videos for %s (skipping TTS).",
+            expected_mp3.name,
+        )
+    elif resume_publish and not getattr(args, "resume_publish", False):
         logger.warning(
             "MP3 %s exists but publish marker missing — resume publish only "
             "(skipping fetch/TTS; YouTube skipped to avoid duplicate uploads).",
@@ -2915,8 +2952,15 @@ def _publish_youtube(
         find_transcript_for_episode,
         transcript_to_srt,
     )
-    from engine.publisher import generate_episode_thumbnail
+    from engine.publisher import (
+        generate_episode_thumbnail,
+        generate_shorts_thumbnail,
+    )
     from engine.video import build_long_form_video, build_short_video
+    from engine.youtube_shorts import (
+        resolve_shorts_start_offset,
+        should_upload_shorts_today,
+    )
     from engine.video_metadata import (
         build_long_form_metadata,
         build_short_metadata,
@@ -2942,8 +2986,9 @@ def _publish_youtube(
     long_video_path = work_dir / f"{base_name}.mp4"
     short_video_path = work_dir / f"{base_name}_short.mp4"
     thumbnail_path = work_dir / f"{base_name}_thumb.jpg"
+    short_thumbnail_path = work_dir / f"{base_name}_short_thumb.jpg"
+    show_label = config.publishing.rss_title or config.name
 
-    # Thumbnail is shared between long-form and Shorts.
     try:
         generate_episode_thumbnail(
             cover_path,
@@ -2951,10 +2996,10 @@ def _publish_youtube(
             date_str=today_str,
             output_path=thumbnail_path,
             hook=hook,
-            show_name=config.publishing.rss_title or config.name,
+            show_name=show_label,
         )
     except Exception as exc:  # pragma: no cover - thumbnail rendering best-effort
-        logger.warning("Thumbnail generation failed: %s", exc)
+        logger.warning("Long-form thumbnail generation failed: %s", exc)
         thumbnail_path = None  # type: ignore[assignment]
 
     # ---- Build captions SRT (optional — falls back to no captions) ----
@@ -3080,6 +3125,29 @@ def _publish_youtube(
     else:  # pexels (default)
         _run_pexels_path(into_long=True, into_short=True)
 
+    # Shorts thumbnail: vertical crop from cover or first vertical scene.
+    shorts_thumb_base = cover_path
+    if getattr(yt, "shorts_thumbnail_from_scene", True) and len(short_scene_paths) >= 1:
+        shorts_thumb_base = short_scene_paths[0]
+    try:
+        generate_shorts_thumbnail(
+            shorts_thumb_base,
+            episode_num=episode_num,
+            date_str=today_str,
+            output_path=short_thumbnail_path,
+            hook=hook,
+            show_name=show_label,
+        )
+    except Exception as exc:  # pragma: no cover
+        logger.warning("Shorts thumbnail generation failed: %s", exc)
+        short_thumbnail_path = thumbnail_path  # fallback to long-form thumb
+
+    from engine.audio import get_audio_duration as _audio_dur
+    try:
+        _ep_duration = _audio_dur(str(final_mp3)) or 0.0
+    except Exception:
+        _ep_duration = 0.0
+
     # ---- Long-form ----
     long_url = ""
     if config.youtube.publish_long_form:
@@ -3169,12 +3237,14 @@ def _publish_youtube(
             }
 
     # ---- Shorts ----
-    if config.youtube.publish_shorts:
+    if config.youtube.publish_shorts and should_upload_shorts_today(
+        config, episode_num=episode_num,
+    ):
         try:
-            short_offset = float(
-                getattr(config.audio, "intro_duration", 0.0) or 0.0
-            ) + float(
-                getattr(config.audio, "voice_intro_delay", 0.0) or 0.0
+            short_offset = resolve_shorts_start_offset(
+                config,
+                chapters_path if chapters_path.exists() else None,
+                audio_duration=_ep_duration,
             )
             duration = float(config.youtube.short_duration_seconds or 55.0)
             build_short_video(
@@ -3192,6 +3262,11 @@ def _publish_youtube(
                 hook=hook,
                 long_form_url=long_url,
             )
+            short_thumb = (
+                short_thumbnail_path
+                if short_thumbnail_path and Path(short_thumbnail_path).exists()
+                else thumbnail_path
+            )
             short_upload = upload_video(
                 short_video_path,
                 credentials=credentials,
@@ -3201,7 +3276,7 @@ def _publish_youtube(
                 category_id=meta["category_id"],
                 default_language=meta["default_language"],
                 privacy_status=config.youtube.privacy_status,
-                thumbnail_path=thumbnail_path,
+                thumbnail_path=short_thumb,
             )
             result["short_url"] = short_upload.watch_url
             playlist_id = (

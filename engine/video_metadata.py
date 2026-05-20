@@ -18,9 +18,12 @@ import json
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
+# Repo root — two levels up from engine/
+_REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 YOUTUBE_TITLE_MAX = 100
@@ -171,6 +174,43 @@ def _format_chapter_block(chapters: List[Dict]) -> str:
 # Tag handling
 # ---------------------------------------------------------------------------
 
+def _load_description_body_from_template(
+    config: Any,
+    *,
+    episode_num: int,
+    today_str: str,
+    hook: str,
+) -> str:
+    """Optional YouTube-specific description intro from a prompt file."""
+    yt = getattr(config, "youtube", None)
+    rel = (getattr(yt, "description_prompt_file", None) or "").strip()
+    if not rel:
+        return ""
+    path = Path(rel)
+    if not path.is_file():
+        path = _REPO_ROOT / rel
+    if not path.exists():
+        logger.warning("youtube.description_prompt_file missing: %s", path)
+        return ""
+    template = path.read_text(encoding="utf-8").strip()
+    rss_title = (
+        getattr(config.publishing, "rss_title", "")
+        or getattr(config, "name", "")
+    )
+    try:
+        body = template.format(
+            hook=(hook or "").strip(),
+            episode_num=episode_num,
+            today_str=today_str,
+            show_name=rss_title,
+            rss_link=getattr(config.publishing, "rss_link", "") or "",
+        )
+    except KeyError as exc:
+        logger.warning("description template format error: %s", exc)
+        return ""
+    return _strip_markdown(body)
+
+
 def _build_tags(
     extra: List[str],
     keywords: List[str],
@@ -245,10 +285,18 @@ def build_long_form_metadata(
         f"utm_source=youtube&utm_medium=video&utm_campaign=ep{episode_num}"
     )
 
-    # First few paragraphs of the digest become the description body.
-    body_source = _strip_markdown(digest_text or "")
-    paragraphs = [p.strip() for p in body_source.split("\n\n") if p.strip()]
-    body = "\n\n".join(paragraphs[:4]).strip()
+    template_body = _load_description_body_from_template(
+        config,
+        episode_num=episode_num,
+        today_str=today_str,
+        hook=hook,
+    )
+    if template_body:
+        body = template_body
+    else:
+        body_source = _strip_markdown(digest_text or "")
+        paragraphs = [p.strip() for p in body_source.split("\n\n") if p.strip()]
+        body = "\n\n".join(paragraphs[:4]).strip()
 
     chapters_block = _format_chapter_block(_read_chapters(chapters_path))
 
@@ -288,6 +336,19 @@ def build_long_form_metadata(
     disclosure = (config.youtube.synthetic_disclosure or "").strip()
     if disclosure:
         pieces.append(disclosure)
+    pinned = (getattr(config.youtube, "pinned_comment_template", None) or "").strip()
+    if pinned:
+        try:
+            pinned = pinned.format(
+                hook=(hook or "").strip(),
+                episode_num=episode_num,
+                today_str=today_str,
+                show_page_url=rss_link,
+                full_episode_url=audio_url or "",
+            )
+        except KeyError:
+            pass
+        pieces.append("—\nSuggested pinned comment:\n" + pinned)
 
     # Final safety strip — YouTube rejects any description containing
     # ``<`` or ``>`` with HTTP 400 ``invalidDescription``. ``_strip_markdown``

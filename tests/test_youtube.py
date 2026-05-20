@@ -42,6 +42,8 @@ def _make_config(**overrides):
         synthetic_disclosure=overrides.get(
             "synthetic_disclosure", "AI Disclosure: synthesized voice."
         ),
+        description_prompt_file=overrides.get("description_prompt_file", ""),
+        pinned_comment_template=overrides.get("pinned_comment_template", ""),
         enabled=True,
         channel="en",
     )
@@ -217,6 +219,32 @@ def test_build_tags_respects_500_char_cap():
 # ---------------------------------------------------------------------------
 # Metadata builders
 # ---------------------------------------------------------------------------
+
+def test_youtube_oauth_scopes_include_force_ssl():
+    from engine.youtube import YOUTUBE_SCOPES
+    assert "https://www.googleapis.com/auth/youtube.force-ssl" in YOUTUBE_SCOPES
+
+
+def test_build_long_form_metadata_uses_description_template(tmp_path):
+    prompt = tmp_path / "yt_intro.txt"
+    prompt.write_text(
+        "Ep {episode_num}: {hook}\nShow: {show_name}",
+        encoding="utf-8",
+    )
+    cfg = _make_config()
+    cfg.youtube.description_prompt_file = str(prompt)
+    meta = vm.build_long_form_metadata(
+        cfg,
+        episode_num=5,
+        today_str="2026-05-20",
+        hook="Cybertruck news",
+        digest_text="# Digest\n\n**Should not appear** in YouTube body.",
+        audio_url="",
+    )
+    assert "Ep 5" in meta["description"]
+    assert "Cybertruck news" in meta["description"]
+    assert "Should not appear" not in meta["description"]
+
 
 def test_build_long_form_metadata_truncates_title_to_100_chars():
     config = _make_config(rss_title="X" * 80)
