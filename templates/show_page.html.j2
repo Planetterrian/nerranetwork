@@ -9,8 +9,8 @@
   "name": {{ show_name | tojson }},
   "description": {{ meta_description | tojson }},
   "url": {{ canonical_url | tojson }},
-  "webFeed": "{{ path_prefix }}{{ rss_file }}"{% if podcast_image_url %},
-  "image": "{{ podcast_image_url }}"{% endif %}{% if apple_podcasts_url %},
+  "webFeed": {{ schema_web_feed | tojson }}{% if schema_image_url %},
+  "image": {{ schema_image_url | tojson }}{% endif %}{% if apple_podcasts_url %},
   "sameAs": [{{ apple_podcasts_url | tojson }}]{% endif %}
 }
 </script>

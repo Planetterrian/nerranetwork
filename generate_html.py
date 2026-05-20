@@ -1565,6 +1565,8 @@ def generate_show_page(slug, *, dry_run=False):
         "show_color": cfg["brand_color"],
         "show_color_dark": cfg.get("brand_color_dark", cfg["brand_color"]),
         "canonical_url": f"{GITHUB_RAW}/{cfg['show_page']}",
+        "schema_web_feed": f"{GITHUB_RAW}/{cfg['rss_file']}",
+        "schema_image_url": f"{GITHUB_RAW}/{cfg['podcast_image'].lstrip('/')}",
         "rss_url": f"{prefix}{cfg['rss_file']}",
         "related_show": related_show_data,
         "blog_page": f"blog/{cfg['slug']}/index.html",

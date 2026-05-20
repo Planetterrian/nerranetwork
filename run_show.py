@@ -132,6 +132,11 @@ def parse_args() -> argparse.Namespace:
                         help="Skip newsletter sending")
     parser.add_argument("--skip-youtube", action="store_true",
                         help="Skip YouTube video build + upload")
+    parser.add_argument(
+        "--resume-publish",
+        action="store_true",
+        help="Publish only: MP3 + digest on disk, skip fetch/TTS (for mid-publish retries)",
+    )
     return parser.parse_args()
 
 
@@ -447,14 +452,23 @@ def run(args: argparse.Namespace) -> None:
         )
         return
 
-    if (
-        expected_mp3.exists()
-        and not is_publish_complete(publish_marker)
-        and not args.test
-    ):
+    from engine.pipeline_resume import (
+        apply_resume_args,
+        load_resume_publish_state,
+        should_resume_publish,
+    )
+
+    resume_publish = should_resume_publish(
+        expected_mp3,
+        publish_marker,
+        test_mode=args.test,
+        dry_run=args.dry_run,
+        force=getattr(args, "resume_publish", False),
+    )
+    if resume_publish and not getattr(args, "resume_publish", False):
         logger.warning(
-            "MP3 %s exists but publish marker missing — re-running pipeline "
-            "to complete RSS/R2/newsletter (prior run failed mid-publish).",
+            "MP3 %s exists but publish marker missing — resume publish only "
+            "(skipping fetch/TTS; YouTube skipped to avoid duplicate uploads).",
             expected_mp3.name,
         )
 
@@ -469,237 +483,308 @@ def run(args: argparse.Namespace) -> None:
     except Exception as exc:
         logger.warning("Content lake init failed (non-fatal): %s", exc)
 
-    # 4 & 5. Pre-fetch hook + RSS fetch in parallel (concurrent.futures)
-    hook_module = _load_hook(args.show)
+    final_mp3 = None
+    audio_duration = 0.0
+    x_thread = ""
+    hook = None
+    digest_md = None
     extra_context: dict = {}
+    articles: list = []
 
-    from engine.content_tracker import ContentTracker, SHOW_SECTION_PATTERNS
-    from engine.utils import deduplicate_by_entity
-
-    # Prefer YAML-provided section patterns; fall back to hardcoded registry
-    section_patterns = (
-        config.content_tracking.section_patterns
-        if config.content_tracking.section_patterns
-        else SHOW_SECTION_PATTERNS.get(config.slug, {})
-    )
-    ct_cfg = config.content_tracking
-    content_tracker = ContentTracker(
-        config.slug,
-        digests_dir,
-        quote_author_cooldown_days=getattr(ct_cfg, "quote_author_cooldown_days", 30),
-    )
-    content_tracker.load()
-
-    feed_dicts = [{"url": s.url, "label": s.label} for s in config.sources]
-
-    from concurrent.futures import ThreadPoolExecutor, as_completed
-
-    def _run_hook():
-        if hook_module and hasattr(hook_module, "pre_fetch"):
-            logger.info("Running pre-fetch hook for %s ...", args.show)
-            return hook_module.pre_fetch(
-                config, episode_num=episode_num, today_str=today_str,
-            ) or {}
-        return {}
-
-    def _run_fetch():
-        min_articles = getattr(config, "min_articles", None) or 3
-        return _fetch_with_expansion(
-            feed_dicts, config.keywords, content_tracker, min_articles,
-            config=config,
-        )
-
-    def _run_x_fetch():
-        # Skip the X API call if X posting is disabled for this show —
-        # before May 12 2026 the fetch ran whenever ``x_accounts`` was
-        # configured, regardless of ``x_enabled``, so shows with X
-        # posting off still paid for X API calls and ingested X posts
-        # that were never used. Operator-caught during the May 12 2026
-        # pipeline audit.
-        if not config.x_accounts or not config.publishing.x_enabled:
-            return []
-        from engine.fetcher import fetch_x_posts
-        return fetch_x_posts(config.x_accounts, keywords=config.keywords)
-
-    articles = []
-    x_posts = []
-    rss_fetch_failed = False
-    narrative_topic: dict = {}
-
-    # Narrative-mode shows (Unintended Consequences) bypass RSS fetch +
-    # slow-news fallback entirely — their input is a curated topic
-    # queue, not daily news. Pick the next unproduced topic up-front;
-    # if the queue is exhausted, skip the episode rather than producing
-    # content with empty inputs.
-    if getattr(config, "narrative_mode", False):
-        from engine.topic_queue import pick_next_topic
-        queue_path = PROJECT_ROOT / config.topic_queue_file
-        narrative_topic = pick_next_topic(queue_path) or {}
-        if not narrative_topic:
-            _skip_episode(
-                "narrative_queue_empty",
-                f"Topic queue {config.topic_queue_file} has no unproduced "
-                f"entries. Append new topics to keep the show running.",
-            )
-            return  # _skip_episode raises SystemExit, but mypy doesn't know that
-        logger.info(
-            "Narrative mode: picked topic %r (%s)",
-            narrative_topic.get("id"), narrative_topic.get("title"),
-        )
-        metrics.record("narrative_mode", True)
-        metrics.record("narrative_topic_id", narrative_topic.get("id", ""))
-        # Skip the fetch threadpool entirely — articles stays [].
-
-    with metrics.stage("fetch_and_dedup"):
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            hook_future = executor.submit(_run_hook)
-            fetch_future = executor.submit(_run_fetch)
-            x_fetch_future = executor.submit(_run_x_fetch)
-
-            try:
-                extra_context = hook_future.result(timeout=60)
-            except Exception as exc:
-                logger.warning(
-                    "Pre-fetch hook failed for %s: %s — continuing without hook data",
-                    args.show, exc,
-                )
-                extra_context = {}
-
-            try:
-                articles = fetch_future.result(timeout=120)
-            except Exception as exc:
-                logger.error("RSS fetch failed: %s", exc)
-                articles = []
-                # Distinguish a structural fetch failure from a genuine
-                # slow-news day. Without this flag, slow_news mode would
-                # happily ship an evergreen-only episode when feeds are
-                # actually broken, masking the outage from operators.
-                rss_fetch_failed = True
-
-            try:
-                x_posts = x_fetch_future.result(timeout=120)
-                if x_posts:
-                    tracker["services"]["x_api"]["search_calls"] = len(x_posts)
-            except Exception as exc:
-                logger.warning("X account fetch failed: %s — continuing with RSS only", exc)
-                x_posts = []
-
-    if rss_fetch_failed and not articles and not x_posts:
-        _skip_episode(
-            "rss_fetch_failed",
-            "RSS fetch raised and no fallback content available. "
-            "Refusing to ship evergreen filler on a fetch outage.",
-        )
-
-    # Merge X posts into articles, deduplicating against existing RSS articles
-    if x_posts:
-        logger.info("Merging %d X posts from %d account(s) into %d RSS articles",
-                     len(x_posts), len(config.x_accounts), len(articles))
-        from engine.utils import calculate_similarity
-        _X_DEDUP_THRESHOLD = 0.65
-        filtered_x = []
-        for xp in x_posts:
-            xp_title = (xp.get("title") or xp.get("summary") or "")[:200]
-            if not xp_title:
-                filtered_x.append(xp)
-                continue
-            is_dup = False
-            for art in articles:
-                art_title = (art.get("title") or art.get("summary") or "")[:200]
-                if art_title and calculate_similarity(xp_title, art_title) >= _X_DEDUP_THRESHOLD:
-                    logger.info("X post deduped against RSS article (%.0f%%): '%s'",
-                                calculate_similarity(xp_title, art_title) * 100,
-                                xp_title[:80])
-                    is_dup = True
-                    break
-            if not is_dup:
-                filtered_x.append(xp)
-        skipped = len(x_posts) - len(filtered_x)
-        if skipped:
-            logger.info("Cross-dedup filtered %d X post(s) that overlapped with RSS articles", skipped)
-        articles.extend(filtered_x)
-        x_posts = filtered_x  # Update for accurate count below
-    logger.info("After fetch + dedup: %d articles (incl. %d X posts)", len(articles), len(x_posts))
-
-    # 5a2. Web search fallback — if articles below quality threshold, try Grok web_search
-    web_articles: list = []
-    min_quality = getattr(config, "min_articles", 6) or 6
-    if len(articles) < min_quality and getattr(config, "web_search_queries", None):
-        logger.info(
-            "Articles (%d) below quality threshold (%d) — trying web search ...",
-            len(articles), min_quality,
-        )
+    if resume_publish:
+        args = apply_resume_args(args)
         try:
-            from engine.fetcher import fetch_web_search_articles
-            web_articles = fetch_web_search_articles(
-                config.web_search_queries,
-                keywords=config.keywords,
+            rs = load_resume_publish_state(
+                config,
+                digests_dir=digests_dir,
+                episode_num=episode_num,
+                today=today,
+                today_str=today_str,
+                expected_mp3=expected_mp3,
+                show_slug=args.show,
+                extract_hook=_extract_hook,
+                load_hook=_load_hook,
             )
-            if web_articles:
-                from engine.utils import calculate_similarity
-                # Dedup web articles against existing RSS+X articles
-                deduped_web = []
-                for wa in web_articles:
-                    wa_title = wa.get("title", "")[:200]
-                    is_dup = any(
-                        calculate_similarity(wa_title, a.get("title", "")[:200]) >= 0.65
-                        for a in articles
-                    )
-                    if not is_dup:
-                        deduped_web.append(wa)
-                logger.info(
-                    "Web search: %d articles found, %d after cross-dedup",
-                    len(web_articles), len(deduped_web),
+        except FileNotFoundError as exc:
+            logger.error("Resume publish aborted: %s", exc)
+            sys.exit(1)
+        x_thread = rs.x_thread
+        hook = rs.hook
+        final_mp3 = rs.final_mp3
+        audio_duration = rs.audio_duration
+        digest_md = rs.digest_md
+        extra_context = rs.extra_context
+    else:
+        # 4 & 5. Pre-fetch hook + RSS fetch in parallel (concurrent.futures)
+        hook_module = _load_hook(args.show)
+        extra_context: dict = {}
+
+        from engine.content_tracker import ContentTracker, SHOW_SECTION_PATTERNS
+        from engine.utils import deduplicate_by_entity
+
+        # Prefer YAML-provided section patterns; fall back to hardcoded registry
+        section_patterns = (
+            config.content_tracking.section_patterns
+            if config.content_tracking.section_patterns
+            else SHOW_SECTION_PATTERNS.get(config.slug, {})
+        )
+        ct_cfg = config.content_tracking
+        content_tracker = ContentTracker(
+            config.slug,
+            digests_dir,
+            quote_author_cooldown_days=getattr(ct_cfg, "quote_author_cooldown_days", 30),
+        )
+        content_tracker.load()
+
+        feed_dicts = [{"url": s.url, "label": s.label} for s in config.sources]
+
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        def _run_hook():
+            if hook_module and hasattr(hook_module, "pre_fetch"):
+                logger.info("Running pre-fetch hook for %s ...", args.show)
+                return hook_module.pre_fetch(
+                    config, episode_num=episode_num, today_str=today_str,
+                ) or {}
+            return {}
+
+        def _run_fetch():
+            min_articles = getattr(config, "min_articles", None) or 3
+            return _fetch_with_expansion(
+                feed_dicts, config.keywords, content_tracker, min_articles,
+                config=config,
+            )
+
+        def _run_x_fetch():
+            # Skip the X API call if X posting is disabled for this show —
+            # before May 12 2026 the fetch ran whenever ``x_accounts`` was
+            # configured, regardless of ``x_enabled``, so shows with X
+            # posting off still paid for X API calls and ingested X posts
+            # that were never used. Operator-caught during the May 12 2026
+            # pipeline audit.
+            if not config.x_accounts or not config.publishing.x_enabled:
+                return []
+            from engine.fetcher import fetch_x_posts
+            return fetch_x_posts(config.x_accounts, keywords=config.keywords)
+
+        articles = []
+        x_posts = []
+        rss_fetch_failed = False
+        narrative_topic: dict = {}
+
+        # Narrative-mode shows (Unintended Consequences) bypass RSS fetch +
+        # slow-news fallback entirely — their input is a curated topic
+        # queue, not daily news. Pick the next unproduced topic up-front;
+        # if the queue is exhausted, skip the episode rather than producing
+        # content with empty inputs.
+        if getattr(config, "narrative_mode", False):
+            from engine.topic_queue import pick_next_topic
+            queue_path = PROJECT_ROOT / config.topic_queue_file
+            narrative_topic = pick_next_topic(queue_path) or {}
+            if not narrative_topic:
+                _skip_episode(
+                    "narrative_queue_empty",
+                    f"Topic queue {config.topic_queue_file} has no unproduced "
+                    f"entries. Append new topics to keep the show running.",
                 )
-                articles.extend(deduped_web)
-                web_articles = deduped_web
-        except Exception as exc:
-            logger.warning("Web search fallback failed (non-fatal): %s", exc)
-
-    logger.info(
-        "Content pipeline: %d RSS + %d X + %d web_search = %d total",
-        len(articles) - len(x_posts) - len(web_articles),
-        len(x_posts), len(web_articles), len(articles),
-    )
-    metrics.record("article_count", len(articles))
-
-    if not articles and not getattr(config, "narrative_mode", False):
-        logger.warning("No articles found even after expanded search. Skipping episode.")
-        _skip_episode("no_articles", "No articles found even after expanded search.")
-
-    # Skip episode if digest would be too thin — or activate slow news mode
-    skip_threshold = getattr(config, "min_articles_skip", 3) or 3
-    slow_news_mode = False
-    selected_segs: list = []
-
-    # Helper: query content lake for recently covered topics (for segment selection)
-    def _get_covered_topics() -> set:
-        try:
-            from engine.content_lake import query_show_range
-            from datetime import timedelta
-            hist = query_show_range(
-                args.show,
-                (today - timedelta(days=30)).isoformat(),
-                today.isoformat(),
-            )
-            topics: set = set()
-            for ep in hist:
-                topics.update(t.lower() for t in ep.get("topics", []))
-            return topics
-        except Exception as exc:
-            logger.warning("Content lake query failed (dedup disabled): %s", exc)
-            return set()
-
-    if (
-        len(articles) < skip_threshold
-        and not getattr(config, "narrative_mode", False)
-    ):
-        from engine.slow_news import is_slow_news_day, load_segment_library, select_segments
-
-        if is_slow_news_day(len(articles), config):
+                return  # _skip_episode raises SystemExit, but mypy doesn't know that
             logger.info(
-                "Slow news day: %d article(s) below threshold %d — activating evergreen segments",
-                len(articles), skip_threshold,
+                "Narrative mode: picked topic %r (%s)",
+                narrative_topic.get("id"), narrative_topic.get("title"),
+            )
+            metrics.record("narrative_mode", True)
+            metrics.record("narrative_topic_id", narrative_topic.get("id", ""))
+            # Skip the fetch threadpool entirely — articles stays [].
+
+        with metrics.stage("fetch_and_dedup"):
+            with ThreadPoolExecutor(max_workers=3) as executor:
+                hook_future = executor.submit(_run_hook)
+                fetch_future = executor.submit(_run_fetch)
+                x_fetch_future = executor.submit(_run_x_fetch)
+
+                try:
+                    extra_context = hook_future.result(timeout=60)
+                except Exception as exc:
+                    logger.warning(
+                        "Pre-fetch hook failed for %s: %s — continuing without hook data",
+                        args.show, exc,
+                    )
+                    extra_context = {}
+
+                try:
+                    articles = fetch_future.result(timeout=120)
+                except Exception as exc:
+                    logger.error("RSS fetch failed: %s", exc)
+                    articles = []
+                    # Distinguish a structural fetch failure from a genuine
+                    # slow-news day. Without this flag, slow_news mode would
+                    # happily ship an evergreen-only episode when feeds are
+                    # actually broken, masking the outage from operators.
+                    rss_fetch_failed = True
+
+                try:
+                    x_posts = x_fetch_future.result(timeout=120)
+                    if x_posts:
+                        tracker["services"]["x_api"]["search_calls"] = len(x_posts)
+                except Exception as exc:
+                    logger.warning("X account fetch failed: %s — continuing with RSS only", exc)
+                    x_posts = []
+
+        if rss_fetch_failed and not articles and not x_posts:
+            _skip_episode(
+                "rss_fetch_failed",
+                "RSS fetch raised and no fallback content available. "
+                "Refusing to ship evergreen filler on a fetch outage.",
+            )
+
+        # Merge X posts into articles, deduplicating against existing RSS articles
+        if x_posts:
+            logger.info("Merging %d X posts from %d account(s) into %d RSS articles",
+                         len(x_posts), len(config.x_accounts), len(articles))
+            from engine.utils import calculate_similarity
+            _X_DEDUP_THRESHOLD = 0.65
+            filtered_x = []
+            for xp in x_posts:
+                xp_title = (xp.get("title") or xp.get("summary") or "")[:200]
+                if not xp_title:
+                    filtered_x.append(xp)
+                    continue
+                is_dup = False
+                for art in articles:
+                    art_title = (art.get("title") or art.get("summary") or "")[:200]
+                    if art_title and calculate_similarity(xp_title, art_title) >= _X_DEDUP_THRESHOLD:
+                        logger.info("X post deduped against RSS article (%.0f%%): '%s'",
+                                    calculate_similarity(xp_title, art_title) * 100,
+                                    xp_title[:80])
+                        is_dup = True
+                        break
+                if not is_dup:
+                    filtered_x.append(xp)
+            skipped = len(x_posts) - len(filtered_x)
+            if skipped:
+                logger.info("Cross-dedup filtered %d X post(s) that overlapped with RSS articles", skipped)
+            articles.extend(filtered_x)
+            x_posts = filtered_x  # Update for accurate count below
+        logger.info("After fetch + dedup: %d articles (incl. %d X posts)", len(articles), len(x_posts))
+
+        # 5a2. Web search fallback — if articles below quality threshold, try Grok web_search
+        web_articles: list = []
+        min_quality = getattr(config, "min_articles", 6) or 6
+        if len(articles) < min_quality and getattr(config, "web_search_queries", None):
+            logger.info(
+                "Articles (%d) below quality threshold (%d) — trying web search ...",
+                len(articles), min_quality,
+            )
+            try:
+                from engine.fetcher import fetch_web_search_articles
+                web_articles = fetch_web_search_articles(
+                    config.web_search_queries,
+                    keywords=config.keywords,
+                )
+                if web_articles:
+                    from engine.utils import calculate_similarity
+                    # Dedup web articles against existing RSS+X articles
+                    deduped_web = []
+                    for wa in web_articles:
+                        wa_title = wa.get("title", "")[:200]
+                        is_dup = any(
+                            calculate_similarity(wa_title, a.get("title", "")[:200]) >= 0.65
+                            for a in articles
+                        )
+                        if not is_dup:
+                            deduped_web.append(wa)
+                    logger.info(
+                        "Web search: %d articles found, %d after cross-dedup",
+                        len(web_articles), len(deduped_web),
+                    )
+                    articles.extend(deduped_web)
+                    web_articles = deduped_web
+            except Exception as exc:
+                logger.warning("Web search fallback failed (non-fatal): %s", exc)
+
+        logger.info(
+            "Content pipeline: %d RSS + %d X + %d web_search = %d total",
+            len(articles) - len(x_posts) - len(web_articles),
+            len(x_posts), len(web_articles), len(articles),
+        )
+        metrics.record("article_count", len(articles))
+
+        if not articles and not getattr(config, "narrative_mode", False):
+            logger.warning("No articles found even after expanded search. Skipping episode.")
+            _skip_episode("no_articles", "No articles found even after expanded search.")
+
+        # Skip episode if digest would be too thin — or activate slow news mode
+        skip_threshold = getattr(config, "min_articles_skip", 3) or 3
+        slow_news_mode = False
+        selected_segs: list = []
+
+        # Helper: query content lake for recently covered topics (for segment selection)
+        def _get_covered_topics() -> set:
+            try:
+                from engine.content_lake import query_show_range
+                from datetime import timedelta
+                hist = query_show_range(
+                    args.show,
+                    (today - timedelta(days=30)).isoformat(),
+                    today.isoformat(),
+                )
+                topics: set = set()
+                for ep in hist:
+                    topics.update(t.lower() for t in ep.get("topics", []))
+                return topics
+            except Exception as exc:
+                logger.warning("Content lake query failed (dedup disabled): %s", exc)
+                return set()
+
+        if (
+            len(articles) < skip_threshold
+            and not getattr(config, "narrative_mode", False)
+        ):
+            from engine.slow_news import is_slow_news_day, load_segment_library, select_segments
+
+            if is_slow_news_day(len(articles), config):
+                logger.info(
+                    "Slow news day: %d article(s) below threshold %d — activating evergreen segments",
+                    len(articles), skip_threshold,
+                )
+                library = load_segment_library(config.slow_news.library_file)
+                recent_seg_ids = content_tracker.get_recent_segment_ids(
+                    days=config.slow_news.cooldown_days,
+                )
+                selected_segs = select_segments(
+                    library,
+                    recent_seg_ids,
+                    max_segments=config.slow_news.max_segments,
+                    mode=config.slow_news.selection_mode,
+                    covered_topics=_get_covered_topics(),
+                )
+                slow_news_mode = True
+                metrics.record("slow_news_mode", True)
+            else:
+                logger.warning(
+                    "Only %d article(s) found — below minimum threshold (%d) for a quality episode. Skipping.",
+                    len(articles), skip_threshold,
+                )
+                _skip_episode(
+                    "insufficient_articles",
+                    f"Only {len(articles)} article(s) found — below minimum threshold ({skip_threshold}).",
+                )
+
+        # 5b2. Thin content detection — article count is above skip threshold but
+        #      below the quality threshold (min_articles).  Activate slow news mode
+        #      to supplement with evergreen segments so the LLM has enough material.
+        min_quality = getattr(config, "min_articles", 6) or 6
+        if (
+            not slow_news_mode
+            and len(articles) < min_quality
+            and config.slow_news.enabled
+        ):
+            from engine.slow_news import load_segment_library, select_segments
+
+            logger.warning(
+                "Thin content: %d articles (skip threshold %d met, quality "
+                "threshold %d not met) — supplementing with evergreen segments",
+                len(articles), skip_threshold, min_quality,
             )
             library = load_segment_library(config.slow_news.library_file)
             recent_seg_ids = content_tracker.get_recent_segment_ids(
@@ -714,1104 +799,1079 @@ def run(args: argparse.Namespace) -> None:
             )
             slow_news_mode = True
             metrics.record("slow_news_mode", True)
+            metrics.record("slow_news_trigger", "thin_content")
+
+        # 5c. Pre-dedup cap: high-volume shows (OV with 28 general-news feeds)
+        # can fetch 200-300 raw articles.  Pairwise dedup is O(n²), so 288
+        # articles → ~41K comparisons → 80s.  Capping at 150 keeps the dedup
+        # stage under 30s while still seeing enough variety for quality selection.
+        MAX_RAW_BEFORE_DEDUP = 150
+        if len(articles) > MAX_RAW_BEFORE_DEDUP:
+            logger.info(
+                "Pre-dedup cap: %d → %d articles (keeping most recent / highest relevance)",
+                len(articles), MAX_RAW_BEFORE_DEDUP,
+            )
+            articles = articles[:MAX_RAW_BEFORE_DEDUP]
+
+        # 5d. Sort by relevance_score desc to select the best articles for the
+        # cap, then restore chronological order for the LLM prompt.  Prompt order
+        # influences the model's output format — reordering articles can cause the
+        # LLM to break the structured digest template (headings, numbered items).
+        articles.sort(
+            key=lambda a: (a.get("relevance_score", 0.0), a.get("published_date", "")),
+            reverse=True,
+        )
+
+        # 5e. Cap article count to prevent prompt bloat and quality degradation
+        MAX_ARTICLES_FOR_LLM = 25
+        if len(articles) > MAX_ARTICLES_FOR_LLM:
+            logger.info(
+                "Capping articles from %d to %d to prevent prompt bloat",
+                len(articles), MAX_ARTICLES_FOR_LLM,
+            )
+            articles = articles[:MAX_ARTICLES_FOR_LLM]
+
+        # 5f. Restore chronological order for the prompt — LLMs follow the digest
+        # format template more reliably when articles appear newest-first by feed,
+        # not reordered by an internal score the model doesn't see.
+        articles.sort(key=lambda a: a.get("published_date", ""), reverse=True)
+
+        # 6. Build template vars for digest prompt
+        # Regex to strip dateline suffixes that RSS sources (e.g. Teslarati)
+        # embed in article titles — e.g. "Tesla Model 2 Rises April 12, 2026,
+        # 1:54 AM PST".  The published_date field already carries this info.
+        _DATELINE_TAIL = re.compile(
+            r"\s*(?:January|February|March|April|May|June|July|August|September|"
+            r"October|November|December)\s+\d{1,2},?\s+\d{4},?\s+\d{1,2}:\d{2}\s*(?:AM|PM)\s*(?:PST|PDT|EST|EDT|CST|CDT|UTC|GMT)?\s*$",
+            re.IGNORECASE,
+        )
+
+        news_lines = []
+        for i, art in enumerate(articles, 1):
+            title = art.get("title", "Untitled")
+            title = _DATELINE_TAIL.sub("", title).rstrip(" :—–-")
+            desc = art.get("description", "")
+            url = art.get("url", "")
+            source = art.get("source_name", "Unknown")
+            pub = art.get("published_date", "")
+            news_lines.append(
+                f"{i}. **{title}** — {source}"
+                + (f" ({pub})" if pub else "")
+                + f"\n   {desc}\n   URL: {url}"
+            )
+        news_section = "\n\n".join(news_lines)
+
+        # Get content tracker summary for the LLM to avoid cross-episode repetition
+        content_tracker_summary = content_tracker.get_summary_for_prompt()
+        if content_tracker_summary:
+            logger.info("Injecting content tracker summary into LLM prompt (%d chars)", len(content_tracker_summary))
+
+        # Get recent deep dive topics for freshness enforcement
+        recent_deep_dives = content_tracker.get_recent_deep_dive_topics(max_items=14)
+        if recent_deep_dives:
+            deep_dive_topics_text = "\n".join(f"- {t}" for t in recent_deep_dives)
+            logger.info("Injecting %d recent deep dive topics into prompt", len(recent_deep_dives))
         else:
-            logger.warning(
-                "Only %d article(s) found — below minimum threshold (%d) for a quality episode. Skipping.",
-                len(articles), skip_threshold,
+            deep_dive_topics_text = "(No previous deep dives — you have full freedom to choose any topic.)"
+
+        template_vars = {
+            "today_str": today_str,
+            "date_human": today_str,  # alias used by Omni View prompts
+            "news_section": news_section,
+            "sections_json": news_section,  # alias used by Omni View digest prompt
+            "episode_num": episode_num,
+            "recent_content_summary": content_tracker_summary,
+            "recent_deep_dive_topics": deep_dive_topics_text,
+        }
+        # Narrative-mode shows feed a topic from the queue into the digest
+        # prompt instead of news articles. Stage the topic vars here so the
+        # downstream digest prompt template can resolve ``{topic_title}``,
+        # ``{topic_brief}``, and ``{topic_category}``. (The actual queue
+        # pick + skip-when-empty happens further up — see narrative_mode
+        # branch around the fetch stage.)
+        if getattr(config, "narrative_mode", False):
+            narrative_topic = locals().get("narrative_topic") or {}
+            template_vars["topic_title"] = narrative_topic.get("title", "")
+            template_vars["topic_brief"] = narrative_topic.get("brief", "")
+            template_vars["topic_category"] = narrative_topic.get("category", "")
+        # Slow news day context injection
+        if slow_news_mode and selected_segs:
+            from engine.slow_news import build_slow_news_prompt_context
+
+            # Gather previous angle summaries for freshness enforcement
+            previous_angles: dict = {}
+            for seg in selected_segs:
+                history = content_tracker.get_segment_history(seg["id"], limit=3)
+                angles = [h["summary"] for h in history if h.get("summary")]
+                if angles:
+                    previous_angles[seg["id"]] = angles
+
+            template_vars["slow_news_context"] = build_slow_news_prompt_context(
+                articles, selected_segs, config, template_vars, previous_angles,
             )
-            _skip_episode(
-                "insufficient_articles",
-                f"Only {len(articles)} article(s) found — below minimum threshold ({skip_threshold}).",
-            )
-
-    # 5b2. Thin content detection — article count is above skip threshold but
-    #      below the quality threshold (min_articles).  Activate slow news mode
-    #      to supplement with evergreen segments so the LLM has enough material.
-    min_quality = getattr(config, "min_articles", 6) or 6
-    if (
-        not slow_news_mode
-        and len(articles) < min_quality
-        and config.slow_news.enabled
-    ):
-        from engine.slow_news import load_segment_library, select_segments
-
-        logger.warning(
-            "Thin content: %d articles (skip threshold %d met, quality "
-            "threshold %d not met) — supplementing with evergreen segments",
-            len(articles), skip_threshold, min_quality,
-        )
-        library = load_segment_library(config.slow_news.library_file)
-        recent_seg_ids = content_tracker.get_recent_segment_ids(
-            days=config.slow_news.cooldown_days,
-        )
-        selected_segs = select_segments(
-            library,
-            recent_seg_ids,
-            max_segments=config.slow_news.max_segments,
-            mode=config.slow_news.selection_mode,
-            covered_topics=_get_covered_topics(),
-        )
-        slow_news_mode = True
-        metrics.record("slow_news_mode", True)
-        metrics.record("slow_news_trigger", "thin_content")
-
-    # 5c. Pre-dedup cap: high-volume shows (OV with 28 general-news feeds)
-    # can fetch 200-300 raw articles.  Pairwise dedup is O(n²), so 288
-    # articles → ~41K comparisons → 80s.  Capping at 150 keeps the dedup
-    # stage under 30s while still seeing enough variety for quality selection.
-    MAX_RAW_BEFORE_DEDUP = 150
-    if len(articles) > MAX_RAW_BEFORE_DEDUP:
-        logger.info(
-            "Pre-dedup cap: %d → %d articles (keeping most recent / highest relevance)",
-            len(articles), MAX_RAW_BEFORE_DEDUP,
-        )
-        articles = articles[:MAX_RAW_BEFORE_DEDUP]
-
-    # 5d. Sort by relevance_score desc to select the best articles for the
-    # cap, then restore chronological order for the LLM prompt.  Prompt order
-    # influences the model's output format — reordering articles can cause the
-    # LLM to break the structured digest template (headings, numbered items).
-    articles.sort(
-        key=lambda a: (a.get("relevance_score", 0.0), a.get("published_date", "")),
-        reverse=True,
-    )
-
-    # 5e. Cap article count to prevent prompt bloat and quality degradation
-    MAX_ARTICLES_FOR_LLM = 25
-    if len(articles) > MAX_ARTICLES_FOR_LLM:
-        logger.info(
-            "Capping articles from %d to %d to prevent prompt bloat",
-            len(articles), MAX_ARTICLES_FOR_LLM,
-        )
-        articles = articles[:MAX_ARTICLES_FOR_LLM]
-
-    # 5f. Restore chronological order for the prompt — LLMs follow the digest
-    # format template more reliably when articles appear newest-first by feed,
-    # not reordered by an internal score the model doesn't see.
-    articles.sort(key=lambda a: a.get("published_date", ""), reverse=True)
-
-    # 6. Build template vars for digest prompt
-    # Regex to strip dateline suffixes that RSS sources (e.g. Teslarati)
-    # embed in article titles — e.g. "Tesla Model 2 Rises April 12, 2026,
-    # 1:54 AM PST".  The published_date field already carries this info.
-    _DATELINE_TAIL = re.compile(
-        r"\s*(?:January|February|March|April|May|June|July|August|September|"
-        r"October|November|December)\s+\d{1,2},?\s+\d{4},?\s+\d{1,2}:\d{2}\s*(?:AM|PM)\s*(?:PST|PDT|EST|EDT|CST|CDT|UTC|GMT)?\s*$",
-        re.IGNORECASE,
-    )
-
-    news_lines = []
-    for i, art in enumerate(articles, 1):
-        title = art.get("title", "Untitled")
-        title = _DATELINE_TAIL.sub("", title).rstrip(" :—–-")
-        desc = art.get("description", "")
-        url = art.get("url", "")
-        source = art.get("source_name", "Unknown")
-        pub = art.get("published_date", "")
-        news_lines.append(
-            f"{i}. **{title}** — {source}"
-            + (f" ({pub})" if pub else "")
-            + f"\n   {desc}\n   URL: {url}"
-        )
-    news_section = "\n\n".join(news_lines)
-
-    # Get content tracker summary for the LLM to avoid cross-episode repetition
-    content_tracker_summary = content_tracker.get_summary_for_prompt()
-    if content_tracker_summary:
-        logger.info("Injecting content tracker summary into LLM prompt (%d chars)", len(content_tracker_summary))
-
-    # Get recent deep dive topics for freshness enforcement
-    recent_deep_dives = content_tracker.get_recent_deep_dive_topics(max_items=14)
-    if recent_deep_dives:
-        deep_dive_topics_text = "\n".join(f"- {t}" for t in recent_deep_dives)
-        logger.info("Injecting %d recent deep dive topics into prompt", len(recent_deep_dives))
-    else:
-        deep_dive_topics_text = "(No previous deep dives — you have full freedom to choose any topic.)"
-
-    template_vars = {
-        "today_str": today_str,
-        "date_human": today_str,  # alias used by Omni View prompts
-        "news_section": news_section,
-        "sections_json": news_section,  # alias used by Omni View digest prompt
-        "episode_num": episode_num,
-        "recent_content_summary": content_tracker_summary,
-        "recent_deep_dive_topics": deep_dive_topics_text,
-    }
-    # Narrative-mode shows feed a topic from the queue into the digest
-    # prompt instead of news articles. Stage the topic vars here so the
-    # downstream digest prompt template can resolve ``{topic_title}``,
-    # ``{topic_brief}``, and ``{topic_category}``. (The actual queue
-    # pick + skip-when-empty happens further up — see narrative_mode
-    # branch around the fetch stage.)
-    if getattr(config, "narrative_mode", False):
-        narrative_topic = locals().get("narrative_topic") or {}
-        template_vars["topic_title"] = narrative_topic.get("title", "")
-        template_vars["topic_brief"] = narrative_topic.get("brief", "")
-        template_vars["topic_category"] = narrative_topic.get("category", "")
-    # Slow news day context injection
-    if slow_news_mode and selected_segs:
-        from engine.slow_news import build_slow_news_prompt_context
-
-        # Gather previous angle summaries for freshness enforcement
-        previous_angles: dict = {}
-        for seg in selected_segs:
-            history = content_tracker.get_segment_history(seg["id"], limit=3)
-            angles = [h["summary"] for h in history if h.get("summary")]
-            if angles:
-                previous_angles[seg["id"]] = angles
-
-        template_vars["slow_news_context"] = build_slow_news_prompt_context(
-            articles, selected_segs, config, template_vars, previous_angles,
-        )
-    else:
-        template_vars["slow_news_context"] = ""
-
-    # Cross-show topic awareness from content lake (avoid redundancy across shows)
-    try:
-        from engine.content_lake import query_all_shows_range
-        from datetime import timedelta
-        cross_start = (today - timedelta(days=7)).isoformat()
-        cross_end = today.isoformat()
-        recent_cross = query_all_shows_range(cross_start, cross_end)
-        other_show_topics = [
-            ep for ep in recent_cross
-            if ep.get("show_slug") != args.show and ep.get("headlines")
-        ]
-        if other_show_topics:
-            lines = []
-            for ep in other_show_topics[-10:]:  # Last 10 episodes from other shows
-                show_label = ep.get("show_name", ep.get("show_slug", ""))
-                date_label = ep.get("date", "")
-                headlines = ep.get("headlines", [])[:3]
-                if headlines:
-                    lines.append(f"- {show_label} ({date_label}): {'; '.join(headlines)}")
-            if lines:
-                template_vars["cross_show_context"] = (
-                    "Topics recently covered by other Nerra Network shows "
-                    "(avoid redundancy):\n" + "\n".join(lines)
-                )
-                logger.info("Injecting cross-show context (%d shows) into digest prompt", len(lines))
-        if "cross_show_context" not in template_vars:
-            template_vars["cross_show_context"] = (
-                "(No recent cross-network coverage to dedupe against today.)"
-            )
-    except Exception as exc:
-        logger.debug("Cross-show context unavailable (non-fatal): %s", exc)
-        template_vars["cross_show_context"] = (
-            "(Cross-network context unavailable — proceed without dedupe signal.)"
-        )
-
-    # Merge extra context from hooks (e.g. price, change_str, x_posts_section)
-    template_vars.update(extra_context)
-
-    # 7. Generate digest
-    #
-    # Sunday weekly-recap mode (May 2026 schedule overhaul). When the
-    # show has ``weekly_recap_on_sunday: true`` and today is Sunday,
-    # short-circuit the news-fetch + LLM digest stage by synthesising
-    # a digest from the past 7 days of canonical episodes via the
-    # content lake. The rest of the pipeline (podcast script gen,
-    # TTS, publish) runs unchanged on this synthetic digest, so
-    # listeners get the same narrative quality as a daily episode.
-    is_weekly_recap = (
-        bool(getattr(config, "weekly_recap_on_sunday", False))
-        and today.weekday() == 6
-    )
-    from engine.generator import generate_digest, LLMRefusalError
-    if is_weekly_recap:
-        logger.info("Sunday weekly-recap mode active for %s.", config.slug)
-        from engine.weekly_recap import build_weekly_recap_digest
-        x_thread = build_weekly_recap_digest(
-            config.slug, config.name, today,
-        )
-        if not x_thread:
-            logger.warning(
-                "Weekly recap could not be synthesised (insufficient "
-                "content lake data) — falling back to daily fetch.",
-            )
-            is_weekly_recap = False
         else:
-            metrics.record("weekly_recap_mode", True)
-    if not is_weekly_recap:
-        logger.info("Generating digest ...")
+            template_vars["slow_news_context"] = ""
+
+        # Cross-show topic awareness from content lake (avoid redundancy across shows)
         try:
-            with metrics.stage("generate_digest"):
-                x_thread = generate_digest(template_vars, config, tracker=tracker)
-        except LLMRefusalError as e:
-            logger.error("PIPELINE ABORTED: %s", e)
-            logger.error(
-                "The LLM refused to generate content. This typically means the news "
-                "sources had insufficient relevant content. Check source feeds and "
-                "consider re-running later."
-            )
-            save_usage(tracker, digests_dir)
-            sys.exit(1)
-
-    # Record episode content in the cross-episode tracker
-    if section_patterns:
-        _article_urls = [a.get("url", "") for a in articles if a.get("url")]
-        _article_titles = [a.get("title", "") for a in articles if a.get("title")]
-        content_tracker.record_episode(
-            x_thread, section_patterns,
-            source_urls=_article_urls,
-            source_titles=_article_titles,
-        )
-        content_tracker.save()
-
-    # Record slow-news segment metadata for cooldown tracking & freshness
-    if slow_news_mode and selected_segs:
-        import datetime as _dt
-        today_iso = _dt.date.today().isoformat()
-        for ep in content_tracker.data.get("episodes", []):
-            if ep.get("date") == today_iso:
-                ep["slow_news"] = True
-                ep["slow_news_segments"] = [s["id"] for s in selected_segs]
-                ep["slow_news_segment_summaries"] = _extract_segment_summaries(
-                    x_thread, selected_segs,
-                )
-                break
-        content_tracker.save()
-        logger.info(
-            "Recorded slow-news segments: %s",
-            [s["id"] for s in selected_segs],
-        )
-
-    # 7b. Post-generation digest validation — catch structure issues before TTS.
-    #      If critical sections are missing, retry digest generation once with an
-    #      explicit instruction to include them.
-    #
-    # Skip entirely when in Sunday weekly-recap mode. Operator caught
-    # (May 10 2026) the recap digest produced by ``build_weekly_recap_digest``
-    # being silently OVERWRITTEN here: the daily-format validator
-    # rejected the recap (missing "Top 10 News Items", "Tesla First
-    # Principles", etc. — sections that don't apply on a recap day),
-    # the retry path called ``generate_digest`` with the live news
-    # template, and the synthesised recap content got replaced by a
-    # daily digest from TODAY's news. Six of seven recap-eligible
-    # shows shipped daily content on May 10 with the metric still
-    # claiming ``weekly_recap_mode: True``. M&A survived only because
-    # its validator config didn't enforce conflicting sections. Recaps
-    # have their own fixed shape ("This Week's Top Stories") and
-    # don't need the daily-format validator's protection.
-    from engine.validation import validate_digest as _validate_digest, SHOW_VALIDATION_CONFIGS
-    _val_factory = SHOW_VALIDATION_CONFIGS.get(config.slug)
-    _exact_dups: list = []  # Populated by validate_digest for 100% cross-episode matches
-    if _val_factory and not is_weekly_recap:
-        _val_config = _val_factory()
-        _recent = content_tracker.get_recent_headlines(days=7)
-        _val_passed, _val_issues, _exact_dups = _validate_digest(
-            x_thread, _val_config,
-            section_patterns=section_patterns,
-            recent_headlines=_recent,
-        )
-        # Near-verbatim within-episode duplicates (>= 80%): strip the later
-        # occurrence from the digest and continue rather than aborting the
-        # entire episode.  A single repeated story is not worth killing an
-        # otherwise good episode — especially when X posts added fresh content.
-        _critical_dup_issues = []
-        for _issue in _val_issues:
-            if "Duplicate within" not in _issue:
-                continue
-            _m = re.search(r"similarity\s+(\d+)%", _issue)
-            if _m and int(_m.group(1)) >= 80:
-                _critical_dup_issues.append(_issue)
-        if _critical_dup_issues:
-            logger.warning(
-                "Digest has %d near-verbatim (>=80%%) intra-episode duplicate(s) — "
-                "stripping duplicates and continuing: %s",
-                len(_critical_dup_issues), "; ".join(_critical_dup_issues),
-            )
-            from engine.generator import _strip_duplicate_stories
-            x_thread = _strip_duplicate_stories(
-                x_thread, threshold=0.75, show_name=config.name,
-            )
-        if not _val_passed:
-            # Check for critical missing sections (non-optional)
-            _missing = [
-                i for i in _val_issues
-                if "missing from digest" in i.lower()
+            from engine.content_lake import query_all_shows_range
+            from datetime import timedelta
+            cross_start = (today - timedelta(days=7)).isoformat()
+            cross_end = today.isoformat()
+            recent_cross = query_all_shows_range(cross_start, cross_end)
+            other_show_topics = [
+                ep for ep in recent_cross
+                if ep.get("show_slug") != args.show and ep.get("headlines")
             ]
-            if _missing:
-                logger.warning(
-                    "Digest missing %d critical section(s): %s — retrying once ...",
-                    len(_missing), "; ".join(_missing),
+            if other_show_topics:
+                lines = []
+                for ep in other_show_topics[-10:]:  # Last 10 episodes from other shows
+                    show_label = ep.get("show_name", ep.get("show_slug", ""))
+                    date_label = ep.get("date", "")
+                    headlines = ep.get("headlines", [])[:3]
+                    if headlines:
+                        lines.append(f"- {show_label} ({date_label}): {'; '.join(headlines)}")
+                if lines:
+                    template_vars["cross_show_context"] = (
+                        "Topics recently covered by other Nerra Network shows "
+                        "(avoid redundancy):\n" + "\n".join(lines)
+                    )
+                    logger.info("Injecting cross-show context (%d shows) into digest prompt", len(lines))
+            if "cross_show_context" not in template_vars:
+                template_vars["cross_show_context"] = (
+                    "(No recent cross-network coverage to dedupe against today.)"
                 )
-                _section_names = [
-                    m.split("'")[1] for m in _missing if "'" in m
+        except Exception as exc:
+            logger.debug("Cross-show context unavailable (non-fatal): %s", exc)
+            template_vars["cross_show_context"] = (
+                "(Cross-network context unavailable — proceed without dedupe signal.)"
+            )
+
+        # Merge extra context from hooks (e.g. price, change_str, x_posts_section)
+        template_vars.update(extra_context)
+
+        # 7. Generate digest
+        #
+        # Sunday weekly-recap mode (May 2026 schedule overhaul). When the
+        # show has ``weekly_recap_on_sunday: true`` and today is Sunday,
+        # short-circuit the news-fetch + LLM digest stage by synthesising
+        # a digest from the past 7 days of canonical episodes via the
+        # content lake. The rest of the pipeline (podcast script gen,
+        # TTS, publish) runs unchanged on this synthetic digest, so
+        # listeners get the same narrative quality as a daily episode.
+        is_weekly_recap = (
+            bool(getattr(config, "weekly_recap_on_sunday", False))
+            and today.weekday() == 6
+        )
+        from engine.generator import generate_digest, LLMRefusalError
+        if is_weekly_recap:
+            logger.info("Sunday weekly-recap mode active for %s.", config.slug)
+            from engine.weekly_recap import build_weekly_recap_digest
+            x_thread = build_weekly_recap_digest(
+                config.slug, config.name, today,
+            )
+            if not x_thread:
+                logger.warning(
+                    "Weekly recap could not be synthesised (insufficient "
+                    "content lake data) — falling back to daily fetch.",
+                )
+                is_weekly_recap = False
+            else:
+                metrics.record("weekly_recap_mode", True)
+        if not is_weekly_recap:
+            logger.info("Generating digest ...")
+            try:
+                with metrics.stage("generate_digest"):
+                    x_thread = generate_digest(template_vars, config, tracker=tracker)
+            except LLMRefusalError as e:
+                logger.error("PIPELINE ABORTED: %s", e)
+                logger.error(
+                    "The LLM refused to generate content. This typically means the news "
+                    "sources had insufficient relevant content. Check source feeds and "
+                    "consider re-running later."
+                )
+                save_usage(tracker, digests_dir)
+                sys.exit(1)
+
+        # Record episode content in the cross-episode tracker
+        if section_patterns:
+            _article_urls = [a.get("url", "") for a in articles if a.get("url")]
+            _article_titles = [a.get("title", "") for a in articles if a.get("title")]
+            content_tracker.record_episode(
+                x_thread, section_patterns,
+                source_urls=_article_urls,
+                source_titles=_article_titles,
+            )
+            content_tracker.save()
+
+        # Record slow-news segment metadata for cooldown tracking & freshness
+        if slow_news_mode and selected_segs:
+            import datetime as _dt
+            today_iso = _dt.date.today().isoformat()
+            for ep in content_tracker.data.get("episodes", []):
+                if ep.get("date") == today_iso:
+                    ep["slow_news"] = True
+                    ep["slow_news_segments"] = [s["id"] for s in selected_segs]
+                    ep["slow_news_segment_summaries"] = _extract_segment_summaries(
+                        x_thread, selected_segs,
+                    )
+                    break
+            content_tracker.save()
+            logger.info(
+                "Recorded slow-news segments: %s",
+                [s["id"] for s in selected_segs],
+            )
+
+        # 7b. Post-generation digest validation — catch structure issues before TTS.
+        #      If critical sections are missing, retry digest generation once with an
+        #      explicit instruction to include them.
+        #
+        # Skip entirely when in Sunday weekly-recap mode. Operator caught
+        # (May 10 2026) the recap digest produced by ``build_weekly_recap_digest``
+        # being silently OVERWRITTEN here: the daily-format validator
+        # rejected the recap (missing "Top 10 News Items", "Tesla First
+        # Principles", etc. — sections that don't apply on a recap day),
+        # the retry path called ``generate_digest`` with the live news
+        # template, and the synthesised recap content got replaced by a
+        # daily digest from TODAY's news. Six of seven recap-eligible
+        # shows shipped daily content on May 10 with the metric still
+        # claiming ``weekly_recap_mode: True``. M&A survived only because
+        # its validator config didn't enforce conflicting sections. Recaps
+        # have their own fixed shape ("This Week's Top Stories") and
+        # don't need the daily-format validator's protection.
+        from engine.validation import validate_digest as _validate_digest, SHOW_VALIDATION_CONFIGS
+        _val_factory = SHOW_VALIDATION_CONFIGS.get(config.slug)
+        _exact_dups: list = []  # Populated by validate_digest for 100% cross-episode matches
+        if _val_factory and not is_weekly_recap:
+            _val_config = _val_factory()
+            _recent = content_tracker.get_recent_headlines(days=7)
+            _val_passed, _val_issues, _exact_dups = _validate_digest(
+                x_thread, _val_config,
+                section_patterns=section_patterns,
+                recent_headlines=_recent,
+            )
+            # Near-verbatim within-episode duplicates (>= 80%): strip the later
+            # occurrence from the digest and continue rather than aborting the
+            # entire episode.  A single repeated story is not worth killing an
+            # otherwise good episode — especially when X posts added fresh content.
+            _critical_dup_issues = []
+            for _issue in _val_issues:
+                if "Duplicate within" not in _issue:
+                    continue
+                _m = re.search(r"similarity\s+(\d+)%", _issue)
+                if _m and int(_m.group(1)) >= 80:
+                    _critical_dup_issues.append(_issue)
+            if _critical_dup_issues:
+                logger.warning(
+                    "Digest has %d near-verbatim (>=80%%) intra-episode duplicate(s) — "
+                    "stripping duplicates and continuing: %s",
+                    len(_critical_dup_issues), "; ".join(_critical_dup_issues),
+                )
+                from engine.generator import _strip_duplicate_stories
+                x_thread = _strip_duplicate_stories(
+                    x_thread, threshold=0.75, show_name=config.name,
+                )
+            if not _val_passed:
+                # Check for critical missing sections (non-optional)
+                _missing = [
+                    i for i in _val_issues
+                    if "missing from digest" in i.lower()
                 ]
-                _section_list = ", ".join(_section_names)
-                _retry_suffix = (
-                    f"\n\nCRITICAL: Your previous attempt was rejected because "
-                    f"it was missing these required sections: {_section_list}. "
-                    f"You MUST include ALL sections from the formatting template "
-                    f"above. If source material is limited, use the available "
-                    f"articles to write those sections with extra depth rather "
-                    f"than omitting them. Do NOT skip any section."
+                if _missing:
+                    logger.warning(
+                        "Digest missing %d critical section(s): %s — retrying once ...",
+                        len(_missing), "; ".join(_missing),
+                    )
+                    _section_names = [
+                        m.split("'")[1] for m in _missing if "'" in m
+                    ]
+                    _section_list = ", ".join(_section_names)
+                    _retry_suffix = (
+                        f"\n\nCRITICAL: Your previous attempt was rejected because "
+                        f"it was missing these required sections: {_section_list}. "
+                        f"You MUST include ALL sections from the formatting template "
+                        f"above. If source material is limited, use the available "
+                        f"articles to write those sections with extra depth rather "
+                        f"than omitting them. Do NOT skip any section."
+                    )
+                    try:
+                        with metrics.stage("generate_digest_retry"):
+                            x_thread_retry = generate_digest(
+                                template_vars, config, tracker=tracker,
+                                prompt_suffix=_retry_suffix,
+                            )
+                        # Re-validate
+                        _val2_passed, _val2_issues, _exact_dups2 = _validate_digest(
+                            x_thread_retry, _val_config,
+                            section_patterns=section_patterns,
+                            recent_headlines=_recent,
+                        )
+                        _missing2 = [
+                            i for i in _val2_issues
+                            if "missing from digest" in i.lower()
+                        ]
+                        # If the original is very short (likely garbage from a
+                        # failed refusal recovery), prefer any substantially
+                        # longer retry regardless of section comparison.
+                        _orig_is_garbage = len(x_thread) < 2000 and len(x_thread_retry) > len(x_thread) * 3
+                        if _orig_is_garbage:
+                            logger.info(
+                                "Original digest looks like garbage (%d chars) — "
+                                "preferring much longer retry (%d chars)",
+                                len(x_thread), len(x_thread_retry),
+                            )
+                            x_thread = x_thread_retry
+                            _exact_dups = _exact_dups2
+                        elif len(_missing2) < len(_missing):
+                            logger.info(
+                                "Digest retry improved: %d → %d missing sections",
+                                len(_missing), len(_missing2),
+                            )
+                            x_thread = x_thread_retry
+                            _exact_dups = _exact_dups2
+                        elif len(x_thread_retry) > len(x_thread):
+                            # Same missing sections but retry is longer — prefer
+                            # the longer output (less likely to be garbage).
+                            logger.info(
+                                "Digest retry same sections but longer (%d → %d chars) — using retry",
+                                len(x_thread), len(x_thread_retry),
+                            )
+                            x_thread = x_thread_retry
+                            _exact_dups = _exact_dups2
+                        else:
+                            logger.warning("Digest retry did not improve — keeping original")
+                    except LLMRefusalError:
+                        # LLM refusal is a permanent failure — don't mask it
+                        logger.error("Digest retry refused by LLM — aborting episode")
+                        raise
+                    except Exception as exc:
+                        logger.warning("Digest retry failed: %s — keeping original", exc)
+                else:
+                    # Check for item-count shortfalls (e.g. "Top News has 3 items, minimum is 5").
+                    # These can be genuine content gaps OR formatting mismatches (the LLM
+                    # wrote the content but didn't use bold markers for items).  If the
+                    # digest is long enough to be real content, treat as a warning rather
+                    # than killing the episode.
+                    _item_count_issues = [
+                        i for i in _val_issues
+                        if "has only" in i.lower() or "below minimum" in i.lower()
+                           or ("item" in i.lower() and "minimum" in i.lower())
+                    ]
+                    if _item_count_issues:
+                        _digest_char_count = len(x_thread.strip())
+                        if _digest_char_count < 1500:
+                            # Genuinely thin digest — not enough content
+                            logger.error(
+                                "Digest has %d item-count shortfall(s) and is short "
+                                "(%d chars) — episode too thin to publish: %s",
+                                len(_item_count_issues), _digest_char_count,
+                                "; ".join(_item_count_issues),
+                            )
+                            _skip_episode(
+                                "thin_episode",
+                                f"Digest has {len(_item_count_issues)} item-count shortfall(s) "
+                                f"and is short ({_digest_char_count} chars).",
+                            )
+                        else:
+                            # Long enough to be real content — likely a formatting
+                            # mismatch rather than missing content.
+                            logger.warning(
+                                "Digest has %d item-count shortfall(s) but is %d chars "
+                                "(likely formatting mismatch, not missing content): %s",
+                                len(_item_count_issues), _digest_char_count,
+                                "; ".join(_item_count_issues),
+                            )
+
+                    # Check for excessive cross-episode repeats — a few follow-ups
+                    # are normal, but 3+ identical headlines means the LLM ignored
+                    # the content tracker.
+                    _repeat_issues = [
+                        i for i in _val_issues
+                        if "cross-episode repeat" in i.lower()
+                    ]
+                    metrics.record("cross_episode_repeats", len(_repeat_issues))
+                    _repeat_threshold = getattr(config.slow_news, "repeat_trigger_threshold", 3) or 3
+                    # Spec v2 follow-up after Tesla Ep459: a daily news show
+                    # legitimately revisits 3-6 ongoing stories per day
+                    # (Tesla earnings cadence, FSD lawsuit, Cybertruck
+                    # production updates) without that meaning "the LLM
+                    # ignored the content tracker." Today's run had 6
+                    # cross-episode repeats out of 22 articles (27%) — far
+                    # under "the digest is mostly recycled" — but the
+                    # absolute threshold of 3 still triggered slow-news
+                    # fallback, burning ~5 minutes regenerating from
+                    # evergreen segments instead of just shipping the
+                    # surviving 16 fresh stories. Add a ratio gate: only
+                    # fall back when repeats are BOTH above the absolute
+                    # threshold AND >=40% of the digest. This lets healthy
+                    # news cycles ship; protects against actual tracker-
+                    # ignoring runs.
+                    total_digest_items = max(1, len(articles))
+                    repeat_ratio = len(_repeat_issues) / total_digest_items
+                    metrics.record("cross_episode_repeat_ratio", round(repeat_ratio, 3))
+                    # Ratio gate raised from 0.40 → 0.55 in the May 2026
+                    # content audit. TST/FF/PT were tripping slow-news
+                    # mode on 60-87% of episodes despite shipping plenty
+                    # of unique stories — the previous gate ate cycles
+                    # where, say, 10 of 22 articles overlapped with a
+                    # week of Tesla-FSD coverage. 0.55 lets healthy news
+                    # cycles ship and only falls back when the digest is
+                    # genuinely majority-recycled. Per-show override via
+                    # ``slow_news.repeat_trigger_ratio`` for shows that
+                    # want to keep tighter constraints.
+                    _repeat_ratio_threshold = float(
+                        getattr(config.slow_news, "repeat_trigger_ratio", 0.55) or 0.55
+                    )
+                    if (
+                        len(_repeat_issues) >= _repeat_threshold
+                        and repeat_ratio >= _repeat_ratio_threshold
+                    ):
+                        # If slow news mode is available, fall back to it instead
+                        # of skipping entirely — the repeat articles are stale but
+                        # evergreen segments can fill the episode.
+                        if not slow_news_mode and config.slow_news.enabled:
+                            from engine.slow_news import (
+                                load_segment_library, select_segments,
+                                build_slow_news_prompt_context,
+                            )
+                            logger.warning(
+                                "Digest has %d cross-episode repeat(s) — falling back "
+                                "to slow news mode with evergreen segments",
+                                len(_repeat_issues),
+                            )
+                            library = load_segment_library(config.slow_news.library_file)
+                            recent_seg_ids = content_tracker.get_recent_segment_ids(
+                                days=config.slow_news.cooldown_days,
+                            )
+                            selected_segs = select_segments(
+                                library,
+                                recent_seg_ids,
+                                max_segments=config.slow_news.max_segments,
+                                mode=config.slow_news.selection_mode,
+                            )
+                            slow_news_mode = True
+                            metrics.record("slow_news_mode", True)
+                            metrics.record("slow_news_trigger", "stale_repeats")
+
+                            # Gather previous angle summaries for freshness
+                            previous_angles: dict = {}
+                            for seg in selected_segs:
+                                history = content_tracker.get_segment_history(seg["id"], limit=3)
+                                angles = [h["summary"] for h in history if h.get("summary")]
+                                if angles:
+                                    previous_angles[seg["id"]] = angles
+
+                            template_vars["slow_news_context"] = build_slow_news_prompt_context(
+                                articles, selected_segs, config, template_vars, previous_angles,
+                            )
+
+                            # Re-generate digest with slow news context
+                            logger.info("Re-generating digest with slow news context ...")
+                            try:
+                                with metrics.stage("generate_digest_slow_news"):
+                                    x_thread = generate_digest(
+                                        template_vars, config, tracker=tracker,
+                                    )
+                            except LLMRefusalError as e:
+                                logger.error("Slow news fallback digest refused: %s", e)
+                                _skip_episode(
+                                    "llm_refusal",
+                                    f"Slow news fallback digest refused by LLM: {e}",
+                                )
+                            except Exception as e:
+                                logger.error("Slow news fallback digest failed: %s", e)
+                                sys.exit(1)
+
+                            # Extract hook from the regenerated digest
+                            hook = _extract_hook(x_thread)
+                            if not hook:
+                                hook = f"Episode {episode_num}"
+                            logger.info("Slow news fallback hook: %s", hook)
+
+                            # Re-record episode content
+                            if section_patterns:
+                                _article_urls = [a.get("url", "") for a in articles if a.get("url")]
+                                _article_titles = [a.get("title", "") for a in articles if a.get("title")]
+                                content_tracker.record_episode(
+                                    x_thread, section_patterns,
+                                    source_urls=_article_urls,
+                                    source_titles=_article_titles,
+                                )
+                                content_tracker.save()
+                        else:
+                            logger.error(
+                                "Digest has %d cross-episode repeat(s) — too many recycled "
+                                "stories to publish.",
+                                len(_repeat_issues),
+                            )
+                            _skip_episode(
+                                "cross_episode_repeats",
+                                f"Digest has {len(_repeat_issues)} cross-episode repeat(s) — "
+                                "too many recycled stories.",
+                            )
+
+                    logger.warning(
+                        "Digest validation found %d issue(s) — continuing (non-blocking)",
+                        len(_val_issues),
+                    )
+        else:
+            logger.debug("No validation config for show '%s' — skipping digest validation", config.slug)
+
+        # 7c. Minimum digest length gate — catch LLM garbage (e.g. 319-char responses)
+        #     before the pipeline spends TTS credits and publishes a bad episode.
+        #     A normal digest is 3000-10000+ chars.  Below 800 chars the LLM clearly
+        #     failed to produce a usable episode.
+        _MIN_DIGEST_CHARS = 800
+        _digest_len = len(x_thread.strip())
+        if _digest_len < _MIN_DIGEST_CHARS:
+            # Try slow news fallback — the LLM may do better with structured
+            # evergreen prompts than with the regular digest template.
+            if not slow_news_mode and config.slow_news.enabled:
+                logger.warning(
+                    "Digest is too short (%d chars, minimum %d) — attempting slow "
+                    "news fallback with evergreen segments ...",
+                    _digest_len, _MIN_DIGEST_CHARS,
+                )
+                from engine.slow_news import (
+                    load_segment_library, select_segments,
+                    build_slow_news_prompt_context,
                 )
                 try:
-                    with metrics.stage("generate_digest_retry"):
-                        x_thread_retry = generate_digest(
-                            template_vars, config, tracker=tracker,
-                            prompt_suffix=_retry_suffix,
-                        )
-                    # Re-validate
-                    _val2_passed, _val2_issues, _exact_dups2 = _validate_digest(
-                        x_thread_retry, _val_config,
-                        section_patterns=section_patterns,
-                        recent_headlines=_recent,
+                    library = load_segment_library(config.slow_news.library_file)
+                    recent_seg_ids = content_tracker.get_recent_segment_ids(
+                        days=config.slow_news.cooldown_days,
                     )
-                    _missing2 = [
-                        i for i in _val2_issues
-                        if "missing from digest" in i.lower()
-                    ]
-                    # If the original is very short (likely garbage from a
-                    # failed refusal recovery), prefer any substantially
-                    # longer retry regardless of section comparison.
-                    _orig_is_garbage = len(x_thread) < 2000 and len(x_thread_retry) > len(x_thread) * 3
-                    if _orig_is_garbage:
-                        logger.info(
-                            "Original digest looks like garbage (%d chars) — "
-                            "preferring much longer retry (%d chars)",
-                            len(x_thread), len(x_thread_retry),
+                    selected_segs = select_segments(
+                        library, recent_seg_ids,
+                        max_segments=config.slow_news.max_segments,
+                        mode=config.slow_news.selection_mode,
+                    )
+                    previous_angles: dict = {}
+                    for seg in selected_segs:
+                        previous_angles[seg["id"]] = content_tracker.get_segment_history(
+                            seg["id"], limit=3,
                         )
-                        x_thread = x_thread_retry
-                        _exact_dups = _exact_dups2
-                    elif len(_missing2) < len(_missing):
+                    slow_ctx = build_slow_news_prompt_context(
+                        articles, selected_segs, config, template_vars, previous_angles,
+                    )
+                    template_vars["slow_news_context"] = slow_ctx
+                    slow_news_mode = True
+
+                    with metrics.stage("generate_digest_llm_fallback"):
+                        x_thread = generate_digest(template_vars, config, tracker=tracker)
+
+                    _digest_len = len(x_thread.strip())
+                    if _digest_len >= _MIN_DIGEST_CHARS:
                         logger.info(
-                            "Digest retry improved: %d → %d missing sections",
-                            len(_missing), len(_missing2),
+                            "Slow news fallback produced usable digest (%d chars)",
+                            _digest_len,
                         )
-                        x_thread = x_thread_retry
-                        _exact_dups = _exact_dups2
-                    elif len(x_thread_retry) > len(x_thread):
-                        # Same missing sections but retry is longer — prefer
-                        # the longer output (less likely to be garbage).
-                        logger.info(
-                            "Digest retry same sections but longer (%d → %d chars) — using retry",
-                            len(x_thread), len(x_thread_retry),
-                        )
-                        x_thread = x_thread_retry
-                        _exact_dups = _exact_dups2
                     else:
-                        logger.warning("Digest retry did not improve — keeping original")
-                except LLMRefusalError:
-                    # LLM refusal is a permanent failure — don't mask it
-                    logger.error("Digest retry refused by LLM — aborting episode")
-                    raise
+                        logger.error(
+                            "Slow news fallback still too short (%d chars) — aborting",
+                            _digest_len,
+                        )
+                        save_usage(tracker, digests_dir)
+                        sys.exit(1)
                 except Exception as exc:
-                    logger.warning("Digest retry failed: %s — keeping original", exc)
-            else:
-                # Check for item-count shortfalls (e.g. "Top News has 3 items, minimum is 5").
-                # These can be genuine content gaps OR formatting mismatches (the LLM
-                # wrote the content but didn't use bold markers for items).  If the
-                # digest is long enough to be real content, treat as a warning rather
-                # than killing the episode.
-                _item_count_issues = [
-                    i for i in _val_issues
-                    if "has only" in i.lower() or "below minimum" in i.lower()
-                       or ("item" in i.lower() and "minimum" in i.lower())
-                ]
-                if _item_count_issues:
-                    _digest_char_count = len(x_thread.strip())
-                    if _digest_char_count < 1500:
-                        # Genuinely thin digest — not enough content
-                        logger.error(
-                            "Digest has %d item-count shortfall(s) and is short "
-                            "(%d chars) — episode too thin to publish: %s",
-                            len(_item_count_issues), _digest_char_count,
-                            "; ".join(_item_count_issues),
-                        )
-                        _skip_episode(
-                            "thin_episode",
-                            f"Digest has {len(_item_count_issues)} item-count shortfall(s) "
-                            f"and is short ({_digest_char_count} chars).",
-                        )
-                    else:
-                        # Long enough to be real content — likely a formatting
-                        # mismatch rather than missing content.
-                        logger.warning(
-                            "Digest has %d item-count shortfall(s) but is %d chars "
-                            "(likely formatting mismatch, not missing content): %s",
-                            len(_item_count_issues), _digest_char_count,
-                            "; ".join(_item_count_issues),
-                        )
-
-                # Check for excessive cross-episode repeats — a few follow-ups
-                # are normal, but 3+ identical headlines means the LLM ignored
-                # the content tracker.
-                _repeat_issues = [
-                    i for i in _val_issues
-                    if "cross-episode repeat" in i.lower()
-                ]
-                metrics.record("cross_episode_repeats", len(_repeat_issues))
-                _repeat_threshold = getattr(config.slow_news, "repeat_trigger_threshold", 3) or 3
-                # Spec v2 follow-up after Tesla Ep459: a daily news show
-                # legitimately revisits 3-6 ongoing stories per day
-                # (Tesla earnings cadence, FSD lawsuit, Cybertruck
-                # production updates) without that meaning "the LLM
-                # ignored the content tracker." Today's run had 6
-                # cross-episode repeats out of 22 articles (27%) — far
-                # under "the digest is mostly recycled" — but the
-                # absolute threshold of 3 still triggered slow-news
-                # fallback, burning ~5 minutes regenerating from
-                # evergreen segments instead of just shipping the
-                # surviving 16 fresh stories. Add a ratio gate: only
-                # fall back when repeats are BOTH above the absolute
-                # threshold AND >=40% of the digest. This lets healthy
-                # news cycles ship; protects against actual tracker-
-                # ignoring runs.
-                total_digest_items = max(1, len(articles))
-                repeat_ratio = len(_repeat_issues) / total_digest_items
-                metrics.record("cross_episode_repeat_ratio", round(repeat_ratio, 3))
-                # Ratio gate raised from 0.40 → 0.55 in the May 2026
-                # content audit. TST/FF/PT were tripping slow-news
-                # mode on 60-87% of episodes despite shipping plenty
-                # of unique stories — the previous gate ate cycles
-                # where, say, 10 of 22 articles overlapped with a
-                # week of Tesla-FSD coverage. 0.55 lets healthy news
-                # cycles ship and only falls back when the digest is
-                # genuinely majority-recycled. Per-show override via
-                # ``slow_news.repeat_trigger_ratio`` for shows that
-                # want to keep tighter constraints.
-                _repeat_ratio_threshold = float(
-                    getattr(config.slow_news, "repeat_trigger_ratio", 0.55) or 0.55
-                )
-                if (
-                    len(_repeat_issues) >= _repeat_threshold
-                    and repeat_ratio >= _repeat_ratio_threshold
-                ):
-                    # If slow news mode is available, fall back to it instead
-                    # of skipping entirely — the repeat articles are stale but
-                    # evergreen segments can fill the episode.
-                    if not slow_news_mode and config.slow_news.enabled:
-                        from engine.slow_news import (
-                            load_segment_library, select_segments,
-                            build_slow_news_prompt_context,
-                        )
-                        logger.warning(
-                            "Digest has %d cross-episode repeat(s) — falling back "
-                            "to slow news mode with evergreen segments",
-                            len(_repeat_issues),
-                        )
-                        library = load_segment_library(config.slow_news.library_file)
-                        recent_seg_ids = content_tracker.get_recent_segment_ids(
-                            days=config.slow_news.cooldown_days,
-                        )
-                        selected_segs = select_segments(
-                            library,
-                            recent_seg_ids,
-                            max_segments=config.slow_news.max_segments,
-                            mode=config.slow_news.selection_mode,
-                        )
-                        slow_news_mode = True
-                        metrics.record("slow_news_mode", True)
-                        metrics.record("slow_news_trigger", "stale_repeats")
-
-                        # Gather previous angle summaries for freshness
-                        previous_angles: dict = {}
-                        for seg in selected_segs:
-                            history = content_tracker.get_segment_history(seg["id"], limit=3)
-                            angles = [h["summary"] for h in history if h.get("summary")]
-                            if angles:
-                                previous_angles[seg["id"]] = angles
-
-                        template_vars["slow_news_context"] = build_slow_news_prompt_context(
-                            articles, selected_segs, config, template_vars, previous_angles,
-                        )
-
-                        # Re-generate digest with slow news context
-                        logger.info("Re-generating digest with slow news context ...")
-                        try:
-                            with metrics.stage("generate_digest_slow_news"):
-                                x_thread = generate_digest(
-                                    template_vars, config, tracker=tracker,
-                                )
-                        except LLMRefusalError as e:
-                            logger.error("Slow news fallback digest refused: %s", e)
-                            _skip_episode(
-                                "llm_refusal",
-                                f"Slow news fallback digest refused by LLM: {e}",
-                            )
-                        except Exception as e:
-                            logger.error("Slow news fallback digest failed: %s", e)
-                            sys.exit(1)
-
-                        # Extract hook from the regenerated digest
-                        hook = _extract_hook(x_thread)
-                        if not hook:
-                            hook = f"Episode {episode_num}"
-                        logger.info("Slow news fallback hook: %s", hook)
-
-                        # Re-record episode content
-                        if section_patterns:
-                            _article_urls = [a.get("url", "") for a in articles if a.get("url")]
-                            _article_titles = [a.get("title", "") for a in articles if a.get("title")]
-                            content_tracker.record_episode(
-                                x_thread, section_patterns,
-                                source_urls=_article_urls,
-                                source_titles=_article_titles,
-                            )
-                            content_tracker.save()
-                    else:
-                        logger.error(
-                            "Digest has %d cross-episode repeat(s) — too many recycled "
-                            "stories to publish.",
-                            len(_repeat_issues),
-                        )
-                        _skip_episode(
-                            "cross_episode_repeats",
-                            f"Digest has {len(_repeat_issues)} cross-episode repeat(s) — "
-                            "too many recycled stories.",
-                        )
-
-                logger.warning(
-                    "Digest validation found %d issue(s) — continuing (non-blocking)",
-                    len(_val_issues),
-                )
-    else:
-        logger.debug("No validation config for show '%s' — skipping digest validation", config.slug)
-
-    # 7c. Minimum digest length gate — catch LLM garbage (e.g. 319-char responses)
-    #     before the pipeline spends TTS credits and publishes a bad episode.
-    #     A normal digest is 3000-10000+ chars.  Below 800 chars the LLM clearly
-    #     failed to produce a usable episode.
-    _MIN_DIGEST_CHARS = 800
-    _digest_len = len(x_thread.strip())
-    if _digest_len < _MIN_DIGEST_CHARS:
-        # Try slow news fallback — the LLM may do better with structured
-        # evergreen prompts than with the regular digest template.
-        if not slow_news_mode and config.slow_news.enabled:
-            logger.warning(
-                "Digest is too short (%d chars, minimum %d) — attempting slow "
-                "news fallback with evergreen segments ...",
-                _digest_len, _MIN_DIGEST_CHARS,
-            )
-            from engine.slow_news import (
-                load_segment_library, select_segments,
-                build_slow_news_prompt_context,
-            )
-            try:
-                library = load_segment_library(config.slow_news.library_file)
-                recent_seg_ids = content_tracker.get_recent_segment_ids(
-                    days=config.slow_news.cooldown_days,
-                )
-                selected_segs = select_segments(
-                    library, recent_seg_ids,
-                    max_segments=config.slow_news.max_segments,
-                    mode=config.slow_news.selection_mode,
-                )
-                previous_angles: dict = {}
-                for seg in selected_segs:
-                    previous_angles[seg["id"]] = content_tracker.get_segment_history(
-                        seg["id"], limit=3,
-                    )
-                slow_ctx = build_slow_news_prompt_context(
-                    articles, selected_segs, config, template_vars, previous_angles,
-                )
-                template_vars["slow_news_context"] = slow_ctx
-                slow_news_mode = True
-
-                with metrics.stage("generate_digest_llm_fallback"):
-                    x_thread = generate_digest(template_vars, config, tracker=tracker)
-
-                _digest_len = len(x_thread.strip())
-                if _digest_len >= _MIN_DIGEST_CHARS:
-                    logger.info(
-                        "Slow news fallback produced usable digest (%d chars)",
-                        _digest_len,
-                    )
-                else:
                     logger.error(
-                        "Slow news fallback still too short (%d chars) — aborting",
-                        _digest_len,
+                        "Slow news fallback failed: %s — aborting", exc,
                     )
                     save_usage(tracker, digests_dir)
                     sys.exit(1)
-            except Exception as exc:
+            else:
                 logger.error(
-                    "Slow news fallback failed: %s — aborting", exc,
-                )
-                save_usage(tracker, digests_dir)
-                sys.exit(1)
-        else:
-            logger.error(
-                "Digest is too short (%d chars, minimum %d) — LLM returned "
-                "garbage. Aborting episode.",
-                _digest_len, _MIN_DIGEST_CHARS,
-            )
-            save_usage(tracker, digests_dir)
-            sys.exit(1)
-
-    # Extract the daily hook (headline) from the digest
-    hook = _extract_hook(x_thread)
-    if hook:
-        logger.info("Hook: %s", hook)
-    else:
-        logger.warning("No HOOK found in digest — using generic episode title")
-
-    # Log slow news mode but do NOT tag the episode title — slow news
-    # episodes should be indistinguishable from regular episodes.
-    if slow_news_mode:
-        logger.info("Slow news mode active (not tagged in title)")
-
-    # Defense-in-depth: final refusal scan before saving digest
-    from engine.generator import _REFUSAL_PATTERNS as _FINAL_REFUSAL_PATTERNS
-    for _rpat in _FINAL_REFUSAL_PATTERNS:
-        if re.search(_rpat, x_thread):
-            logger.error("BLOCKED: Digest contains LLM refusal text (matched: %s)", _rpat[:60])
-            raise SystemExit(1)
-
-    # Scrub LLM scaffold + run body transforms ONCE on the canonical
-    # digest text. Spec v2 follow-up: previously these passes only ran
-    # inside `send_show_newsletter`, so the email subscriber saw the
-    # cleaned version but the blog reader, RSS show-notes reader, and
-    # GitHub Pages summary saw the raw LLM output (with **HOOK:**,
-    # **Date:**, box-drawing rules, **TOPIC SELECTION:**, raw Google
-    # News URLs, etc.). Scrubbing here makes the canonical .md the
-    # single source of truth for every downstream surface. The
-    # newsletter pipeline still re-scrubs as defense-in-depth — both
-    # passes are idempotent.
-    from engine.newsletter_body import transform_daily_body
-    from engine.newsletter_sanitizer import scrub_scaffold
-    x_thread = scrub_scaffold(x_thread)
-    x_thread = transform_daily_body(x_thread, slug=getattr(config, "slug", ""))
-    if args.show == "tesla":
-        from shows.hooks.tesla import scrub_unavailable_tsla_from_digest
-        x_thread = scrub_unavailable_tsla_from_digest(x_thread)
-
-    # Save digest to file. Strip lone UTF-16 surrogates (the LLM
-    # occasionally emits one); ``write_text`` would otherwise abort the
-    # whole pipeline on ``UnicodeEncodeError``. See engine.utils.
-    from engine.utils import strip_lone_surrogates as _scrub
-    digest_md = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}.md"
-    digest_md.write_text(_scrub(x_thread), encoding="utf-8")
-    logger.info("Digest saved: %s", digest_md)
-
-    # Narrative-mode shows: mark the topic as produced in the queue so
-    # the next run picks the next entry. Done after the digest is on
-    # disk so a mid-pipeline failure doesn't burn a queue slot.
-    if (
-        getattr(config, "narrative_mode", False)
-        and locals().get("narrative_topic")
-    ):
-        try:
-            from engine.topic_queue import mark_topic_produced
-            queue_path = PROJECT_ROOT / config.topic_queue_file
-            mark_topic_produced(
-                queue_path,
-                topic_id=narrative_topic.get("id", ""),
-                episode_num=episode_num,
-                produced_date=today.isoformat(),
-            )
-        except Exception as exc:  # noqa: BLE001
-            logger.warning(
-                "Failed to mark topic as produced (non-fatal): %s", exc,
-            )
-
-    # Post-generation hook (e.g. extract trade picks for Modern Investing tracker)
-    if hook_module and hasattr(hook_module, "post_generate"):
-        try:
-            hook_module.post_generate(config, digest_text=x_thread, episode_num=episode_num)
-        except Exception as exc:
-            logger.warning("Post-generate hook failed for %s: %s", args.show, exc)
-
-    # Write episode to Content Lake (non-fatal — must never block pipeline)
-    _lake_record = None
-    try:
-        from engine.content_lake import store_episode, EpisodeRecord, extract_entities_and_topics
-
-        _et = extract_entities_and_topics(x_thread, args.show)
-        _lang = "ru" if args.show in ("finansy_prosto", "privet_russian") else "en"
-        _headlines = [a.get("title", "") for a in articles if a.get("title")]
-        _source_urls = [a.get("url", "") for a in articles if a.get("url")]
-        _lake_record = EpisodeRecord(
-            show_slug=args.show,
-            episode_num=episode_num,
-            date=today.isoformat(),
-            title=hook or f"Episode {episode_num}",
-            hook=hook or "",
-            digest_md=x_thread,
-            podcast_script="",  # Updated after script generation
-            summary=x_thread[:500] if x_thread else "",
-            headlines=_headlines,
-            source_urls=_source_urls,
-            entities=_et["entities"],
-            topics=_et["topics"],
-            word_count=len(x_thread.split()) if x_thread else 0,
-            show_name=config.name,
-            language=_lang,
-        )
-        store_episode(_lake_record)
-    except Exception as exc:
-        logger.warning("Content lake write failed (non-fatal): %s", exc)
-
-    if args.test:
-        logger.info("[TEST MODE] Digest generated successfully. Stopping here.")
-        print("\n" + "=" * 60)
-        if hook:
-            print(f"HOOK: {hook}")
-            print("-" * 60)
-        print(x_thread[:2000])
-        if len(x_thread) > 2000:
-            print(f"\n... ({len(x_thread)} chars total, truncated)")
-        print("=" * 60)
-        save_usage(tracker, digests_dir)
-        return
-
-    # 8. Generate podcast script (if not skipped)
-    final_mp3 = None
-    audio_duration = 0.0
-
-    if not args.skip_podcast:
-        from engine.generator import generate_podcast_script
-
-        # Strip URLs, emojis, unicode decorations, and other metadata from
-        # the digest before feeding it to the podcast script prompt.  The LLM
-        # sometimes echoes these through to the script, and TTS reads them
-        # aloud.  This is defense-in-depth alongside the prompt instructions.
-        clean_digest = _clean_digest_for_podcast(x_thread)
-
-        # Strip exact cross-episode duplicates from the digest so they don't
-        # make it into the podcast script.  _exact_dups is populated by
-        # validate_digest when a headline matches a recent episode at 100%.
-        if _val_factory and _exact_dups:
-            for dup_headline in _exact_dups:
-                if dup_headline in clean_digest:
-                    # Remove the paragraph containing the duplicate headline
-                    import re as _re
-                    # Try to remove the full bold-headline block
-                    _dup_escaped = _re.escape(dup_headline)
-                    _pattern = _re.compile(
-                        r'\n[^\n]*\*\*' + _dup_escaped + r'\*\*[^\n]*(?:\n(?![#\n━*])[^\n]*)*',
-                        _re.IGNORECASE,
-                    )
-                    clean_digest_new = _pattern.sub('', clean_digest)
-                    if clean_digest_new != clean_digest:
-                        logger.info(
-                            "Stripped 100%% duplicate headline from podcast digest: '%s'",
-                            dup_headline[:60],
-                        )
-                        clean_digest = clean_digest_new
-
-        if hook:
-            effective_hook = hook
-        elif getattr(config, "narrative_mode", False):
-            # Narrative-mode shows shouldn't fall back to a news framing.
-            # The hook is the topic title (or show name) so the LLM has
-            # something concrete to anchor the opening to. Logged as a
-            # warning so the operator can investigate why digest hook
-            # extraction returned empty for a topic-queue-driven show.
-            _topic = locals().get("narrative_topic") or {}
-            effective_hook = (_topic.get("title") if isinstance(_topic, dict)
-                              else "") or config.name
-            logger.warning(
-                "Narrative-mode show %s has no extractable hook — using "
-                "topic title (%r) as the {hook} fallback. Investigate the "
-                "digest output if this happens repeatedly.",
-                config.slug, effective_hook,
-            )
-        else:
-            effective_hook = (
-                f"Here's what's making news in the {config.name} world today."
-            )
-
-        pod_vars = {
-            "episode_num": episode_num,
-            "today_str": today_str,
-            "date_human": today_str,  # alias used by Omni View prompts
-            "digest": clean_digest,
-            "hook": effective_hook,
-        }
-        # Merge extra context for podcast prompt (e.g. tone_hint, intro_line)
-        pod_vars.update(extra_context)
-
-        # Provide default intro_line/closing_block if hook didn't supply them.
-        # Uses engine.intros for day-varying, show-specific intros so
-        # listeners don't hear the exact same opening every day.
-        # Episode 1 gets a special intro — the podcast prompt templates handle
-        # the detailed first-episode introduction based on {episode_num}.
-        from engine.intros import build_intro_line, build_closing_block, get_show_host
-        host = getattr(config.publishing, "host_name", None) or get_show_host(args.show)
-        # Pick the YouTube channel handle so the closing line can mention
-        # the right channel. Empty string means "don't mention YouTube"
-        # (e.g. shows where YouTube publishing isn't enabled yet).
-        _yt_handle = ""
-        if getattr(config, "youtube", None) and config.youtube.enabled:
-            _yt_handle = (
-                "@NerraRU" if config.youtube.channel == "ru" else "@NerraNetwork"
-            )
-        if episode_num == 1:
-            pod_vars.setdefault(
-                "intro_line",
-                f"{host}: Welcome to the very first episode of {config.name}! "
-                f"Today is {today_str}. {effective_hook}",
-            )
-            _ep1_close = (
-                f"{host}: That wraps up our very first episode of {config.name}! "
-                f"If you enjoyed this, please subscribe on Apple Podcasts, Spotify, "
-                f"or wherever you listen — and a rating or review really helps new "
-                f"listeners find us. "
-                f"I'm {host} in Vancouver. Thanks for joining me on this journey, "
-                f"and I'll see you tomorrow for episode two."
-            )
-            if _yt_handle:
-                _ep1_close += (
-                    f" And if you'd rather watch than listen, find us on YouTube "
-                    f"at {_yt_handle} — link's in the show notes."
-                )
-            pod_vars.setdefault("closing_block", _ep1_close)
-        else:
-            pod_vars.setdefault(
-                "intro_line",
-                build_intro_line(
-                    args.show,
-                    episode_num=episode_num,
-                    today_str=today_str,
-                    date=today,
-                    extra_context=extra_context,
-                ),
-            )
-            pod_vars.setdefault(
-                "closing_block",
-                build_closing_block(
-                    args.show,
-                    episode_num=episode_num,
-                    today_str=today_str,
-                    date=today,
-                    extra_context=extra_context,
-                    youtube_channel_handle=_yt_handle,
-                ),
-            )
-        pod_vars.setdefault("tone_hint", "natural and conversational")
-
-        t0 = time.monotonic()
-        logger.info("Generating podcast script ...")
-        try:
-            podcast_script = generate_podcast_script(pod_vars, config, tracker=tracker)
-        except LLMRefusalError as e:
-            logger.error("PIPELINE ABORTED at podcast script stage: %s", e)
-            save_usage(tracker, digests_dir)
-            sys.exit(1)
-        logger.info("Podcast script generation took %.1fs", time.monotonic() - t0)
-
-        # 8b. Podcast script length check — two-tier gate.
-        #     Hard floor (true garbage): abort only when clearly broken.
-        #     Soft floor (below target): warn but continue — a shorter fresh
-        #     episode is better than no episode.
-        _TARGET_WORDS = getattr(config.llm, "min_podcast_words", 1000) or 1000
-        _HARD_FLOOR = max(600, int(_TARGET_WORDS * 0.4))
-        _script_word_count = len(podcast_script.split())
-        if _script_word_count < _HARD_FLOOR:
-            logger.error(
-                "Podcast script is clearly broken (%d words, hard floor %d) — "
-                "aborting episode.",
-                _script_word_count, _HARD_FLOOR,
-            )
-            save_usage(tracker, digests_dir)
-            sys.exit(1)
-        elif _script_word_count < _TARGET_WORDS:
-            logger.warning(
-                "Podcast script below target (%d words, target %d) — "
-                "continuing with shorter episode (fresh > long).",
-                _script_word_count, _TARGET_WORDS,
-            )
-            metrics.record("script_below_target", True)
-        # Always log the raw word count + target so post-hoc audits can
-        # validate calibration without grepping workflow logs. The May
-        # 2026 Phase-3 recalibration was hard to validate post-merge
-        # because only the boolean was preserved; the raw counts now
-        # let us compute the actual/target ratio over time.
-        metrics.record("podcast_script_word_count", _script_word_count)
-        metrics.record("podcast_script_target_words", _TARGET_WORDS)
-
-        # 8c. Pre-TTS duration estimate — skip obviously doomed episodes before
-        #     burning TTS credits.  ~150 words/minute for podcast speech.
-        #     Use a 70% margin to avoid false positives (the audio gate at
-        #     step 10 remains the final authority).
-        _min_audio = config.min_audio_duration
-        if _min_audio:
-            _estimated_duration = _script_word_count / 150.0 * 60.0
-            if _estimated_duration < _min_audio * 0.7:
-                logger.error(
-                    "Script too short for minimum duration: ~%.0fs estimated "
-                    "vs %ds minimum (%d words at ~150 wpm). Aborting before TTS.",
-                    _estimated_duration, _min_audio, _script_word_count,
+                    "Digest is too short (%d chars, minimum %d) — LLM returned "
+                    "garbage. Aborting episode.",
+                    _digest_len, _MIN_DIGEST_CHARS,
                 )
                 save_usage(tracker, digests_dir)
                 sys.exit(1)
 
-        # Update Content Lake with podcast script (non-fatal)
-        if _lake_record is not None:
-            try:
-                from engine.content_lake import store_episode as _store_ep
-                _lake_record.podcast_script = podcast_script
-                _store_ep(_lake_record)
-            except Exception as exc:
-                logger.warning("Content lake script update failed (non-fatal): %s", exc)
+        # Extract the daily hook (headline) from the digest
+        hook = _extract_hook(x_thread)
+        if hook:
+            logger.info("Hook: %s", hook)
+        else:
+            logger.warning("No HOOK found in digest — using generic episode title")
 
-        # Clean podcast script: strip speaker prefixes and stage directions
-        podcast_script = _clean_podcast_script(podcast_script, host_name=host)
+        # Log slow news mode but do NOT tag the episode title — slow news
+        # episodes should be indistinguishable from regular episodes.
+        if slow_news_mode:
+            logger.info("Slow news mode active (not tagged in title)")
 
-        # Apply pronunciation fixes
-        podcast_script = _apply_pronunciation(podcast_script, args.show)
+        # Defense-in-depth: final refusal scan before saving digest
+        from engine.generator import _REFUSAL_PATTERNS as _FINAL_REFUSAL_PATTERNS
+        for _rpat in _FINAL_REFUSAL_PATTERNS:
+            if re.search(_rpat, x_thread):
+                logger.error("BLOCKED: Digest contains LLM refusal text (matched: %s)", _rpat[:60])
+                raise SystemExit(1)
 
-        # Post-pronunciation cleanup: strip metadata that survived in word form
-        # (e.g. "(Word count: two thousand four hundred seventy-eight)" after
-        # number-to-words conversion made it invisible to earlier regex passes)
-        podcast_script = _strip_post_pronunciation_artifacts(podcast_script)
+        # Scrub LLM scaffold + run body transforms ONCE on the canonical
+        # digest text. Spec v2 follow-up: previously these passes only ran
+        # inside `send_show_newsletter`, so the email subscriber saw the
+        # cleaned version but the blog reader, RSS show-notes reader, and
+        # GitHub Pages summary saw the raw LLM output (with **HOOK:**,
+        # **Date:**, box-drawing rules, **TOPIC SELECTION:**, raw Google
+        # News URLs, etc.). Scrubbing here makes the canonical .md the
+        # single source of truth for every downstream surface. The
+        # newsletter pipeline still re-scrubs as defense-in-depth — both
+        # passes are idempotent.
+        from engine.newsletter_body import transform_daily_body
+        from engine.newsletter_sanitizer import scrub_scaffold
+        x_thread = scrub_scaffold(x_thread)
+        x_thread = transform_daily_body(x_thread, slug=getattr(config, "slug", ""))
+        if args.show == "tesla":
+            from shows.hooks.tesla import scrub_unavailable_tsla_from_digest
+            x_thread = scrub_unavailable_tsla_from_digest(x_thread)
 
-        # Russian-show date Russification — operator caught (Финансы
-        # Просто Ep32, May 6 2026) the LLM emitting English-form dates
-        # like "May sixth, twenty twenty-six" inside otherwise-Russian
-        # sentences. Grok TTS reads the English literally with the
-        # Russian voice, which sounds awful. Helper is idempotent and
-        # narrowly targeted so it's safe to run on every Russian script.
-        if args.show in ("finansy_prosto", "privet_russian"):
-            from engine.russian_text import russify_english_dates
-            podcast_script = russify_english_dates(podcast_script)
-
-        # Append AI disclosure at the end of the episode
-        podcast_script = podcast_script.rstrip() + "\n\n" + _AI_DISCLOSURE
-
-        # Parse chapter markers from the cleaned script (before TTS)
-        from engine.chapters import parse_chapters
-        episode_chapters = parse_chapters(
-            podcast_script,
-            config.chapters.section_markers,
-            show_name=config.name,
-        ) if config.chapters.enabled and config.chapters.section_markers else []
-
-        # Final defense-in-depth: strip any speaker prefixes that survived
-        # all prior cleaning passes.  This catches edge cases where the LLM
-        # output format, retry expansion, or paragraph breaking unexpectedly
-        # places a prefix at a line/sentence start.
-        import re as _re
-        for _pfx in ("Host:", f"{host}:", "Patrick:", "Ведущая:", "Ведущий:", "Narrator:", "Speaker:"):
-            _esc = _re.escape(_pfx)
-            podcast_script = _re.sub(r"^" + _esc + r"\s*", "", podcast_script, flags=_re.MULTILINE)
-            podcast_script = _re.sub(r"(?<=[.!?])\s+" + _esc + r"\s*", " ", podcast_script)
-        podcast_script = _re.sub(r"\n{3,}", "\n\n", podcast_script).strip()
-
-        # Save TTS-ready script for debugging pronunciation/intro issues
+        # Save digest to file. Strip lone UTF-16 surrogates (the LLM
+        # occasionally emits one); ``write_text`` would otherwise abort the
+        # whole pipeline on ``UnicodeEncodeError``. See engine.utils.
         from engine.utils import strip_lone_surrogates as _scrub
-        tts_script_path = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}_tts.txt"
-        tts_script_path.write_text(_scrub(podcast_script), encoding="utf-8")
-        logger.info("TTS script saved: %s", tts_script_path)
+        digest_md = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}.md"
+        digest_md.write_text(_scrub(x_thread), encoding="utf-8")
+        logger.info("Digest saved: %s", digest_md)
 
-        # 9. TTS — provider-aware (ElevenLabs default; Grok for Russian shows)
-        tts_provider = (config.tts.provider or "elevenlabs").lower()
-        tts_ready = False
-        if tts_provider == "grok":
-            api_key = (
-                os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY") or ""
-            ).strip()
-            if not api_key:
-                logger.error("GROK_API_KEY (or XAI_API_KEY) not set. Skipping TTS.")
-            else:
-                from engine.tts import synthesize  # noqa: F401 (import below)
-                # No fail-fast auth ping for Grok TTS — the same key drives
-                # the LLM stage which has already validated upstream. A bad
-                # key would have failed the digest run before we reached TTS.
-                tts_ready = True
-        else:
-            api_key = (os.getenv("ELEVENLABS_API_KEY") or "").strip()
-            if not api_key:
-                logger.error("ELEVENLABS_API_KEY not set. Skipping TTS.")
-            else:
-                from engine.tts import synthesize, validate_elevenlabs_auth
-                validate_elevenlabs_auth(api_key)
-                tts_ready = True
+        # Narrative-mode shows: mark the topic as produced in the queue so
+        # the next run picks the next entry. Done after the digest is on
+        # disk so a mid-pipeline failure doesn't burn a queue slot.
+        if (
+            getattr(config, "narrative_mode", False)
+            and locals().get("narrative_topic")
+        ):
+            try:
+                from engine.topic_queue import mark_topic_produced
+                queue_path = PROJECT_ROOT / config.topic_queue_file
+                mark_topic_produced(
+                    queue_path,
+                    topic_id=narrative_topic.get("id", ""),
+                    episode_num=episode_num,
+                    produced_date=today.isoformat(),
+                )
+            except Exception as exc:  # noqa: BLE001
+                logger.warning(
+                    "Failed to mark topic as produced (non-fatal): %s", exc,
+                )
 
-        if tts_ready:
-            raw_mp3 = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}_raw.mp3"
-            logger.info("Synthesizing audio ...")
-            t0 = time.monotonic()
+        # Post-generation hook (e.g. extract trade picks for Modern Investing tracker)
+        if hook_module and hasattr(hook_module, "post_generate"):
+            try:
+                hook_module.post_generate(config, digest_text=x_thread, episode_num=episode_num)
+            except Exception as exc:
+                logger.warning("Post-generate hook failed for %s: %s", args.show, exc)
 
-            # Section-aware TTS: split at chapter boundaries and
-            # concatenate with transition stings between sections.
-            sting_path = None
-            if config.audio.transition_sting:
-                sting_path = PROJECT_ROOT / config.audio.transition_sting
+        # Write episode to Content Lake (non-fatal — must never block pipeline)
+        _lake_record = None
+        try:
+            from engine.content_lake import store_episode, EpisodeRecord, extract_entities_and_topics
 
-            # ``config.tts.use_section_tts`` is the network-wide opt-in.
-            # As of May 13 2026 the default is False — episodes are
-            # synthesised as a single Grok TTS call so the network-wide
-            # ``<fast>...</fast>`` wrap from ``_defaults.yaml`` is
-            # applied exactly once per episode (no chunk/section
-            # boundaries that could leak the tag aloud). See landmine
-            # #17 + the TTSConfig docstring.
-            use_section_tts = (
-                getattr(config.tts, "use_section_tts", True)
-                and episode_chapters
-                and len(episode_chapters) >= 2
-                and sting_path
+            _et = extract_entities_and_topics(x_thread, args.show)
+            _lang = "ru" if args.show in ("finansy_prosto", "privet_russian") else "en"
+            _headlines = [a.get("title", "") for a in articles if a.get("title")]
+            _source_urls = [a.get("url", "") for a in articles if a.get("url")]
+            _lake_record = EpisodeRecord(
+                show_slug=args.show,
+                episode_num=episode_num,
+                date=today.isoformat(),
+                title=hook or f"Episode {episode_num}",
+                hook=hook or "",
+                digest_md=x_thread,
+                podcast_script="",  # Updated after script generation
+                summary=x_thread[:500] if x_thread else "",
+                headlines=_headlines,
+                source_urls=_source_urls,
+                entities=_et["entities"],
+                topics=_et["topics"],
+                word_count=len(x_thread.split()) if x_thread else 0,
+                show_name=config.name,
+                language=_lang,
             )
+            store_episode(_lake_record)
+        except Exception as exc:
+            logger.warning("Content lake write failed (non-fatal): %s", exc)
 
-            if use_section_tts:
-                from engine.chapters import split_script_at_chapters
-                from engine.audio import generate_transition_sting, concatenate_with_stings
+        if args.test:
+            logger.info("[TEST MODE] Digest generated successfully. Stopping here.")
+            print("\n" + "=" * 60)
+            if hook:
+                print(f"HOOK: {hook}")
+                print("-" * 60)
+            print(x_thread[:2000])
+            if len(x_thread) > 2000:
+                print(f"\n... ({len(x_thread)} chars total, truncated)")
+            print("=" * 60)
+            save_usage(tracker, digests_dir)
+            return
 
-                sections = split_script_at_chapters(podcast_script, episode_chapters)
-                sections = [s for s in sections if s.strip()]
+        # 8. Generate podcast script (if not skipped)
+        final_mp3 = None
+        audio_duration = 0.0
 
-                # Safety: if sections capture < 80% of the script, something
-                # went wrong with splitting — fall back to single synthesis.
-                sections_total = sum(len(s) for s in sections)
-                if sections_total < len(podcast_script) * 0.8:
-                    logger.warning(
-                        "Section TTS: sections only contain %d/%d chars (%.0f%%) — "
-                        "falling back to single synthesis to avoid truncation",
-                        sections_total, len(podcast_script),
-                        100 * sections_total / len(podcast_script) if podcast_script else 0,
+        if not args.skip_podcast:
+            from engine.generator import generate_podcast_script
+
+            # Strip URLs, emojis, unicode decorations, and other metadata from
+            # the digest before feeding it to the podcast script prompt.  The LLM
+            # sometimes echoes these through to the script, and TTS reads them
+            # aloud.  This is defense-in-depth alongside the prompt instructions.
+            clean_digest = _clean_digest_for_podcast(x_thread)
+
+            # Strip exact cross-episode duplicates from the digest so they don't
+            # make it into the podcast script.  _exact_dups is populated by
+            # validate_digest when a headline matches a recent episode at 100%.
+            if _val_factory and _exact_dups:
+                for dup_headline in _exact_dups:
+                    if dup_headline in clean_digest:
+                        # Remove the paragraph containing the duplicate headline
+                        import re as _re
+                        # Try to remove the full bold-headline block
+                        _dup_escaped = _re.escape(dup_headline)
+                        _pattern = _re.compile(
+                            r'\n[^\n]*\*\*' + _dup_escaped + r'\*\*[^\n]*(?:\n(?![#\n━*])[^\n]*)*',
+                            _re.IGNORECASE,
+                        )
+                        clean_digest_new = _pattern.sub('', clean_digest)
+                        if clean_digest_new != clean_digest:
+                            logger.info(
+                                "Stripped 100%% duplicate headline from podcast digest: '%s'",
+                                dup_headline[:60],
+                            )
+                            clean_digest = clean_digest_new
+
+            if hook:
+                effective_hook = hook
+            elif getattr(config, "narrative_mode", False):
+                # Narrative-mode shows shouldn't fall back to a news framing.
+                # The hook is the topic title (or show name) so the LLM has
+                # something concrete to anchor the opening to. Logged as a
+                # warning so the operator can investigate why digest hook
+                # extraction returned empty for a topic-queue-driven show.
+                _topic = locals().get("narrative_topic") or {}
+                effective_hook = (_topic.get("title") if isinstance(_topic, dict)
+                                  else "") or config.name
+                logger.warning(
+                    "Narrative-mode show %s has no extractable hook — using "
+                    "topic title (%r) as the {hook} fallback. Investigate the "
+                    "digest output if this happens repeatedly.",
+                    config.slug, effective_hook,
+                )
+            else:
+                effective_hook = (
+                    f"Here's what's making news in the {config.name} world today."
+                )
+
+            pod_vars = {
+                "episode_num": episode_num,
+                "today_str": today_str,
+                "date_human": today_str,  # alias used by Omni View prompts
+                "digest": clean_digest,
+                "hook": effective_hook,
+            }
+            # Merge extra context for podcast prompt (e.g. tone_hint, intro_line)
+            pod_vars.update(extra_context)
+
+            # Provide default intro_line/closing_block if hook didn't supply them.
+            # Uses engine.intros for day-varying, show-specific intros so
+            # listeners don't hear the exact same opening every day.
+            # Episode 1 gets a special intro — the podcast prompt templates handle
+            # the detailed first-episode introduction based on {episode_num}.
+            from engine.intros import build_intro_line, build_closing_block, get_show_host
+            host = getattr(config.publishing, "host_name", None) or get_show_host(args.show)
+            # Pick the YouTube channel handle so the closing line can mention
+            # the right channel. Empty string means "don't mention YouTube"
+            # (e.g. shows where YouTube publishing isn't enabled yet).
+            _yt_handle = ""
+            if getattr(config, "youtube", None) and config.youtube.enabled:
+                _yt_handle = (
+                    "@NerraRU" if config.youtube.channel == "ru" else "@NerraNetwork"
+                )
+            if episode_num == 1:
+                pod_vars.setdefault(
+                    "intro_line",
+                    f"{host}: Welcome to the very first episode of {config.name}! "
+                    f"Today is {today_str}. {effective_hook}",
+                )
+                _ep1_close = (
+                    f"{host}: That wraps up our very first episode of {config.name}! "
+                    f"If you enjoyed this, please subscribe on Apple Podcasts, Spotify, "
+                    f"or wherever you listen — and a rating or review really helps new "
+                    f"listeners find us. "
+                    f"I'm {host} in Vancouver. Thanks for joining me on this journey, "
+                    f"and I'll see you tomorrow for episode two."
+                )
+                if _yt_handle:
+                    _ep1_close += (
+                        f" And if you'd rather watch than listen, find us on YouTube "
+                        f"at {_yt_handle} — link's in the show notes."
                     )
-                    metrics.record("section_tts_fallback", True)
-                    metrics.record("section_tts_coverage_pct", round(
-                        100 * sections_total / len(podcast_script), 1,
-                    ) if podcast_script else 0)
-                    sections = []  # Force fallback to single synthesis below
+                pod_vars.setdefault("closing_block", _ep1_close)
+            else:
+                pod_vars.setdefault(
+                    "intro_line",
+                    build_intro_line(
+                        args.show,
+                        episode_num=episode_num,
+                        today_str=today_str,
+                        date=today,
+                        extra_context=extra_context,
+                    ),
+                )
+                pod_vars.setdefault(
+                    "closing_block",
+                    build_closing_block(
+                        args.show,
+                        episode_num=episode_num,
+                        today_str=today_str,
+                        date=today,
+                        extra_context=extra_context,
+                        youtube_channel_handle=_yt_handle,
+                    ),
+                )
+            pod_vars.setdefault("tone_hint", "natural and conversational")
 
-                if len(sections) >= 2:
-                    logger.info("Section TTS: synthesizing %d sections separately", len(sections))
-                    metrics.record("section_tts_fallback", False)
-                    metrics.record("section_tts_section_count", len(sections))
-                    section_tmp_dir = digests_dir / f"_sections_ep{episode_num:03d}"
+            t0 = time.monotonic()
+            logger.info("Generating podcast script ...")
+            try:
+                podcast_script = generate_podcast_script(pod_vars, config, tracker=tracker)
+            except LLMRefusalError as e:
+                logger.error("PIPELINE ABORTED at podcast script stage: %s", e)
+                save_usage(tracker, digests_dir)
+                sys.exit(1)
+            logger.info("Podcast script generation took %.1fs", time.monotonic() - t0)
 
-                    from engine.tts import synthesize_sections
-                    section_files = synthesize_sections(
-                        sections,
-                        config.tts.voice_id,
-                        section_tmp_dir,
-                        api_key=api_key,
-                        provider=tts_provider,
-                        section_prefix=f"sec_ep{episode_num:03d}",
-                        max_chars=config.tts.max_chars,
-                        model_id=config.tts.model,
-                        stability=config.tts.stability,
-                        similarity_boost=config.tts.similarity_boost,
-                        style=config.tts.style,
-                        language_code=config.tts.language_code,
-                        speed=config.tts.speed,
-                        apply_text_normalization=config.tts.apply_text_normalization,
-                        speech_wrap_open=config.tts.speech_wrap_open,
-                        speech_wrap_close=config.tts.speech_wrap_close,
+            # 8b. Podcast script length check — two-tier gate.
+            #     Hard floor (true garbage): abort only when clearly broken.
+            #     Soft floor (below target): warn but continue — a shorter fresh
+            #     episode is better than no episode.
+            _TARGET_WORDS = getattr(config.llm, "min_podcast_words", 1000) or 1000
+            _HARD_FLOOR = max(600, int(_TARGET_WORDS * 0.4))
+            _script_word_count = len(podcast_script.split())
+            if _script_word_count < _HARD_FLOOR:
+                logger.error(
+                    "Podcast script is clearly broken (%d words, hard floor %d) — "
+                    "aborting episode.",
+                    _script_word_count, _HARD_FLOOR,
+                )
+                save_usage(tracker, digests_dir)
+                sys.exit(1)
+            elif _script_word_count < _TARGET_WORDS:
+                logger.warning(
+                    "Podcast script below target (%d words, target %d) — "
+                    "continuing with shorter episode (fresh > long).",
+                    _script_word_count, _TARGET_WORDS,
+                )
+                metrics.record("script_below_target", True)
+            # Always log the raw word count + target so post-hoc audits can
+            # validate calibration without grepping workflow logs. The May
+            # 2026 Phase-3 recalibration was hard to validate post-merge
+            # because only the boolean was preserved; the raw counts now
+            # let us compute the actual/target ratio over time.
+            metrics.record("podcast_script_word_count", _script_word_count)
+            metrics.record("podcast_script_target_words", _TARGET_WORDS)
+
+            # 8c. Pre-TTS duration estimate — skip obviously doomed episodes before
+            #     burning TTS credits.  ~150 words/minute for podcast speech.
+            #     Use a 70% margin to avoid false positives (the audio gate at
+            #     step 10 remains the final authority).
+            _min_audio = config.min_audio_duration
+            if _min_audio:
+                _estimated_duration = _script_word_count / 150.0 * 60.0
+                if _estimated_duration < _min_audio * 0.7:
+                    logger.error(
+                        "Script too short for minimum duration: ~%.0fs estimated "
+                        "vs %ds minimum (%d words at ~150 wpm). Aborting before TTS.",
+                        _estimated_duration, _min_audio, _script_word_count,
                     )
+                    save_usage(tracker, digests_dir)
+                    sys.exit(1)
 
-                    generate_transition_sting(sting_path)
-                    concatenate_with_stings(
-                        section_files, raw_mp3, sting_path=sting_path,
-                    )
+            # Update Content Lake with podcast script (non-fatal)
+            if _lake_record is not None:
+                try:
+                    from engine.content_lake import store_episode as _store_ep
+                    _lake_record.podcast_script = podcast_script
+                    _store_ep(_lake_record)
+                except Exception as exc:
+                    logger.warning("Content lake script update failed (non-fatal): %s", exc)
 
-                    for sf in section_files:
-                        try:
-                            sf.unlink()
-                        except Exception as exc:
-                            logger.debug("Failed to clean up temp file %s: %s", sf, exc)
-                    try:
-                        section_tmp_dir.rmdir()
-                    except Exception as exc:
-                        logger.debug("Failed to remove temp dir %s: %s", section_tmp_dir, exc)
+            # Clean podcast script: strip speaker prefixes and stage directions
+            podcast_script = _clean_podcast_script(podcast_script, host_name=host)
+
+            # Apply pronunciation fixes
+            podcast_script = _apply_pronunciation(podcast_script, args.show)
+
+            # Post-pronunciation cleanup: strip metadata that survived in word form
+            # (e.g. "(Word count: two thousand four hundred seventy-eight)" after
+            # number-to-words conversion made it invisible to earlier regex passes)
+            podcast_script = _strip_post_pronunciation_artifacts(podcast_script)
+
+            # Russian-show date Russification — operator caught (Финансы
+            # Просто Ep32, May 6 2026) the LLM emitting English-form dates
+            # like "May sixth, twenty twenty-six" inside otherwise-Russian
+            # sentences. Grok TTS reads the English literally with the
+            # Russian voice, which sounds awful. Helper is idempotent and
+            # narrowly targeted so it's safe to run on every Russian script.
+            if args.show in ("finansy_prosto", "privet_russian"):
+                from engine.russian_text import russify_english_dates
+                podcast_script = russify_english_dates(podcast_script)
+
+            # Append AI disclosure at the end of the episode
+            podcast_script = podcast_script.rstrip() + "\n\n" + _AI_DISCLOSURE
+
+            # Parse chapter markers from the cleaned script (before TTS)
+            from engine.chapters import parse_chapters
+            episode_chapters = parse_chapters(
+                podcast_script,
+                config.chapters.section_markers,
+                show_name=config.name,
+            ) if config.chapters.enabled and config.chapters.section_markers else []
+
+            # Final defense-in-depth: strip any speaker prefixes that survived
+            # all prior cleaning passes.  This catches edge cases where the LLM
+            # output format, retry expansion, or paragraph breaking unexpectedly
+            # places a prefix at a line/sentence start.
+            import re as _re
+            for _pfx in ("Host:", f"{host}:", "Patrick:", "Ведущая:", "Ведущий:", "Narrator:", "Speaker:"):
+                _esc = _re.escape(_pfx)
+                podcast_script = _re.sub(r"^" + _esc + r"\s*", "", podcast_script, flags=_re.MULTILINE)
+                podcast_script = _re.sub(r"(?<=[.!?])\s+" + _esc + r"\s*", " ", podcast_script)
+            podcast_script = _re.sub(r"\n{3,}", "\n\n", podcast_script).strip()
+
+            # Save TTS-ready script for debugging pronunciation/intro issues
+            from engine.utils import strip_lone_surrogates as _scrub
+            tts_script_path = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}_tts.txt"
+            tts_script_path.write_text(_scrub(podcast_script), encoding="utf-8")
+            logger.info("TTS script saved: %s", tts_script_path)
+
+            # 9. TTS — provider-aware (ElevenLabs default; Grok for Russian shows)
+            tts_provider = (config.tts.provider or "elevenlabs").lower()
+            tts_ready = False
+            if tts_provider == "grok":
+                api_key = (
+                    os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY") or ""
+                ).strip()
+                if not api_key:
+                    logger.error("GROK_API_KEY (or XAI_API_KEY) not set. Skipping TTS.")
                 else:
-                    # Not enough sections — fall back to single synthesis
+                    from engine.tts import synthesize  # noqa: F401 (import below)
+                    # No fail-fast auth ping for Grok TTS — the same key drives
+                    # the LLM stage which has already validated upstream. A bad
+                    # key would have failed the digest run before we reached TTS.
+                    tts_ready = True
+            else:
+                api_key = (os.getenv("ELEVENLABS_API_KEY") or "").strip()
+                if not api_key:
+                    logger.error("ELEVENLABS_API_KEY not set. Skipping TTS.")
+                else:
+                    from engine.tts import synthesize, validate_elevenlabs_auth
+                    validate_elevenlabs_auth(api_key)
+                    tts_ready = True
+
+            if tts_ready:
+                raw_mp3 = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}_raw.mp3"
+                logger.info("Synthesizing audio ...")
+                t0 = time.monotonic()
+
+                # Section-aware TTS: split at chapter boundaries and
+                # concatenate with transition stings between sections.
+                sting_path = None
+                if config.audio.transition_sting:
+                    sting_path = PROJECT_ROOT / config.audio.transition_sting
+
+                # ``config.tts.use_section_tts`` is the network-wide opt-in.
+                # As of May 13 2026 the default is False — episodes are
+                # synthesised as a single Grok TTS call so the network-wide
+                # ``<fast>...</fast>`` wrap from ``_defaults.yaml`` is
+                # applied exactly once per episode (no chunk/section
+                # boundaries that could leak the tag aloud). See landmine
+                # #17 + the TTSConfig docstring.
+                use_section_tts = (
+                    getattr(config.tts, "use_section_tts", True)
+                    and episode_chapters
+                    and len(episode_chapters) >= 2
+                    and sting_path
+                )
+
+                if use_section_tts:
+                    from engine.chapters import split_script_at_chapters
+                    from engine.audio import generate_transition_sting, concatenate_with_stings
+
+                    sections = split_script_at_chapters(podcast_script, episode_chapters)
+                    sections = [s for s in sections if s.strip()]
+
+                    # Safety: if sections capture < 80% of the script, something
+                    # went wrong with splitting — fall back to single synthesis.
+                    sections_total = sum(len(s) for s in sections)
+                    if sections_total < len(podcast_script) * 0.8:
+                        logger.warning(
+                            "Section TTS: sections only contain %d/%d chars (%.0f%%) — "
+                            "falling back to single synthesis to avoid truncation",
+                            sections_total, len(podcast_script),
+                            100 * sections_total / len(podcast_script) if podcast_script else 0,
+                        )
+                        metrics.record("section_tts_fallback", True)
+                        metrics.record("section_tts_coverage_pct", round(
+                            100 * sections_total / len(podcast_script), 1,
+                        ) if podcast_script else 0)
+                        sections = []  # Force fallback to single synthesis below
+
+                    if len(sections) >= 2:
+                        logger.info("Section TTS: synthesizing %d sections separately", len(sections))
+                        metrics.record("section_tts_fallback", False)
+                        metrics.record("section_tts_section_count", len(sections))
+                        section_tmp_dir = digests_dir / f"_sections_ep{episode_num:03d}"
+
+                        from engine.tts import synthesize_sections
+                        section_files = synthesize_sections(
+                            sections,
+                            config.tts.voice_id,
+                            section_tmp_dir,
+                            api_key=api_key,
+                            provider=tts_provider,
+                            section_prefix=f"sec_ep{episode_num:03d}",
+                            max_chars=config.tts.max_chars,
+                            model_id=config.tts.model,
+                            stability=config.tts.stability,
+                            similarity_boost=config.tts.similarity_boost,
+                            style=config.tts.style,
+                            language_code=config.tts.language_code,
+                            speed=config.tts.speed,
+                            apply_text_normalization=config.tts.apply_text_normalization,
+                            speech_wrap_open=config.tts.speech_wrap_open,
+                            speech_wrap_close=config.tts.speech_wrap_close,
+                        )
+
+                        generate_transition_sting(sting_path)
+                        concatenate_with_stings(
+                            section_files, raw_mp3, sting_path=sting_path,
+                        )
+
+                        for sf in section_files:
+                            try:
+                                sf.unlink()
+                            except Exception as exc:
+                                logger.debug("Failed to clean up temp file %s: %s", sf, exc)
+                        try:
+                            section_tmp_dir.rmdir()
+                        except Exception as exc:
+                            logger.debug("Failed to remove temp dir %s: %s", section_tmp_dir, exc)
+                    else:
+                        # Not enough sections — fall back to single synthesis
+                        synthesize(
+                            podcast_script, config.tts.voice_id, raw_mp3,
+                            api_key=api_key, provider=tts_provider,
+                            max_chars=config.tts.max_chars,
+                            model_id=config.tts.model, stability=config.tts.stability,
+                            similarity_boost=config.tts.similarity_boost,
+                            style=config.tts.style,
+                            language_code=config.tts.language_code,
+                            speed=config.tts.speed,
+                            apply_text_normalization=config.tts.apply_text_normalization,
+                            speech_wrap_open=config.tts.speech_wrap_open,
+                            speech_wrap_close=config.tts.speech_wrap_close,
+                        )
+                else:
                     synthesize(
                         podcast_script, config.tts.voice_id, raw_mp3,
                         api_key=api_key, provider=tts_provider,
@@ -1825,201 +1885,187 @@ def run(args: argparse.Namespace) -> None:
                         speech_wrap_open=config.tts.speech_wrap_open,
                         speech_wrap_close=config.tts.speech_wrap_close,
                     )
-            else:
-                synthesize(
-                    podcast_script, config.tts.voice_id, raw_mp3,
-                    api_key=api_key, provider=tts_provider,
-                    max_chars=config.tts.max_chars,
-                    model_id=config.tts.model, stability=config.tts.stability,
-                    similarity_boost=config.tts.similarity_boost,
-                    style=config.tts.style,
-                    language_code=config.tts.language_code,
-                    speed=config.tts.speed,
-                    apply_text_normalization=config.tts.apply_text_normalization,
-                    speech_wrap_open=config.tts.speech_wrap_open,
-                    speech_wrap_close=config.tts.speech_wrap_close,
-                )
 
-            _tts_duration = time.monotonic() - t0
-            logger.info("TTS synthesis took %.1fs", _tts_duration)
-            metrics.record("tts_duration_s", round(_tts_duration, 2))
-            from engine.tracking import record_tts_usage
-            record_tts_usage(tracker, len(podcast_script), provider=config.tts.provider)
+                _tts_duration = time.monotonic() - t0
+                logger.info("TTS synthesis took %.1fs", _tts_duration)
+                metrics.record("tts_duration_s", round(_tts_duration, 2))
+                from engine.tracking import record_tts_usage
+                record_tts_usage(tracker, len(podcast_script), provider=config.tts.provider)
 
-            # 9a. Generate transcript from raw TTS audio (non-fatal).
-            # Runs FIRST so the Whisper output can also feed the
-            # post-TTS validation step below without a second
-            # transcribe pass. Before May 12 2026 these two stages
-            # each loaded Whisper independently and re-transcribed
-            # the same audio — operator-caught during the pipeline
-            # audit.
-            _transcript_result = None
-            try:
-                from engine.transcripts import generate_transcript
-                _lang = "ru" if args.show in ("finansy_prosto", "privet_russian") else "en"
-                _ep_prefix = f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}"
-                _transcript_result = generate_transcript(
-                    raw_mp3, digests_dir, _ep_prefix,
-                    model_size=config.tts.whisper_model, language=_lang,
-                )
-            except Exception as exc:
-                logger.warning("Transcript generation failed (non-fatal): %s", exc)
-
-            # 9b. Post-TTS transcription validation (opt-in). Reuses the
-            # transcript text from 9a when available so Whisper only
-            # runs once per episode. Falls back to its own transcribe
-            # call if the transcript step couldn't produce text (e.g.
-            # faster-whisper missing on the runner).
-            if config.tts.validate_transcription:
-                import json as _json
-                from engine.tts_validation import validate_tts_transcription
-                from engine.utils import strip_speech_tags
-                logger.info("Running post-TTS transcription validation...")
-                # Whisper transcribes audio (no tag literals come back), so
-                # we compare against the tag-stripped script — otherwise the
-                # match score is artificially lowered by every [breath] /
-                # <emphasis>...</emphasis> in the reference text.
-                tts_val = validate_tts_transcription(
-                    raw_mp3, strip_speech_tags(podcast_script),
-                    model_size=config.tts.whisper_model,
-                    threshold=config.tts.whisper_threshold,
-                    transcription=(
-                        _transcript_result.text if _transcript_result else None
-                    ),
-                )
-                if tts_val["passed"]:
-                    logger.info("TTS validation PASSED (%.1f%% match)", tts_val["match_score"] * 100)
-                else:
-                    logger.warning(
-                        "TTS validation WARNING: %.1f%% match (threshold %.0f%%)",
-                        tts_val["match_score"] * 100,
-                        config.tts.whisper_threshold * 100,
+                # 9a. Generate transcript from raw TTS audio (non-fatal).
+                # Runs FIRST so the Whisper output can also feed the
+                # post-TTS validation step below without a second
+                # transcribe pass. Before May 12 2026 these two stages
+                # each loaded Whisper independently and re-transcribed
+                # the same audio — operator-caught during the pipeline
+                # audit.
+                _transcript_result = None
+                try:
+                    from engine.transcripts import generate_transcript
+                    _lang = "ru" if args.show in ("finansy_prosto", "privet_russian") else "en"
+                    _ep_prefix = f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}"
+                    _transcript_result = generate_transcript(
+                        raw_mp3, digests_dir, _ep_prefix,
+                        model_size=config.tts.whisper_model, language=_lang,
                     )
-                    for w in tts_val["mismatched_words"][:10]:
-                        logger.warning("  Mismatch: expected '%s' → heard '%s'", w["expected"], w["heard"])
-                val_path = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}_tts_validation.json"
-                val_path.write_text(_json.dumps(tts_val, indent=2))
-                logger.info("TTS validation report saved: %s", val_path.name)
+                except Exception as exc:
+                    logger.warning("Transcript generation failed (non-fatal): %s", exc)
 
-            # 9c. Tag-leak regression detector — scan the Whisper
-            # transcript for tag-as-text bleeds (the May 2026
-            # ``<build-intensity>`` regression cost a full network
-            # day before being caught by ear). Best-effort: log
-            # warning + record metric; never blocks the pipeline.
-            # Will flip to hard-block once false-positive rate is
-            # calibrated (see audit plan Phase 1.6).
-            try:
-                from engine.tag_leak_detector import (
-                    scan_transcript, summarize_leaks,
-                )
-                _ep_prefix_t = (
-                    f"{config.episode.prefix}_Ep{episode_num:03d}_"
-                    f"{today:%Y%m%d}"
-                )
-                _transcript_txt = digests_dir / f"{_ep_prefix_t}_transcript.txt"
-                _leaks = scan_transcript(_transcript_txt)
-                metrics.record("tag_leaks", len(_leaks))
-                if _leaks:
-                    logger.warning(
-                        "Tag-leak detector flagged %d suspect line(s) in "
-                        "%s — %s",
-                        len(_leaks),
-                        _transcript_txt.name,
-                        summarize_leaks(_leaks),
-                    )
-                    # Record per-pattern counts so the dashboard can
-                    # show which leak families are still recurring.
-                    _by_pattern: dict = {}
-                    for _leak in _leaks:
-                        _by_pattern[_leak.pattern_name] = (
-                            _by_pattern.get(_leak.pattern_name, 0) + 1
-                        )
-                    metrics.record("tag_leaks_by_pattern", _by_pattern)
-                else:
-                    logger.info("Tag-leak detector: clean transcript.")
-            except Exception as exc:
-                logger.debug("Tag-leak detector failed (non-fatal): %s", exc)
-
-            # 10. Audio mixing
-            from engine.audio import get_audio_duration, mix_with_music, normalize_voice
-
-            final_mp3 = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}.mp3"
-
-            t0 = time.monotonic()
-            if config.audio.music_file:
-                music_path = PROJECT_ROOT / config.audio.music_file
-                if music_path.exists():
-                    logger.info("Mixing with music: %s", music_path.name)
-
-                    # Resolve optional background/outro music file
-                    bg_music_path = None
-                    if config.audio.background_music_file:
-                        bg_music_path = PROJECT_ROOT / config.audio.background_music_file
-
-                    mix_with_music(
-                        raw_mp3, music_path, final_mp3,
-                        intro_duration=int(config.audio.intro_duration),
-                        overlap_duration=int(config.audio.overlap_duration),
-                        fade_duration=int(config.audio.fade_duration),
-                        outro_duration=int(config.audio.outro_duration),
-                        intro_volume=config.audio.intro_volume,
-                        overlap_volume=config.audio.overlap_volume,
-                        fade_volume=config.audio.fade_volume,
-                        outro_volume=config.audio.outro_volume,
-                        voice_intro_delay=config.audio.voice_intro_delay,
-                        background_music_path=bg_music_path,
-                        outro_crossfade=config.audio.outro_crossfade,
-                        outro_fade_out_duration=getattr(
-                            config.audio, "outro_fade_out_duration", 6.0,
+                # 9b. Post-TTS transcription validation (opt-in). Reuses the
+                # transcript text from 9a when available so Whisper only
+                # runs once per episode. Falls back to its own transcribe
+                # call if the transcript step couldn't produce text (e.g.
+                # faster-whisper missing on the runner).
+                if config.tts.validate_transcription:
+                    import json as _json
+                    from engine.tts_validation import validate_tts_transcription
+                    from engine.utils import strip_speech_tags
+                    logger.info("Running post-TTS transcription validation...")
+                    # Whisper transcribes audio (no tag literals come back), so
+                    # we compare against the tag-stripped script — otherwise the
+                    # match score is artificially lowered by every [breath] /
+                    # <emphasis>...</emphasis> in the reference text.
+                    tts_val = validate_tts_transcription(
+                        raw_mp3, strip_speech_tags(podcast_script),
+                        model_size=config.tts.whisper_model,
+                        threshold=config.tts.whisper_threshold,
+                        transcription=(
+                            _transcript_result.text if _transcript_result else None
                         ),
                     )
+                    if tts_val["passed"]:
+                        logger.info("TTS validation PASSED (%.1f%% match)", tts_val["match_score"] * 100)
+                    else:
+                        logger.warning(
+                            "TTS validation WARNING: %.1f%% match (threshold %.0f%%)",
+                            tts_val["match_score"] * 100,
+                            config.tts.whisper_threshold * 100,
+                        )
+                        for w in tts_val["mismatched_words"][:10]:
+                            logger.warning("  Mismatch: expected '%s' → heard '%s'", w["expected"], w["heard"])
+                    val_path = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}_tts_validation.json"
+                    val_path.write_text(_json.dumps(tts_val, indent=2))
+                    logger.info("TTS validation report saved: %s", val_path.name)
+
+                # 9c. Tag-leak regression detector — scan the Whisper
+                # transcript for tag-as-text bleeds (the May 2026
+                # ``<build-intensity>`` regression cost a full network
+                # day before being caught by ear). Best-effort: log
+                # warning + record metric; never blocks the pipeline.
+                # Will flip to hard-block once false-positive rate is
+                # calibrated (see audit plan Phase 1.6).
+                try:
+                    from engine.tag_leak_detector import (
+                        scan_transcript, summarize_leaks,
+                    )
+                    _ep_prefix_t = (
+                        f"{config.episode.prefix}_Ep{episode_num:03d}_"
+                        f"{today:%Y%m%d}"
+                    )
+                    _transcript_txt = digests_dir / f"{_ep_prefix_t}_transcript.txt"
+                    _leaks = scan_transcript(_transcript_txt)
+                    metrics.record("tag_leaks", len(_leaks))
+                    if _leaks:
+                        logger.warning(
+                            "Tag-leak detector flagged %d suspect line(s) in "
+                            "%s — %s",
+                            len(_leaks),
+                            _transcript_txt.name,
+                            summarize_leaks(_leaks),
+                        )
+                        # Record per-pattern counts so the dashboard can
+                        # show which leak families are still recurring.
+                        _by_pattern: dict = {}
+                        for _leak in _leaks:
+                            _by_pattern[_leak.pattern_name] = (
+                                _by_pattern.get(_leak.pattern_name, 0) + 1
+                            )
+                        metrics.record("tag_leaks_by_pattern", _by_pattern)
+                    else:
+                        logger.info("Tag-leak detector: clean transcript.")
+                except Exception as exc:
+                    logger.debug("Tag-leak detector failed (non-fatal): %s", exc)
+
+                # 10. Audio mixing
+                from engine.audio import get_audio_duration, mix_with_music, normalize_voice
+
+                final_mp3 = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}.mp3"
+
+                t0 = time.monotonic()
+                if config.audio.music_file:
+                    music_path = PROJECT_ROOT / config.audio.music_file
+                    if music_path.exists():
+                        logger.info("Mixing with music: %s", music_path.name)
+
+                        # Resolve optional background/outro music file
+                        bg_music_path = None
+                        if config.audio.background_music_file:
+                            bg_music_path = PROJECT_ROOT / config.audio.background_music_file
+
+                        mix_with_music(
+                            raw_mp3, music_path, final_mp3,
+                            intro_duration=int(config.audio.intro_duration),
+                            overlap_duration=int(config.audio.overlap_duration),
+                            fade_duration=int(config.audio.fade_duration),
+                            outro_duration=int(config.audio.outro_duration),
+                            intro_volume=config.audio.intro_volume,
+                            overlap_volume=config.audio.overlap_volume,
+                            fade_volume=config.audio.fade_volume,
+                            outro_volume=config.audio.outro_volume,
+                            voice_intro_delay=config.audio.voice_intro_delay,
+                            background_music_path=bg_music_path,
+                            outro_crossfade=config.audio.outro_crossfade,
+                            outro_fade_out_duration=getattr(
+                                config.audio, "outro_fade_out_duration", 6.0,
+                            ),
+                        )
+                    else:
+                        logger.warning("Music file not found: %s — using voice only", music_path)
+                        normalize_voice(raw_mp3, final_mp3)
                 else:
-                    logger.warning("Music file not found: %s — using voice only", music_path)
                     normalize_voice(raw_mp3, final_mp3)
-            else:
-                normalize_voice(raw_mp3, final_mp3)
 
-            _mix_duration = time.monotonic() - t0
-            logger.info("Audio mixing took %.1fs", _mix_duration)
-            metrics.record("audio_mix_duration_s", round(_mix_duration, 2))
-            audio_duration = get_audio_duration(final_mp3) or 0.0
-            logger.info("Final audio: %s (%.0fs)", final_mp3.name, audio_duration)
+                _mix_duration = time.monotonic() - t0
+                logger.info("Audio mixing took %.1fs", _mix_duration)
+                metrics.record("audio_mix_duration_s", round(_mix_duration, 2))
+                audio_duration = get_audio_duration(final_mp3) or 0.0
+                logger.info("Final audio: %s (%.0fs)", final_mp3.name, audio_duration)
 
-            # 10-gate. Skip episode if audio is too short to be a quality episode.
-            _min_audio = config.min_audio_duration
-            if _min_audio and audio_duration < _min_audio:
-                logger.error(
-                    "Audio too short (%.0fs < %ds minimum) — skipping episode.",
-                    audio_duration, _min_audio,
-                )
-                final_mp3.unlink(missing_ok=True)
-                _skip_episode(
-                    "audio_too_short",
-                    f"Audio too short ({audio_duration:.0f}s < {_min_audio}s minimum).",
-                )
+                # 10-gate. Skip episode if audio is too short to be a quality episode.
+                _min_audio = config.min_audio_duration
+                if _min_audio and audio_duration < _min_audio:
+                    logger.error(
+                        "Audio too short (%.0fs < %ds minimum) — skipping episode.",
+                        audio_duration, _min_audio,
+                    )
+                    final_mp3.unlink(missing_ok=True)
+                    _skip_episode(
+                        "audio_too_short",
+                        f"Audio too short ({audio_duration:.0f}s < {_min_audio}s minimum).",
+                    )
 
-            # 10a. Generate chapter data (timestamps + JSON)
-            if episode_chapters and audio_duration > 0:
-                from engine.chapters import calculate_timestamps, write_chapters_json
+                # 10a. Generate chapter data (timestamps + JSON)
+                if episode_chapters and audio_duration > 0:
+                    from engine.chapters import calculate_timestamps, write_chapters_json
 
-                # Music intro offset = time before voice starts
-                music_intro_offset = config.audio.voice_intro_delay + config.audio.intro_duration
-                calculate_timestamps(
-                    episode_chapters,
-                    audio_duration,
-                    music_intro_offset=music_intro_offset,
-                )
+                    # Music intro offset = time before voice starts
+                    music_intro_offset = config.audio.voice_intro_delay + config.audio.intro_duration
+                    calculate_timestamps(
+                        episode_chapters,
+                        audio_duration,
+                        music_intro_offset=music_intro_offset,
+                    )
 
-                ep_title = f"Ep {episode_num}: {hook}" if hook else f"{config.name} - Episode {episode_num}"
-                chapters_json_path = digests_dir / f"chapters_ep{episode_num:03d}.json"
-                write_chapters_json(
-                    episode_chapters,
-                    chapters_json_path,
-                    episode_title=ep_title,
-                )
+                    ep_title = f"Ep {episode_num}: {hook}" if hook else f"{config.name} - Episode {episode_num}"
+                    chapters_json_path = digests_dir / f"chapters_ep{episode_num:03d}.json"
+                    write_chapters_json(
+                        episode_chapters,
+                        chapters_json_path,
+                        episode_title=ep_title,
+                    )
 
-            # NOTE: raw MP3 cleanup is deferred until after post-validation
-            # passes, so we have recovery if the mix is corrupt (see #20).
+                # NOTE: raw MP3 cleanup is deferred until after post-validation
+                # passes, so we have recovery if the mix is corrupt (see #20).
 
     # 10b. Upload to R2 (if configured)
     r2_audio_url = None

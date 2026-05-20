@@ -66,6 +66,44 @@ class TestTeslaScrub:
         assert "Record deal" in out
 
 
+class TestResumePublish:
+    def test_should_resume_when_mp3_without_marker(self, tmp_path):
+        from engine.pipeline_resume import should_resume_publish
+        from engine.publish_marker import publish_marker_path
+
+        mp3 = tmp_path / "ep.mp3"
+        mp3.write_bytes(b"x" * 1000)
+        marker = publish_marker_path(tmp_path, date(2026, 5, 20))
+        assert should_resume_publish(mp3, marker, test_mode=False, dry_run=False)
+
+    def test_should_not_resume_when_marker_complete(self, tmp_path):
+        from engine.pipeline_resume import should_resume_publish
+        from engine.publish_marker import (
+            publish_marker_path,
+            write_publish_complete_marker,
+        )
+
+        mp3 = tmp_path / "ep.mp3"
+        mp3.write_bytes(b"x" * 1000)
+        marker = publish_marker_path(tmp_path, date(2026, 5, 20))
+        write_publish_complete_marker(
+            marker, show_slug="tesla", episode_num=1, date_iso="2026-05-20",
+        )
+        assert not should_resume_publish(mp3, marker, test_mode=False, dry_run=False)
+
+
+class TestShowPageSchemaUrls:
+    def test_schema_urls_are_absolute(self):
+        from generate_html import GITHUB_RAW, NETWORK_SHOWS
+
+        cfg = NETWORK_SHOWS["tesla"]
+        feed = f"{GITHUB_RAW}/{cfg['rss_file']}"
+        img = f"{GITHUB_RAW}/{cfg['podcast_image'].lstrip('/')}"
+        assert feed == "https://nerranetwork.com/podcast.rss"
+        assert feed.startswith("https://")
+        assert img.startswith("https://nerranetwork.com/assets/")
+
+
 class TestBlogRssRegeneration:
     def test_collect_posts_from_tesla_digests(self):
         digest_dir = REPO / "digests" / "tesla_shorts_time"

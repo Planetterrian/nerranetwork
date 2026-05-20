@@ -1,19 +1,21 @@
 # Review Remediation Plan (May 2026)
 
-Tracking implementation of the full-network audit. Status: **in progress on branch `cursor/review-remediation-db26`**.
+Tracking implementation of the full-network audit.
 
-## P0 — Subscriber-facing
+**Merged to `main`:** PR #389 (P0/P1). **P2 branch:** `cursor/review-p2-db26`.
+
+## P0 — Subscriber-facing ✅
 
 | # | Item | Status |
 |---|------|--------|
 | 1 | Wire `update_blog_rss()` into daily pipeline + `generate_all_blogs` | Done |
-| 2 | Generate `blog_unintended_consequences.rss` | Done (on next UC/blog run) |
+| 2 | Generate `blog_unintended_consequences.rss` | Done |
 | 3 | Run `scripts/generate_api.py` in CI finalize | Done |
 | 4 | Publish-complete checkpoint (not MP3-only) | Done |
 | 5 | Gate newsletter/X on successful MP3 | Done |
 | 6 | Scrub invalid TSLA price lines before publish | Done |
 
-## P1 — Reliability & ops
+## P1 — Reliability & ops ✅
 
 | # | Item | Status |
 |---|------|--------|
@@ -25,16 +27,18 @@ Tracking implementation of the full-network audit. Status: **in progress on bran
 | 12 | YouTube disclosure → Grok TTS | Done |
 | 13 | UC YAML comment matches code | Done |
 
-## P2 — Follow-ups (not in this PR)
+## P2 — Follow-ups
 
-- Schema.org absolute URLs on show pages
-- Blog post template RSS `<link rel="alternate">`
-- RSS historical show-notes backfill
-- Refresh `docs/env_var_inventory.md`
-- Git history MP3 purge
-- YouTube quota / enable more shows
-- `run_show.py` phase extraction / resume-publish-only path
-- Light-mode site option
+| Item | Status |
+|------|--------|
+| Schema.org absolute URLs on show pages | Done |
+| Blog post template RSS `<link rel="alternate">` | Done |
+| Refresh `docs/env_var_inventory.md` | Done |
+| `run_show.py` resume-publish-only path | Done |
+| RSS historical show-notes backfill | Deferred |
+| Git history MP3 purge | Deferred (needs operator + `git filter-repo`) |
+| YouTube quota / enable more shows | Deferred (ops / quota request) |
+| Light-mode site option | Deferred |
 
 ## Verification
 

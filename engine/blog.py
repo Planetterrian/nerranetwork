@@ -687,6 +687,7 @@ def generate_blog_post_html(
         "prev_post": prev_post,
         "next_post": next_post,
         "rss_file": show_config.get("rss_file", ""),
+        "blog_rss_url": f"https://nerranetwork.com/blog_{show_slug}.rss",
         "show_page": show_config.get("show_page", ""),
         "summaries_page": show_config.get("summaries_page", ""),
         "blog_index_url": f"../../blog/{show_slug}/index.html",
