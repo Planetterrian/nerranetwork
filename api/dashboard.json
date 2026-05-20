@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-05-20T12:28:46.717081+00:00",
+  "generated_at": "2026-05-20T19:18:14.248275+00:00",
   "network": {
     "landmines_counts": {
-      "ok": 9,
-      "warn": 3,
-      "fail": 0
+      "ok": 7,
+      "warn": 4,
+      "fail": 1
     },
-    "shows_count": 11,
+    "shows_count": 13,
     "stale_shows": 0,
     "total_cost_last_7_days_usd": 3.5028,
     "total_cost_last_30_days_usd": 113.4978,
@@ -114,6 +114,23 @@
         "success_rate": 1.0
       },
       {
+        "slug": "network_meta",
+        "name": "",
+        "rss_file": "podcast.rss",
+        "rss_title": "Podcast",
+        "rss_image": "",
+        "show_page": "network_meta.html",
+        "blog_page": "blog/network_meta/index.html",
+        "newsletter_enabled": false,
+        "x_enabled": true,
+        "latest_pub_date": "2026-05-20T08:00:00+00:00",
+        "pub_status": "ok",
+        "cost_last_7_days_usd": 0.0,
+        "episodes_last_7_days": 0,
+        "p50_pipeline_s": 0.0,
+        "success_rate": 0.0
+      },
+      {
         "slug": "omni_view",
         "name": "Omni View",
         "rss_file": "omni_view_podcast.rss",
@@ -163,6 +180,23 @@
         "episodes_last_7_days": 4,
         "p50_pipeline_s": 30.02,
         "success_rate": 1.0
+      },
+      {
+        "slug": "scaffold_pending",
+        "name": "",
+        "rss_file": "podcast.rss",
+        "rss_title": "Podcast",
+        "rss_image": "",
+        "show_page": "scaffold_pending.html",
+        "blog_page": "blog/scaffold_pending/index.html",
+        "newsletter_enabled": false,
+        "x_enabled": true,
+        "latest_pub_date": "2026-05-20T08:00:00+00:00",
+        "pub_status": "ok",
+        "cost_last_7_days_usd": 0.0,
+        "episodes_last_7_days": 0,
+        "p50_pipeline_s": 0.0,
+        "success_rate": 0.0
       },
       {
         "slug": "tesla",
@@ -262,6 +296,16 @@
       "x_enabled": true
     },
     {
+      "slug": "network_meta",
+      "name": "network_meta",
+      "yaml_path": "shows/network_meta.yaml",
+      "load_error": null,
+      "rss_file": "podcast.rss",
+      "rss_image": "",
+      "newsletter_enabled": false,
+      "x_enabled": true
+    },
+    {
       "slug": "omni_view",
       "name": "Omni View",
       "yaml_path": "shows/omni_view.yaml",
@@ -290,6 +334,16 @@
       "rss_image": "https://nerranetwork.com/assets/covers/privet-russian.jpg",
       "newsletter_enabled": true,
       "x_enabled": false
+    },
+    {
+      "slug": "scaffold_pending",
+      "name": "scaffold_pending",
+      "yaml_path": "shows/scaffold_pending.yaml",
+      "load_error": null,
+      "rss_file": "podcast.rss",
+      "rss_image": "",
+      "newsletter_enabled": false,
+      "x_enabled": true
     },
     {
       "slug": "tesla",
@@ -357,9 +411,32 @@
     {
       "id": "item_4_output_dirs",
       "title": "Per-show output paths under digests/",
-      "status": "ok",
-      "details": "All 11 shows write into digests/…",
-      "evidence": {}
+      "status": "fail",
+      "details": "4 path(s) outside digests/",
+      "evidence": {
+        "violations": [
+          {
+            "slug": "network_meta",
+            "field": "episode.output_dir",
+            "value": "digests"
+          },
+          {
+            "slug": "network_meta",
+            "field": "publishing.audio_subdir",
+            "value": "digests"
+          },
+          {
+            "slug": "scaffold_pending",
+            "field": "episode.output_dir",
+            "value": "digests"
+          },
+          {
+            "slug": "scaffold_pending",
+            "field": "publishing.audio_subdir",
+            "value": "digests"
+          }
+        ]
+      }
     },
     {
       "id": "item_5_nested_digests",
@@ -378,8 +455,8 @@
     {
       "id": "item_8_feature_flags",
       "title": "Feature flags (x_enabled) explicit",
-      "status": "ok",
-      "details": "All 11 shows declare publishing.x_enabled explicitly.",
+      "status": "warn",
+      "details": "2 show(s) rely on the publishing.x_enabled default (not explicit in YAML): network_meta, scaffold_pending",
       "evidence": {
         "per_show": [
           {
@@ -413,6 +490,11 @@
             "explicit": true
           },
           {
+            "slug": "network_meta",
+            "x_enabled": null,
+            "explicit": false
+          },
+          {
             "slug": "omni_view",
             "x_enabled": true,
             "explicit": true
@@ -428,6 +510,11 @@
             "explicit": true
           },
           {
+            "slug": "scaffold_pending",
+            "x_enabled": null,
+            "explicit": false
+          },
+          {
             "slug": "tesla",
             "x_enabled": true,
             "explicit": true
@@ -437,6 +524,10 @@
             "x_enabled": true,
             "explicit": true
           }
+        ],
+        "missing": [
+          "network_meta",
+          "scaffold_pending"
         ]
       }
     },
@@ -464,7 +555,7 @@
       "id": "item_11_tts_provider",
       "title": "All shows use Grok TTS",
       "status": "ok",
-      "details": "All 11 shows resolve tts.provider == grok.",
+      "details": "All 13 shows resolve tts.provider == grok.",
       "evidence": {}
     },
     {
@@ -559,6 +650,15 @@
         "drift": []
       },
       {
+        "slug": "network_meta",
+        "voice_id": "kdif6sqjcyiq",
+        "model": "eleven_flash_v2_5",
+        "stability": 0.5,
+        "similarity_boost": 0.75,
+        "style": 0.0,
+        "drift": []
+      },
+      {
         "slug": "omni_view",
         "voice_id": "kdif6sqjcyiq",
         "model": "eleven_flash_v2_5",
@@ -590,6 +690,15 @@
             "actual": "0b875ae2"
           }
         ]
+      },
+      {
+        "slug": "scaffold_pending",
+        "voice_id": "kdif6sqjcyiq",
+        "model": "eleven_flash_v2_5",
+        "stability": 0.5,
+        "similarity_boost": 0.75,
+        "style": 0.0,
+        "drift": []
       },
       {
         "slug": "tesla",
@@ -1430,6 +1539,21 @@
           ]
         ]
       },
+      "network_meta": {
+        "last_7_days": {
+          "grok": 0.0,
+          "tts": 0.0,
+          "total": 0.0,
+          "episodes": 0
+        },
+        "last_30_days": {
+          "grok": 0.0,
+          "tts": 0.0,
+          "total": 0.0,
+          "episodes": 0
+        },
+        "daily_series": []
+      },
       "omni_view": {
         "last_7_days": {
           "grok": 0.3555,
@@ -1813,6 +1937,21 @@
             0.0323
           ]
         ]
+      },
+      "scaffold_pending": {
+        "last_7_days": {
+          "grok": 0.0,
+          "tts": 0.0,
+          "total": 0.0,
+          "episodes": 0
+        },
+        "last_30_days": {
+          "grok": 0.0,
+          "tts": 0.0,
+          "total": 0.0,
+          "episodes": 0
+        },
+        "daily_series": []
       },
       "tesla": {
         "last_7_days": {
@@ -2714,6 +2853,42 @@
         "rate": 0.0
       }
     },
+    "network_meta": {
+      "sample_size": 0,
+      "p50_duration_s": 0.0,
+      "p95_duration_s": 0.0,
+      "success_rate": 0.0,
+      "stage_mean_s": {},
+      "recent": [],
+      "youtube": {
+        "enabled_in_recent": false,
+        "long_form_attempts": 0,
+        "long_form_uploaded": 0,
+        "long_form_success_rate": 0.0,
+        "shorts_attempts": 0,
+        "shorts_uploaded": 0,
+        "shorts_success_rate": 0.0,
+        "long_form_errors": []
+      },
+      "weekly_recap": {
+        "attempts": 0,
+        "synthesised": 0,
+        "success_rate": 0.0
+      },
+      "grok_imagine": {
+        "attempts": 0,
+        "successful_episodes": 0,
+        "generation_success_rate": 0.0,
+        "cost_usd_recent": 0.0,
+        "recent_failures": []
+      },
+      "tag_leaks": {
+        "episodes_with_leaks": 0,
+        "total_leaks": 0,
+        "by_pattern": {},
+        "rate": 0.0
+      }
+    },
     "omni_view": {
       "sample_size": 30,
       "p50_duration_s": 322.15,
@@ -3047,6 +3222,42 @@
         "rate": 0.0
       }
     },
+    "scaffold_pending": {
+      "sample_size": 0,
+      "p50_duration_s": 0.0,
+      "p95_duration_s": 0.0,
+      "success_rate": 0.0,
+      "stage_mean_s": {},
+      "recent": [],
+      "youtube": {
+        "enabled_in_recent": false,
+        "long_form_attempts": 0,
+        "long_form_uploaded": 0,
+        "long_form_success_rate": 0.0,
+        "shorts_attempts": 0,
+        "shorts_uploaded": 0,
+        "shorts_success_rate": 0.0,
+        "long_form_errors": []
+      },
+      "weekly_recap": {
+        "attempts": 0,
+        "synthesised": 0,
+        "success_rate": 0.0
+      },
+      "grok_imagine": {
+        "attempts": 0,
+        "successful_episodes": 0,
+        "generation_success_rate": 0.0,
+        "cost_usd_recent": 0.0,
+        "recent_failures": []
+      },
+      "tag_leaks": {
+        "episodes_with_leaks": 0,
+        "total_leaks": 0,
+        "by_pattern": {},
+        "rate": 0.0
+      }
+    },
     "tesla": {
       "sample_size": 30,
       "p50_duration_s": 289.37,
@@ -3286,7 +3497,7 @@
       {
         "file": "blog.rss",
         "entry_count": 50,
-        "latest_pub_date": "2026-03-26T00:00:00+00:00",
+        "latest_pub_date": "2026-05-20T00:00:00+00:00",
         "latest_enclosures": [],
         "malformed": false,
         "error": null
