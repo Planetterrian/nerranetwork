@@ -1,0 +1,67 @@
+What's up? Welcome to Models and Agents, episode 54 for May 20th, 2026, your daily AI briefing.
+Another day, another round of AI developments. Let's break it down.
+Gemini 3.5 Flash gives builders faster, cheaper frontier performance on coding and agent tasks,
+while Gemini Omni adds real-time multi-modal scene editing.
+Google released Gemini 3.5 Flash today with claims it outperforms the prior 3.1 pro on coding
+and agentic work. The model reportedly runs four times faster than competing frontier models
+and at roughly half the cost. Early users inside anti-gravity report 12 times speed-ups and
+800 tokens per second. It is already available in the Gemini app and anti-gravity,
+with a full pro variant promise soon. Builders working on agentic systems or high-volume
+coding tools should evaluate it immediately for latency-sensitive deployments.
+Watch for expanded context windows and deeper tool-calling integrations in the coming weeks.
+Alibaba simultaneously shipped twin 3.5 live-translate Flash for low-latency multi-modal translation
+across 60 languages. Now let's move into the model updates. Alibaba's Quen 3.5 live-translate
+Flash handles simultaneous audio and video input across 60 languages. It outputs speech in 29
+languages at 2.8 second latency. The model adds speaker voice cloning, lip-reading vision support,
+and dynamic keyword configuration for domain terms. It outperforms prior commercial systems on
+floors and co-votes two benchmarks. Access runs only through the Alibaba Cloud Model Studio
+WebSocket API. Gemini Omni brings major gains in world understanding and multimodal editing.
+The system accepts photos, video, and audio to generate entirely new scenes. Users can upload
+their own videos and iteratively refine outputs, with video handling as the initial focus.
+Over time, the system aims to support arbitrary input and output modalities.
+Now for the agent and tool developments. Red Hat expanded its AI factory platform with new
+Nvidia integrations and broader support for enterprise autonomous agents.
+The update targets production deployment of agentec workflows inside existing Red Hat
+infrastructure. Organizations already running OpenShift can now add agent capabilities without
+new hardware provisioning. K.AI launched an agent designed to automate back office insurance
+processes, including claims handling and policy servicing. The system focuses on structured workflows
+that require both document understanding and external tool calls. Early pilots target mid-size
+carriers looking to reduce manual review cycles. In the practical and community space,
+a new pre-print shows guardrails lifting an 8 billion parameter model from 53% to 99% success
+on agentec tasks. The approach adds lightweight safety layers without changing base model weights.
+Teams running smaller open models for agents should review the paper for immediate implementation
+patterns. A user running Quinn 3.6-27b on dual 6000 blackwell cards Vialama.cpp reports 100-110 tokens per
+second. The setup leaves headroom for embeddings and comfy UI, while using tenser splitting,
+flash attention, and speculative MTP decoding. Developers with similar hardware can copy the command
+flags to test further gains. Okay, let's pop the hood on guardrails for small agent models.
+Everyone talks about guardrails as a simple safety toggle. In practice, they are a layered
+filtering system that runs before and after the main model call. The first layer uses lightweight
+classifiers to block obvious policy violations in the prompt. A second layer inspects the
+model's planned tool calls and rewrites or rejects risky actions. The final layer scores the
+completed trajectory against task success and safety rubrics. Failures feed back into a short-term
+memory buffer. On the 8 billion parameter model in the recent pre-print, this stack raised agent
+success from 53% to 99%. It added roughly 15-25 milliseconds per turn and less than one gigabyte
+of extra VRAM. The quality lift shrinks one's base models exceed 30 billion parameters because
+their native instruction following already reduces unsafe outputs. Use guardrails when you
+must ship small models into production agents. Skip them only if you have both a large base
+model and exhaustive red teaming coverage. The gacha most teams miss is that guardrails must be
+updated whenever the underlying model or tool set changes. Otherwise, false negative rates climb
+quickly. So when should you actually reach for this versus the alternative? Reach for the guard
+rail stack on smaller models headed for customer-facing agents where safety margins matter most.
+Skip the overhead once your base model already clears red team checks at scale.
+Now for things to try this week. Try Gemini 3.5 Flash inside the Gemini app or anti-gravity for
+any coding or multi-step agent workflow. The speed and cost improvements are immediately noticeable
+versus prior frontier options. Test Quinn 3.5 Live Translate Flash via Alibaba Cloud Model Studio
+if you need real-time speech translation with vision or voice cloning. Add the guard rail patterns
+from the 8 billion agent paper to your local Lama-Ox CPP or VLLM setups before deploying smaller
+models in customer-facing agents. Run the provided blackwell lemma.cpp command on any dual GPU
+workstation to benchmark Quinn 3.6 to 27b throughput against your current inference stack.
+On the horizon, OpenAI plans to repeat its discounted token program for YC startups once
+current capacity sells out. And Thropic continues its series of dialogues with philosophers and
+ethicists on frontier AI character and alignment questions. Red Hat and NVIDIA are expected to release
+additional enterprise agent tooling on the updated AI factory platform in the coming quarter.
+Before we go, tomorrow keep an eye on updates to open AI's discounted token program for startups.
+That's models and agents for today. If you found this useful, share it with someone who's trying
+to keep up with all these changes, and subscribe so you don't miss tomorrow's update.
+The AI world moves fast. We'll help you keep up. See you tomorrow. This episode used AI voice
+synthesis of my voice. Editorial selection and analysis are my own.
