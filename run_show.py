@@ -1682,7 +1682,15 @@ def run(args: argparse.Namespace) -> None:
             #     Soft floor (below target): warn but continue — a shorter fresh
             #     episode is better than no episode.
             _TARGET_WORDS = getattr(config.llm, "min_podcast_words", 1000) or 1000
-            _HARD_FLOOR = max(600, int(_TARGET_WORDS * 0.4))
+            # Hard floor is the larger of (a) the per-show absolute
+            # floor and (b) 40% of the target word count. Per-show
+            # absolute floor defaults to 600 (the network-wide tuning
+            # for the news-show shape). Specialist shows with a
+            # thinner content surface (env_intel) override it lower
+            # so a narrow-news-day episode at ~500 words ships
+            # instead of being treated as broken output.
+            _FLOOR_FIELD = getattr(config.llm, "min_podcast_word_floor", 600) or 600
+            _HARD_FLOOR = max(_FLOOR_FIELD, int(_TARGET_WORDS * 0.4))
             _script_word_count = len(podcast_script.split())
             if _script_word_count < _HARD_FLOOR:
                 logger.error(

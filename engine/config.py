@@ -46,6 +46,17 @@ class LLMConfig:
     max_tokens: int = 3500
     podcast_max_tokens: int = 0  # 0 = use max_tokens for both
     min_podcast_words: int = 1500  # Minimum word count to trigger retry
+    # Absolute hard floor below which the runner aborts the episode as
+    # "clearly broken" (see run_show.py:1580). Network default 600 is
+    # tuned for the news-show shape where 600 words ~ 4 minutes — well
+    # under what a real episode should ever produce. Specialist shows
+    # with structurally thinner content surfaces (env_intel's
+    # alt-cadence BC environmental policy beat is the canonical
+    # example) historically come in at 700–900 words on a normal day
+    # and can dip into the 500s on a narrow news day without the
+    # output being "broken" — set their floor lower so a thin-but-
+    # legitimate episode ships instead of being skipped.
+    min_podcast_word_floor: int = 600
     podcast_chain: bool = False  # Two-stage generation: outline then expand
     # Model used when the primary refuses after educational retry. A
     # different model (or different variant of the same family) often
