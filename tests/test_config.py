@@ -703,9 +703,19 @@ class TestYouTubeImageProviderConfig:
         cfg = load_config(SHOWS_DIR / "tesla.yaml")
         assert cfg.youtube.image_provider == "grok"
 
-    def test_mab_yaml_uses_grok_image_provider(self):
+    def test_mab_yaml_uses_pexels_image_provider(self):
+        """MAB was flipped from ``grok`` back to ``pexels`` in commit
+        a79df65 (May 20 2026, "YouTube pipeline P0–P2") for a one-month
+        A/B test against Tesla on Grok Imagine. The yaml comment
+        documents the intent (``Flip back to grok after operator
+        review``) but the original drift guard still asserted ``grok``
+        and started failing CI on the next run. Pin the current
+        intended state so a future yaml refactor doesn't silently
+        flip it again mid-experiment. When the operator decides the
+        A/B winner, flip both the yaml and this assertion in the same
+        commit."""
         cfg = load_config(SHOWS_DIR / "models_agents_beginners.yaml")
-        assert cfg.youtube.image_provider == "grok"
+        assert cfg.youtube.image_provider == "pexels"
 
     def test_other_shows_remain_on_pexels(self):
         """Every other show (the 9 that aren't YouTube-enabled today,
