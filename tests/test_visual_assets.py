@@ -556,13 +556,23 @@ def test_every_show_yaml_has_image_queries():
     """
     import yaml as _yaml
     shows_dir = Path(__file__).resolve().parent.parent / "shows"
-    # Underscore-prefixed YAMLs (`_defaults.yaml`, `_blocked_sources.yaml`)
-    # and shared maps (`pronunciation_map.yaml`) are network-wide
-    # configuration, not shows.
+    # Network-wide configuration files that live alongside real show
+    # YAMLs but don't define a show. Underscore-prefixed files
+    # (`_defaults.yaml`, `_blocked_sources.yaml`) follow the
+    # convention; the rest are referenced by exact filename in
+    # production code (engine/show_scaffold.py, generate_html.py,
+    # scripts/validate_show.py) so they can't be renamed to use the
+    # underscore prefix without a refactor. Keep this exclusion list
+    # in sync when new non-show YAMLs land in shows/.
+    _NON_SHOW_YAMLS = {
+        "pronunciation_map.yaml",
+        "network_meta.yaml",     # scaffold tool registry
+        "scaffold_pending.yaml", # pending cron entries from scaffold_show.py
+    }
     show_files = sorted(
         f for f in shows_dir.glob("*.yaml")
         if not f.name.startswith("_")
-        and f.name != "pronunciation_map.yaml"
+        and f.name not in _NON_SHOW_YAMLS
     )
     assert show_files, f"No show YAMLs found under {shows_dir}"
     for show_file in show_files:
