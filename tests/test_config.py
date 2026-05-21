@@ -174,6 +174,12 @@ class TestDefaultValues:
         assert c.digest_temperature == 0.7
         assert c.podcast_temperature == 0.7
         assert c.max_tokens == 3500
+        # Hard-floor default mirrors the network-wide 600-word
+        # tuning baked into run_show.py:1685 since the start of
+        # the Phase-3 calibration. Only shows that explicitly
+        # opt into a thinner content surface (env_intel) override
+        # it lower.
+        assert c.min_podcast_word_floor == 600
 
     def test_tts_defaults(self):
         c = TTSConfig()
@@ -536,6 +542,15 @@ class TestLoadConfigRealFiles:
         assert cfg.newsletter.enabled is True
         assert cfg.newsletter.api_key_env == "BUTTONDOWN_API_KEY"
         assert cfg.newsletter.tag == "Environmental Intelligence"
+        # env_intel is structurally a shorter show (alt-cadence,
+        # narrow content surface). Last five episodes ran 693–928
+        # words — the network 1500 default was never close. Ep036
+        # (2026-05-21) came in at 539 words on a narrow-news day
+        # and was incorrectly aborted at the 600 hard floor; the
+        # explicit floor + target keep narrow-but-legitimate
+        # episodes shippable. See run_show.py:1685.
+        assert cfg.llm.min_podcast_words == 900
+        assert cfg.llm.min_podcast_word_floor == 450
 
 
 # =========================================================================

@@ -177,6 +177,21 @@ llm:
   podcast_temperature: 0.7
   max_tokens: 3500
   podcast_max_tokens: 8000
+  # env_intel is structurally a shorter, specialist show: alt-cadence
+  # (odd weekdays), narrow content surface (BC environmental policy +
+  # federal regulatory tracking), small daily news pool. The last five
+  # shipped episodes ran 693, 730, 820, 838 and 928 words — the network
+  # default ``min_podcast_words: 1500`` was never close. Pin the target
+  # to reality so the "below target" warning isn't permanent noise; pair
+  # it with an explicit ``min_podcast_word_floor: 450`` so a narrow-news
+  # day (Ep036, 2026-05-21 came in at 539 words and was incorrectly
+  # treated as "clearly broken") ships as a short-but-legitimate
+  # episode instead of aborting. The podcast prompt already tells the
+  # LLM "if the briefing is genuinely thin, let the episode be shorter
+  # rather than fill space with editorial padding"; this aligns the
+  # pipeline gate with that instruction.
+  min_podcast_words: 900
+  min_podcast_word_floor: 450
 
 tts:
   # Inherits provider=grok, voice_id=sal, language_code=en, max_chars=10000
