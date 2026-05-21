@@ -124,6 +124,38 @@ def test_short_form_filter_graph_with_hook_burns_caption():
     assert graph.endswith("[v]")
 
 
+def test_short_form_filter_graph_hook_sits_in_bottom_third():
+    """May 2026 operator review: the shorts hook moved out of the
+    top half (was ``y=240``) into the bottom third of the
+    1080x1920 frame. ``y=h*0.70`` puts the baseline at y≈1344,
+    well inside the bottom-third zone (y > 1280) and above the
+    URL pill at y≈1820. Pin the new position so a future style
+    edit doesn't drift back to the top."""
+    graph = _short_form_filter_graph(hook="anything")
+    # New bottom-third position.
+    assert "y=h*0.70" in graph
+    # Old top-of-frame position must not return.
+    assert "y=240" not in graph
+
+
+def test_short_form_filter_graph_hook_is_not_prominent():
+    """May 2026 operator review: drop the opaque-box treatment
+    (was ``box=1:boxcolor=black@0.6``) and shrink the font (64
+    → 44) so the hook no longer dominates the slideshow during
+    its 3-second window. Outline + shadow keep it readable on
+    bright frames without painting a black rectangle."""
+    graph = _short_form_filter_graph(hook="anything")
+    # Smaller font.
+    assert "fontsize=44" in graph
+    assert "fontsize=64" not in graph
+    # No opaque box behind the text.
+    assert "box=1" not in graph
+    assert "boxcolor=" not in graph
+    # Outline + soft shadow for readability without prominence.
+    assert "borderw=4" in graph
+    assert "bordercolor=black" in graph
+
+
 def test_short_form_filter_graph_without_hook_omits_caption():
     graph = _short_form_filter_graph(hook=None)
     # No first-3s caption when hook isn't provided.
@@ -522,9 +554,12 @@ def test_long_form_filter_graph_with_subtitles_appends_filter():
     # ASS force-style is appended.
     assert "force_style=" in graph
     assert "Alignment=2" in graph
-    # Subtitles sit at standard bottom margin now (no spectrum band
-    # to lift them above).
-    assert "MarginV=80" in graph
+    # Subtitles sit in the bottom third of the 1920x1080 frame (May
+    # 2026 operator review). ``MarginV=120`` puts the baseline ~120
+    # px above the bottom edge — comfortably below y=720 (bottom
+    # third boundary) and high enough that the YouTube progress bar
+    # doesn't overlap on mobile.
+    assert "MarginV=120" in graph
     # Subtitles attach to the [branded] stage (was [disclosed] before
     # the centered burn-in was removed).
     assert "[branded]subtitles=" in graph
@@ -548,14 +583,21 @@ def test_subtitles_path_escape_handles_metacharacters():
 
 
 def test_subtitles_force_style_has_required_fields():
-    """Sanity check on the ASS force-style string."""
+    """Sanity check on the ASS force-style string. May 2026 retune:
+    pin the new "auto-caption-style" look so a future style edit
+    doesn't silently regress to the old opaque-box look the operator
+    asked to remove ("make it not as prominent")."""
     assert "FontName=DejaVu Sans" in _SUBTITLES_FORCE_STYLE
     assert "Alignment=2" in _SUBTITLES_FORCE_STYLE
-    # Standard bottom-edge subtitle position now that the spectrum
-    # band is gone.
-    assert "MarginV=80" in _SUBTITLES_FORCE_STYLE
-    # BorderStyle=3 = opaque box behind text (better readability than outline).
-    assert "BorderStyle=3" in _SUBTITLES_FORCE_STYLE
+    # Bottom-third position (May 2026 operator review).
+    assert "MarginV=120" in _SUBTITLES_FORCE_STYLE
+    # BorderStyle=1 = outline + soft shadow only (no opaque box).
+    # Keeps the slideshow imagery visible behind the words.
+    assert "BorderStyle=1" in _SUBTITLES_FORCE_STYLE
+    assert "BorderStyle=3" not in _SUBTITLES_FORCE_STYLE
+    # Smaller font reads less as "subtitle bar" and more as
+    # "auto-caption hint" — also matches YouTube auto-caption sizing.
+    assert "FontSize=18" in _SUBTITLES_FORCE_STYLE
 
 
 # ---------------------------------------------------------------------------
