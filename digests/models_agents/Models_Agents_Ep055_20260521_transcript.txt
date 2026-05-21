@@ -1,0 +1,78 @@
+Welcome back to Models & Agents Episode F-D-5 on May 21, 2026.
+Let's see what shipped. Let's see what happened in the AI world today,
+and trust me, it's been busy. A general-purpose reasoning model just
+disproved an 80-year-old math conjecture by finding better constructions than the square grid's
+mathematicians expected. Open AI announced that one of its general-purpose models
+solved the planar unit distance problem posed by Paul Erduce in 1946.
+This marks the first time AI has autonomously resolved a prominent open math question.
+The model discovered an entirely new family of constructions that outperformed the square
+grid patterns long assumed to be optimal. The result came from a model not specialized for math.
+It maintained long chains of reasoning across distant concepts and surfaced previously unexplored paths.
+Open AI notes that the same systems will soon accelerate work in biology, physics,
+and medicine, while still requiring human judgment to choose problems and interpret outcomes.
+Developers should watch for follow-up papers and whether similar reasoning gains appear in
+coding or scientific tool use benchmarks. Now let's move to the model updates that landed this week.
+Demis Haasabis highlighted that Gemini 3.5-flash outperformed the prior 3.1-pro on coding and
+agentic tasks. The model runs four times faster than other frontier models. It reaches 800 tokens per
+second in anti-gravity. Gemini 3.5-flash also ships at less than half the cost of comparable systems.
+A pro variant is still coming. Builders working on latency sensitive agents or high volume coding
+workflows should test it immediately in the Gemini app or anti-gravity. Haasabis pointed to the
+official Google blog post for deeper technical details on the new Flash model. The release continues
+Google's push to deliver faster, cheaper inference optimized for agent workloads.
+Let's turn to the agent and tool developments. Resolve AI expanded its platform with a coordinated
+team of specialized agents. These agents pursue multiple hypotheses in parallel, cross-verify
+conclusions, and build full causal chains for production incidents. The new architecture reportedly doubles
+root cause accuracy on internal benchmarks. It includes always on background agents plus a shared
+workspace for human agent collaboration. Engineering teams can integrate it via REST API or MCP
+server and pay only for actual troubleshooting work. Corei.ai launched the Artemis edition of its
+agent platform. The platform centers on a YAML-based agent blueprint language. An AI architect called
+ARCH translates natural language requirements into deployable, governed, multi-agent systems.
+The platform uses a dual-brain architecture that pairs LLM reasoning with deterministic business
+rule execution. It supports 175 models across clouds and on-premises.
+Existing customers are already planning migrations while new deployments start on the updated stack.
+Ripletide introduced decision context graphs that give agents structured memory, time-aware reasoning,
+and explicit decision logic. The graphs make agents non-regressive so they can compound validated
+action sequences over time. The approach encodes applicability rules and temporal validity directly
+rather than relying on the model to infer them. On the practical and community side, LLM station
+reached version 0.9. It is a Windows GUI that launches LLMOS server directly with full parameter
+control. The tool supports multiple backends including official LLMA.CPP with MTP, TurboQuant for high
+context KV cache quantization, and voice features via XTTS and faster whisper.
+Users report strong results running 23.627b at 177 kilobytes context on dual RTX 3060 cards.
+The project retains real-time VRAM monitoring and per model profiles. The project is open-source
+under MIT and accepts contributions for Linux and Mac ports. The LLM planner site helps users match
+rigs to models or models to existing hardware. It covers more than 60 builds and more than 50 models.
+The site sites more than 130 talk for S sources and links more than 150 reviewer videos.
+It includes decode and prompt processing speeds at multiple quants,
+power draw, and multi-region pricing with weekly updates. A user running LLMA 370B locally with
+function calling is seeking cheap or free APIs that return useful web page chunks. The thread
+surfaces practical trade-offs between context quality and costs for local agent setups.
+Okay, let's pop the hood on multi-agent verification loops. Everyone talks about multi-agent systems
+as if simply adding more models will automatically improve reliability. In practice, verification works
+through explicit hand-off protocols. One agent must cite every evidence fragment it used.
+Another agent is tasked with attempting to disprove the proposed causal chain. This adds measurable
+latency, often 200-400 milliseconds per verification round, yet it dramatically reduces confident but
+unsupported conclusions on complex incidents. The key engineering choice is deciding how many
+independent hypotheses to explore in parallel versus how deeply to verify each one.
+Teams that oververify see diminishing returns once accuracy plateaus, around 85-90% on their
+internal eVal sets. When the cost of a wrong route causes high, the architecture shines. When speed
+matters more than perfect explanations, a single well-prompted agent with strong retrieval still wins.
+The gacha that bites most teams is forgetting to let agents explicitly say I do not have enough
+evidence. That turns the system back into a confident hallucinator. Here are the things to try this
+week. Test Gemini 3.5 Flash in the Gemini app or anti-gravity for coding and agentic tasks to see the
+reported four-time speed and sub-half-cost gains firsthand. Spin up Lama Station version 0.9 if you
+run Lama.cpp on Windows and want full parameter control plus turboquant high-contact support without
+command line overhead. Experiment with Resolve AI's MCP server integration so your existing coding
+agents can hand off production debugging to the multi-agent investigation system.
+Explore Coray.ai's Artemis platform on Azure if you need declarative agent definitions that combine
+LLM reasoning with deterministic business rules for regulated environments. Compare the
+RIPLIT TIDE decision context graph approach against plain rag when building agents that must respect
+time-scoped policies and avoid regression on repeated tasks. On the horizon, open AI is
+expected to release further details and papers on the general purpose reasoning techniques behind
+the Erdos result. Google will continue rolling out Gemini 3.5 Flash capabilities and the promised
+pro variant. More enterprise agent platforms are likely to announce MCP and rest interoperability
+as the pattern becomes standard for agent to agent hand off. Hardware vendors and open source projects
+will keep shipping new backends and quantization methods aimed at 100K plus context on consumer GPUs.
+Tomorrow, keep an eye on the first follow-up papers from open AI on the reasoning techniques
+that cracked the old math problem. That wraps up today's AI briefing. Share this with a developer
+or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow.
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.
