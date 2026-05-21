@@ -76,7 +76,8 @@ def _wrap_caption_line(text: str, max_chars: int = 42) -> str:
 
 
 def transcript_to_srt(transcript_path: Path, srt_path: Path,
-                      *, min_segment_duration: float = 0.4) -> Path:
+                      *, min_segment_duration: float = 0.4,
+                      audio_offset_seconds: float = 0.0) -> Path:
     """Convert a faster-whisper transcript JSON into SRT subtitles.
 
     Parameters
@@ -89,6 +90,20 @@ def transcript_to_srt(transcript_path: Path, srt_path: Path,
         Skip cues shorter than this many seconds. Whisper sometimes
         emits sub-100ms artifacts for breath/punctuation that flicker
         on screen.
+    audio_offset_seconds:
+        Shift every cue right by this many seconds. Required when the
+        Whisper transcript was generated against a voice-only "raw"
+        MP3 but the video uses the post-mix final MP3 that prepends
+        a music intro. The pipeline transcribes the raw voice to get
+        clean word boundaries (music confuses Whisper), then offsets
+        the SRT by ``config.audio.voice_intro_delay`` so the cues
+        align with the speech inside the final mix. Without this
+        offset every caption on a show with a 25 s music intro
+        (Planetterrian, Unintended Consequences) appeared 25 s
+        earlier than the corresponding speech on the YouTube long-
+        form — operator reported the result as "terrible". Defaults
+        to ``0.0`` for back-compat with any caller that already
+        feeds an aligned transcript.
 
     Returns
     -------
@@ -97,6 +112,10 @@ def transcript_to_srt(transcript_path: Path, srt_path: Path,
     """
     if not transcript_path.exists():
         raise FileNotFoundError(f"transcript not found: {transcript_path}")
+    if audio_offset_seconds < 0:
+        raise ValueError(
+            f"audio_offset_seconds must be >= 0; got {audio_offset_seconds}"
+        )
 
     data = json.loads(transcript_path.read_text(encoding="utf-8"))
     segments = data.get("segments") or []
@@ -117,8 +136,8 @@ def transcript_to_srt(transcript_path: Path, srt_path: Path,
         if start is None or end is None or not text:
             continue
         try:
-            start_f = float(start)
-            end_f = float(end)
+            start_f = float(start) + audio_offset_seconds
+            end_f = float(end) + audio_offset_seconds
         except (TypeError, ValueError):
             continue
         if end_f - start_f < min_segment_duration:

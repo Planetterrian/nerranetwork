@@ -388,22 +388,35 @@ def _render_slideshow(scene_paths: Sequence[Path], output: Path,
 # ---------------------------------------------------------------------------
 
 # Force-style for the burn-in subtitles. ASS color format is &HAABBGGRR
-# (alpha is "100 minus opacity" — 0 is opaque, 255 is transparent).
-# BorderStyle=3 = opaque box behind the text. MarginV=80 sits the
-# subtitle baseline near the bottom edge — without the spectrum band
-# we used to lift captions above, this is the standard subtitle
-# position.
+# (alpha is "amount of transparency" — 0x00 is opaque, 0xFF is
+# transparent). The May 2026 operator review of the long-form YouTube
+# output asked for two changes:
+#
+#   1. Position firmly in the bottom third of the 1920x1080 frame
+#      rather than the previous "near the bottom edge" baseline.
+#      ``MarginV=120`` lifts the baseline ~120 px above the bottom
+#      edge, placing the caption text roughly y≈940 — comfortably
+#      inside the bottom-third zone (y > 720) but still high enough
+#      not to overlap the YouTube progress-bar HUD on mobile.
+#   2. "Not as prominent." Drop the opaque box behind the text
+#      (``BorderStyle=3`` → ``BorderStyle=1`` outline-only with a
+#      strong outline + soft shadow) so the slideshow imagery stays
+#      visible behind the words. Smaller font (22 → 18) reads less
+#      as "burned-in subtitle bar" and more as "auto-caption hint."
+#      White text + black 3 px outline + 1 px shadow remains
+#      readable against bright backgrounds (matches YouTube's own
+#      auto-caption styling).
 _SUBTITLES_FORCE_STYLE = (
     "FontName=DejaVu Sans,"
-    "FontSize=22,"
+    "FontSize=18,"
     "PrimaryColour=&H00FFFFFF,"
     "OutlineColour=&H00000000,"
-    "BackColour=&HA0000000,"
-    "BorderStyle=3,"
-    "Outline=4,"
-    "Shadow=0,"
+    "BackColour=&H00000000,"
+    "BorderStyle=1,"
+    "Outline=3,"
+    "Shadow=1,"
     "Alignment=2,"
-    "MarginV=80"
+    "MarginV=120"
 )
 
 
@@ -534,13 +547,30 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
     if hook:
         wrapped = _wrap_caption(hook)
         escaped = _drawtext_escape(wrapped)
+        # May 2026 operator review: move the hook out of the top
+        # half (was y=240) into the bottom third of the 1080x1920
+        # frame and reduce visual weight to match the long-form
+        # caption treatment.
+        #   * ``y=h*0.70`` puts the text baseline at y≈1344, which
+        #     centres the wrapped caption inside the bottom third
+        #     (y > 1280) while leaving room above the
+        #     ``H-h-100`` URL pill that sits at y≈1820 when
+        #     ``with_url_pill=True``.
+        #   * ``fontsize=44`` (was 64) is still readable on a
+        #     phone but no longer dominates the slideshow.
+        #   * Outline-only (no ``box=1`` solid fill) keeps the
+        #     imagery visible behind the words. A 4 px black
+        #     outline + 2 px shadow stays readable on bright
+        #     backgrounds without painting a black rectangle
+        #     across the frame.
         caption = (
             f";{post_brand_label}drawtext=fontfile='{font_path}':"
             f"text='{escaped}':"
-            f"fontsize=64:fontcolor=white:"
-            f"x=(w-text_w)/2:y=240:"
-            f"box=1:boxcolor=black@0.6:boxborderw=24:"
-            f"line_spacing=14:"
+            f"fontsize=44:fontcolor=white:"
+            f"x=(w-text_w)/2:y=h*0.70:"
+            f"borderw=4:bordercolor=black:"
+            f"shadowx=2:shadowy=2:shadowcolor=black@0.7:"
+            f"line_spacing=10:"
             f"enable='between(t,0,3)'"
             f"[v]"
         )

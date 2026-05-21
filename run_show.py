@@ -3018,7 +3018,21 @@ def _publish_youtube(
     if transcript_path is not None:
         try:
             srt_candidate = work_dir / f"{base_name}.srt"
-            transcript_to_srt(transcript_path, srt_candidate)
+            # Whisper transcribes the voice-only raw MP3 (music
+            # confuses the segment timestamps), but the long-form
+            # video uses the final MP3 that prepends
+            # ``voice_intro_delay`` seconds of music. Offset the SRT
+            # by exactly that delay so the burned-in captions land
+            # on the speech instead of the music intro. See the
+            # captions.transcript_to_srt docstring for context.
+            _caption_offset = float(
+                getattr(config.audio, "voice_intro_delay", 0.0) or 0.0
+            )
+            transcript_to_srt(
+                transcript_path,
+                srt_candidate,
+                audio_offset_seconds=_caption_offset,
+            )
             srt_path = srt_candidate
         except Exception as exc:  # pragma: no cover — best-effort
             logger.warning("Caption generation failed: %s", exc)
