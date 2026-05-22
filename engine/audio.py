@@ -148,6 +148,16 @@ def _voice_norm_full_cmd(voice_in: str, voice_out: str) -> list:
     return [
         "ffmpeg", "-y", "-threads", "0", "-i", voice_in,
         "-af",
+        # ``afade=t=in:st=0:d=0.05`` (May 22 2026) ramps the very
+        # first 50 ms of voice from silence to full level so the
+        # WAV stream-copy concat with the prepended ``voice_silence``
+        # block transitions smoothly. Without it, the first
+        # non-zero sample of TTS audio jumped from absolute zero
+        # to whatever the encoder produced — audible as a click /
+        # tic right at the moment voice enters the mix. The afade
+        # also covers any matching click at the apad-added trailing
+        # silence boundary at the very end of the voice file.
+        "afade=t=in:st=0:d=0.05:curve=tri,"
         "highpass=f=80,lowpass=f=15000,"
         "loudnorm=I=-18:TP=-1.5:LRA=11:linear=true,"
         "acompressor=threshold=-20dB:ratio=4:attack=10:release=100:makeup=1,"
@@ -160,7 +170,11 @@ def _voice_norm_fallback_cmd(voice_in: str, voice_out: str) -> list:
     """Build the simplified fallback voice normalization command."""
     return [
         "ffmpeg", "-y", "-threads", "0", "-i", voice_in,
-        "-af", "loudnorm=I=-18:TP=-1.5:LRA=11:linear=true",
+        # Same May 22 2026 silence-to-voice click fix as the full
+        # chain — see the comment in _voice_norm_full_cmd.
+        "-af",
+        "afade=t=in:st=0:d=0.05:curve=tri,"
+        "loudnorm=I=-18:TP=-1.5:LRA=11:linear=true",
         "-ar", "44100", "-ac", "1",
     ] + _voice_norm_codec_args(voice_out) + [voice_out]
 
@@ -425,10 +439,22 @@ def _music_intro_cmd(music_in: str, intro_out: str,
     timeline-build stage instead of a 2s tail-fade here. The old
     tail-fade left the music dropping to silence right when voice
     started — operator caught this as ``music cuts off too soon``
-    on TST Ep465 (May 6 2026)."""
+    on TST Ep465 (May 6 2026).
+
+    The ``afade=t=in:d=0.05`` at the start (May 22 2026) eliminates
+    the audible click that occurred when a music MP3 with a non-zero
+    first sample (any DC offset, attack transient, or non-fade
+    encoded master) was played at full ``intro_volume`` from sample
+    zero. Operator caught "audio tics and hisses at the start of
+    music" on the May 22 episodes. A 50 ms linear ramp is short
+    enough to be imperceptible as a fade but long enough to remove
+    the discontinuity that produces the click. ``curve=tri`` (linear
+    triangular) keeps the ramp simple and click-free across every
+    music file in the assets/ directory."""
     return [
         "ffmpeg", "-y", "-threads", "0", "-i", music_in, "-t", str(duration),
-        "-af", f"volume={volume}",
+        "-af",
+        f"afade=t=in:st=0:d=0.05:curve=tri,volume={volume}",
         "-ar", "44100", "-ac", "2",
         "-c:a", "libmp3lame", "-b:a", "192k", "-preset", "fast",
         intro_out,

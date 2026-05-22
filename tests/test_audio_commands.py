@@ -26,10 +26,17 @@ def voice_normalization_full(voice_in: str, voice_out: str) -> list:
     """The 5-stage filter chain for voice normalization. The 6.5 kHz
     de-essing dip was retired May 2026 once the second custom voice
     clone (kdif6sqjcyiq, recorded on a better mic) replaced the
-    sibilant b4cusb2omvkz."""
+    sibilant b4cusb2omvkz.
+
+    May 22 2026: prepended ``afade=t=in:st=0:d=0.05:curve=tri`` so the
+    silence-to-voice transition at the start of the voice file
+    ramps smoothly instead of jumping to the first non-zero TTS
+    sample (audible as a click when the voice file is later
+    stream-copy-concatenated onto a block of leading silence)."""
     return [
         "ffmpeg", "-y", "-threads", "0", "-i", voice_in,
         "-af",
+        "afade=t=in:st=0:d=0.05:curve=tri,"
         "highpass=f=80,lowpass=f=15000,"
         "loudnorm=I=-18:TP=-1.5:LRA=11:linear=true,"
         "acompressor=threshold=-20dB:ratio=4:attack=10:release=100:makeup=1,"
@@ -41,10 +48,13 @@ def voice_normalization_full(voice_in: str, voice_out: str) -> list:
 
 
 def voice_normalization_fallback(voice_in: str, voice_out: str) -> list:
-    """Simplified fallback when the full chain fails."""
+    """Simplified fallback when the full chain fails. Same May 22 2026
+    silence-to-voice click fix as the full chain."""
     return [
         "ffmpeg", "-y", "-threads", "0", "-i", voice_in,
-        "-af", "loudnorm=I=-18:TP=-1.5:LRA=11:linear=true",
+        "-af",
+        "afade=t=in:st=0:d=0.05:curve=tri,"
+        "loudnorm=I=-18:TP=-1.5:LRA=11:linear=true",
         "-ar", "44100", "-ac", "1",
         "-c:a", "libmp3lame", "-b:a", "192k", "-preset", "fast",
         voice_out,
@@ -52,14 +62,17 @@ def voice_normalization_fallback(voice_in: str, voice_out: str) -> list:
 
 
 def music_intro(music_in: str, intro_out: str) -> list:
-    """5-second intro at 0.6 volume — flat, no internal boundary
-    fades. The intro→overlap transition is handled by ``acrossfade``
-    at the timeline-build stage (see ``_music_acrossfade_cmd``).
-    The previous 2s tail-fade was removed May 6 2026 because it
-    dropped the music to silence right when voice started."""
+    """5-second intro at 0.6 volume — flat through the body, with a
+    50 ms linear fade-in at t=0 to eliminate the click that any
+    music MP3 with a non-zero first sample produced when it was
+    played at full ``intro_volume`` from sample zero. Click was
+    operator-caught on May 22 2026 ("audio tics and hisses at the
+    start of music"). The intro→overlap transition itself is still
+    handled by ``acrossfade`` at the timeline-build stage (see
+    ``_music_acrossfade_cmd``)."""
     return [
         "ffmpeg", "-y", "-threads", "0", "-i", music_in, "-t", "5",
-        "-af", "volume=0.6",
+        "-af", "afade=t=in:st=0:d=0.05:curve=tri,volume=0.6",
         "-ar", "44100", "-ac", "2",
         "-c:a", "libmp3lame", "-b:a", "192k", "-preset", "fast",
         intro_out,
@@ -179,6 +192,13 @@ class TestVoiceNormalization:
         assert "alimiter=level_in=1:level_out=0.95:limit=0.95" in af_value
 
         # Filter order matters — verify sequencing
+        # afade-in must come FIRST so the silence-to-voice ramp
+        # happens before any frequency / dynamics processing
+        # touches the signal. May 22 2026: added to eliminate the
+        # click that occurred at the prepended-silence ↔ voice
+        # boundary in mix_with_music.
+        assert "afade=t=in:st=0:d=0.05" in af_value
+        assert af_value.index("afade=t=in") < af_value.index("highpass")
         assert af_value.index("highpass") < af_value.index("lowpass")
         assert af_value.index("lowpass") < af_value.index("loudnorm")
         assert af_value.index("loudnorm") < af_value.index("acompressor")
@@ -194,7 +214,13 @@ class TestVoiceNormalization:
     def test_fallback_chain(self):
         cmd = voice_normalization_fallback("/tmp/v.mp3", "/tmp/vm.mp3")
         af_value = cmd[cmd.index("-af") + 1]
-        assert af_value == "loudnorm=I=-18:TP=-1.5:LRA=11:linear=true"
+        # Fallback gets the same May 22 2026 click-prevention afade
+        # as the full chain — the silence-to-voice click is identical
+        # regardless of which normalization path runs.
+        assert af_value == (
+            "afade=t=in:st=0:d=0.05:curve=tri,"
+            "loudnorm=I=-18:TP=-1.5:LRA=11:linear=true"
+        )
         # Same encoding params
         assert cmd[cmd.index("-ac") + 1] == "1"
 
@@ -219,6 +245,20 @@ class TestMusicSegments:
         # Internal boundary fades removed May 6 2026 — acrossfade
         # at the timeline-build stage handles transitions now.
         assert "afade=t=out" not in af
+
+    def test_intro_has_click_prevention_fade_in(self):
+        """May 22 2026 click fix: music intro must include a 50 ms
+        ``afade=t=in`` at the very start so the music MP3's first
+        non-zero sample doesn't produce an audible click when
+        played at full ``intro_volume`` from sample zero. Operator
+        report: "audio tics and hisses at the start of music" on
+        the May 22 episodes. Must come BEFORE ``volume=`` so the
+        ramp covers the full level transition from 0 to
+        ``intro_volume``."""
+        cmd = music_intro("/music.mp3", "/intro.mp3")
+        af = cmd[cmd.index("-af") + 1]
+        assert "afade=t=in:st=0:d=0.05" in af
+        assert af.index("afade=t=in") < af.index("volume=")
 
     def test_intro_stereo(self):
         cmd = music_intro("/m.mp3", "/i.mp3")
