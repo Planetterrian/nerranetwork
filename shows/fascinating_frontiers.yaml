@@ -146,9 +146,17 @@ llm:
   podcast_prompt_file: shows/prompts/fascinating_frontiers_podcast.txt
   digest_temperature: 0.5
   podcast_temperature: 0.75
-  max_tokens: 3500
-  podcast_max_tokens: 8000
-  min_podcast_words: 1050
+  # May 2026 substance-boost: bumped 3500 → 5000 (matches PT + Tesla)
+  # to give grok-4.3's always-on reasoning enough headroom to produce
+  # a full Top-15 digest with 4-5 sentences per item. The prior 3500
+  # cap was producing 8-item Top-15 sections; operator complaint
+  # ("less news items being included and less of the substance from
+  # any news item") traced to budget-starved completions.
+  max_tokens: 5000
+  podcast_max_tokens: 10000
+  # Podcast target bumped 1050 → 1350 to match the new "12-14 stories
+  # × 5-7 sentences" structure (was "9-11 × 4-6").
+  min_podcast_words: 1350
   podcast_chain: true
 
 tts:

@@ -165,8 +165,13 @@ llm:
   podcast_prompt_file: shows/prompts/models_agents_podcast.txt
   digest_temperature: 0.5
   podcast_temperature: 0.7
-  max_tokens: 3500
-  podcast_max_tokens: 8000
+  # May 2026 substance-boost: bumped 3500 → 5000 (matches Tesla / PT /
+  # FF). The digest now asks for 4-6 Model Updates + 4-5 Agent & Tool
+  # items + 4-5 Practical & Community items at 4-5 sentences each;
+  # the 3500-token cap was producing 2-3 items per section after
+  # grok-4.3 reasoning consumed the budget.
+  max_tokens: 5000
+  podcast_max_tokens: 10000
 
 tts:
   # Inherits provider=grok, voice_id=sal, language_code=en, max_chars=10000

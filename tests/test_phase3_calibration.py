@@ -36,26 +36,42 @@ class TestRecalibratedMinPodcastWords:
     targets STILL fired ``script_below_target`` on every show every
     day — Phase 3 estimated median delivery from logs but the actual
     median (now visible in metrics_ep*.json) was lower. Targets
-    dropped a second time to ~1.05× empirical median:
+    dropped a second time to ~1.05× empirical median.
 
-      tesla            : 1700 → 1200  (median 1129)
-      omni_view        : 1300 → 900   (median  867)
-      planetterrian    : 1400 → 950   (median  887)
-      fascinating_fron : 1500 → 1050  (median  985)
-      modern_investing : 1500 → 1300  (median 1224)
-      models_agents_b… : 1100 → 900   (median  878)
-      privet_russian   : 700  → 650   (median  601)
+    May 21 2026 substance-boost: operator reviewed several days of
+    output and reported "all the shows are light on substance for
+    all the news information... less news items being included in
+    all shows and less of the substance from any news item." Three
+    coordinated changes shipped together:
 
-    ``models_agents`` and ``unintended_consequences`` retain their
-    Phase-3 values until at least 5 post-Phase-3 episodes have
-    committed (insufficient data to retune confidently). FP keeps
-    its 900 target because the median 836 is close enough that the
-    flag should fire occasionally, which is the desired behaviour."""
+      1. ``MAX_ARTICLES_FOR_LLM`` 25 → 40 (run_show.py:872) — gives
+         the LLM headroom to drop near-duplicate Google-News stories
+         and still hit the Top 15 with diverse angles.
+      2. Tesla / FF / PT digest prompts expanded from "2 sentences
+         max" / "2-4 sentences" per item to "4-5 sentences with
+         concrete substance" and an explicit "required ingredients"
+         list (named people, specific numbers, named programs /
+         instruments / molecules, short quote, comparison /
+         context, mechanism, what-to-watch-next).
+      3. Tesla / FF / PT podcast prompts expanded from "Cover 9-11
+         × 4-6 sentences" to "Cover 12-14 × 5-7 sentences" so the
+         richer digest material lands in the spoken script.
+
+    Targets bumped to match the new structure (and per-show
+    max_tokens raised so grok-4.3 reasoning has room to write the
+    fuller output):
+
+      tesla            : 1200 → 1600  (12 + 3-4 X × 5-7 = ~75-112 sent)
+      planetterrian    :  950 → 1250  (12-14 × 5-7 = ~60-98 sent)
+      fascinating_fron : 1050 → 1350  (12-14 × 5-7 = ~60-98 sent)
+
+    Other shows retain their May 9 calibration — their prompts
+    weren't changed in this pass."""
 
     EXPECTED = {
-        "tesla":                   1200,
-        "fascinating_frontiers":   1050,
-        "planetterrian":           950,
+        "tesla":                   1600,
+        "fascinating_frontiers":   1350,
+        "planetterrian":           1250,
         "modern_investing":        1300,
         "omni_view":               900,
         "unintended_consequences": 1300,

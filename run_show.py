@@ -859,8 +859,17 @@ def run(args: argparse.Namespace) -> None:
             reverse=True,
         )
 
-        # 5e. Cap article count to prevent prompt bloat and quality degradation
-        MAX_ARTICLES_FOR_LLM = 25
+        # 5e. Cap article count to prevent prompt bloat and quality degradation.
+        # Bumped 25 → 40 (May 2026 operator feedback): every show's digest
+        # asks for a Top 12-15 list, plus the Spotlight / Deep Dive
+        # sections. A 25-article cap left the LLM nothing to choose from
+        # — when 6 of 25 were Google-News-aggregated duplicates of the
+        # same story, the surviving 19 barely cleared "Top 15" and the
+        # digest shrank to 6-8 substantive items. 40 articles gives the
+        # LLM headroom to drop near-duplicates and still hit the 15-item
+        # target with diverse angles. Prompt token usage rises ~30%
+        # (~1200 extra tokens) but stays well under the 128k context.
+        MAX_ARTICLES_FOR_LLM = 40
         if len(articles) > MAX_ARTICLES_FOR_LLM:
             logger.info(
                 "Capping articles from %d to %d to prevent prompt bloat",
