@@ -124,10 +124,69 @@ class TestFindScaffoldLeaks:
 
     def test_bare_label_line_is_caught_by_generic_rule(self):
         """A new label we forgot to add to the blocklist still trips
-        the generic ``^**Capitalized:**$`` catch-all."""
+        the generic ``^**Capitalized:**$`` catch-all when it stands
+        alone with no content under it."""
         text = "**Today's Insight:**"
         leaks = find_scaffold_leaks(text)
         assert any("bare-label line" in m for m in leaks)
+
+    def test_bare_label_with_bullets_below_is_not_scaffold(self):
+        """Multiple show prompts emit legitimate Markdown section
+        headers as bare labels followed by bullet content. Operator
+        report May 22 2026: "I haven't seen buttondown newsletters
+        lately" traced to Omni View / Modern Investing / Privet
+        Russian sending blocked because the old catch-all flagged
+        ``**Questions to consider:**`` as scaffold even though bullets
+        immediately followed. Real content under the label = real
+        section header = ship."""
+        text = (
+            "**Questions to consider:**\n"
+            "- What changes in shipping routes if oversight increases?\n"
+            "- Which countries have the strongest interest?\n"
+        )
+        leaks = find_scaffold_leaks(text)
+        assert not any("bare-label" in m for m in leaks), leaks
+
+    def test_bare_label_with_paragraph_below_is_not_scaffold(self):
+        """The Privet Russian ``**Grammar Spotlight:**`` shape — label
+        on its own line followed by a prose paragraph — must ship as
+        a section header, not block as scaffold."""
+        text = (
+            "**Grammar Spotlight:**\n"
+            "We are learning how to say \"it is\" with weather words.\n"
+        )
+        assert find_scaffold_leaks(text) == []
+
+    def test_bare_label_with_sub_label_below_is_not_scaffold(self):
+        """Modern Investing ``**AI Analysis:**`` is followed by a
+        bullet whose marker is another bold label (``- **Catalyst:**
+        ...``). The bullet's `-` prefix means it's content, not a
+        bare label, so the section header must ship."""
+        text = (
+            "**AI Analysis:**\n"
+            "- **Catalyst:** Policy announcement on quantum grants.\n"
+        )
+        assert find_scaffold_leaks(text) == []
+
+    def test_orphan_bare_label_at_end_of_text_still_flagged(self):
+        """A label with nothing under it (end of body or pre-truncation
+        scaffold) IS scaffold and must still block."""
+        text = "Some intro content.\n\n**Trailing Scaffold Label:**"
+        leaks = find_scaffold_leaks(text)
+        assert any("bare-label" in m for m in leaks)
+
+    def test_back_to_back_bare_labels_flagged_as_scaffold_cluster(self):
+        """When two bare labels follow each other with no content
+        between, it's a cluster of scaffolding the LLM mirrored from
+        the prompt, not a section header. Block both."""
+        text = (
+            "**Topic Selection:**\n"
+            "\n"
+            "**Topic Freshness:**\n"
+        )
+        leaks = find_scaffold_leaks(text)
+        # At least one of the two should fire; both are scaffolding.
+        assert any("bare-label" in m for m in leaks)
 
     def test_after_scrubbing_known_labels_clean(self):
         text = "**HOOK:** Body content.\n\n**Date:** May 02, 2026\n\nDone."

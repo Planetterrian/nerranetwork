@@ -218,12 +218,51 @@ def find_scaffold_leaks(text: str) -> List[str]:
                 sample = sample[:77] + "..."
             leaks.append(f"{name}: {sample!r}")
     # Generic catch-all: any line that's literally `**Anything Capitalized:**`
-    # at the start of a line is suspicious. We keep this *after* the
-    # specific-label pass so legit prose like "**Tesla:** A car company"
-    # mid-sentence doesn't trip — the start-of-line anchor + the rest of
-    # the line being *only* the label is the giveaway.
-    bare_label = re.compile(r"(?m)^\s*\*\*[A-Z][\w '-]{2,40}:\*\*\s*$")
+    # at the start of a line is suspicious — but ONLY when nothing
+    # follows on the next line.
+    #
+    # A bare `**Label:**` line followed by a bullet, a paragraph, a sub-
+    # header, or any other content is a legitimate Markdown section
+    # header — multiple show prompts define them deliberately:
+    #
+    #   Omni View    : ``**Questions to consider:**`` then ``- bullet``
+    #   Modern Inv.  : ``**AI Analysis:**`` then ``- **Catalyst:** ...``
+    #   Privet Rus.  : ``**Grammar Spotlight:**`` then prose paragraph
+    #
+    # The May 2026 send pipeline was hard-blocking those three shows
+    # ("haven't seen buttondown newsletters lately" — operator) because
+    # the regex didn't distinguish "header with content below" from
+    # "orphaned scaffold leak."
+    #
+    # New behaviour: only flag a label as scaffold when the next
+    # non-blank line is itself empty, another bare label, the end of the
+    # text, or another structural divider (i.e. nothing real underneath
+    # to render). A label with bullets / prose / a sub-header /
+    # blockquote / code on the next non-blank line is a legitimate
+    # section break and ships.
+    bare_label = re.compile(r"(?m)^[ \t]*\*\*[A-Z][\w '-]{2,40}:\*\*[ \t]*$")
+    lines = text.splitlines()
     for m in bare_label.finditer(text):
+        # Find which line the match starts on so we can inspect what
+        # comes after it. ``count`` is the line index of the label.
+        line_idx = text[:m.start()].count("\n")
+        # Scan forward for the next non-blank line.
+        follower: str | None = None
+        for nxt in lines[line_idx + 1:]:
+            stripped = nxt.strip()
+            if stripped:
+                follower = stripped
+                break
+        # No follower at all → label is truly orphaned at end of text.
+        is_orphan = follower is None
+        # Follower is also a bare label → cluster of scaffolding.
+        is_cluster = bool(
+            follower and bare_label.fullmatch(follower)
+        )
+        if not (is_orphan or is_cluster):
+            # A real follower (bullet, prose, sub-header) means this is
+            # a legitimate section header, not scaffold. Skip.
+            continue
         sample = m.group(0).strip()
         if len(sample) > 80:
             sample = sample[:77] + "..."
