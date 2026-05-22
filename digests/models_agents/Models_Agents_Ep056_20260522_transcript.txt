@@ -1,0 +1,91 @@
+What's up? Welcome to Models and Agents, Episode 56. It's May 22nd, 2026. Plenty of model
+releases and agent benchmarks moving today. OpenAI just gave Codex the ability to control
+locked max and run multi-day goals, turning it into a true background agent you can launch from
+your phone. OpenAI shipped several Codex updates today. These include secure computer use on locked
+max, goal mode for hours long autonomous work, and advanced annotation tools. Codex can now control
+apps on a locked Mac from your phone with the screen off. Goal mode lets users set objectives that
+run for hours or days across the app, IDE extension and CLI. Advanced annotation mode allows direct
+visual edits to web pages during feedback sessions. These changes make Codex significantly more
+hands-off compared to previous interactive coding tools. Builders working on automation or
+remote workflows should test goal mode immediately to see how it handles long-running tasks without
+constant supervision. Watch for how OpenAI expands the computer-use surface beyond max and coming
+releases. Microsoft Research released Pharaoh 1.5, a family of browser computer-use agents in
+4 billion, 9 billion, and 27 billion sizes. The 27 billion model scores 72 percent on online
+mine-to-web. It outperforms OpenAI operator, Gemini 2.5 computer use, and utori navigator.
+The release includes Farah Gen 1.5, a synthetic data pipeline for training agents on gated environments.
+Teams building web automation should compare Pharaoh 1.5 9 billion against existing browser tools for
+cost-sensitive deployments. A new tutorial shows how to build recurrent depth transformers using
+Open Mythos in Google Colab. It supports MLA, GQA, Sparse Moe, and Loop-scaled reasoning.
+Users can create both MLA and GQA variants while checking stability of the recurrent injection
+matrix via spectral radius. This approach enables deeper reasoning loops without proportional
+parameter growth. Researchers experimenting with long horizon tasks should try the colab notebook
+to test loop scaling on their own data sets. A new framework uses Bayes rule on next token log
+probabilities to attribute model outputs back to prompt tokens without depending on internal
+architecture. The method computes conditional probabilities of responses given prompts and
+marginalizes individual tokens to produce attribution scores. It also tracks entropy across token
+distributions to highlight uncertain generation steps. Developers debugging prompt sensitivity
+should apply this technique to surface which input tokens most influence unstable outputs.
+SemDetect combines textual features with claim-level semantic analysis to detect fully AI-generated
+peer reviews. It compares target reviews against multiple AI-generated versions of the same paper,
+exploiting convergence patterns in model outputs. On over 20,000 ICLR and NERI-EPIS reviews,
+it improves TPR at 0.1% FPR by 25.5% over baselines. Conference organizers and journal platforms
+should evaluate it for catching AI-assisted submissions that still contain human judgment.
+Python developers can now author agent skills as files on disk, inline code, or reusable classes.
+They compose them freely through source classes that handle discovery and deduplication.
+Skills can come from local repos, internal package indexes, or quick definitions.
+This removes previous friction around mixing skills sources in agent workflows.
+Teams using Microsoft's framework should refactor existing skills into composable classes
+to improve reuse across projects. Ztalk is a new multi-threaded tokenizer in ZIG that loads tick-talking,
+hugging-face, sentence-piece, and other formats while delivering two to five times speed-ups.
+It remains bit identical to reference implementations and exposes eight language bindings
+over a single CABI. The library targets rigged chunking and data set tokenization to bin and NPWI files.
+Local pipeline builders should benchmark it against HF tokenizers on their current
+vocabularies for immediate throughput gains. Ranked judge generates synthetic multi-turn
+conversation pairs with single injected flaws to evaluate LLM as a judge systems on complex
+dialogues. It supports domains including machine learning, biomedicine, and finance, and ranks 21
+frontier judges using Bradley Terry modeling. The benchmark enables precise isolation of failure
+modes to individual turns. Evaluation teams should adopt it when current single-turn judge benchmarks
+no longer match their conversational agent complexity. A community effort is collecting a JSON L data set
+focused on C++ and systems programming for fine-tuning local models on memory ownership,
+thread safety, and optimization. Categories include generation, optimization, debugging,
+organization, and tool calling. Contributors are discussing structure and whether tool calling
+examples needs separate emphasis. Builders targeting systems level codes should contribute
+examples or test early fine-tunes on twin 3.627 billion variants. Agent context compilation
+converts multi-turn agent trajectories from search, software engineering, and database agents into
+long context QA pairs. It supplies direct supervision on cross-turn dependencies without additional
+annotation. Training twin 330 billion A3B with ACC yields plus 18.1 on MRCR and plus 7.6 on
+graph walks while preserving general capabilities. Teams extending context windows should incorporate
+ACC trajectories into their SFT mix for measurable long-range gains. Prompt NCE estimates
+point-wise mutual information using only LLM prompts and contrast of estimation with an explicit
+other category. It recovers true conditional probabilities rather than simple rankings and reaches
+0.82 spearman correlation with human derived PMI on three data sets. Education researchers are already
+using it to score student knowledge summaries in low data settings. Practitioners needing lightweight
+information theoretic metrics should test prompt NCE before training task-specific critics.
+Okay, let's pop the hood on hypergraph tokenization for LLMs. Everyone talks about feeding
+graphs into LLMs as if you just serialize edges into text. In practice, hypergraphs require a
+fundamentally different tokenization strategy because multiple vertices share a single high-order
+relation that pairwise edges cannot express. The core move is to project native incident structures
+into the model's token space using a bidirectional message passing projector that decouples semantic
+content from structural roles. This adds a fixed-shape hybrid template containing both local incidents,
+details and overview summaries, which the projector maps without collapsing higher-order connections.
+The engineering trade-off is clear. You gain faithful representation of joint relations at the cost
+of roughly 15-20% more tokens per hyperedge compared with naive flattening. Quality gains are
+largest on tasks with dense, multi-way dependencies, and shrink once graphs become mostly pairwise.
+When your relational data contains frequent and airy patterns that matter for correctness,
+adopt hypergraph native tokenization, otherwise stick with standard graph linearization and accept
+the semantic loss. The gotcha most teams hit is underestimating how quickly token budgets explode
+once incidents details are preserved at scale. Test OpenAI Codex Goal Mode on a multi-hour
+refactoring task to see how well it maintains context without intervention. Run Farrah 1.59 billion
+against your current browser automation scripts and measure task completion rate versus OpenAI
+operator. Benchmark Ztalk against your existing tokenizer on a 100,000 document rag corpus for
+throughput improvements. Apply sem detect to a sample of recent peer reviews to evaluate its false
+positive rate on LLM refined human text. Generate rank judge pairs in your domain and score your
+preferred judge model to identify turn-level weaknesses. Continued expansion of Codex computer use capabilities
+beyond macOS is expected in the next release cycle. More labs are likely to release browser or desktop
+agent families following Microsoft's Farrah 1.5 results. Growing adoption of hypergraph modeling
+techniques in relational reasoning benchmarks is on the way. Before we go, tomorrow keep an eye on early
+integration reports from teams testing Farrah 1.5 9 billion in production browser workflows.
+That's models and agents for today. If you found this useful share it with someone who's trying to
+keep up with all these changes and subscribe so you don't miss tomorrow's update. The AI world
+moves fast. We'll help you keep up. See you tomorrow. This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.
