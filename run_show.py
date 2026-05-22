@@ -2416,6 +2416,16 @@ def run(args: argparse.Namespace) -> None:
             email_id = None
             logger.exception("Newsletter send raised: %s", exc)
 
+        # Record the send outcome in metrics.json so the operator can
+        # spot a pipeline-wide silent-failure (e.g. May 2026 audit
+        # caught all three of OV / Modern Investing / Privet Russian
+        # being scaffold-blocked for weeks without a metric to flag
+        # it). ``newsletter_email_id`` is None on every blocked path;
+        # the bool counter is the easier-to-grep daily signal.
+        metrics.record("newsletter_sent", bool(email_id))
+        if email_id:
+            metrics.record("newsletter_email_id", email_id)
+
         if email_id:
             logger.info("Newsletter sent: %s", email_id)
         else:
