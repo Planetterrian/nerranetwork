@@ -713,6 +713,32 @@ def _strip_metadata_from_script(script: str) -> str:
     return script.strip()
 
 
+def _retry_word_count_ok(orig_words: int, retry_words: int,
+                         show_floor: int) -> bool:
+    """Decide whether a podcast-script retry's word count is healthy
+    enough to swap in. Both repetition-retry paths use this gate.
+
+    Two failure modes the gate protects against:
+
+      1. ``Omni View Ep059 (2026-05-23)`` — anti-repetition retry
+         replaced an 883-word original with a 555-word "cleaner"
+         retry. The retry passed the char-length 0.5× check
+         (3870/6163 ≈ 0.63) but then tripped the runner's 600-word
+         hard floor and aborted the episode. Floor is enforced
+         AFTER the swap, so we have to gate it BEFORE.
+      2. Drastic shrinkage even above the floor. A retry that's
+         lost 20%+ of word count almost certainly lost real
+         content along with the repetition.
+
+    Returns True when ``retry_words`` clears BOTH:
+      * 80 % of the original word count, AND
+      * the per-show ``min_podcast_word_floor`` + 50-word margin
+        (so the downstream hard-floor check has headroom).
+    """
+    threshold = max(int(orig_words * 0.8), show_floor + 50)
+    return retry_words >= threshold
+
+
 def _sanitize_podcast_script(text: str) -> str:
     """Strip known LLM artifacts that break TTS quality.
 
@@ -1607,18 +1633,26 @@ def generate_podcast_script(
                 min_podcast_words=min_words,
             )
             if _rep_retry < _rep_count:
-                # Guard: don't swap to a drastically shorter retry — it's
-                # likely garbage even if it has fewer repetitions.
-                if len(text_retry) < len(text) * 0.5:
+                # See ``_retry_word_count_ok`` for the OV Ep059
+                # incident this guard protects against.
+                orig_words = len(text.split())
+                retry_words = len(text_retry.split())
+                show_floor = (
+                    getattr(config.llm, "min_podcast_word_floor", 600) or 600
+                )
+                if not _retry_word_count_ok(orig_words, retry_words, show_floor):
                     logger.warning(
-                        "Repetition retry for '%s' has fewer repetitions but is "
-                        "drastically shorter (%d → %d chars) — keeping original",
-                        config.name, len(text), len(text_retry),
+                        "Repetition retry for '%s' has fewer repetitions but "
+                        "would drop word count too far (%d → %d, show floor=%d) "
+                        "— keeping original",
+                        config.name, orig_words, retry_words, show_floor,
                     )
                 else:
                     logger.info(
-                        "Repetition retry improved script for '%s' (%d → %d suspicious phrases)",
+                        "Repetition retry improved script for '%s' (%d → %d "
+                        "suspicious phrases, %d → %d words)",
                         config.name, _rep_count, _rep_retry,
+                        orig_words, retry_words,
                     )
                     text = text_retry
             else:
@@ -1674,13 +1708,31 @@ def generate_podcast_script(
                         pass
                 reps_rr = detect_phrase_repetition(text_rr)
                 critical_rr = [r for r in reps_rr if r["severity"] == "critical"]
-                # Guard: don't swap if retry is drastically shorter (likely garbage)
-                if not critical_rr and len(text_rr) >= len(text) * 0.5:
+                orig_words = len(text.split())
+                retry_words = len(text_rr.split())
+                show_floor = (
+                    getattr(config.llm, "min_podcast_word_floor", 600) or 600
+                )
+                # See ``_retry_word_count_ok`` for the OV Ep059
+                # incident this guard protects against (anti-rep
+                # retry replaced 883-word original with 555-word
+                # retry that then tripped the 600-word hard floor).
+                if not critical_rr and _retry_word_count_ok(
+                    orig_words, retry_words, show_floor,
+                ):
                     logger.info(
-                        "Anti-repetition retry cleared critical loops for '%s'",
-                        config.name,
+                        "Anti-repetition retry cleared critical loops for '%s' "
+                        "(%d → %d words)",
+                        config.name, orig_words, retry_words,
                     )
                     text = text_rr
+                elif not critical_rr:
+                    logger.warning(
+                        "Anti-repetition retry for '%s' cleared loops but "
+                        "dropped word count too far (%d → %d, show floor=%d) — "
+                        "keeping original to avoid hard-floor abort downstream",
+                        config.name, orig_words, retry_words, show_floor,
+                    )
                 else:
                     logger.warning(
                         "Anti-repetition retry did not clear critical loops for "
