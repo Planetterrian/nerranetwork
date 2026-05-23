@@ -2978,6 +2978,7 @@ def _publish_youtube(
     from engine.captions import (
         find_transcript_for_episode,
         transcript_to_srt,
+        transcript_to_srt_window,
     )
     from engine.publisher import (
         generate_episode_thumbnail,
@@ -3288,6 +3289,40 @@ def _publish_youtube(
                 audio_duration=_ep_duration,
             )
             duration = float(config.youtube.short_duration_seconds or 55.0)
+
+            # Build a Shorts-windowed SRT (May 2026 operator review:
+            # Shorts had no synced captions at all). Reuse the Whisper
+            # transcript that already powers the long-form SRT, slice
+            # it to the Shorts time window, and rebase timestamps to
+            # the Shorts clip's own t=0 timeline. Same
+            # ``voice_intro_delay`` offset the long-form SRT uses so
+            # the cues land on speech in the final audio.
+            short_srt_path = None
+            if transcript_path is not None:
+                try:
+                    short_srt_candidate = work_dir / f"{base_name}_short.srt"
+                    _caption_offset = float(
+                        getattr(config.audio, "voice_intro_delay", 0.0) or 0.0
+                    )
+                    transcript_to_srt_window(
+                        transcript_path,
+                        short_srt_candidate,
+                        window_start_seconds=short_offset,
+                        window_duration_seconds=duration,
+                        audio_offset_seconds=_caption_offset,
+                    )
+                    if short_srt_candidate.exists() and short_srt_candidate.stat().st_size > 0:
+                        short_srt_path = short_srt_candidate
+                    else:
+                        logger.info(
+                            "Shorts SRT empty — no cues fell inside the "
+                            "[%.1fs, %.1fs] window. Shorts ships without "
+                            "burned-in captions.",
+                            short_offset, short_offset + duration,
+                        )
+                except Exception as exc:  # pragma: no cover — best-effort
+                    logger.warning("Shorts caption generation failed: %s", exc)
+
             build_short_video(
                 final_mp3, cover_path, short_video_path,
                 start_offset=short_offset,
@@ -3295,6 +3330,7 @@ def _publish_youtube(
                 hook=hook or None,
                 scene_paths=short_scene_paths if len(short_scene_paths) >= 2 else None,
                 show_name=config.name,
+                subtitles_path=short_srt_path,
             )
             meta = build_short_metadata(
                 config,
