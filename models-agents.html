@@ -40,6 +40,20 @@
 
     
     
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
+    
     
     
     <script defer src="assets/js/tracking.js"></script>
@@ -1403,8 +1417,22 @@
                 .then(xml => {
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(xml, 'text/xml');
-                    const items = doc.querySelectorAll('item');
-                    if (!items.length) { showNoEpisodes(); return; }
+                    const nodeList = doc.querySelectorAll('item');
+                    if (!nodeList.length) { showNoEpisodes(); return; }
+
+                    // The pipeline appends new items to the END of the
+                    // RSS file, so the raw node order is OLDEST first.
+                    // Sort by pubDate desc so the page always shows
+                    // the most recent episode as "latest." Operator
+                    // caught (May 23 2026 env-intel screenshot) the
+                    // old code treating items[0] = oldest as latest
+                    // when the JSON-format path silently fell back
+                    // here.
+                    const items = Array.from(nodeList).sort((a, b) => {
+                        const da = new Date(a.querySelector('pubDate')?.textContent || 0);
+                        const db = new Date(b.querySelector('pubDate')?.textContent || 0);
+                        return db - da;
+                    });
 
                     const first = items[0];
                     document.getElementById('latest-title').textContent = first.querySelector('title')?.textContent || 'Latest Episode';
@@ -1415,7 +1443,7 @@
 
                     const grid = document.getElementById('episodes-grid');
                     grid.innerHTML = '';
-                    Array.from(items).slice(1, 13).forEach(item => {
+                    items.slice(1, 13).forEach(item => {
                         const title = item.querySelector('title')?.textContent || 'Episode';
                         const pd = item.querySelector('pubDate')?.textContent || '';
                         const enclosure = item.querySelector('enclosure');
