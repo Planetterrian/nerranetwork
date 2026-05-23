@@ -538,7 +538,16 @@ NETWORK_SHOWS = {
         "show_page": "env-intel.html",
         "summaries_page": "env-intel-summaries.html",
         "json_path": "digests/env_intel/summaries_env_intel.json",
-        "json_format": "array",
+        # env_intel's summaries JSON is in the network-standard wrapped
+        # form ``{"podcast": ..., "summaries": [...]}``. This entry was
+        # previously ``"array"`` — a mis-pin that made the show page's
+        # JS path return an empty list and silently fall back to the
+        # RSS-from-file path, which doesn't sort items by pubDate, so
+        # the page showed ``Ep 2`` (the OLDEST item in the file) as
+        # "Latest Episode" instead of the actual latest ``Ep 35``.
+        # Operator caught (May 23 2026 screenshot). Every other show
+        # in NETWORK_SHOWS already uses ``"wrapped"``.
+        "json_format": "wrapped",
         "rss_file": "env_intel_podcast.rss",
         "podcast_image": "assets/covers/environmental-intelligence.jpg",
         "x_account": "teslashortstime",
