@@ -1,11 +1,25 @@
 {% extends "base.html.j2" %}
 
+{# May 2026 operator request: homepage nav previously read just
+   ``Latest | Subscribe`` — inconsistent with the rest of the site
+   which carries ``Start Here | Listen | About | Player`` in the
+   top-right. Switched to that 4-link set + the in-page ``Latest``
+   and ``Subscribe`` anchors so the homepage matches every other
+   page while still exposing the homepage-specific jump links. #}
 {% block nav_links %}
+<li><a href="{{ path_prefix }}start-here.html">{{ t.nav_start_here }}</a></li>
+<li><a href="{{ path_prefix }}how-to-listen.html">{{ t.nav_listen }}</a></li>
+<li><a href="{{ path_prefix }}about.html">{{ t.nav_about }}</a></li>
+<li><a href="{{ path_prefix }}player.html">{{ t.nav_player }}</a></li>
 <li><a href="#latest">Latest</a></li>
 <li><a href="#subscribe">Subscribe</a></li>
 {% endblock %}
 
 {% block mobile_nav_links %}
+<a href="{{ path_prefix }}start-here.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">{{ t.nav_start_here }}</a>
+<a href="{{ path_prefix }}how-to-listen.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">{{ t.nav_listen }}</a>
+<a href="{{ path_prefix }}about.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">{{ t.nav_about }}</a>
+<a href="{{ path_prefix }}player.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">{{ t.nav_player }}</a>
 <a href="#latest" onclick="document.getElementById('mobileMenu').classList.remove('open')">Latest</a>
 <a href="#subscribe" onclick="document.getElementById('mobileMenu').classList.remove('open')">Subscribe</a>
 {% endblock %}
@@ -181,52 +195,127 @@
         </div>
     </section>
 
-    <!-- Find Your Show — interactive picker -->
-    <section id="find-your-show" class="nn-section" style="background:var(--nn-bg-alt);">
+    {# May 2026 operator request: "Find Your Show" interactive picker
+       was removed and replaced by the Fresh Episodes / Blog / Why Nerra
+       triplet (in that order) — these three sections used to live
+       BELOW the Show Showcase grid; they now sit in the prime slot
+       between the stats bar and the show grid so the page leads with
+       what listeners actually came for (recent episodes + recent
+       writing + the network's pitch) before showing the full
+       show-grid catalogue. The old triplet positions below have been
+       removed in the same edit to avoid duplication. #}
+
+    <!-- Latest Across the Network -->
+    <section id="latest" class="nn-section" style="background:var(--nn-bg-alt);">
         <div class="container">
             <div class="nn-section-header">
-                <div class="section-label">Find Your Show</div>
-                <h2>Tell us what you're into — we'll show you where to start</h2>
-                <p>Pick any filters and matching shows stay highlighted. Clear all to see everything.</p>
+                <div class="section-label">Fresh Episodes</div>
+                <h2>Latest Across the Network</h2>
+                <p>The most recent episodes from all shows.</p>
             </div>
-            <div class="picker">
-                <div class="picker-row">
-                    <span class="picker-label">Topic</span>
-                    <button type="button" class="picker-chip" data-filter-group="topics" data-filter-value="tesla">🔋 Tesla / EV</button>
-                    <button type="button" class="picker-chip" data-filter-group="topics" data-filter-value="world-news">📰 World news</button>
-                    <button type="button" class="picker-chip" data-filter-group="topics" data-filter-value="space">🚀 Space &amp; astronomy</button>
-                    <button type="button" class="picker-chip" data-filter-group="topics" data-filter-value="science">🧬 Science</button>
-                    <button type="button" class="picker-chip" data-filter-group="topics" data-filter-value="longevity">⚕️ Longevity / biotech</button>
-                    <button type="button" class="picker-chip" data-filter-group="topics" data-filter-value="environment">🌍 Environment / climate</button>
-                    <button type="button" class="picker-chip" data-filter-group="topics" data-filter-value="ai">🤖 AI / ML</button>
-                    <button type="button" class="picker-chip" data-filter-group="topics" data-filter-value="investing">📈 Investing</button>
-                    <button type="button" class="picker-chip" data-filter-group="topics" data-filter-value="personal-finance">💰 Personal finance</button>
-                    <button type="button" class="picker-chip" data-filter-group="topics" data-filter-value="language-learning">🗣️ Language learning</button>
-                    <button type="button" class="picker-chip" data-filter-group="topics" data-filter-value="history">📜 History &amp; policy</button>
+        </div>
+        {% if latest_episodes %}
+        <div class="latest-scroll-row">
+            {% for ep in latest_episodes %}
+            <div class="latest-scroll-card glass-card">
+                <div class="episode-card-show" style="background:{{ ep.brand_color }};">{{ ep.show_name }}</div>
+                <div class="episode-card-title">{{ ep.title }}</div>
+                <div class="episode-card-date">{{ ep.date_display }}</div>
+                {% if ep.audio_url %}
+                <audio controls preload="none" src="{{ ep.audio_url }}" aria-label="{{ ep.show_name }} episode audio" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="latest-scroll-row">
+            <p style="color:var(--nn-text-muted);padding:2rem;text-align:center;width:100%;">Episodes will appear here once available.</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- Latest from the Blog -->
+    {% if latest_blog_posts %}
+    <section class="nn-section">
+        <div class="container">
+            <div class="nn-section-header">
+                <div class="section-label">Blog</div>
+                <h2>Latest from the Blog</h2>
+                <p>In-depth articles from our latest episodes.</p>
+            </div>
+            <div class="blog-idx-grid" style="max-width:900px;margin:0 auto;padding-bottom:var(--sp-8)">
+                {% for post in latest_blog_posts %}
+                <a href="blog/{{ post.show_slug }}/ep{{ '%03d' % post.episode_num }}.html"
+                   class="blog-idx-card"
+                   style="--card-show-color: {{ post.show_color }}">
+                    <div class="blog-idx-card-top">
+                        <span class="blog-idx-show-badge" style="background:color-mix(in srgb, {{ post.show_color }} 15%, transparent);color:{{ post.show_color }}">{{ post.show_name }}</span>
+                        <span class="blog-idx-date">{{ post.date }}</span>
+                        <span class="blog-idx-ep">Ep {{ post.episode_num }}</span>
+                        <span class="blog-idx-reading">{{ post.reading_time_min }} min</span>
+                    </div>
+                    <h2>{{ post.title }}</h2>
+                    {% if post.hook %}
+                    <p>{{ post.hook[:140] }}{% if post.hook|length > 140 %}&hellip;{% endif %}</p>
+                    {% endif %}
+                    <span class="blog-idx-read-more" style="color:{{ post.show_color }}">Read article &rarr;</span>
+                </a>
+                {% endfor %}
+            </div>
+            <div style="text-align:center">
+                <a href="blog/index.html" class="nn-btn nn-btn-primary" style="font-size:0.9rem;padding:var(--sp-3) var(--sp-8)">View all blog posts</a>
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Why Nerra -->
+    <section class="nn-section" style="background:var(--nn-bg-alt);">
+        <div class="container">
+            <div class="nn-section-header">
+                <div class="section-label">Why Nerra</div>
+                <h2>Built different</h2>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card glass-card">
+                    <div class="feature-icon">&#9889;</div>
+                    <h3>AI-Enhanced Research</h3>
+                    <p>Every episode is backed by real-time news analysis across dozens of sources, curated and verified by a human host.</p>
                 </div>
-                <div class="picker-row">
-                    <span class="picker-label">You are</span>
-                    <button type="button" class="picker-chip" data-filter-group="audience" data-filter-value="investors">An investor</button>
-                    <button type="button" class="picker-chip" data-filter-group="audience" data-filter-value="professionals">A pro in the field</button>
-                    <button type="button" class="picker-chip" data-filter-group="audience" data-filter-value="builders">A builder / engineer</button>
-                    <button type="button" class="picker-chip" data-filter-group="audience" data-filter-value="students">A student</button>
-                    <button type="button" class="picker-chip" data-filter-group="audience" data-filter-value="beginners">A curious beginner</button>
-                    <button type="button" class="picker-chip" data-filter-group="audience" data-filter-value="newcomers">A newcomer to Canada</button>
-                    <button type="button" class="picker-chip" data-filter-group="audience" data-filter-value="enthusiasts">An enthusiast</button>
+                <div class="feature-card glass-card">
+                    <div class="feature-icon">&#127911;</div>
+                    <h3>Zero Ads. Zero Sponsors.</h3>
+                    <p>No ad reads, no sponsor segments, no paywalls. Just pure content, every single day. Free forever.</p>
                 </div>
-                <div class="picker-row">
-                    <span class="picker-label">Language</span>
-                    <button type="button" class="picker-chip" data-filter-group="language" data-filter-value="english">English</button>
-                    <button type="button" class="picker-chip" data-filter-group="language" data-filter-value="russian">Русский</button>
-                    <button type="button" class="picker-chip" data-filter-group="language" data-filter-value="bilingual">Bilingual (RU + EN)</button>
+                <div class="feature-card glass-card">
+                    <div class="feature-icon">&#127758;</div>
+                    <h3>Multi-Perspective Coverage</h3>
+                    <p>We pull from diverse sources to present balanced, nuanced takes — not echo chambers or clickbait.</p>
                 </div>
-                <div class="picker-row picker-row-actions">
-                    <button type="button" class="picker-clear nn-btn">Clear filters</button>
-                    <span class="picker-count" aria-live="polite">Showing all <strong id="picker-count-total">{{ all_shows | length }}</strong> shows</span>
+                <div class="feature-card glass-card">
+                    <div class="feature-icon">&#128197;</div>
+                    <h3>Daily Consistency</h3>
+                    <p>New episodes every day (or weekday), rain or shine. Build a daily learning habit you can rely on.</p>
+                </div>
+                <div class="feature-card glass-card">
+                    <div class="feature-icon">&#127463;&#127464;</div>
+                    <h3>Made in Canada</h3>
+                    <p>Independently produced in Vancouver by Patrick. No corporate backing, no editorial interference.</p>
+                </div>
+                <div class="feature-card glass-card">
+                    <div class="feature-icon">&#128266;</div>
+                    <h3>Multilingual</h3>
+                    <p>Shows in English and Russian, with more languages planned. Knowledge shouldn't have a language barrier.</p>
                 </div>
             </div>
         </div>
     </section>
+
+    {# --- Find Your Show picker REMOVED (May 2026) — original chip
+       set retained below as a comment for easy resurrection if the
+       operator changes their mind. ---
+       (chip list previously here — three rows of topic / audience /
+       language buttons + clear-filters action — all removed.) --- #}
 
     <!-- Show Showcase -->
     <section id="shows" class="nn-section">
@@ -280,111 +369,10 @@
         </div>
     </section>
 
-    <!-- Latest Across the Network -->
-    <section id="latest" class="nn-section" style="background:var(--nn-bg-alt);">
-        <div class="container">
-            <div class="nn-section-header">
-                <div class="section-label">Fresh Episodes</div>
-                <h2>Latest Across the Network</h2>
-                <p>The most recent episodes from all shows.</p>
-            </div>
-        </div>
-        {% if latest_episodes %}
-        <div class="latest-scroll-row">
-            {% for ep in latest_episodes %}
-            <div class="latest-scroll-card glass-card">
-                <div class="episode-card-show" style="background:{{ ep.brand_color }};">{{ ep.show_name }}</div>
-                <div class="episode-card-title">{{ ep.title }}</div>
-                <div class="episode-card-date">{{ ep.date_display }}</div>
-                {% if ep.audio_url %}
-                <audio controls preload="none" src="{{ ep.audio_url }}" aria-label="{{ ep.show_name }} episode audio" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="latest-scroll-row">
-            <p style="color:var(--nn-text-muted);padding:2rem;text-align:center;width:100%;">Episodes will appear here once available.</p>
-        </div>
-        {% endif %}
-    </section>
-
-    <!-- Why Nerra -->
-    <section class="nn-section">
-        <div class="container">
-            <div class="nn-section-header">
-                <div class="section-label">Why Nerra</div>
-                <h2>Built different</h2>
-            </div>
-            <div class="features-grid">
-                <div class="feature-card glass-card">
-                    <div class="feature-icon">&#9889;</div>
-                    <h3>AI-Enhanced Research</h3>
-                    <p>Every episode is backed by real-time news analysis across dozens of sources, curated and verified by a human host.</p>
-                </div>
-                <div class="feature-card glass-card">
-                    <div class="feature-icon">&#127911;</div>
-                    <h3>Zero Ads. Zero Sponsors.</h3>
-                    <p>No ad reads, no sponsor segments, no paywalls. Just pure content, every single day. Free forever.</p>
-                </div>
-                <div class="feature-card glass-card">
-                    <div class="feature-icon">&#127758;</div>
-                    <h3>Multi-Perspective Coverage</h3>
-                    <p>We pull from diverse sources to present balanced, nuanced takes — not echo chambers or clickbait.</p>
-                </div>
-                <div class="feature-card glass-card">
-                    <div class="feature-icon">&#128197;</div>
-                    <h3>Daily Consistency</h3>
-                    <p>New episodes every day (or weekday), rain or shine. Build a daily learning habit you can rely on.</p>
-                </div>
-                <div class="feature-card glass-card">
-                    <div class="feature-icon">&#127463;&#127464;</div>
-                    <h3>Made in Canada</h3>
-                    <p>Independently produced in Vancouver by Patrick. No corporate backing, no editorial interference.</p>
-                </div>
-                <div class="feature-card glass-card">
-                    <div class="feature-icon">&#128266;</div>
-                    <h3>Multilingual</h3>
-                    <p>Shows in English and Russian, with more languages planned. Knowledge shouldn't have a language barrier.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Latest from the Blog -->
-    {% if latest_blog_posts %}
-    <section class="nn-section">
-        <div class="container">
-            <div class="nn-section-header">
-                <div class="section-label">Blog</div>
-                <h2>Latest from the Blog</h2>
-                <p>In-depth articles from our latest episodes.</p>
-            </div>
-            <div class="blog-idx-grid" style="max-width:900px;margin:0 auto;padding-bottom:var(--sp-8)">
-                {% for post in latest_blog_posts %}
-                <a href="blog/{{ post.show_slug }}/ep{{ '%03d' % post.episode_num }}.html"
-                   class="blog-idx-card"
-                   style="--card-show-color: {{ post.show_color }}">
-                    <div class="blog-idx-card-top">
-                        <span class="blog-idx-show-badge" style="background:color-mix(in srgb, {{ post.show_color }} 15%, transparent);color:{{ post.show_color }}">{{ post.show_name }}</span>
-                        <span class="blog-idx-date">{{ post.date }}</span>
-                        <span class="blog-idx-ep">Ep {{ post.episode_num }}</span>
-                        <span class="blog-idx-reading">{{ post.reading_time_min }} min</span>
-                    </div>
-                    <h2>{{ post.title }}</h2>
-                    {% if post.hook %}
-                    <p>{{ post.hook[:140] }}{% if post.hook|length > 140 %}&hellip;{% endif %}</p>
-                    {% endif %}
-                    <span class="blog-idx-read-more" style="color:{{ post.show_color }}">Read article &rarr;</span>
-                </a>
-                {% endfor %}
-            </div>
-            <div style="text-align:center">
-                <a href="blog/index.html" class="nn-btn nn-btn-primary" style="font-size:0.9rem;padding:var(--sp-3) var(--sp-8)">View all blog posts</a>
-            </div>
-        </div>
-    </section>
-    {% endif %}
+    {# Fresh Episodes / Blog / Why Nerra triplet was moved ABOVE the
+       Show Showcase as part of the May 2026 homepage restructure
+       (operator request). The original positions here are now empty
+       to avoid duplicating those sections on the page. #}
 
     <!-- About the Network -->
     <section class="nn-section" style="background:var(--nn-bg-alt);">
@@ -489,39 +477,14 @@
         </div>
     </section>
 
-    {# --- "Find Your Show" picker behaviour + styles --- #}
+    {# --- May 2026: "Find Your Show" picker styles + JS were
+       removed when the section came out. The non-picker styles
+       below (``.show-card-wrap`` filter classes, ``.show-card-audience``,
+       ``.subscribe-show-list``) are still referenced by other
+       sections so they stay. --- #}
     <style>
-      .picker { max-width: 960px; margin: 0 auto; }
-      .picker-row {
-        display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
-        padding: 10px 0;
-      }
-      .picker-label {
-        flex: 0 0 auto; min-width: 88px;
-        font-family: var(--font-ui); font-size: 0.85rem;
-        color: var(--nn-text-muted); text-transform: uppercase; letter-spacing: 0.05em;
-      }
-      .picker-chip {
-        background: transparent; border: 1px solid var(--nn-border);
-        color: var(--nn-text); border-radius: 999px;
-        min-height: 44px;
-        display: inline-flex; align-items: center;
-        padding: 8px 16px; font-size: 0.9rem; font-family: var(--font-ui);
-        cursor: pointer; transition: background 120ms, border-color 120ms, color 120ms;
-      }
-      .picker-chip:hover { border-color: #6B47FF; }
-      .picker-chip.is-active {
-        background: rgba(124, 92, 255, 0.18);
-        border-color: #6B47FF;
-        color: #fff;
-      }
-      .picker-row-actions { justify-content: space-between; padding-top: 18px; }
-      .picker-clear { font-size: 0.85rem; padding: 8px 16px; }
-      .picker-count { color: var(--nn-text-muted); font-size: 0.85rem; font-family: var(--font-ui); }
-      .picker-count strong { color: var(--nn-text); }
-
-      /* Cards that don't match the active filters fade out but stay in DOM
-         order so the grid layout doesn't jump around. */
+      /* Show-card filter states — used by future picker reinstatement
+         or any other selector that wants to dim non-matching cards. */
       .show-card-wrap.is-dimmed { opacity: 0.32; filter: grayscale(0.5); }
       .show-card-wrap.is-dimmed .show-card { pointer-events: none; }
       .show-card-wrap.is-match {
@@ -534,6 +497,7 @@
       }
       .show-card-audience strong { color: var(--nn-text); font-weight: 600; }
 
+      /* Subscribe-section per-show rows — independent of the picker. */
       .subscribe-show-list {
         display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
         gap: 12px; margin: 24px auto 0; max-width: 1100px;
@@ -556,81 +520,4 @@
       .subscribe-link-btn:hover { background: rgba(124,92,255,0.22); }
       .subscribe-link-rss { background: rgba(255,140,0,0.12); }
     </style>
-
-    <script>
-    (function () {
-      const grid = document.getElementById("show-showcase-grid");
-      if (!grid) return;
-      const cards = Array.from(grid.querySelectorAll(".show-card-wrap"));
-      const chips = Array.from(document.querySelectorAll(".picker-chip"));
-      const clearBtn = document.querySelector(".picker-clear");
-      const countEl = document.getElementById("picker-count-total");
-      const total = cards.length;
-
-      const active = { topics: new Set(), audience: new Set(), language: new Set() };
-
-      function tokensOf(card, group) {
-        const raw = card.getAttribute("data-" + group) || "";
-        return raw.split(/\s+/).filter(Boolean);
-      }
-
-      function cardMatches(card) {
-        for (const group of ["topics", "audience", "language"]) {
-          const wanted = active[group];
-          if (wanted.size === 0) continue;
-          const has = new Set(tokensOf(card, group));
-          let ok = false;
-          for (const w of wanted) {
-            if (has.has(w)) { ok = true; break; }
-          }
-          if (!ok) return false;
-        }
-        return true;
-      }
-
-      function applyFilters() {
-        const anyActive =
-          active.topics.size + active.audience.size + active.language.size > 0;
-        let matched = 0;
-        cards.forEach((card) => {
-          const m = cardMatches(card);
-          card.classList.toggle("is-dimmed", anyActive && !m);
-          card.classList.toggle("is-match", anyActive && m);
-          if (m) matched++;
-        });
-        if (!countEl) return;
-        if (!anyActive) {
-          countEl.textContent = total;
-          countEl.parentElement.firstChild.textContent = "Showing all ";
-        } else {
-          countEl.textContent = matched;
-          countEl.parentElement.firstChild.textContent = "Showing ";
-        }
-      }
-
-      chips.forEach((chip) => {
-        chip.addEventListener("click", () => {
-          const group = chip.getAttribute("data-filter-group");
-          const value = chip.getAttribute("data-filter-value");
-          if (!group || !value || !active[group]) return;
-          if (active[group].has(value)) {
-            active[group].delete(value);
-            chip.classList.remove("is-active");
-          } else {
-            active[group].add(value);
-            chip.classList.add("is-active");
-          }
-          applyFilters();
-        });
-      });
-
-      if (clearBtn) {
-        clearBtn.addEventListener("click", () => {
-          for (const k in active) active[k].clear();
-          chips.forEach((c) => c.classList.remove("is-active"));
-          applyFilters();
-        });
-      }
-    })();
-    </script>
 {% endblock %}
