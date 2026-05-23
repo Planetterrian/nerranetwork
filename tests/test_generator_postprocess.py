@@ -143,3 +143,77 @@ class TestSpeakerPrefixStrip:
         # Line-start prefix stripped.
         assert "Yes, I did." in out
         assert "Patrick: Yes" not in out
+
+
+# ---------------------------------------------------------------------------
+# _retry_word_count_ok — guard for repetition-retry word-count regression
+# ---------------------------------------------------------------------------
+
+class TestRetryWordCountOk:
+    """Operator caught (Omni View Ep059, 2026-05-23) the anti-repetition
+    retry replacing an 883-word original with a 555-word retry. The old
+    guard used ``len(text_retry) < len(text) * 0.5`` on CHAR length,
+    which passed (3870 / 6163 ≈ 0.63), the swap went through, and the
+    555-word script then tripped the runner's 600-word hard floor and
+    aborted the episode. The new ``_retry_word_count_ok`` helper gates
+    both repetition-retry paths on WORD count, with the per-show floor
+    + 50 as a hard minimum so the hard-floor check downstream has
+    headroom."""
+
+    def test_ov_ep059_scenario_rejects_retry(self):
+        """The exact OV Ep059 numbers: 883-word original, 555-word
+        retry, network default floor=600. Must reject so the runner
+        keeps the (repetitive but usable) 883-word original instead
+        of swapping in the (clean but too-short) 555-word retry."""
+        from engine.generator import _retry_word_count_ok
+        assert _retry_word_count_ok(
+            orig_words=883, retry_words=555, show_floor=600,
+        ) is False
+
+    def test_healthy_retry_accepted(self):
+        """Retry that keeps >=80% of original word count AND stays
+        well above the floor — the happy path. Accept."""
+        from engine.generator import _retry_word_count_ok
+        assert _retry_word_count_ok(
+            orig_words=1000, retry_words=900, show_floor=600,
+        ) is True
+
+    def test_retry_below_floor_plus_margin_rejected(self):
+        """Even when the retry keeps 80%+ of the word count, if it
+        would land within 50 words of the per-show floor we reject —
+        the runner's hard-floor check happens AFTER the swap, so we
+        leave a 50-word buffer for ``loudnorm`` / ``_sanitize`` /
+        anti-tag-strip rounding."""
+        from engine.generator import _retry_word_count_ok
+        # 80% of 800 = 640. Floor + 50 = 650. Retry of 640 fails
+        # the floor-margin guard.
+        assert _retry_word_count_ok(
+            orig_words=800, retry_words=640, show_floor=600,
+        ) is False
+        # 651 clears floor+50.
+        assert _retry_word_count_ok(
+            orig_words=800, retry_words=651, show_floor=600,
+        ) is True
+
+    def test_env_intel_low_floor_lets_short_shows_swap(self):
+        """env_intel has ``min_podcast_word_floor: 450`` (PR #395) so
+        retries that land at 500-600 words still pass when the show
+        deliberately ships shorter episodes. Show-specific floor is
+        honored end-to-end."""
+        from engine.generator import _retry_word_count_ok
+        # env_intel: orig 700 → retry 580. 80% = 560, floor+50 = 500.
+        # 580 >= max(560, 500) = 560 → ACCEPT.
+        assert _retry_word_count_ok(
+            orig_words=700, retry_words=580, show_floor=450,
+        ) is True
+
+    def test_uses_max_of_two_constraints(self):
+        """When the two constraints (80% and floor+50) disagree, the
+        STRICTER one wins. A short original (e.g. 500 words) with a
+        retry at 400 words clears 80%-of-original (400 >= 400) but
+        not floor+50 (400 < 650 for floor=600) → REJECT."""
+        from engine.generator import _retry_word_count_ok
+        assert _retry_word_count_ok(
+            orig_words=500, retry_words=400, show_floor=600,
+        ) is False
+
