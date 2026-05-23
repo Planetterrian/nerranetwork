@@ -124,16 +124,16 @@ def test_short_form_filter_graph_with_hook_burns_caption():
     assert graph.endswith("[v]")
 
 
-def test_short_form_filter_graph_hook_sits_in_bottom_third():
-    """May 2026 operator review: the shorts hook moved out of the
-    top half (was ``y=240``) into the bottom third of the
-    1080x1920 frame. ``y=h*0.70`` puts the baseline at y≈1344,
-    well inside the bottom-third zone (y > 1280) and above the
-    URL pill at y≈1820. Pin the new position so a future style
-    edit doesn't drift back to the top."""
+def test_short_form_filter_graph_hook_sits_in_bottom_half():
+    """May 2026 follow-up: the Shorts hook moved out of the top
+    half (was ``y=240``) and now sits at ``y=h*0.55`` (≈y=1056) —
+    inside the lower half of the 1080x1920 frame but above the
+    burn-in subtitle baseline (MarginV=300 → y≈1620) so the two
+    overlays don't collide during the first 3 s when both are
+    visible. The hook fades after 3 s; the subtitles continue."""
     graph = _short_form_filter_graph(hook="anything")
-    # New bottom-third position.
-    assert "y=h*0.70" in graph
+    # New mid-lower position that leaves room for burn-in subs below.
+    assert "y=h*0.55" in graph
     # Old top-of-frame position must not return.
     assert "y=240" not in graph
 
@@ -162,6 +162,55 @@ def test_short_form_filter_graph_without_hook_omits_caption():
     assert "between(t,0,3)" not in graph
     # But the brand pill + visualization still produce the [v] output.
     assert graph.endswith("[v]")
+
+
+def test_short_form_filter_graph_burns_subtitles_when_path_provided():
+    """May 2026 operator review: Shorts had no synced captions at
+    all — only the 3-second static hook. With the new
+    ``subtitles_path`` arg the Shorts MP4 burns in cues from a
+    Shorts-windowed SRT using the dedicated
+    ``_SHORTS_SUBTITLES_FORCE_STYLE`` (FontSize=34, MarginV=300)
+    so the transcript actually shows up on the vertical format."""
+    graph = _short_form_filter_graph(subtitles_path="/tmp/short.srt")
+    assert "subtitles=" in graph
+    assert "FontSize=34" in graph
+    assert "MarginV=300" in graph
+    assert graph.endswith("[v]")
+
+
+def test_short_form_filter_graph_subtitles_compose_with_hook():
+    """When BOTH the hook and subtitles are present, the filter
+    graph must end in a single ``[v]`` output. The hook renders at
+    ``y=h*0.55`` (≈y=1056); the subtitles render at MarginV=300
+    (baseline ≈y=1620). Both must be visible together for the
+    first 3 seconds without overlapping."""
+    graph = _short_form_filter_graph(
+        hook="Today's market.", subtitles_path="/tmp/short.srt",
+    )
+    # Hook is wired through with its 0-3s gate.
+    assert "between(t,0,3)" in graph
+    # Subtitles filter is wired through.
+    assert "subtitles=" in graph
+    # Single final [v] output (no double-terminated graph).
+    assert graph.endswith("[v]")
+    # Hook chains into the subtitle stage rather than terminating
+    # the graph early.
+    assert "[hooked]subtitles=" in graph
+
+
+def test_short_form_cmd_threads_subtitles_path():
+    """The Shorts MP4 builder must pass ``subtitles_path`` through
+    to the filter graph so the burn-in actually happens. May 2026
+    operator complaint traced to the path being available
+    (transcript exists) but unused in the Shorts command builder."""
+    from engine.video import _short_form_cmd
+    cmd = _short_form_cmd(
+        "/v.mp3", "/bg.jpg", "/brand.png", "/out.mp4",
+        subtitles_path="/tmp/short.srt",
+    )
+    fc = cmd[cmd.index("-filter_complex") + 1]
+    assert "subtitles=" in fc
+    assert "/tmp/short.srt" in fc
 
 
 # ---------------------------------------------------------------------------
@@ -554,12 +603,12 @@ def test_long_form_filter_graph_with_subtitles_appends_filter():
     # ASS force-style is appended.
     assert "force_style=" in graph
     assert "Alignment=2" in graph
-    # Subtitles sit in the bottom third of the 1920x1080 frame (May
-    # 2026 operator review). ``MarginV=120`` puts the baseline ~120
-    # px above the bottom edge — comfortably below y=720 (bottom
-    # third boundary) and high enough that the YouTube progress bar
-    # doesn't overlap on mobile.
-    assert "MarginV=120" in graph
+    # Subtitles sit FLUSH with the bottom area (May 2026 follow-up
+    # — operator caught that the previous ``MarginV=120`` still
+    # read as "central portion" rather than truly bottom). The new
+    # ``MarginV=50`` puts the text baseline ≈y=1030 — just above
+    # YouTube's auto-fading progress-bar HUD.
+    assert "MarginV=50" in graph
     # Subtitles attach to the [branded] stage (was [disclosed] before
     # the centered burn-in was removed).
     assert "[branded]subtitles=" in graph
@@ -586,18 +635,21 @@ def test_subtitles_force_style_has_required_fields():
     """Sanity check on the ASS force-style string. May 2026 retune:
     pin the new "auto-caption-style" look so a future style edit
     doesn't silently regress to the old opaque-box look the operator
-    asked to remove ("make it not as prominent")."""
+    asked to remove ("make it not as prominent"). May 22 follow-up:
+    operator caught the previous ``MarginV=120 / FontSize=18`` still
+    reading as central + too small — moved to ``MarginV=50`` (flush
+    bottom) + ``FontSize=22`` (readable on phones)."""
     assert "FontName=DejaVu Sans" in _SUBTITLES_FORCE_STYLE
     assert "Alignment=2" in _SUBTITLES_FORCE_STYLE
-    # Bottom-third position (May 2026 operator review).
-    assert "MarginV=120" in _SUBTITLES_FORCE_STYLE
+    # Flush-bottom position (May 22 2026 operator follow-up).
+    assert "MarginV=50" in _SUBTITLES_FORCE_STYLE
     # BorderStyle=1 = outline + soft shadow only (no opaque box).
     # Keeps the slideshow imagery visible behind the words.
     assert "BorderStyle=1" in _SUBTITLES_FORCE_STYLE
     assert "BorderStyle=3" not in _SUBTITLES_FORCE_STYLE
-    # Smaller font reads less as "subtitle bar" and more as
-    # "auto-caption hint" — also matches YouTube auto-caption sizing.
-    assert "FontSize=18" in _SUBTITLES_FORCE_STYLE
+    # FontSize=22 (was 18) — bigger reads better on phone screens
+    # without looking like a heavy "subtitle bar."
+    assert "FontSize=22" in _SUBTITLES_FORCE_STYLE
 
 
 # ---------------------------------------------------------------------------

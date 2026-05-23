@@ -387,28 +387,31 @@ def _render_slideshow(scene_paths: Sequence[Path], output: Path,
 # Long-form filter graph (stage 2)
 # ---------------------------------------------------------------------------
 
-# Force-style for the burn-in subtitles. ASS color format is &HAABBGGRR
-# (alpha is "amount of transparency" — 0x00 is opaque, 0xFF is
-# transparent). The May 2026 operator review of the long-form YouTube
-# output asked for two changes:
+# Force-style for the long-form burn-in subtitles. ASS color format
+# is &HAABBGGRR (alpha is "amount of transparency" — 0x00 is opaque,
+# 0xFF is transparent).
 #
-#   1. Position firmly in the bottom third of the 1920x1080 frame
-#      rather than the previous "near the bottom edge" baseline.
-#      ``MarginV=120`` lifts the baseline ~120 px above the bottom
-#      edge, placing the caption text roughly y≈940 — comfortably
-#      inside the bottom-third zone (y > 720) but still high enough
-#      not to overlap the YouTube progress-bar HUD on mobile.
-#   2. "Not as prominent." Drop the opaque box behind the text
-#      (``BorderStyle=3`` → ``BorderStyle=1`` outline-only with a
-#      strong outline + soft shadow) so the slideshow imagery stays
-#      visible behind the words. Smaller font (22 → 18) reads less
-#      as "burned-in subtitle bar" and more as "auto-caption hint."
-#      White text + black 3 px outline + 1 px shadow remains
-#      readable against bright backgrounds (matches YouTube's own
-#      auto-caption styling).
+# May 2026 history (operator-driven iteration):
+#   * First pass: ``MarginV=120`` was meant to put text in the bottom
+#     third (y > 720). With Alignment=2 + a 2-line cue, the bottom of
+#     the text sat at y≈960 — technically inside the bottom third but
+#     still looked "mid-frame" on a YouTube player whose chrome
+#     overlays the lower 80 px. ``FontSize=18`` also read as too small
+#     in side-by-side reviews.
+#   * Second pass (this comment block): drop the baseline to
+#     ``MarginV=50`` so the text sits flush with the bottom area of
+#     the video (text bottom ≈ y=1030, comfortably above YouTube's
+#     auto-fading progress-bar HUD), and bump ``FontSize`` 18 → 22
+#     for readability on phones and tablets. Operator caught the
+#     long-form cues being too small + too high to read as a proper
+#     burned-in transcript.
+#
+# Outline-only (``BorderStyle=1`` + ``Outline=3`` + ``Shadow=1``) is
+# unchanged from the first pass — keeps the slideshow imagery
+# visible behind the words.
 _SUBTITLES_FORCE_STYLE = (
     "FontName=DejaVu Sans,"
-    "FontSize=18,"
+    "FontSize=22,"
     "PrimaryColour=&H00FFFFFF,"
     "OutlineColour=&H00000000,"
     "BackColour=&H00000000,"
@@ -416,7 +419,37 @@ _SUBTITLES_FORCE_STYLE = (
     "Outline=3,"
     "Shadow=1,"
     "Alignment=2,"
-    "MarginV=120"
+    "MarginV=50"
+)
+
+
+# Force-style for the Shorts (1080x1920 vertical) burn-in subtitles.
+# Three reasons this can't reuse ``_SUBTITLES_FORCE_STYLE``:
+#   1. Vertical frame is narrower (1080 vs 1920) so per-line char
+#      budgets that work on long-form spill past the visible edge.
+#      The matching wrap in ``captions.transcript_to_srt_window``
+#      uses ``wrap_max_chars=32`` — fits inside 1080 px at
+#      FontSize=34 with comfortable side margins.
+#   2. Shorts are watched on phones held close — the FontSize must
+#      step up (22 → 34) so cues are readable at 5–10 cm viewing.
+#   3. Position has to clear both the static hook caption (at
+#      ``y=h*0.70`` ≈ 1344) and the URL pill (at ``y=H-h-100`` ≈
+#      1820), AND sit firmly in the bottom third. ``MarginV=300``
+#      places the cue baseline at y≈1620 — between the hook
+#      (which fades after 3 s) and the URL pill, with enough
+#      vertical clearance for a 3-line cue at FontSize=34 not to
+#      overlap either.
+_SHORTS_SUBTITLES_FORCE_STYLE = (
+    "FontName=DejaVu Sans,"
+    "FontSize=34,"
+    "PrimaryColour=&H00FFFFFF,"
+    "OutlineColour=&H00000000,"
+    "BackColour=&H00000000,"
+    "BorderStyle=1,"
+    "Outline=4,"
+    "Shadow=2,"
+    "Alignment=2,"
+    "MarginV=300"
 )
 
 
@@ -500,7 +533,8 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
                              fps: int = 30,
                              hook: Optional[str] = None,
                              bg_is_video: bool = False,
-                             with_url_pill: bool = False) -> str:
+                             with_url_pill: bool = False,
+                             subtitles_path: Optional[str] = None) -> str:
     """filter_complex for the 1080x1920 Shorts build.
 
     Inputs:
@@ -544,38 +578,57 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
     else:
         post_brand_label = "[branded]"
 
+    # Anchor for any post-brand overlay (hook caption + burn-in
+    # subtitles + the final ``[v]`` rename). We chain by reassigning
+    # ``post_brand_label`` after each step so the order is:
+    #   brand pill → URL pill → hook (0-3s) → burn-in subtitles → [v]
+    chain = base
     if hook:
         wrapped = _wrap_caption(hook)
         escaped = _drawtext_escape(wrapped)
-        # May 2026 operator review: move the hook out of the top
-        # half (was y=240) into the bottom third of the 1080x1920
-        # frame and reduce visual weight to match the long-form
-        # caption treatment.
-        #   * ``y=h*0.70`` puts the text baseline at y≈1344, which
-        #     centres the wrapped caption inside the bottom third
-        #     (y > 1280) while leaving room above the
-        #     ``H-h-100`` URL pill that sits at y≈1820 when
-        #     ``with_url_pill=True``.
-        #   * ``fontsize=44`` (was 64) is still readable on a
-        #     phone but no longer dominates the slideshow.
+        # May 2026 operator review: hook is the static 0-3 s
+        # opening title — separate from the burn-in transcript
+        # that follows. Position lifted ABOVE the burn-in zone
+        # so the two overlays don't visually collide during the
+        # first 3 s. ``y=h*0.55`` puts the hook around y≈1056 —
+        # inside the lower half but well above the subtitle
+        # baseline at y≈1620 (MarginV=300 in
+        # ``_SHORTS_SUBTITLES_FORCE_STYLE``).
+        #   * ``fontsize=44`` is still readable on a phone but
+        #     no longer dominates the slideshow.
         #   * Outline-only (no ``box=1`` solid fill) keeps the
         #     imagery visible behind the words. A 4 px black
         #     outline + 2 px shadow stays readable on bright
-        #     backgrounds without painting a black rectangle
-        #     across the frame.
-        caption = (
+        #     backgrounds without painting a black rectangle.
+        hook_label = "[hooked]" if subtitles_path else "[v]"
+        hook_filter = (
             f";{post_brand_label}drawtext=fontfile='{font_path}':"
             f"text='{escaped}':"
             f"fontsize=44:fontcolor=white:"
-            f"x=(w-text_w)/2:y=h*0.70:"
+            f"x=(w-text_w)/2:y=h*0.55:"
             f"borderw=4:bordercolor=black:"
             f"shadowx=2:shadowy=2:shadowcolor=black@0.7:"
             f"line_spacing=10:"
             f"enable='between(t,0,3)'"
-            f"[v]"
+            f"{hook_label}"
         )
-        return base + caption
-    return base + f";{post_brand_label}null[v]"
+        chain += hook_filter
+        post_brand_label = hook_label
+
+    if subtitles_path:
+        escaped_sub = _subtitles_path_escape(subtitles_path)
+        # Use the dedicated Shorts force-style so font + position
+        # are tuned for the 1080x1920 vertical frame and don't
+        # overlap the hook (above) or the URL pill (below).
+        chain += (
+            f";{post_brand_label}subtitles='{escaped_sub}'"
+            f":force_style='{_SHORTS_SUBTITLES_FORCE_STYLE}'[v]"
+        )
+        return chain
+    if hook:
+        # Hook was the last filter — already terminated at [v].
+        return chain
+    return chain + f";{post_brand_label}null[v]"
 
 
 # ---------------------------------------------------------------------------
@@ -639,7 +692,8 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                     fps: int = 30,
                     hook: Optional[str] = None,
                     bg_is_video: bool = False,
-                    url_pill_in: Optional[str] = None) -> List[str]:
+                    url_pill_in: Optional[str] = None,
+                    subtitles_path: Optional[str] = None) -> List[str]:
     """ffmpeg command for the 1080x1920 Shorts build.
 
     When *bg_is_video* is True, *bg_in* is a pre-rendered vertical
@@ -649,6 +703,14 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
 
     When *url_pill_in* is provided, a 4th input is added (the
     ``nerranetwork.com`` URL pill PNG) and overlaid at bottom-center.
+
+    When *subtitles_path* is provided (May 2026), ffmpeg's
+    ``subtitles`` filter burns the cues from a Shorts-windowed SRT
+    onto the video using the dedicated
+    ``_SHORTS_SUBTITLES_FORCE_STYLE`` (FontSize=34, MarginV=300) —
+    tuned for the 1080x1920 frame and positioned so it doesn't
+    collide with the static hook (0-3 s, y≈1056) or the URL pill
+    (y≈1820).
     """
     if bg_is_video:
         bg_input = ["-stream_loop", "-1", "-i", bg_in]
@@ -672,7 +734,8 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
         "-filter_complex",
         _short_form_filter_graph(1080, 1920, fps, hook,
                                  bg_is_video=bg_is_video,
-                                 with_url_pill=bool(url_pill_in)),
+                                 with_url_pill=bool(url_pill_in),
+                                 subtitles_path=subtitles_path),
         "-map", "[v]", "-map", "1:a",
         *_VIDEO_ENCODE,
         "-r", str(fps),
@@ -811,7 +874,8 @@ def build_short_video(audio_path: Path, cover_path: Path,
                       fps: int = 30,
                       hook: Optional[str] = None,
                       scene_paths: Optional[Sequence[Path]] = None,
-                      show_name: Optional[str] = None) -> Path:
+                      show_name: Optional[str] = None,
+                      subtitles_path: Optional[Path] = None) -> Path:
     """Render a 1080x1920 vertical YouTube Shorts video.
 
     Parameters
@@ -837,6 +901,15 @@ def build_short_video(audio_path: Path, cover_path: Path,
         renders the show name in the top-right pill and a
         ``nerranetwork.com`` pill at bottom-center. When ``None``:
         legacy "Nerra Network" single pill in the top-right.
+    subtitles_path:
+        Optional SRT (May 2026). Cues must already be windowed and
+        rebased to the Shorts clip's own t=0 timeline (see
+        ``engine.captions.transcript_to_srt_window``). When
+        provided, ffmpeg's ``subtitles`` filter burns the cues
+        onto the video with the dedicated
+        ``_SHORTS_SUBTITLES_FORCE_STYLE``. The cues sit between the
+        static hook (above) and the URL pill (below) so all three
+        overlays are visible together without overlap.
     """
     if duration >= 60:
         raise ValueError(
@@ -884,10 +957,13 @@ def build_short_video(audio_path: Path, cover_path: Path,
         duration=duration, fps=fps, hook=hook,
         bg_is_video=bg_is_video,
         url_pill_in=str(url_pill_path) if url_pill_path else None,
+        subtitles_path=str(subtitles_path) if subtitles_path else None,
     )
     logger.info(
-        "Building Shorts video (%.1fs from %.1fs) → %s",
+        "Building Shorts video (%.1fs from %.1fs) → %s "
+        "(subtitles=%s)",
         duration, start_offset, output_path.name,
+        bool(subtitles_path),
     )
     _run_ffmpeg(cmd, label="shorts video")
     return output_path

@@ -11,6 +11,7 @@ from engine.captions import (
     _wrap_caption_line,
     find_transcript_for_episode,
     transcript_to_srt,
+    transcript_to_srt_window,
 )
 
 
@@ -38,6 +39,44 @@ def test_wrap_caption_line_breaks_at_word_boundary():
     # No line should split a word in the middle.
     for line in lines:
         assert " " in line or len(line) <= 20
+
+
+def test_wrap_caption_line_supports_three_lines():
+    """May 2026 fix: prior 2-line cap dumped overflow text into
+    line 2 (which silently clipped off the right edge in libass).
+    A 3-line wrap fits the long Whisper segments that sentences
+    rich with named entities + numbers produce, without losing
+    content."""
+    text = (
+        "Engineers at the Stanford Artificial Intelligence "
+        "Laboratory reported a forty seven percent improvement "
+        "on the benchmark this morning compared to last quarter."
+    )
+    out = _wrap_caption_line(text, max_chars=40, max_lines=3)
+    lines = out.split("\n")
+    assert 2 <= len(lines) <= 3, f"expected 2-3 lines, got {len(lines)}: {lines!r}"
+    # Every word from the source must survive.
+    src_words = set(text.split())
+    rendered_words = set(out.replace("\n", " ").split())
+    assert src_words == rendered_words, (
+        f"lost words during wrap: {src_words - rendered_words!r}"
+    )
+
+
+def test_wrap_caption_line_default_is_55_chars_3_lines():
+    """The default budget changed May 2026 from 42 chars / 2 lines
+    to 55 chars / 3 lines. 55-char lines fit comfortably in a
+    1920-wide frame at FontSize=22 with side margins; the third
+    line absorbs sentences that the previous 2-line cap was
+    truncating."""
+    # Sentence chosen to fit in two 55-char lines, which the old
+    # 42-char default would have spilled into a third (overflowed) line.
+    text = "Sentence with enough length to require multi-line wrap on a 42-char budget but fits in 55."
+    out = _wrap_caption_line(text)
+    lines = out.split("\n")
+    assert all(len(line) <= 55 or " " not in line for line in lines)
+    # No clipping — every word survives.
+    assert set(text.split()) == set(out.replace("\n", " ").split())
 
 
 def test_transcript_to_srt_basic(tmp_path: Path):
@@ -166,6 +205,111 @@ def test_transcript_to_srt_negative_offset_raises(tmp_path: Path):
         transcript_to_srt(
             transcript_path, tmp_path / "out.srt",
             audio_offset_seconds=-1.0,
+        )
+
+
+def test_transcript_to_srt_window_clips_to_range(tmp_path: Path):
+    """Shorts pipeline: only cues whose timeline overlaps the
+    Shorts window survive. Cues outside the window are dropped;
+    cues that straddle a boundary are clipped to fit. Timestamps
+    are rebased so the SRT starts at t=0 relative to the Shorts
+    clip."""
+    transcript = {
+        "language": "en",
+        "segments": [
+            # Before window — drop.
+            {"start": 0.0, "end": 4.0, "text": "Intro music"},
+            # Straddles the window start — clip + keep tail.
+            {"start": 9.0, "end": 12.0, "text": "Boundary cue at start"},
+            # Fully inside — keep verbatim.
+            {"start": 15.0, "end": 20.0, "text": "Middle of the clip"},
+            # Straddles the window end — clip + keep head.
+            {"start": 62.0, "end": 70.0, "text": "Boundary cue at end"},
+            # After window — drop.
+            {"start": 75.0, "end": 80.0, "text": "Outro music"},
+        ],
+    }
+    transcript_path = tmp_path / "ep.json"
+    transcript_path.write_text(json.dumps(transcript), encoding="utf-8")
+    srt_path = tmp_path / "short.srt"
+    # Window: final-audio [10s, 65s] (duration=55).
+    transcript_to_srt_window(
+        transcript_path, srt_path,
+        window_start_seconds=10.0,
+        window_duration_seconds=55.0,
+    )
+    content = srt_path.read_text(encoding="utf-8")
+    # Three surviving cues (the two boundary cues + the middle one).
+    assert content.count(" --> ") == 3
+    # Pre-window and post-window text must NOT appear.
+    assert "Intro music" not in content
+    assert "Outro music" not in content
+    # Rebased: first surviving cue starts at t=0 (10.0 - 10.0).
+    assert "00:00:00,000 -->" in content
+    # Middle cue runs from 15.0 → 20.0 in the source = 5.0 → 10.0 in
+    # the rebased SRT.
+    assert "00:00:05,000 --> 00:00:10,000" in content
+
+
+def test_transcript_to_srt_window_applies_audio_offset(tmp_path: Path):
+    """The audio_offset_seconds applies BEFORE windowing — same
+    semantics as the long-form SRT (so the Shorts cues land on
+    speech in the final mix, not on the music intro)."""
+    transcript = {
+        "segments": [
+            # In the raw transcript timeline.
+            {"start": 0.0, "end": 5.0, "text": "First speech"},
+        ],
+    }
+    transcript_path = tmp_path / "t.json"
+    transcript_path.write_text(json.dumps(transcript), encoding="utf-8")
+    srt_path = tmp_path / "short.srt"
+    # Music intro = 10 s. The Shorts window is [10s, 30s] of the
+    # final audio. After offset, the speech cue is at [10s, 15s] —
+    # rebased to [0s, 5s] in the Shorts clip.
+    transcript_to_srt_window(
+        transcript_path, srt_path,
+        window_start_seconds=10.0,
+        window_duration_seconds=20.0,
+        audio_offset_seconds=10.0,
+    )
+    content = srt_path.read_text(encoding="utf-8")
+    assert "00:00:00,000 --> 00:00:05,000" in content
+    assert "First speech" in content
+
+
+def test_transcript_to_srt_window_empty_when_no_overlap(tmp_path: Path):
+    """A window that contains no transcript cues produces an empty
+    SRT (rather than raising). Caller treats empty as 'skip
+    burn-in for this Shorts.'"""
+    transcript = {"segments": [{"start": 0.0, "end": 3.0, "text": "Intro"}]}
+    transcript_path = tmp_path / "t.json"
+    transcript_path.write_text(json.dumps(transcript), encoding="utf-8")
+    srt_path = tmp_path / "short.srt"
+    transcript_to_srt_window(
+        transcript_path, srt_path,
+        window_start_seconds=60.0,
+        window_duration_seconds=10.0,
+    )
+    assert srt_path.exists()
+    assert srt_path.read_text(encoding="utf-8") == ""
+
+
+def test_transcript_to_srt_window_rejects_invalid_args(tmp_path: Path):
+    transcript_path = tmp_path / "t.json"
+    transcript_path.write_text(json.dumps({"segments": []}), encoding="utf-8")
+    srt_path = tmp_path / "short.srt"
+    with pytest.raises(ValueError, match="window_start_seconds"):
+        transcript_to_srt_window(
+            transcript_path, srt_path,
+            window_start_seconds=-1.0,
+            window_duration_seconds=10.0,
+        )
+    with pytest.raises(ValueError, match="window_duration_seconds"):
+        transcript_to_srt_window(
+            transcript_path, srt_path,
+            window_start_seconds=0.0,
+            window_duration_seconds=0.0,
         )
 
 
