@@ -1,0 +1,189 @@
+Hey everyone, welcome to Models and Agents, Episode 57.
+It's May 23rd, 2026.
+You're daily briefing on the AI models and agents
+that are changing everything.
+And no, not those kinds of models and agents.
+Let's get into it.
+Open AI just added goal mode and screen-aware context
+to Codex, letting agents work autonomously for hours
+on real tasks.
+Open AI rolled out goal mode, app shots,
+and advanced annotation in Codex across app, IDE, and CLI.
+Anthropic reported finding over 10,000 high-severity vulnerabilities
+through Project Glass Wing using Cloud Models.
+Multiple new open source releases focus on faster inference
+and smaller footprints for consumer hardware.
+Open AI announced goal mode, app shots for screen context,
+and advanced annotation capabilities for Codex.
+Goal mode lets users set objectives
+that the system pursues for hours or days
+with reduced intervention, available in the app, IDE extension,
+and CLI.
+App shots pull live screen content directly
+into the agent session, while the annotation mode supports
+direct visual feedback on web pages.
+These updates shift Codex from reactive chat
+toward longer running context-rich agent workflows.
+Builders working on coding automation
+or multi-step development tasks should test the new modes
+this week to see how hands-off execution performs
+on their projects.
+Watch for further, agentic refinements
+as open AI solicits user suggestions
+for next week's updates.
+Superlabs released Supra 50M, a 50 million parameter
+LAMMA style model, trained from scratch
+on 20 billion tokens of fine web underscore EDU data.
+It reports 76.3% on Blimp, 77.2% on PSYQ,
+and 52.2% on ARC Easy despite its size.
+Both base and instruct versions are available on hugging face
+with a custom BPE tokenizer.
+The release kicks off Superlabs scaling roadmap
+that includes 124 million and 350 million variants.
+Try the instruct version for lightweight educational
+or reasoning tasks where larger models are overkill.
+Mietwan open-sourced long-cat video avatar 1.5,
+an audio-driven human video generation framework
+built on the long-cat video base.
+It adds whisper-large audio encoding,
+supports AT2V, ATI2V, and video continuation,
+and achieves eight-step inference via DMD2 distillation.
+The model handles realistic and animated styles
+plus multi-person scenes while maintaining identity consistency.
+Wates are MIT licensed, tested for avatar
+or lip sync video projects that need production stability
+without heavy fine tuning.
+A new uncensored fine tune of Gemma 4 to 26B, A4B,
+it was released with KLD of 0.0152
+and only 12 refusals out of 100 test cases.
+Both safe tensors and GGUF versions are available.
+Positioned as a faster, lower VRAM alternative
+to the 31 billion Mero-Mero variant.
+The author notes the 31 billion remains stronger overall
+but acknowledges demand for the smaller size.
+Download from LLM fan 4.6 on hugging face
+if you need reduced refusal behavior
+on the 26 billion A4B base.
+A pure Q4KM GGUF of Q1 3.6 to 27B fits in 15.1 to 15.4 gigabytes VRAM
+and delivers 40 tokens per second generation
+on an RTX 5,060 Ti when using MTP.
+The non-MTP version reaches higher prompt processing speeds.
+Perplexity stays within 0.17 of BF16.
+Builders targeting consumer 16GB cards
+can now run this model locally
+with the latest Lamada.cpp and the linked pure quant files.
+BLAMA 0.2.0 introduces D Flash for major speedups
+on single RTX 3,090 hardware,
+reaching 163.9 tokens per second median
+on twin 3.627 billion at 4.4 times baseline.
+It also hits 177.8 tokens per second
+on Gemma 431 billion at 4.93 times baseline.
+Prompt processing remains near baseline
+while acceptance rates stay usable.
+The update adds full Gemma 431 billion vision support
+and stricter drag validation.
+Try the quick start configs if you want speculative decoding gains
+without changing your target model.
+Spice is a new open source runtime
+that sits above execution agents and handles perception,
+simulation, structured decision making,
+and reflection before dispatching tasks.
+It targets the gap where current agents excel at execution
+but lack context-aware prioritization.
+The GitHub repo includes a core loop diagram
+and supports delegation to tools like cloud code or codex.
+Fork the repository to experiment
+with adding an explicit decision layer to your agent stacks.
+A step-by-step guide shows how to install
+and run G-brain V0.38.2.0.
+The markdown first knowledge graph originally built
+by Gary Tan for his own open claw and Hermes deployments.
+It wires itself via regx inference rather than LLM calls
+and connects to cloud code through MCP.
+The tutorial covers building a brain repo
+and running hybrid search in about 20 minutes.
+Clone the repo and follow the terminal commands
+if you need persistent memory across agent sessions.
+A user achieved 30 plus tokens per second
+with 262,000 context on an 8 gigabyte 3,070 Ti
+using Q4K XLquants of the 35 billion A3B MoE model.
+Only about 3.5 billion active parameters need to stay in VRAM.
+Linux server yielded a 25% boost over Windows 11
+due to lower memory overhead.
+The detailed LMAW server configs and KV cache settings
+are worth copying if you run MoE models on limited hardware.
+LMAW.cpp added programmatic dependent launch support
+for blackwell GPUs with compute capability greater than or equal to 90.
+Enabling it via the DGGML CUDA, PDL equals ON,
+build flag delivered 5 to 9% token generation gains
+with negligible pre-fill impact.
+The feature is off by default.
+Builders on RTX 50 series cards should rebuild with the flag
+to capture the free inference boost.
+Bite-shaped CPU 5Quant at 18.3 gigabytes
+ran 30% faster on token generation
+than unsloth UDIQ4XS while partially offloaded
+on a six gigabyte laptop GPU.
+Prompt processing was slightly slower.
+The author notes the need for independent quality comparisons.
+Test the linked GGUF if you prioritize generation speed
+on low VRAM laptops.
+Okay, let's pop the hood on pure quantization.
+Everyone talks about quantization as a simple
+make it smaller knob.
+In practice, it is a set of deliberate trade-offs
+between bit width, calibration data, and hardware mapping
+that determine whether a model stays usable.
+Pure quantization methods skip iMATrix calibration
+and instead apply uniform or near uniform scaling across weights,
+which reduces pre-processing time
+and sometimes improves throughput on CPUs during offload.
+The cost appears in slightly higher perplexity,
+typically 0.05 to 0.17 above eMATrix equivalents
+on the same model size.
+For MOE architectures, the savings compound
+because only active experts are loaded.
+Dropping from 4.5 bits per weight to 4.22 bits per weight
+can free enough VRAM to keep an extra expert resident
+and raise cache hit rates.
+The practical decision rule is straightforward.
+Use pure quants when generation speed
+on partial offload matters more than squeezing
+every last point of benchmark quality.
+And fall back to iMATrix when you have the calibration budget
+and need maximum fidelity on long-context tasks.
+Test OpenAI Codex goal mode on a multi-hour refactoring task
+to see how the hands-off execution performs
+compared with manual prompting.
+Run the new QN3.6 to 27B pure Q4KM GGUF
+on any 16GB card and compare token generation
+against your current 7Billion to 13Billion daily driver.
+Install B-Lama V0.2.0 with D-Flash on a 3,090
+and benchmark it against plainlama.cpp
+on the same twin 27Billion or Gemma 31Billion target.
+Follow the G-Brain tutorial to add a self-wiring
+markdown memory layer to an existing
+clawed code or codex workflow.
+Try the long cat, see video, slash avatar 1.5 demo
+on a short audio-driven avatar clip
+to evaluate the new Whisper large lip sync quality.
+Superlabs plans to release 124 million
+and 350 million models
+continuing the current scaling series.
+Further codex refinements are expected
+after OpenAI collects user suggestions this week.
+More iklama.cpp compatible quants for 16GB cards
+are likely as the project gains adoption.
+Additional D-Flash style speculative
+decoding implementations may appear
+for other inference engines.
+Tomorrow, keep an eye on the next round
+of user-driven codex updates
+and the first Superlabs 124 million release.
+That wraps up today's AI briefing.
+Share this with the developer or builder
+who wants to stay current.
+Subscribe wherever you listen.
+See you tomorrow.
+This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.

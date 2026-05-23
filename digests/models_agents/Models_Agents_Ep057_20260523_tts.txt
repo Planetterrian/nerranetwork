@@ -1,0 +1,149 @@
+Hey everyone, welcome to Models and Agents, episode fifty-seven. It's May twenty-third, twenty twenty-six. Your daily briefing on the A I models and agents that are changing everything. And no, not THOSE kinds of models and agents. Let's get into it.
+
+Open A I just added goal mode and screen-aware context to Codex, letting agents work autonomously for hours on real tasks.
+
+Open A I rolled out Goal mode, Appshots, and advanced annotation in Codex across app, IDE, and CLI.
+
+An-thropic reported finding over ten thousand high-severity vulnerabilities through Project Glasswing using Claude models.
+
+Multiple new open-source releases focus on faster inference and smaller footprints for consumer hardware.
+
+Open A I announced Goal mode, Appshots for screen context, and advanced annotation capabilities for Codex.
+
+Goal mode lets users set objectives that the system pursues for hours or days with reduced intervention, available in the app, IDE extension, and CLI.
+
+Appshots pull live screen content directly into the agent session, while the annotation mode supports direct visual feedback on web pages.
+
+These updates shift Codex from reactive chat toward longer-running, context-rich agent workflows.
+
+Builders working on coding automation or multi-step development tasks should test the new modes this week to see how hands-off execution performs on their projects.
+
+Watch for further agentic refinements as Open A I solicits user suggestions for next week’s updates.
+
+SupraLabs released Supra-50M, a fifty million parameter Lah-mah-style model trained from scratch on twenty billion tokens of fineweb-edu data.
+
+It reports seventy six point three percent on BLiMP, seventy seven point two percent on SciQ, and fifty two point two percent on ARC-Easy despite its size.
+
+Both base and instruct versions are available on Hugging Face with a custom BPE tokenizer.
+
+The release kicks off SupraLabs’ scaling roadmap that includes one hundred twenty four million and three hundred fifty million variants.
+
+Try the instruct version for lightweight educational or reasoning tasks where larger models are overkill.
+
+Meituan open-sourced LongCat-Video-Avatar one point five, an audio-driven human video generation framework built on the LongCat-Video base.
+
+It adds Whisper-Large audio encoding, supports AT2V/ATI2V and video continuation, and achieves eight-step inference via DMD2 distillation.
+
+The model handles realistic and animated styles plus multi-person scenes while maintaining identity consistency.
+
+Weights are MIT-licensed.
+
+Test it for avatar or lip-sync video projects that need production stability without heavy fine-tuning.
+
+A new uncensored fine-tune of gemma-four to twenty-sixB-A4B-it was released with KLD of zero point zero one five two and only twelve refusals out of one hundred test cases.
+
+Both Safetensors and GGUF versions are available, positioned as a faster, lower-VRAM alternative to the thirty one billion MeroMero variant.
+
+The author notes the thirty one billion remains stronger overall but acknowledges demand for the smaller size.
+
+Download from llmfan46 on Hugging Face if you need reduced refusal behavior on the twenty six billion A4B base.
+
+A pure Q four K M GGUF of Qwenthree point six to twenty-sevenB fits in fifteen point one to fifteen point four gigabytes VRAM and delivers forty tokens per second generation on an RTX five thousand sixty Ti when using MTP.
+
+The non-MTP version reaches higher prompt processing speeds.
+
+Perplexity stays within zero point one seven of BF sixteen.
+
+Builders targeting consumer sixteen gigabyte cards can now run this model locally with the latest Lah-mah.cpp and the linked pure quant files.
+
+BeeLlama zero point two point zero introduces DFlash for major speedups on single RTX three thousand ninety hardware, reaching one hundred sixty three point nine tokens per second median on Chwen three point six twenty seven billion at four point four times baseline.
+
+It also hits one hundred seventy seven point eight tokens per second on Gemma four thirty one billion at four point nine three times baseline.
+
+Prompt processing remains near baseline while acceptance rates stay usable.
+
+The update adds full Gemma four thirty one billion vision support and stricter draft validation.
+
+Try the quick-start configs if you want speculative decoding gains without changing your target model.
+
+Spice is a new open-source runtime that sits above execution agents and handles perception, simulation, structured decision-making, and reflection before dispatching tasks.
+
+It targets the gap where current agents excel at execution but lack context-aware prioritization.
+
+The GitHub repo includes a core loop diagram and supports delegation to tools like Claude Code or Codex.
+
+Fork the repository to experiment with adding an explicit decision layer to your agent stacks.
+
+A step-by-step guide shows how to install and run GBrain v zero point three eight point two point zero, the markdown-first knowledge graph originally built by Garry Tan for his own OpenClaw and Hermes deployments.
+
+It wires itself via regex inference rather than L L M calls and connects to Claude Code through M C P.
+
+The tutorial covers building a brain repo and running hybrid search in about twenty minutes.
+
+Clone the repo and follow the terminal commands if you need persistent memory across agent sessions.
+
+A user achieved thirty plus tokens per second with two hundred sixty two thousand context on an eight gigabyte three thousand seventy Ti using Q four K XL quants of the thirty five billion A3B MoE model.
+
+Only about three point five billion active parameters need to stay in VRAM.
+
+Linux Server yielded a twenty five percent boost over Windows eleven due to lower memory overhead.
+
+The detailed Lah-mah-server configs and KV cache settings are worth copying if you run MoE models on limited hardware.
+
+Lah-mah.cpp added Programmatic Dependent Launch support for Blackwell G P U's with compute capability greater than or equal to ninety.
+
+Enabling it via the DGGML koo-dah PDL equals ON build flag delivered five to nine percent token generation gains with negligible prefill impact.
+
+The feature is off by default.
+
+Builders on RTX fifty series cards should rebuild with the flag to capture the free inference boost.
+
+ByteShape’s CPU-five quant at eighteen point three gigabytes ran thirty percent faster on token generation than Unsloth UD-IQ four XS while partially offloaded on a six gigabyte laptop G P U.
+
+Prompt processing was slightly slower.
+
+The author notes the need for independent quality comparisons.
+
+Test the linked GGUF if you prioritize generation speed on low-VRAM laptops.
+
+OK, let's pop the hood on pure quantization.
+
+Everyone talks about quantization as a simple make it smaller knob.
+
+In practice it is a set of deliberate trade-offs between bit-width, calibration data, and hardware mapping that determine whether a model stays usable.
+
+Pure quantization methods skip imatrix calibration and instead apply uniform or near-uniform scaling across weights, which reduces preprocessing time and sometimes improves throughput on CPUs during offload.
+
+The cost appears in slightly higher perplexity, typically zero point zero five to zero point one seven above imatrix equivalents on the same model size.
+
+For MoE architectures the savings compound because only active experts are loaded.
+
+Dropping from four point five bits per weight to four point two two bits per weight can free enough VRAM to keep an extra expert resident and raise cache hit rates.
+
+The practical decision rule is straightforward.
+
+Use pure quants when generation speed on partial offload matters more than squeezing every last point of benchmark quality, and fall back to imatrix when you have the calibration budget and need maximum fidelity on long-context tasks.
+
+Test Open A I Codex Goal mode on a multi-hour refactoring task to see how the hands-off execution performs compared with manual prompting.
+
+Run the new Qwenthree point six to twenty-sevenB pure Q four K M GGUF on any sixteen gigabyte card and compare token generation against your current seven billion to thirteen billion daily driver.
+
+Install BeeLlama v zero point two point zero with DFlash on a three thousand ninety and benchmark it against plain Lah-mah.cpp on the same Chwen twenty seven billion or Gemma thirty one billion target.
+
+Follow the GBrain tutorial to add a self-wiring markdown memory layer to an existing Claude Code or Codex workflow.
+
+Try the LongCat-Video-Avatar one point five demo on a short audio-driven avatar clip to evaluate the new Whisper-Large lip sync quality.
+
+SupraLabs plans to release one hundred twenty four million and three hundred fifty million models continuing the current scaling series.
+
+Further Codex refinements are expected after Open A I collects user suggestions this week.
+
+More ik Lah-mah.cpp-compatible quants for sixteen gigabyte cards are likely as the project gains adoption.
+
+Additional DFlash-style speculative decoding implementations may appear for other inference engines.
+
+Tomorrow, keep an eye on the next round of user-driven Codex updates and the first SupraLabs one hundred twenty four million release.
+
+That wraps up today's A I briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
