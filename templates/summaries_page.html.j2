@@ -1,6 +1,13 @@
 {% extends "base.html.j2" %}
 
+{# May 2026: site-wide nav consistency — Start Here / Listen /
+   About / Player quartet in front of the per-show secondary
+   links. Same pattern as ``show_page.html.j2``. #}
 {% block nav_links %}
+<li><a href="{{ path_prefix }}start-here.html">{{ t.nav_start_here }}</a></li>
+<li><a href="{{ path_prefix }}how-to-listen.html">{{ t.nav_listen }}</a></li>
+<li><a href="{{ path_prefix }}about.html">{{ t.nav_about }}</a></li>
+<li><a href="{{ path_prefix }}player.html">{{ t.nav_player }}</a></li>
 <li><a href="{{ path_prefix }}{{ show_page }}">{{ show_name }}</a></li>
 <li><a href="{{ path_prefix }}blog/{{ show_slug }}/index.html">Blog</a></li>
 <li><a href="{{ path_prefix }}{{ summaries_page }}">Summaries</a></li>
@@ -9,6 +16,10 @@
 {% endblock %}
 
 {% block mobile_nav_links %}
+<a href="{{ path_prefix }}start-here.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">{{ t.nav_start_here }}</a>
+<a href="{{ path_prefix }}how-to-listen.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">{{ t.nav_listen }}</a>
+<a href="{{ path_prefix }}about.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">{{ t.nav_about }}</a>
+<a href="{{ path_prefix }}player.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">{{ t.nav_player }}</a>
 <a href="{{ path_prefix }}{{ show_page }}" onclick="document.getElementById('mobileMenu').classList.remove('open')">{{ show_name }}</a>
 <a href="{{ path_prefix }}blog/{{ show_slug }}/index.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">Blog</a>
 <a href="{{ path_prefix }}{{ summaries_page }}" onclick="document.getElementById('mobileMenu').classList.remove('open')">Summaries</a>
