@@ -1,0 +1,79 @@
+Welcome back to Models and Agents, episode 58 on May 24th, 2026.
+Let's see what shipped, lots of news to walk through.
+Let's start with what actually matters.
+Looking back at six episodes from 2026-05-18 to 2026-05-24,
+the stories that mattered what we learned and what to watch next.
+In video, pushed a full four-bit pre-training stack called NVFP4
+through validation on a 12-billion-parameter Mamba transformer.
+The run covered 10 trillion tokens and stayed within 0.04 points
+of the FP8 baseline on MMLU Pro.
+The stack mixes selective BF16 layers,
+16 by 16 random Hadamard transforms on gradients,
+two-dimensional weight scaling and stochastic rounding.
+That combination matters because it shows four-bit methods
+can now support full-scale pre-training rather than just inference or fine-tuning.
+And ThropicBot Stainless API,
+the service that built every one of its SDKs and MCP servers
+since the API first launched.
+The acquisition brings SDK and model context protocol tooling in-house
+after Stainless API had served multiple labs as an independent platform.
+Owning the integration layer directly
+should tighten the feedback loop between model updates and the developer tools
+that depend on them.
+Google ship Gemini 3.5 Flash at I-O-2026
+with claims it beats the prior 3.1 Pro on coding and agentic tasks.
+The model runs four times faster than competing frontier systems
+and reaches 800 tokens per second inside anti-gravity
+at roughly half the prior cost.
+That speed target lines up with a growing need for agents
+that can sustain long sessions without constant restarts.
+Alibaba previewed 23.5 live translate flash
+for low-latency multimodal translation across 60 languages at the same time.
+The model focuses on real-time multimodal handoff
+which could matter most for agent workflows that already mix vision and text.
+OpenAI reported that a general-purpose reasoning model
+found a new family of constructions for the planar unit distance problem
+first posed by Paul Erdosh in 1946.
+The solution outperformed the square grid patterns previously assumed to be optimal
+and came from a model without math-specific fine-tuning.
+The result hints that broad reasoning models are starting to surface
+novel structures even in long-standing math problems.
+OpenAI also rolled out codex updates that include secure computer use on locked
+max, goal mode for multi-hour autonomous runs, and advanced annotation tools.
+Codex now pulls live screen content through app shots
+and accepts direct visual edits on web pages during feedback.
+These changes shift codex from short-term assistance towards sustained multi-surface operation.
+Microsoft released FARA 1.5, a family of browser agents that outperformed both OpenAI
+operator and Gemini 2.5 on web tasks.
+The game show browser automation is becoming a competitive benchmark rather than a niche experiment.
+And Thropic ran project Glasswing with clawed models
+and surfaced more than 10,000 high-severity vulnerabilities.
+The volume suggests systematic red teaming is now generating enough data
+to influence model hardening cycles.
+Several open-source projects dropped focused on faster inference and smaller memory footprints
+for consumer hardware. These releases add immediate options for teams
+that need to run models locally without waiting for cloud updates.
+The week's clearest pattern sits in how pre-training efficiency,
+SDK control, and longer-running agent modes are landing together.
+And Vidya's four-bit stack shows extended training runs can stay close to FP8 accuracy
+on constrained hardware. And Thropic's move to own stainless API gives it direct ownership of
+the integration layer many agent frameworks already depend on. Gemini 3.5 Flash and the new
+twin translation model both target high-volume agent and real-time workflows with measurable speed gains.
+OpenAI's math result and the codex goal mode updates point to the same underlying shift
+towards sustained, multi-step reasoning without constant human steering.
+Microsoft Farrah 1.5 and the open-source inference releases add pressure on both closed and consumer
+side tooling. Next week we'll likely show how these four-bit methods scale past the 12-billion
+proof of concept and whether the new codex modes hold up on production code bases.
+Keep an eye on how the stainless API integration changes release cadence for
+cloud SDKs and MCP servers. If you train long horizon models, test the NVFP4 stack on a smaller run
+first to see where the selective BF16 layers need to sit. Builders working on agent pipelines should
+try Gemini 3.5 Flash inside anti-gravity this week for the reported speed gains.
+For translation heavy workflows, the twin 3.5 live translate Flash preview is worth a direct
+comparison against current multimodal options. Codex goal mode and app shots are live across the app,
+IDE extension and CLI, so set a multi-hour objective and watch how context carries across those
+surfaces. Teams evaluating browser automation can benchmark Farrah 1.5 against operator and
+Gemini 2.5 on their own web task suites. Open source inference projects focused on consumer
+hardware are worth pulling in if you need smaller footprints without losing too much speed. Tomorrow
+we will have more on how the new codex annotation tools change feedback loops in actual development
+cycles. This episode used AI voice synthesis of my voice. Editorial selection and analysis are my
+own.
