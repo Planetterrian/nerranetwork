@@ -160,6 +160,24 @@ All RSS `<enclosure>` URLs now use `audio.nerranetwork.com` (Cloudflare R2).
 MP3 files are uploaded to R2 during the pipeline and excluded from git commits.
 **Do NOT change R2 bucket paths — this breaks podcast subscribers.**
 
+### Image gallery (Phase 1 — May 2026)
+
+Every Grok-Imagine scene generated for the YouTube long-form / Shorts
+slideshow is uploaded to a separate R2 bucket (`nerra-gallery`) with a
+JSON sidecar and a watermarked WebP thumbnail. Module:
+[`engine/gallery_uploader.py`](engine/gallery_uploader.py). The hook
+into `run_show.py:_publish_youtube` is purely additive — gallery
+upload failure cannot block YouTube publish. Layout, schema,
+env vars, and Phase 2/3 roadmap live in
+[`docs/gallery_storage.md`](docs/gallery_storage.md). New env vars:
+`R2_GALLERY_BUCKET` (default `nerra-gallery`),
+`R2_GALLERY_PUBLIC_BASE_URL` (optional). License default: **CC BY-SA
+4.0** with attribution to Nerra Network. Unconfigured environments
+(env vars unset) are a clean no-op. Backfill:
+[`scripts/backfill_gallery.py`](scripts/backfill_gallery.py) — note
+historical scene dirs are in `.gitignore` so there is nothing to
+backfill from on-repo state without an external archive.
+
 ### Testing
 
 ```bash
