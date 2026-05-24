@@ -1,0 +1,41 @@
+{# Reusable gallery section. Caller controls layout/title via params.
+
+   Renders an empty root element with the manifest URL + a small
+   help bar. The hydration is done client-side by assets/js/gallery.js
+   reading the static manifest at site/data/gallery-manifest.json.
+
+   Params:
+     section_id        — DOM id for the root container
+     section_title     — h2 text above the gallery (omit to hide)
+     section_intro     — short paragraph under the title (optional)
+     show_slug         — when provided, gallery is filtered to one show
+                         and the show-filter pill row is suppressed
+     page_size         — initial render count (defaults to 60 client-side)
+     hide_controls     — when truthy, hides the search + sort row
+                         (used on per-show embeds where the row of
+                         60 newest pictures for that show is enough)
+     path_prefix       — usual prefix to repo root from the rendered page
+                         (sub-pages use this to climb back)
+#}
+<section class="nn-section nn-gallery-section" id="{{ section_id|default('gallery') }}">
+    {% if section_title %}
+    <header class="nn-section-header">
+        <h2 class="nn-section-title">{{ section_title }}</h2>
+        {% if section_intro %}
+        <p class="nn-section-intro">{{ section_intro }}</p>
+        {% endif %}
+    </header>
+    {% endif %}
+
+    <div data-nn-gallery
+         {% if show_slug %}data-show-slug="{{ show_slug }}"{% endif %}
+         {% if page_size %}data-page-size="{{ page_size }}"{% endif %}
+         {% if hide_controls %}data-controls="hide"{% endif %}>
+        <p class="nn-gallery-loading">Loading gallery&hellip;</p>
+    </div>
+</section>
+
+<script>
+    window.NN_GALLERY_MANIFEST_URL = '{{ path_prefix|default("") }}site/data/gallery-manifest.json';
+</script>
+<script defer src="{{ path_prefix|default('') }}assets/js/gallery.js"></script>

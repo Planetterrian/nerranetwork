@@ -160,23 +160,49 @@ All RSS `<enclosure>` URLs now use `audio.nerranetwork.com` (Cloudflare R2).
 MP3 files are uploaded to R2 during the pipeline and excluded from git commits.
 **Do NOT change R2 bucket paths — this breaks podcast subscribers.**
 
-### Image gallery (Phase 1 — May 2026)
+### Image gallery (Phases 1 + 2 — May 2026)
 
 Every Grok-Imagine scene generated for the YouTube long-form / Shorts
 slideshow is uploaded to a separate R2 bucket (`nerra-gallery`) with a
-JSON sidecar and a watermarked WebP thumbnail. Module:
+JSON sidecar and a watermarked WebP thumbnail.
+
+**Phase 1 — storage.** Module:
 [`engine/gallery_uploader.py`](engine/gallery_uploader.py). The hook
 into `run_show.py:_publish_youtube` is purely additive — gallery
-upload failure cannot block YouTube publish. Layout, schema,
-env vars, and Phase 2/3 roadmap live in
-[`docs/gallery_storage.md`](docs/gallery_storage.md). New env vars:
+upload failure cannot block YouTube publish. New env vars:
 `R2_GALLERY_BUCKET` (default `nerra-gallery`),
 `R2_GALLERY_PUBLIC_BASE_URL` (optional). License default: **CC BY-SA
-4.0** with attribution to Nerra Network. Unconfigured environments
-(env vars unset) are a clean no-op. Backfill:
+4.0** with attribution to Nerra Network. Backfill:
 [`scripts/backfill_gallery.py`](scripts/backfill_gallery.py) — note
 historical scene dirs are in `.gitignore` so there is nothing to
 backfill from on-repo state without an external archive.
+
+**Phase 2 — manifest + rendering.** A workflow
+([`.github/workflows/build-gallery-manifest.yml`](.github/workflows/build-gallery-manifest.yml))
+runs nightly + after every successful `Run Podcast Show` and rebuilds
+[`site/data/gallery-manifest.json`](site/data/gallery-manifest.json)
+from the R2 sidecars via
+[`scripts/build_gallery_manifest.py`](scripts/build_gallery_manifest.py).
+The frontend is **vanilla JS** ([`assets/js/gallery.js`](assets/js/gallery.js))
+— no build step — hydrating the mount point declared in
+[`templates/_gallery_section.html.j2`](templates/_gallery_section.html.j2).
+The network-wide page is
+[`templates/gallery_page.html.j2`](templates/gallery_page.html.j2)
+rendered to `/gallery.html` by `generate_gallery_page()` in
+`generate_html.py`. Per-show galleries are embedded on each show page
+when `gallery_enabled` is true (today: any show with
+`youtube.enabled: true`, currently Tesla + MAB — see landmine #20).
+Prompt visibility is a per-image **toggle** (hidden by default in the
+lightbox). The "Download full size" button opens a Phase-3 email-gate
+modal **stub** — submitting the email marks the visitor as subscribed
+in `localStorage` and proceeds; the real Buttondown subscription +
+signed R2 URL flow lands in Phase 3.
+
+Layout, schema, env vars, and the Phase 3 roadmap live in
+[`docs/gallery_storage.md`](docs/gallery_storage.md). Unconfigured
+environments (env vars unset) are a clean no-op: the manifest builder
+writes an empty manifest and the frontend renders a friendly empty
+state.
 
 ### Testing
 

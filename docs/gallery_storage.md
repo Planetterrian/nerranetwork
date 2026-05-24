@@ -162,10 +162,111 @@ python scripts/backfill_gallery.py --from-dir /tmp/old_ci_runs --execute
 python scripts/backfill_gallery.py --shows tesla --execute
 ```
 
+## Phase 2 — manifest + rendering (shipped)
+
+### Manifest builder
+
+[`scripts/build_gallery_manifest.py`](../scripts/build_gallery_manifest.py)
+walks every `*.json` sidecar in the R2 bucket and aggregates them into
+[`site/data/gallery-manifest.json`](../site/data/gallery-manifest.json).
+The manifest schema is versioned via `schema_version` (currently 1)
+and looks like::
+
+    {
+      "schema_version": 1,
+      "generated_at": "2026-05-24T15:30:00+00:00",
+      "image_count": 124,
+      "show_counts": {"tesla": 84, "models_agents_beginners": 40},
+      "shows": [{"slug": "tesla", "name": "Tesla Shorts Time", "image_count": 84}, ...],
+      "images": [
+        { ...sidecar fields...,
+          "thumbnail_url": "https://gallery.../tesla/.../<id>.thumb.webp",
+          "original_url":  "https://gallery.../tesla/.../<id>.jpeg",
+          "sidecar_url":   "https://gallery.../tesla/.../<id>.json"
+        }, ...
+      ]
+    }
+
+Images are sorted newest-first by `generated_at` so the default UI
+sort matches the manifest's natural order.
+
+The builder is **safe to run anywhere**: if R2 isn't configured it
+writes an empty manifest; if a sidecar fails to parse it logs and
+skips; if only the timestamp would change it doesn't rewrite the
+file. The CI workflow's commit step is therefore a no-op when no new
+images have been uploaded.
+
+### CI workflow
+
+[`.github/workflows/build-gallery-manifest.yml`](../.github/workflows/build-gallery-manifest.yml)
+runs:
+
+* Nightly at 03:30 UTC.
+* After every successful `Run Podcast Show` workflow run.
+* On push to `main` affecting gallery code paths.
+* `workflow_dispatch` for manual runs.
+
+It commits the regenerated manifest back to `main` (no-op when
+unchanged). Reuses the same R2 credentials as the audio pipeline plus
+the gallery-specific bucket/base-URL env vars.
+
+### Frontend
+
+* [`templates/_gallery_section.html.j2`](../templates/_gallery_section.html.j2)
+  — reusable Jinja2 partial that renders an empty
+  `<div data-nn-gallery>` mount point + bootstrap script tags.
+* [`templates/gallery_page.html.j2`](../templates/gallery_page.html.j2)
+  — network-wide browse page, rendered to `/gallery.html` by
+  `generate_gallery_page()` in `generate_html.py`.
+* [`assets/js/gallery.js`](../assets/js/gallery.js) — vanilla JS
+  (no build step) that fetches the manifest, renders the grid (lazy
+  thumbnails via `loading="lazy"`), runs search + show filter + sort
+  client-side, and opens a lightbox with prev/next, prompt toggle,
+  and a download button.
+* CSS additions in [`styles/main.css`](../styles/main.css) use the
+  existing design tokens (`--nn-bg`, `--nn-card`, `--show-color`,
+  etc.) so per-show embeds pick up the show's brand colour
+  automatically.
+
+### Per-show vs network-wide
+
+| Surface | Filter | Controls | Page size |
+|---|---|---|---|
+| Per-show embed (Tesla, MAB) | Pinned to that show | Search + sort hidden | 24 newest |
+| `/gallery` | All shows; multi-select pill row | Search + sort visible | 60 newest |
+
+A show is opted in when its YAML's `youtube.enabled` is true (today:
+Tesla Shorts Time + Models & Agents for Beginners — see CLAUDE.md
+landmine #20). When a show migrates off YouTube the embed
+auto-disables.
+
+### Prompt visibility
+
+Hidden by default; the lightbox shows a "Show prompt" button that
+toggles a `<details>` block. Decision recorded in the project spec
+under "QUESTIONS TO RAISE BEFORE BUILDING" #3.
+
+### Download gate (Phase 3 stub)
+
+The "Download full size" button in the lightbox opens an email-gate
+modal that:
+
+* In Phase 2: marks the visitor as subscribed in `localStorage` on
+  email submit, fires a GA4 `gallery_subscribe_stub` event, and
+  opens `original_url` in a new tab.
+* In Phase 3: will POST to `/api/subscribe` on a Cloudflare Worker
+  that calls Buttondown with `tag=gallery-subscriber` and sets a JWT
+  cookie, then 302 to a signed R2 URL.
+
+Until Phase 3 ships, original URLs typically resolve to 403 because
+the R2 bucket policy keeps originals private. The Phase 2 stub
+exists so the UI is complete and reviewable end-to-end now, and so
+Phase 3 only has to swap the network calls — not the UX.
+
 ## Roadmap
 
 | Phase | Status | Scope |
 |---|---|---|
-| 1 | **Shipped (this PR)** | R2 layout + uploader + sidecar + pipeline hook + backfill |
-| 2 | TODO | `/site/data/gallery-manifest.json` rebuilder, Jinja2 gallery components, per-show + network-wide pages |
-| 3 | TODO | Cloudflare Worker, JWT cookie, Buttondown gate, magic-link login |
+| 1 | **Shipped** | R2 layout + uploader + sidecar + pipeline hook + backfill |
+| 2 | **Shipped (this PR)** | Manifest builder + nightly workflow + Jinja2 gallery components + per-show + `/gallery` page + email-gate UI stub |
+| 3 | TODO | Cloudflare Worker, JWT cookie, Buttondown subscription, magic-link login, signed R2 download URLs |
