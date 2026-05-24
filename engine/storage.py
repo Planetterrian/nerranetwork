@@ -25,6 +25,7 @@ def upload_to_r2(
     access_key: str,
     secret_key: str,
     public_base_url: str = "",
+    content_type: str = "",
 ) -> str:
     """Upload a file to Cloudflare R2 and return its public URL.
 
@@ -43,11 +44,10 @@ def upload_to_r2(
     public_base_url:
         Public URL prefix for the bucket (e.g. ``"https://audio.example.com"``).
         If empty, constructs a URL from the endpoint.
-
-    Returns
-    -------
-    str
-        The public URL of the uploaded file.
+    content_type:
+        Override for the S3 ``ContentType`` header. When empty, defaults
+        to ``audio/mpeg`` for ``.mp3`` paths and ``application/octet-stream``
+        otherwise — the existing audio-upload contract.
     """
     import boto3
     from botocore.config import Config as BotoConfig
@@ -63,7 +63,8 @@ def upload_to_r2(
         ),
     )
 
-    content_type = "audio/mpeg" if str(local_path).endswith(".mp3") else "application/octet-stream"
+    if not content_type:
+        content_type = "audio/mpeg" if str(local_path).endswith(".mp3") else "application/octet-stream"
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=2, min=4, max=30))
     def _upload():
