@@ -287,6 +287,21 @@ episode so the dashboard can show smart-vs-fallback rates. New shows
 opt in by setting `youtube.shorts_start_mode: smart` in their YAML.
 Drift guards in `tests/test_shorts_selector.py`.
 
+**End-screen CTA card.** The last
+`youtube.shorts_end_card_duration_seconds` (default 3 s) of every
+Short overlays a translucent black panel with a two-line CTA:
+big headline ("WATCH FULL EPISODE") + a cyan sub-line ("Tap
+Subscribe ↗") pointing at YouTube's own Subscribe button on the
+Shorts player's right rail. Implemented as a drawbox + 2 drawtext
+filters in the existing filter graph — zero filesystem dependency,
+no per-episode asset generation. YAML knobs to customise:
+`shorts_end_card_enabled` (default true network-wide), plus
+`shorts_end_card_main_text` / `shorts_end_card_sub_text` /
+`shorts_end_card_duration_seconds` for per-show overrides (useful
+for Russian-language shows when they migrate to YouTube). Drift
+guards in `tests/test_video_commands.py` under the "Shorts end-
+screen CTA card" header.
+
 ### Testing
 
 ```bash

@@ -547,7 +547,12 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
                              hook: Optional[str] = None,
                              bg_is_video: bool = False,
                              with_url_pill: bool = False,
-                             subtitles_path: Optional[str] = None) -> str:
+                             subtitles_path: Optional[str] = None,
+                             end_card: bool = False,
+                             end_card_duration: float = 3.0,
+                             total_duration: float = 55.0,
+                             end_card_main_text: str = "WATCH FULL EPISODE",
+                             end_card_sub_text: str = "Tap Subscribe ↗") -> str:
     """filter_complex for the 1080x1920 Shorts build.
 
     Inputs:
@@ -633,14 +638,76 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
         # Use the dedicated Shorts force-style so font + position
         # are tuned for the 1080x1920 vertical frame and don't
         # overlap the hook (above) or the URL pill (below).
+        sub_label = "[capted]" if end_card else "[v]"
         chain += (
             f";{post_brand_label}subtitles='{escaped_sub}'"
-            f":force_style='{_SHORTS_SUBTITLES_FORCE_STYLE}'[v]"
+            f":force_style='{_SHORTS_SUBTITLES_FORCE_STYLE}'{sub_label}"
         )
-        return chain
-    if hook:
+        post_brand_label = sub_label
+        if not end_card:
+            return chain
+    elif hook and not end_card:
         # Hook was the last filter — already terminated at [v].
         return chain
+
+    if end_card:
+        # Last-3-seconds CTA card. Three stacked overlays bound to a
+        # single enable window so the layer is atomic — either all
+        # three render (between t=END-3 and t=END) or none do.
+        #
+        #   1. ``drawbox`` paints a full-frame translucent black panel
+        #      to wipe the slideshow + captions, focusing attention.
+        #   2. ``drawtext`` for the headline ("WATCH FULL EPISODE")
+        #      sits centred slightly above mid-frame.
+        #   3. ``drawtext`` for the sub-line ("Tap Subscribe ↗") sits
+        #      under the headline, pointing the viewer at YouTube's
+        #      own subscribe button on the right rail of the Shorts
+        #      player.
+        #
+        # Why drawbox / drawtext rather than a composited PNG: zero
+        # filesystem dependency (no new asset to generate per-episode),
+        # the text is parameterisable per-show via YAML, and the
+        # filter chain stays self-contained. A PNG end-card with the
+        # long-form thumbnail is a worthwhile follow-up but adds an
+        # asset-generation step that ffmpeg doesn't need today.
+        font_path = _drawtext_escape(_find_font())
+        if total_duration <= end_card_duration:
+            # Degenerate case: clip shorter than the end card. Run
+            # the card for the whole clip.
+            end_card_start = 0.0
+        else:
+            end_card_start = max(0.0, total_duration - end_card_duration)
+        end_card_end = total_duration
+        enable_clause = (
+            f"between(t,{end_card_start:.2f},{end_card_end:.2f})"
+        )
+        escaped_main = _drawtext_escape(end_card_main_text)
+        escaped_sub = _drawtext_escape(end_card_sub_text)
+        chain += (
+            f";{post_brand_label}"
+            # 1. Translucent black backdrop.
+            f"drawbox=x=0:y=0:w=iw:h=ih:"
+            f"color=black@0.78:t=fill:enable='{enable_clause}'"
+            # 2. Headline.
+            f",drawtext=fontfile='{font_path}':"
+            f"text='{escaped_main}':"
+            f"fontsize=88:fontcolor=white:"
+            f"x=(w-text_w)/2:y=(h-text_h)/2-100:"
+            f"borderw=4:bordercolor=black:"
+            f"shadowx=2:shadowy=2:shadowcolor=black@0.7:"
+            f"enable='{enable_clause}'"
+            # 3. Sub-line — smaller, accent colour (cyan, matches
+            # the per-word caption highlight from the previous PR).
+            f",drawtext=fontfile='{font_path}':"
+            f"text='{escaped_sub}':"
+            f"fontsize=56:fontcolor=0x00D4FF:"
+            f"x=(w-text_w)/2:y=(h+text_h)/2+40:"
+            f"borderw=3:bordercolor=black:"
+            f"enable='{enable_clause}'"
+            f"[v]"
+        )
+        return chain
+
     return chain + f";{post_brand_label}null[v]"
 
 
@@ -706,7 +773,11 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                     hook: Optional[str] = None,
                     bg_is_video: bool = False,
                     url_pill_in: Optional[str] = None,
-                    subtitles_path: Optional[str] = None) -> List[str]:
+                    subtitles_path: Optional[str] = None,
+                    end_card: bool = False,
+                    end_card_main_text: str = "WATCH FULL EPISODE",
+                    end_card_sub_text: str = "Tap Subscribe ↗",
+                    end_card_duration: float = 3.0) -> List[str]:
     """ffmpeg command for the 1080x1920 Shorts build.
 
     When *bg_is_video* is True, *bg_in* is a pre-rendered vertical
@@ -748,7 +819,12 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
         _short_form_filter_graph(1080, 1920, fps, hook,
                                  bg_is_video=bg_is_video,
                                  with_url_pill=bool(url_pill_in),
-                                 subtitles_path=subtitles_path),
+                                 subtitles_path=subtitles_path,
+                                 end_card=end_card,
+                                 end_card_duration=end_card_duration,
+                                 total_duration=duration,
+                                 end_card_main_text=end_card_main_text,
+                                 end_card_sub_text=end_card_sub_text),
         "-map", "[v]", "-map", "1:a",
         *_VIDEO_ENCODE,
         "-r", str(fps),
@@ -888,7 +964,11 @@ def build_short_video(audio_path: Path, cover_path: Path,
                       hook: Optional[str] = None,
                       scene_paths: Optional[Sequence[Path]] = None,
                       show_name: Optional[str] = None,
-                      subtitles_path: Optional[Path] = None) -> Path:
+                      subtitles_path: Optional[Path] = None,
+                      end_card: bool = False,
+                      end_card_main_text: str = "WATCH FULL EPISODE",
+                      end_card_sub_text: str = "Tap Subscribe ↗",
+                      end_card_duration: float = 3.0) -> Path:
     """Render a 1080x1920 vertical YouTube Shorts video.
 
     Parameters
@@ -971,12 +1051,16 @@ def build_short_video(audio_path: Path, cover_path: Path,
         bg_is_video=bg_is_video,
         url_pill_in=str(url_pill_path) if url_pill_path else None,
         subtitles_path=str(subtitles_path) if subtitles_path else None,
+        end_card=end_card,
+        end_card_main_text=end_card_main_text,
+        end_card_sub_text=end_card_sub_text,
+        end_card_duration=end_card_duration,
     )
     logger.info(
         "Building Shorts video (%.1fs from %.1fs) → %s "
-        "(subtitles=%s)",
+        "(subtitles=%s, end_card=%s)",
         duration, start_offset, output_path.name,
-        bool(subtitles_path),
+        bool(subtitles_path), end_card,
     )
     _run_ffmpeg(cmd, label="shorts video")
     return output_path
