@@ -202,8 +202,8 @@ def transcript_to_srt_window(
     window_duration_seconds: float,
     audio_offset_seconds: float = 0.0,
     min_segment_duration: float = 0.4,
-    wrap_max_chars: int = 32,
-    wrap_max_lines: int = 3,
+    wrap_max_chars: int = 24,
+    wrap_max_lines: int = 2,
 ) -> Path:
     """Emit a SRT containing only the cues that fall inside a time
     window of the FINAL audio, with their timestamps shifted so the
@@ -215,10 +215,14 @@ def transcript_to_srt_window(
     cues that originally landed within that slice need their
     timestamps rebased to the Shorts clip's own timeline.
 
-    The wrap is tighter (32 chars / 3 lines) than the long-form
+    The wrap is tighter (24 chars / 2 lines) than the long-form
     default because vertical Shorts have a 1080-px wide frame
     versus 1920 long-form; wider line lengths spill past the visible
-    edge on phones.
+    edge on phones. May 2026 retune dropped these from 32 / 3 lines
+    to 24 / 2 to match the FontSize=48 caption card upgrade in
+    ``engine.video._SHORTS_SUBTITLES_FORCE_STYLE`` — larger font
+    means fewer chars fit per line, and two lines is the comfortable
+    reading ceiling on a phone-held-at-arm's-length Short.
 
     Parameters
     ----------
