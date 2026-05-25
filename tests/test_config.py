@@ -718,19 +718,18 @@ class TestYouTubeImageProviderConfig:
         cfg = load_config(SHOWS_DIR / "tesla.yaml")
         assert cfg.youtube.image_provider == "grok"
 
-    def test_mab_yaml_uses_pexels_image_provider(self):
-        """MAB was flipped from ``grok`` back to ``pexels`` in commit
-        a79df65 (May 20 2026, "YouTube pipeline P0–P2") for a one-month
-        A/B test against Tesla on Grok Imagine. The yaml comment
-        documents the intent (``Flip back to grok after operator
-        review``) but the original drift guard still asserted ``grok``
-        and started failing CI on the next run. Pin the current
-        intended state so a future yaml refactor doesn't silently
-        flip it again mid-experiment. When the operator decides the
-        A/B winner, flip both the yaml and this assertion in the same
-        commit."""
+    def test_mab_yaml_uses_grok_image_provider(self):
+        """MAB ran on ``pexels`` for the May 2026 A/B test against
+        Tesla on Grok Imagine; operator concluded the A/B was
+        inconclusive AND the Phase 1 gallery uploader is wired only
+        into the Grok Imagine code path (Pexels images never reach
+        the gallery R2 bucket). MAB flipped back to ``grok`` so the
+        per-show gallery embed on the MAB show page actually has
+        images to render. Cost: ~$0.16/episode added (8 images ×
+        $0.02 standard model). Flip the YAML AND this assertion in
+        the same commit if the show ever moves back to Pexels."""
         cfg = load_config(SHOWS_DIR / "models_agents_beginners.yaml")
-        assert cfg.youtube.image_provider == "pexels"
+        assert cfg.youtube.image_provider == "grok"
 
     def test_other_shows_remain_on_pexels(self):
         """Every other show (the 9 that aren't YouTube-enabled today,
