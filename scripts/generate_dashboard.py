@@ -72,7 +72,17 @@ HEADERS = {
 HEAD_TIMEOUT = 5
 
 # Skip these YAML files when discovering shows — they are not shows.
-_NON_SHOW_YAMLS = {"_defaults", "_blocked_sources", "pronunciation_map"}
+# ``network_meta`` + ``scaffold_pending`` are network-level helper
+# files (cross-show metadata + pending scaffold-script state) that
+# don't have ``name`` / ``slug`` / ``episode`` / ``publishing``
+# blocks of their own — loading them via the ShowConfig dataclass
+# pulls in the network defaults and trips the item_4_output_dirs
+# landmine check, which was the root cause of the recurring FAIL
+# state on the management dashboard workflow.
+_NON_SHOW_YAMLS = {
+    "_defaults", "_blocked_sources", "pronunciation_map",
+    "network_meta", "scaffold_pending",
+}
 
 # Canonical Russian voice id (pulled from CLAUDE.md; shows/_defaults.yaml ships
 # the English default). Shows may override with either the EN or RU voice id.

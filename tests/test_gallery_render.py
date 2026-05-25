@@ -182,16 +182,19 @@ def test_gallery_enabled_requires_grok_image_provider():
         bool(mab_yt.get("youtube_enabled"))
         and mab_provider in ("grok", "hybrid")
     )
-    # MAB is on Pexels today (no gallery images produced) — section
-    # must stay hidden. The day MAB flips to grok / hybrid this test
-    # also needs to flip; that's the intended contract.
-    assert mab_provider == "pexels", (
-        f"MAB expected on pexels, got {mab_provider!r}. If you "
-        "intentionally migrated MAB to Grok Imagine, flip this "
-        "assertion to expect 'grok' / 'hybrid' and the gallery "
-        "section will start rendering on the MAB show page."
+    # MAB was flipped to ``grok`` after the May 2026 A/B vs Tesla;
+    # Pexels images don't flow into the gallery bucket so MAB on
+    # Pexels would have rendered an empty gallery embed forever.
+    # If MAB ever moves back to Pexels, flip this assertion AND the
+    # YAML in the same commit (the section will auto-hide either
+    # way thanks to the provider gate added in PR #412).
+    assert mab_provider in ("grok", "hybrid"), (
+        f"MAB expected on grok / hybrid, got {mab_provider!r}. If "
+        "you intentionally moved MAB back to Pexels, flip this "
+        "assertion to expect 'pexels' and the gallery section will "
+        "auto-hide on the MAB show page."
     )
-    assert mab_enabled is False, "MAB gallery_enabled must stay False"
+    assert mab_enabled is True, "MAB gallery_enabled must be True"
 
 
 def test_read_show_image_provider_defaults_to_pexels_for_unknown_show():
