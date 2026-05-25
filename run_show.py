@@ -3013,6 +3013,7 @@ def _publish_youtube(
     )
     from engine.publisher import (
         generate_episode_thumbnail,
+        generate_shorts_end_card,
         generate_shorts_thumbnail,
     )
     from engine.video import build_long_form_video, build_short_video
@@ -3534,6 +3535,44 @@ def _publish_youtube(
                     logger.warning("Shorts caption generation failed: %s", exc)
 
             _yt = config.youtube
+            _end_card_enabled = bool(
+                getattr(_yt, "shorts_end_card_enabled", True)
+            )
+            _end_card_main = str(
+                getattr(_yt, "shorts_end_card_main_text", "WATCH FULL EPISODE")
+            )
+            _end_card_sub = str(
+                getattr(_yt, "shorts_end_card_sub_text", "Tap Subscribe ↗")
+            )
+            _end_card_dur = float(
+                getattr(_yt, "shorts_end_card_duration_seconds", 3.0) or 3.0
+            )
+
+            # PNG end card with the long-form thumbnail composited in
+            # (May 2026 visual upgrade). Generated only when end-card
+            # is enabled AND we successfully built a long-form
+            # thumbnail upstream. Failure here drops back to the
+            # drawtext-only path inside build_short_video — soft
+            # degradation, never blocks the Shorts publish.
+            _end_card_image_path = None
+            if _end_card_enabled and thumbnail_path and Path(thumbnail_path).exists():
+                try:
+                    _end_card_image_candidate = work_dir / f"{base_name}_end_card.png"
+                    generate_shorts_end_card(
+                        thumbnail_path,
+                        _end_card_image_candidate,
+                        show_name=config.name,
+                        main_text=_end_card_main,
+                        sub_text=_end_card_sub,
+                    )
+                    if _end_card_image_candidate.exists():
+                        _end_card_image_path = _end_card_image_candidate
+                except Exception as exc:  # pragma: no cover — best-effort
+                    logger.warning(
+                        "Shorts end-card PNG render failed: %s — "
+                        "falling back to drawtext-only end card", exc,
+                    )
+
             build_short_video(
                 final_mp3, cover_path, short_video_path,
                 start_offset=short_offset,
@@ -3542,16 +3581,11 @@ def _publish_youtube(
                 scene_paths=short_scene_paths if len(short_scene_paths) >= 2 else None,
                 show_name=config.name,
                 subtitles_path=short_srt_path,
-                end_card=bool(getattr(_yt, "shorts_end_card_enabled", True)),
-                end_card_main_text=str(
-                    getattr(_yt, "shorts_end_card_main_text", "WATCH FULL EPISODE")
-                ),
-                end_card_sub_text=str(
-                    getattr(_yt, "shorts_end_card_sub_text", "Tap Subscribe ↗")
-                ),
-                end_card_duration=float(
-                    getattr(_yt, "shorts_end_card_duration_seconds", 3.0) or 3.0
-                ),
+                end_card=_end_card_enabled,
+                end_card_main_text=_end_card_main,
+                end_card_sub_text=_end_card_sub,
+                end_card_duration=_end_card_dur,
+                end_card_image_path=_end_card_image_path,
             )
             meta = build_short_metadata(
                 config,

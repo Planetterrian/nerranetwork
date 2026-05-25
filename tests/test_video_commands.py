@@ -1188,3 +1188,216 @@ def test_short_form_filter_graph_long_hook_uses_smaller_font():
         f"long hook should have shrunk below 44, got {chosen}"
     )
     assert chosen >= 32, f"smallest allowed is 32, got {chosen}"
+
+
+# ---------------------------------------------------------------------------
+# Shorts end-card PNG overlay path
+# ---------------------------------------------------------------------------
+#
+# May 2026 visual upgrade (PR #420): when a pre-rendered end-card
+# PNG is passed to build_short_video, the filter graph swaps the
+# drawbox+drawtext fallback for a single overlay= filter sourcing
+# the PNG. The drawtext path stays as the soft-failure fallback
+# (PNG generation failed → ship the text-only card).
+
+def test_short_form_filter_graph_end_card_image_uses_overlay():
+    """When ``end_card_image_input_label`` is provided, the filter
+    graph must overlay that image (NOT emit drawbox + drawtext)."""
+    graph = _short_form_filter_graph(
+        end_card=True, total_duration=55.0,
+        end_card_image_input_label="[3:v]",
+    )
+    # Overlay filter sourcing the image label.
+    assert "[3:v]format=rgba[endcard]" in graph
+    assert "[endcard]overlay=x=0:y=0:enable='between(t,52.00,55.00)'[v]" in graph
+    # Drawtext fallback is NOT emitted.
+    assert "drawbox" not in graph
+    assert "WATCH FULL EPISODE" not in graph
+
+
+def test_short_form_filter_graph_end_card_drawtext_when_no_image():
+    """No ``end_card_image_input_label`` keeps the legacy drawtext +
+    drawbox fallback path so the soft-failure behaviour ships."""
+    graph = _short_form_filter_graph(
+        end_card=True, total_duration=55.0,
+        end_card_image_input_label=None,
+    )
+    assert "drawbox" in graph
+    assert "WATCH FULL EPISODE" in graph
+    assert "[endcard]overlay" not in graph
+
+
+def test_short_form_filter_graph_end_card_image_composes_with_captions():
+    """Overlay path must compose cleanly with subtitles too —
+    captions terminate at ``[capted]`` and the overlay chains from
+    there to the final ``[v]``."""
+    graph = _short_form_filter_graph(
+        end_card=True, total_duration=55.0,
+        subtitles_path="/tmp/short.srt",
+        end_card_image_input_label="[4:v]",
+    )
+    assert "[capted]" in graph
+    assert "[4:v]format=rgba[endcard]" in graph
+    assert "[capted][endcard]overlay" in graph
+    assert graph.endswith("[v]")
+    assert graph.count("[v]") == 1
+
+
+def test_short_form_cmd_adds_end_card_image_as_input(tmp_path, monkeypatch):
+    """``build_short_video(end_card_image_path=path)`` must add the
+    image as another ffmpeg ``-i`` input AND wire the right index
+    label into the filter graph."""
+    audio = tmp_path / "voice.mp3"
+    audio.write_bytes(b"\x00")
+    cover = tmp_path / "cover.jpg"
+    cover.write_bytes(b"\xFF\xD8")
+    end_card = tmp_path / "end_card.png"
+    end_card.write_bytes(b"\x89PNG\r\n\x1a\n")  # minimal PNG magic
+    out = tmp_path / "short.mp4"
+
+    captured = []
+    monkeypatch.setattr(
+        "engine.video.subprocess.run",
+        lambda cmd, **kw: (captured.append(list(cmd)),
+                           type("R", (), {"returncode": 0})())[1],
+    )
+    build_short_video(
+        audio, cover, out, duration=55.0,
+        show_name="Tesla Shorts Time",  # → adds url_pill at [3:v]
+        end_card=True,
+        end_card_image_path=end_card,
+    )
+    assert captured, "no ffmpeg cmd captured"
+    cmd = captured[-1]
+    # The end-card PNG appears as a -i input.
+    assert str(end_card) in cmd
+    # Filter graph references the right index. With show_name=Tesla
+    # the URL pill takes [3:v], so the end-card lands at [4:v].
+    graph = cmd[cmd.index("-filter_complex") + 1]
+    assert "[4:v]format=rgba[endcard]" in graph
+
+
+def test_short_form_cmd_end_card_image_index_when_no_url_pill(tmp_path, monkeypatch):
+    """When the show passes ``show_name=None`` (legacy single
+    pill), there's no URL pill at [3:v], so the end-card PNG lands
+    at [3:v] instead of [4:v]."""
+    audio = tmp_path / "voice.mp3"
+    audio.write_bytes(b"\x00")
+    cover = tmp_path / "cover.jpg"
+    cover.write_bytes(b"\xFF\xD8")
+    end_card = tmp_path / "end_card.png"
+    end_card.write_bytes(b"\x89PNG\r\n\x1a\n")
+    out = tmp_path / "short.mp4"
+
+    captured = []
+    monkeypatch.setattr(
+        "engine.video.subprocess.run",
+        lambda cmd, **kw: (captured.append(list(cmd)),
+                           type("R", (), {"returncode": 0})())[1],
+    )
+    build_short_video(
+        audio, cover, out, duration=55.0,
+        show_name=None,  # legacy "Nerra Network" single pill, no URL pill
+        end_card=True,
+        end_card_image_path=end_card,
+    )
+    assert captured
+    cmd = captured[-1]
+    graph = cmd[cmd.index("-filter_complex") + 1]
+    assert "[3:v]format=rgba[endcard]" in graph
+
+
+def test_short_form_cmd_missing_end_card_image_falls_back_to_drawtext(
+    tmp_path, monkeypatch,
+):
+    """When the operator passes ``end_card_image_path`` but the file
+    doesn't exist on disk, build_short_video must fall back to the
+    drawtext path rather than crash or feed a missing file to
+    ffmpeg."""
+    audio = tmp_path / "voice.mp3"
+    audio.write_bytes(b"\x00")
+    cover = tmp_path / "cover.jpg"
+    cover.write_bytes(b"\xFF\xD8")
+    out = tmp_path / "short.mp4"
+
+    captured = []
+    monkeypatch.setattr(
+        "engine.video.subprocess.run",
+        lambda cmd, **kw: (captured.append(list(cmd)),
+                           type("R", (), {"returncode": 0})())[1],
+    )
+    build_short_video(
+        audio, cover, out, duration=55.0,
+        show_name="Tesla Shorts Time",
+        end_card=True,
+        end_card_image_path=tmp_path / "nonexistent_end_card.png",
+    )
+    assert captured
+    cmd = captured[-1]
+    graph = cmd[cmd.index("-filter_complex") + 1]
+    # Drawtext fallback in use.
+    assert "drawbox" in graph
+    assert "WATCH FULL EPISODE" in graph
+    # Filter graph does NOT reference any [N:v] for the missing image.
+    assert "[endcard]overlay" not in graph
+
+
+# ---------------------------------------------------------------------------
+# generate_shorts_end_card — PNG composition
+# ---------------------------------------------------------------------------
+
+def test_generate_shorts_end_card_produces_valid_png(tmp_path):
+    """Smoke test: feed a tiny stub thumbnail in, get a 1080×1920
+    PNG out with the expected text rendered."""
+    from PIL import Image
+    from engine.publisher import generate_shorts_end_card
+
+    thumb = tmp_path / "long_thumb.jpg"
+    Image.new("RGB", (1280, 720), (60, 80, 120)).save(thumb, format="JPEG")
+    out = tmp_path / "end_card.png"
+
+    generate_shorts_end_card(
+        thumb, out,
+        show_name="Tesla Shorts Time",
+    )
+
+    assert out.exists()
+    with Image.open(out) as img:
+        assert img.format == "PNG"
+        assert img.size == (1080, 1920)
+
+
+def test_generate_shorts_end_card_missing_thumbnail_still_renders(tmp_path):
+    """Long-form thumbnail can fail upstream; the end card must
+    still ship (just without the embedded thumbnail). Defensive
+    against an unexpected upstream failure on rare episodes."""
+    from PIL import Image
+    from engine.publisher import generate_shorts_end_card
+
+    out = tmp_path / "end_card.png"
+    generate_shorts_end_card(
+        tmp_path / "nonexistent.jpg", out,
+        show_name="Tesla Shorts Time",
+    )
+    assert out.exists()
+    with Image.open(out) as img:
+        assert img.size == (1080, 1920)
+
+
+def test_generate_shorts_end_card_custom_text(tmp_path):
+    """``main_text`` / ``sub_text`` are configurable per show."""
+    from PIL import Image
+    from engine.publisher import generate_shorts_end_card
+
+    thumb = tmp_path / "long_thumb.jpg"
+    Image.new("RGB", (1280, 720), (10, 10, 10)).save(thumb, format="JPEG")
+    out = tmp_path / "end_card.png"
+    # Default vs custom shouldn't crash either way — that's the
+    # contract we're verifying here.
+    generate_shorts_end_card(
+        thumb, out,
+        show_name="Russian Show",
+        main_text="СМОТРИТЕ ВЕСЬ ЭПИЗОД",
+        sub_text="Подписывайтесь ↗",
+    )
+    assert out.exists()

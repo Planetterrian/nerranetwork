@@ -322,10 +322,19 @@ the "Shorts hook overlay auto-shrink-to-fit" header.
 
 **End-screen CTA card.** The last
 `youtube.shorts_end_card_duration_seconds` (default 3 s) of every
-Short overlays a translucent black panel with a two-line CTA:
-big headline ("WATCH FULL EPISODE") + a cyan sub-line ("Tap
-Subscribe ↗") pointing at YouTube's own Subscribe button on the
-Shorts player's right rail. Implemented as a drawbox + 2 drawtext
+Short overlays a PNG end card composited at run time by
+[`engine.publisher.generate_shorts_end_card`](engine/publisher.py).
+The card shows the long-form 1280×720 thumbnail in the upper third
+(framed with a thin white border so it reads as a tap target),
+a big white headline ("WATCH FULL EPISODE"), a cyan sub-line
+("Tap Subscribe ↗", matching the per-word caption highlight from
+PR #415), and a small `nerranetwork.com` footer. The
+`engine.video._short_form_filter_graph` overlays the PNG via a
+single `overlay=enable='between(t,END-3,END)'` filter. When PNG
+generation fails (or the long-form thumbnail upstream failed),
+the chain falls back to the drawtext-only version originally
+shipped in PR #417 — soft degradation, never blocks the Shorts
+publish. Implemented as a drawbox + 2 drawtext
 filters in the existing filter graph — zero filesystem dependency,
 no per-episode asset generation. YAML knobs to customise:
 `shorts_end_card_enabled` (default true network-wide), plus

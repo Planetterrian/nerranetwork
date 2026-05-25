@@ -662,7 +662,8 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
                              end_card_duration: float = 3.0,
                              total_duration: float = 55.0,
                              end_card_main_text: str = "WATCH FULL EPISODE",
-                             end_card_sub_text: str = "Tap Subscribe ↗") -> str:
+                             end_card_sub_text: str = "Tap Subscribe ↗",
+                             end_card_image_input_label: Optional[str] = None) -> str:
     """filter_complex for the 1080x1920 Shorts build.
 
     Inputs:
@@ -774,29 +775,27 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
         return chain
 
     if end_card:
-        # Last-3-seconds CTA card. Three stacked overlays bound to a
-        # single enable window so the layer is atomic — either all
-        # three render (between t=END-3 and t=END) or none do.
+        # Last-N-seconds CTA card. Two render paths, gated by
+        # ``end_card_image_input_label``:
         #
-        #   1. ``drawbox`` paints a full-frame translucent black panel
-        #      to wipe the slideshow + captions, focusing attention.
-        #   2. ``drawtext`` for the headline ("WATCH FULL EPISODE")
-        #      sits centred slightly above mid-frame.
-        #   3. ``drawtext`` for the sub-line ("Tap Subscribe ↗") sits
-        #      under the headline, pointing the viewer at YouTube's
-        #      own subscribe button on the right rail of the Shorts
-        #      player.
+        # * PNG overlay (preferred). The caller renders the card
+        #   PNG via engine.publisher.generate_shorts_end_card —
+        #   that image composites the long-form thumbnail with
+        #   the CTA copy in a richer layout than ffmpeg can paint
+        #   inline. The label points at the ffmpeg input index
+        #   for the PNG (e.g. ``[4:v]``). We overlay it on top of
+        #   the slideshow with an ``enable`` clause for the last
+        #   N seconds.
         #
-        # Why drawbox / drawtext rather than a composited PNG: zero
-        # filesystem dependency (no new asset to generate per-episode),
-        # the text is parameterisable per-show via YAML, and the
-        # filter chain stays self-contained. A PNG end-card with the
-        # long-form thumbnail is a worthwhile follow-up but adds an
-        # asset-generation step that ffmpeg doesn't need today.
-        font_path = _drawtext_escape(_find_font())
+        # * Drawtext fallback (no PNG provided). drawbox + 2
+        #   drawtext filters paint the card inline — the
+        #   pre-PR-#420 behaviour. Useful for tests / when PNG
+        #   generation fails / for shows that opt-out of the
+        #   thumbnail-bearing card.
+        #
+        # Both paths bind to the same ``between(t, END-N, END)``
+        # enable window so the layer is atomic.
         if total_duration <= end_card_duration:
-            # Degenerate case: clip shorter than the end card. Run
-            # the card for the whole clip.
             end_card_start = 0.0
         else:
             end_card_start = max(0.0, total_duration - end_card_duration)
@@ -804,6 +803,20 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
         enable_clause = (
             f"between(t,{end_card_start:.2f},{end_card_end:.2f})"
         )
+
+        if end_card_image_input_label:
+            # PNG path. The input is added as a video stream
+            # upstream (in _short_form_cmd) and labelled with
+            # whatever index the caller assigned, e.g. ``[4:v]``.
+            chain += (
+                f";{end_card_image_input_label}format=rgba[endcard];"
+                f"{post_brand_label}[endcard]overlay="
+                f"x=0:y=0:enable='{enable_clause}'[v]"
+            )
+            return chain
+
+        # Drawtext fallback path.
+        font_path = _drawtext_escape(_find_font())
         escaped_main = _drawtext_escape(end_card_main_text)
         escaped_sub = _drawtext_escape(end_card_sub_text)
         chain += (
@@ -820,7 +833,7 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
             f"shadowx=2:shadowy=2:shadowcolor=black@0.7:"
             f"enable='{enable_clause}'"
             # 3. Sub-line — smaller, accent colour (cyan, matches
-            # the per-word caption highlight from the previous PR).
+            # the per-word caption highlight from PR #415).
             f",drawtext=fontfile='{font_path}':"
             f"text='{escaped_sub}':"
             f"fontsize=56:fontcolor=0x00D4FF:"
@@ -900,7 +913,8 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                     end_card: bool = False,
                     end_card_main_text: str = "WATCH FULL EPISODE",
                     end_card_sub_text: str = "Tap Subscribe ↗",
-                    end_card_duration: float = 3.0) -> List[str]:
+                    end_card_duration: float = 3.0,
+                    end_card_image_in: Optional[str] = None) -> List[str]:
     """ffmpeg command for the 1080x1920 Shorts build.
 
     When *bg_is_video* is True, *bg_in* is a pre-rendered vertical
@@ -925,10 +939,23 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
         bg_input = ["-loop", "1", "-framerate", str(fps), "-i", bg_in]
 
     extra_inputs: List[str] = []
+    # ffmpeg input order is fixed: [0:v] bg, [1:a] audio, [2:v] brand,
+    # then optional [3:v] url_pill, then optional [N:v] end_card_image.
+    # Compute the end-card image's input index based on what came
+    # before it so the filter graph references the right stream.
+    next_input_index = 3
     if url_pill_in:
-        extra_inputs = [
+        extra_inputs.extend([
             "-loop", "1", "-framerate", str(fps), "-i", url_pill_in,
-        ]
+        ])
+        next_input_index += 1
+
+    end_card_image_input_label: Optional[str] = None
+    if end_card and end_card_image_in:
+        extra_inputs.extend([
+            "-loop", "1", "-framerate", str(fps), "-i", end_card_image_in,
+        ])
+        end_card_image_input_label = f"[{next_input_index}:v]"
 
     return [
         "ffmpeg", "-y", "-threads", "0",
@@ -947,7 +974,8 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                                  end_card_duration=end_card_duration,
                                  total_duration=duration,
                                  end_card_main_text=end_card_main_text,
-                                 end_card_sub_text=end_card_sub_text),
+                                 end_card_sub_text=end_card_sub_text,
+                                 end_card_image_input_label=end_card_image_input_label),
         "-map", "[v]", "-map", "1:a",
         *_VIDEO_ENCODE,
         "-r", str(fps),
@@ -1091,7 +1119,8 @@ def build_short_video(audio_path: Path, cover_path: Path,
                       end_card: bool = False,
                       end_card_main_text: str = "WATCH FULL EPISODE",
                       end_card_sub_text: str = "Tap Subscribe ↗",
-                      end_card_duration: float = 3.0) -> Path:
+                      end_card_duration: float = 3.0,
+                      end_card_image_path: Optional[Path] = None) -> Path:
     """Render a 1080x1920 vertical YouTube Shorts video.
 
     Parameters
@@ -1178,6 +1207,11 @@ def build_short_video(audio_path: Path, cover_path: Path,
         end_card_main_text=end_card_main_text,
         end_card_sub_text=end_card_sub_text,
         end_card_duration=end_card_duration,
+        end_card_image_in=(
+            str(end_card_image_path)
+            if end_card_image_path and Path(end_card_image_path).exists()
+            else None
+        ),
     )
     logger.info(
         "Building Shorts video (%.1fs from %.1fs) → %s "
