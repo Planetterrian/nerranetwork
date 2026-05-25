@@ -413,7 +413,21 @@ def build_short_metadata(
     disclosure = (config.youtube.synthetic_disclosure or "").strip()
     if disclosure:
         pieces.append(disclosure)
-    pieces.append("#Shorts #podcast")
+
+    # Auto-extract hashtags from the hook so the Shorts description
+    # carries the day's entities (Tesla / Cybercab / OpenAI etc.) as
+    # search-indexable + above-the-title topic tags. YouTube renders
+    # the FIRST 3 hashtags as clickable links above the video title
+    # — biggest discovery lever on Shorts after the title itself.
+    # Falls back cleanly to the static ``#Shorts #podcast`` line when
+    # the hook has nothing extractable.
+    from engine.shorts_hashtags import extract_hashtags, format_hashtag_line
+    extracted = extract_hashtags(
+        hook,
+        show_keywords=list(getattr(config, "keywords", []) or []),
+        max_hashtags=5,
+    )
+    pieces.append(format_hashtag_line(extracted, ("#Shorts", "#podcast")))
 
     # Same ``invalidDescription`` defense as build_long_form_metadata —
     # YouTube rejects ``<`` / ``>`` even though Shorts hasn't tripped
