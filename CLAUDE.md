@@ -255,6 +255,24 @@ with the first wave of episodes:
 inconclusive and the gallery pipeline (Phase 1) requires Grok
 Imagine. Cost: ~$0.16/episode added.
 
+**Per-word caption highlighting (TikTok / Reels look).** Shorts now
+ship with per-word "current word" highlighting instead of static
+segment cards.
+[`engine.captions.transcript_to_ass_window`](engine/captions.py)
+generates an ASS file (the modern subtitle format the ffmpeg
+`subtitles` filter accepts identically to SRT — no `video.py` change
+needed) with one `Dialogue` line per word; each line shows the full
+chunk text with the active word colour-flipped to Nerra cyan
+(`#00D4FF` / ASS `&H00FFD400`). Word timestamps come from
+`faster-whisper` which already runs with `word_timestamps=True` in
+`engine.transcripts` — no new transcription cost. Words are chunked
+to ≤24 chars / ≤8 words per chunk to match the FontSize=48 caption
+card. `run_show.py` tries the ASS path first; if the transcript has
+no word data (older episodes) or no overlap with the Shorts window,
+it falls back to the legacy segment-level SRT so the Short always
+has captions of some kind. Drift guards in
+`tests/test_captions_ass.py`.
+
 ### Testing
 
 ```bash
