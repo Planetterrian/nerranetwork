@@ -263,10 +263,115 @@ the R2 bucket policy keeps originals private. The Phase 2 stub
 exists so the UI is complete and reviewable end-to-end now, and so
 Phase 3 only has to swap the network calls — not the UX.
 
+## Phase 3 — email-gated downloads (shipped)
+
+### Endpoints (Cloudflare Worker at `api.nerranetwork.com`)
+
+| Method | Path | Behaviour |
+|---|---|---|
+| POST | `/api/subscribe` | Body `{email}`. Subscribes via Buttondown with tag `gallery-subscriber`, sets a 90-day HttpOnly Secure SameSite=Lax JWT cookie, returns `200 {ok:true}`. Already-subscribed addresses are treated as success (so re-subscribing still issues the cookie). |
+| GET | `/api/login?email=...` | If the address is subscribed, sends a magic-link email via Resend (15-min TTL). **Always returns 200** regardless of whether the address exists — the response is identical on hit vs miss so the endpoint can't be used to enumerate subscribers. |
+| GET | `/api/magic?token=...` | Verifies the magic-login JWT (HS256 + exp + scope), issues the 90-day cookie, 302 to `/gallery.html`. |
+| GET | `/api/download?key=<r2_object_key>` | Verifies the cookie. Validates the key is well-formed (no traversal / no absolute paths). Fetches the R2 object via the bound bucket and streams it back with `Content-Disposition: attachment`. |
+| GET | `/api/health` | Liveness ping. |
+
+### Authentication model
+
+Two JWT scopes, both signed with HMAC-SHA256 using the `JWT_SECRET`
+the operator provisions once:
+
+| Scope | TTL | Carrier |
+|---|---|---|
+| `gallery-subscriber` | 90 days | Cookie `nn_gallery=<jwt>` (HttpOnly, Secure, SameSite=Lax) |
+| `magic-login` | 15 minutes | URL query parameter on the emailed magic link |
+
+The cookie is set by `/api/subscribe` and `/api/magic` and consumed
+by `/api/download`. There is no logout endpoint — Phase 3 ships a
+single-cookie subscriber model; the operator can revoke
+network-wide by rotating `JWT_SECRET` (all outstanding cookies
+become invalid on the next download attempt).
+
+### Download path — spec deviation
+
+The project spec called for `/api/download` to issue a **short-lived
+signed R2 URL and 302 redirect**. The Worker **proxies the bytes
+through** instead. Rationale:
+
+* Re-validates the JWT on every request, so revocation actually works
+  (signed URLs would remain valid for their full TTL even after the
+  visitor's cookie expires).
+* No signed URLs in browser history or share sheets — originals can't
+  leak via copy-paste of a working URL.
+* No SigV4 plumbing or third-party dependency in the Worker.
+
+For the gallery's traffic volume the Worker bandwidth cost is well
+under the free tier. If we hit Worker bandwidth limits we'll swap to
+signed URLs — the endpoint contract from the frontend's perspective
+is unchanged.
+
+### Frontend integration
+
+[`assets/js/gallery.js`](../assets/js/gallery.js) calls the Worker
+endpoints with `fetch(..., { credentials: 'include' })`. The base
+URL defaults to `https://api.nerranetwork.com` and is overridable
+via `window.NN_GALLERY_API_BASE` (used by `wrangler dev` against the
+local static site).
+
+The lightbox displays the watermarked 800-px thumbnail; the "Download
+full size" button fetches the original via `/api/download` and uses
+a programmatic `<a download>` click to trigger the browser save
+dialog. If the response is 401 (no cookie / expired cookie), the
+gate modal opens.
+
+The gate modal has two modes, toggleable via a single link:
+
+* **Subscribe & download** (default): POSTs to `/api/subscribe`,
+  then retries the download.
+* **Sign in instead**: GETs `/api/login?email=...`, shows the
+  enumeration-safe success message.
+
+### Worker layout
+
+```
+workers/gallery/
+├── README.md            # Operator deploy + smoke-test guide
+├── package.json
+├── tsconfig.json
+├── vitest.config.ts
+├── wrangler.toml        # Worker config + R2 binding + route
+├── src/
+│   ├── index.ts         # Router (4 endpoints + /health)
+│   ├── handlers.ts      # Endpoint logic (pure functions of (req, env, deps))
+│   ├── jwt.ts           # HS256 sign/verify, hand-rolled, no deps
+│   ├── buttondown.ts    # Buttondown API client
+│   ├── resend.ts        # Resend API client
+│   ├── magic-email.ts   # HTML + plain-text magic-link email
+│   ├── cors.ts          # Origin allow-list + CORS headers
+│   └── types.ts         # Env + DI shape
+└── test/                # 45 vitest tests across the 3 modules
+```
+
+### Operator deployment
+
+See [`workers/gallery/README.md`](../workers/gallery/README.md) for
+the step-by-step deploy guide. Summary:
+
+1. Tighten R2 bucket policy: originals private, thumbnails + sidecars
+   public.
+2. Add a CNAME `api.nerranetwork.com` in the Cloudflare zone.
+3. Create a Resend account + verify the sending domain + grab an
+   API key.
+4. From `workers/gallery/`: `wrangler secret put` four secrets
+   (`JWT_SECRET`, `BUTTONDOWN_API_KEY`, `RESEND_API_KEY`,
+   `RESEND_FROM_EMAIL`).
+5. `npm install && npm test && npm run deploy`.
+6. Bind the custom domain `api.nerranetwork.com` to the Worker in
+   the Cloudflare dashboard.
+
 ## Roadmap
 
 | Phase | Status | Scope |
 |---|---|---|
 | 1 | **Shipped** | R2 layout + uploader + sidecar + pipeline hook + backfill |
-| 2 | **Shipped (this PR)** | Manifest builder + nightly workflow + Jinja2 gallery components + per-show + `/gallery` page + email-gate UI stub |
-| 3 | TODO | Cloudflare Worker, JWT cookie, Buttondown subscription, magic-link login, signed R2 download URLs |
+| 2 | **Shipped** | Manifest builder + nightly workflow + Jinja2 gallery components + per-show + `/gallery` page + email-gate UI stub |
+| 3 | **Shipped (this PR)** | Cloudflare Worker (subscribe / login / magic / download), JWT cookie, Buttondown subscription, magic-link email via Resend, frontend wired to real endpoints |
