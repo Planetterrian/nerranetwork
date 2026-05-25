@@ -41,6 +41,7 @@ def resolve_shorts_start_offset(
     chapters_path: Optional[Path] = None,
     *,
     audio_duration: float = 0.0,
+    transcript_path: Optional[Path] = None,
 ) -> float:
     """Pick where the Shorts audio clip begins in the final mixed MP3.
 
@@ -53,6 +54,13 @@ def resolve_shorts_start_offset(
       ``voice`` (default) — start at ``voice_intro_delay``.
       ``first_chapter`` — start at the first chapter marker after the cold
           open (second chapter when ≥2 exist, else first chapter > 45s).
+      ``smart`` — scan the Whisper transcript for the most engaging
+          beat (numeric reveal, hook phrase, surprise framing) and
+          start there. Falls back to ``voice`` if no segment scores
+          above the noise threshold. Requires ``transcript_path``;
+          without it (or on transcript I/O failure) silently falls
+          back to ``voice`` too. See engine.shorts_selector for the
+          scoring details.
     """
     yt = getattr(config, "youtube", None)
     explicit = getattr(yt, "shorts_start_offset", None) if yt else None
@@ -82,9 +90,43 @@ def resolve_shorts_start_offset(
         )
         return offset
 
-    offset = float(getattr(config.audio, "voice_intro_delay", 0.0) or 0.0)
-    logger.info("Shorts start offset (voice): %.1fs", offset)
-    return offset
+    voice_offset = float(
+        getattr(config.audio, "voice_intro_delay", 0.0) or 0.0
+    )
+
+    if mode == "smart":
+        # Smart mode is best-effort: it falls back to voice on any
+        # missing dep (no transcript path), unreadable transcript,
+        # empty transcript, or no candidate above the score
+        # threshold. Operators see the chosen path in the log line
+        # so a regression in the heuristic is obvious from CI logs.
+        from engine.shorts_selector import pick_engaging_window
+        if transcript_path is not None and transcript_path.exists():
+            short_dur = float(
+                getattr(yt, "short_duration_seconds", 55.0) or 55.0
+            )
+            best = pick_engaging_window(
+                transcript_path,
+                audio_offset=voice_offset,
+                audio_duration=audio_duration,
+                window_duration=short_dur,
+                min_start_final=voice_offset,
+            )
+            if best is not None:
+                logger.info(
+                    "Shorts start offset (smart): %.1fs (score=%.1f, "
+                    "opening=%r)",
+                    best.start_seconds, best.score, best.opening_text,
+                )
+                return best.start_seconds
+        logger.info(
+            "Shorts start offset (smart→voice fallback): %.1fs",
+            voice_offset,
+        )
+        return voice_offset
+
+    logger.info("Shorts start offset (voice): %.1fs", voice_offset)
+    return voice_offset
 
 
 def should_upload_shorts_today(config: Any, *, episode_num: int) -> bool:
