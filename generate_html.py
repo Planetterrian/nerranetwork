@@ -80,6 +80,26 @@ def _read_show_youtube(slug: str) -> dict:
         "youtube_channel_url": f"https://www.youtube.com/{handle}",
     }
 
+
+def _read_show_image_provider(slug: str) -> str:
+    """Return the show's YouTube ``image_provider`` setting (``pexels``,
+    ``grok``, or ``hybrid``). Defaults to ``pexels`` to match
+    run_show.py's default — only shows that opt into ``grok`` produce
+    gallery images, so this is the signal the show page uses to
+    decide whether to embed the gallery section."""
+    import yaml as _yaml
+
+    yaml_path = SHOWS_DIR / f"{slug}.yaml"
+    if not yaml_path.exists():
+        return "pexels"
+    try:
+        data = _yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
+    except _yaml.YAMLError:
+        return "pexels"
+    yt = data.get("youtube") or {}
+    return (yt.get("image_provider") or "pexels").strip().lower() or "pexels"
+
+
 # ---------------------------------------------------------------------------
 # Marketing / Analytics configuration
 # ---------------------------------------------------------------------------
@@ -1589,11 +1609,19 @@ def generate_show_page(slug, *, dry_run=False):
     is_russian = slug in ("finansy_prosto", "privet_russian")
 
     yt_meta = _read_show_youtube(slug)
-    # Phase 2 gallery: enable the embedded per-show gallery section on
-    # any show whose YouTube path is on, since those are the shows
-    # currently producing Grok Imagine artwork. When a show migrates
-    # off YouTube (or off Grok Imagine), the section auto-disables.
-    gallery_enabled = bool(yt_meta.get("youtube_enabled"))
+    # Phase 2 gallery: enable the embedded per-show gallery section
+    # only on shows that *also* use Grok Imagine for their YouTube
+    # slideshow. The Phase 1 gallery uploader is wired exclusively
+    # into the Grok Imagine code path in run_show.py; Pexels-sourced
+    # slideshows are stock photography and don't land in the gallery
+    # bucket — embedding the section on those pages would render an
+    # empty state forever. Switching a show from `image_provider:
+    # pexels` to `grok` (or `hybrid`) in its YAML opts it in.
+    image_provider = _read_show_image_provider(slug)
+    gallery_enabled = (
+        bool(yt_meta.get("youtube_enabled"))
+        and image_provider in ("grok", "hybrid")
+    )
 
     context = {
         **cfg,
