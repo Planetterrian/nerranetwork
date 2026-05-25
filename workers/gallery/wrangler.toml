@@ -10,11 +10,13 @@ account_id = ""  # set via `wrangler whoami` or CI; intentionally
                  # blank in-repo so a developer fork doesn't bind
                  # to the production account by mistake.
 
-# Custom route on the existing zone.  Set ZONE_ID + the api.* CNAME
-# in Cloudflare first (operator step — see README).  Until both are
-# wired, deploy goes to the *.workers.dev preview URL automatically.
+# Custom Domain for the Worker.  A custom_domain routes the WHOLE
+# hostname to the Worker (no path or wildcard allowed here — the
+# Worker's own router in src/index.ts handles /api/* and 404s the
+# rest).  `wrangler deploy` provisions the DNS record + cert for
+# api.nerranetwork.com automatically; no manual CNAME needed.
 routes = [
-  { pattern = "api.nerranetwork.com/api/*", custom_domain = true },
+  { pattern = "api.nerranetwork.com", custom_domain = true },
 ]
 
 # R2 binding for the gallery bucket.  The Worker uses
