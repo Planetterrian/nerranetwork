@@ -199,6 +199,116 @@ def _wrap_caption(text: str, max_chars_per_line: int = 26,
 
 
 # ---------------------------------------------------------------------------
+# Auto-fit hook overlay
+# ---------------------------------------------------------------------------
+#
+# The 0–3 s hook overlay on a Shorts MP4 used to render at a fixed
+# fontsize=44 with a char-based word wrap (26 chars × 4 lines). Tesla
+# hooks > ~104 chars truncated with "..." at the end of line 4 —
+# operator caught this on Ep466 ("California regulators just
+# disclosed the Tesla Semi's battery sizes at 822 kWh and 548 kWh.").
+#
+# This helper applies the same shrink-to-fit pattern the thumbnail
+# renderer uses (engine.publisher.generate_episode_thumbnail). The
+# default size stays at 44 — preserving the May 2026 operator
+# preference for a non-dominant hook — and only shrinks when keeping
+# 44 would truncate. Pixel-based wrap via PIL ImageFont gives an
+# accurate fit on the actual frame width (1080 px on Shorts) instead
+# of the conservative char-budget approximation.
+
+
+def _pixel_wrap_lines(
+    text: str, font, max_width: int, max_lines: int,
+) -> tuple[list[str], bool]:
+    """Greedy word-wrap by rendered pixel width.
+
+    Returns ``(lines, fits)``. ``fits`` is True when every word in
+    ``text`` made it into the returned lines (no truncation).
+    """
+    words = text.split()
+    if not words:
+        return [], True
+    lines: list[str] = []
+    current: list[str] = []
+    for word in words:
+        candidate = (" ".join(current + [word])) if current else word
+        try:
+            bbox = font.getbbox(candidate)
+            line_px = bbox[2] - bbox[0]
+        except Exception:  # pragma: no cover — font getbbox edge case
+            line_px = len(candidate) * (font.size // 2)
+        if line_px <= max_width or not current:
+            current.append(word)
+        else:
+            lines.append(" ".join(current))
+            current = [word]
+            if len(lines) >= max_lines:
+                break
+    if current and len(lines) < max_lines:
+        lines.append(" ".join(current))
+    used = " ".join(lines).split()
+    fits = len(used) == len(words)
+    return lines, fits
+
+
+def autofit_hook_overlay(
+    hook: str,
+    *,
+    frame_width: int = 1080,
+    safe_margin: int = 80,
+    max_lines: int = 4,
+    font_path: Optional[str] = None,
+    candidates: tuple[int, ...] = (44, 40, 36, 32),
+) -> tuple[int, str]:
+    """Pick the largest font size from ``candidates`` where ``hook``
+    fits inside ``frame_width - 2*safe_margin`` and ``max_lines``.
+
+    Returns ``(fontsize, wrapped_text)``. ``wrapped_text`` joins
+    lines with ``\\n`` — the format ``_drawtext_escape`` understands
+    and the existing caller uses unchanged.
+
+    The candidate list starts at the legacy default 44 so the
+    common case (typical-length hooks) preserves the existing
+    visual exactly. Only hooks that would truncate at 44 drop to
+    40, then 36, then 32 — each step a meaningful enough size
+    change that the operator can tell at a glance which path the
+    auto-fit took.
+
+    Falls back to the char-based ``_wrap_caption`` (with a leading
+    fontsize of 44) when Pillow isn't available — the
+    pre-Phase-1 behaviour, defensive against an unexpected import
+    environment.
+    """
+    if not hook:
+        return candidates[0], ""
+    try:
+        from PIL import ImageFont
+    except ImportError:  # pragma: no cover — PIL is a hard dep
+        return candidates[0], _wrap_caption(hook)
+    if font_path is None:
+        font_path = _find_font()
+    max_width = frame_width - 2 * safe_margin
+    last_lines: list[str] = []
+    last_size = candidates[-1]
+    for size in candidates:
+        try:
+            font = ImageFont.truetype(font_path, size)
+        except (OSError, IOError):  # pragma: no cover — font missing
+            return size, _wrap_caption(hook)
+        lines, fits = _pixel_wrap_lines(hook, font, max_width, max_lines)
+        if fits:
+            return size, "\n".join(lines)
+        last_lines = lines
+        last_size = size
+    # Floor: ship at the smallest size even if it truncates.
+    # Append an explicit ellipsis on the last line so the truncation
+    # is visible to the viewer rather than feeling like a cut-off bug.
+    if last_lines and not last_lines[-1].endswith("..."):
+        last_lines[-1] = last_lines[-1].rstrip(",.; ") + "..."
+    return last_size, "\n".join(last_lines)
+
+
+# ---------------------------------------------------------------------------
 # Brand pill PNGs
 # ---------------------------------------------------------------------------
 #
@@ -602,7 +712,19 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
     #   brand pill → URL pill → hook (0-3s) → burn-in subtitles → [v]
     chain = base
     if hook:
-        wrapped = _wrap_caption(hook)
+        # Auto-shrink-to-fit (May 2026 retune): start at the legacy
+        # fontsize=44 and shrink in 4-px steps only if the wrapped
+        # text would truncate at the larger size. Pixel-accurate
+        # word wrap via PIL ImageFont uses the actual frame width
+        # (1080 px) instead of the old conservative char budget.
+        # Output: ``(fontsize, wrapped)`` ready for drawtext.
+        hook_fontsize, wrapped = autofit_hook_overlay(
+            hook,
+            frame_width=width,
+            safe_margin=80,
+            max_lines=4,
+            font_path=_find_font(),
+        )
         escaped = _drawtext_escape(wrapped)
         # May 2026 operator review: hook is the static 0-3 s
         # opening title — separate from the burn-in transcript
@@ -612,8 +734,9 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
         # inside the lower half but well above the subtitle
         # baseline at y≈1620 (MarginV=300 in
         # ``_SHORTS_SUBTITLES_FORCE_STYLE``).
-        #   * ``fontsize=44`` is still readable on a phone but
-        #     no longer dominates the slideshow.
+        #   * Default ``fontsize=44`` (auto-shrunk per hook length)
+        #     is readable on a phone but no longer dominates the
+        #     slideshow.
         #   * Outline-only (no ``box=1`` solid fill) keeps the
         #     imagery visible behind the words. A 4 px black
         #     outline + 2 px shadow stays readable on bright
@@ -622,7 +745,7 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
         hook_filter = (
             f";{post_brand_label}drawtext=fontfile='{font_path}':"
             f"text='{escaped}':"
-            f"fontsize=44:fontcolor=white:"
+            f"fontsize={hook_fontsize}:fontcolor=white:"
             f"x=(w-text_w)/2:y=h*0.55:"
             f"borderw=4:bordercolor=black:"
             f"shadowx=2:shadowy=2:shadowcolor=black@0.7:"

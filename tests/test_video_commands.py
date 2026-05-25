@@ -1068,3 +1068,123 @@ def test_short_form_cmd_threads_end_card_params(tmp_path, monkeypatch):
     assert "CUSTOM CTA" in graph
     assert "Subscribe " in graph  # ASCII portion of the sub-text
     assert "between(t,51.00,55.00)" in graph
+
+
+# ---------------------------------------------------------------------------
+# Shorts hook overlay auto-shrink-to-fit
+# ---------------------------------------------------------------------------
+#
+# Same shrink-to-fit pattern the thumbnail uses (see
+# tests/test_thumbnail_autofit.py). The 0-3 s drawtext hook used to
+# render at a fixed fontsize=44 with a char-based 26 × 4 wrap that
+# silently truncated > 104-char hooks. Auto-fit drops the font in
+# 4-px steps (44 → 40 → 36 → 32) until the wrapped block fits the
+# frame width without dropping words.
+
+def test_autofit_hook_overlay_short_hook_stays_at_44():
+    """A short hook (< 1 line at 44 px) must keep the legacy
+    fontsize=44 — preserves the existing visual for the common case."""
+    from engine.video import autofit_hook_overlay
+    size, wrapped = autofit_hook_overlay("Tesla beats Q1 target.")
+    assert size == 44
+    # Single line, no break inserted.
+    assert "\n" not in wrapped
+
+
+def test_autofit_hook_overlay_long_hook_shrinks():
+    """A hook that genuinely exceeds the 44-px 4-line budget must
+    shrink to a smaller size in the candidate ladder. (The original
+    char-based 26 × 4 = 104-char limit was conservative — a
+    pixel-accurate wrap at 44 px fits ~38 chars / line × 4 lines =
+    ~150 chars before needing to shrink.) This hook is ~170 chars
+    so it forces a shrink."""
+    from engine.video import autofit_hook_overlay
+    long_hook = (
+        "California regulators just disclosed the Tesla Semi's "
+        "battery sizes at 822 kWh and 548 kWh, alongside a revised "
+        "Cybertruck consumer range estimate that surprised analysts."
+    )
+    size, wrapped = autofit_hook_overlay(long_hook)
+    # Must drop below the legacy default 44.
+    assert size < 44, f"expected shrink for {len(long_hook)}-char hook, got {size}"
+    assert size >= 32
+    # Must NOT truncate at the chosen size — every source word fits.
+    src_words = long_hook.split()
+    out_words = wrapped.replace("\n", " ").split()
+    assert len(out_words) == len(src_words), (
+        f"words dropped during autofit: src={len(src_words)} "
+        f"out={len(out_words)} wrapped={wrapped!r}"
+    )
+
+
+def test_autofit_hook_overlay_91_char_hook_fits_at_44():
+    """Operator's original truncation complaint was at the char-based
+    104-char budget. With the pixel-accurate wrap a 91-char hook
+    fits comfortably at 44 px — no shrink needed. This is the
+    regression direction (i.e. don't shrink hooks that don't need
+    it)."""
+    from engine.video import autofit_hook_overlay
+    hook_91 = (
+        "California regulators just disclosed the Tesla Semi's "
+        "battery sizes at 822 kWh and 548 kWh."
+    )
+    assert len(hook_91) >= 80
+    size, wrapped = autofit_hook_overlay(hook_91)
+    assert size == 44, f"91-char hook should fit at 44 px, got {size}"
+    src_words = hook_91.split()
+    out_words = wrapped.replace("\n", " ").split()
+    assert len(out_words) == len(src_words)
+
+
+def test_autofit_hook_overlay_empty_hook():
+    from engine.video import autofit_hook_overlay
+    size, wrapped = autofit_hook_overlay("")
+    assert wrapped == ""
+    # Default font size still returned so callers don't have to
+    # special-case the empty path.
+    assert size == 44
+
+
+def test_autofit_hook_overlay_respects_max_lines():
+    """A 200-char hook MUST stay within max_lines=4 regardless of
+    which fontsize wins. Too many lines on a 9:16 frame collides
+    with the burn-in caption card at y≈1480."""
+    from engine.video import autofit_hook_overlay
+    runaway = "word " * 80  # 400 chars
+    _size, wrapped = autofit_hook_overlay(runaway, max_lines=4)
+    assert wrapped.count("\n") <= 3  # ≤4 lines
+
+
+def test_autofit_hook_overlay_floor_appends_ellipsis_on_truncation():
+    """When even the smallest fontsize can't fit, the floor renders
+    the wrapped lines + a visible "…" on the last line so the
+    truncation is OBVIOUS to a viewer rather than feeling like a
+    cut-off bug."""
+    from engine.video import autofit_hook_overlay
+    runaway = "supercalifragilistic " * 30
+    _size, wrapped = autofit_hook_overlay(
+        runaway, max_lines=2, candidates=(44, 32),
+    )
+    # The last line gets the ellipsis marker once we hit the floor.
+    assert wrapped.endswith("...")
+
+
+def test_short_form_filter_graph_long_hook_uses_smaller_font():
+    """End-to-end: a long hook in the actual filter graph should
+    emit a smaller fontsize=N drawtext, not the default 44."""
+    long_hook = (
+        "Tesla just disclosed an unprecedented restructuring of its "
+        "Cybercab manufacturing supply chain across three continents "
+        "to absorb the surprise tariff changes announced overnight."
+    )
+    graph = _short_form_filter_graph(hook=long_hook)
+    # The drawtext fontsize=N where N may be 40, 36, or 32 depending
+    # on the exact font metrics — assert it's NOT the default 44.
+    import re
+    m = re.search(r"fontsize=(\d+)", graph)
+    assert m, "no fontsize found in graph"
+    chosen = int(m.group(1))
+    assert chosen < 44, (
+        f"long hook should have shrunk below 44, got {chosen}"
+    )
+    assert chosen >= 32, f"smallest allowed is 32, got {chosen}"
