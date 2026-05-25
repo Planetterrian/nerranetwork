@@ -424,32 +424,45 @@ _SUBTITLES_FORCE_STYLE = (
 
 
 # Force-style for the Shorts (1080x1920 vertical) burn-in subtitles.
-# Three reasons this can't reuse ``_SUBTITLES_FORCE_STYLE``:
-#   1. Vertical frame is narrower (1080 vs 1920) so per-line char
-#      budgets that work on long-form spill past the visible edge.
-#      The matching wrap in ``captions.transcript_to_srt_window``
-#      uses ``wrap_max_chars=32`` — fits inside 1080 px at
-#      FontSize=34 with comfortable side margins.
-#   2. Shorts are watched on phones held close — the FontSize must
-#      step up (22 → 34) so cues are readable at 5–10 cm viewing.
-#   3. Position has to clear both the static hook caption (at
-#      ``y=h*0.70`` ≈ 1344) and the URL pill (at ``y=H-h-100`` ≈
-#      1820), AND sit firmly in the bottom third. ``MarginV=300``
-#      places the cue baseline at y≈1620 — between the hook
-#      (which fades after 3 s) and the URL pill, with enough
-#      vertical clearance for a 3-line cue at FontSize=34 not to
-#      overlap either.
+#
+# May 2026 upgrade (operator: "transcript should look visually good"):
+# moved from outline-only at FontSize=34 to a TikTok-style "subtitle
+# card" — bigger, bolder text on a semi-transparent rounded-feel box
+# that always reads against busy Grok-Imagine backgrounds:
+#
+#   * FontSize 34 → 48. Modern YouTube Shorts auto-captions sit
+#     around this size; phones held at 5-10 cm need it.
+#   * Bold=-1 (ASS "true"). Heavier strokes survive over photos.
+#   * BorderStyle 1 → 3 (opaque box). Combined with a translucent
+#     BackColour (&H80 alpha = 50 % opaque black), the cue sits in
+#     a card rather than relying purely on outline to read against
+#     bright imagery. Way more legible on phones.
+#   * MarginV 300 → 340. Larger card needs more clearance from the
+#     URL pill (y ≈ 1820) at the bottom; 340 places the card top
+#     at ~y≈1480, still firmly in the bottom third and below the
+#     hook overlay (which fades after 3 s).
+#   * Outline kept at 3 so the text has a hairline contour even
+#     where the card edges meet bright pixels. Shadow dropped to
+#     0 since the box already separates text from the image.
+#
+# Vertical frame is narrower (1080 vs 1920); the matching wrap in
+# ``captions.transcript_to_srt_window`` was tightened from
+# ``wrap_max_chars=32`` / ``wrap_max_lines=3`` to ``24`` / ``2`` so
+# the larger card holds at most 2 lines of ~24 chars each — fits
+# inside ~960 px wide at FontSize=48 with comfortable side margins
+# and never stretches taller than the available clearance.
 _SHORTS_SUBTITLES_FORCE_STYLE = (
     "FontName=DejaVu Sans,"
-    "FontSize=34,"
+    "FontSize=48,"
+    "Bold=-1,"
     "PrimaryColour=&H00FFFFFF,"
     "OutlineColour=&H00000000,"
-    "BackColour=&H00000000,"
-    "BorderStyle=1,"
-    "Outline=4,"
-    "Shadow=2,"
+    "BackColour=&H80000000,"
+    "BorderStyle=3,"
+    "Outline=3,"
+    "Shadow=0,"
     "Alignment=2,"
-    "MarginV=300"
+    "MarginV=340"
 )
 
 

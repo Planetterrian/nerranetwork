@@ -225,6 +225,36 @@ manifest builder writes an empty manifest, the frontend renders a
 friendly empty state, and the gate modal surfaces a network error if
 the Worker hostname isn't reachable yet.
 
+### YouTube Shorts production (May 2026 retune)
+
+Two Shorts-quality fixes shipped after the operator caught issues
+with the first wave of episodes:
+
+* **Thumbnail title auto-shrink-to-fit.**
+  [`engine/publisher.py:generate_episode_thumbnail`](engine/publisher.py)
+  iteratively shrinks the hook font (start at the YouTube-spec max,
+  step down by 8 px) until the wrapped block fits inside 60 % of the
+  frame height AND ≤ max-lines (3 on Shorts 1080×1920, 4 on long-form
+  1280×720). Floor at ~32 px. Replaces the legacy fixed-size
+  rendering that clipped long Tesla hooks against the safe area.
+  Drift guard: `tests/test_thumbnail_autofit.py`.
+* **Shorts burn-in caption upgrade.** Bumped from outline-only
+  FontSize=34 to FontSize=48 bold on a 50 %-opaque box
+  (`BorderStyle=3` + `BackColour=&H80000000`) in
+  `engine.video._SHORTS_SUBTITLES_FORCE_STYLE` — TikTok-style
+  "subtitle card" that stays readable over Grok-Imagine backgrounds.
+  Position shifted to `MarginV=340` to keep the larger card clear of
+  the URL pill (y ≈ 1820) and below the hook overlay (y ≈ 1056).
+  Caption wrap tightened to 24 chars / 2 lines (was 32 / 3) to match
+  the larger font; see
+  `engine.captions.transcript_to_srt_window`. Drift guard:
+  `tests/test_video_commands.py::test_short_form_filter_graph_burns_subtitles_when_path_provided`.
+
+`shows/models_agents_beginners.yaml` also flipped from
+`image_provider: pexels` to `grok` in May 2026 — Pexels A/B was
+inconclusive and the gallery pipeline (Phase 1) requires Grok
+Imagine. Cost: ~$0.16/episode added.
+
 ### Testing
 
 ```bash

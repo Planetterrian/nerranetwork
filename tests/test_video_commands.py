@@ -165,16 +165,25 @@ def test_short_form_filter_graph_without_hook_omits_caption():
 
 
 def test_short_form_filter_graph_burns_subtitles_when_path_provided():
-    """May 2026 operator review: Shorts had no synced captions at
-    all — only the 3-second static hook. With the new
-    ``subtitles_path`` arg the Shorts MP4 burns in cues from a
-    Shorts-windowed SRT using the dedicated
-    ``_SHORTS_SUBTITLES_FORCE_STYLE`` (FontSize=34, MarginV=300)
-    so the transcript actually shows up on the vertical format."""
+    """May 2026 operator review (round 2): Shorts captions upgraded
+    from FontSize=34 outline-only to FontSize=48 bold on a 50 %-opaque
+    box (TikTok-style "subtitle card"). The card has to stay
+    readable on busy Grok-Imagine backgrounds and sit firmly below
+    the 0–3 s hook overlay AND above the bottom URL pill — see the
+    block comment on ``_SHORTS_SUBTITLES_FORCE_STYLE`` for the
+    geometry math. Drift guard pins every field that affects
+    legibility."""
     graph = _short_form_filter_graph(subtitles_path="/tmp/short.srt")
     assert "subtitles=" in graph
-    assert "FontSize=34" in graph
-    assert "MarginV=300" in graph
+    # Caption text style.
+    assert "FontSize=48" in graph
+    assert "Bold=-1" in graph
+    # Background card: BorderStyle=3 + non-zero alpha BackColour =
+    # opaque box behind the words, not pure outline.
+    assert "BorderStyle=3" in graph
+    assert "BackColour=&H80000000" in graph
+    # Position: clear of URL pill (y≈1820) and hook (y≈1056).
+    assert "MarginV=340" in graph
     assert graph.endswith("[v]")
 
 

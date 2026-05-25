@@ -1205,13 +1205,59 @@ def generate_episode_thumbnail(
 
     if hook:
         clean_hook = hook.strip()
-        if len(clean_hook) > 120:
-            clean_hook = clean_hook[:117].rstrip() + "..."
-        hook_font = _load_font(max(56, width // 14))
+        # Safety cap — anything longer than 220 chars is almost
+        # certainly an LLM run-on; truncate to keep the auto-fit loop
+        # from producing illegible 5-line micro-text on a thumbnail.
+        # The hook is also the first paragraph of the script; the
+        # extra context is preserved on the actual show notes / RSS.
+        if len(clean_hook) > 220:
+            clean_hook = clean_hook[:217].rstrip() + "…"
+        # Auto-shrink-to-fit. Operator caught (May 2026) hooks like
+        # "Tesla is hiring engineers to build a wireless Battery
+        # Management System for Cybercab that removes heavy wiring"
+        # rendering as 5+ lines on Shorts (1080×1920) and clipping
+        # against the top of the safe area at the legacy fixed
+        # 77 px size. Instead of clipping or hard-truncating mid-word,
+        # we shrink the font until the wrapped block fits inside the
+        # text-safe area (60 % of frame height — leaves room for the
+        # show label at top and the footer at bottom). The descent
+        # cap on font size also keeps the smallest legible reading
+        # at ~32 px which is readable on a phone preview thumbnail.
         max_text_width = width - 2 * margin
-        lines = _wrap_text(clean_hook, hook_font, max_text_width)
-        ascent_descent = hook_font.getbbox("Ay")
-        line_h = (ascent_descent[3] - ascent_descent[1]) + 12
+        # Leave 20 % top + 20 % bottom for show label / footer breathing
+        # room. The hook block can fill the central 60 %.
+        max_block_h = int(height * 0.60)
+        max_lines = 4 if height >= width else 3
+        # Try sizes from the YouTube-preferred large size all the way
+        # down to a hard floor. The fall-through floor (32 px) is set
+        # so even on a runaway-long hook the text is still readable
+        # on a 320-px-wide YouTube mobile preview tile.
+        max_font = max(56, width // 14)
+        min_font = max(32, width // 24)
+        font_size = max_font
+        lines: list = []
+        line_h = 0
+        while font_size >= min_font:
+            hook_font = _load_font(font_size)
+            lines = _wrap_text(clean_hook, hook_font, max_text_width)
+            ascent_descent = hook_font.getbbox("Ay")
+            line_h = (ascent_descent[3] - ascent_descent[1]) + 12
+            block_h = line_h * len(lines)
+            if block_h <= max_block_h and len(lines) <= max_lines:
+                break
+            # Shrink by 8 px per pass — fine-grained enough to find a
+            # good fit without spending many PIL renders on a single
+            # thumbnail (hot path during YouTube publish).
+            font_size -= 8
+        else:
+            # We hit the floor and still don't fit. Render at the
+            # floor; visual review will catch any pathological case
+            # and the operator can hand-edit the hook in the YAML
+            # rather than ship a bad thumbnail.
+            hook_font = _load_font(min_font)
+            lines = _wrap_text(clean_hook, hook_font, max_text_width)
+            ascent_descent = hook_font.getbbox("Ay")
+            line_h = (ascent_descent[3] - ascent_descent[1]) + 12
         block_h = line_h * len(lines)
         y = (height - block_h) // 2
         for line in lines:
