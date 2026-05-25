@@ -287,6 +287,21 @@ episode so the dashboard can show smart-vs-fallback rates. New shows
 opt in by setting `youtube.shorts_start_mode: smart` in their YAML.
 Drift guards in `tests/test_shorts_selector.py`.
 
+**Hook overlay auto-shrink-to-fit.** The 0–3 s static hook
+overlay on the Shorts MP4 used to render at a fixed
+fontsize=44 with a conservative char-based wrap (26 chars × 4
+lines = 104-char budget) that truncated longer Tesla hooks with
+"...". `engine.video.autofit_hook_overlay` now applies the same
+shrink-to-fit pattern the thumbnail uses: start at 44 px, drop
+in 4-px steps (44 → 40 → 36 → 32) only if the wrapped text
+would truncate at the larger size. Pixel-accurate wrap via PIL
+`ImageFont.getbbox` uses the actual 1080-px Shorts frame width
+instead of the char-budget approximation, so a 110-char hook
+(Tesla Ep461 Cybercab wireless-BMS) now fits at 44 px without
+truncation, and runaway 170+-char hooks shrink to 32 px and
+still fit. Drift guards in `tests/test_video_commands.py` under
+the "Shorts hook overlay auto-shrink-to-fit" header.
+
 **End-screen CTA card.** The last
 `youtube.shorts_end_card_duration_seconds` (default 3 s) of every
 Short overlays a translucent black panel with a two-line CTA:
