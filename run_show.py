@@ -2209,6 +2209,23 @@ def run(args: argparse.Namespace) -> None:
             "image_provider",
             youtube_urls.get("image_provider", "pexels"),
         )
+        # Gallery upload outcome (Phase 1 → diagnostics added May 2026).
+        # Always recorded so the operator can read the metrics file
+        # for the latest episode and tell at a glance whether the
+        # gallery R2 bucket is receiving uploads.
+        metrics.record(
+            "gallery_attempted",
+            int(youtube_urls.get("gallery_attempted", 0) or 0),
+        )
+        metrics.record(
+            "gallery_uploaded",
+            int(youtube_urls.get("gallery_uploaded", 0) or 0),
+        )
+        if youtube_urls.get("gallery_skipped_reason"):
+            metrics.record(
+                "gallery_skipped_reason",
+                str(youtube_urls["gallery_skipped_reason"]),
+            )
         # Surface the first 5 Grok Imagine failure messages when the
         # provider is grok / hybrid AND the run produced 0 images. Tells
         # the operator WHY the slideshow fell back to the cover (bad
@@ -3073,6 +3090,13 @@ def _publish_youtube(
     grok_image_cost = 0.0
     grok_images_generated = 0
     grok_image_failures: list = []
+    # Gallery upload counters (Phase 1 → diagnostics added May 2026).
+    # Surfaced in per-episode metrics so we can tell from the dashboard
+    # whether the gallery R2 bucket is actually receiving uploads or
+    # silently no-op'ing on a misconfigured environment.
+    gallery_uploaded = 0
+    gallery_attempted = 0
+    gallery_skipped_reason = ""
 
     def _run_pexels_path(into_long: bool, into_short: bool):
         nonlocal pexels_attribution, pexels_filtered
@@ -3175,7 +3199,13 @@ def _publish_youtube(
         ``fetch_scene_images_grok``; the ``NN`` is the prompt index, so
         we can pair each image back with its source prompt without
         plumbing extra state.
+
+        Always emits a single summary log line (even on 0 uploads) and
+        bumps ``gallery_uploaded`` / ``gallery_attempted`` /
+        ``gallery_skipped_reason`` so the per-episode metrics file
+        shows the gallery outcome at a glance.
         """
+        nonlocal gallery_uploaded, gallery_attempted, gallery_skipped_reason
         try:
             from engine.gallery_uploader import (
                 ImageMetadata,
@@ -3183,11 +3213,20 @@ def _publish_youtube(
                 upload_image,
             )
         except Exception as exc:  # pragma: no cover — import-time soft-fail
+            gallery_skipped_reason = f"import_error:{type(exc).__name__}"
             logger.warning("Gallery uploader import failed: %s", exc)
             return
 
         gconfig = gallery_config_from_env()
         if not gconfig.is_configured:
+            gallery_skipped_reason = "unconfigured"
+            logger.info(
+                "Gallery: skipping upload for ep%s (aspect=%s) — "
+                "R2 env vars unset (bucket=%r endpoint=%r access=%s secret=%s)",
+                episode_num, aspect,
+                gconfig.bucket, gconfig.endpoint_url,
+                bool(gconfig.access_key), bool(gconfig.secret_key),
+            )
             return
 
         import re as _re
@@ -3201,11 +3240,16 @@ def _publish_youtube(
         )
         model_id = getattr(yt, "grok_image_model", "grok-imagine-image")
 
+        attempted = 0
         uploaded = 0
+        first_failure = ""
         for scene_path in scene_paths:
+            attempted += 1
             try:
                 image_bytes = Path(scene_path).read_bytes()
             except Exception as exc:  # pragma: no cover — best-effort
+                if not first_failure:
+                    first_failure = f"read:{type(exc).__name__}:{exc}"
                 logger.warning(
                     "Gallery: failed to read %s: %s", scene_path, exc,
                 )
@@ -3235,12 +3279,26 @@ def _publish_youtube(
             )
             if result_upload is not None:
                 uploaded += 1
+            elif not first_failure:
+                # upload_image() returns None on any soft failure
+                # (R2 error, thumbnail error, missing creds). The
+                # specific cause was logged inside the helper; we
+                # capture the fact here so the per-episode metrics
+                # show a non-empty skipped_reason when uploads silently
+                # 0-out (the most operationally hostile failure mode).
+                first_failure = "upload_returned_none"
 
-        if uploaded:
-            logger.info(
-                "Gallery: uploaded %d/%d scene images for ep%s (aspect=%s)",
-                uploaded, len(scene_paths), episode_num, aspect,
-            )
+        gallery_attempted += attempted
+        gallery_uploaded += uploaded
+        if uploaded == 0 and attempted > 0 and not gallery_skipped_reason:
+            gallery_skipped_reason = first_failure or "unknown_failure"
+
+        logger.info(
+            "Gallery: ep%s aspect=%s attempted=%d uploaded=%d bucket=%s "
+            "first_failure=%r",
+            episode_num, aspect, attempted, uploaded, gconfig.bucket,
+            first_failure or None,
+        )
 
     if image_provider == "grok":
         long_scene_paths = _run_grok_path(aspect="16:9", label_suffix="")
@@ -3491,6 +3549,13 @@ def _publish_youtube(
     if grok_image_failures:
         result["grok_image_failures"] = grok_image_failures[:5]
     result["image_provider"] = image_provider
+    # Gallery (Phase 1) upload outcome. Always surfaced so the
+    # dashboard can plot "uploaded N / attempted M (reason=…)" per
+    # episode and spot a misconfigured bucket immediately.
+    result["gallery_attempted"] = gallery_attempted
+    result["gallery_uploaded"] = gallery_uploaded
+    if gallery_skipped_reason:
+        result["gallery_skipped_reason"] = gallery_skipped_reason
     return result
 
 
