@@ -1,0 +1,38 @@
+# Cloudflare Worker that backs the Nerra Network image gallery's
+# email-gated download flow. See workers/gallery/README.md for the
+# deploy + secret bootstrap steps, and docs/gallery_storage.md for
+# the architecture context.
+
+name = "nerra-gallery-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+account_id = ""  # set via `wrangler whoami` or CI; intentionally
+                 # blank in-repo so a developer fork doesn't bind
+                 # to the production account by mistake.
+
+# Custom route on the existing zone.  Set ZONE_ID + the api.* CNAME
+# in Cloudflare first (operator step — see README).  Until both are
+# wired, deploy goes to the *.workers.dev preview URL automatically.
+routes = [
+  { pattern = "api.nerranetwork.com/api/*", custom_domain = true },
+]
+
+# R2 binding for the gallery bucket.  The Worker uses
+# env.GALLERY_BUCKET.get(key) on download; no separate access key is
+# needed because the binding is scoped by Cloudflare to this Worker.
+[[r2_buckets]]
+binding = "GALLERY_BUCKET"
+bucket_name = "nerra-gallery"
+
+# Secrets are set out-of-band via:
+#   wrangler secret put JWT_SECRET
+#   wrangler secret put BUTTONDOWN_API_KEY
+#   wrangler secret put RESEND_API_KEY
+#   wrangler secret put RESEND_FROM_EMAIL
+# Do NOT commit them here.
+
+[observability]
+enabled = true
+
+[placement]
+mode = "smart"

@@ -214,6 +214,10 @@ def build_manifest(
         record["original_url"] = _public_url(config, original_key)
         record["thumbnail_url"] = _public_url(config, thumb_key)
         record["sidecar_url"] = _public_url(config, sidecar_key)
+        # Phase 3: the frontend passes this key to the Worker's
+        # /api/download endpoint. The Worker validates the JWT cookie
+        # then streams the R2 object from the bound bucket.
+        record["original_key"] = original_key
         images.append(record)
 
         slug = sidecar["show_slug"]

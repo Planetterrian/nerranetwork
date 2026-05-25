@@ -164,6 +164,8 @@ def test_build_manifest_attaches_urls_to_every_image(config):
     assert img["thumbnail_url"].endswith("/abc.thumb.webp")
     assert img["original_url"].endswith("/abc.jpeg")
     assert img["sidecar_url"].endswith("/abc.json")
+    # Phase 3: frontend passes this key to /api/download.
+    assert img["original_key"] == "tesla/2026-05-24/ep001/abc.jpeg"
     # Original sidecar fields are preserved.
     assert img["prompt"] == "a tesla cybertruck"
     assert img["license"] == "CC BY-SA 4.0"

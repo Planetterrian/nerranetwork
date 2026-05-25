@@ -25,6 +25,12 @@
 
     var MANIFEST_URL = (window.NN_GALLERY_MANIFEST_URL ||
         '/site/data/gallery-manifest.json');
+    // Worker base URL. Phase 3 deploys the Worker at
+    // api.nerranetwork.com; the override exists so local dev
+    // (python -m http.server 8080 + wrangler dev) can point at
+    // http://127.0.0.1:8787 without editing this file.
+    var API_BASE = (window.NN_GALLERY_API_BASE ||
+        'https://api.nerranetwork.com').replace(/\/+$/, '');
     var PROMPT_PREFIX_RE = /^[^,]+,\s*photorealistic[^,]*,\s*/i;
 
     function $(sel, root) { return (root || document).querySelector(sel); }
@@ -411,21 +417,13 @@
         if (!lb || !_lbState.state) return;
         var img = _lbState.state.visible[_lbState.index];
         var imgEl = $('.nn-lb-image', lb);
-        imgEl.src = img.thumbnail_url; // start with thumb for instant paint
+        imgEl.src = img.thumbnail_url;
         imgEl.alt = img.caption || img.episode_title || (img.show_name || '') + ' image';
-        // Swap to the full original after a tick (preloading the
-        // higher-res image without blocking the first paint). The
-        // public_base_url points at the public R2 host today; Phase 3
-        // will route this through the Worker to a signed URL.
-        var hires = new Image();
-        hires.onload = function () {
-            if (lb.getAttribute('aria-hidden') === 'false' &&
-                _lbState.state.visible[_lbState.index] === img) {
-                imgEl.src = img.original_url;
-            }
-        };
-        hires.onerror = function () { /* stay on thumbnail */ };
-        hires.src = img.original_url;
+        // Phase 3: originals are private (the Worker proxies them
+        // through /api/download). The lightbox stays on the 800-px
+        // watermarked thumbnail, which is the right size for a modal
+        // preview. The "Download full size" button takes the visitor
+        // through the email gate to fetch the original.
 
         $('.nn-lb-title', lb).textContent = img.episode_title || '';
         $('.nn-lb-sub', lb).textContent = [
@@ -458,26 +456,59 @@
         }
     }
 
-    // ---------- Download gate (Phase 3 stub) ----------
+    // ---------- Download gate (Phase 3 — wired to api.nerranetwork.com) ----------
 
-    function isSubscribed() {
-        try { return localStorage.getItem('nn_gallery_subscriber') === '1'; }
-        catch (_) { return false; }
+    function downloadEndpoint(key) {
+        return API_BASE + '/api/download?key=' + encodeURIComponent(key);
     }
-    function markSubscribed() {
-        try { localStorage.setItem('nn_gallery_subscriber', '1'); }
-        catch (_) {}
+    function subscribeEndpoint() { return API_BASE + '/api/subscribe'; }
+    function loginEndpoint(email) {
+        return API_BASE + '/api/login?email=' + encodeURIComponent(email);
     }
 
+    // Programmatic download: fetch the bytes through the Worker so
+    // we re-validate the JWT cookie on every download (revocation
+    // works) and the browser triggers a real save dialog via
+    // <a download>. If the Worker says 401 we open the gate; on any
+    // other error we surface a console warning and let the visitor
+    // retry. Note: cross-origin <a download> respects
+    // Content-Disposition from the Worker.
     function handleDownload() {
         if (!_lbState.state) return;
         var img = _lbState.state.visible[_lbState.index];
-        if (!img) return;
-        if (isSubscribed()) {
-            window.open(img.original_url, '_blank', 'noopener');
-            return;
-        }
-        openGateModal(img);
+        if (!img || !img.original_key) return;
+        fetch(downloadEndpoint(img.original_key), {
+            method: 'GET',
+            credentials: 'include',
+        }).then(function (resp) {
+            if (resp.status === 401) {
+                openGateModal();
+                return null;
+            }
+            if (!resp.ok) {
+                throw new Error('download HTTP ' + resp.status);
+            }
+            return resp.blob().then(function (blob) {
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = img.original_key.split('/').pop() || 'image';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
+                if (typeof window.gtag === 'function') {
+                    try { window.gtag('event', 'gallery_download', { image_id: img.image_id }); }
+                    catch (_) {}
+                }
+            });
+        }).catch(function (err) {
+            if (typeof console !== 'undefined') {
+                console.warn('[gallery] download failed:', err);
+            }
+            // Fallback: open the gate so they can sign in / sign up.
+            openGateModal();
+        });
     }
 
     function ensureGateModal() {
@@ -496,34 +527,74 @@
                     'free email subscription. We&rsquo;ll send you ' +
                     'occasional Nerra Network updates and you can ' +
                     'download any image at full resolution from then on.</p>' +
-                '<form class="nn-gate-form">' +
+                '<form class="nn-gate-form" data-mode="subscribe">' +
                     '<label><span class="nn-vh">Email</span>' +
                         '<input type="email" required placeholder="you@example.com" ' +
                             'autocomplete="email" class="nn-gate-input">' +
                     '</label>' +
-                    '<button type="submit" class="nn-btn">Subscribe &amp; download</button>' +
+                    '<button type="submit" class="nn-btn nn-gate-submit">Subscribe &amp; download</button>' +
                 '</form>' +
                 '<p class="nn-gate-fineprint">By subscribing you agree to ' +
-                    'receive emails from Nerra Network. Unsubscribe any time.</p>' +
+                    'receive emails from Nerra Network. Unsubscribe any time. ' +
+                    '<a href="#" class="nn-gate-toggle">Already subscribed? Sign in instead.</a>' +
+                '</p>' +
                 '<p class="nn-gate-error" hidden></p>' +
+                '<p class="nn-gate-success" hidden></p>' +
             '</div>'
         );
         document.body.appendChild(m);
         m.addEventListener('click', function (e) {
             if (e.target === m || e.target.classList.contains('nn-gate-close')) {
                 closeGateModal();
+                return;
+            }
+            if (e.target.classList && e.target.classList.contains('nn-gate-toggle')) {
+                e.preventDefault();
+                toggleGateMode(m);
             }
         });
         m.addEventListener('submit', function (e) {
             e.preventDefault();
-            var email = ($('.nn-gate-input', m).value || '').trim();
+            var input = $('.nn-gate-input', m);
+            var email = (input && input.value || '').trim();
             if (!email) return;
-            submitGate(email, m);
+            var mode = $('.nn-gate-form', m).getAttribute('data-mode');
+            if (mode === 'login') submitLogin(email, m);
+            else submitSubscribe(email, m);
         });
         return m;
     }
 
-    function openGateModal(_img) {
+    function toggleGateMode(m) {
+        var form = $('.nn-gate-form', m);
+        var title = $('.nn-gate-title', m);
+        var body = $('.nn-gate-body', m);
+        var submit = $('.nn-gate-submit', m);
+        var toggle = $('.nn-gate-toggle', m);
+        var success = $('.nn-gate-success', m);
+        var error = $('.nn-gate-error', m);
+        if (success) success.setAttribute('hidden', '');
+        if (error) error.setAttribute('hidden', '');
+        if (form.getAttribute('data-mode') === 'subscribe') {
+            form.setAttribute('data-mode', 'login');
+            title.textContent = 'Sign in to download';
+            body.textContent = 'Enter the email you previously subscribed with. ' +
+                'We’ll send you a one-click sign-in link.';
+            submit.textContent = 'Send sign-in link';
+            toggle.textContent = 'Don’t have an account? Subscribe instead.';
+        } else {
+            form.setAttribute('data-mode', 'subscribe');
+            title.textContent = 'One-time email to download';
+            body.innerHTML = 'Originals are gated behind a ' +
+                'free email subscription. We’ll send you ' +
+                'occasional Nerra Network updates and you can ' +
+                'download any image at full resolution from then on.';
+            submit.textContent = 'Subscribe & download';
+            toggle.textContent = 'Already subscribed? Sign in instead.';
+        }
+    }
+
+    function openGateModal() {
         var m = ensureGateModal();
         m.setAttribute('aria-hidden', 'false');
         document.body.classList.add('nn-no-scroll');
@@ -540,29 +611,87 @@
         }
     }
 
-    function submitGate(email, modal) {
-        // Phase 3 hook: POST to /api/subscribe on the Worker. For now
-        // this is a stub — we log the event, mark the visitor as
-        // subscribed locally, close the gate, and surface the
-        // download.
+    function showGateError(modal, message) {
+        var el = $('.nn-gate-error', modal);
+        if (!el) return;
+        el.textContent = message;
+        el.removeAttribute('hidden');
+    }
+
+    function showGateSuccess(modal, message) {
+        var el = $('.nn-gate-success', modal);
+        if (!el) return;
+        el.textContent = message;
+        el.removeAttribute('hidden');
+    }
+
+    function setGateBusy(modal, busy) {
+        var submit = $('.nn-gate-submit', modal);
+        if (submit) submit.disabled = !!busy;
+    }
+
+    function submitSubscribe(email, modal) {
         var errEl = $('.nn-gate-error', modal);
-        errEl.setAttribute('hidden', '');
-        if (typeof console !== 'undefined') {
-            console.info('[gallery] gate stub: would subscribe', email,
-                '(Phase 3 wires this to the Cloudflare Worker)');
-        }
-        // Best-effort GA4 event if gtag is on the page.
-        if (typeof window.gtag === 'function') {
-            try { window.gtag('event', 'gallery_subscribe_stub', { email_domain: email.split('@')[1] || '' }); }
-            catch (_) {}
-        }
-        markSubscribed();
-        closeGateModal();
-        // Re-trigger the download now that the visitor is "subscribed".
-        if (_lbState.state) {
-            var img = _lbState.state.visible[_lbState.index];
-            if (img) window.open(img.original_url, '_blank', 'noopener');
-        }
+        var okEl = $('.nn-gate-success', modal);
+        if (errEl) errEl.setAttribute('hidden', '');
+        if (okEl) okEl.setAttribute('hidden', '');
+        setGateBusy(modal, true);
+        fetch(subscribeEndpoint(), {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email }),
+        }).then(function (resp) {
+            if (resp.ok) {
+                if (typeof window.gtag === 'function') {
+                    try { window.gtag('event', 'gallery_subscribe', { email_domain: email.split('@')[1] || '' }); }
+                    catch (_) {}
+                }
+                closeGateModal();
+                // Retry the download — the cookie is now set.
+                handleDownload();
+                return;
+            }
+            return resp.json().then(function (body) {
+                showGateError(modal,
+                    (body && body.error)
+                        ? ('Couldn’t subscribe: ' + body.error)
+                        : 'Couldn’t subscribe. Please try again in a moment.');
+            }, function () {
+                showGateError(modal, 'Couldn’t subscribe. Please try again in a moment.');
+            });
+        }).catch(function () {
+            showGateError(modal, 'Network error. Please check your connection and retry.');
+        }).then(function () { setGateBusy(modal, false); });
+    }
+
+    function submitLogin(email, modal) {
+        var errEl = $('.nn-gate-error', modal);
+        var okEl = $('.nn-gate-success', modal);
+        if (errEl) errEl.setAttribute('hidden', '');
+        if (okEl) okEl.setAttribute('hidden', '');
+        setGateBusy(modal, true);
+        fetch(loginEndpoint(email), {
+            method: 'GET',
+            credentials: 'include',
+        }).then(function (resp) {
+            // The API always returns 200 to avoid email enumeration —
+            // so we show the same success message regardless of
+            // whether the address is actually subscribed.
+            if (resp.ok) {
+                showGateSuccess(modal,
+                    'If that email is subscribed, a sign-in link is on the way. ' +
+                    'Check your inbox (and spam folder).');
+                if (typeof window.gtag === 'function') {
+                    try { window.gtag('event', 'gallery_login_requested'); }
+                    catch (_) {}
+                }
+            } else {
+                showGateError(modal, 'Couldn’t send the link. Please try again.');
+            }
+        }).catch(function () {
+            showGateError(modal, 'Network error. Please check your connection and retry.');
+        }).then(function () { setGateBusy(modal, false); });
     }
 
     // ---------- Bootstrap ----------

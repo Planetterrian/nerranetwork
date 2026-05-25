@@ -160,7 +160,7 @@ All RSS `<enclosure>` URLs now use `audio.nerranetwork.com` (Cloudflare R2).
 MP3 files are uploaded to R2 during the pipeline and excluded from git commits.
 **Do NOT change R2 bucket paths — this breaks podcast subscribers.**
 
-### Image gallery (Phases 1 + 2 — May 2026)
+### Image gallery (Phases 1 + 2 + 3 — May 2026)
 
 Every Grok-Imagine scene generated for the YouTube long-form / Shorts
 slideshow is uploaded to a separate R2 bucket (`nerra-gallery`) with a
@@ -193,16 +193,37 @@ rendered to `/gallery.html` by `generate_gallery_page()` in
 when `gallery_enabled` is true (today: any show with
 `youtube.enabled: true`, currently Tesla + MAB — see landmine #20).
 Prompt visibility is a per-image **toggle** (hidden by default in the
-lightbox). The "Download full size" button opens a Phase-3 email-gate
-modal **stub** — submitting the email marks the visitor as subscribed
-in `localStorage` and proceeds; the real Buttondown subscription +
-signed R2 URL flow lands in Phase 3.
+lightbox).
 
-Layout, schema, env vars, and the Phase 3 roadmap live in
-[`docs/gallery_storage.md`](docs/gallery_storage.md). Unconfigured
-environments (env vars unset) are a clean no-op: the manifest builder
-writes an empty manifest and the frontend renders a friendly empty
-state.
+**Phase 3 — email-gated downloads.** Cloudflare Worker at
+`api.nerranetwork.com` ([`workers/gallery/`](workers/gallery/)) with
+four endpoints: `POST /api/subscribe` (Buttondown subscribe + 90-day
+JWT cookie), `GET /api/login` (magic-link email via Resend, always
+200 so the address can't be enumerated), `GET /api/magic` (consume
+the magic JWT, set cookie, 302 to /gallery), `GET /api/download`
+(verify cookie, stream the R2 object via the bucket binding with
+`Content-Disposition: attachment`). JWT is HS256, hand-rolled in
+[`workers/gallery/src/jwt.ts`](workers/gallery/src/jwt.ts) — no
+third-party dep on the Worker. The download endpoint **proxies bytes
+through the Worker** instead of issuing signed R2 URLs (revocation
+works, no shareable URLs, no SigV4 plumbing — documented deviation
+from the spec). Frontend [`assets/js/gallery.js`](assets/js/gallery.js)
+calls these endpoints with `credentials:'include'`; gate modal
+supports both "Subscribe & download" and "Already subscribed? Sign
+in instead" paths. New secrets (set via `wrangler secret put` once):
+`JWT_SECRET`, `BUTTONDOWN_API_KEY`, `RESEND_API_KEY`,
+`RESEND_FROM_EMAIL`. The Worker doesn't need new R2 credentials —
+the bucket is wired declaratively as `GALLERY_BUCKET` in
+[`workers/gallery/wrangler.toml`](workers/gallery/wrangler.toml).
+
+Layout, schema, env vars, deployment steps, and the operator
+checklist live in
+[`docs/gallery_storage.md`](docs/gallery_storage.md) and
+[`workers/gallery/README.md`](workers/gallery/README.md).
+Unconfigured environments (env vars unset) are a clean no-op: the
+manifest builder writes an empty manifest, the frontend renders a
+friendly empty state, and the gate modal surfaces a network error if
+the Worker hostname isn't reachable yet.
 
 ### Testing
 
