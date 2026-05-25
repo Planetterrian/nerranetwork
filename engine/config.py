@@ -397,6 +397,20 @@ class YouTubeConfig:
     shorts_end_card_sub_text: str = "Tap Subscribe ↗"
     shorts_end_card_duration_seconds: float = 3.0
 
+    # Multiple Shorts per episode (May 2026). When > 1, the
+    # smart-selector picks the top-N non-overlapping engaging windows
+    # from the episode transcript and publishes each as its own
+    # Short, with distinct title (taken from each window's opening
+    # text) and distinct thumbnail. Default 1 preserves legacy
+    # single-Short behaviour. Quota caveat: each Short upload costs
+    # 1 600 quota units on the YouTube Data API; the @NerraNetwork
+    # channel has 10 000/day total. With Tesla + MAB long+short
+    # already at 6 400 (4 uploads × 1 600), only 2 extra Shorts fit
+    # before hitting the cap. ``smart`` shorts_start_mode is
+    # required: voice / first_chapter modes only know about one
+    # offset so they ignore this knob and always produce 1 Short.
+    shorts_per_episode: int = 1
+
 
 @dataclass
 class ShowConfig:
