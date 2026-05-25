@@ -927,3 +927,144 @@ def test_brand_pill_text_omits_ai_narrated_marker():
     assert "AI-narrated" not in _BRAND_PILL_TEXT
     assert "AI narrated" not in _BRAND_PILL_TEXT
     assert _BRAND_PILL_TEXT == "Nerra Network"
+
+
+# ---------------------------------------------------------------------------
+# Shorts end-screen CTA card — last-3s subscribe overlay
+# ---------------------------------------------------------------------------
+#
+# Operator priority #3 (May 2026): every Short ends with a 3-second
+# CTA card pointing the viewer at YouTube's own Subscribe button on
+# the Shorts player's right rail. drawbox backdrop + 2 drawtext lines.
+
+def test_short_form_filter_graph_omits_end_card_when_disabled():
+    """``end_card=False`` (default) must produce exactly the legacy
+    chain — no drawbox, no end-card drawtext, the existing
+    short-form drift guards stay green."""
+    graph = _short_form_filter_graph(end_card=False)
+    assert "drawbox" not in graph
+    assert "WATCH FULL EPISODE" not in graph
+    assert "Tap Subscribe" not in graph
+
+
+def test_short_form_filter_graph_appends_end_card_when_enabled():
+    """``end_card=True`` must add: a full-frame translucent backdrop,
+    a big headline drawtext, and a smaller sub-line drawtext — all
+    bound to the same ``between(t, total-3, total)`` enable window."""
+    graph = _short_form_filter_graph(
+        end_card=True, total_duration=55.0, end_card_duration=3.0,
+    )
+    # Backdrop covers the full frame at ~78 % opacity.
+    assert "drawbox=x=0:y=0:w=iw:h=ih" in graph
+    assert "color=black@0.78" in graph
+    # Headline + sub-line text.
+    assert "WATCH FULL EPISODE" in graph
+    assert "Tap Subscribe" in graph
+    # All three filters share a single enable window keyed off the
+    # passed ``total_duration``.
+    assert "between(t,52.00,55.00)" in graph
+    # Output is still a single [v] terminator.
+    assert graph.endswith("[v]")
+
+
+def test_short_form_filter_graph_end_card_window_scales_with_duration():
+    """A 30 s Short must still get a 3 s end card at t=27..30, not a
+    hard-coded t=52..55 window."""
+    graph = _short_form_filter_graph(
+        end_card=True, total_duration=30.0, end_card_duration=3.0,
+    )
+    assert "between(t,27.00,30.00)" in graph
+
+
+def test_short_form_filter_graph_end_card_custom_duration():
+    """``end_card_duration`` is operator-configurable; a 5 s card on
+    a 55 s clip should fire from t=50."""
+    graph = _short_form_filter_graph(
+        end_card=True, total_duration=55.0, end_card_duration=5.0,
+    )
+    assert "between(t,50.00,55.00)" in graph
+
+
+def test_short_form_filter_graph_end_card_custom_text():
+    """Per-show YAML can override the CTA copy (Russian shows, A/B
+    testing, etc.) — the override must appear verbatim in the
+    drawtext payload."""
+    graph = _short_form_filter_graph(
+        end_card=True, total_duration=55.0,
+        end_card_main_text="WATCH THE FULL SHOW",
+        end_card_sub_text="Subscribe now",
+    )
+    assert "WATCH THE FULL SHOW" in graph
+    assert "Subscribe now" in graph
+    # Defaults must NOT appear.
+    assert "WATCH FULL EPISODE" not in graph
+
+
+def test_short_form_filter_graph_end_card_composes_with_subtitles():
+    """When BOTH subtitles and the end card are present, captions
+    must stop at the [capted] label and the end-card chain becomes
+    the [v] terminator. No double-terminated graph."""
+    graph = _short_form_filter_graph(
+        end_card=True, subtitles_path="/tmp/short.srt", total_duration=55.0,
+    )
+    # Subtitles land at [capted], not [v].
+    assert "[capted]" in graph
+    # End card runs after — the only [v] is from the end-card chain.
+    assert graph.count("[v]") == 1
+    assert graph.endswith("[v]")
+    # End-card overlay paints over captions.
+    assert "drawbox" in graph
+    assert "WATCH FULL EPISODE" in graph
+
+
+def test_short_form_filter_graph_end_card_composes_with_hook_only():
+    """End card + hook (no subtitles): hook fires 0-3 s, end card
+    fires 52-55 s, both bound to drawtext but on opposite ends of
+    the clip. Both must coexist in the same chain ending at [v]."""
+    graph = _short_form_filter_graph(
+        end_card=True, hook="Today on the show.", total_duration=55.0,
+    )
+    # Hook still gates on first 3 s.
+    assert "between(t,0,3)" in graph
+    # End card gates on last 3 s.
+    assert "between(t,52.00,55.00)" in graph
+    assert graph.endswith("[v]")
+
+
+def test_short_form_filter_graph_end_card_degenerate_short_clip():
+    """If someone sets total_duration <= end_card_duration, the card
+    should render for the whole clip rather than fail / produce a
+    negative start time."""
+    graph = _short_form_filter_graph(
+        end_card=True, total_duration=2.0, end_card_duration=3.0,
+    )
+    assert "between(t,0.00,2.00)" in graph
+
+
+def test_short_form_cmd_threads_end_card_params(tmp_path, monkeypatch):
+    """``build_short_video(end_card=True, …)`` must pass the end-card
+    params down through ``_short_form_cmd`` into the filter graph."""
+    audio = tmp_path / "voice.mp3"
+    audio.write_bytes(b"\x00")
+    cover = tmp_path / "cover.jpg"
+    cover.write_bytes(b"\xFF\xD8")
+    out = tmp_path / "short.mp4"
+
+    captured = []
+    monkeypatch.setattr(
+        "engine.video.subprocess.run",
+        lambda cmd, **kw: (captured.append(list(cmd)),
+                           type("R", (), {"returncode": 0})())[1],
+    )
+    build_short_video(
+        audio, cover, out, duration=55.0,
+        end_card=True,
+        end_card_main_text="CUSTOM CTA",
+        end_card_sub_text="Subscribe →",
+        end_card_duration=4.0,
+    )
+    assert captured, "no ffmpeg cmd captured"
+    graph = captured[-1][captured[-1].index("-filter_complex") + 1]
+    assert "CUSTOM CTA" in graph
+    assert "Subscribe " in graph  # ASCII portion of the sub-text
+    assert "between(t,51.00,55.00)" in graph

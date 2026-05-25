@@ -3533,6 +3533,7 @@ def _publish_youtube(
                 except Exception as exc:  # pragma: no cover — best-effort
                     logger.warning("Shorts caption generation failed: %s", exc)
 
+            _yt = config.youtube
             build_short_video(
                 final_mp3, cover_path, short_video_path,
                 start_offset=short_offset,
@@ -3541,6 +3542,16 @@ def _publish_youtube(
                 scene_paths=short_scene_paths if len(short_scene_paths) >= 2 else None,
                 show_name=config.name,
                 subtitles_path=short_srt_path,
+                end_card=bool(getattr(_yt, "shorts_end_card_enabled", True)),
+                end_card_main_text=str(
+                    getattr(_yt, "shorts_end_card_main_text", "WATCH FULL EPISODE")
+                ),
+                end_card_sub_text=str(
+                    getattr(_yt, "shorts_end_card_sub_text", "Tap Subscribe ↗")
+                ),
+                end_card_duration=float(
+                    getattr(_yt, "shorts_end_card_duration_seconds", 3.0) or 3.0
+                ),
             )
             meta = build_short_metadata(
                 config,
