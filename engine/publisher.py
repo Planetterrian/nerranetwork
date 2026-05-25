@@ -1303,6 +1303,131 @@ def generate_shorts_thumbnail(
     )
 
 
+def generate_shorts_end_card(
+    long_form_thumbnail_path: Path,
+    output_path: Path,
+    *,
+    show_name: str = "",
+    main_text: str = "WATCH FULL EPISODE",
+    sub_text: str = "Tap Subscribe ↗",
+    size: tuple = (1080, 1920),
+) -> Path:
+    """Render the 1080×1920 PNG end-card overlay for a Shorts MP4.
+
+    The drawn card composites the long-form 1280×720 thumbnail into
+    the upper third of a dark vertical frame, then layers a big
+    headline ("WATCH FULL EPISODE") + cyan sub-line ("Tap Subscribe
+    ↗") + a small ``nerranetwork.com`` footer below it. The output
+    is a PNG (transparent background pixels would be wasted — the
+    image fills the whole frame), used as an ffmpeg overlay input
+    on the Shorts MP4 during the last 3 seconds in
+    ``engine.video._short_form_filter_graph``.
+
+    This is the visual upgrade over the drawtext-only end card
+    shipped in PR #417: viewers see what the actual long-form
+    episode looks like, which is significantly more compelling
+    than a text-only "WATCH FULL EPISODE" prompt.
+
+    Falls back to a text-only render when ``long_form_thumbnail_path``
+    is missing or fails to load (defensive: thumbnail generation can
+    fail upstream and we want the end card to still ship).
+    """
+    from PIL import Image, ImageDraw
+
+    width, height = size
+    # Solid dark background — matches the existing drawtext end card's
+    # 78%-opaque black panel but goes full opaque (no need to see the
+    # slideshow behind a PNG overlay).
+    bg = Image.new("RGB", (width, height), (11, 15, 26))  # --nn-bg
+
+    # Crop the long-form thumbnail into the upper third. Long-form
+    # thumbs are 1280×720 (16:9). Scale to 1080 wide → 1080×608.
+    # Centre vertically inside a 1080×~720 slot at y≈300..1020.
+    thumb_section_top = int(height * 0.16)   # y ≈ 307
+    thumb_section_h = int(height * 0.38)     # h ≈ 730
+    try:
+        thumb = Image.open(long_form_thumbnail_path).convert("RGB")
+        # Scale-to-fit (preserve aspect, fit inside thumb_section).
+        src_ratio = thumb.width / thumb.height
+        target_w = width
+        target_h = int(round(target_w / src_ratio))
+        if target_h > thumb_section_h:
+            target_h = thumb_section_h
+            target_w = int(round(target_h * src_ratio))
+        thumb = thumb.resize((target_w, target_h), Image.LANCZOS)
+        thumb_x = (width - target_w) // 2
+        thumb_y = thumb_section_top + (thumb_section_h - target_h) // 2
+        bg.paste(thumb, (thumb_x, thumb_y))
+        # Subtle 4-px white frame around the thumbnail so it reads as
+        # a "tap me" target rather than blending into the background.
+        ImageDraw.Draw(bg).rectangle(
+            (thumb_x - 4, thumb_y - 4,
+             thumb_x + target_w + 4, thumb_y + target_h + 4),
+            outline=(255, 255, 255), width=4,
+        )
+    except (FileNotFoundError, OSError) as exc:
+        logger.warning(
+            "Shorts end card: long-form thumbnail unavailable (%s) — "
+            "rendering text-only card. (%s)",
+            long_form_thumbnail_path, exc,
+        )
+        # No thumbnail to paste — the rest of the card still renders.
+
+    draw = ImageDraw.Draw(bg)
+
+    # Optional show pill at the very top (mirrors the brand pill on
+    # the Shorts MP4 above the slideshow).
+    if show_name:
+        show_font = _load_font(36)
+        sw_bbox = show_font.getbbox(show_name)
+        show_w = sw_bbox[2] - sw_bbox[0]
+        draw.text(
+            ((width - show_w) // 2, int(height * 0.07)),
+            show_name, font=show_font, fill=(232, 236, 244),
+        )
+
+    # Main CTA headline — same fontsize as the drawtext end card so
+    # the visual jump from PNG → drawtext fallback isn't jarring.
+    main_y = int(height * 0.62)
+    main_font = _load_font(88)
+    mw_bbox = main_font.getbbox(main_text)
+    main_w = mw_bbox[2] - mw_bbox[0]
+    main_x = (width - main_w) // 2
+    # Subtle drop shadow + outline for legibility on the dark BG.
+    draw.text((main_x + 3, main_y + 3), main_text, font=main_font,
+              fill=(0, 0, 0))
+    draw.text((main_x, main_y), main_text, font=main_font,
+              fill=(255, 255, 255))
+
+    # Sub-line in Nerra cyan (#00D4FF) — matches the per-word caption
+    # highlight from PR #415 + the drawtext sub-line from PR #417.
+    sub_y = int(height * 0.74)
+    sub_font = _load_font(56)
+    sw2_bbox = sub_font.getbbox(sub_text)
+    sub_w = sw2_bbox[2] - sw2_bbox[0]
+    sub_x = (width - sub_w) // 2
+    draw.text((sub_x + 2, sub_y + 2), sub_text, font=sub_font,
+              fill=(0, 0, 0))
+    draw.text((sub_x, sub_y), sub_text, font=sub_font,
+              fill=(0, 212, 255))
+
+    # Footer with the network URL — small + muted so it doesn't
+    # compete with the CTA above. Sits clear of the Shorts URL pill
+    # at y≈1820 by living at y≈1870.
+    footer_y = int(height * 0.93)
+    footer_font = _load_font(32)
+    footer_text = "nerranetwork.com"
+    fw_bbox = footer_font.getbbox(footer_text)
+    footer_w = fw_bbox[2] - fw_bbox[0]
+    draw.text(
+        ((width - footer_w) // 2, footer_y),
+        footer_text, font=footer_font, fill=(139, 143, 174),  # --nn-text-muted
+    )
+
+    bg.save(output_path, format="PNG", optimize=True)
+    return output_path
+
+
 # ---------------------------------------------------------------------------
 # Digest formatting for X posting
 # ---------------------------------------------------------------------------
