@@ -1588,6 +1588,13 @@ def generate_show_page(slug, *, dry_run=False):
 
     is_russian = slug in ("finansy_prosto", "privet_russian")
 
+    yt_meta = _read_show_youtube(slug)
+    # Phase 2 gallery: enable the embedded per-show gallery section on
+    # any show whose YouTube path is on, since those are the shows
+    # currently producing Grok Imagine artwork. When a show migrates
+    # off YouTube (or off Grok Imagine), the section auto-disables.
+    gallery_enabled = bool(yt_meta.get("youtube_enabled"))
+
     context = {
         **cfg,
         "path_prefix": prefix,
@@ -1612,7 +1619,18 @@ def generate_show_page(slug, *, dry_run=False):
         "performance_data": performance_data,
         "page_lang": "ru" if is_russian else "en",
         "hreflang_self": f"ru-{cfg['slug']}" if is_russian else "en",
-        **_read_show_youtube(slug),
+        # Per-show embedded gallery (Phase 2).
+        "gallery_enabled": gallery_enabled,
+        "section_id": "gallery",
+        "section_title": "Episode gallery",
+        "section_intro": (
+            f"AI-generated visuals from recent {cfg['name']} episodes. "
+            "Click any image for a larger view; “Show prompt” "
+            "reveals the text the image was generated from."
+        ),
+        "page_size": 24,
+        "hide_controls": True,
+        **yt_meta,
     }
 
     html = template.render(**context)
@@ -2110,6 +2128,7 @@ def generate_sitemap(*, dry_run=False):
     for extra in ["modern-investing-resources.html", "start-here.html",
                   "about.html", "how-to-listen.html", "faq.html",
                   "press.html", "contact.html", "editorial.html",
+                  "gallery.html",
                   "404.html"]:
         if (ROOT / extra).exists():
             urls.append((f"{base}/{extra}", "0.5", _file_lastmod(ROOT / extra)))
@@ -2237,6 +2256,62 @@ def _count_languages() -> int:
         else:
             langs.add("en")
     return len(langs)
+
+
+def generate_gallery_page(*, dry_run=False):
+    """Generate the network-wide /gallery.html browse page.
+
+    The page renders an empty mount-point that ``assets/js/gallery.js``
+    hydrates client-side from ``site/data/gallery-manifest.json`` (built
+    nightly by ``scripts/build_gallery_manifest.py``). All filtering,
+    sorting, and lightbox UX is client-side.
+    """
+    env = _get_jinja_env()
+    template = env.get_template("gallery_page.html.j2")
+
+    context = {
+        "path_prefix": "",
+        "page_title": "Gallery — Nerra Network",
+        "page_description": (
+            "Every AI-generated visual produced for Nerra Network "
+            "episodes. Browse by show, search, and download under "
+            "CC BY-SA 4.0."
+        ),
+        "meta_description": (
+            "Browse the Nerra Network image gallery — AI-generated "
+            "thumbnails, segment cards, and Shorts art from every "
+            "episode, filterable by show and date."
+        ),
+        "meta_keywords": (
+            "Nerra Network gallery, AI generated images, podcast "
+            "artwork, Grok Imagine, episode thumbnails"
+        ),
+        "theme_color": "#6B47FF",
+        "og_image": "",
+        "canonical_url": "https://nerranetwork.com/gallery.html",
+        "show_color": "",
+        "show_color_dark": "",
+        "all_shows": _build_all_shows_list(),
+        # Params for the _gallery_section.html.j2 partial. The hero
+        # already has a title so the section itself runs untitled.
+        "section_id": "gallery",
+        "section_title": "",
+        "section_intro": "",
+        "show_slug": "",
+        "page_size": 60,
+        "hide_controls": False,
+    }
+
+    html = template.render(**context)
+    out_path = ROOT / "gallery.html"
+
+    if dry_run:
+        print(f"[dry-run] Would write {out_path}")
+        return None
+
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path}")
+    return out_path
 
 
 def generate_about_page(*, dry_run=False):
@@ -2561,6 +2636,7 @@ def main():
         generate_player_page(dry_run=args.dry_run)
         generate_start_here_page(dry_run=args.dry_run)
         generate_about_page(dry_run=args.dry_run)
+        generate_gallery_page(dry_run=args.dry_run)
         generate_how_to_listen_page(dry_run=args.dry_run)
         generate_press_page(dry_run=args.dry_run)
         generate_contact_page(dry_run=args.dry_run)

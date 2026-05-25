@@ -1,0 +1,98 @@
+name: Build Gallery Manifest
+
+# Rebuilds site/data/gallery-manifest.json by walking every .json
+# sidecar in the nerra-gallery R2 bucket. See
+# docs/gallery_storage.md for the manifest schema and
+# scripts/build_gallery_manifest.py for the builder.
+#
+# The script gracefully writes an empty manifest when R2 credentials
+# are missing — the workflow will not fail in that case. It also
+# skips the write when only the timestamp would change, so the daily
+# commit step is a no-op when no new images have been uploaded.
+#
+# Triggers:
+#   * Nightly at 03:30 UTC — well after run-show.yml finishes its
+#     last slot (~12:00 UTC) and the dashboard refresh.
+#   * After every successful "Run Podcast Show" workflow run, so the
+#     gallery reflects new uploads within minutes of episode publish.
+#   * On push to main affecting the gallery code paths.
+#   * workflow_dispatch for manual runs.
+
+on:
+  schedule:
+    - cron: '30 3 * * *'
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Run Podcast Show"]
+    types: [completed]
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/build_gallery_manifest.py'
+      - 'engine/gallery_uploader.py'
+      - '.github/workflows/build-gallery-manifest.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-gallery-manifest
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Skip workflow_run firings where the upstream Run Podcast Show failed.
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - uses: actions/cache@v5
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-gallery-${{ hashFiles('requirements.txt') }}
+          restore-keys: ${{ runner.os }}-pip-gallery-
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build gallery manifest
+        env:
+          R2_GALLERY_BUCKET: ${{ secrets.R2_GALLERY_BUCKET }}
+          R2_GALLERY_PUBLIC_BASE_URL: ${{ secrets.R2_GALLERY_PUBLIC_BASE_URL }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: python scripts/build_gallery_manifest.py --out site/data/gallery-manifest.json
+
+      - name: Pull latest before committing
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase --autostash origin main || true
+
+      - name: Commit and push manifest
+        run: |
+          git add site/data/gallery-manifest.json
+          if git diff --cached --quiet; then
+            echo "No manifest changes to commit"
+            exit 0
+          fi
+          git commit -m "Update gallery manifest $(date -u +%Y-%m-%dT%H:%MZ)"
+          # Small retry in case two gallery runs raced.
+          for i in 1 2 3; do
+            if git push; then
+              exit 0
+            fi
+            git pull --rebase --autostash origin main || true
+            sleep 2
+          done
+          git push

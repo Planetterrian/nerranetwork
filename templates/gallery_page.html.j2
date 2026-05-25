@@ -1,0 +1,52 @@
+{% extends "base.html.j2" %}
+
+{% block head_extra %}
+    <link rel="stylesheet" href="{{ path_prefix }}styles/main.css">
+    <style>
+        .nn-gallery-hero {
+            padding: calc(var(--nav-height) + var(--sp-12)) var(--sp-6) var(--sp-8);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .nn-gallery-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 0%, rgba(124, 92, 255, 0.18), transparent 70%);
+            pointer-events: none;
+        }
+        .nn-gallery-hero h1 {
+            font-family: var(--font-heading);
+            font-size: clamp(2rem, 5vw, 3rem);
+            margin: 0 0 var(--sp-3);
+            background: var(--nn-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .nn-gallery-hero p {
+            font-family: var(--font-ui);
+            color: var(--nn-text-muted);
+            font-size: 1.05rem;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+        .nn-gallery-wrap {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 var(--sp-6) var(--sp-16);
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<section class="nn-gallery-hero">
+    <h1>Gallery</h1>
+    <p>Every AI-generated visual produced for Nerra Network episodes — long-form thumbnails, segment cards, and Shorts art. Browse by show or search the catalogue.</p>
+</section>
+
+<div class="nn-gallery-wrap">
+    {% include "_gallery_section.html.j2" with context %}
+</div>
+{% endblock %}
