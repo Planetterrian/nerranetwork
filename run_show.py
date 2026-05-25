@@ -2994,6 +2994,7 @@ def _publish_youtube(
 
     from engine.captions import (
         find_transcript_for_episode,
+        transcript_to_ass_window,
         transcript_to_srt,
         transcript_to_srt_window,
     )
@@ -3439,29 +3440,66 @@ def _publish_youtube(
             # the Shorts clip's own t=0 timeline. Same
             # ``voice_intro_delay`` offset the long-form SRT uses so
             # the cues land on speech in the final audio.
+            #
+            # Format selection (May 2026): try ASS first for per-word
+            # highlighting (TikTok-style "current word" pop). The
+            # ffmpeg ``subtitles`` filter accepts both .ass and .srt
+            # transparently, so swapping extensions on the wire needs
+            # no video.py change. If the ASS file is empty (older
+            # transcript without word_timestamps, or no overlap with
+            # the Shorts window), fall back to the legacy SRT format
+            # — better a static cue card than no captions.
             short_srt_path = None
             if transcript_path is not None:
                 try:
-                    short_srt_candidate = work_dir / f"{base_name}_short.srt"
                     _caption_offset = float(
                         getattr(config.audio, "voice_intro_delay", 0.0) or 0.0
                     )
-                    transcript_to_srt_window(
+                    short_ass_candidate = work_dir / f"{base_name}_short.ass"
+                    transcript_to_ass_window(
                         transcript_path,
-                        short_srt_candidate,
+                        short_ass_candidate,
                         window_start_seconds=short_offset,
                         window_duration_seconds=duration,
                         audio_offset_seconds=_caption_offset,
                     )
-                    if short_srt_candidate.exists() and short_srt_candidate.stat().st_size > 0:
-                        short_srt_path = short_srt_candidate
+                    has_word_cues = (
+                        short_ass_candidate.exists()
+                        and short_ass_candidate.stat().st_size > 0
+                        # The empty-state file still has the [Script Info]
+                        # header (~480 bytes); a populated file always has
+                        # at least one Dialogue line on top of that. Use a
+                        # threshold rather than zero so empty-state files
+                        # fall through to SRT fallback cleanly.
+                        and "Dialogue:" in short_ass_candidate.read_text(
+                            encoding="utf-8", errors="replace",
+                        )
+                    )
+                    if has_word_cues:
+                        short_srt_path = short_ass_candidate
                     else:
                         logger.info(
-                            "Shorts SRT empty — no cues fell inside the "
-                            "[%.1fs, %.1fs] window. Shorts ships without "
-                            "burned-in captions.",
+                            "Shorts per-word ASS contained no events — "
+                            "falling back to segment-level SRT for the "
+                            "[%.1fs, %.1fs] window.",
                             short_offset, short_offset + duration,
                         )
+                        short_srt_candidate = work_dir / f"{base_name}_short.srt"
+                        transcript_to_srt_window(
+                            transcript_path,
+                            short_srt_candidate,
+                            window_start_seconds=short_offset,
+                            window_duration_seconds=duration,
+                            audio_offset_seconds=_caption_offset,
+                        )
+                        if short_srt_candidate.exists() and short_srt_candidate.stat().st_size > 0:
+                            short_srt_path = short_srt_candidate
+                        else:
+                            logger.info(
+                                "Shorts SRT also empty — no cues fell "
+                                "inside the window. Shorts ships without "
+                                "burned-in captions.",
+                            )
                 except Exception as exc:  # pragma: no cover — best-effort
                     logger.warning("Shorts caption generation failed: %s", exc)
 

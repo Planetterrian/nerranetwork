@@ -329,6 +329,291 @@ def transcript_to_srt_window(
     return srt_path
 
 
+# ---------------------------------------------------------------------------
+# ASS — per-word highlight for Shorts (TikTok / Reels look)
+# ---------------------------------------------------------------------------
+
+# Highlight colour for the "current word" in the per-word Shorts caption
+# card. Cyan (#00D4FF) is one of the two Nerra Network accent colours
+# (defined in styles/main.css as --nn-cyan) and lifts cleanly off the
+# 50 %-opaque black caption card without bleeding into the white text
+# of the surrounding words. ASS colour format is &HAABBGGRR so cyan
+# (R=00, G=D4, B=FF) becomes &H00FFD400.
+_HIGHLIGHT_PRIMARY_BGR = "&H00FFD400&"
+
+# Inline override that resets the cue's primary colour to whatever
+# ``force_style`` set as the default (white in
+# ``_SHORTS_SUBTITLES_FORCE_STYLE``). ``\r`` without an argument reverts
+# to the style default; we use this rather than hard-coding a white
+# colour so per-show style overrides keep working in a future change.
+_HIGHLIGHT_RESET = r"{\r}"
+
+
+def _format_ass_timestamp(seconds: float) -> str:
+    """Format ``seconds`` as ASS ``H:MM:SS.cs`` (centiseconds)."""
+    if seconds < 0:
+        seconds = 0.0
+    cs_total = int(round(seconds * 100))
+    h = cs_total // (3600 * 100)
+    rem = cs_total % (3600 * 100)
+    m = rem // (60 * 100)
+    rem = rem % (60 * 100)
+    s = rem // 100
+    cs = rem % 100
+    return f"{h}:{m:02d}:{s:02d}.{cs:02d}"
+
+
+def _ass_escape(text: str) -> str:
+    """Escape characters with special meaning in ASS dialogue text.
+
+    ASS uses ``{`` and ``}`` to delimit inline override tags, and
+    backslashes inside the braces are tag prefixes. We don't carry
+    arbitrary user content through (Whisper output is normal speech)
+    so the only realistic risk is curly braces in a quoted lyric or
+    a model artefact. Strip them; keep everything else literal.
+    """
+    if not text:
+        return ""
+    return text.replace("{", "(").replace("}", ")")
+
+
+_ASS_HEADER = """[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+YCbCr Matrix: TV.709
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,DejaVu Sans,48,&H00FFFFFF,&H00FFFFFF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,3,3,0,2,40,40,340,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+"""
+
+
+def _chunk_words(
+    words: List[dict], *, max_chars: int, max_words_per_chunk: int,
+) -> List[List[dict]]:
+    """Group consecutive words into render-ready chunks.
+
+    A "chunk" is the unit that occupies the caption card for the
+    duration of its first→last word range; per-word highlight cycles
+    inside a chunk. Splitting on chars (24) + max words (8) keeps
+    each chunk to a comfortable 1–2 line render at FontSize=48 on a
+    1080-wide frame.
+    """
+    chunks: List[List[dict]] = []
+    current: List[dict] = []
+    current_chars = 0
+    for w in words:
+        token = (w.get("word") or "").strip()
+        if not token:
+            continue
+        prospective = current_chars + len(token) + (1 if current else 0)
+        if current and (
+            prospective > max_chars or len(current) >= max_words_per_chunk
+        ):
+            chunks.append(current)
+            current = [w]
+            current_chars = len(token)
+        else:
+            current.append(w)
+            current_chars = prospective
+    if current:
+        chunks.append(current)
+    return chunks
+
+
+def _render_chunk_dialogues(
+    chunk: List[dict],
+    *,
+    window_start: float,
+    window_end: float,
+    audio_offset: float,
+    min_word_duration: float = 0.08,
+) -> List[str]:
+    """Emit one ASS Dialogue line per word in the chunk.
+
+    Each line shows the SAME text (the whole chunk) with one word
+    coloured in the highlight cyan and the others left at the style
+    default. That produces the TikTok "current word" visual: the
+    whole sentence is visible, but the active word pops.
+
+    Word timestamps are first shifted onto the final-audio timeline
+    (``audio_offset``), then rebased to the Shorts clip's t=0 origin
+    (``window_start``), then clipped to the window.
+    """
+    if not chunk:
+        return []
+    tokens = [(w.get("word") or "").strip() for w in chunk]
+    tokens = [t for t in tokens if t]
+    if not tokens:
+        return []
+
+    lines: List[str] = []
+    for idx, w in enumerate(chunk):
+        token = (w.get("word") or "").strip()
+        if not token:
+            continue
+        try:
+            ws = float(w["start"]) + audio_offset
+            we = float(w["end"]) + audio_offset
+        except (KeyError, TypeError, ValueError):
+            continue
+        # Clip to the Shorts window, then rebase to t=0.
+        ws = max(ws, window_start)
+        we = min(we, window_end)
+        if we - ws < min_word_duration:
+            we = ws + min_word_duration
+        rel_start = ws - window_start
+        rel_end = we - window_start
+        if rel_end <= 0 or rel_start >= (window_end - window_start):
+            continue
+
+        # Build the cue text. The current word is wrapped in a
+        # primary-colour override; everything else stays default.
+        parts: List[str] = []
+        for j, t in enumerate(tokens):
+            esc = _ass_escape(t)
+            if j == idx:
+                parts.append(f"{{\\1c{_HIGHLIGHT_PRIMARY_BGR}}}{esc}{_HIGHLIGHT_RESET}")
+            else:
+                parts.append(esc)
+        cue_text = " ".join(parts)
+        lines.append(
+            f"Dialogue: 0,"
+            f"{_format_ass_timestamp(rel_start)},"
+            f"{_format_ass_timestamp(rel_end)},"
+            f"Default,,0,0,0,,{cue_text}"
+        )
+    return lines
+
+
+def transcript_to_ass_window(
+    transcript_path: Path,
+    ass_path: Path,
+    *,
+    window_start_seconds: float,
+    window_duration_seconds: float,
+    audio_offset_seconds: float = 0.0,
+    wrap_max_chars: int = 24,
+    max_words_per_chunk: int = 8,
+) -> Path:
+    """Emit an ASS caption file with per-word highlighting for a Shorts
+    window.
+
+    Drop-in replacement for ``transcript_to_srt_window`` when the
+    Whisper transcript carries per-word timestamps (the network's
+    primary transcript invocation in ``engine.transcripts`` has
+    ``word_timestamps=True`` so this is the common case). Falls back
+    silently to an empty file if no segments / no word data exists
+    in the window — the caller treats an empty caption file the same
+    as the SRT path (skip burn-in).
+
+    Visual: each chunk of ~24 chars / ≤8 words occupies the bottom-
+    third caption card; the active word is rendered in cyan
+    (``&H00FFD400``) while the rest of the chunk stays at the style
+    default (white from ``_SHORTS_SUBTITLES_FORCE_STYLE``). As speech
+    progresses, the highlight steps from one word to the next at
+    Whisper's per-word timestamps. The chunk transition is implicit:
+    the chunk's last word's end is the start of the next chunk's
+    first word.
+
+    The default style block in the file is a sensible Shorts-tuned
+    baseline; ffmpeg's ``subtitles`` filter overrides it via
+    ``force_style=`` so the values pinned in
+    ``engine.video._SHORTS_SUBTITLES_FORCE_STYLE`` remain the source
+    of truth at render time.
+    """
+    if window_start_seconds < 0:
+        raise ValueError(
+            f"window_start_seconds must be >= 0, got {window_start_seconds}"
+        )
+    if window_duration_seconds <= 0:
+        raise ValueError(
+            f"window_duration_seconds must be > 0, got {window_duration_seconds}"
+        )
+    if audio_offset_seconds < 0:
+        raise ValueError(
+            f"audio_offset_seconds must be >= 0, got {audio_offset_seconds}"
+        )
+
+    try:
+        data = json.loads(transcript_path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        logger.error("Transcript not found: %s", transcript_path)
+        raise
+    except json.JSONDecodeError as exc:
+        logger.error("Transcript JSON malformed (%s): %s", transcript_path, exc)
+        raise
+
+    segments = data.get("segments", []) if isinstance(data, dict) else []
+    window_end = window_start_seconds + window_duration_seconds
+
+    dialogue_lines: List[str] = []
+    for seg in segments:
+        if not isinstance(seg, dict):
+            continue
+        words = seg.get("words") or []
+        if not words:
+            continue
+        # Filter words to the Shorts window before chunking — avoids
+        # chunks that straddle the boundary.
+        in_window: List[dict] = []
+        for w in words:
+            if not isinstance(w, dict):
+                continue
+            try:
+                ws = float(w["start"]) + audio_offset_seconds
+                we = float(w["end"]) + audio_offset_seconds
+            except (KeyError, TypeError, ValueError):
+                continue
+            if we <= window_start_seconds or ws >= window_end:
+                continue
+            in_window.append(w)
+        if not in_window:
+            continue
+        for chunk in _chunk_words(
+            in_window,
+            max_chars=wrap_max_chars,
+            max_words_per_chunk=max_words_per_chunk,
+        ):
+            dialogue_lines.extend(
+                _render_chunk_dialogues(
+                    chunk,
+                    window_start=window_start_seconds,
+                    window_end=window_end,
+                    audio_offset=audio_offset_seconds,
+                )
+            )
+
+    body = _ASS_HEADER + "\n".join(dialogue_lines) + ("\n" if dialogue_lines else "")
+    try:
+        ass_path.write_text(body, encoding="utf-8")
+    except OSError as exc:
+        logger.error(
+            "Failed to write Shorts ASS to %s (%s): %s",
+            ass_path, type(exc).__name__, exc,
+        )
+        raise
+    if not dialogue_lines:
+        logger.info(
+            "Shorts window [%.2fs, %.2fs] (offset=%.2fs) contained no "
+            "word-level transcript data — ASS file written empty",
+            window_start_seconds, window_end, audio_offset_seconds,
+        )
+    else:
+        logger.info(
+            "Wrote %d per-word Shorts caption events → %s (window=[%.1fs, %.1fs])",
+            len(dialogue_lines), ass_path.name,
+            window_start_seconds, window_end,
+        )
+    return ass_path
+
+
 def find_transcript_for_episode(digests_dir: Path,
                                 episode_prefix: str,
                                 episode_num: int,
