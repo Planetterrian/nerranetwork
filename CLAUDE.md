@@ -287,6 +287,24 @@ episode so the dashboard can show smart-vs-fallback rates. New shows
 opt in by setting `youtube.shorts_start_mode: smart` in their YAML.
 Drift guards in `tests/test_shorts_selector.py`.
 
+**Auto-hashtag injection on Shorts descriptions.** Every Shorts
+upload now carries entity-derived hashtags in its description
+(via [`engine.shorts_hashtags.extract_hashtags`](engine/shorts_hashtags.py)).
+YouTube renders the **first 3** hashtags as clickable topic-tag
+links above the video title — biggest discovery lever on Shorts
+after the title itself. Heuristic-only parser, no LLM call:
+multi-word Title-Case entities (`Tesla Cybercab` →
+`#TeslaCybercab`) outrank single proper nouns (`Tesla` →
+`#Tesla`) which outrank all-caps acronyms (`TSLA` → `#TSLA`),
+with the show's YAML `keywords` blended in at the tail to fill
+remaining slots. Substring de-dupe across bands prevents
+"#Tesla" eating a slot when "#TeslaCybercab" already covers the
+entity. Caps at 5 hashtags + the static `#Shorts #podcast`
+suffix. Real-hook probes: Tesla wireless-BMS hook →
+`#BatteryManagementSystem #Tesla #Cybercab`; Modern Investing
+TFSA/RRSP hook → `#ModernInvestingTechniques #TFSA #RRSP`. Drift
+guards in `tests/test_shorts_hashtags.py`.
+
 **Hook overlay auto-shrink-to-fit.** The 0–3 s static hook
 overlay on the Shorts MP4 used to render at a fixed
 fontsize=44 with a conservative char-based wrap (26 chars × 4
