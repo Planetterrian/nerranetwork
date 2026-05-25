@@ -2221,6 +2221,19 @@ def run(args: argparse.Namespace) -> None:
             "gallery_uploaded",
             int(youtube_urls.get("gallery_uploaded", 0) or 0),
         )
+        # Smart Shorts segment selection (May 2026): record the chosen
+        # offset and which mode resolved to it so the dashboard can
+        # surface smart-vs-fallback rate per show.
+        if "shorts_start_offset" in youtube_urls:
+            metrics.record(
+                "shorts_start_offset",
+                float(youtube_urls["shorts_start_offset"]),
+            )
+        if "shorts_start_mode_resolved" in youtube_urls:
+            metrics.record(
+                "shorts_start_mode_resolved",
+                str(youtube_urls["shorts_start_mode_resolved"]),
+            )
         if youtube_urls.get("gallery_skipped_reason"):
             metrics.record(
                 "gallery_skipped_reason",
@@ -3430,8 +3443,25 @@ def _publish_youtube(
                 config,
                 chapters_path if chapters_path.exists() else None,
                 audio_duration=_ep_duration,
+                transcript_path=transcript_path,
             )
             duration = float(config.youtube.short_duration_seconds or 55.0)
+            # Surface the chosen offset on the result dict so the
+            # caller can record it as a metric. Operators reading the
+            # dashboard / metrics_ep*.json can then tell at a glance
+            # whether smart-mode is firing, which voice-fallback rate
+            # is, and whether a particular show's heuristic threshold
+            # needs tuning.
+            result["shorts_start_offset"] = round(short_offset, 2)
+            result["shorts_start_mode_resolved"] = (
+                "explicit" if getattr(
+                    config.youtube, "shorts_start_offset", None,
+                ) is not None
+                else (
+                    getattr(config.youtube, "shorts_start_mode", None)
+                    or "voice"
+                )
+            )
 
             # Build a Shorts-windowed SRT (May 2026 operator review:
             # Shorts had no synced captions at all). Reuse the Whisper

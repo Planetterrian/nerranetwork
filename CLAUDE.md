@@ -273,6 +273,20 @@ it falls back to the legacy segment-level SRT so the Short always
 has captions of some kind. Drift guards in
 `tests/test_captions_ass.py`.
 
+**Smart Shorts segment selection.** Tesla + MAB now use
+`shorts_start_mode: smart` in their YAML, which calls
+[`engine.shorts_selector.pick_engaging_window`](engine/shorts_selector.py)
+to scan the Whisper transcript and start the Shorts clip at the
+most engaging beat (numeric reveal, hook framing like "the kicker
+is…", surprise / question / superlative). Pure heuristic — no LLM
+call, no per-episode cost. Falls back to the legacy
+`voice_intro_delay` start when no segment scores above the noise
+threshold (5.0). The chosen offset + the resolved mode are recorded
+as metrics (`shorts_start_offset`, `shorts_start_mode_resolved`) per
+episode so the dashboard can show smart-vs-fallback rates. New shows
+opt in by setting `youtube.shorts_start_mode: smart` in their YAML.
+Drift guards in `tests/test_shorts_selector.py`.
+
 ### Testing
 
 ```bash
