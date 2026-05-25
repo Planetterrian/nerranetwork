@@ -152,3 +152,53 @@ def test_gallery_manifest_placeholder_is_valid_json():
     assert isinstance(data["images"], list)
     assert isinstance(data["shows"], list)
     assert "image_count" in data
+
+
+def test_gallery_enabled_requires_grok_image_provider():
+    """A show that uses Pexels for its YouTube slideshow must NOT
+    have the gallery section embedded — the gallery uploader is
+    wired only into the Grok Imagine path, so a Pexels show would
+    render an empty gallery forever."""
+    import sys
+    if str(PROJECT_ROOT) not in sys.path:
+        sys.path.insert(0, str(PROJECT_ROOT))
+    from generate_html import (
+        _read_show_image_provider, _read_show_youtube,
+    )
+
+    tesla_yt = _read_show_youtube("tesla")
+    tesla_provider = _read_show_image_provider("tesla")
+    tesla_enabled = (
+        bool(tesla_yt.get("youtube_enabled"))
+        and tesla_provider in ("grok", "hybrid")
+    )
+    assert tesla_provider == "grok", \
+        f"Tesla expected on grok provider, got {tesla_provider!r}"
+    assert tesla_enabled, "Tesla should have gallery_enabled=True"
+
+    mab_yt = _read_show_youtube("models_agents_beginners")
+    mab_provider = _read_show_image_provider("models_agents_beginners")
+    mab_enabled = (
+        bool(mab_yt.get("youtube_enabled"))
+        and mab_provider in ("grok", "hybrid")
+    )
+    # MAB is on Pexels today (no gallery images produced) — section
+    # must stay hidden. The day MAB flips to grok / hybrid this test
+    # also needs to flip; that's the intended contract.
+    assert mab_provider == "pexels", (
+        f"MAB expected on pexels, got {mab_provider!r}. If you "
+        "intentionally migrated MAB to Grok Imagine, flip this "
+        "assertion to expect 'grok' / 'hybrid' and the gallery "
+        "section will start rendering on the MAB show page."
+    )
+    assert mab_enabled is False, "MAB gallery_enabled must stay False"
+
+
+def test_read_show_image_provider_defaults_to_pexels_for_unknown_show():
+    """An unknown / missing show YAML must default to 'pexels' so the
+    gallery section auto-disables rather than breaking the render."""
+    import sys
+    if str(PROJECT_ROOT) not in sys.path:
+        sys.path.insert(0, str(PROJECT_ROOT))
+    from generate_html import _read_show_image_provider
+    assert _read_show_image_provider("__nonexistent__") == "pexels"
