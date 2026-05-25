@@ -331,3 +331,171 @@ def test_explicit_offset_overrides_smart(tmp_path):
     assert resolve_shorts_start_offset(
         cfg, None, audio_duration=300.0, transcript_path=tp,
     ) == 42.0
+
+
+# ---------------------------------------------------------------------------
+# pick_top_n_engaging_windows — multi-Shorts selection
+# ---------------------------------------------------------------------------
+
+
+def test_pick_top_n_returns_empty_when_n_le_0(tmp_path):
+    """Defensive — n=0 (or negative) is a caller bug; return empty
+    rather than picking anything."""
+    from engine.shorts_selector import pick_top_n_engaging_windows
+    segs = [_seg(0.0, 5.0, "And the kicker is they hit $15 billion in revenue.")]
+    tp = _write_transcript(tmp_path, segs)
+    out = pick_top_n_engaging_windows(
+        tp, n=0, audio_offset=0.0, audio_duration=300.0,
+    )
+    assert out == []
+
+
+def test_pick_top_n_returns_one_for_n_equals_1(tmp_path):
+    """n=1 must behave identically to pick_engaging_window — caller
+    that's already on the single-Short path can swap if desired."""
+    from engine.shorts_selector import (
+        pick_engaging_window,
+        pick_top_n_engaging_windows,
+    )
+    segs = [
+        _seg(0.0, 5.0, "Welcome to today's episode."),
+        _seg(5.0, 12.0, "And the kicker is they hit $15 billion in revenue."),
+    ]
+    tp = _write_transcript(tmp_path, segs)
+    single = pick_engaging_window(
+        tp, audio_offset=0.0, audio_duration=300.0,
+    )
+    multi = pick_top_n_engaging_windows(
+        tp, n=1, audio_offset=0.0, audio_duration=300.0,
+    )
+    assert single is not None
+    assert len(multi) == 1
+    assert multi[0].start_seconds == single.start_seconds
+
+
+def test_pick_top_n_picks_non_overlapping_windows(tmp_path):
+    """N=2 must produce two windows whose [start, end] don't
+    overlap with each other (or share less than min_gap_seconds
+    between end and next start)."""
+    from engine.shorts_selector import pick_top_n_engaging_windows
+    # Two clearly distinct engaging beats far apart in the episode.
+    high_signal_a = "Here's the kicker: $15 billion this quarter."
+    high_signal_b = "And the wild part is they hit 38% revenue."
+    filler = "The quarterly report covers regular data."
+    segs = [
+        _seg(0.0, 5.0, filler),
+        _seg(5.0, 12.0, high_signal_a),       # window candidate A
+        _seg(12.0, 60.0, filler),
+        _seg(70.0, 80.0, high_signal_b),      # window candidate B (way later)
+        _seg(80.0, 100.0, filler),
+    ]
+    tp = _write_transcript(tmp_path, segs)
+    out = pick_top_n_engaging_windows(
+        tp, n=2, audio_offset=0.0, audio_duration=300.0,
+        window_duration=55.0, min_gap_seconds=10.0,
+    )
+    assert len(out) == 2
+    # Sorted chronologically.
+    assert out[0].start_seconds < out[1].start_seconds
+    # Non-overlapping with the configured gap.
+    assert out[0].end_seconds + 10.0 <= out[1].start_seconds
+
+
+def test_pick_top_n_rejects_overlapping_candidates(tmp_path):
+    """When two engaging beats are inside the same 55s window, only
+    one of them survives — the other would overlap."""
+    from engine.shorts_selector import pick_top_n_engaging_windows
+    # Both beats fall inside [0, 55] so picking both as starts would
+    # produce overlapping windows.
+    segs = [
+        _seg(0.0, 5.0, "Welcome to today's episode."),
+        _seg(5.0, 12.0, "Here's the kicker: $15 billion this quarter."),
+        _seg(12.0, 20.0, "And the wild part is they hit 38% growth."),
+        _seg(20.0, 80.0, "More content."),
+    ]
+    tp = _write_transcript(tmp_path, segs)
+    out = pick_top_n_engaging_windows(
+        tp, n=2, audio_offset=0.0, audio_duration=200.0,
+        window_duration=55.0, min_gap_seconds=10.0,
+    )
+    # Only one of the two close-by signals survives — the other
+    # falls inside the picked window.
+    assert len(out) == 1
+
+
+def test_pick_top_n_returns_fewer_than_n_when_supply_short(tmp_path):
+    """If the episode only has 1 strong beat, n=3 returns 1 window
+    rather than padding with garbage."""
+    from engine.shorts_selector import pick_top_n_engaging_windows
+    segs = [
+        _seg(0.0, 5.0, "Welcome to today's episode."),
+        _seg(5.0, 12.0, "Here's the kicker: $15 billion this quarter."),
+        _seg(12.0, 200.0, "Some boring filler content."),
+    ]
+    tp = _write_transcript(tmp_path, segs)
+    out = pick_top_n_engaging_windows(
+        tp, n=3, audio_offset=0.0, audio_duration=300.0,
+    )
+    assert len(out) == 1
+
+
+def test_pick_top_n_returns_empty_when_no_threshold_breakers(tmp_path):
+    """All-boilerplate episode produces no Shorts plan; caller falls
+    back to the legacy voice-start single Short."""
+    from engine.shorts_selector import pick_top_n_engaging_windows
+    segs = [
+        _seg(0.0, 5.0, "Welcome to today's episode."),
+        _seg(5.0, 12.0, "The company released a report."),
+        _seg(12.0, 20.0, "Operations continue as expected."),
+    ]
+    tp = _write_transcript(tmp_path, segs)
+    out = pick_top_n_engaging_windows(
+        tp, n=3, audio_offset=0.0, audio_duration=300.0,
+        min_score_threshold=5.0,
+    )
+    assert out == []
+
+
+def test_pick_top_n_sorted_chronologically(tmp_path):
+    """The returned list is sorted by start_seconds ascending so the
+    Shorts publish flow uploads them in episode order (Short 1 from
+    earlier in the episode, Short 2 later) — small but real signal
+    for viewers who watch multiple Shorts in a row."""
+    from engine.shorts_selector import pick_top_n_engaging_windows
+    # Two engaging beats; the later one has a HIGHER raw score so
+    # we'd take it first if sort were by score. After re-sort, it
+    # comes second.
+    segs = [
+        _seg(0.0, 5.0, "Filler before any signal."),
+        _seg(5.0, 12.0, "The kicker is they hit $15 billion."),  # mid score
+        _seg(12.0, 60.0, "More filler."),
+        _seg(70.0, 80.0, "Here's the kicker: incredibly the wild part is 80%."),  # higher score
+        _seg(80.0, 200.0, "More filler."),
+    ]
+    tp = _write_transcript(tmp_path, segs)
+    out = pick_top_n_engaging_windows(
+        tp, n=2, audio_offset=0.0, audio_duration=300.0,
+        window_duration=55.0, min_gap_seconds=10.0,
+    )
+    assert len(out) == 2
+    # Returned chronologically even though the latter has a higher
+    # raw score.
+    assert out[0].start_seconds < out[1].start_seconds
+
+
+def test_pick_top_n_respects_min_start_final(tmp_path):
+    """An engaging beat that lands during the music intro (final-
+    audio time < min_start_final) must be rejected even if its
+    Whisper timestamp is t=0."""
+    from engine.shorts_selector import pick_top_n_engaging_windows
+    segs = [
+        _seg(0.0, 5.0, "Here's the kicker: $15 billion this quarter."),
+    ]
+    tp = _write_transcript(tmp_path, segs)
+    # Whisper t=0..5; final audio adds 4.5s offset; window starts at
+    # final t=4.5. With min_start_final=10.0, the window is rejected.
+    out = pick_top_n_engaging_windows(
+        tp, n=3, audio_offset=4.5, audio_duration=300.0,
+        min_start_final=10.0, window_duration=55.0,
+    )
+    assert out == []

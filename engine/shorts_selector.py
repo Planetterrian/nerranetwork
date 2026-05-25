@@ -344,3 +344,109 @@ def pick_engaging_window(
         best.start_seconds, best.score, best.opening_text,
     )
     return best
+
+
+def pick_top_n_engaging_windows(
+    transcript_path: Path,
+    *,
+    n: int,
+    audio_offset: float,
+    audio_duration: float,
+    window_duration: float = 55.0,
+    min_start_final: Optional[float] = None,
+    min_score_threshold: float = 5.0,
+    min_gap_seconds: float = 10.0,
+) -> List[ScoredWindow]:
+    """Return up to ``n`` non-overlapping windows ranked by score.
+
+    Powers the "multiple Shorts per episode" pipeline. Each window's
+    start must be at least ``min_gap_seconds`` AFTER the previous
+    picked window's end, so the N Shorts cover genuinely different
+    moments of the episode rather than near-duplicates.
+
+    Selection is greedy-by-score: take the top-scoring candidate
+    first, then filter remaining candidates to those that don't
+    overlap (with the gap), then take the next-highest, repeat.
+    This produces the N most engaging windows that are also
+    temporally distinct.
+
+    Behaviour at the edges:
+
+    * Fewer than ``n`` candidates above ``min_score_threshold`` →
+      returns whatever it found (possibly empty). Caller decides
+      whether to fall back to legacy voice-start for the missing
+      slots.
+    * No candidates at all → returns ``[]``.
+    * ``n <= 0`` → returns ``[]`` (defensive — caller bug).
+    * Transcript unreadable → returns ``[]`` (logged in score_candidates).
+
+    Returned list is sorted by ``start_seconds`` ascending so the
+    Shorts publish flow uploads them in chronological order
+    (Short 1 from earlier in the episode, Short 2 later) — a small
+    but real engagement signal for viewers who watch multiple
+    Shorts in a row.
+    """
+    if n <= 0:
+        return []
+    floor = audio_offset if min_start_final is None else min_start_final
+    candidates = score_candidates(
+        transcript_path,
+        audio_offset=audio_offset,
+        audio_duration=audio_duration,
+        window_duration=window_duration,
+        min_start_final=floor,
+    )
+    if not candidates:
+        logger.info(
+            "Smart Shorts selector (top-%d): no scorable candidates in %s",
+            n, transcript_path.name,
+        )
+        return []
+
+    picked: List[ScoredWindow] = []
+    # ``candidates`` is already sorted by score descending. Walk it
+    # greedily and accept any that doesn't overlap a previously
+    # picked window.
+    for cand in candidates:
+        if cand.score < min_score_threshold:
+            break  # remaining are all below threshold too
+        if not _overlaps_any(cand, picked, min_gap_seconds):
+            picked.append(cand)
+            if len(picked) >= n:
+                break
+
+    # Re-sort by start time so the caller can iterate chronologically.
+    picked.sort(key=lambda w: w.start_seconds)
+    if picked:
+        logger.info(
+            "Smart Shorts selector (top-%d): picked %d window(s): %s",
+            n, len(picked),
+            ", ".join(
+                f"{w.start_seconds:.1f}s(score={w.score:.1f})" for w in picked
+            ),
+        )
+    else:
+        logger.info(
+            "Smart Shorts selector (top-%d): no candidate above threshold "
+            "%.1f in %s",
+            n, min_score_threshold, transcript_path.name,
+        )
+    return picked
+
+
+def _overlaps_any(
+    candidate: ScoredWindow,
+    others: List[ScoredWindow],
+    min_gap_seconds: float,
+) -> bool:
+    """True when ``candidate`` overlaps with any window in ``others``
+    OR sits within ``min_gap_seconds`` of one. Two windows are
+    "non-overlapping with gap" iff ``other.end + gap <= candidate.start``
+    OR ``candidate.end + gap <= other.start``."""
+    for other in others:
+        if (
+            candidate.start_seconds < other.end_seconds + min_gap_seconds
+            and other.start_seconds < candidate.end_seconds + min_gap_seconds
+        ):
+            return True
+    return False

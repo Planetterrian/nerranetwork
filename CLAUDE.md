@@ -287,6 +287,26 @@ episode so the dashboard can show smart-vs-fallback rates. New shows
 opt in by setting `youtube.shorts_start_mode: smart` in their YAML.
 Drift guards in `tests/test_shorts_selector.py`.
 
+**Multiple Shorts per episode.** Setting `youtube.shorts_per_episode`
+to N (default 1; cap at 2-3 for YouTube quota safety on the
+@NerraNetwork channel — see landmine #20) makes the runner publish
+N Shorts per episode instead of one. Each Short comes from one of
+the top-N non-overlapping windows the smart selector
+([`pick_top_n_engaging_windows`](engine/shorts_selector.py)) picks
+from the transcript; each gets a distinct headline (the window's
+opening text), a distinct thumbnail (cycled through the available
+Grok-Imagine scene images), and a distinct filename
+(`_short_1.mp4`, `_short_2.mp4`, …). Uploads are sequential; one
+failure doesn't block the others. Per-Short error captures land in
+`result["short_errors"][i]` and the aggregate
+`shorts_count_requested` / `shorts_count_uploaded` metrics fire on
+every episode so the dashboard can plot the multi-Shorts hit rate.
+Requires `shorts_start_mode: smart` (the voice / first_chapter
+modes only know about one offset). Default 1 preserves legacy
+single-Short behaviour byte-for-byte. Drift guards in
+`tests/test_shorts_selector.py` under the
+`pick_top_n_engaging_windows` block.
+
 **Auto-hashtag injection on Shorts descriptions.** Every Shorts
 upload now carries entity-derived hashtags in its description
 (via [`engine.shorts_hashtags.extract_hashtags`](engine/shorts_hashtags.py)).
