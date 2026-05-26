@@ -726,15 +726,33 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
             max_lines=4,
             font_path=_find_font(),
         )
-        escaped = _drawtext_escape(wrapped)
+        # May 26 2026 operator-caught regression (Tesla Ep485 + MAB):
+        # multi-line hooks rendered as ONE overflowing line with the
+        # `\n` byte showing up as the letter "n" between words —
+        # "major warning" → "majornwarning", "volume reductions" →
+        # "volumenreductions". The single-drawtext path emitted
+        # `text='line1\nline2'` and relied on ffmpeg drawtext's
+        # text= expansion to render `\n` as a newline. In practice
+        # the backslash gets eaten somewhere in the filter_complex
+        # parse → drawtext text= pipeline and only the literal "n"
+        # survives. Fix: stack one drawtext filter PER wrapped line
+        # with explicit y-offsets — sidesteps the `\n` escape
+        # entirely and produces deterministic per-line layout.
+        wrapped_lines = wrapped.split("\n") if wrapped else []
+        n_lines = max(len(wrapped_lines), 1)
+        line_spacing = 10
+        line_h = hook_fontsize + line_spacing
         # May 2026 operator review: hook is the static 0-3 s
         # opening title — separate from the burn-in transcript
         # that follows. Position lifted ABOVE the burn-in zone
         # so the two overlays don't visually collide during the
-        # first 3 s. ``y=h*0.55`` puts the hook around y≈1056 —
-        # inside the lower half but well above the subtitle
-        # baseline at y≈1620 (MarginV=300 in
-        # ``_SHORTS_SUBTITLES_FORCE_STYLE``).
+        # first 3 s. ``y=h*0.55`` puts the hook block CENTER
+        # around y≈1056 — inside the lower half but well above
+        # the subtitle baseline at y≈1620 (MarginV=300 in
+        # ``_SHORTS_SUBTITLES_FORCE_STYLE``). With multi-line
+        # hooks, line i is offset from the block center by
+        # ``(i - (n-1)/2) * line_h`` so the wrap stays visually
+        # centered regardless of line count.
         #   * Default ``fontsize=44`` (auto-shrunk per hook length)
         #     is readable on a phone but no longer dominates the
         #     slideshow.
@@ -743,19 +761,24 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
         #     outline + 2 px shadow stays readable on bright
         #     backgrounds without painting a black rectangle.
         hook_label = "[hooked]" if subtitles_path else "[v]"
-        hook_filter = (
-            f";{post_brand_label}drawtext=fontfile='{font_path}':"
-            f"text='{escaped}':"
-            f"fontsize={hook_fontsize}:fontcolor=white:"
-            f"x=(w-text_w)/2:y=h*0.55:"
-            f"borderw=4:bordercolor=black:"
-            f"shadowx=2:shadowy=2:shadowcolor=black@0.7:"
-            f"line_spacing=10:"
-            f"enable='between(t,0,3)'"
-            f"{hook_label}"
-        )
-        chain += hook_filter
-        post_brand_label = hook_label
+        for i, line in enumerate(wrapped_lines):
+            escaped_line = _drawtext_escape(line)
+            offset_px = (i - (n_lines - 1) / 2.0) * line_h
+            sign = "+" if offset_px >= 0 else "-"
+            y_expr = f"h*0.55{sign}{abs(offset_px):.0f}"
+            is_last = (i == n_lines - 1)
+            line_label = hook_label if is_last else f"[hookln{i}]"
+            chain += (
+                f";{post_brand_label}drawtext=fontfile='{font_path}':"
+                f"text='{escaped_line}':"
+                f"fontsize={hook_fontsize}:fontcolor=white:"
+                f"x=(w-text_w)/2:y={y_expr}:"
+                f"borderw=4:bordercolor=black:"
+                f"shadowx=2:shadowy=2:shadowcolor=black@0.7:"
+                f"enable='between(t,0,3)'"
+                f"{line_label}"
+            )
+            post_brand_label = line_label
 
     if subtitles_path:
         escaped_sub = _subtitles_path_escape(subtitles_path)
