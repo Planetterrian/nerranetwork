@@ -450,7 +450,7 @@ def update_rss_feed(
     fg.podcast.itunes_explicit("no")
 
     # --- Migrate legacy GitHub raw URLs to R2 CDN --------------------------
-    _GITHUB_RAW_PREFIX = "https://raw.githubusercontent.com/patricknovak/nerranetworks/main/"
+    _GITHUB_RAW_PREFIX = "https://raw.githubusercontent.com/Planetterrian/nerranetwork/main/"
     r2_base = "https://audio.nerranetwork.com"
     migrated_count = 0
     for ep_data in episodes_by_number.values():

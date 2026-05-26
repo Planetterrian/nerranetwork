@@ -25,7 +25,7 @@ DATA_DIR = ROOT / "data"
 SKIP_FILES = {"_defaults.yaml", "_blocked_sources.yaml"}
 
 HEADERS = {
-    "User-Agent": "PodcastBot/1.0 (+https://github.com/patricknovak/nerranetworks)"
+    "User-Agent": "PodcastBot/1.0 (+https://github.com/Planetterrian/nerranetwork)"
 }
 TIMEOUT = 15
 

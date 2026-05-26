@@ -107,7 +107,7 @@ All files are saved in `digests/planetterrian/`:
 
 The RSS feed is automatically generated at:
 - File: `planetterrian_podcast.rss` (in project root)
-- URL: `https://raw.githubusercontent.com/patricknovak/nerranetworks/main/planetterrian_podcast.rss`
+- URL: `https://raw.githubusercontent.com/Planetterrian/nerranetwork/main/planetterrian_podcast.rss`
 
 ## GitHub Pages Setup
 

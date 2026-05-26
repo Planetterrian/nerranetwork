@@ -104,7 +104,7 @@ All files are saved in `digests/fascinating_frontiers/`:
 
 The RSS feed is automatically generated at:
 - File: `fascinating_frontiers_podcast.rss` (in project root)
-- URL: `https://raw.githubusercontent.com/patricknovak/nerranetworks/main/fascinating_frontiers_podcast.rss`
+- URL: `https://raw.githubusercontent.com/Planetterrian/nerranetwork/main/fascinating_frontiers_podcast.rss`
 
 ## Differences from Planetterrian Daily
 

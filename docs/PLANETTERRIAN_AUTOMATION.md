@@ -62,7 +62,7 @@ After each run, these files are automatically committed to the repository:
 ### Verify Output
 After each successful run:
 1. Check **X account** (@planetterrian) - should see new post
-2. Check **RSS feed**: `https://raw.githubusercontent.com/patricknovak/nerranetworks/main/planetterrian_podcast.rss`
+2. Check **RSS feed**: `https://raw.githubusercontent.com/Planetterrian/nerranetwork/main/planetterrian_podcast.rss`
 3. Check **digests/** folder - should see new files
 4. Check **credit_usage_*.json** - see API costs
 
