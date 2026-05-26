@@ -111,7 +111,7 @@ the purpose since we'd need a URL migration anyway.
 
 The URL would change from:
 ```
-https://raw.githubusercontent.com/patricknovak/nerranetworks/main/digests/Tesla_Shorts_Time_Pod_Ep404_20260215.mp3
+https://raw.githubusercontent.com/Planetterrian/nerranetwork/main/digests/Tesla_Shorts_Time_Pod_Ep404_20260215.mp3
 ```
 to something like:
 ```
@@ -190,7 +190,7 @@ Each script constructs RSS enclosure URLs:
 | `planetterrian.py` | ~1541, 1695, 2595 | `{base_url}/digests/planetterrian/{mp3_filename}` |
 | `fascinating_frontiers.py` | ~2616, 2706 | `{base_url}/digests/fascinating_frontiers/{mp3_filename}` |
 
-`base_url` is `https://raw.githubusercontent.com/patricknovak/nerranetworks/main`
+`base_url` is `https://raw.githubusercontent.com/Planetterrian/nerranetwork/main`
 
 These must be updated to point to the new storage URL for new episodes.
 
@@ -315,7 +315,7 @@ If setting up a Cloudflare account is undesirable, GitHub Releases work:
      --title "Tesla Shorts Time Ep404"
    ```
 
-2. **URL format**: `https://github.com/patricknovak/nerranetworks/releases/download/tesla-ep404-20260215/Tesla_Shorts_Time_Pod_Ep404_20260215.mp3`
+2. **URL format**: `https://github.com/Planetterrian/nerranetwork/releases/download/tesla-ep404-20260215/Tesla_Shorts_Time_Pod_Ep404_20260215.mp3`
 
 3. Same RSS migration process, just different URL format.
 

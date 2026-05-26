@@ -224,7 +224,7 @@ class TestChannelMetadata:
 # TEST: Item / Episode structure
 # ===================================================================
 
-BASE_URL = "https://raw.githubusercontent.com/patricknovak/nerranetworks/main"
+BASE_URL = "https://raw.githubusercontent.com/Planetterrian/nerranetwork/main"
 R2_BASE_URL = "https://audio.nerranetwork.com"
 OP3_PREFIX = "https://op3.dev/e/"
 

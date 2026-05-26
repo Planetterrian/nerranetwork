@@ -103,7 +103,7 @@ All RSS feeds use `raw.githubusercontent.com` URLs pointing to `digests/` paths 
 
 | RSS Feed | Enclosure URL Pattern |
 |----------|----------------------|
-| `podcast.rss` | `https://raw.githubusercontent.com/patricknovak/nerranetworks/main/digests/Tesla_Shorts_Time_Pod_Ep*.mp3` |
+| `podcast.rss` | `https://raw.githubusercontent.com/Planetterrian/nerranetwork/main/digests/Tesla_Shorts_Time_Pod_Ep*.mp3` |
 | `podcast.rss` (legacy) | `...main/digests/digests/Tesla_Shorts_Time_Pod_Ep32[4-9].mp3` |
 | `planetterrian_podcast.rss` | `...main/digests/planetterrian/Planetterrian_Daily_Ep*.mp3` |
 | `fascinating_frontiers_podcast.rss` | `...main/digests/fascinating_frontiers/Fascinating_Frontiers_Ep*.mp3` |
@@ -135,7 +135,7 @@ Each script constructs output paths using `project_root / "digests" / ...`:
 | `planetterrian.py` | `project_root / "digests" / "planetterrian"` | `digests/planetterrian/` |
 | `fascinating_frontiers.py` | `project_root / "digests" / "fascinating_frontiers"` | `digests/fascinating_frontiers/` |
 
-**Also constructed in scripts**: RSS feed `<enclosure url="...">` URLs using `https://raw.githubusercontent.com/patricknovak/nerranetworks/main/digests/...`
+**Also constructed in scripts**: RSS feed `<enclosure url="...">` URLs using `https://raw.githubusercontent.com/Planetterrian/nerranetwork/main/digests/...`
 
 ### 2d. HTML Pages
 
@@ -188,7 +188,7 @@ All four `summaries_*.json` files live at `digests/` top-level, not in their res
 ### 4a. Separate Source from Output
 
 ```
-nerranetworks/
+nerranetwork/
 ├── src/                              # ALL source code (NEW)
 │   ├── shows/
 │   │   ├── tesla_shorts_time.py
