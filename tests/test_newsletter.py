@@ -499,10 +499,13 @@ def test_send_newsletter_uses_v2_filter_tree_when_tags_set(monkeypatch):
     # Each tag becomes a leaf condition.
     leaf_tags = {f["value"] for f in filters["filters"]}
     assert leaf_tags == {"Tesla Shorts Time", "Privet Russian"}
-    # No leftover keys from the old schema.
+    # No leftover keys from the old schema. May 26 2026: Buttondown
+    # tightened the leaf-condition field enum — ``"tag"`` now 422s,
+    # ``"subscriber.tags"`` is the accepted form, and the operator
+    # for list membership is ``"contains"``.
     for leaf in filters["filters"]:
-        assert leaf["field"] == "tag"
-        assert leaf["operator"] == "equals"
+        assert leaf["field"] == "subscriber.tags"
+        assert leaf["operator"] == "contains"
     # Old keys must NOT appear.
     assert "predicates" not in filters
     assert "operator" not in filters

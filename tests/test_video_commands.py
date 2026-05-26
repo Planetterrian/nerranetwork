@@ -472,32 +472,42 @@ def test_drawtext_escape_escapes_real_newlines():
 
 
 def test_short_form_filter_graph_caption_has_no_real_newlines():
-    """End-to-end pin: the rendered Shorts filter graph for a
-    realistic multi-line hook MUST NOT contain real newline
-    characters inside the drawtext text= region. A real newline
-    there terminates ffmpeg's single-quoted parsing region and
-    breaks the entire filter graph — exactly what failed Tesla
-    Ep466's Shorts upload on May 8 2026."""
+    """End-to-end pin: each drawtext text= region in the rendered
+    Shorts filter graph MUST contain neither a real newline (which
+    closes ffmpeg's single-quoted parsing region — broke Tesla
+    Ep466's Shorts upload on May 8 2026) NOR a literal ``\\n``
+    escape (which silently rendered as the letter "n" between
+    wrap points — broke Tesla Ep485 / MAB Shorts on May 26 2026:
+    "major warning" → "majornwarning", "volume reductions" →
+    "volumenreductions"). The fix stacks one drawtext per
+    wrapped line, so each text= value is a single physical line
+    of plain words — no newline of any kind."""
     hook = (
         "California regulators just disclosed the Tesla Semi's "
         "battery sizes at 822 kWh and 548 kWh."
     )
     graph = _short_form_filter_graph(hook=hook)
-    # Find the drawtext text= region.
     import re as _re
-    m = _re.search(r"text='([^']*(?:\\'[^']*)*)'", graph)
-    assert m is not None, "drawtext text= region not found in graph"
-    text_value = m.group(1)
-    # No real newlines may appear inside the quoted region.
-    assert "\n" not in text_value, (
-        f"Real newline survived into drawtext text= value (would break "
-        f"ffmpeg parsing): {text_value!r}"
-    )
-    # But the literal escape sequence \n MUST be present so the rendered
-    # caption still wraps to multiple lines.
-    assert r"\n" in text_value, (
-        f"Multi-line hook should produce literal \\n breaks; got "
-        f"{text_value!r}"
+    # Every drawtext text= region in the graph must be newline-free
+    # AND must not contain the literal \n escape sequence.
+    text_values = _re.findall(r"text='([^']*(?:\\'[^']*)*)'", graph)
+    assert text_values, "no drawtext text= regions found in graph"
+    for tv in text_values:
+        assert "\n" not in tv, (
+            f"Real newline survived into drawtext text= value (would "
+            f"break ffmpeg parsing): {tv!r}"
+        )
+        assert r"\n" not in tv, (
+            f"Literal \\n escape in drawtext text= value (would render "
+            f"as the letter 'n' between words): {tv!r}"
+        )
+    # A long multi-line hook must produce MULTIPLE drawtext filters
+    # (one per wrapped line). Single-drawtext graph would be the
+    # broken legacy path.
+    drawtext_count = graph.count("drawtext=")
+    assert drawtext_count >= 2, (
+        f"long hook should produce >=2 stacked drawtext filters, "
+        f"got {drawtext_count}"
     )
 
 

@@ -241,9 +241,21 @@ def send_newsletter(
         # Older clients sent ``{operator, predicates}`` and got
         # HTTP 422; the predicate enum is also strict — only "and"
         # or "or" are accepted (not "any"/"all").
+        #
+        # May 26 2026: Buttondown tightened the ``field`` enum on
+        # the leaf condition; ``field: "tag"`` now returns HTTP 422
+        # with a literal_error listing the accepted values:
+        # ``subscriber.churn_date``, ``subscriber.click_rate``,
+        # ``subscriber.last_click_date``, ``subscriber.last_open_date``,
+        # ``subscriber.open_rate``, ``subscriber.price``,
+        # ``subscriber.source``, ``subscriber.status``,
+        # ``subscriber.subscription_date``, ``subscriber.tags``,
+        # ``subscriber.upgrade_date``. Tag membership now lives at
+        # ``subscriber.tags``; the operator for "subscriber has this
+        # tag" is ``contains`` because tags is a list field.
         data["filters"] = {
             "filters": [
-                {"field": "tag", "operator": "equals", "value": t}
+                {"field": "subscriber.tags", "operator": "contains", "value": t}
                 for t in tags
             ],
             "groups": [],
