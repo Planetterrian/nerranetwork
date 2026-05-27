@@ -24,11 +24,15 @@ jobs:
     timeout-minutes: 10
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
       - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'
           requirements-file: 'requirements.txt'
           fetch-depth: "1"
+          skip-checkout: 'true'
 
       - name: Archive old data files
         run: |

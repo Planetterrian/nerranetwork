@@ -27,19 +27,49 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  trigger-maintenance:
+  generate-artifacts:
     runs-on: ubuntu-latest
-    # Only proceed on successful run-show or on schedule/dispatch
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
 
     steps:
-      - name: Trigger downstream maintenance jobs
-        run: |
-          echo "Nightly maintenance triggered after successful pipeline run."
-          echo "Downstream jobs (health, dashboard, gallery, feed audit) should be configured"
-          echo "to run on this workflow_run or keep their own light schedules as safety nets."
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
-# Note: The actual work still lives in the specialized workflows for now
-# (health-check, dashboard, build-gallery-manifest, feed-audit).
-# They already listen to "Run Podcast Show" via workflow_run where appropriate.
-# Over time we can move more logic here if desired.
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'requirements.txt'
+          skip-checkout: 'true'
+
+      - name: Generate Management Dashboard
+        run: python scripts/generate_dashboard.py --out api/dashboard.json
+
+      - name: Build Gallery Manifest + Search Index
+        env:
+          R2_GALLERY_BUCKET: ${{ secrets.R2_GALLERY_BUCKET }}
+          R2_GALLERY_PUBLIC_BASE_URL: ${{ secrets.R2_GALLERY_PUBLIC_BASE_URL }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          python scripts/build_gallery_manifest.py --out site/data/gallery-manifest.json
+          python scripts/build_search_index.py --out site/data/search-index.json
+
+      - uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: |
+            api/dashboard.json
+            site/data/gallery-manifest.json
+            site/data/search-index.json
+          commit-message: "Nightly maintenance: update dashboard + gallery + search index"
+
+      - name: Notify on failure (webhook)
+        if: failure() && env.NOTIFICATION_WEBHOOK_URL != ''
+        env:
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+        run: |
+          curl -s -X POST "$NOTIFICATION_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "{\"text\":\"⚠️ Nightly Maintenance job had issues on $(date -u +%Y-%m-%d). Check logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+            || echo "Webhook notification failed (non-blocking)"

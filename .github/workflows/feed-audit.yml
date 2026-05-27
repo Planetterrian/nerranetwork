@@ -12,11 +12,15 @@ jobs:
       contents: write
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
       - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'
           requirements-file: 'requirements.txt'
           extra-packages: "pyyaml requests feedparser"
+          skip-checkout: 'true'
 
       - name: Run feed audit
         id: audit
