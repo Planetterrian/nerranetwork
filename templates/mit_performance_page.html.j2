@@ -4,6 +4,12 @@
 
 {% block content %}
 <div class="container" style="max-width: 1100px; padding-top: var(--sp-8);">
+  <style>
+    @media (max-width: 640px) {
+      .glass-card { padding: 12px !important; }
+      table { font-size: 11px !important; }
+    }
+  </style>
 
   <div style="margin-bottom: var(--sp-8);">
     <h1 style="font-size: 2.4rem; margin-bottom: 0.5rem;">Performance &amp; Lessons</h1>
@@ -58,14 +64,15 @@
     </div>
 
     <!-- Current Operating Principles (The Heart of the Recursive Loop) -->
-    {% if performance_data.derived_principles %}
+    {% set principles = performance_data.derived_principles or tracker.get('derived_principles', []) if tracker else [] %}
+    {% if principles %}
     <div class="glass-card" style="padding: var(--sp-6); margin-bottom: var(--sp-8); border-left: 5px solid var(--show-color, #047857);">
       <h2 style="margin-top:0;">Current Operating Principles</h2>
       <p style="color:var(--nn-text-muted); font-size:0.95rem;">
         These principles are derived directly from our real (simulated) results. The model is required to reference and obey them when selecting new Practice Investments.
       </p>
       <ul style="margin-top: var(--sp-4); line-height: 1.7;">
-        {% for principle in performance_data.derived_principles %}
+        {% for principle in principles %}
         <li style="margin-bottom: var(--sp-3);">
           <strong>{{ principle.title }}</strong><br>
           <span style="font-size:0.92rem;">{{ principle.description }}</span>

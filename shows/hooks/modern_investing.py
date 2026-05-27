@@ -188,10 +188,10 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     context["tone_hint"] = _tone_from_portfolio(tracker)
 
     # === Strong Recursive Learning Loop (core of NASDAQ outperformance goal) ===
-    # This block gives the LLM explicit, evidence-based feedback on what has
-    # actually worked or failed in the simulated portfolio vs NASDAQ.
     try:
         context["mit_recursive_learning_context"] = get_mit_recursive_learning_context()
+        context["mit_operating_principles"] = _derive_operating_principles(tracker)
+        context["mit_confidence_calibration"] = get_mit_confidence_calibration(tracker)
     except Exception as exc:
         logger.warning("Failed to build recursive learning context: %s", exc)
         context["mit_recursive_learning_context"] = "Learning context temporarily unavailable — focus on process discipline."
@@ -1621,4 +1621,77 @@ def get_mit_recursive_learning_context() -> str:
 
     lines.append("\nINSTRUCTION: When suggesting the next Practice Investment, heavily weight the patterns above. Explicitly reference what has worked or failed in recent trades. Prioritize ideas that increase the probability of positive alpha vs NASDAQ.")
 
+    # Add confidence calibration
+    try:
+        calib = get_mit_confidence_calibration(tracker)
+        if calib and "Not enough" not in calib:
+            lines.append(f"\nCONFIDENCE CALIBRATION: {calib}")
+    except Exception:
+        pass
+
     return "\n".join(lines)
+
+
+def _derive_operating_principles(tracker: dict) -> list:
+    """
+    Derives a small set of high-confidence 'Operating Principles' from the
+    actual track record. These become living rules the model must consider.
+    """
+    closed = [t for t in tracker.get("trades", []) if t.get("status") == "closed" and t.get("alpha_pct") is not None]
+    if len(closed) < 8:
+        return []
+
+    principles = []
+
+    # 1. Sector discipline
+    sector_stats = {}
+    for t in closed:
+        sec = t.get("sector", "other")
+        if sec not in sector_stats:
+            sector_stats[sec] = {"count": 0, "total_alpha": 0}
+        sector_stats[sec]["count"] += 1
+        sector_stats[sec]["total_alpha"] += t.get("alpha_pct", 0)
+
+    best_sector = max(sector_stats.items(), key=lambda x: x[1]["total_alpha"] / max(x[1]["count"], 1), default=None)
+    if best_sector and best_sector[1]["count"] >= 3 and (best_sector[1]["total_alpha"] / best_sector[1]["count"]) > 2:
+        principles.append({
+            "title": f"Favor {best_sector[0].replace('_', ' ').title()}",
+            "description": f"Data shows strong positive alpha in this sector across {best_sector[1]['count']} trades.",
+            "evidence": f"Avg alpha +{(best_sector[1]['total_alpha'] / best_sector[1]['count']):.1f}%"
+        })
+
+    # 2. Lesson tag discipline (most effective tags)
+    tag_performance = {}
+    for t in closed:
+        for tag in t.get("lesson_tags", []):
+            if tag not in tag_performance:
+                tag_performance[tag] = {"count": 0, "total_alpha": 0}
+            tag_performance[tag]["count"] += 1
+            tag_performance[tag]["total_alpha"] += t.get("alpha_pct", 0)
+
+    if tag_performance:
+        best_tag = max(tag_performance.items(), key=lambda x: x[1]["total_alpha"] / max(x[1]["count"], 1))
+        if best_tag[1]["count"] >= 2 and (best_tag[1]["total_alpha"] / best_tag[1]["count"]) > 3:
+            principles.append({
+                "title": f"Prioritize setups matching '{best_tag[0]}'",
+                "description": "This lesson tag has shown the strongest alpha when present in winning trades.",
+                "evidence": f"{best_tag[1]['count']} trades, avg +{(best_tag[1]['total_alpha']/best_tag[1]['count']):.1f}% alpha"
+            })
+
+    return principles[:6]
+
+
+def get_mit_confidence_calibration(tracker: dict) -> str:
+    """Simple calibration report for the prompt."""
+    closed = [t for t in tracker.get("trades", []) if t.get("status") == "closed" and t.get("confidence") and t.get("alpha_pct") is not None]
+    if len(closed) < 5:
+        return "Not enough data for confidence calibration yet."
+
+    high_conf = [t for t in closed if t.get("confidence", "").lower() in ("high", "very high")]
+    if not high_conf:
+        return "Confidence calibration data still limited."
+
+    high_conf_wins = sum(1 for t in high_conf if t.get("alpha_pct", 0) > 0)
+    wr = high_conf_wins / len(high_conf) * 100 if high_conf else 0
+
+    return f"High-confidence picks have been correct {wr:.0f}% of the time ({high_conf_wins}/{len(high_conf)}). Use this to calibrate how strongly to act on strong signals."
