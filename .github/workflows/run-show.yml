@@ -584,6 +584,10 @@ jobs:
           python generate_html.py --network --blogs --sitemap
           python scripts/generate_api.py
 
+          # Rebuild the global search index so new episodes are immediately searchable.
+          # This (combined with the backfill in nightly) makes search reliable and up-to-date.
+          python scripts/build_search_index.py --out site/data/search-index.json
+
       - name: Commit and push shared pages
         run: |
           # Standard bot identity for consistency with episode commits and composites.
@@ -595,13 +599,14 @@ jobs:
           git add sitemap.xml || true
           git add api/*.json || true
           git add blog*.rss || true
+          git add site/data/search-index.json || true
 
           if git diff --cached --quiet; then
             echo "Shared pages are already up to date."
             exit 0
           fi
 
-          git commit -m "Update shared pages (network index, blog index, sitemap) $(date +%Y-%m-%d)"
+          git commit -m "Update shared pages (network index, blog index, sitemap, search index) $(date +%Y-%m-%d)"
 
           # 5 attempts + slightly longer backoff for the shared-pages commit
           # (lower stakes than per-episode artifacts; pages are fully regenerable
