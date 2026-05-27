@@ -256,6 +256,12 @@ youtube:
   # in the 30-45 s "high completion rate" sweet spot vs the previous
   # 55 s near-max. Same generation cost, better algorithmic signal.
   short_duration_seconds: 40
+  # TST content is often more measured/narrative than punchy. The
+  # default 5.0 threshold in the smart selector frequently falls back
+  # to the legacy voice start. Lowering to 3.5 gives the heuristic a
+  # better chance on good-but-not-perfect Tesla stories while still
+  # avoiding boilerplate openers. See engine/shorts_selector.py.
+  shorts_min_score_threshold: 3.5
   # Curated Pexels search phrases. Direct keywords like "model 3" / "model y"
   # were returning fashion photography models — confirmed root cause for
   # the Ep456 manifest containing topless / portrait images. Each phrase
