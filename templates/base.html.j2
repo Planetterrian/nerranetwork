@@ -186,10 +186,10 @@
                Content Lake FTS index (scripts/build_search_index.py). Single
                fetch of a compact JSON; rich client ranking + all shows + entities.
                Zero ongoing backend cost (static site). #}
-            <div class="nn-global-search" style="position:relative;margin-left:auto;margin-right:0.75rem;max-width:220px;flex:1 1 auto;">
+            <div class="nn-global-search" style="position:relative;margin-left:auto;margin-right:0.5rem;max-width:180px;flex:1 1 auto;min-width:120px;">
                 <input type="search" id="nn-global-search-input"
-                       placeholder="Search episodes…"
-                       style="width:100%;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.9rem;"
+                       placeholder="Search…"
+                       style="width:100%;padding:6px 8px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.85rem;"
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
@@ -382,6 +382,8 @@
                     <a href="{{ path_prefix }}privacy-policy.html">{{ t.footer_privacy }}</a> &middot;
                     <a href="{{ path_prefix }}terms-of-service.html">{{ t.footer_terms }}</a> &middot;
                     <a href="{{ path_prefix }}ai-disclosure.html">{{ t.footer_ai_disclosure }}</a>
+                    <span style="opacity:0.5;">&middot;</span>
+                    <span style="font-size:0.7rem;opacity:0.6;">Automation: reliable nightly + post-publish pipeline</span>
                 </div>
             </div>
         </div>
@@ -491,7 +493,7 @@
 
         function renderResults(matches) {
             if (!matches.length) {
-                resultsBox.innerHTML = '<div style="padding:8px 12px;color:var(--nn-text-muted);">No matches. Try a show name, entity (Tesla, OpenAI), or topic.</div>';
+                resultsBox.innerHTML = '<div style="padding:8px 12px;color:var(--nn-text-muted);">No matches. The search index is refreshed automatically every night and after every episode.</div>';
             } else {
                 var html = matches.slice(0, 10).map(function(m) {
                     var label = (m.title || m.hook || '').substring(0, 78);

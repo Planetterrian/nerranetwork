@@ -1,0 +1,151 @@
+{% extends "base.html.j2" %}
+
+{% block title %}Modern Investing Techniques — Performance & Lessons Learned{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1100px; padding-top: var(--sp-8);">
+
+  <div style="margin-bottom: var(--sp-8);">
+    <h1 style="font-size: 2.4rem; margin-bottom: 0.5rem;">Performance &amp; Lessons</h1>
+    <p style="font-size: 1.1rem; color: var(--nn-text-muted); max-width: 720px;">
+      This page shows exactly how our AI-driven simulated portfolio is performing against the NASDAQ, 
+      what we are learning in real time, and the principles we are currently operating under.
+      Everything here is transparent, data-driven, and updated automatically.
+    </p>
+    <p style="font-size: 0.9rem; color: var(--nn-text-muted); margin-top: 0.5rem;">
+      <strong>Important:</strong> All trades are simulated for education. No real money is at risk. This is a learning laboratory.
+    </p>
+  </div>
+
+  {% if performance_data and performance_data.available %}
+    <!-- Core Performance Snapshot -->
+    <div class="glass-card" style="padding: var(--sp-6); margin-bottom: var(--sp-8);">
+      <h2 style="margin-top:0; font-size:1.4rem;">Current Track Record vs NASDAQ</h2>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--sp-4); margin: var(--sp-6) 0;">
+        <div>
+          <div style="font-size:0.8rem; color:var(--nn-text-muted); text-transform:uppercase;">Cumulative Alpha vs NASDAQ</div>
+          <div style="font-size:2.2rem; font-weight:700; color: {% if (performance_data.alpha.inception_to_date_pct or 0) >= 0 %}#10b981{% else %}#ef4444{% endif %};">
+            {{ "{:+.2f}".format(performance_data.alpha.inception_to_date_pct or 0) }}%
+          </div>
+          <div style="font-size:0.85rem;">Since inception</div>
+        </div>
+        
+        <div>
+          <div style="font-size:0.8rem; color:var(--nn-text-muted); text-transform:uppercase;">YTD Alpha</div>
+          <div style="font-size:2.2rem; font-weight:700; color: {% if (performance_data.alpha.ytd_pct or 0) >= 0 %}#10b981{% else %}#ef4444{% endif %};">
+            {{ "{:+.2f}".format(performance_data.alpha.ytd_pct or 0) }}%
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size:0.8rem; color:var(--nn-text-muted); text-transform:uppercase;">Win Rate</div>
+          <div style="font-size:2.2rem; font-weight:700;">
+            {{ "{:.0f}".format(performance_data.summary.win_rate_pct or 0) }}%
+          </div>
+          <div style="font-size:0.85rem;">{{ performance_data.summary.wins or 0 }}W / {{ performance_data.summary.losses or 0 }}L / {{ performance_data.summary.breakeven or 0 }}BE</div>
+        </div>
+
+        <div>
+          <div style="font-size:0.8rem; color:var(--nn-text-muted); text-transform:uppercase;">Total Simulated Trades</div>
+          <div style="font-size:2.2rem; font-weight:700;">{{ performance_data.summary.total_trades or 0 }}</div>
+        </div>
+      </div>
+
+      <div style="font-size:0.85rem; color:var(--nn-text-muted);">
+        Last updated: {{ performance_data.last_updated or "recently" }} • All figures are simulated with $1,000 per position for tracking purposes only.
+      </div>
+    </div>
+
+    <!-- Current Operating Principles (The Heart of the Recursive Loop) -->
+    {% if performance_data.derived_principles %}
+    <div class="glass-card" style="padding: var(--sp-6); margin-bottom: var(--sp-8); border-left: 5px solid var(--show-color, #047857);">
+      <h2 style="margin-top:0;">Current Operating Principles</h2>
+      <p style="color:var(--nn-text-muted); font-size:0.95rem;">
+        These principles are derived directly from our real (simulated) results. The model is required to reference and obey them when selecting new Practice Investments.
+      </p>
+      <ul style="margin-top: var(--sp-4); line-height: 1.7;">
+        {% for principle in performance_data.derived_principles %}
+        <li style="margin-bottom: var(--sp-3);">
+          <strong>{{ principle.title }}</strong><br>
+          <span style="font-size:0.92rem;">{{ principle.description }}</span>
+          {% if principle.evidence %}
+          <div style="font-size:0.8rem; color:var(--nn-text-muted); margin-top:2px;">
+            Evidence: {{ principle.evidence }}
+          </div>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      <div style="font-size:0.8rem; color:var(--nn-text-muted); margin-top:var(--sp-4);">
+        These principles evolve as we collect more data. The goal is continuous, measurable improvement in alpha generation.
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Lessons Learned (Recursive Feedback) -->
+    {% if performance_data.lessons_learned %}
+    <div class="glass-card" style="padding: var(--sp-6); margin-bottom: var(--sp-8);">
+      <h2 style="margin-top:0;">Active Lessons We're Applying</h2>
+      <p style="color:var(--nn-text-muted); font-size:0.92rem;">
+        Each of these rules was written by a past episode after analyzing actual outcomes. Future episodes must respect them.
+      </p>
+      <ul style="margin-top:var(--sp-4);">
+        {% for lesson in performance_data.lessons_learned[:12] %}
+        <li style="margin-bottom:var(--sp-3);">
+          <strong>Ep{{ lesson.episode_num }}:</strong> {{ lesson.observation }}<br>
+          <span style="color:var(--show-color, #047857);"><strong>Rule we now follow:</strong></span> {{ lesson.adjustment }}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <!-- Strategy & Sector Effectiveness -->
+    {% if performance_data.sectors %}
+    <div class="glass-card" style="padding:var(--sp-6); margin-bottom:var(--sp-8);">
+      <h2 style="margin-top:0;">What the Data Says About Different Approaches</h2>
+      <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+        <thead>
+          <tr style="text-align:left; border-bottom:2px solid var(--nn-border);">
+            <th style="padding:8px;">Sector / Approach</th>
+            <th style="padding:8px; text-align:right;">Trades</th>
+            <th style="padding:8px; text-align:right;">Win Rate</th>
+            <th style="padding:8px; text-align:right;">Avg Alpha</th>
+            <th style="padding:8px; text-align:right;">Total Alpha</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sec, sec_data in performance_data.sectors.items() | sort(attribute='1.cumulative_alpha', reverse=true) %}
+          {% if sec_data.trade_count > 0 %}
+          <tr style="border-top:1px solid var(--nn-border);">
+            <td style="padding:8px; text-transform:capitalize;">{{ sec | replace('_', ' ') }}</td>
+            <td style="padding:8px; text-align:right;">{{ sec_data.trade_count }}</td>
+            <td style="padding:8px; text-align:right;">{{ "{:.0f}".format((sec_data.wins or 0) / sec_data.trade_count * 100) }}%</td>
+            <td style="padding:8px; text-align:right; color:{% if (sec_data.avg_alpha or 0) >= 0 %}#10b981{% else %}#ef4444{% endif %};">
+              {{ "{:+.2f}".format(sec_data.avg_alpha or 0) }}%
+            </td>
+            <td style="padding:8px; text-align:right; font-weight:600; color:{% if (sec_data.cumulative_alpha or 0) >= 0 %}#10b981{% else %}#ef4444{% endif %};">
+              {{ "{:+.2f}".format(sec_data.cumulative_alpha or 0) }}%
+            </td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+  {% else %}
+    <div class="glass-card" style="padding:var(--sp-8); text-align:center;">
+      <p>Performance data is being generated. Check back after a few episodes have run.</p>
+    </div>
+  {% endif %}
+
+  <div style="margin-top: var(--sp-8); font-size:0.85rem; color:var(--nn-text-muted); border-top:1px solid var(--nn-border); padding-top:var(--sp-4);">
+    This page and the learning system behind it are part of our commitment to radical transparency in AI-assisted investing education.
+    All data comes from the same tracker the podcast uses every day.
+  </div>
+
+</div>
+{% endblock %}

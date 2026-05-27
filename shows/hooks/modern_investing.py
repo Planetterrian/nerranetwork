@@ -187,6 +187,15 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     # Dynamic tone based on portfolio performance
     context["tone_hint"] = _tone_from_portfolio(tracker)
 
+    # === Strong Recursive Learning Loop (core of NASDAQ outperformance goal) ===
+    # This block gives the LLM explicit, evidence-based feedback on what has
+    # actually worked or failed in the simulated portfolio vs NASDAQ.
+    try:
+        context["mit_recursive_learning_context"] = get_mit_recursive_learning_context()
+    except Exception as exc:
+        logger.warning("Failed to build recursive learning context: %s", exc)
+        context["mit_recursive_learning_context"] = "Learning context temporarily unavailable — focus on process discipline."
+
     return context
 
 
@@ -1556,3 +1565,60 @@ def _extract_trade_from_digest(digest_text: str, episode_num: int | None = None)
         "pnl_dollars": None,
         "lesson": "",
     }
+
+
+def get_mit_recursive_learning_context() -> str:
+    """
+    Returns a rich, structured block of learning context for the LLM.
+
+    This is the core of the "strong recursive learning loop" for Modern
+    Investing Techniques. It feeds:
+    - Current portfolio alpha vs NASDAQ
+    - Top performing strategies / sectors with evidence
+    - Lessons that have statistically worked (or failed)
+    - Explicit recommendations for the next Practice Investment
+
+    The output is designed to be injected into the podcast prompt so the
+    model continuously improves its stock selection and risk management
+    toward the explicit goal of outperforming the NASDAQ over time.
+    """
+    output_dir = Path(__file__).resolve().parent.parent.parent / "digests" / "modern_investing"
+    tracker = _load_tracker(output_dir / TRACKER_FILENAME)
+
+    summary = tracker.get("summary", {})
+    cum_alpha = summary.get("cumulative_alpha_vs_nasdaq", 0.0)
+    total_trades = summary.get("total_trades", 0)
+    win_rate = summary.get("win_rate", 0.0)
+
+    closed = [t for t in tracker.get("trades", []) if t.get("status") == "closed" and t.get("alpha_pct") is not None]
+
+    if total_trades < 5:
+        return "EARLY STAGE: Fewer than 5 closed trades. Focus on process, position sizing, and clear thesis writing. NASDAQ benchmark tracking is active."
+
+    # Top 3 winning patterns
+    winning = sorted(closed, key=lambda t: t.get("alpha_pct", 0), reverse=True)[:3]
+    losing = sorted(closed, key=lambda t: t.get("alpha_pct", 0))[:2]
+
+    lines = [
+        "RECURSIVE LEARNING CONTEXT — USE THIS TO IMPROVE FUTURE PRACTICE INVESTMENTS:",
+        f"Current track record: {total_trades} closed trades | Win rate {win_rate:.0%} | Cumulative alpha vs NASDAQ: {cum_alpha:+.1f}%",
+    ]
+
+    if winning:
+        lines.append("\nStrongest recent patterns (highest alpha):")
+        for t in winning:
+            lines.append(f"  + {t.get('symbol')} ({t.get('sector')}): +{t.get('alpha_pct',0):.1f}% alpha — {t.get('strategy','')[:80]}")
+
+    if losing:
+        lines.append("\nAreas to improve (lowest alpha):")
+        for t in losing:
+            lines.append(f"  - {t.get('symbol')} ({t.get('sector')}): {t.get('alpha_pct',0):+.1f}% alpha")
+
+    # Sector guidance from earlier analysis function
+    sector_analysis = _analyze_strategy_patterns(tracker)
+    if "FAVOR" in sector_analysis or "AVOID" in sector_analysis:
+        lines.append("\n" + sector_analysis)
+
+    lines.append("\nINSTRUCTION: When suggesting the next Practice Investment, heavily weight the patterns above. Explicitly reference what has worked or failed in recent trades. Prioritize ideas that increase the probability of positive alpha vs NASDAQ.")
+
+    return "\n".join(lines)
