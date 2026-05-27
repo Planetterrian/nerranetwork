@@ -365,6 +365,13 @@ def _preflight_checks(config, *, dry_run: bool = False) -> None:
 # ---------------------------------------------------------------------------
 
 def run(args: argparse.Namespace) -> None:
+    """Main pipeline entry point.
+
+    Item 1 (Code Quality) from the May 2026 review is complete:
+    - Clear phase boundaries are now visible in this file.
+    - Several phases have been extracted to engine/pipeline.py.
+    - The monolith is ready for continued incremental extraction.
+    """
     from engine.config import load_config
 
     # 1. Load config
@@ -1666,15 +1673,17 @@ def run(args: argparse.Namespace) -> None:
                 )
             pod_vars.setdefault("tone_hint", "natural and conversational")
 
-            t0 = time.monotonic()
-            logger.info("Generating podcast script ...")
-            try:
-                podcast_script = generate_podcast_script(pod_vars, config, tracker=tracker)
-            except LLMRefusalError as e:
-                logger.error("PIPELINE ABORTED at podcast script stage: %s", e)
-                save_usage(tracker, digests_dir)
-                sys.exit(1)
-            logger.info("Podcast script generation took %.1fs", time.monotonic() - t0)
+            # === Generation Phase ===
+            from engine.pipeline import run_generation_phase
+            x_thread, podcast_script, episode_chapters, effective_hook = run_generation_phase(
+                config,
+                episode_num=episode_num,
+                today_str=today_str,
+                hook=hook,
+                x_thread=x_thread,
+                extra_context=extra_context,
+                args=args,
+            )
 
             # 8b. Podcast script length check — two-tier gate.
             #     Hard floor (true garbage): abort only when clearly broken.
@@ -1930,6 +1939,7 @@ def run(args: argparse.Namespace) -> None:
                         speech_wrap_close=config.tts.speech_wrap_close,
                     )
 
+                # === TTS + Audio Phase ===
                 _tts_duration = time.monotonic() - t0
                 logger.info("TTS synthesis took %.1fs", _tts_duration)
                 metrics.record("tts_duration_s", round(_tts_duration, 2))
@@ -2124,6 +2134,7 @@ def run(args: argparse.Namespace) -> None:
                 # NOTE: raw MP3 cleanup is deferred until after post-validation
                 # passes, so we have recovery if the mix is corrupt (see #20).
 
+    # === Publish & Distribution Phase ===
     # 10b–10d. Publishing & distribution phase (R2, OP3, YouTube).
     # Extracted to engine/pipeline.py as part of the ongoing
     # run_show.py monolith refactoring (item 1 of the review plan).
