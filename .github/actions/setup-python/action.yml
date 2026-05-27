@@ -1,8 +1,13 @@
 name: "Setup Python + Pip"
 description: |
   Reusable composite for Nerra Network workflows.
-  Handles checkout (optional), Python 3.12, pip cache, and requirements install.
-  Dramatically reduces duplication across workflows.
+  Handles checkout (optional), Python setup, pip caching, system packages, and requirements installation.
+
+  Usage example:
+    - uses: ./.github/actions/setup-python
+      with:
+        system-packages: 'ffmpeg'
+        extra-packages: 'ruff'
 
 inputs:
   python-version:
@@ -29,6 +34,10 @@ inputs:
     description: "Enable pip caching (true/false)"
     required: false
     default: "true"
+  system-packages:
+    description: "Space-separated apt packages to install (e.g. 'ffmpeg')"
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -44,6 +53,13 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
         cache: ${{ inputs.cache == 'true' && 'pip' || '' }}
+
+    - name: Install system dependencies
+      if: inputs.system-packages != ''
+      shell: bash
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq ${{ inputs.system-packages }}
 
     - name: Install dependencies
       shell: bash

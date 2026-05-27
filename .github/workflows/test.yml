@@ -16,8 +16,14 @@ jobs:
           requirements-file: 'requirements.txt'
           extra-packages: "ruff"
 
-      - name: Lint with ruff
-        run: ruff check engine/ run_show.py --select=E9,F63,F7,F82 --no-fix
+      - name: Lint with ruff (full)
+        run: ruff check engine/ run_show.py scripts/ --fix --exit-non-zero-on-fix
+
+      - name: Validate GitHub Actions workflows (actionlint)
+        run: |
+          # Install actionlint if not present
+          curl -s https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash | bash -s -- latest
+          ./actionlint -color
 
       - name: Run tests
         run: python -m pytest tests/ -x -q --tb=short

@@ -210,27 +210,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v6
+      - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'
+          requirements-file: 'requirements.txt'
+          system-packages: 'ffmpeg'
 
-      - name: Cache pip
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
-
-      - name: Install Python dependencies
+      - name: Install show-specific Python requirements
         run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
-          # Show-specific extras
           if [ "${{ matrix.show }}" = "fascinating_frontiers" ] && [ -f requirements_fascinating_frontiers.txt ]; then
             pip install -r requirements_fascinating_frontiers.txt
           fi
@@ -508,9 +495,10 @@ jobs:
         env:
           NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
         run: |
+          # Supports Slack, Discord, or any generic webhook that accepts JSON {"text": "..."}
           curl -s -X POST "$NOTIFICATION_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
-            -d "{\"text\":\"Pipeline FAILED: ${{ matrix.show }} on $(date -u +%Y-%m-%d). Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+            -d "{\"text\":\"❌ Pipeline FAILED: ${{ matrix.show }} on $(date -u +%Y-%m-%d)\\nRun: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
             || echo "Webhook notification failed (non-blocking)"
 
   # -----------------------------------------------------------------------
@@ -540,23 +528,10 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v6
+      - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'
-
-      - name: Cache pip
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install Python dependencies
-        run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
+          requirements-file: 'requirements.txt'
 
       - name: Pull latest changes from all show jobs
         run: git pull origin main
