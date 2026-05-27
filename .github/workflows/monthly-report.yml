@@ -61,11 +61,15 @@ jobs:
     if: ${{ github.event_name != 'schedule' || github.event.schedule == '0 16 1 * *' }}
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
       - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'
           requirements-file: 'requirements.txt'
           extra-packages: "pyyaml requests tenacity openai"
+          skip-checkout: 'true'
 
       - name: Run monthly reports
         env:
@@ -106,11 +110,15 @@ jobs:
       }}
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
       - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'
           requirements-file: 'requirements.txt'
           # MIT monthly needs yfinance + engine deps for R2 + ffmpeg
+          skip-checkout: 'true'
 
       - name: Run MIT monthly episode
         env:

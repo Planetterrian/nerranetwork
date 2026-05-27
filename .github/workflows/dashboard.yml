@@ -32,10 +32,14 @@ jobs:
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
       - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'
           requirements-file: 'requirements.txt'
+          skip-checkout: 'true'
 
       - name: Generate api/dashboard.json
         id: gen

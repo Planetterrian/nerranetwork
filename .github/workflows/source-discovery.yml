@@ -46,11 +46,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
       - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'
           requirements-file: 'requirements.txt'
           extra-packages: "pyyaml requests feedparser"
+          skip-checkout: 'true'
 
       - name: Audit existing sources
         run: python check_sources.py --check-blocked
