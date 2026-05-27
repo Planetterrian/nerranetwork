@@ -1580,6 +1580,38 @@ def generate_mit_performance_page(*, dry_run=False):
     return out_path
 
 
+def generate_tesla_narrative_page(*, dry_run=False):
+    """Generate the public Tesla Narrative Tracker / Storylines page."""
+    env = _get_jinja_env()
+    template = env.get_template("tesla_narrative_page.html.j2")
+
+    narrative_data = _load_tesla_narrative_data()
+
+    context = {
+        "narrative": narrative_data,
+        "path_prefix": "",
+        "is_russian": False,
+        "t": {
+            "nav_shows": "Shows", "nav_blog": "Blog", "all_blog_posts": "All Blog Posts",
+            "show_blog_suffix": "Blog", "nav_start_here": "Start Here", "nav_listen": "How to Listen",
+            "nav_about": "About", "nav_player": "Player", "nav_home": "Home",
+            "footer_network_status": "Network Status"
+        },
+        "all_shows": _build_all_shows_list(),
+    }
+
+    html = template.render(**context)
+    out_path = ROOT / "tesla-narrative.html"
+
+    if dry_run:
+        print(f"[dry-run] Would write {out_path}")
+        return out_path
+
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote dedicated Tesla Narrative page: {out_path}")
+    return out_path
+
+
 def generate_show_page(slug, *, dry_run=False):
     """Render and write a show page for a single show."""
     cfg = NETWORK_SHOWS[slug]
