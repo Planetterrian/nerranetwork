@@ -105,6 +105,16 @@ def main() -> int:
 
     for line in lines:
         print(line)
+
+    # Item 6: automated onboarding hint (builds on the registration patch already emitted)
+    print("\n" + "=" * 60)
+    print("Item 6 (onboarding automation): To turn this into a PR:")
+    print(f"  git checkout -b add-show-{spec.slug}")
+    print("  # (scaffold already created the files + printed the registration patch above)")
+    print("  git add shows/ scripts/ digests/ templates/ .github/workflows/")
+    print(f"  git commit -m 'feat(shows): scaffold new show {spec.slug} ({spec.show_name})'")
+    print("  # Then push + open PR with the registration patch from the output as description body.")
+    print("=" * 60)
     return 0
 
 

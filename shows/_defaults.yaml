@@ -166,6 +166,18 @@ newsletter:
   # model knows where to land. Per-show overrides are encouraged;
   # 1300 is a sensible network default for a news-driven weekly.
   length_target_words: 1300
+
+# ---- Item 4 cost circuit breaker defaults (May 2026 review) ----
+# All 0 = disabled (current network posture). Per-show YAMLs can opt in.
+# The runner reads recent metrics_ep*.json + credit_usage for the 7-day sums.
+# Per-episode hard stops (max_*_per_episode) are enforced before the expensive
+# calls (TTS synthesis, Grok Imagine image gen) when >0.
+cost_circuit_breakers:
+  # max_weekly_cost_usd: 0.0          # existing USD aggregate from dashboard
+  # max_weekly_tts_chars: 0
+  # max_weekly_grok_images: 0
+  # max_tts_chars_per_episode: 0
+  # max_grok_images_per_episode: 0
   # Compose flag for the styled "Heads up: educational only..."
   # callout. Flip to true on shows that discuss money / trades.
   requires_financial_disclaimer: false

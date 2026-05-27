@@ -30,9 +30,16 @@
  *
  *   GET /api/download?key=<r2_object_key>
  *     - Verify the gallery-subscriber cookie.
+ *     - Check per-email revocation KV blacklist (Item 3).
  *     - Validate the key is well-formed (no traversal / absolute paths).
  *     - Fetch the R2 object via the bound bucket.
  *     - Stream it back with Content-Disposition: attachment.
+ *
+ * Revocation (Item 3, May 2026): operator sets a KV key under the
+ * RATE_LIMIT_KV binding ("revoke:email@ex.com" = timestamp). All
+ * download + magic flows check it after JWT validation and refuse
+ * access (403/401). Stateless JWTs remain lightweight; revocation is
+ * immediate without rotating secrets.
  *
  * Spec deviation note: the project spec calls for "generates
  * short-lived signed R2 URL, 302 redirects" on /api/download. We
@@ -84,6 +91,13 @@ const REDIRECT_AFTER_MAGIC = "https://nerranetwork.com/gallery.html";
 const RATE_LIMIT_ATTEMPTS = 5;
 const RATE_LIMIT_WINDOW_SECONDS = 10 * 60;
 
+// Per-email revocation (Item 3 of May 2026 review).
+// Operator revokes via wrangler KV CLI (or dashboard) using the same
+// RATE_LIMIT_KV binding:  wrangler kv key put --binding RATE_LIMIT_KV "revoke:email@ex.com" "2026-05-24"
+// The value is the revocation timestamp (human readable). Download/login
+// paths check this after JWT validation and hard-fail with 403/401.
+const REVOCATION_PREFIX = "revoke:";
+
 async function checkRateLimit(
   env: Env,
   route: "subscribe" | "login",
@@ -112,6 +126,16 @@ async function checkRateLimit(
   });
 
   return { allowed: true };
+}
+
+
+async function isEmailRevoked(env: Env, email: string): Promise<boolean> {
+  if (!env.RATE_LIMIT_KV) {
+    return false; // fail-open for revocation (no lockout on misconfig)
+  }
+  const key = REVOCATION_PREFIX + email;
+  const val = await env.RATE_LIMIT_KV.get(key);
+  return !!val; // presence = revoked (value is the timestamp for audit)
 }
 
 
@@ -256,6 +280,16 @@ export async function handleMagic(
       },
     );
   }
+
+  // Item 3: block magic login for revoked emails (prevents fresh long-lived cookie)
+  const magicEmail = (verify.claims.sub || "").toLowerCase();
+  if (magicEmail && await isEmailRevoked(env, magicEmail)) {
+    return new Response(
+      "This subscription has been revoked. Please contact support if you believe this is an error.",
+      { status: 403, headers: { "Content-Type": "text/plain; charset=utf-8" } },
+    );
+  }
+
   const cookieToken = await signJwt(
     {
       sub: verify.claims.sub,
@@ -294,6 +328,12 @@ export async function handleDownload(
   });
   if (!verify.ok) {
     return jsonResponse(request, 401, { ok: false, error: "auth required" });
+  }
+
+  // Item 3: per-email revocation check (after JWT, before streaming bytes)
+  const claimsEmail = (verify.claims?.sub || "").toLowerCase();
+  if (claimsEmail && await isEmailRevoked(env, claimsEmail)) {
+    return jsonResponse(request, 403, { ok: false, error: "subscription revoked" });
   }
 
   const object = await env.GALLERY_BUCKET.get(key);
