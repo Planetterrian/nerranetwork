@@ -88,6 +88,12 @@ tts:
   style: 0.0
   use_speaker_boost: true
   apply_text_normalization: "on"
+  # Tag-leak hard block (added as quick win in May 2026 codebase review).
+  # Default False = best-effort (metric recorded + warning logged; episode ships).
+  # Set to true on a per-show basis (or here for the whole network) once the
+  # detector has low false-positive rate on real transcripts for that voice.
+  # When true, any leak aborts the episode before mixing/publishing.
+  tag_leak_hard_block: false
 
 audio:
   min_audio_duration: 180

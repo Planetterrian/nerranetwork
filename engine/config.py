@@ -128,6 +128,14 @@ class TTSConfig:
     whisper_model: str = "base"  # "tiny", "base", "small", "medium"
     whisper_threshold: float = 0.7  # Minimum match score (0.0–1.0)
 
+    # Tag-leak hard block (quick win from May 2026 full codebase review)
+    # When True, scan_transcript() finding any spoken speech tag after Grok TTS
+    # causes the pipeline to hard-fail the episode (before audio mix / publish).
+    # Default False keeps the historical best-effort behaviour (metric + warning).
+    # Per-show override allowed once the detector's false-positive rate is
+    # calibrated on real episodes for that voice/show.
+    tag_leak_hard_block: bool = False
+
 
 @dataclass
 class AudioConfig:

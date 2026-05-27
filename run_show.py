@@ -2037,6 +2037,19 @@ def run(args: argparse.Namespace) -> None:
                         metrics.record("tag_leaks_by_pattern", _by_pattern)
                     else:
                         logger.info("Tag-leak detector: clean transcript.")
+
+                    # Quick-win hard block (May 2026 review): if the show has opted in
+                    # via tts.tag_leak_hard_block (default False in _defaults), any
+                    # detected spoken tag aborts the episode here (before expensive
+                    # audio mix + publish). This is the calibrated "flip to hard"
+                    # path the original detector comment anticipated.
+                    if getattr(config.tts, "tag_leak_hard_block", False) and _leaks:
+                        logger.error(
+                            "Tag-leak hard block enabled for %s and %d leak(s) found — "
+                            "aborting episode to protect listener experience.",
+                            config.name, len(_leaks)
+                        )
+                        sys.exit(1)
                 except Exception as exc:
                     logger.debug("Tag-leak detector failed (non-fatal): %s", exc)
 

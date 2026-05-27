@@ -2,9 +2,11 @@
 
 Automated daily podcast generation system running **11 shows** via a unified
 `run_show.py` runner + per-show YAML configs. Each show fetches news via RSS
-and xAI/Grok web search, generates a digest and podcast script via xAI/Grok,
-synthesizes audio via ElevenLabs TTS, mixes intro/outro music, and publishes
-to RSS feeds, GitHub Pages, and X/Twitter.
+and xAI/Grok web search (or topic queues for narrative shows), generates a
+digest and podcast script via xAI/Grok, synthesizes audio via Grok TTS (full
+network migration May 2026; ElevenLabs retained only as emergency rollback),
+mixes intro/outro music, and publishes to RSS, GitHub Pages, YouTube (long-form
++ smart Shorts for enabled shows), and X/Twitter where configured.
 
 All shows are produced independently in Vancouver, Canada.
 
@@ -24,6 +26,7 @@ All shows are produced independently in Vancouver, Canada.
 | **Финансы Просто** | Even days | [Player](https://nerranetwork.com/ru/finansy-prosto.html) | [RSS](https://nerranetwork.com/finansy_prosto_podcast.rss) |
 | **Modern Investing Techniques** | Weekdays | [Player](https://nerranetwork.com/modern-investing.html) | [RSS](https://nerranetwork.com/modern_investing_podcast.rss) |
 | **Привет, Русский!** | Even days | [Player](https://nerranetwork.com/ru/privet-russian.html) | [RSS](https://nerranetwork.com/privet_russian_podcast.rss) |
+| **Unintended Consequences** | Weekdays (narrative) | [Player](https://nerranetwork.com/unintended-consequences.html) | [RSS](https://nerranetwork.com/unintended_consequences_podcast.rss) |
 
 ## Listen
 
@@ -39,68 +42,61 @@ All shows are available on **Apple Podcasts**, **Spotify**, and via **RSS**.
 | M&A for Beginners | [Apple](https://podcasts.apple.com/us/podcast/models-agents-for-beginners/id1885231582) | [Spotify](https://open.spotify.com/show/7vRUrQAJWzOB729A9aVDd5) |
 | Modern Investing | [Apple](https://podcasts.apple.com/us/podcast/modern-investing-techniques/id1886870483) | [Spotify](https://open.spotify.com/show/2Txa9atsocnmm91r65Ahy9) |
 | Финансы Просто | [Apple](https://podcasts.apple.com/us/podcast/%D1%84%D0%B8%D0%BD%D0%B0%D0%BD%D1%81%D1%8B-%D0%BF%D1%80%D0%BE%D1%81%D1%82%D0%BE/id1885235226) | [Spotify](https://open.spotify.com/show/35jCJTVe3ITGah3ryeKzzM) |
-| Привет, Русский! | [Apple](https://podcasts.apple.com/us/podcast/%D0%BF%D1%80%D0%B8%D0%B2%D0%B5%D1%82-%D1%80%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9/id1885236720) | [Spotify](https://open.spotify.com/show/7rB9mPNBp5S6RCpHPKIZbL) |
+| Привет, Русский! | [Apple](https://podcasts.apple.com/us/podcast/%D0%BF%D1%80%D0%B1%D0%B8%D0%B2%D0%B5%D1%82-%D1%80%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9/id1885236720) | [Spotify](https://open.spotify.com/show/7rB9mPNBp5S6RCpHPKIZbL) |
+| Unintended Consequences | Search "Nerra Network" on Apple | Search "Nerra Network" on Spotify |
 
 ## Architecture
 
 ```
-run_show.py                     # Unified entry point for all shows
-├── engine/                     # Shared modules (22 files)
-│   ├── config.py               # YAML-based show configuration
-│   ├── fetcher.py              # RSS feed fetching + keyword scoring
-│   ├── generator.py            # xAI/Grok LLM digest + podcast generation
-│   ├── tts.py                  # ElevenLabs TTS synthesis
-│   ├── audio.py                # ffmpeg audio processing + music mixing
-│   ├── publisher.py            # RSS feed update, GitHub Pages, X posting
-│   ├── content_tracker.py      # Cross-episode deduplication
-│   ├── newsletter.py           # Buttondown newsletter integration
-│   ├── storage.py              # Cloudflare R2 audio storage
-│   ├── blog.py                 # Blog post generation
-│   ├── chapters.py             # MP3 chapter markers
-│   ├── transcripts.py          # Episode transcript generation
-│   ├── synthesizer.py          # Newsletter/report content synthesis
-│   ├── tracking.py             # API usage + cost tracking
-│   ├── validation.py           # Output validation + repair
-│   └── utils.py                # Text processing, similarity, helpers
-├── shows/                      # Per-show configuration
-│   ├── _defaults.yaml          # Network-wide defaults (TTS, audio, storage)
-│   ├── *.yaml                  # Show configs (sources, LLM, TTS, publishing)
-│   ├── prompts/                # LLM prompt templates (4 per show)
-│   ├── hooks/                  # Show-specific pre-fetch hooks
-│   ├── segments/               # Slow-news segment libraries
-│   └── templates/              # Jinja2 templates for shows
-├── digests/                    # Generated output (audio, markdown, JSON)
-│   └── <show>/                 # Per-show subdirectories
+run_show.py                     # Unified entry point for all 11 shows
+├── engine/                     # ~50 shared modules (see engine/ + CLAUDE.md)
+│   ├── config.py               # YAML deep-merge + ShowConfig dataclasses
+│   ├── fetcher.py              # RSS + web_search + x_search
+│   ├── generator.py            # Grok LLM digest/script (refusals, fallbacks)
+│   ├── tts.py                  # Grok TTS (primary) + ElevenLabs (rollback)
+│   ├── audio.py                # ffmpeg mix + normalize + sidechain ducking
+│   ├── publisher.py            # RSS, GitHub Pages, X, thumbnails, end-cards
+│   ├── content_tracker.py      # Cross-episode dedup + cooldowns
+│   ├── content_lake.py         # SQLite for weekly recaps, briefings, search
+│   ├── weekly_recap.py         # Sunday synthetic digest from lake (7 shows)
+│   ├── shorts_selector.py      # Heuristic "most engaging" window picker
+│   ├── youtube*.py + video.py  # Long-form + multi-Shorts (smart + hashtags)
+│   ├── gallery_uploader.py     # Grok-Imagine scenes → R2 + sidecars
+│   ├── tracking.py             # Per-ep LLM/TTS/X/Imagine cost rollup
+│   ├── metrics.py              # Stage timings + counters (dashboard fuel)
+│   ├── newsletter*.py          # Sanitizer + body transforms + template (v2)
+│   └── ...                     # transcripts, chapters, grok_imagine, etc.
+├── shows/                      # Per-show configuration (11 + _defaults)
+│   ├── *.yaml                  # Sources, LLM, TTS, audio, youtube, hooks
+│   ├── prompts/                # digest / podcast / system / weekly
+│   ├── hooks/                  # Pre-fetch (Tesla TSLA price, etc.)
+│   └── topic_queues/           # Narrative shows (Unintended Consequences)
+├── digests/                    # All generated output (per-show subdirs)
+├── workers/gallery/            # Cloudflare Worker (email-gate + JWT + R2 proxy)
 ├── assets/
-│   ├── music/                  # Intro/outro music files
-│   └── pronunciation.py        # Shared TTS pronunciation fixes
-├── scripts/                    # Utility scripts (dashboard, audits, etc.)
-├── styles/
-│   └── main.css                # Shared stylesheet (dark theme, glassmorphism)
-├── .github/workflows/
-│   ├── run-show.yml            # Unified daily cron workflow (all shows)
-│   ├── test.yml                # CI test + lint
-│   ├── dashboard.yml           # Management dashboard updates
-│   └── ...                     # Feed audit, newsletters, reports, etc.
-└── *.rss                       # Podcast RSS feeds
+│   ├── music/                  # Centralized intro/outro (per-show)
+│   └── pronunciation.py        # Shared TTS fixes + map
+├── scripts/                    # 30+ ops tools (scaffold, dashboard, audits, backfills)
+├── .github/workflows/          # 12 workflows (staggered cron + matrix + landmines)
+└── *.rss + *.html            # Public RSS feeds + static site
 ```
+
+See `CLAUDE.md` (operator bible) and `docs/` for the full current module list and 20+ live landmines tracked on the management dashboard.
 
 ### Pipeline (per show, per run)
 
-1. **Load config** from `shows/<show>.yaml` (merged with `_defaults.yaml`)
-2. **Pre-fetch hook** (optional — e.g., Tesla stock price via yfinance)
-3. **Fetch** news from RSS sources + xAI/Grok web search
-4. **Dedup** via ContentTracker (cross-episode) + entity dedup
-5. **Generate** digest text via xAI/Grok API
-6. **Generate** podcast script via xAI/Grok API
-7. **Synthesize** audio via ElevenLabs TTS (with chunking + section-aware synthesis)
-8. **Mix** intro/outro music with voice (ffmpeg)
-9. **Upload** to Cloudflare R2
-10. **Update** RSS feed + chapter markers
-11. **Generate** blog post, transcript
-12. **Save** summary to GitHub Pages JSON
-13. **Send** newsletter (if configured)
-14. **Post** X/Twitter teaser (if configured)
+1. **Load + preflight** config (YAML + _defaults deep merge, env keys, prompts, music, cost circuit breaker, LLM ping)
+2. **Pre-fetch hook** (optional, e.g. yfinance TSLA) + resume decision (publish / YouTube only)
+3. **Fetch + dedup** (RSS + Grok web_search + X accounts, multi-layer ContentTracker + entity + sim + lake)
+4. **Digest** (or Sunday weekly recap from content lake for 7 shows)
+5. **Podcast script** (with pronunciation, chapters, AI disclosure, length gates)
+6. **TTS** (Grok single-chunk primary; section stings optional) + Whisper transcript
+7. **Audio mix** (music ducking, EBU R128 -16 LUFS, chapters JSON)
+8. **Upload + publish** (R2 + OP3, post-run validation hard gate, RSS + chapters, GitHub Pages, blog)
+9. **YouTube** (long-form + N smart Shorts with per-word captions, auto-hashtags, end-card CTA — only TST + MAB enabled due to quota)
+10. **Gallery side-effect** (Grok-Imagine scenes → nerra-gallery R2 + thumbs + sidecars for enabled shows)
+11. **Newsletter + X** (sanitized, Buttondown tag-aware; teaser with YouTube link)
+12. **Metrics + lake write** (full cost + timing + entity extraction for recaps)
 
 ## Usage
 
@@ -124,7 +120,7 @@ python generate_html.py --all
 
 ### Available shows
 
-`tesla`, `omni_view`, `fascinating_frontiers`, `planetterrian`, `env_intel`, `models_agents`, `models_agents_beginners`, `finansy_prosto`, `modern_investing`, `privet_russian`
+`tesla`, `omni_view`, `fascinating_frontiers`, `planetterrian`, `env_intel`, `models_agents`, `models_agents_beginners`, `finansy_prosto`, `modern_investing`, `privet_russian`, `unintended_consequences`
 
 ## Adding a New Show
 
@@ -185,3 +181,21 @@ deployed.
 - `docs/newsletter_comparison.md` — Newsletter platform evaluation
 - `docs/podcast_directories.md` — Directory submission guide
 - `docs/monetization_roadmap.md` — Revenue strategy and timeline
+
+## Recent Improvements & Roadmap (May 2026+)
+
+Major 2026 milestones shipped:
+- Full-network Grok TTS migration (36× cheaper than previous ElevenLabs baseline; custom trained voice for consistent host identity across English shows).
+- YouTube Shorts production for Tesla Shorts Time + Models & Agents for Beginners (smart segment selection, per-word highlighting, auto-hashtags, end-screen CTAs, multi-Shorts per episode).
+- Nerra Gallery (Phases 1-3): Grok-Imagine scenes stored in dedicated R2 bucket with sidecars + watermarked WebP thumbs; network-wide + per-show embeds; email-gated full-res downloads (Buttondown + magic-link JWT via Cloudflare Worker).
+- Sunday weekly recap episodes for the 7 daily shows (synthesized from the content lake instead of fresh news fetch).
+- Broadcast-quality audio pipeline (48 kHz WAV Grok TTS → single lossy encode, sidechain-ducked music, -16 LUFS EBU R128).
+
+A full internal codebase review was performed in May 2026. Quick wins and strategic improvements (global site search, progressive enhancement for JS surfaces, gallery auth hardening, proactive alerting, pipeline modularization, dynamic metadata, live quota/cost visibility, onboarding automation, etc.) are tracked in the operator plan.
+
+See:
+- `CLAUDE.md` — Single source of truth for architecture, 20+ live landmines (enforced on the management dashboard), and current invariants.
+- `management.html` (powered by `api/dashboard.json`) — Live status of costs, landmines, RSS health, YouTube success rates, etc.
+- `docs/` — Detailed audits (gallery_storage.md, youtube_quota..., pipeline_audit..., etc.).
+
+The network is intentionally kept as a set of static sites + GitHub Actions + serverless Worker so it remains simple, cheap, and reliable at 10+ episodes/week.
