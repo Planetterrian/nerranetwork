@@ -56,11 +56,12 @@ jobs:
           python scripts/build_gallery_manifest.py --out site/data/gallery-manifest.json
           python scripts/build_search_index.py --out site/data/search-index.json
 
-      - name: Generate MIT Performance Page + Main Site
-        # Ensures the dedicated Modern Investing performance & lessons page
+      - name: Generate MIT Performance Page + Tesla Narrative Page + Main Site
+        # Ensures dedicated transparency pages (MIT performance + TST narrative tracker)
         # and other pages that depend on fresh data stay up to date.
         run: |
           python generate_html.py --show modern_investing
+          python generate_html.py --show tesla
           # Optionally regenerate full site if needed:
           # python generate_html.py --all
 
@@ -72,7 +73,9 @@ jobs:
             site/data/search-index.json
             modern-investing-performance.html
             modern-investing.html
-          commit-message: "Nightly maintenance: update dashboard + gallery + search index + MIT performance page"
+            tesla-narrative.html
+            tesla.html
+          commit-message: "Nightly maintenance: update dashboard + gallery + search index + MIT + Tesla narrative pages"
 
       - name: Notify on failure (webhook)
         if: failure() && env.NOTIFICATION_WEBHOOK_URL != ''

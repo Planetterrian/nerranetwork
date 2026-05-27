@@ -1410,6 +1410,23 @@ def _load_mit_performance_data():
         return None
 
 
+def _load_tesla_narrative_data():
+    """Load the Tesla narrative tracker for the public page."""
+    import json
+    tracker_path = ROOT / "digests" / "tesla_shorts_time" / "tesla_narrative_tracker.json"
+    if not tracker_path.exists():
+        return None
+    try:
+        data = json.loads(tracker_path.read_text(encoding="utf-8"))
+        return {
+            "available": True,
+            "programs": data.get("programs", {}),
+            "last_updated": data.get("last_updated", ""),
+        }
+    except Exception:
+        return None
+
+
 def _with_utm(url, source="nerranetwork", medium="web", campaign=""):
     """Jinja filter: append UTM tracking parameters to an outbound URL.
 
@@ -1786,6 +1803,12 @@ def generate_all_show_pages(*, dry_run=False):
     mit_result = generate_mit_performance_page(dry_run=dry_run)
     if mit_result:
         paths.append(mit_result)
+
+    # Tesla Narrative Tracker page (recursive memory + transparency)
+    if "tesla" in NETWORK_SHOWS:
+        tesla_narrative = generate_tesla_narrative_page(dry_run=dry_run)
+        if tesla_narrative:
+            paths.append(tesla_narrative)
 
     return paths
 
@@ -2759,6 +2782,9 @@ def main():
         # Dedicated MIT performance page
         if args.show == "modern_investing":
             generate_mit_performance_page(dry_run=args.dry_run)
+        # Tesla Narrative page
+        if args.show == "tesla":
+            generate_tesla_narrative_page(dry_run=args.dry_run)
         if args.blogs:
             generate_blog_posts(args.show, dry_run=args.dry_run)
             generate_blog_index(args.show, dry_run=args.dry_run)

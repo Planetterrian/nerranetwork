@@ -1502,6 +1502,18 @@ def run(args: argparse.Namespace) -> None:
         digest_md.write_text(_scrub(x_thread), encoding="utf-8")
         logger.info("Digest saved: %s", digest_md)
 
+        # Tesla Shorts Time: update narrative, performance, and theme memory
+        # (the core of TST's recursive improvement system). Non-fatal.
+        if args.show == "tesla":
+            try:
+                from engine import tesla_memory
+                output_dir = Path(config.episode.output_dir)
+                tesla_memory.update_theme_history_from_digest(output_dir, x_thread, episode_num)
+                # Note: narrative + performance updates are currently manual/light
+                # or driven by future YouTube data ingestion. The framework is ready.
+            except Exception as exc:
+                logger.warning("Tesla memory update failed (non-fatal): %s", exc)
+
         # Narrative-mode shows: mark the topic as produced in the queue so
         # the next run picks the next entry. Done after the digest is on
         # disk so a mid-pipeline failure doesn't burn a queue slot.
