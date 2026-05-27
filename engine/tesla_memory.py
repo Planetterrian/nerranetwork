@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -284,21 +285,36 @@ def record_performance_signal(output_dir: Path, signal_type: str, value: Any) ->
 
 # Simple theme mining stub (can be expanded significantly later)
 def update_theme_history_from_digest(output_dir: Path, digest_text: str, episode_num: int) -> None:
-    """Very lightweight theme extraction from the just-generated digest."""
+    """Lightweight but useful theme extraction from the just-generated digest + narrative context."""
     history = load_theme_history(output_dir)
     themes = history.setdefault("recurring_themes", {})
 
-    # Extremely simple keyword-based mining (good enough for v1)
+    # Core Tesla program keywords (keep in sync with narrative tracker)
     keywords = [
         "optimus", "cybercab", "robotaxi", "fsd", "unsupervised",
         "hw5", "ai5", "4680", "structural pack", "giga texas",
-        "next gen", "redwood", "megapack", "energy storage"
+        "next gen", "redwood", "megapack", "energy storage", "dojo"
     ]
 
     text_lower = digest_text.lower()
     for kw in keywords:
         if kw in text_lower:
             themes[kw] = themes.get(kw, 0) + 1
+
+    # Also extract simple bigram themes from the narrative status block if present
+    # (this helps surface emerging phrases the LLM itself is using)
+    try:
+        from engine.tesla_memory import build_narrative_status_block
+        tracker = load_narrative_tracker(output_dir)
+        narrative_text = build_narrative_status_block(tracker).lower()
+        # Very lightweight bigram extraction
+        words = [w for w in re.findall(r'\b[a-z]{4,}\b', narrative_text) if w not in {"status", "last", "major", "update", "episode", "date"}]
+        for i in range(len(words)-1):
+            bigram = f"{words[i]} {words[i+1]}"
+            if len(bigram) > 8:
+                themes[bigram] = themes.get(bigram, 0) + 1
+    except Exception:
+        pass
 
     # Keep only top 30 themes to avoid bloat
     sorted_themes = dict(sorted(themes.items(), key=lambda x: x[1], reverse=True)[:30])
