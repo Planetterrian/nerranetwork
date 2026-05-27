@@ -522,23 +522,43 @@ def _build_nested(cls, raw: dict):
 
 
 def _deep_merge(base: dict, override: dict) -> dict:
-    """Deep-merge *override* into *base* (one level of nesting).
+    """Deep-merge *override* into *base* (fully recursive).
 
-    Top-level keys from *override* replace *base*.  For dict-valued keys,
-    the inner dicts are merged so that the show can override individual
-    fields without losing sibling defaults.
+    This was upgraded from one-level to recursive as part of the
+    May 2026 maintainability improvements (item 1 in the review plan).
     """
     merged = dict(base)
     for key, value in override.items():
-        if (
-            key in merged
-            and isinstance(merged[key], dict)
-            and isinstance(value, dict)
-        ):
-            merged[key] = {**merged[key], **value}
+        if key in merged and isinstance(merged[key], dict) and isinstance(value, dict):
+            merged[key] = _deep_merge(merged[key], value)
         else:
             merged[key] = value
     return merged
+
+
+def discover_show_slugs(shows_dir: Path | None = None) -> list[str]:
+    """Centralized discovery of all active show slugs.
+
+    This is the single source of truth for "which shows exist" to eliminate
+    the duplication currently spread across run_show.py, generate_dashboard.py,
+    archive scripts, scaffold, etc. (part of the larger pipeline extraction
+    and maintainability work from the May 2026 review).
+    """
+    if shows_dir is None:
+        shows_dir = Path(__file__).resolve().parent.parent / "shows"
+
+    NON_SHOW = {"pronunciation_map", "network_meta", "scaffold_pending"}
+    slugs: list[str] = []
+    for p in sorted(shows_dir.glob("*.yaml")):
+        stem = p.stem
+        if stem.endswith("_template"):
+            continue
+        if stem.startswith("_"):
+            continue
+        if stem in NON_SHOW:
+            continue
+        slugs.append(stem)
+    return slugs
 
 
 def load_config(yaml_path: str | Path) -> ShowConfig:

@@ -130,8 +130,11 @@ def load_shows_from_yaml(shows_dir: Path, root: Path) -> List[Dict[str, Any]]:
     from engine.config import load_config  # local import — script boot
 
     results: List[Dict[str, Any]] = []
-    for path in _list_show_yaml_paths(shows_dir):
-        slug = path.stem
+    from engine.config import discover_show_slugs
+    for slug in discover_show_slugs(shows_dir):
+        path = shows_dir / f"{slug}.yaml"
+        if not path.exists():
+            continue
         try:
             cfg = load_config(str(path))
         except Exception as exc:

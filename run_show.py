@@ -88,28 +88,18 @@ logger = logging.getLogger("run_show")
 # CLI
 # ---------------------------------------------------------------------------
 
-_NON_SHOW_YAMLS = {"pronunciation_map"}
+_NON_SHOW_YAMLS = {"pronunciation_map"}  # kept for backward compat in CLI help text only
 
 
 def _discover_shows() -> list[str]:
-    """Find all show slugs by scanning shows/*.yaml.
+    """Find all show slugs.
 
-    Skips template files, leading-underscore config files
-    (e.g. ``_defaults``, ``_blocked_sources``), and named resource files
-    in ``_NON_SHOW_YAMLS``.
+    Now delegates to the centralized implementation in engine/config.py
+    (part of the ongoing effort to reduce duplication across the codebase
+    as identified in the May 2026 review).
     """
-    shows_dir = PROJECT_ROOT / "shows"
-    slugs = []
-    for p in sorted(shows_dir.glob("*.yaml")):
-        stem = p.stem
-        if stem.endswith("_template"):
-            continue
-        if stem.startswith("_"):
-            continue
-        if stem in _NON_SHOW_YAMLS:
-            continue
-        slugs.append(stem)
-    return slugs
+    from engine.config import discover_show_slugs
+    return discover_show_slugs(PROJECT_ROOT / "shows")
 
 
 def parse_args() -> argparse.Namespace:
@@ -2182,76 +2172,38 @@ def run(args: argparse.Namespace) -> None:
         extra_context["youtube_url"] = youtube_long_url
     if youtube_short_url:
         extra_context["youtube_short_url"] = youtube_short_url
-    # Record YouTube publishing outcomes so the dashboard can graph
-    # upload success rate per show. We always record these (even on
-    # skip/fail) so the dashboard sees zeros instead of missing data.
+    # Record YouTube publishing outcomes (extracted to engine/pipeline.py
+    # as the first step of the larger run_show.py phase extraction effort
+    # identified in the May 2026 review).
+    from engine.pipeline import record_youtube_outcomes
+
     try:
-        metrics.record(
-            "youtube_publish_duration_s",
-            round(time.monotonic() - _t_yt, 2),
+        record_youtube_outcomes(
+            metrics,
+            youtube_urls,
+            time.monotonic() - _t_yt,
+            config=config,
         )
-        metrics.record("youtube_long_form_uploaded", bool(youtube_long_url))
-        metrics.record("youtube_short_uploaded", bool(youtube_short_url))
-        metrics.record(
-            "youtube_enabled",
-            bool(getattr(config.youtube, "enabled", False)),
-        )
-        # Surface upload failure reasons in metrics.json so the operator
-        # can diagnose without grepping GitHub Action logs. Most likely
-        # culprit when uploads silently fail is YouTube Data API
-        # quota exhaustion (10,000 units/day, 1,600 per upload =
-        # ~6 uploads/day per channel; the @NerraNetwork channel has
-        # 8 English shows × 2 videos = 16 uploads which exceeds quota).
-        if youtube_urls.get("long_error"):
-            metrics.record("youtube_long_error", youtube_urls["long_error"])
-        if youtube_urls.get("short_error"):
-            metrics.record("youtube_short_error", youtube_urls["short_error"])
-        metrics.record("pexels_photos_filtered", youtube_pexels_filtered)
-        # Grok Imagine cost tracking (May 2026). Always recorded so the
-        # dashboard can plot $0 for pexels-only runs and the actual
-        # spend for grok / hybrid runs.
-        metrics.record(
-            "grok_image_cost_usd",
-            float(youtube_urls.get("grok_image_cost_usd", 0.0) or 0.0),
-        )
-        metrics.record(
-            "grok_images_generated",
-            int(youtube_urls.get("grok_images_generated", 0) or 0),
-        )
-        metrics.record(
-            "image_provider",
-            youtube_urls.get("image_provider", "pexels"),
-        )
+    except Exception:
+        # Never let metrics recording break a successful publish
+        pass
 
-        # Medium item: Record actual quota units consumed this episode for
-        # better live visibility (instead of only static estimates).
-        try:
-            from engine.youtube_quota import estimate_episode_units
+    # Medium item: Record actual quota units consumed this episode for
+    # better live visibility (still here for now; will move in a follow-up).
+    try:
+        from engine.youtube_quota import estimate_episode_units
 
-            yt_cfg = getattr(config, "youtube", None) or {}
-            q = estimate_episode_units(
-                publish_long_form=bool(youtube_long_url),
-                publish_shorts=bool(youtube_short_url),
-                with_thumbnail=True,
-                with_playlist=True,
-                with_caption_track=bool(youtube_long_url),  # captions only on long form today
-            )
-            metrics.record("youtube_quota_units_this_episode", q.units)
-            metrics.record("youtube_uploads_this_episode", q.uploads)
-        except Exception as exc:
-            logger.debug("Could not record YouTube quota metrics: %s", exc)
-        # Gallery upload outcome (Phase 1 → diagnostics added May 2026).
-        # Always recorded so the operator can read the metrics file
-        # for the latest episode and tell at a glance whether the
-        # gallery R2 bucket is receiving uploads.
-        metrics.record(
-            "gallery_attempted",
-            int(youtube_urls.get("gallery_attempted", 0) or 0),
+        q = estimate_episode_units(
+            publish_long_form=bool(youtube_long_url),
+            publish_shorts=bool(youtube_short_url),
+            with_thumbnail=True,
+            with_playlist=True,
+            with_caption_track=bool(youtube_long_url),
         )
-        metrics.record(
-            "gallery_uploaded",
-            int(youtube_urls.get("gallery_uploaded", 0) or 0),
-        )
+        metrics.record("youtube_quota_units_this_episode", q.units)
+        metrics.record("youtube_uploads_this_episode", q.uploads)
+    except Exception as exc:
+        logger.debug("Could not record YouTube quota metrics: %s", exc)
         # Smart Shorts segment selection (May 2026): record the chosen
         # offset and which mode resolved to it so the dashboard can
         # surface smart-vs-fallback rate per show.

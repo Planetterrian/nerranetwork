@@ -68,15 +68,21 @@ def estimate_episode_units(
 
 def list_youtube_enabled_slugs(shows_dir: Path) -> List[str]:
     """Return slugs with ``youtube.enabled: true``."""
+    from engine.config import discover_show_slugs, load_config
+
     enabled: List[str] = []
-    for path in sorted(shows_dir.glob("*.yaml")):
-        if path.name.startswith("_"):
-            continue
-        raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-        slug = raw.get("slug") or path.stem
-        yt = raw.get("youtube") or {}
-        if yt.get("enabled") is True:
-            enabled.append(slug)
+    for slug in discover_show_slugs(shows_dir):
+        yaml_path = shows_dir / f"{slug}.yaml"
+        try:
+            cfg = load_config(yaml_path)
+            if getattr(getattr(cfg, "youtube", None), "enabled", False):
+                enabled.append(slug)
+        except Exception:
+            # Fall back to raw parse if config load fails
+            raw = yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
+            yt = raw.get("youtube") or {}
+            if yt.get("enabled") is True:
+                enabled.append(slug)
     return enabled
 
 
@@ -86,22 +92,36 @@ def estimate_network_daily_units(
     daily_quota: int = DEFAULT_DAILY_QUOTA,
 ) -> dict:
     """Sum quota for all enabled shows (reads show YAML only)."""
+    from engine.config import discover_show_slugs, load_config
+
     total = 0
     per_show: dict[str, int] = {}
-    for path in sorted(shows_dir.glob("*.yaml")):
-        if path.name.startswith("_"):
-            continue
-        raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-        slug = raw.get("slug") or path.stem
-        yt = raw.get("youtube") or {}
-        if yt.get("enabled") is not True:
-            continue
-        est = estimate_episode_units(
-            publish_long_form=bool(yt.get("publish_long_form", True)),
-            publish_shorts=bool(yt.get("publish_shorts", True)),
-        )
-        per_show[slug] = est.units
-        total += est.units
+    for slug in discover_show_slugs(shows_dir):
+        yaml_path = shows_dir / f"{slug}.yaml"
+        try:
+            cfg = load_config(yaml_path)
+            yt = getattr(cfg, "youtube", None)
+            if not getattr(yt, "enabled", False):
+                continue
+            est = estimate_episode_units(
+                publish_long_form=getattr(yt, "publish_long_form", True),
+                publish_shorts=getattr(yt, "publish_shorts", True),
+            )
+            per_show[slug] = est.units
+            total += est.units
+        except Exception:
+            # Fallback to raw parse
+            raw = yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
+            yt = raw.get("youtube") or {}
+            if yt.get("enabled") is not True:
+                continue
+            est = estimate_episode_units(
+                publish_long_form=bool(yt.get("publish_long_form", True)),
+                publish_shorts=bool(yt.get("publish_shorts", True)),
+            )
+            per_show[slug] = est.units
+            total += est.units
+
     return {
         "enabled_slugs": list(per_show.keys()),
         "per_show_units": per_show,
