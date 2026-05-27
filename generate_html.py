@@ -1053,6 +1053,7 @@ NETWORK_SHOWS = {
         "description": "AI-driven analysis of investing strategies, market trends, and financial techniques for the modern investor.",
         "show_page": "modern-investing.html",
         "summaries_page": "modern-investing-summaries.html",
+        "performance_page": "modern-investing-performance.html",  # Dedicated recursive learning + transparency hub
         "json_path": "digests/modern_investing/summaries_modern_investing.json",
         "json_format": "wrapped",
         "rss_file": "modern_investing_podcast.rss",
@@ -1061,6 +1062,8 @@ NETWORK_SHOWS = {
         "brand_color": "#047857",
         "brand_color_dark": "#047857",
         "tagline": "AI-Powered Market Intelligence",
+        # Special: Strong recursive learning + public transparency vs NASDAQ
+        "has_performance_loop": True,
         "hero_tagline": "AI-Powered Market Intelligence",
         "schedule": "Daily",
         "episode_length": "~12 min",
@@ -1514,6 +1517,52 @@ def generate_all_summaries(*, dry_run=False):
 # Show pages
 # ---------------------------------------------------------------------------
 
+def generate_mit_performance_page(*, dry_run=False):
+    """Generate the dedicated Modern Investing Techniques Performance & Lessons page."""
+    cfg = NETWORK_SHOWS["modern_investing"]
+    env = _get_jinja_env()
+    template = env.get_template("mit_performance_page.html.j2")
+
+    performance_data = _load_mit_performance_data()
+
+    # Load richer data directly from tracker for the dedicated page
+    tracker_data = None
+    try:
+        tracker_path = ROOT / "digests" / "modern_investing" / "investment_tracker.json"
+        if tracker_path.exists():
+            tracker_data = json.loads(tracker_path.read_text(encoding="utf-8"))
+    except Exception:
+        pass
+
+    context = {
+        "show": cfg,
+        "performance_data": performance_data,
+        "tracker": tracker_data,
+        "path_prefix": "",
+        "is_russian": False,
+        "t": {
+            "nav_shows": "Shows", "nav_blog": "Blog", "all_blog_posts": "All Blog Posts",
+            "show_blog_suffix": "Blog", "nav_start_here": "Start Here", "nav_listen": "How to Listen",
+            "nav_about": "About", "nav_player": "Player", "nav_home": "Home",
+            "footer_network_status": "Network Status"
+        },
+        "all_shows": _build_all_shows_list(),
+        "youtube": _read_show_youtube("modern_investing"),
+        "image_provider": _read_show_image_provider("modern_investing"),
+    }
+
+    html = template.render(**context)
+    out_path = ROOT / cfg["performance_page"]
+
+    if dry_run:
+        print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
+        return None
+
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote dedicated MIT Performance page: {out_path}")
+    return out_path
+
+
 def generate_show_page(slug, *, dry_run=False):
     """Render and write a show page for a single show."""
     cfg = NETWORK_SHOWS[slug]
@@ -1537,6 +1586,24 @@ def generate_show_page(slug, *, dry_run=False):
         }
 
     prefix = _path_prefix(cfg["show_page"])
+
+    # Special MIT performance & learning transparency (strong recursive loop)
+    mit_performance = None
+    if slug == "modern_investing":
+        try:
+            import json as _json
+            tracker_path = ROOT / "digests" / "modern_investing" / "investment_tracker.json"
+            if tracker_path.exists():
+                tracker = _json.loads(tracker_path.read_text(encoding="utf-8"))
+                summary = tracker.get("summary", {})
+                mit_performance = {
+                    "cumulative_alpha_vs_nasdaq": summary.get("cumulative_alpha_vs_nasdaq", 0.0),
+                    "total_trades": summary.get("total_trades", 0),
+                    "win_rate": summary.get("win_rate", 0.0),
+                    "last_updated": tracker.get("last_updated", ""),
+                }
+        except Exception as e:
+            print(f"Warning: could not load MIT performance tracker: {e}")
 
     # Collect latest blog post metadata for the show page
     latest_blog_posts = []
@@ -1712,6 +1779,12 @@ def generate_all_show_pages(*, dry_run=False):
         result = generate_show_page(slug, dry_run=dry_run)
         if result:
             paths.append(result)
+
+    # Dedicated MIT Performance & Lessons page (best-in-class transparency)
+    mit_result = generate_mit_performance_page(dry_run=dry_run)
+    if mit_result:
+        paths.append(mit_result)
+
     return paths
 
 
@@ -2680,6 +2753,10 @@ def main():
         # Always generate the show page and summaries page
         generate_show_page(args.show, dry_run=args.dry_run)
         generate_summaries_page(args.show, dry_run=args.dry_run)
+
+        # Dedicated MIT performance page
+        if args.show == "modern_investing":
+            generate_mit_performance_page(dry_run=args.dry_run)
         if args.blogs:
             generate_blog_posts(args.show, dry_run=args.dry_run)
             generate_blog_index(args.show, dry_run=args.dry_run)

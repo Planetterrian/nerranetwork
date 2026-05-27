@@ -98,6 +98,29 @@
 
   .sparkline-row {
     display: flex; align-items: center; gap: 12px; padding: 10px 0;
+  }
+
+  .automation-card {
+    background: linear-gradient(135deg, rgba(107,71,255,0.08), rgba(0,212,255,0.04));
+    border: 1px solid #6b47ff;
+    border-radius: 14px;
+    padding: 20px;
+    margin-top: 24px;
+  }
+  .automation-card h3 { color: #a5b4fc; margin-top: 0; }
+  .automation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .automation-item {
+    background: rgba(0,0,0,0.2);
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  .automation-item strong { display: block; color: #c0c7ff; margin-bottom: 4px; }
     border-bottom: 1px solid var(--nn-border, #232938);
   }
   .sparkline-row .label { width: 200px; font-size: 13px; }
@@ -121,6 +144,20 @@
     <span class="status-pill warn"><span id="count-warn">0</span>&nbsp;warn</span>
     <span class="status-pill fail"><span id="count-fail">0</span>&nbsp;fail</span>
     <span id="spend-7d" style="font-size:13px;color:#94a3b8"></span>
+    <span id="last-refreshed" style="font-size:12px;color:#64748b;margin-left:8px;"></span>
+  </div>
+</div>
+
+<!-- New: Highlight improved automation (added after the major May 2026 CI overhaul) -->
+<div style="max-width:1200px;margin:0 auto 20px;background:linear-gradient(135deg,rgba(107,71,255,0.08),rgba(0,212,255,0.03));border:1px solid #6b47ff;border-radius:12px;padding:16px 20px;">
+  <strong style="color:#a5b4fc;">🛠️ Automation &amp; CI Improvements (May 2026)</strong>
+  <div style="margin-top:8px;font-size:13.5px;color:#cbd5e1;display:flex;gap:16px;flex-wrap:wrap;">
+    <div>• Reusable composite actions (setup-python, safe-commit-push, etc.)</div>
+    <div>• Nightly maintenance now reliably updates dashboard + gallery + search index</div>
+    <div>• Dependabot + actionlint + full ruff in CI</div>
+  </div>
+  <div style="margin-top:6px;font-size:12px;color:#64748b;">
+    Result: Much higher consistency for search, galleries, and this dashboard.
   </div>
 </div>
 
@@ -229,8 +266,17 @@
   $("#loading").hidden = true;
   $("#content").hidden = false;
   $("#status-summary").hidden = false;
+  const genDate = new Date(data.generated_at);
   $("#generated-at").textContent =
-    "Generated " + new Date(data.generated_at).toLocaleString() + ".";
+    "Generated " + genDate.toLocaleString() + ".";
+
+  // Last refreshed indicator (friendly relative time)
+  const lastRef = document.getElementById("last-refreshed");
+  if (lastRef) {
+    const hoursAgo = Math.round((Date.now() - genDate.getTime()) / (1000 * 60 * 60));
+    lastRef.textContent = hoursAgo < 2 ? "Just now" : `${hoursAgo}h ago`;
+    lastRef.title = genDate.toLocaleString();
+  }
 
   const counts = data.network.landmines_counts || {};
   $("#count-ok").textContent = counts.ok || 0;
