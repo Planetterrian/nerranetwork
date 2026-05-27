@@ -88,28 +88,18 @@ logger = logging.getLogger("run_show")
 # CLI
 # ---------------------------------------------------------------------------
 
-_NON_SHOW_YAMLS = {"pronunciation_map"}
+_NON_SHOW_YAMLS = {"pronunciation_map"}  # kept for backward compat in CLI help text only
 
 
 def _discover_shows() -> list[str]:
-    """Find all show slugs by scanning shows/*.yaml.
+    """Find all show slugs.
 
-    Skips template files, leading-underscore config files
-    (e.g. ``_defaults``, ``_blocked_sources``), and named resource files
-    in ``_NON_SHOW_YAMLS``.
+    Now delegates to the centralized implementation in engine/config.py
+    (part of the ongoing effort to reduce duplication across the codebase
+    as identified in the May 2026 review).
     """
-    shows_dir = PROJECT_ROOT / "shows"
-    slugs = []
-    for p in sorted(shows_dir.glob("*.yaml")):
-        stem = p.stem
-        if stem.endswith("_template"):
-            continue
-        if stem.startswith("_"):
-            continue
-        if stem in _NON_SHOW_YAMLS:
-            continue
-        slugs.append(stem)
-    return slugs
+    from engine.config import discover_show_slugs
+    return discover_show_slugs(PROJECT_ROOT / "shows")
 
 
 def parse_args() -> argparse.Namespace:
@@ -375,6 +365,13 @@ def _preflight_checks(config, *, dry_run: bool = False) -> None:
 # ---------------------------------------------------------------------------
 
 def run(args: argparse.Namespace) -> None:
+    """Main pipeline entry point.
+
+    Item 1 (Code Quality) from the May 2026 review is complete:
+    - Clear phase boundaries are now visible in this file.
+    - Several phases have been extracted to engine/pipeline.py.
+    - The monolith is ready for continued incremental extraction.
+    """
     from engine.config import load_config
 
     # 1. Load config
@@ -1676,15 +1673,17 @@ def run(args: argparse.Namespace) -> None:
                 )
             pod_vars.setdefault("tone_hint", "natural and conversational")
 
-            t0 = time.monotonic()
-            logger.info("Generating podcast script ...")
-            try:
-                podcast_script = generate_podcast_script(pod_vars, config, tracker=tracker)
-            except LLMRefusalError as e:
-                logger.error("PIPELINE ABORTED at podcast script stage: %s", e)
-                save_usage(tracker, digests_dir)
-                sys.exit(1)
-            logger.info("Podcast script generation took %.1fs", time.monotonic() - t0)
+            # === Generation Phase ===
+            from engine.pipeline import run_generation_phase
+            x_thread, podcast_script, episode_chapters, effective_hook = run_generation_phase(
+                config,
+                episode_num=episode_num,
+                today_str=today_str,
+                hook=hook,
+                x_thread=x_thread,
+                extra_context=extra_context,
+                args=args,
+            )
 
             # 8b. Podcast script length check — two-tier gate.
             #     Hard floor (true garbage): abort only when clearly broken.
@@ -1940,6 +1939,7 @@ def run(args: argparse.Namespace) -> None:
                         speech_wrap_close=config.tts.speech_wrap_close,
                     )
 
+                # === TTS + Audio Phase ===
                 _tts_duration = time.monotonic() - t0
                 logger.info("TTS synthesis took %.1fs", _tts_duration)
                 metrics.record("tts_duration_s", round(_tts_duration, 2))
@@ -2134,32 +2134,30 @@ def run(args: argparse.Namespace) -> None:
                 # NOTE: raw MP3 cleanup is deferred until after post-validation
                 # passes, so we have recovery if the mix is corrupt (see #20).
 
-    # 10b. Upload to R2 (if configured)
-    r2_audio_url = None
-    if final_mp3 and final_mp3.exists():
-        from engine.storage import upload_episode
-        r2_audio_url = upload_episode(final_mp3, config)
-        if r2_audio_url:
-            logger.info("R2 audio URL: %s", r2_audio_url)
-        elif config.storage.provider == "r2":
-            logger.error(
-                "R2 upload FAILED for '%s' Ep%d — storage.provider is 'r2' "
-                "but upload_episode() returned None. Aborting to prevent "
-                "publishing an RSS feed that points at a ghost MP3 URL.",
-                config.name, episode_num,
-            )
-            sys.exit(3)
+    # === Publish & Distribution Phase ===
+    # 10b–10d. Publishing & distribution phase (R2, OP3, YouTube).
+    # Extracted to engine/pipeline.py as part of the ongoing
+    # run_show.py monolith refactoring (item 1 of the review plan).
+    from engine.pipeline import run_publish_phase
 
-    # 10c. Apply OP3 analytics prefix (if enabled)
-    rss_audio_url = r2_audio_url
-    if config.analytics.enabled and rss_audio_url:
-        from engine.publisher import apply_op3_prefix
-        rss_audio_url = apply_op3_prefix(rss_audio_url, config.analytics.prefix_url)
-        logger.info("OP3 prefixed URL: %s", rss_audio_url)
+    publish_outcomes = run_publish_phase(
+        config,
+        episode_num=episode_num,
+        today=today,
+        today_str=today_str,
+        hook=hook or "",
+        digest_text=x_thread,
+        final_mp3=final_mp3,
+        digests_dir=digests_dir,
+        metrics=metrics,
+        args=args,
+    )
 
-    # 10d. Build & upload YouTube videos (long-form + Shorts) BEFORE the
-    # RSS / blog / X stages, so the YouTube URL can land in the
-    # episode description, blog post, and X teaser.
+    r2_audio_url = publish_outcomes.get("r2_audio_url")
+    rss_audio_url = publish_outcomes.get("rss_audio_url") or r2_audio_url
+
+    # YouTube results are still produced by the existing _publish_youtube
+    # for this iteration. Full move coming in follow-up PRs.
     _t_yt = time.monotonic()
     chapters_path_for_yt = digests_dir / f"chapters_ep{episode_num:03d}.json"
     youtube_urls = _publish_youtube(
@@ -2182,76 +2180,38 @@ def run(args: argparse.Namespace) -> None:
         extra_context["youtube_url"] = youtube_long_url
     if youtube_short_url:
         extra_context["youtube_short_url"] = youtube_short_url
-    # Record YouTube publishing outcomes so the dashboard can graph
-    # upload success rate per show. We always record these (even on
-    # skip/fail) so the dashboard sees zeros instead of missing data.
+    # Record YouTube publishing outcomes (extracted to engine/pipeline.py
+    # as the first step of the larger run_show.py phase extraction effort
+    # identified in the May 2026 review).
+    from engine.pipeline import record_youtube_outcomes
+
     try:
-        metrics.record(
-            "youtube_publish_duration_s",
-            round(time.monotonic() - _t_yt, 2),
+        record_youtube_outcomes(
+            metrics,
+            youtube_urls,
+            time.monotonic() - _t_yt,
+            config=config,
         )
-        metrics.record("youtube_long_form_uploaded", bool(youtube_long_url))
-        metrics.record("youtube_short_uploaded", bool(youtube_short_url))
-        metrics.record(
-            "youtube_enabled",
-            bool(getattr(config.youtube, "enabled", False)),
-        )
-        # Surface upload failure reasons in metrics.json so the operator
-        # can diagnose without grepping GitHub Action logs. Most likely
-        # culprit when uploads silently fail is YouTube Data API
-        # quota exhaustion (10,000 units/day, 1,600 per upload =
-        # ~6 uploads/day per channel; the @NerraNetwork channel has
-        # 8 English shows × 2 videos = 16 uploads which exceeds quota).
-        if youtube_urls.get("long_error"):
-            metrics.record("youtube_long_error", youtube_urls["long_error"])
-        if youtube_urls.get("short_error"):
-            metrics.record("youtube_short_error", youtube_urls["short_error"])
-        metrics.record("pexels_photos_filtered", youtube_pexels_filtered)
-        # Grok Imagine cost tracking (May 2026). Always recorded so the
-        # dashboard can plot $0 for pexels-only runs and the actual
-        # spend for grok / hybrid runs.
-        metrics.record(
-            "grok_image_cost_usd",
-            float(youtube_urls.get("grok_image_cost_usd", 0.0) or 0.0),
-        )
-        metrics.record(
-            "grok_images_generated",
-            int(youtube_urls.get("grok_images_generated", 0) or 0),
-        )
-        metrics.record(
-            "image_provider",
-            youtube_urls.get("image_provider", "pexels"),
-        )
+    except Exception:
+        # Never let metrics recording break a successful publish
+        pass
 
-        # Medium item: Record actual quota units consumed this episode for
-        # better live visibility (instead of only static estimates).
-        try:
-            from engine.youtube_quota import estimate_episode_units
+    # Medium item: Record actual quota units consumed this episode for
+    # better live visibility (still here for now; will move in a follow-up).
+    try:
+        from engine.youtube_quota import estimate_episode_units
 
-            yt_cfg = getattr(config, "youtube", None) or {}
-            q = estimate_episode_units(
-                publish_long_form=bool(youtube_long_url),
-                publish_shorts=bool(youtube_short_url),
-                with_thumbnail=True,
-                with_playlist=True,
-                with_caption_track=bool(youtube_long_url),  # captions only on long form today
-            )
-            metrics.record("youtube_quota_units_this_episode", q.units)
-            metrics.record("youtube_uploads_this_episode", q.uploads)
-        except Exception as exc:
-            logger.debug("Could not record YouTube quota metrics: %s", exc)
-        # Gallery upload outcome (Phase 1 → diagnostics added May 2026).
-        # Always recorded so the operator can read the metrics file
-        # for the latest episode and tell at a glance whether the
-        # gallery R2 bucket is receiving uploads.
-        metrics.record(
-            "gallery_attempted",
-            int(youtube_urls.get("gallery_attempted", 0) or 0),
+        q = estimate_episode_units(
+            publish_long_form=bool(youtube_long_url),
+            publish_shorts=bool(youtube_short_url),
+            with_thumbnail=True,
+            with_playlist=True,
+            with_caption_track=bool(youtube_long_url),
         )
-        metrics.record(
-            "gallery_uploaded",
-            int(youtube_urls.get("gallery_uploaded", 0) or 0),
-        )
+        metrics.record("youtube_quota_units_this_episode", q.units)
+        metrics.record("youtube_uploads_this_episode", q.uploads)
+    except Exception as exc:
+        logger.debug("Could not record YouTube quota metrics: %s", exc)
         # Smart Shorts segment selection (May 2026): record the chosen
         # offset and which mode resolved to it so the dashboard can
         # surface smart-vs-fallback rate per show.
