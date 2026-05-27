@@ -4,41 +4,71 @@
 
 {% block content %}
 <div class="container" style="max-width: 1100px; padding-top: var(--sp-8);">
+  <style>
+    @media (max-width: 640px) {
+      .glass-card { padding: 14px !important; }
+      .program-card { padding: 14px !important; }
+    }
+    .program-card {
+      background: var(--nn-surface);
+      border: 1px solid var(--nn-border);
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: var(--sp-5);
+    }
+    .program-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .status-text {
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+    .meta-row {
+      font-size: 0.85rem;
+      color: var(--nn-text-muted);
+    }
+  </style>
+
   <div style="margin-bottom: var(--sp-8);">
-    <h1 style="font-size: 2.2rem; margin-bottom: 0.4rem;">Tesla Narrative Tracker</h1>
-    <p style="font-size: 1.05rem; color: var(--nn-text-muted); max-width: 780px;">
-      This page tracks the major ongoing Tesla programs that matter most over multi-quarter arcs.
-      Tesla Shorts Time maintains persistent memory of status, key claims, and open questions so listeners
-      get genuine narrative continuity rather than daily snapshots.
+    <h1 style="font-size: 2.3rem; margin-bottom: 0.3rem;">Tesla Narrative Tracker</h1>
+    <p style="font-size: 1.1rem; color: var(--nn-text-muted); max-width: 820px;">
+      Tesla Shorts Time maintains living memory of the major multi-quarter programs that define Tesla's future.
+      This page shows the current status of each major bet, the last time we covered it in depth, key open questions,
+      and notable claims the show has surfaced.
     </p>
     <p style="font-size: 0.85rem; color: var(--nn-text-muted); margin-top: 0.4rem;">
-      Updated automatically after episodes. Data lives in <code>tesla_narrative_tracker.json</code>.
+      Automatically updated after episodes. Source: <code>digests/tesla_shorts_time/tesla_narrative_tracker.json</code>
     </p>
   </div>
 
   {% if narrative and narrative.programs %}
     <div class="glass-card" style="padding: var(--sp-6); margin-bottom: var(--sp-8);">
-      <h2 style="margin-top:0;">Active Programs</h2>
+      <h2 style="margin-top:0; margin-bottom: var(--sp-5);">Active Strategic Programs</h2>
 
       {% for key, prog in narrative.programs.items() %}
-        <div style="margin-bottom: var(--sp-6); padding-bottom: var(--sp-5); border-bottom: 1px solid var(--nn-border);">
-          <div style="display:flex; align-items:baseline; gap:12px; margin-bottom:4px;">
-            <h3 style="margin:0; font-size:1.25rem;">{{ prog.display_name or key.title() }}</h3>
+        <div class="program-card">
+          <div class="program-header">
+            <h3 style="margin:0; font-size:1.3rem;">{{ prog.display_name or key.title() }}</h3>
             {% if prog.last_major_update_episode %}
-              <span style="font-size:0.8rem; color:var(--nn-text-muted);">
-                Last major update: Ep{{ prog.last_major_update_episode }} ({{ prog.last_major_update_date }})
+              <span class="meta-row">
+                Last deep coverage: <strong>Ep {{ prog.last_major_update_episode }}</strong> ({{ prog.last_major_update_date }})
               </span>
+            {% else %}
+              <span class="meta-row">Not yet deeply covered on the show</span>
             {% endif %}
           </div>
 
-          <p style="margin: 4px 0 8px; line-height:1.45;">
-            {{ prog.status }}
-          </p>
+          <p class="status-text">{{ prog.status }}</p>
 
           {% if prog.key_open_questions %}
-            <div style="font-size:0.9rem;">
-              <strong>Open questions:</strong>
-              <ul style="margin:4px 0 0 18px; padding:0;">
+            <div style="margin-bottom: 8px;">
+              <strong style="font-size:0.9rem;">Key open questions:</strong>
+              <ul style="margin: 4px 0 0 18px; padding:0; font-size:0.9rem;">
                 {% for q in prog.key_open_questions %}
                   <li>{{ q }}</li>
                 {% endfor %}
@@ -47,21 +77,35 @@
           {% endif %}
 
           {% if prog.show_confidence %}
-            <div style="margin-top:6px; font-size:0.85rem; color:var(--nn-text-muted);">
-              Show confidence on major timelines: <strong>{{ prog.show_confidence }}</strong>
+            <div class="meta-row">
+              TST confidence on major timelines: <strong>{{ prog.show_confidence }}</strong>
+            </div>
+          {% endif %}
+
+          {% if prog.notable_claims %}
+            <div style="margin-top: 10px; font-size:0.85rem;">
+              <strong>Notable claims surfaced on the show:</strong>
+              {% for claim in prog.notable_claims %}
+                <div style="margin-top:4px; padding-left:8px; border-left:2px solid var(--nn-border);">
+                  Ep {{ claim.episode }} ({{ claim.date }}): "{{ claim.claim }}" — <em>Status: {{ claim.status }}</em>
+                </div>
+              {% endfor %}
             </div>
           {% endif %}
         </div>
       {% endfor %}
     </div>
   {% else %}
-    <p>Narrative tracker data not yet available.</p>
+    <p style="color: var(--nn-text-muted);">Narrative tracker data is being initialized.</p>
   {% endif %}
 
-  <div style="margin-top: var(--sp-8); font-size:0.85rem; color:var(--nn-text-muted);">
+  <div style="margin-top: var(--sp-8); font-size:0.85rem; color:var(--nn-text-muted); line-height:1.5;">
     <p>
-      This system is part of Tesla Shorts Time's long-term memory architecture (alongside performance signals and theme mining).
-      The goal is for the show to become a better chronicler of Tesla's biggest bets over time.
+      This is part of Tesla Shorts Time’s long-term memory system (narrative tracking + performance signals + theme mining from our own transcripts).
+      The goal is for the show to become the best public running history of Tesla’s biggest strategic bets while continuously improving what we emphasize based on real audience data.
+    </p>
+    <p style="margin-top:12px;">
+      Want to suggest an update to any program status? Reach out on X at <a href="https://x.com/teslashortstime" target="_blank">@teslashortstime</a>.
     </p>
   </div>
 </div>

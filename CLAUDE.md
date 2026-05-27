@@ -139,6 +139,7 @@ TST received a full recursive improvement architecture (analogous to MIT):
 - Prompt updates in both digest and podcast prompts.
 - Public page `tesla-narrative.html` (generated nightly + on demand).
 - Post-episode hook + Sunday recap integration.
+- Operator tooling: `scripts/update_tesla_narrative.py` for easy updates without hand-editing JSON.
 - Goal: TST becomes the best long-term public chronicle of Tesla's major programs while
   continuously optimizing for real audience engagement.
 - **PR** (Привет, Русский!) runs via `run_show.py` +

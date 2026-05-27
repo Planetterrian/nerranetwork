@@ -138,3 +138,20 @@ def build_weekly_recap_digest(
             "voice and pacing as a daily episode."
         ),
     ])
+
+    # TST-specific enhancement: inject narrative memory framing when available
+    if show_slug == "tesla":
+        try:
+            from engine import tesla_memory
+            from pathlib import Path as _Path
+            tracker = tesla_memory.load_narrative_tracker(
+                _Path("digests/tesla_shorts_time")
+            )
+            narrative_block = tesla_memory.build_narrative_status_block(tracker)
+            if narrative_block:
+                base += "\n\n" + narrative_block + "\n\nUse the narrative status above to highlight meaningful progress or open questions across the week."
+        except Exception:
+            pass
+
+    return base
+    ])
