@@ -1,21 +1,19 @@
-name: Build Gallery Manifest
+name: Build Gallery Manifest + Search Index
 
-# Rebuilds site/data/gallery-manifest.json by walking every .json
-# sidecar in the nerra-gallery R2 bucket. See
-# docs/gallery_storage.md for the manifest schema and
-# scripts/build_gallery_manifest.py for the builder.
+# Rebuilds site/data/gallery-manifest.json (R2 sidecars) and
+# site/data/search-index.json (Content Lake FTS-powered episodes).
+# See scripts/build_gallery_manifest.py and scripts/build_search_index.py.
 #
-# The script gracefully writes an empty manifest when R2 credentials
-# are missing — the workflow will not fail in that case. It also
-# skips the write when only the timestamp would change, so the daily
-# commit step is a no-op when no new images have been uploaded.
+# Search index (Item 2 of the May 2026 review) gives the global nav search
+# full coverage of every episode via the lake without any runtime backend.
+# Both builders are safe/no-op on missing data and avoid timestamp-only commits.
 #
 # Triggers:
 #   * Nightly at 03:30 UTC — well after run-show.yml finishes its
 #     last slot (~12:00 UTC) and the dashboard refresh.
 #   * After every successful "Run Podcast Show" workflow run, so the
-#     gallery reflects new uploads within minutes of episode publish.
-#   * On push to main affecting the gallery code paths.
+#     gallery + search reflect new episodes within minutes.
+#   * On push to main affecting the builders or templates.
 #   * workflow_dispatch for manual runs.
 
 on:
@@ -29,7 +27,10 @@ on:
     branches: [main]
     paths:
       - 'scripts/build_gallery_manifest.py'
+      - 'scripts/build_search_index.py'
       - 'engine/gallery_uploader.py'
+      - 'engine/content_lake.py'
+      - 'templates/base.html.j2'
       - '.github/workflows/build-gallery-manifest.yml'
 
 permissions:
@@ -72,6 +73,10 @@ jobs:
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
         run: python scripts/build_gallery_manifest.py --out site/data/gallery-manifest.json
+
+      - name: Build global search index (Content Lake FTS)
+        # No secrets needed — purely local lake + metadata. Safe even if lake is empty.
+        run: python scripts/build_search_index.py --out site/data/search-index.json
 
       - name: Pull latest before committing
         run: |

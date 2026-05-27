@@ -433,6 +433,11 @@ class ShowConfig:
     min_articles_skip: int = 3  # Hard cutoff — skip episode if fewer articles
     min_audio_duration: int = 0  # Minimum audio seconds — skip if shorter (0 = disabled)
     max_weekly_cost_usd: float = 0.0  # 0 = no limit; >0 skips episode if 7-day spend exceeds
+    # Item 4 stronger breakers (May 2026 review)
+    max_weekly_tts_chars: int = 0          # 0 = off; summed from recent metrics_ep*.json
+    max_weekly_grok_images: int = 0        # 0 = off
+    max_tts_chars_per_episode: int = 0     # hard stop before synthesis (0 = off)
+    max_grok_images_per_episode: int = 0   # hard stop before image gen (0 = off)
     llm: LLMConfig = field(default_factory=LLMConfig)
     tts: TTSConfig = field(default_factory=TTSConfig)
     audio: AudioConfig = field(default_factory=AudioConfig)
@@ -611,6 +616,10 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
             or 0
         ),
         max_weekly_cost_usd=float(data.get("max_weekly_cost_usd", 0.0)),
+        max_weekly_tts_chars=int(data.get("max_weekly_tts_chars", 0) or 0),
+        max_weekly_grok_images=int(data.get("max_weekly_grok_images", 0) or 0),
+        max_tts_chars_per_episode=int(data.get("max_tts_chars_per_episode", 0) or 0),
+        max_grok_images_per_episode=int(data.get("max_grok_images_per_episode", 0) or 0),
         llm=_build_nested(LLMConfig, data.get("llm")),
         tts=_build_nested(TTSConfig, data.get("tts")),
         audio=_build_nested(AudioConfig, data.get("audio")),

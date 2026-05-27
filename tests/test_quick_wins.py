@@ -57,10 +57,21 @@ def test_dashboard_json_will_contain_projections_after_regen():
 
 
 def test_global_search_proto_markup_present():
-    """Audience quick win: the nav now contains the global search input + results container."""
+    """Audience Item 2: global search upgraded to full Content Lake FTS-powered index."""
     base = (ROOT / "templates/base.html.j2").read_text(encoding="utf-8")
     assert "nn-global-search-input" in base
-    assert "Global search proto (client-only" in base
+    assert "Content Lake FTS index" in base or "build_search_index" in base
+
+def test_search_index_builder_exists_and_is_safe():
+    """Item 2 drift guard: the search index builder script exists, supports --dry-run, and is wired into CI."""
+    script = ROOT / "scripts/build_search_index.py"
+    assert script.exists()
+    src = script.read_text(encoding="utf-8")
+    assert "def main" in src and "--dry-run" in src
+    assert "Content Lake" in src or "get_all_search_docs" in src
+    # Also referenced from the gallery+search workflow
+    wf = (ROOT / ".github/workflows/build-gallery-manifest.yml").read_text(encoding="utf-8")
+    assert "build_search_index.py" in wf
 
 
 def test_noscript_fallback_in_show_page_template():

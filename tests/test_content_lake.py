@@ -7,6 +7,7 @@ import pytest
 from engine.content_lake import (
     EpisodeRecord,
     extract_entities_and_topics,
+    get_all_search_docs,
     get_lake_stats,
     init_db,
     query_all_shows_range,
@@ -295,3 +296,39 @@ class TestExtractEntitiesAndTopics:
         result = extract_entities_and_topics(text, "models_agents")
         assert "OpenAI" in result["entities"]
         assert "Anthropic" in result["entities"]
+
+
+# ---------------------------------------------------------------------------
+# Item 2 search enhancements (server-built index + filtered FTS)
+# ---------------------------------------------------------------------------
+
+class TestSearchEnhancements:
+    def test_search_content_supports_show_filter(self, tmp_path):
+        db = tmp_path / "test.db"
+        store_episode(_make_record(show_slug="tesla", episode_num=1, digest_md="Tesla robotaxi news"), db)
+        store_episode(
+            _make_record(show_slug="omni_view", episode_num=1, show_name="Omni View",
+                         digest_md="World news about markets and Tesla"),
+            db,
+        )
+
+        all_results = search_content("Tesla", db_path=db)
+        assert len(all_results) == 2
+
+        tesla_only = search_content("Tesla", show_slug="tesla", db_path=db)
+        assert len(tesla_only) == 1
+        assert tesla_only[0]["show_slug"] == "tesla"
+
+    def test_get_all_search_docs_compact(self, tmp_path):
+        db = tmp_path / "test.db"
+        store_episode(_make_record(episode_num=42, title="Big Reveal", entities=["Cybercab"]), db)
+
+        docs = get_all_search_docs(db)
+        assert len(docs) == 1
+        d = docs[0]
+        assert d["episode_num"] == 42
+        assert d["title"] == "Big Reveal"
+        assert "Cybercab" in d["entities"]
+        # Must not include heavy text fields in the search export
+        assert "digest_md" not in d
+        assert "podcast_script" not in d

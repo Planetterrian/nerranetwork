@@ -290,8 +290,8 @@ def _preflight_checks(config, *, dry_run: bool = False) -> None:
                 "must be about_to_send, draft, or scheduled."
             )
 
-    # Cost circuit breaker: skip episode if 7-day spend exceeds the show's
-    # max_weekly_cost_usd (reads the previously committed dashboard JSON).
+    # Cost circuit breaker (enhanced Item 4, May 2026): USD + TTS chars + Grok images.
+    # USD path unchanged (dashboard aggregate). Additional weekly + per-ep guards below.
     max_cost = getattr(config, "max_weekly_cost_usd", 0.0) or 0.0
     if max_cost > 0:
         dashboard_path = PROJECT_ROOT / "api" / "dashboard.json"
@@ -309,6 +309,32 @@ def _preflight_checks(config, *, dry_run: bool = False) -> None:
                     )
             except Exception as exc:
                 logger.warning("Cost circuit breaker read failed: %s", exc)
+
+    # Item 4: weekly TTS chars / Grok images (best-effort from on-disk metrics)
+    # + hard per-episode caps (enforced later before the calls).
+    max_w_tts = getattr(config, "max_weekly_tts_chars", 0) or 0
+    max_w_img = getattr(config, "max_weekly_grok_images", 0) or 0
+    if max_w_tts > 0 or max_w_img > 0:
+        try:
+            import json as _json, re as _re
+            # metrics live under the show's output dir (digests/<slug>/metrics_ep*.json)
+            out_dir = Path(getattr(config, "output_dir", PROJECT_ROOT / "digests" / config.slug))
+            metrics_files = sorted(out_dir.glob("metrics_ep*.json"))[-8:]  # last ~week
+            w_tts = 0
+            w_img = 0
+            for mf in metrics_files:
+                try:
+                    m = _json.loads(mf.read_text(encoding="utf-8"))
+                    w_tts += int(m.get("tts_chars", 0) or 0)
+                    w_img += int(m.get("grok_images_generated", 0) or 0)
+                except Exception:
+                    continue
+            if max_w_tts > 0 and w_tts >= max_w_tts:
+                issues.append(f"TTS circuit breaker: {config.slug} used {w_tts} chars this week (limit {max_w_tts})")
+            if max_w_img > 0 and w_img >= max_w_img:
+                issues.append(f"Image circuit breaker: {config.slug} generated {w_img} Grok images this week (limit {max_w_img})")
+        except Exception as exc:
+            logger.warning("Granular cost breaker scan failed: %s", exc)
 
     if issues:
         for issue in issues:
@@ -1754,6 +1780,16 @@ def run(args: argparse.Namespace) -> None:
             # Apply pronunciation fixes
             podcast_script = _apply_pronunciation(podcast_script, args.show)
 
+            # Item 4: hard per-episode TTS char cap (checked after final script clean,
+            # before any synthesis work). 0 = disabled (current default for all shows).
+            max_per_tts = getattr(config, "max_tts_chars_per_episode", 0) or 0
+            if max_per_tts > 0 and len(podcast_script or "") > max_per_tts:
+                logger.error(
+                    "Per-episode TTS cap exceeded for %s Ep%d: %d chars > limit %d — aborting before synthesis",
+                    config.slug, episode_num, len(podcast_script or ""), max_per_tts
+                )
+                raise SystemExit("TTS per-episode cap exceeded")
+
             # Post-pronunciation cleanup: strip metadata that survived in word form
             # (e.g. "(Word count: two thousand four hundred seventy-eight)" after
             # number-to-words conversion made it invisible to earlier regex passes)
@@ -2194,7 +2230,7 @@ def run(args: argparse.Namespace) -> None:
         )
     except Exception:
         # Never let metrics recording break a successful publish
-        pass
+        logger.warning("post-publish metrics recording failed (non-fatal)", exc_info=True)
 
     # Medium item: Record actual quota units consumed this episode for
     # better live visibility (still here for now; will move in a follow-up).
@@ -2255,7 +2291,7 @@ def run(args: argparse.Namespace) -> None:
                 youtube_urls["grok_image_failures"],
             )
     except Exception:
-        pass
+        logger.warning("post-publish step failed (non-fatal)", exc_info=True)
 
     # 11. Update RSS feed
     _t_rss = time.monotonic()

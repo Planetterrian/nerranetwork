@@ -12,7 +12,7 @@ and is consumed by `assets/js/gallery.js` on the static site.
 | POST | `/api/subscribe` | none | Body `{email}`. Subscribes via Buttondown with tag `gallery-subscriber`, sets a 90-day HttpOnly Secure SameSite=Lax JWT cookie, returns `200 {ok:true}`. |
 | GET | `/api/login` | none | `?email=...`. If the address is subscribed in Buttondown, sends a magic-link email via Resend (15-min TTL). Always 200 (no enumeration). |
 | GET | `/api/magic` | none | `?token=...`. Verifies the magic-login JWT, issues the 90-day cookie, 302 to `/gallery.html`. |
-| GET | `/api/download` | cookie | `?key=<r2_object_key>`. Verifies the cookie, fetches the R2 object via the bound bucket, streams it back with `Content-Disposition: attachment`. |
+| GET | `/api/download` | cookie | `?key=<r2_object_key>`. Verifies the cookie + per-email revocation blacklist (Item 3), fetches the R2 object via the bound bucket, streams it back with `Content-Disposition: attachment`. |
 | GET | `/api/health` | none | Liveness ping. `200 {ok:true}`. |
 
 ## Deviation from spec
@@ -26,6 +26,34 @@ maintain. For the gallery's traffic volume the Worker bandwidth cost
 is well under the free tier. If we ever hit Worker bandwidth limits
 we'll swap to signed URLs — the endpoint contract from the
 frontend's perspective is unchanged.
+
+## Per-email revocation (Item 3 — May 2026 review)
+
+Revocation is implemented via the existing `RATE_LIMIT_KV` binding
+(keys prefixed `revoke:`). It works with the stateless HS256 JWTs
+because every protected request re-checks the KV after JWT validation.
+
+**Operator procedure to revoke an email:**
+
+```bash
+# From a machine with wrangler auth
+wrangler kv key put --binding RATE_LIMIT_KV \
+  "revoke:spammer@example.com" \
+  "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+# To un-revoke (rare)
+wrangler kv key delete --binding RATE_LIMIT_KV "revoke:spammer@example.com"
+```
+
+The value is a human timestamp for audit in the KV dashboard.
+Revoked users immediately get 403 on `/api/download` and 403 on
+`/api/magic` (no new long-lived cookie can be minted).
+
+The check is fail-open if the KV binding is missing (no accidental
+mass lockouts during misconfig). Add the same KV namespace ID you
+already use for rate limiting.
+
+No new secrets or bindings required.
 
 ## One-time operator setup
 

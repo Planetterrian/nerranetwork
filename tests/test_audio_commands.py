@@ -152,7 +152,7 @@ def final_mix(
         "ffmpeg", "-y", "-threads", "0",
         "-i", voice_in, "-i", music_in,
         "-filter_complex",
-        f"[0:a]apad=pad_dur={voice_pad_seconds},asplit=2[voice_mix][voice_sc];"
+        f"[0:a]apad=pad_dur={voice_pad_seconds},afade=t=in:st=0:d=0.04:curve=tri,asplit=2[voice_mix][voice_sc];"
         "[1:a][voice_sc]sidechaincompress="
         "threshold=-30dB:ratio=8:attack=50:release=600:level_sc=2"
         "[music_ducked];"

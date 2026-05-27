@@ -231,21 +231,63 @@ def query_by_entity(
 def search_content(
     query: str,
     limit: int = 20,
+    show_slug: Optional[str] = None,
     db_path: Path = DB_PATH,
 ) -> List[Dict[str, Any]]:
-    """Full-text search across all episode content."""
+    """Full-text search across episode content using FTS5.
+
+    Supports optional show_slug filter. Results are FTS-ranked (bm25).
+    Safe to call after compaction (FTS retains historical text).
+    """
+    init_db(db_path)
+    conn = sqlite3.connect(str(db_path))
+    conn.row_factory = sqlite3.Row
+    if show_slug:
+        rows = conn.execute("""
+            SELECT e.* FROM episodes_fts fts
+            JOIN episodes e ON fts.rowid = e.id
+            WHERE episodes_fts MATCH ? AND e.show_slug = ?
+            ORDER BY rank
+            LIMIT ?
+        """, (query, show_slug, limit)).fetchall()
+    else:
+        rows = conn.execute("""
+            SELECT e.* FROM episodes_fts fts
+            JOIN episodes e ON fts.rowid = e.id
+            WHERE episodes_fts MATCH ?
+            ORDER BY rank
+            LIMIT ?
+        """, (query, limit)).fetchall()
+    conn.close()
+    return _rows_to_dicts(rows)
+
+
+def get_all_search_docs(db_path: Path = DB_PATH) -> List[Dict[str, Any]]:
+    """Export compact episode docs for static client-side search index.
+
+    Includes only metadata + short fields (no full digest/script post-compaction).
+    Used by build_search_index.py (Item 2 of May 2026 review).
+    """
     init_db(db_path)
     conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
     rows = conn.execute("""
-        SELECT e.* FROM episodes_fts fts
-        JOIN episodes e ON fts.rowid = e.id
-        WHERE episodes_fts MATCH ?
-        ORDER BY rank
-        LIMIT ?
-    """, (query, limit)).fetchall()
+        SELECT show_slug, episode_num, date, title, hook, summary,
+               headlines, entities, topics, show_name, language
+        FROM episodes
+        ORDER BY date DESC, show_slug ASC
+    """).fetchall()
     conn.close()
-    return _rows_to_dicts(rows)
+    docs = []
+    for r in rows:
+        d = dict(r)
+        for f in ("headlines", "entities", "topics"):
+            try:
+                d[f] = json.loads(d[f]) if d.get(f) else []
+            except Exception:
+                d[f] = []
+        docs.append(d)
+    return docs
 
 
 def get_lake_stats(db_path: Path = DB_PATH) -> Dict[str, Any]:
@@ -388,3 +430,35 @@ def extract_entities_and_topics(
         "entities": sorted(entities),
         "topics": sorted(topics),
     }
+
+
+# ---------------------------------------------------------------------------
+# CLI + URL helpers (Item 2 search UX)
+# ---------------------------------------------------------------------------
+
+def episode_search_url(show_slug: str, episode_num: int) -> str:
+    """Return the public URL for an episode (prefers show page + anchor for now)."""
+    # Convention: /tesla.html (or blog/tesla/...) — the JS + pages handle deep links
+    # For simplicity we point to the show page; client can highlight if needed.
+    return f"/{show_slug.replace('_', '-')}.html"
+
+
+if __name__ == "__main__":
+    import argparse
+    import sys
+
+    parser = argparse.ArgumentParser(description="Content Lake search (FTS over episodes)")
+    parser.add_argument("query", help="FTS5 query (supports AND, OR, NEAR, prefix*)")
+    parser.add_argument("--show", help="Limit to one show slug")
+    parser.add_argument("--limit", type=int, default=10)
+    args = parser.parse_args()
+
+    try:
+        results = search_content(args.query, limit=args.limit, show_slug=args.show)
+        print(f"Found {len(results)} results for: {args.query}")
+        for r in results:
+            print(f"  {r['show_slug']} Ep{r['episode_num']} ({r['date']}): {r['title'] or r['hook'][:80]}")
+            print(f"    url: {episode_search_url(r['show_slug'], r['episode_num'])}")
+    except Exception as e:
+        print(f"Search error: {e}", file=sys.stderr)
+        sys.exit(1)

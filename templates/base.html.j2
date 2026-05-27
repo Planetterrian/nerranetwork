@@ -182,17 +182,17 @@
                 <span class="gradient-text">Nerra</span> Network
             </a>
 
-            {# Quick-win global search proto (client-only, May 2026 review).
-               Fetches a few small api/*.json on first use, builds an in-memory
-               index across shows, and shows a lightweight dropdown. Zero backend
-               cost; can be upgraded to server-side + content_lake later. #}
+            {# Global search (Item 2, May 2026 review) — powered by server-built
+               Content Lake FTS index (scripts/build_search_index.py). Single
+               fetch of a compact JSON; rich client ranking + all shows + entities.
+               Zero ongoing backend cost (static site). #}
             <div class="nn-global-search" style="position:relative;margin-left:auto;margin-right:0.75rem;max-width:220px;flex:1 1 auto;">
                 <input type="search" id="nn-global-search-input"
-                       placeholder="Search episodes &amp; posts…"
+                       placeholder="Search episodes…"
                        style="width:100%;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.9rem;"
-                       aria-label="Search all shows">
+                       aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
-                     style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:320px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+                     style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
             </div>
 
             <ul class="nn-nav-links">
@@ -413,88 +413,128 @@
     {% block scripts %}{% endblock %}
 
     <script>
-    // Global search proto (client-only, May 2026 quick win).
-    // Fetches a handful of small /api/*.json on first interaction, unions episodes,
-    // and renders a simple dropdown with links. Zero server cost; upgrade path
-    // is obvious (server index or content_lake FTS + dedicated endpoint).
+    // Global search (Item 2, May 2026 review) — single fetch of the server-built
+    // Content Lake index (scripts/build_search_index.py + FTS at build time).
+    // Richer ranking, all shows, entities/topics, graceful fallback to legacy
+    // api/*.json during transition. Zero runtime backend cost.
     (function () {
         var input = document.getElementById('nn-global-search-input');
         var resultsBox = document.getElementById('nn-global-search-results');
         if (!input || !resultsBox) return;
 
-        var index = null; // cached {items: [...]}
-        var API_ENDPOINTS = [
-            '/api/tesla.json',
-            '/api/models_agents.json',
-            '/api/fascinating_frontiers.json',
-            '/api/omni_view.json',
-            '/api/planetterrian.json',
-            '/api/modern_investing.json'
+        var cached = null; // {episodes: [...]}
+
+        var INDEX_URL = '/site/data/search-index.json';
+        // Legacy fallback (old proto) — used only if new index 404s
+        var LEGACY_ENDPOINTS = [
+            '/api/tesla.json', '/api/models_agents.json', '/api/fascinating_frontiers.json',
+            '/api/omni_view.json', '/api/planetterrian.json', '/api/modern_investing.json',
+            '/api/env_intel.json', '/api/finansy_prosto.json', '/api/privet_russian.json',
+            '/api/unintended_consequences.json'
         ];
 
-        function normalise(s) { return (s || '').toLowerCase(); }
+        function norm(s) { return (s || '').toLowerCase(); }
 
-        async function buildIndex() {
-            if (index) return index;
-            var items = [];
-            for (var i = 0; i < API_ENDPOINTS.length; i++) {
-                try {
-                    var res = await fetch(API_ENDPOINTS[i], { credentials: 'same-origin' });
-                    if (!res.ok) continue;
+        function scoreItem(it, q) {
+            // Simple but effective client ranker (title > hook > entities/show)
+            var t = norm(it.title), h = norm(it.hook), s = norm(it.show_name || it.show_slug),
+                ents = (it.entities || []).join(' ').toLowerCase();
+            var score = 0;
+            if (t.indexOf(q) !== -1) score += 100;
+            if (t.indexOf(q) === 0) score += 50; // starts with
+            if (h.indexOf(q) !== -1) score += 40;
+            if (ents.indexOf(q) !== -1) score += 25;
+            if (s.indexOf(q) !== -1) score += 10;
+            // Prefer recent
+            if (it.date) {
+                var y = parseInt(it.date.slice(0,4), 10) || 2020;
+                score += Math.max(0, (y - 2023) * 2);
+            }
+            return score;
+        }
+
+        async function loadIndex() {
+            if (cached) return cached;
+            try {
+                var res = await fetch(INDEX_URL, { credentials: 'same-origin' });
+                if (res.ok) {
                     var data = await res.json();
-                    var eps = data.episodes || data || [];
+                    cached = { episodes: data.episodes || [] };
+                    return cached;
+                }
+            } catch (e) { /* fall through to legacy */ }
+            // Legacy multi-fetch path (kept for transition / forks without the new index)
+            var items = [];
+            for (var i = 0; i < LEGACY_ENDPOINTS.length; i++) {
+                try {
+                    var r = await fetch(LEGACY_ENDPOINTS[i], { credentials: 'same-origin' });
+                    if (!r.ok) continue;
+                    var d = await r.json();
+                    var eps = d.episodes || d || [];
                     for (var j = 0; j < eps.length; j++) {
                         var e = eps[j];
                         items.push({
                             title: e.title || e.episode_title || '',
                             hook: e.hook || e.summary || '',
-                            show: data.name || API_ENDPOINTS[i].split('/').pop().replace('.json',''),
-                            url: e.url || ('/' + (data.slug || '') + '.html'),
-                            date: e.date || ''
+                            show_slug: (d.slug || LEGACY_ENDPOINTS[i].split('/').pop().replace('.json','')),
+                            show_name: d.name || '',
+                            url: e.url || ('/' + (d.slug || '') + '.html'),
+                            date: e.date || '',
+                            entities: e.entities || []
                         });
                     }
-                } catch (e) { /* ignore individual fetch failures for proto */ }
+                } catch (_) {}
             }
-            index = { items: items };
-            return index;
+            cached = { episodes: items };
+            return cached;
         }
 
         function renderResults(matches) {
             if (!matches.length) {
-                resultsBox.innerHTML = '<div style="padding:8px 12px;color:var(--nn-text-muted);">No matches</div>';
+                resultsBox.innerHTML = '<div style="padding:8px 12px;color:var(--nn-text-muted);">No matches. Try a show name, entity (Tesla, OpenAI), or topic.</div>';
             } else {
-                var html = matches.slice(0, 8).map(function(m) {
-                    return '<a href="' + m.url + '" style="display:block;padding:6px 10px;text-decoration:none;color:inherit;border-bottom:1px solid var(--nn-border);">' +
-                           '<strong>' + (m.title || m.hook).substring(0,80) + '</strong><br>' +
-                           '<small>' + m.show + (m.date ? ' · ' + m.date : '') + '</small></a>';
+                var html = matches.slice(0, 10).map(function(m) {
+                    var label = (m.title || m.hook || '').substring(0, 78);
+                    var meta = (m.show_name || m.show_slug || '') + (m.date ? ' · ' + m.date : '');
+                    if (m.entities && m.entities.length) meta += ' · ' + m.entities.slice(0,2).join(', ');
+                    return '<a href="' + (m.url || '#') + '" style="display:block;padding:7px 10px;text-decoration:none;color:inherit;border-bottom:1px solid var(--nn-border);">' +
+                           '<strong>' + label + '</strong><br>' +
+                           '<small style="opacity:0.75">' + meta + '</small></a>';
                 }).join('');
                 resultsBox.innerHTML = html;
             }
             resultsBox.style.display = 'block';
         }
 
-        input.addEventListener('focus', async function () {
-            await buildIndex();
-        });
+        input.addEventListener('focus', function () { loadIndex(); });
 
         input.addEventListener('input', async function () {
-            var q = normalise(input.value.trim());
+            var q = norm(input.value.trim());
             if (q.length < 2) {
                 resultsBox.style.display = 'none';
                 return;
             }
-            await buildIndex();
-            var matches = (index.items || []).filter(function(it) {
-                return normalise(it.title).indexOf(q) !== -1 ||
-                       normalise(it.hook).indexOf(q) !== -1 ||
-                       normalise(it.show).indexOf(q) !== -1;
-            });
-            renderResults(matches);
+            var idx = await loadIndex();
+            var eps = idx.episodes || [];
+            var scored = eps.map(function(e) {
+                return { item: e, score: scoreItem(e, q) };
+            }).filter(function(x) { return x.score > 0; })
+              .sort(function(a, b) { return b.score - a.score; })
+              .map(function(x) { return x.item; });
+            renderResults(scored);
         });
 
         document.addEventListener('click', function (e) {
             if (!resultsBox.contains(e.target) && e.target !== input) {
                 resultsBox.style.display = 'none';
+            }
+        });
+
+        // Keyboard escape convenience
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && resultsBox.style.display !== 'none') {
+                resultsBox.style.display = 'none';
+                input.blur();
             }
         });
     })();

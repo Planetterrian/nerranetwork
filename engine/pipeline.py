@@ -85,7 +85,8 @@ def record_youtube_outcomes(
         )
     except Exception:
         # Never let metrics recording break a publish
-        pass
+        logger = __import__("logging").getLogger(__name__)
+        logger.warning("record_youtube_outcomes failed (non-fatal)", exc_info=True)
 
 
 def run_publish_phase(

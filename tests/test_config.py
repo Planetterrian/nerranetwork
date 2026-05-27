@@ -821,3 +821,29 @@ class TestYouTubeImageProviderConfig:
                 f"{slug} drifted off pexels — would silently incur Grok "
                 f"Imagine cost"
             )
+
+
+# =========================================================================
+# Item 4 cost circuit breakers (new fields + preflight wiring)
+# =========================================================================
+
+class TestItem4CostBreakers:
+    def test_new_cost_fields_default_to_zero_and_are_present(self):
+        """Drift guard for Item 4: the four new breaker fields exist on ShowConfig
+        and default to 0 (disabled) so no show is accidentally capped.
+        """
+        from engine.config import ShowConfig
+        cfg = ShowConfig()
+        assert hasattr(cfg, "max_weekly_tts_chars")
+        assert hasattr(cfg, "max_weekly_grok_images")
+        assert hasattr(cfg, "max_tts_chars_per_episode")
+        assert hasattr(cfg, "max_grok_images_per_episode")
+        assert cfg.max_weekly_tts_chars == 0
+        assert cfg.max_tts_chars_per_episode == 0
+
+    def test_tesla_yaml_can_opt_into_caps_without_error(self):
+        """Any show can declare the new caps; deep-merge + loader must not explode."""
+        cfg = load_config(SHOWS_DIR / "tesla.yaml")
+        # Even if not set in YAML, the attrs exist post-load
+        assert hasattr(cfg, "max_weekly_tts_chars")
+        assert isinstance(cfg.max_weekly_tts_chars, int)
