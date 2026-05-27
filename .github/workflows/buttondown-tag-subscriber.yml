@@ -155,7 +155,7 @@ jobs:
         # artifact gives the operator a downloadable spreadsheet for
         # bulk roster work without copy-pasting from the log.
         if: steps.run_tool.outputs.output_file != ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: buttondown-${{ github.run_id }}
           path: ${{ steps.run_tool.outputs.output_file }}
