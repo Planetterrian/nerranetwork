@@ -45,6 +45,12 @@ jobs:
       - name: Generate Management Dashboard
         run: python scripts/generate_dashboard.py --out api/dashboard.json
 
+      - name: Backfill Content Lake (required for search index)
+        # The content lake DB is gitignored. Nightly needs it populated from
+        # committed digests so build_search_index.py can produce a real index.
+        # Without this, search returns 0 results (the bug the user reported).
+        run: python scripts/backfill_content_lake.py
+
       - name: Build Gallery Manifest + Search Index
         env:
           R2_GALLERY_BUCKET: ${{ secrets.R2_GALLERY_BUCKET }}
