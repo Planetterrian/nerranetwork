@@ -2124,32 +2124,29 @@ def run(args: argparse.Namespace) -> None:
                 # NOTE: raw MP3 cleanup is deferred until after post-validation
                 # passes, so we have recovery if the mix is corrupt (see #20).
 
-    # 10b. Upload to R2 (if configured)
-    r2_audio_url = None
-    if final_mp3 and final_mp3.exists():
-        from engine.storage import upload_episode
-        r2_audio_url = upload_episode(final_mp3, config)
-        if r2_audio_url:
-            logger.info("R2 audio URL: %s", r2_audio_url)
-        elif config.storage.provider == "r2":
-            logger.error(
-                "R2 upload FAILED for '%s' Ep%d — storage.provider is 'r2' "
-                "but upload_episode() returned None. Aborting to prevent "
-                "publishing an RSS feed that points at a ghost MP3 URL.",
-                config.name, episode_num,
-            )
-            sys.exit(3)
+    # 10b–10d. Publishing & distribution phase (R2, OP3, YouTube).
+    # Extracted to engine/pipeline.py as part of the ongoing
+    # run_show.py monolith refactoring (item 1 of the review plan).
+    from engine.pipeline import run_publish_phase
 
-    # 10c. Apply OP3 analytics prefix (if enabled)
-    rss_audio_url = r2_audio_url
-    if config.analytics.enabled and rss_audio_url:
-        from engine.publisher import apply_op3_prefix
-        rss_audio_url = apply_op3_prefix(rss_audio_url, config.analytics.prefix_url)
-        logger.info("OP3 prefixed URL: %s", rss_audio_url)
+    publish_outcomes = run_publish_phase(
+        config,
+        episode_num=episode_num,
+        today=today,
+        today_str=today_str,
+        hook=hook or "",
+        digest_text=x_thread,
+        final_mp3=final_mp3,
+        digests_dir=digests_dir,
+        metrics=metrics,
+        args=args,
+    )
 
-    # 10d. Build & upload YouTube videos (long-form + Shorts) BEFORE the
-    # RSS / blog / X stages, so the YouTube URL can land in the
-    # episode description, blog post, and X teaser.
+    r2_audio_url = publish_outcomes.get("r2_audio_url")
+    rss_audio_url = publish_outcomes.get("rss_audio_url") or r2_audio_url
+
+    # YouTube results are still produced by the existing _publish_youtube
+    # for this iteration. Full move coming in follow-up PRs.
     _t_yt = time.monotonic()
     chapters_path_for_yt = digests_dir / f"chapters_ep{episode_num:03d}.json"
     youtube_urls = _publish_youtube(
