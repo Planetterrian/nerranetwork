@@ -262,6 +262,71 @@ def append_cron_snippet(
     return line
 
 
+def generate_registration_patch(spec: ScaffoldSpec) -> str:
+    """Return a copy-paste friendly 'Registration Patch' block for the operator.
+
+    This is the core of the medium-term onboarding automation improvement.
+    It reduces the number of manual edits required after running the scaffold.
+    """
+    slug = spec.slug
+    rss_file = f"{slug}_podcast.rss"
+    page = slug_to_page(slug)
+    cover = f"assets/covers/{slug.replace('_', '-')}.jpg"
+
+    # Reasonable staleness threshold based on cadence
+    if spec.cadence == "daily" or spec.weekly_recap:
+        health_hours = 48
+    elif "weekday" in (spec.cron_day_filter or ""):
+        health_hours = 120
+    else:
+        health_hours = 96
+
+    cron_line = ""
+    if spec.cron:
+        filt = spec.cron_day_filter
+        filt_repr = "None" if filt is None else f'"{filt}"'
+        cron_line = (
+            f'                  "{spec.cron}":       ("{slug}",{" " * (27 - len(slug))}{filt_repr}),'
+        )
+
+    health_line = f'              "{rss_file}": ("{spec.show_name}", {health_hours}),'
+
+    buttondown_tag = spec.slug.replace("_", "-")
+
+    lines = [
+        "\n" + "=" * 60,
+        "REGISTRATION PATCH — copy/paste the relevant parts",
+        "=" * 60,
+        "",
+        "1. Add to .github/workflows/run-show.yml  (inside CRON_MAP)",
+    ]
+    if cron_line:
+        lines.append(f"   {cron_line}")
+    else:
+        lines.append("   (No --cron was provided — add manually)")
+
+    lines.extend([
+        "",
+        "2. Add to .github/workflows/health-check.yml  (inside FEEDS)",
+        f"   {health_line}",
+        "",
+        "3. Buttondown tag (create in Buttondown dashboard if missing):",
+        f"   {buttondown_tag}",
+        "",
+        "4. Cover art:",
+        f"   {cover}   (recommended 1200×1200)",
+        "",
+        "5. After first episode ships, run:",
+        f"   python generate_html.py --show {slug} --blogs",
+        "",
+        "6. (Optional) Music:",
+        f"   Update shows/{slug}.yaml → audio.music_file if you have a dedicated track.",
+        "",
+        "=" * 60,
+    ])
+    return "\n".join(lines)
+
+
 def validate_slug(slug: str) -> None:
     if not re.match(r"^[a-z][a-z0-9_]{1,40}$", slug):
         raise ValueError(
@@ -366,4 +431,9 @@ def scaffold_show(root: Path, spec: ScaffoldSpec, *, dry_run: bool = False) -> l
         f"  4. Add cover art: assets/covers/{spec.slug.replace('_', '-')}.jpg\n"
         f"  5. Paste cron line + run generate_html.py --show {spec.slug}\n"
     )
+
+    # Medium item: emit a much richer registration patch to reduce manual steps
+    patch = generate_registration_patch(spec)
+    log.append(patch)
+
     return log

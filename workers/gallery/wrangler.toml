@@ -26,6 +26,13 @@ routes = [
 binding = "GALLERY_BUCKET"
 bucket_name = "nerra-gallery"
 
+# KV namespace for rate limiting on subscribe/login (medium item from codebase review).
+# Prevents abuse of Buttondown + Resend quotas and Worker CPU.
+[[kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = ""          # Fill with real production KV ID after creation: wrangler kv namespace create gallery_rate_limits
+preview_id = ""  # Optional preview namespace
+
 # Secrets are set out-of-band via:
 #   wrangler secret put JWT_SECRET
 #   wrangler secret put BUTTONDOWN_API_KEY

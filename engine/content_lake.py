@@ -281,6 +281,50 @@ def get_lake_stats(db_path: Path = DB_PATH) -> Dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
+# Medium item: Compaction / retention (May 2026 review)
+# ---------------------------------------------------------------------------
+
+def compact_lake(retention_days: int = 180, db_path: Path = DB_PATH) -> dict:
+    """Remove large text fields (digest_md, podcast_script) for old episodes.
+
+    Keeps all metadata, headlines, entities, topics, and FTS index entries
+    for weekly recaps, search, and cross-show analysis.
+
+    This is the recommended way to control content lake growth without
+    losing analytical value.
+    """
+    from datetime import date, timedelta  # already used in compact_lake
+
+    init_db(db_path)
+    conn = sqlite3.connect(str(db_path))
+    cutoff = (date.today() - timedelta(days=retention_days)).isoformat()
+
+    try:
+        before = conn.execute(
+            "SELECT COUNT(*) FROM episodes "
+            "WHERE date < ? AND (digest_md IS NOT NULL OR podcast_script IS NOT NULL)",
+            (cutoff,)
+        ).fetchone()[0]
+
+        conn.execute(
+            "UPDATE episodes SET digest_md = NULL, podcast_script = NULL "
+            "WHERE date < ? AND (digest_md IS NOT NULL OR podcast_script IS NOT NULL)",
+            (cutoff,)
+        )
+        affected = conn.execute("SELECT changes()").fetchone()[0]
+        conn.commit()
+
+        return {
+            "retention_days": retention_days,
+            "cutoff": cutoff,
+            "episodes_cleared": affected,
+            "full_text_episodes_before": before,
+        }
+    finally:
+        conn.close()
+
+
+# ---------------------------------------------------------------------------
 # Entity & topic extraction
 # ---------------------------------------------------------------------------
 

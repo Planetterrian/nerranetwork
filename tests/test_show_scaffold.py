@@ -82,3 +82,28 @@ class TestScaffold:
         assert (tmp_path / "shows" / "prompts" / "scaffold_me_digest.txt").exists()
         meta = yaml.safe_load((tmp_path / "shows" / "network_meta.yaml").read_text())
         assert "scaffold_me" in meta
+
+
+def test_generate_registration_patch_contains_key_sections():
+    """Medium item: The scaffold now emits a rich registration patch that covers
+    cron, health-check, Buttondown tag, and cover art to reduce manual onboarding steps.
+    """
+    from engine.show_scaffold import ScaffoldSpec, generate_registration_patch
+
+    spec = ScaffoldSpec(
+        show_name="Ocean Tech Weekly",
+        slug="ocean_tech",
+        description="Daily ocean technology news.",
+        audience="marine researchers",
+        cron="45 10 * * *",
+        cron_day_filter="weekday",
+    )
+
+    patch = generate_registration_patch(spec)
+
+    assert "REGISTRATION PATCH" in patch
+    assert "run-show.yml" in patch
+    assert "health-check.yml" in patch
+    assert "Buttondown tag" in patch
+    assert "ocean-tech.jpg" in patch or "ocean_tech" in patch
+    assert "test_medium_podcast.rss" not in patch  # sanity: this is for the test show only

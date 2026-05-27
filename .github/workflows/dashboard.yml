@@ -98,3 +98,69 @@ jobs:
         run: |
           echo "::error::Management dashboard detected FAIL-level landmine(s). See api/dashboard.json → landmines[]."
           exit 1
+
+      # Medium item: Proactive alerting (May 2026 review)
+      # If the dashboard contains critical alerts (currently landmine FAILs),
+      # send a notification via the existing NOTIFICATION_WEBHOOK_URL secret.
+      - name: Send proactive alert webhook for critical issues
+        if: env.NOTIFICATION_WEBHOOK_URL != ''
+        env:
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+        run: |
+          ALERT_COUNT=$(python -c "
+          import json, sys
+          try:
+              data = json.load(open('api/dashboard.json'))
+              alerts = data.get('alerts', [])
+              print(len(alerts))
+          except Exception:
+              print(0)
+          ")
+
+          if [ "$ALERT_COUNT" -gt 0 ]; then
+            echo "Sending proactive alert for $ALERT_COUNT critical issue(s)..."
+            python - << 'PYEOF'
+          import json
+          import os
+          import urllib.request
+
+          url = os.environ.get("NOTIFICATION_WEBHOOK_URL")
+          if not url:
+              sys.exit(0)
+
+          with open("api/dashboard.json") as f:
+              data = json.load(f)
+
+          alerts = data.get("alerts", [])
+          if not alerts:
+              sys.exit(0)
+
+          # Build a compact Slack-compatible payload
+          lines = [f"🚨 *Nerra Dashboard Alert* — {len(alerts)} critical issue(s) detected"]
+          for a in alerts[:5]:
+              lines.append(f"• *{a.get('title', a.get('id'))}* — {a.get('details', '')[:120]}")
+
+          if len(alerts) > 5:
+              lines.append(f"... and {len(alerts) - 5} more (see api/dashboard.json)")
+
+          payload = {
+              "text": "\n".join(lines),
+              "username": "Nerra Dashboard",
+              "icon_emoji": ":warning:"
+          }
+
+          req = urllib.request.Request(
+              url,
+              data=json.dumps(payload).encode("utf-8"),
+              headers={"Content-Type": "application/json"},
+              method="POST"
+          )
+          try:
+              urllib.request.urlopen(req, timeout=10)
+              print("Webhook sent successfully")
+          except Exception as e:
+              print(f"Webhook failed (non-fatal): {e}")
+          PYEOF
+          else
+            echo "No critical alerts — skipping webhook"
+          fi
