@@ -1,0 +1,147 @@
+What's up — welcome to Models and Agents, episode sixty-one. It's May twenty-seventh, twenty twenty-six. Lots of news to walk through — let's start with what actually matters.
+
+An-thropic just published concrete sandboxing patterns that let agents scale capabilities without expanding their blast radius.
+
+The briefing today centers on new sandboxing techniques for agents, fixes to speculative decoding, and several fresh agent frameworks plus evaluation tools.
+
+Three model updates focus on inference stability and post-training methods.
+
+Agent tooling includes a Rust coding agent and a prompt optimizer that uses sandboxed execution.
+
+One community project improves how multi-turn conversations turn into benchmarks.
+
+An-thropic released a new engineering blog post on sandboxing for A I agents.
+
+The post stresses that permissions must evolve alongside agent capabilities.
+
+Sandboxing limits the scope of potentially destructive actions in their products.
+
+The guidance favors starting with narrow permissions and expanding them only after demonstrated reliability.
+
+Builders can apply the patterns when granting file system, network, or code execution access.
+
+The approach avoids reliance on static rules as agents gain autonomy.
+
+Similar sandbox designs are likely to appear from other labs soon.
+
+Now let's move to the model updates.
+
+The EAGLE team, vLLM, and TorchSpec released EAGLE 3.1.
+
+The update targets attention drift that caused inconsistent draft token acceptance rates during speculative decoding.
+
+Teams running high-throughput inference pipelines can integrate the algorithm to reduce variance in latency.
+
+The release prioritizes production robustness over raw speed gains.
+
+Builders should test the updated path if they see fluctuating acceptance rates on long contexts.
+
+Researchers introduced Self-Verified Distillation as a post-training method.
+
+Models generate, self-verify, and train on their own solutions using only unlabeled prompts.
+
+Three-stage filtering covers cycle-consistency, factuality, and correctness.
+
+Qwenthree to fourB showed gains of sixteen point seven points on math benchmarks, eleven point one on science, and eight point three on coding.
+
+The method requires only a single inference call at test time.
+
+Teams fine-tuning smaller models should experiment with the pipeline when labeled data is scarce.
+
+MicroSpec introduces a training-free method for speculative decoding.
+
+It builds compact, context-sensitive vocabularies on the fly.
+
+Average vocabulary size drops by more than forty times while maintaining coverage through temporal locality.
+
+The system achieves fifty one point six percent lower draft latency and one point one two to one point three two times end-to-end speedup over EAGLE-2.
+
+Inference teams should evaluate it when vocabulary projection is the current bottleneck.
+
+Now for agent and tool developments.
+
+VTCode is a new open-source Rust TUI coding agent.
+
+It uses AST-level chunking and explicit token budget tracking to avoid dumping entire directories into prompts.
+
+The agent supports macOS Seatbelt, Linux Landlock, and seccomp sandboxing plus tree-sitter validation on every generated command.
+
+It works with any Open A I compatible provider and includes a config example for routing through endpoints like Deep Seek V4 Flash.
+
+Developers tired of token waste in agent coding sessions should try the MIT-licensed repo.
+
+Hyvemind is a desktop app that combines three A I assisted development modes.
+
+The modes cover focused task planning, concurrent multi-model review called Hivemind, and fully autonomous multi-feature execution called Swarms.
+
+It supports providers including An-thropic, Open A I, Ollama, Deep Seek, and En-vidia NIM.
+
+The project is seeking testers before full public release and is available on GitHub.
+
+Users can export and reuse swarm plans across different model compositions.
+
+SPEAR turns automatic prompt engineering into an agentic process.
+
+The system is called Sandboxed Prompt Engineer with Active Roll-back.
+
+It includes four tools with a Python sandbox for structural error analysis.
+
+SPEAR outperformed prior methods on thirteen industrial L L M as-judge tasks and seven BBH tasks.
+
+The Python tool provided the largest single contribution on complex judge tasks.
+
+Auto-rollback prevents metric regression during optimization.
+
+Prompt engineers working on evaluation pipelines should test the agentic approach.
+
+In the practical and community section, Conv-to-Bench automatically converts real multi-turn user-assistant dialogues into structured requirement checklists.
+
+Applied to programming tasks, it produces benchmarks with near-perfect Spearman correlation to human-authored sets like BigCodeBench.
+
+The L L M as-judge component reached substantial agreement with human ground truth at kappa of zero point seven zero five.
+
+The framework reduces the cost of maintaining high-quality evaluation sets as models evolve.
+
+Evaluation teams should examine the pipeline for their own domain-specific benchmarks.
+
+OK, let's pop the hood on speculative decoding stability.
+
+Everyone talks about speculative decoding as a simple speed trick.
+
+In practice it balances draft model quality, acceptance criteria, and attention stability across layers.
+
+The mechanism lets a smaller draft model propose multiple tokens that the target model verifies in parallel.
+
+Attention drift occurs when the draft model's hidden states diverge from what the target would have produced at the same positions.
+
+Divergence grows with sequence length because each accepted token shifts the key-value cache the target model sees on the next verification step.
+
+EAGLE 3.1 and similar fixes add lightweight correction terms or re-normalization steps to keep the draft distribution aligned.
+
+These corrections cost a small amount of extra compute per verification round.
+
+The corrections buy back ten to twenty percent acceptance rate on long contexts while adding roughly five to eight percent overhead to the verification pass.
+
+Use the stabilized version for any production workload where tail latency matters more than average throughput.
+
+Skip it for short, bursty requests where drift never has time to accumulate.
+
+Things to try this week include testing EAGLE 3.1 in your vLLM setup if speculative decoding acceptance rates have been drifting on contexts over eight thousand tokens.
+
+Clone VTCode and run it against a local Deep Seek endpoint to measure token savings on a real refactor task.
+
+Apply Self-Verified Distillation to a four billion or eight billion Qwen3 model on your domain-specific unlabeled prompts before the next fine-tuning cycle.
+
+Experiment with SPEAR's Python sandbox tool on an existing L L M as-judge task to see how structural error analysis changes prompt quality.
+
+On the horizon, more labs are expected to release detailed sandboxing and permission frameworks as agent deployments move into production environments.
+
+Additional papers on agent credit assignment and retrieval-aware training are likely following the RICE-PO and SPEAR releases.
+
+Open-source coding agents with stronger AST-aware context management will continue appearing on GitHub as teams share their internal tools.
+
+Tomorrow, keep an eye on further details from labs expanding sandbox designs for production agents.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
