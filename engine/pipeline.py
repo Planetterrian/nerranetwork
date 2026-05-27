@@ -293,9 +293,15 @@ def run_generation_phase(
 
     # Chapter parsing (if enabled for the show)
     episode_chapters: list = []
-    if getattr(config, "chapters", None) and getattr(config.chapters, "enabled", False):
+    if (getattr(config, "chapters", None)
+            and getattr(config.chapters, "enabled", False)
+            and getattr(config.chapters, "section_markers", None)):
         from engine.chapters import parse_chapters
-        episode_chapters = parse_chapters(podcast_script)
+        episode_chapters = parse_chapters(
+            podcast_script,
+            config.chapters.section_markers,
+            show_name=config.name,
+        )
 
     return x_thread, podcast_script, episode_chapters, effective_hook
 
