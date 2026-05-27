@@ -1708,7 +1708,9 @@ def run(args: argparse.Namespace) -> None:
                 hook=hook,
                 x_thread=x_thread,
                 extra_context=extra_context,
+                template_vars=template_vars,   # pass the rich dict built earlier (news, tracker summaries, hook data, etc.)
                 args=args,
+                tracker=tracker if 'tracker' in locals() else None,
             )
 
             # 8b. Podcast script length check — two-tier gate.

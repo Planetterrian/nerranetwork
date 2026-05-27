@@ -155,12 +155,26 @@ def run_generation_phase(
     episode_num: int,
     today_str: str,
     hook: str,
-    x_thread: str,
-    extra_context: dict,
-    args: Any,
+    x_thread: str = "",
+    extra_context: Optional[dict] = None,
+    template_vars: Optional[Dict[str, Any]] = None,
+    args: Any = None,
+    tracker: Optional[dict] = None,
 ) -> tuple[str, str, list, str]:
     """
-    Run the digest + podcast script generation phase.
+    Run the digest + podcast script generation phase (correctly wired).
+
+    This is the extracted implementation. It uses the canonical calling
+    convention for the generator functions:
+        generate_digest(template_vars_dict, config, tracker=..., prompt_suffix=...)
+        generate_podcast_script(template_vars_dict, config, tracker=...)
+
+    If a rich ``template_vars`` is supplied by the caller (preferred), it is
+    used as-is (preserving news_section, content tracker summaries, hook
+    data from pre-fetch hooks, slow-news context, cross-show context, etc.).
+
+    If ``x_thread`` is already populated, the digest generation step is
+    skipped (the caller already produced it).
 
     Returns:
         (x_thread, podcast_script, episode_chapters, effective_hook)
@@ -168,29 +182,61 @@ def run_generation_phase(
     from engine.generator import generate_digest, generate_podcast_script
     from engine.intros import build_intro_line, build_closing_block
 
-    # Digest
-    x_thread = generate_digest(
-        config,
-        episode_num=episode_num,
-        today_str=today_str,
-        hook=hook,
-        extra_context=extra_context,
-    )
+    extra_context = extra_context or {}
+    effective_hook = hook or (x_thread.split("\n", 1)[0][:120] if x_thread else "")
 
-    # Podcast script
-    effective_hook = hook or x_thread.split("\n", 1)[0][:120]
+    # Build or use the provided template_vars.
+    # The caller (run_show.py) normally builds a rich one containing
+    # episode_num, today_str, news_section, recent_* summaries, slow_news_context,
+    # cross_show_context, plus hook data via .update(extra_context).
+    if template_vars is None:
+        template_vars = {
+            "today_str": today_str,
+            "date_human": today_str,
+            "episode_num": episode_num,
+            "hook": effective_hook,
+        }
+        template_vars.update(extra_context)
+        # Provide safe fallbacks for keys that many prompts reference
+        template_vars.setdefault("news_section", "")
+        template_vars.setdefault("sections_json", "")
+        template_vars.setdefault("recent_content_summary", "")
+        template_vars.setdefault("recent_deep_dive_topics", "")
+        template_vars.setdefault("slow_news_context", "")
+        template_vars.setdefault("cross_show_context", "")
+        if getattr(config, "narrative_mode", False):
+            # Minimal narrative fallbacks; real values should come from caller
+            template_vars.setdefault("topic_title", "")
+            template_vars.setdefault("topic_brief", "")
+            template_vars.setdefault("topic_category", "")
 
+    # If the caller already generated the digest (usual path), reuse it.
+    # Only generate here if we were not given a non-empty x_thread.
+    if not x_thread or not x_thread.strip():
+        try:
+            x_thread = generate_digest(template_vars, config, tracker=tracker)
+        except Exception:
+            # Let the normal tenacity / caller retry logic handle real failures
+            raise
+
+    if not effective_hook:
+        effective_hook = (x_thread.split("\n", 1)[0][:120] if x_thread else hook)
+
+    # YouTube handle for closing blocks
     _yt_handle = ""
-    if getattr(config, "youtube", None) and config.youtube.enabled:
+    if getattr(config, "youtube", None) and getattr(config.youtube, "enabled", False):
         _yt_handle = (
-            "@NerraRU" if config.youtube.channel == "ru" else "@NerraNetwork"
+            "@NerraRU" if getattr(config.youtube, "channel", "") == "ru" else "@NerraNetwork"
         )
 
+    # Podcast script template vars (pod_vars are a subset used by the podcast prompt)
     pod_vars = {
         "hook": effective_hook,
         "date": today_str,
         "show_name": config.name,
+        "episode_num": episode_num,
     }
+    pod_vars.update(extra_context)
 
     if episode_num == 1:
         pod_vars.setdefault(
@@ -206,37 +252,46 @@ def run_generation_phase(
             _ep1_close += f" And if you'd rather watch than listen, find us on YouTube at {_yt_handle}."
         pod_vars.setdefault("closing_block", _ep1_close)
     else:
-        pod_vars.setdefault(
-            "intro_line",
-            build_intro_line(
-                args.show,
-                episode_num=episode_num,
-                today_str=today_str,
-                date=__import__("datetime").date.today(),
-                extra_context=extra_context,
-            ),
-        )
-        pod_vars.setdefault(
-            "closing_block",
-            build_closing_block(
-                args.show,
-                episode_num=episode_num,
-                today_str=today_str,
-                date=__import__("datetime").date.today(),
-                extra_context=extra_context,
-                youtube_channel_handle=_yt_handle,
-            ),
-        )
+        if args is not None:
+            pod_vars.setdefault(
+                "intro_line",
+                build_intro_line(
+                    args.show,
+                    episode_num=episode_num,
+                    today_str=today_str,
+                    date=__import__("datetime").date.today(),
+                    extra_context=extra_context,
+                ),
+            )
+            pod_vars.setdefault(
+                "closing_block",
+                build_closing_block(
+                    args.show,
+                    episode_num=episode_num,
+                    today_str=today_str,
+                    date=__import__("datetime").date.today(),
+                    extra_context=extra_context,
+                    youtube_channel_handle=_yt_handle,
+                ),
+            )
+        else:
+            # Safe fallback when args not supplied
+            pod_vars.setdefault("intro_line", f"Welcome back to {config.name}.")
+            pod_vars.setdefault("closing_block", "Thanks for listening.")
+
     pod_vars.setdefault("tone_hint", "natural and conversational")
 
+    # Merge pod_vars into the main template_vars for the podcast prompt
+    # (the podcast prompt expects many of the same keys + digest, etc.)
+    template_vars_for_script = dict(template_vars)
+    template_vars_for_script.update(pod_vars)
+    template_vars_for_script["digest"] = x_thread  # many podcast prompts use {digest}
+
     podcast_script = generate_podcast_script(
-        config,
-        episode_num=episode_num,
-        x_thread=x_thread,
-        extra_context=extra_context,
+        template_vars_for_script, config, tracker=tracker
     )
 
-    # Chapter parsing (simplified for extraction)
+    # Chapter parsing (if enabled for the show)
     episode_chapters: list = []
     if getattr(config, "chapters", None) and getattr(config.chapters, "enabled", False):
         from engine.chapters import parse_chapters

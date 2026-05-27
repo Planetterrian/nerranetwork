@@ -417,10 +417,20 @@ jobs:
         # skipped this commit step, the runner shut down, and the
         # work was gone. Gate on `pipeline.outcome == 'success'` so
         # we only commit when the pipeline itself succeeded.
+        #
+        # Push reliability hardening (May 2026): GitHub occasionally returns
+        # "fatal error in commit_refs" (server-side transient during ref update)
+        # even after the pack is accepted, especially on larger text commits
+        # (transcripts + metrics + chapters + blog HTML + digests ~8k+ insertions).
+        # The 4-attempt rebase/merge loop below handles races from concurrent
+        # matrix jobs. On final exhaustion we create a recovery/* branch + draft
+        # PR so the generated artifacts are NEVER lost in the ephemeral runner.
         if: always() && steps.pipeline.outcome == 'success' && steps.pipeline.outputs.skipped != 'true'
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          # Use the standard GitHub Actions bot identity (consistent with
+          # the safe-commit-push composite and other automation).
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
 
           # Stage all generated output
           git add -A digests/ || true
@@ -455,13 +465,19 @@ jobs:
 
           git commit -m "Auto-generated: ${{ matrix.show }} $(date +%Y-%m-%d)"
 
-          # Push with retry (handles concurrent pushes from matrix jobs)
+          # Push with retry (handles concurrent pushes from matrix jobs).
+          # On persistent "fatal error in commit_refs" or other server transients
+          # after the local commit succeeded, fall back to a recovery branch + PR
+          # so the episode artifacts (transcripts, metrics, chapters, digests, blog)
+          # are preserved instead of being discarded with the runner VM.
+          PUSH_SUCCEEDED=false
           for attempt in 1 2 3 4; do
             # Try rebase first (cleanest history)
             if git pull --rebase origin main; then
               if git push origin main; then
                 echo "Push succeeded on attempt $attempt (rebase)"
-                exit 0
+                PUSH_SUCCEEDED=true
+                break
               fi
             else
               # Rebase failed (likely conflict) — abort and try merge
@@ -470,17 +486,34 @@ jobs:
               if git pull --no-rebase origin main -X theirs; then
                 if git push origin main; then
                   echo "Push succeeded on attempt $attempt (merge)"
-                  exit 0
+                  PUSH_SUCCEEDED=true
+                  break
                 fi
               else
                 echo "Merge also failed on attempt $attempt"
               fi
             fi
-            echo "Push failed on attempt $attempt, retrying in $((attempt * 5))s..."
-            sleep $((attempt * 5))
+            if [ $attempt -lt 4 ]; then
+              echo "Push failed on attempt $attempt, retrying in $((attempt * 5))s..."
+              sleep $((attempt * 5))
+            fi
           done
-          echo "All push attempts failed"
-          exit 1
+
+          if [ "$PUSH_SUCCEEDED" != "true" ]; then
+            echo "All direct push attempts to main exhausted (likely GitHub 'fatal error in commit_refs' transient)."
+            echo "Creating recovery branch + draft PR to preserve generated episode artifacts..."
+
+            # Delegate to a dedicated script. This keeps the workflow YAML clean
+            # (no nested heredocs that confuse the YAML parser) and makes the
+            # recovery logic easy to test/enhance in isolation.
+            SHOW="${{ matrix.show }}" \
+            RUN_ID="${{ github.run_id }}" \
+            REPO_URL="${{ github.server_url }}/${{ github.repository }}" \
+            scripts/create_recovery_pr.sh
+            # The script exits 0 on successful PR creation (data preserved),
+            # or 1 only in the extremely rare case that even the recovery branch push failed.
+            exit $?
+          fi
 
       - name: Alert on failure
         if: failure()
@@ -553,8 +586,9 @@ jobs:
 
       - name: Commit and push shared pages
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          # Standard bot identity for consistency with episode commits and composites.
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
 
           git add index.html || true
           git add blog/index.html || true
@@ -569,13 +603,19 @@ jobs:
 
           git commit -m "Update shared pages (network index, blog index, sitemap) $(date +%Y-%m-%d)"
 
-          for attempt in 1 2 3 4; do
+          # 5 attempts + slightly longer backoff for the shared-pages commit
+          # (lower stakes than per-episode artifacts; pages are fully regenerable
+          # from the per-show commits that already landed).
+          for attempt in 1 2 3 4 5; do
             if git pull --rebase origin main && git push origin main; then
               echo "Push succeeded on attempt $attempt"
               exit 0
             fi
-            echo "Push failed on attempt $attempt, retrying in $((attempt * 2))s..."
-            sleep $((attempt * 2))
+            if [ $attempt -lt 5 ]; then
+              echo "Push failed on attempt $attempt, retrying in $((attempt * 3))s..."
+              sleep $((attempt * 3))
+            fi
           done
-          echo "All push attempts failed"
+          echo "All push attempts failed for shared pages"
+          echo "::warning::Shared pages (index, blog index, sitemap) could not be pushed after 5 attempts. They will be regenerated on the next successful nightly or manual run."
           exit 1
