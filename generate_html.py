@@ -1599,6 +1599,23 @@ def generate_show_page(slug, *, dry_run=False):
     except Exception as e:
         print(f"Warning: could not collect episodes from RSS for {slug}: {e}")
 
+    # Quick-win dynamic metadata (May 2026 review): inject freshest episode title/hook
+    # into page_title and meta description so social cards + search snippets reflect
+    # the current episode instead of static NETWORK_SHOWS text. RSS parse already
+    # happens above for the episodes rail; we just reuse the first item.
+    latest_episode_title = None
+    dynamic_meta_description = cfg.get("meta_description", "")
+    if static_episodes:
+        latest_episode_title = static_episodes[0].get("title")
+        if latest_episode_title:
+            # Keep original meta but lead with the fresh episode for better CTR/SEO
+            dynamic_meta_description = f"Latest: {latest_episode_title}. {cfg.get('meta_description', '')}".strip()
+            # Page title becomes "Show — Latest Hook Snippet | Nerra Network" (safe length)
+            hook_snippet = latest_episode_title.split(":", 1)[-1].strip() if ":" in latest_episode_title else latest_episode_title
+            if len(hook_snippet) > 70:
+                hook_snippet = hook_snippet[:67] + "…"
+            page_title = f"{cfg['name']} — {hook_snippet} | Nerra Network"
+
     # Modern Investing: pull the mock-trade performance block from
     # api/dashboard.json if it's already been generated this run (normal
     # CI flow), or compute it on the fly as a fallback (dev / dry-run).
@@ -1623,13 +1640,28 @@ def generate_show_page(slug, *, dry_run=False):
         and image_provider in ("grok", "hybrid")
     )
 
+    # Quick-win (May 2026 review): dynamic metadata from the RSS we already
+    # parsed for the episodes rail. Makes <title>, meta description, and OG
+    # cards reflect the current episode hook instead of static NETWORK_SHOWS text.
+    page_title = f"{cfg['name']} | Nerra Network"
+    meta_description = cfg.get("meta_description", "")
+    latest_episode_title = static_episodes[0]["title"] if static_episodes else None
+    if latest_episode_title:
+        hook_snippet = latest_episode_title.split(":", 1)[-1].strip() if ":" in latest_episode_title else latest_episode_title
+        if len(hook_snippet) > 68:
+            hook_snippet = hook_snippet[:65] + "…"
+        page_title = f"{cfg['name']} — {hook_snippet} | Nerra Network"
+        meta_description = f"Latest: {latest_episode_title}. {cfg.get('meta_description', '')}".strip()
+
     context = {
         **cfg,
         "path_prefix": prefix,
         "show_name": cfg["name"],
         "show_slug": cfg["slug"],
         "show_description": cfg.get("about_text", cfg["description"]),
-        "page_title": f"{cfg['name']} | Nerra Network",
+        "page_title": page_title,
+        "meta_description": meta_description,  # override the static one from **cfg
+        "latest_episode_title": latest_episode_title,
         "podcast_image_url": podcast_image_url,
         "og_image": f"{GITHUB_RAW}/{_url_encode_image(cfg['podcast_image'])}",
         "show_color": cfg["brand_color"],

@@ -1141,10 +1141,28 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
         for k in ("grok", "tts", "total"):
             bucket[k] = round(bucket[k], 4)
 
+    # Quick-win enhancements (May 2026 codebase review):
+    # - Simple projection so operators see "at current burn rate, what does a week cost?"
+    # - Surface for future live YT quota remaining (engine.youtube_quota already exists).
+    episodes_7 = max(network_7.get("episodes", 0), 1)
+    avg_per_episode = round(network_7["total"] / episodes_7, 4)
+    # Conservative: network ships ~60-70 episodes/week across 11 shows
+    projected_weekly = round(avg_per_episode * 65, 2)
+
     return {
         "per_show": per_show,
         "network_last_7_days": network_7,
         "network_last_30_days": network_30,
+        "projections": {
+            "avg_cost_per_episode_usd": avg_per_episode,
+            "projected_weekly_usd": projected_weekly,
+            "note": "Projection uses last-7d average × 65 (network volume). Tune per operator knowledge.",
+        },
+        "youtube_quota": {
+            "enabled_shows_count": 2,  # TST + MAB only (per landmine #20 quota cap)
+            "daily_insert_cost_units": 1600,  # long + short typical (see engine/youtube_quota.py)
+            "note": "Hard cap ~10k units/day per channel. Preflight + youtube_quota.py have the estimators. Only 2 shows currently enabled.",
+        },
     }
 
 
