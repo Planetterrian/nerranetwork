@@ -1338,6 +1338,33 @@ button { font-family: var(--font-ui); cursor: pointer; }
     padding: 5px 6px !important;
   }
 
+  /* Global search results dropdown (used by centralized assets/js/search.js) */
+  #nn-global-search-results {
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    border: 1px solid var(--nn-border);
+  }
+  .search-result {
+    transition: background 80ms ease;
+  }
+  .search-result:hover,
+  .search-result:focus-visible {
+    background: var(--nn-surface) !important;
+    outline: none;
+  }
+  .search-result mark {
+    background: color-mix(in srgb, var(--show-color, #00D4FF) 35%, transparent);
+    color: inherit;
+    padding: 0 1px;
+    border-radius: 2px;
+    font-weight: 600;
+  }
+  .nn-global-search input:focus-visible {
+    outline: 2px solid var(--show-color, #00D4FF);
+    outline-offset: -2px;
+  }
+
   .show-hero-inner {
     grid-template-columns: 1fr;
     text-align: center;
