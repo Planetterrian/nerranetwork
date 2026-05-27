@@ -452,6 +452,20 @@
             <div style="text-align:center;margin-top:var(--sp-6);">
                 <a href="{{ path_prefix }}{{ summaries_page }}" class="nn-btn">{% if _is_ru %}Все выпуски{% else %}View All Episodes{% endif %}</a>
             </div>
+
+            {# Medium item: Shorts rail / discovery (when YouTube Shorts are enabled for the show) #}
+            {% if youtube and youtube.shorts_playlist_id %}
+            <div style="margin-top: var(--sp-8); text-align: center;">
+                <a href="https://www.youtube.com/playlist?list={{ youtube.shorts_playlist_id }}"
+                   class="nn-btn" target="_blank" rel="noopener"
+                   style="background: #00D4FF; color: #0B0F1A; font-weight: 600;">
+                    🎥 Watch Latest Shorts on YouTube
+                </a>
+                <div style="font-size: 0.8rem; margin-top: 0.5rem; opacity: 0.7;">
+                    Smart-selected 40–60s highlights from recent episodes
+                </div>
+            </div>
+            {% endif %}
         </div>
     </section>
 

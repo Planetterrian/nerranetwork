@@ -25,6 +25,23 @@
 }
     </script>
 
+    {# Medium item: Richer PodcastEpisode structured data #}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "PodcastEpisode",
+      "name": "{{ title }}",
+      "url": "{{ page_url }}",
+      "datePublished": "{{ date }}",
+      "description": {{ summary | tojson }},
+      "associatedMedia": {
+        "@type": "MediaObject",
+        "contentUrl": "{{ audio_url }}"
+      },
+      "transcript": "{{ transcript_url }}"
+    }
+    </script>
+
     <style>
         .blog-hero {
             position: relative;

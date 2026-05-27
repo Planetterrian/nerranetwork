@@ -917,6 +917,7 @@ def aggregate_metrics(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]
         tag_leak_total = 0  # sum of leak counts across recent episodes
         tag_leak_pattern_counts: Dict[str, int] = {}
         yt_long_errors: List[Dict[str, Any]] = []  # last few error payloads
+        youtube_quota_units = 0
         for f in last30:
             try:
                 data = json.loads(f.read_text(encoding="utf-8"))
@@ -943,6 +944,11 @@ def aggregate_metrics(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]
                 _err = counters.get("youtube_long_error")
                 if isinstance(_err, dict):
                     yt_long_errors.append(_err)
+
+                # Medium item: accumulate real quota units recorded at publish time
+                q_units = counters.get("youtube_quota_units_this_episode")
+                if isinstance(q_units, (int, float)):
+                    youtube_quota_units += int(q_units)
             # Sunday weekly-recap health (Phase 1.1 of the May 2026
             # schedule overhaul wired weekly_recap_mode into metrics).
             if "weekly_recap_mode" in counters:
@@ -1008,6 +1014,7 @@ def aggregate_metrics(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]
                     round(yt_long_uploaded / yt_long_attempts, 3)
                     if yt_long_attempts else 0.0
                 ),
+                "estimated_quota_units_last_30_eps": youtube_quota_units,
                 "shorts_attempts": yt_short_attempts,
                 "shorts_uploaded": yt_short_uploaded,
                 "shorts_success_rate": (
@@ -1164,6 +1171,35 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
             "note": "Hard cap ~10k units/day per channel. Preflight + youtube_quota.py have the estimators. Only 2 shows currently enabled.",
         },
     }
+
+
+def extract_critical_alerts(
+    landmines: List[Dict[str, Any]],
+    costs: Dict[str, Any],
+) -> List[Dict[str, Any]]:
+    """Produce a list of actionable critical alerts for proactive notifications.
+
+    This is the foundation for the medium-term "proactive alerts webhook" feature.
+    Currently focuses on landmine FAILs. Can be extended for cost spikes,
+    repeated Grok Imagine failures, etc.
+    """
+    alerts: List[Dict[str, Any]] = []
+
+    for lm in landmines:
+        if lm.get("status") == "fail":
+            alerts.append({
+                "severity": "critical",
+                "type": "landmine",
+                "id": lm.get("id"),
+                "title": lm.get("title"),
+                "details": lm.get("details"),
+                "evidence": lm.get("evidence", {}),
+            })
+
+    # TODO (future medium item): add cost spike detection using costs["projections"]
+    # TODO (future): repeated grok_image or YouTube failures from recent metrics
+
+    return alerts
 
 
 def build_network_rollup(
@@ -1442,17 +1478,32 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
             "x_enabled": (cfg.publishing.x_enabled if cfg else None),
         })
 
+    alerts = extract_critical_alerts(landmines, costs)
+
     return {
         "generated_at": _dt.datetime.now(_dt.timezone.utc).isoformat(),
         "network": network,
         "shows": serializable_shows,
         "landmines": landmines,
+        "alerts": alerts,
         "voice_config": voice,
         "cost_rollup": costs,
         "pipeline_health": metrics,
         "rss_audit": rss,
         "mit_performance": aggregate_mit_performance(root),
+        "content_lake": {
+            "stats": _get_content_lake_stats_safe(),
+            "compaction_note": "Run scripts/compact_lake.py or engine.content_lake.compact_lake() to prune old full text.",
+        },
     }
+
+
+def _get_content_lake_stats_safe() -> dict:
+    try:
+        from engine.content_lake import get_lake_stats
+        return get_lake_stats()
+    except Exception:
+        return {"error": "content lake unavailable"}
 
 
 def _read_previous_flat_total(out_path: Path) -> Optional[int]:
@@ -1490,10 +1541,12 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     # Emit a short human-readable summary so CI logs tell the story at a glance.
     counts = data["network"]["landmines_counts"]
+    alert_count = len(data.get("alerts", []))
     print(
         f"dashboard: wrote {out_path.relative_to(_ROOT)} — "
         f"{counts.get('ok', 0)} ok, {counts.get('warn', 0)} warn, "
         f"{counts.get('fail', 0)} fail; "
+        f"{alert_count} critical alerts; "
         f"{data['network']['shows_count']} shows; "
         f"${data['network']['total_cost_last_7_days_usd']:.2f} 7d spend",
         file=sys.stderr,

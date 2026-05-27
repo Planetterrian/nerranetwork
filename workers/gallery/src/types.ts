@@ -15,6 +15,9 @@ export interface Env {
   BUTTONDOWN_API_KEY: string;
   RESEND_API_KEY: string;
   RESEND_FROM_EMAIL: string;
+
+  // KV binding for rate limiting (medium item)
+  RATE_LIMIT_KV?: KVNamespace;
 }
 
 export interface ButtondownClient {

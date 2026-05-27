@@ -86,7 +86,7 @@ def main() -> int:
         weekly_recap=args.weekly_recap,
         min_articles_skip=args.min_articles_skip,
         sources=_parse_sources(args.sources),
-        keywords=args.keyword,
+        keywords=args.keywords,
         web_search_queries=args.web_search or [
             f"{args.name} news today",
             f"{args.slug.replace('_', ' ')} latest",

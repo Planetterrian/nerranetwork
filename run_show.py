@@ -2222,6 +2222,24 @@ def run(args: argparse.Namespace) -> None:
             "image_provider",
             youtube_urls.get("image_provider", "pexels"),
         )
+
+        # Medium item: Record actual quota units consumed this episode for
+        # better live visibility (instead of only static estimates).
+        try:
+            from engine.youtube_quota import estimate_episode_units
+
+            yt_cfg = getattr(config, "youtube", None) or {}
+            q = estimate_episode_units(
+                publish_long_form=bool(youtube_long_url),
+                publish_shorts=bool(youtube_short_url),
+                with_thumbnail=True,
+                with_playlist=True,
+                with_caption_track=bool(youtube_long_url),  # captions only on long form today
+            )
+            metrics.record("youtube_quota_units_this_episode", q.units)
+            metrics.record("youtube_uploads_this_episode", q.uploads)
+        except Exception as exc:
+            logger.debug("Could not record YouTube quota metrics: %s", exc)
         # Gallery upload outcome (Phase 1 → diagnostics added May 2026).
         # Always recorded so the operator can read the metrics file
         # for the latest episode and tell at a glance whether the

@@ -34,16 +34,20 @@ python run_show.py ocean_tech                 # Ep1 (debut prompts apply)
 | Prompts | `shows/prompts/<slug>_system.txt`, `_digest.txt`, `_podcast.txt`, `_weekly.txt` |
 | Output dirs | `digests/<slug>/`, `blog/<slug>/` |
 | Website registry | `shows/network_meta.yaml` (merged into `generate_html.py`) |
-| Cron reminder | `shows/scaffold_pending.yaml` + printed CRON_MAP line |
+| Cron + registration | `shows/scaffold_pending.yaml` + full **REGISTRATION PATCH** printed by scaffold (cron, health-check, Buttondown tag, cover art) |
 
-## Manual steps (still required)
+## Manual steps (greatly reduced)
 
-1. **Cron** — Paste the printed line into `.github/workflows/run-show.yml` `CRON_MAP` and add a matching `schedule:` cron entry.
-2. **Cover art** — Add `assets/covers/<slug-with-dashes>.jpg` (1200×1200 recommended).
-3. **Health check** — Add `shows/<slug>_podcast.rss` to `.github/workflows/health-check.yml` `FEEDS` (or extend auto-discovery in a future PR).
-4. **Music** (optional) — Point `audio.music_file` at a dedicated MP3 in `assets/music/`.
-5. **Buttondown** — Create a tag matching `newsletter.tag` in the show YAML.
-6. **HTML** — `python generate_html.py --show <slug> --blogs` after the first episode commits.
+The scaffold now emits a **"REGISTRATION PATCH"** block with ready-to-paste snippets for cron, health-check, Buttondown tag, and cover art. Most of the previous manual work is now copy/paste.
+
+Remaining manual steps:
+
+1. **Paste the Registration Patch** output from the scaffold command into the relevant workflow files.
+2. **Cover art** — Add `assets/covers/<slug-with-dashes>.jpg` (1200×1200 recommended) if not already present.
+3. **Music** (optional) — Point `audio.music_file` at a dedicated MP3 in `assets/music/`.
+4. **HTML** — `python generate_html.py --show <slug> --blogs` after the first episode commits.
+
+The scaffold_pending.yaml file continues to accumulate cron entries as a safety net.
 
 ## First-episode quality
 

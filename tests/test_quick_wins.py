@@ -69,3 +69,25 @@ def test_noscript_fallback_in_show_page_template():
     assert "<noscript>" in tpl
     assert "static_episodes[0]" in tpl
     assert "JavaScript disabled" in tpl or "noscript" in tpl.lower()
+
+
+def test_dashboard_emits_alerts_array():
+    """Medium item: Proactive alerts — generate_dashboard must emit an 'alerts' top-level array
+    containing critical landmines (and future signals).
+    """
+    import subprocess
+    import json
+    import sys
+
+    result = subprocess.run(
+        [sys.executable, "scripts/generate_dashboard.py", "--dry-run"],
+        capture_output=True, text=True, cwd=ROOT
+    )
+    data = json.loads(result.stdout)
+    assert "alerts" in data, "dashboard JSON must contain 'alerts' key for proactive notifications"
+    assert isinstance(data["alerts"], list)
+
+    # At minimum, any landmine with status=fail should appear in alerts
+    fail_landmines = [lm for lm in data.get("landmines", []) if lm.get("status") == "fail"]
+    assert len(data["alerts"]) >= len(fail_landmines), \
+        "Every FAIL landmine should produce at least one critical alert"

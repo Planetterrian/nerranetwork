@@ -78,6 +78,42 @@ const KEY_SAFE_RE = /^[A-Za-z0-9_./-]+$/;
 
 const REDIRECT_AFTER_MAGIC = "https://nerranetwork.com/gallery.html";
 
+// Simple KV-based rate limiting (medium item).
+// 5 attempts per 10 minutes per IP on subscribe + login routes.
+// This protects Buttondown/Resend quotas and Worker resources.
+const RATE_LIMIT_ATTEMPTS = 5;
+const RATE_LIMIT_WINDOW_SECONDS = 10 * 60;
+
+async function checkRateLimit(
+  env: Env,
+  route: "subscribe" | "login",
+  ip: string,
+): Promise<{ allowed: boolean; retryAfter?: number }> {
+  if (!env.RATE_LIMIT_KV) {
+    // No KV binding configured yet — fail open (don't block legitimate traffic).
+    return { allowed: true };
+  }
+
+  const key = `rl:${route}:${ip}`;
+  const now = Math.floor(Date.now() / 1000);
+  const windowStart = now - (now % RATE_LIMIT_WINDOW_SECONDS);
+
+  const current = await env.RATE_LIMIT_KV.get(key);
+  const count = current ? parseInt(current, 10) : 0;
+
+  if (count >= RATE_LIMIT_ATTEMPTS) {
+    const retryAfter = RATE_LIMIT_WINDOW_SECONDS - (now % RATE_LIMIT_WINDOW_SECONDS);
+    return { allowed: false, retryAfter };
+  }
+
+  // Increment (best-effort, fire-and-forget)
+  await env.RATE_LIMIT_KV.put(key, String(count + 1), {
+    expirationTtl: RATE_LIMIT_WINDOW_SECONDS + 60,
+  });
+
+  return { allowed: true };
+}
+
 
 // ---------------------------------------------------------------------------
 // Handlers
@@ -88,6 +124,18 @@ export async function handleSubscribe(
   env: Env,
   deps: HandlerDeps,
 ): Promise<Response> {
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+
+  const rate = await checkRateLimit(env, "subscribe", ip);
+  if (!rate.allowed) {
+    return jsonResponse(
+      request,
+      429,
+      { ok: false, error: "rate limited", retryAfter: rate.retryAfter },
+      { "Retry-After": String(rate.retryAfter || 600) }
+    );
+  }
+
   let body: any;
   try {
     body = await request.json();
@@ -135,6 +183,18 @@ export async function handleLogin(
   deps: HandlerDeps,
 ): Promise<Response> {
   const url = new URL(request.url);
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+
+  const rate = await checkRateLimit(env, "login", ip);
+  if (!rate.allowed) {
+    return jsonResponse(
+      request,
+      429,
+      { ok: false, error: "rate limited", retryAfter: rate.retryAfter },
+      { "Retry-After": String(rate.retryAfter || 600) }
+    );
+  }
+
   const email = normaliseEmail(url.searchParams.get("email"));
   if (!email) {
     return jsonResponse(request, 400, { ok: false, error: "invalid email" });
