@@ -1,0 +1,68 @@
+{% extends "base.html.j2" %}
+
+{% block title %}Tesla Shorts Time — Narrative Tracker & Storylines{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1100px; padding-top: var(--sp-8);">
+  <div style="margin-bottom: var(--sp-8);">
+    <h1 style="font-size: 2.2rem; margin-bottom: 0.4rem;">Tesla Narrative Tracker</h1>
+    <p style="font-size: 1.05rem; color: var(--nn-text-muted); max-width: 780px;">
+      This page tracks the major ongoing Tesla programs that matter most over multi-quarter arcs.
+      Tesla Shorts Time maintains persistent memory of status, key claims, and open questions so listeners
+      get genuine narrative continuity rather than daily snapshots.
+    </p>
+    <p style="font-size: 0.85rem; color: var(--nn-text-muted); margin-top: 0.4rem;">
+      Updated automatically after episodes. Data lives in <code>tesla_narrative_tracker.json</code>.
+    </p>
+  </div>
+
+  {% if narrative and narrative.programs %}
+    <div class="glass-card" style="padding: var(--sp-6); margin-bottom: var(--sp-8);">
+      <h2 style="margin-top:0;">Active Programs</h2>
+
+      {% for key, prog in narrative.programs.items() %}
+        <div style="margin-bottom: var(--sp-6); padding-bottom: var(--sp-5); border-bottom: 1px solid var(--nn-border);">
+          <div style="display:flex; align-items:baseline; gap:12px; margin-bottom:4px;">
+            <h3 style="margin:0; font-size:1.25rem;">{{ prog.display_name or key.title() }}</h3>
+            {% if prog.last_major_update_episode %}
+              <span style="font-size:0.8rem; color:var(--nn-text-muted);">
+                Last major update: Ep{{ prog.last_major_update_episode }} ({{ prog.last_major_update_date }})
+              </span>
+            {% endif %}
+          </div>
+
+          <p style="margin: 4px 0 8px; line-height:1.45;">
+            {{ prog.status }}
+          </p>
+
+          {% if prog.key_open_questions %}
+            <div style="font-size:0.9rem;">
+              <strong>Open questions:</strong>
+              <ul style="margin:4px 0 0 18px; padding:0;">
+                {% for q in prog.key_open_questions %}
+                  <li>{{ q }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+
+          {% if prog.show_confidence %}
+            <div style="margin-top:6px; font-size:0.85rem; color:var(--nn-text-muted);">
+              Show confidence on major timelines: <strong>{{ prog.show_confidence }}</strong>
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>Narrative tracker data not yet available.</p>
+  {% endif %}
+
+  <div style="margin-top: var(--sp-8); font-size:0.85rem; color:var(--nn-text-muted);">
+    <p>
+      This system is part of Tesla Shorts Time's long-term memory architecture (alongside performance signals and theme mining).
+      The goal is for the show to become a better chronicler of Tesla's biggest bets over time.
+    </p>
+  </div>
+</div>
+{% endblock %}

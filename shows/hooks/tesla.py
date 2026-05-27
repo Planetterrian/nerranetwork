@@ -16,8 +16,10 @@ from __future__ import annotations
 import datetime
 import logging
 import re
+from pathlib import Path
 
 from engine.utils import number_to_words
+from engine import tesla_memory
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +63,15 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     # Intro/closing are now handled by engine.intros (day-varying, dynamic).
     # Tesla hook only provides stock-specific closing with price data.
     context["closing_block"] = _pick_closing(context)
+
+    # === Tesla Recursive Memory System (Narrative + Performance + Theme loops) ===
+    # This is the core of TST's long-term self-improvement capability.
+    try:
+        output_dir = Path(config.episode.output_dir)
+        memory_ctx = tesla_memory.get_tesla_memory_context(output_dir)
+        context.update(memory_ctx)
+    except Exception as exc:
+        logger.warning("Tesla memory context injection failed (non-fatal): %s", exc)
 
     return context
 

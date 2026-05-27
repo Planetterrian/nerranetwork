@@ -127,6 +127,20 @@ nerranetwork/
 - **MIT** (Modern Investing Techniques) runs via `run_show.py` +
   `shows/modern_investing.yaml`; daily investing podcast focused on Canadian
   and US markets. Weekdays only. X posting disabled.
+
+**Tesla Shorts Time Recursive Memory System (May 2026+)**  
+TST received a full recursive improvement architecture (analogous to MIT):
+- `engine/tesla_memory.py` + three persistent trackers in `digests/tesla_shorts_time/`:
+  `tesla_narrative_tracker.json` (major programs with status, claims, confidence),
+  `tesla_performance_tracker.json` (YouTube/Shorts signals for emphasis),
+  `tesla_theme_history.json` (mined from transcripts/digests).
+- Injected on every episode via `shows/hooks/tesla.py` pre_fetch → rich context blocks
+  (`tesla_narrative_status_block`, performance signals, theme context).
+- Prompt updates in both digest and podcast prompts.
+- Public page `tesla-narrative.html` (generated nightly + on demand).
+- Post-episode hook + Sunday recap integration.
+- Goal: TST becomes the best long-term public chronicle of Tesla's major programs while
+  continuously optimizing for real audience engagement.
 - **PR** (Привет, Русский!) runs via `run_show.py` +
   `shows/privet_russian.yaml`; bilingual Russian language learning podcast
   for English speakers. Even days only. Uses **ElevenLabs TTS**
