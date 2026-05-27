@@ -14,7 +14,7 @@ Make sure these files are committed and pushed to your repository.
 
 ### 2. Enable GitHub Pages
 
-1. Go to your GitHub repository: `https://github.com/patricknovak/nerranetworks`
+1. Go to your GitHub repository: `https://github.com/Planetterrian/nerranetwork`
 2. Click on **Settings** (top menu)
 3. Scroll down to **Pages** in the left sidebar
 4. Under **Source**, select:
@@ -26,7 +26,7 @@ Make sure these files are committed and pushed to your repository.
 
 - GitHub Pages will take 1-2 minutes to deploy
 - You'll see a green checkmark when it's ready
-- Your site will be available at: `https://patricknovak.github.io/nerranetworks/`
+- Your site will be available at: `https://Planetterrian.github.io/nerranetwork/`
 
 ### 4. Custom Domain (Optional)
 
@@ -75,7 +75,7 @@ The player automatically reads from your RSS feed, so:
 ## Public Access
 
 Once enabled, your podcast player will be publicly accessible at:
-- `https://patricknovak.github.io/nerranetworks/`
+- `https://Planetterrian.github.io/nerranetwork/`
 - Anyone can visit and listen to your podcasts
 - No login or authentication required
 - Works on desktop, tablet, and mobile devices

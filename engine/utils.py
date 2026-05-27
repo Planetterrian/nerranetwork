@@ -486,7 +486,7 @@ def enforce_x_char_limit(text: str, max_chars: int = 280) -> str:
 # ---------------------------------------------------------------------------
 
 DEFAULT_HEADERS = {
-    "User-Agent": "PodcastBot/1.0 (+https://github.com/patricknovak/nerranetworks)"
+    "User-Agent": "PodcastBot/1.0 (+https://github.com/Planetterrian/nerranetwork)"
 }
 HTTP_TIMEOUT_SECONDS = 10
 

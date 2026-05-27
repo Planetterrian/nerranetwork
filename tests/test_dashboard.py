@@ -256,3 +256,43 @@ def test_claude_md_drift_banner_fires_when_stale_triple_present():
     lm = gd.item_9_voice_settings(voice)
     assert lm["status"] in ("warn", "fail")
     assert "CLAUDE.md" in lm["details"]
+
+
+def test_network_meta_and_scaffold_pending_excluded_from_shows():
+    """``shows/network_meta.yaml`` and ``shows/scaffold_pending.yaml``
+    are network-level helper YAMLs (cross-show metadata + pending
+    scaffold-script state), NOT real shows. Loading them as shows
+    pulls in the ``digests`` default for ``episode.output_dir`` /
+    ``publishing.audio_subdir``, which the item_4_output_dirs
+    landmine check then flags as a violation. That landmine has
+    been firing FAIL on the management dashboard workflow on every
+    daily run, blocking the workflow + spamming notifications.
+    Regression guard: keep both files in ``_NON_SHOW_YAMLS`` so
+    they never end up in the shows list."""
+    import scripts.generate_dashboard as gd
+    assert "network_meta" in gd._NON_SHOW_YAMLS, (
+        "network_meta.yaml is a cross-show metadata file, not a show "
+        "— include it in _NON_SHOW_YAMLS or item_4_output_dirs will "
+        "fire FAIL on every dashboard run"
+    )
+    assert "scaffold_pending" in gd._NON_SHOW_YAMLS, (
+        "scaffold_pending.yaml is scaffold-script state, not a show"
+    )
+
+
+def test_item_4_output_dirs_no_violations_on_real_shows(tmp_path, monkeypatch):
+    """End-to-end: with the fixed ``_NON_SHOW_YAMLS`` set, the
+    item_4_output_dirs check should report ``ok`` against the
+    actual repo state. If this fails the dashboard workflow's
+    final ``Fail the job on landmine FAIL`` step will fail again."""
+    from pathlib import Path
+
+    import scripts.generate_dashboard as gd
+
+    repo_root = Path(__file__).resolve().parents[1]
+    shows = gd.load_shows_from_yaml(repo_root / "shows", repo_root)
+    result = gd.item_4_output_dirs(shows)
+    assert result["status"] in ("ok", "warn"), (
+        f"item_4_output_dirs still FAIL: {result.get('details')} "
+        f"violations={result.get('evidence', {}).get('violations')}"
+    )

@@ -450,7 +450,7 @@ def update_rss_feed(
     fg.podcast.itunes_explicit("no")
 
     # --- Migrate legacy GitHub raw URLs to R2 CDN --------------------------
-    _GITHUB_RAW_PREFIX = "https://raw.githubusercontent.com/patricknovak/nerranetworks/main/"
+    _GITHUB_RAW_PREFIX = "https://raw.githubusercontent.com/Planetterrian/nerranetwork/main/"
     r2_base = "https://audio.nerranetwork.com"
     migrated_count = 0
     for ep_data in episodes_by_number.values():
@@ -1205,13 +1205,59 @@ def generate_episode_thumbnail(
 
     if hook:
         clean_hook = hook.strip()
-        if len(clean_hook) > 120:
-            clean_hook = clean_hook[:117].rstrip() + "..."
-        hook_font = _load_font(max(56, width // 14))
+        # Safety cap — anything longer than 220 chars is almost
+        # certainly an LLM run-on; truncate to keep the auto-fit loop
+        # from producing illegible 5-line micro-text on a thumbnail.
+        # The hook is also the first paragraph of the script; the
+        # extra context is preserved on the actual show notes / RSS.
+        if len(clean_hook) > 220:
+            clean_hook = clean_hook[:217].rstrip() + "…"
+        # Auto-shrink-to-fit. Operator caught (May 2026) hooks like
+        # "Tesla is hiring engineers to build a wireless Battery
+        # Management System for Cybercab that removes heavy wiring"
+        # rendering as 5+ lines on Shorts (1080×1920) and clipping
+        # against the top of the safe area at the legacy fixed
+        # 77 px size. Instead of clipping or hard-truncating mid-word,
+        # we shrink the font until the wrapped block fits inside the
+        # text-safe area (60 % of frame height — leaves room for the
+        # show label at top and the footer at bottom). The descent
+        # cap on font size also keeps the smallest legible reading
+        # at ~32 px which is readable on a phone preview thumbnail.
         max_text_width = width - 2 * margin
-        lines = _wrap_text(clean_hook, hook_font, max_text_width)
-        ascent_descent = hook_font.getbbox("Ay")
-        line_h = (ascent_descent[3] - ascent_descent[1]) + 12
+        # Leave 20 % top + 20 % bottom for show label / footer breathing
+        # room. The hook block can fill the central 60 %.
+        max_block_h = int(height * 0.60)
+        max_lines = 4 if height >= width else 3
+        # Try sizes from the YouTube-preferred large size all the way
+        # down to a hard floor. The fall-through floor (32 px) is set
+        # so even on a runaway-long hook the text is still readable
+        # on a 320-px-wide YouTube mobile preview tile.
+        max_font = max(56, width // 14)
+        min_font = max(32, width // 24)
+        font_size = max_font
+        lines: list = []
+        line_h = 0
+        while font_size >= min_font:
+            hook_font = _load_font(font_size)
+            lines = _wrap_text(clean_hook, hook_font, max_text_width)
+            ascent_descent = hook_font.getbbox("Ay")
+            line_h = (ascent_descent[3] - ascent_descent[1]) + 12
+            block_h = line_h * len(lines)
+            if block_h <= max_block_h and len(lines) <= max_lines:
+                break
+            # Shrink by 8 px per pass — fine-grained enough to find a
+            # good fit without spending many PIL renders on a single
+            # thumbnail (hot path during YouTube publish).
+            font_size -= 8
+        else:
+            # We hit the floor and still don't fit. Render at the
+            # floor; visual review will catch any pathological case
+            # and the operator can hand-edit the hook in the YAML
+            # rather than ship a bad thumbnail.
+            hook_font = _load_font(min_font)
+            lines = _wrap_text(clean_hook, hook_font, max_text_width)
+            ascent_descent = hook_font.getbbox("Ay")
+            line_h = (ascent_descent[3] - ascent_descent[1]) + 12
         block_h = line_h * len(lines)
         y = (height - block_h) // 2
         for line in lines:
@@ -1255,6 +1301,131 @@ def generate_shorts_thumbnail(
         show_name=show_name,
         size=(1080, 1920),
     )
+
+
+def generate_shorts_end_card(
+    long_form_thumbnail_path: Path,
+    output_path: Path,
+    *,
+    show_name: str = "",
+    main_text: str = "WATCH FULL EPISODE",
+    sub_text: str = "Tap Subscribe ↗",
+    size: tuple = (1080, 1920),
+) -> Path:
+    """Render the 1080×1920 PNG end-card overlay for a Shorts MP4.
+
+    The drawn card composites the long-form 1280×720 thumbnail into
+    the upper third of a dark vertical frame, then layers a big
+    headline ("WATCH FULL EPISODE") + cyan sub-line ("Tap Subscribe
+    ↗") + a small ``nerranetwork.com`` footer below it. The output
+    is a PNG (transparent background pixels would be wasted — the
+    image fills the whole frame), used as an ffmpeg overlay input
+    on the Shorts MP4 during the last 3 seconds in
+    ``engine.video._short_form_filter_graph``.
+
+    This is the visual upgrade over the drawtext-only end card
+    shipped in PR #417: viewers see what the actual long-form
+    episode looks like, which is significantly more compelling
+    than a text-only "WATCH FULL EPISODE" prompt.
+
+    Falls back to a text-only render when ``long_form_thumbnail_path``
+    is missing or fails to load (defensive: thumbnail generation can
+    fail upstream and we want the end card to still ship).
+    """
+    from PIL import Image, ImageDraw
+
+    width, height = size
+    # Solid dark background — matches the existing drawtext end card's
+    # 78%-opaque black panel but goes full opaque (no need to see the
+    # slideshow behind a PNG overlay).
+    bg = Image.new("RGB", (width, height), (11, 15, 26))  # --nn-bg
+
+    # Crop the long-form thumbnail into the upper third. Long-form
+    # thumbs are 1280×720 (16:9). Scale to 1080 wide → 1080×608.
+    # Centre vertically inside a 1080×~720 slot at y≈300..1020.
+    thumb_section_top = int(height * 0.16)   # y ≈ 307
+    thumb_section_h = int(height * 0.38)     # h ≈ 730
+    try:
+        thumb = Image.open(long_form_thumbnail_path).convert("RGB")
+        # Scale-to-fit (preserve aspect, fit inside thumb_section).
+        src_ratio = thumb.width / thumb.height
+        target_w = width
+        target_h = int(round(target_w / src_ratio))
+        if target_h > thumb_section_h:
+            target_h = thumb_section_h
+            target_w = int(round(target_h * src_ratio))
+        thumb = thumb.resize((target_w, target_h), Image.LANCZOS)
+        thumb_x = (width - target_w) // 2
+        thumb_y = thumb_section_top + (thumb_section_h - target_h) // 2
+        bg.paste(thumb, (thumb_x, thumb_y))
+        # Subtle 4-px white frame around the thumbnail so it reads as
+        # a "tap me" target rather than blending into the background.
+        ImageDraw.Draw(bg).rectangle(
+            (thumb_x - 4, thumb_y - 4,
+             thumb_x + target_w + 4, thumb_y + target_h + 4),
+            outline=(255, 255, 255), width=4,
+        )
+    except (FileNotFoundError, OSError) as exc:
+        logger.warning(
+            "Shorts end card: long-form thumbnail unavailable (%s) — "
+            "rendering text-only card. (%s)",
+            long_form_thumbnail_path, exc,
+        )
+        # No thumbnail to paste — the rest of the card still renders.
+
+    draw = ImageDraw.Draw(bg)
+
+    # Optional show pill at the very top (mirrors the brand pill on
+    # the Shorts MP4 above the slideshow).
+    if show_name:
+        show_font = _load_font(36)
+        sw_bbox = show_font.getbbox(show_name)
+        show_w = sw_bbox[2] - sw_bbox[0]
+        draw.text(
+            ((width - show_w) // 2, int(height * 0.07)),
+            show_name, font=show_font, fill=(232, 236, 244),
+        )
+
+    # Main CTA headline — same fontsize as the drawtext end card so
+    # the visual jump from PNG → drawtext fallback isn't jarring.
+    main_y = int(height * 0.62)
+    main_font = _load_font(88)
+    mw_bbox = main_font.getbbox(main_text)
+    main_w = mw_bbox[2] - mw_bbox[0]
+    main_x = (width - main_w) // 2
+    # Subtle drop shadow + outline for legibility on the dark BG.
+    draw.text((main_x + 3, main_y + 3), main_text, font=main_font,
+              fill=(0, 0, 0))
+    draw.text((main_x, main_y), main_text, font=main_font,
+              fill=(255, 255, 255))
+
+    # Sub-line in Nerra cyan (#00D4FF) — matches the per-word caption
+    # highlight from PR #415 + the drawtext sub-line from PR #417.
+    sub_y = int(height * 0.74)
+    sub_font = _load_font(56)
+    sw2_bbox = sub_font.getbbox(sub_text)
+    sub_w = sw2_bbox[2] - sw2_bbox[0]
+    sub_x = (width - sub_w) // 2
+    draw.text((sub_x + 2, sub_y + 2), sub_text, font=sub_font,
+              fill=(0, 0, 0))
+    draw.text((sub_x, sub_y), sub_text, font=sub_font,
+              fill=(0, 212, 255))
+
+    # Footer with the network URL — small + muted so it doesn't
+    # compete with the CTA above. Sits clear of the Shorts URL pill
+    # at y≈1820 by living at y≈1870.
+    footer_y = int(height * 0.93)
+    footer_font = _load_font(32)
+    footer_text = "nerranetwork.com"
+    fw_bbox = footer_font.getbbox(footer_text)
+    footer_w = fw_bbox[2] - fw_bbox[0]
+    draw.text(
+        ((width - footer_w) // 2, footer_y),
+        footer_text, font=footer_font, fill=(139, 143, 174),  # --nn-text-muted
+    )
+
+    bg.save(output_path, format="PNG", optimize=True)
+    return output_path
 
 
 # ---------------------------------------------------------------------------

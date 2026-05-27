@@ -1,0 +1,90 @@
+Pull up a chair. This is Models and Agents, Episode 60 on May 26th, 2026.
+Let's see what shipped. Let's see what happened in the AI world today, and trust me,
+it's been busy. Local builders can now treat markdown skill files as
+optimizable parameters with automated validation gates instead of manual tweaking.
+A new paper formalizes skill opt as a method that uses frontier models to
+propose bounded edits to those markdown skills. Only edits that improve a held out validation set
+are accepted. The best skills converge after 1-4 accepted edits and an edit budget of 4-8
+works best while removing the cap collapses performance. A skill optimized on Codex transferred
+directly to Cloud Code and gained 59.7 on spreadsheet bench. GPT 4.1 nano with an optimized skill
+roughly matched frontier performance on procedural tasks. The approach needs an auto-grader
+with clear correct answers, which limits it to code and spreadsheets for now.
+Watch for follow-up work that relaxes the auto-grader requirement.
+The 35-billion-parameter TWEN variant now ships in an uncensored heretic configuration that
+preserves all 785 MTPs. The 35-billion and 27-billion versions show KL divergences of 0.0487
+and 0.0308 with accuracy losses of only 0.40% and 0.35%. The release includes safe tensors,
+GGUF, NVFP4, and GPTQ in 4 formats. The author notes the 35-billion model targets general
+purpose use while the 36-billion version focuses on agentic and coding tasks. Builders wanting an
+uncensored general purpose model with preserved thinking tokens should test the Q4 or Q6 GGUF
+experience. Ron's speech turns a pre-trained LLM into a speech LM through speech module alignment,
+end-to-end pre-training with knowledge distillation, and multitask preference optimization.
+Training used 1.38 million hours of English and Korean data. The model tops 8 similarly sized
+audio foundation models across 42 English and Korean speech and text benchmarks while keeping strong
+text QA performance. Ron's speech chat adds full duplex conversation after continual training on
+119,000 hours of dialogue data. Teams needing bilingual speech understanding and generation should
+evaluate the open-sourced checkpoints. A new pull request adds support for TALKY 1930-13B
+hyphen IT inside the server backend. The 13-billion instruction-tune model was trained only on
+pre-1931 English text and further aligned with online DPO. It enables historical roleplay
+without modern knowledge contamination. Reference code and the hugging-face repo appear in the pull
+request. Developers building vintage language or time period simulation agents now have
+already to run 13-billion option. Shard delivers a drop-in hugging-face cache that reduces lab
+math 3.18 billion KV memory by roughly 10 times at 8,000 context and 11 times at 32,000 context.
+It applies PCA plus int4 quantization to K after undoing rope and Hadamard rotation plus vector
+quantization to V. Attention runs directly on the compressed keys with no measurable degradation
+on Neahyath or Longbench. The repository sits at Krish 1905 slash Shard. Teams running long
+context local inference should benchmark Shard against their current KV setup. A detailed thread
+examines how local users test prompt injection and jailbreak resistance before wiring models to
+tools, files, drag, shell commands, or browser automation. Most current setups focus on quantization,
+context length, and tokens per second while giving less attention to isolating tool access or
+logging calls. Builders moving local models into agentic workflows should adopt the read-only
+default and tool-call logging patterns raised in the thread. Gartner warns that applying uniform
+governance across all enterprise AI agents is a death sentence. The report recommends differentiated
+policies based on agent autonomy and risk. One size fits all controls will slow adoption without
+improving safety. Enterprise teams evaluating agent platforms should review the governance segmentation
+guidance before standardizing policies. An article outlines the primary production failure modes
+for agents and the first fixes teams should apply. It focuses on concrete engineering gaps rather
+than high-level strategy. Developers shipping agents should read the prioritized fix list before
+their next deployment review. A user measured real-world ASR performance on an Intel Arrow Lake NPU versus
+CPU. The NPU delivered 2.8 to 6.1 times speed-ups and 10 to 21 times lower energy for 10 to 60 second
+audio clips. The setup also frees VRAM on a 7,900 XTX and beats a previous 3060 EGPU for short
+smart home voice commands. The Wyoming parakeet on Intel NPU repository is linked. Home assistant
+or local voice developers should test the NPU path for always on ASR workloads. A post explains
+how context is divided across parallel slots and asks about consequences of exceeding model max
+context or running two agents in parallel when VRAM allows. Practical questions cover performance,
+energy, and slot allocation. Anyone moving from LM studio to the server back end for multi-agent setups
+should review the flag interaction details. A step-by-step guide walks through loading the
+Turing Enterprises slash open-MM-RL dataset, building a reward function that checks exact matches
+and exporting for GRPO. It covers schema inspection, domain analysis, and vision language prompting.
+Developers starting multimodal reasoning projects with verifiable rewards can follow the pipeline
+directly. A detailed post lists nine concrete changes that eliminated crashes and delivered 49
+to 65 tokens per second generation on a 14-inch M2 max. The changes include a 60Hz refresh rate,
+GGUF over MLX, wired memory limit, preserve thinking flag, open code instead of cloud code,
+and Q8KV cache minimum. The author shares exact fan curves and IO GPU wired limit meter settings.
+Mac users struggling with long agentic sessions should apply the refresh rate and memory limit steps
+first. Okay, let's pop the hood on the NPU results. Everyone treats NPUs as marketing gimmicks for
+LLMs. Yet the real engineering story is about power state transitions rather than raw tops.
+An NPU can exit deep sleep and begin useful work in a few milliseconds while a discrete GPU must
+ramp clocks, allocate buffers, and warm PCIe links. This difference only matters for short,
+bursty workloads. Once the task exceeds a few seconds, the GPUs higher sustained throughput wins.
+In the measured ASR case, the NPU delivered 4.8 times lower latency and 10.7 times less energy
+on 10 second clips precisely because it avoided the GPU's ramp up tax. The practical decision rule
+is simple. If average inference length is under roughly three seconds and you already have an NPU
+in the SOC, root the work there. Anything longer or batch oriented still belongs on the GPU.
+The gotcha most teams miss is that the NPU's advantage disappears the moment you add a second
+concurrent stream because its limited 13 tops cannot hide behind parallelism the way a larger GPU can.
+Test the skill opt edit and validate loop on a code or spreadsheet agent you already maintain.
+The 1-4 edit convergence pattern is worth reproducing. Run the 35 billion parameter
+uncensored heretic GGUF on your preferred back end and compare tool call stability with and without
+preserve thinking enabled. Measure your current server setup with the parallel and context flags
+against the slot division behavior described in the thread before scaling to multiple agents.
+Try the Wyoming Parakeet on Intel-NPU setup on any arrow lake machine you have for short voice
+commands. The energy numbers are worth verifying locally. Apply the 60 hertz refresh rate and wired memory
+limit changes on any MacBook running long context sessions and remeasure prompt processing time.
+More consumer hardware diffusion LLM training runs are expected following the open DLLM and D3 LLM
+code drops. Additional server backend pull requests for historical and vintage models will likely land
+as the talky-1930 effort gains visibility. Follow up work on validation gated skill optimization
+is anticipated. Once more teams reproduce the auto greater requirement. Tomorrow keep an eye on
+expanded NPU integration examples for non-ASR workloads as the Intel arrow lake results circulate.
+That wraps up today's AI briefing. Share this with a developer or builder who wants to stay
+current. Subscribe wherever you listen. See you tomorrow. This episode used AI voice synthesis of
+my voice. Editorial selection and analysis are my own.

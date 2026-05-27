@@ -199,6 +199,116 @@ def _wrap_caption(text: str, max_chars_per_line: int = 26,
 
 
 # ---------------------------------------------------------------------------
+# Auto-fit hook overlay
+# ---------------------------------------------------------------------------
+#
+# The 0–3 s hook overlay on a Shorts MP4 used to render at a fixed
+# fontsize=44 with a char-based word wrap (26 chars × 4 lines). Tesla
+# hooks > ~104 chars truncated with "..." at the end of line 4 —
+# operator caught this on Ep466 ("California regulators just
+# disclosed the Tesla Semi's battery sizes at 822 kWh and 548 kWh.").
+#
+# This helper applies the same shrink-to-fit pattern the thumbnail
+# renderer uses (engine.publisher.generate_episode_thumbnail). The
+# default size stays at 44 — preserving the May 2026 operator
+# preference for a non-dominant hook — and only shrinks when keeping
+# 44 would truncate. Pixel-based wrap via PIL ImageFont gives an
+# accurate fit on the actual frame width (1080 px on Shorts) instead
+# of the conservative char-budget approximation.
+
+
+def _pixel_wrap_lines(
+    text: str, font, max_width: int, max_lines: int,
+) -> tuple[list[str], bool]:
+    """Greedy word-wrap by rendered pixel width.
+
+    Returns ``(lines, fits)``. ``fits`` is True when every word in
+    ``text`` made it into the returned lines (no truncation).
+    """
+    words = text.split()
+    if not words:
+        return [], True
+    lines: list[str] = []
+    current: list[str] = []
+    for word in words:
+        candidate = (" ".join(current + [word])) if current else word
+        try:
+            bbox = font.getbbox(candidate)
+            line_px = bbox[2] - bbox[0]
+        except Exception:  # pragma: no cover — font getbbox edge case
+            line_px = len(candidate) * (font.size // 2)
+        if line_px <= max_width or not current:
+            current.append(word)
+        else:
+            lines.append(" ".join(current))
+            current = [word]
+            if len(lines) >= max_lines:
+                break
+    if current and len(lines) < max_lines:
+        lines.append(" ".join(current))
+    used = " ".join(lines).split()
+    fits = len(used) == len(words)
+    return lines, fits
+
+
+def autofit_hook_overlay(
+    hook: str,
+    *,
+    frame_width: int = 1080,
+    safe_margin: int = 80,
+    max_lines: int = 4,
+    font_path: Optional[str] = None,
+    candidates: tuple[int, ...] = (44, 40, 36, 32),
+) -> tuple[int, str]:
+    """Pick the largest font size from ``candidates`` where ``hook``
+    fits inside ``frame_width - 2*safe_margin`` and ``max_lines``.
+
+    Returns ``(fontsize, wrapped_text)``. ``wrapped_text`` joins
+    lines with ``\\n`` — the format ``_drawtext_escape`` understands
+    and the existing caller uses unchanged.
+
+    The candidate list starts at the legacy default 44 so the
+    common case (typical-length hooks) preserves the existing
+    visual exactly. Only hooks that would truncate at 44 drop to
+    40, then 36, then 32 — each step a meaningful enough size
+    change that the operator can tell at a glance which path the
+    auto-fit took.
+
+    Falls back to the char-based ``_wrap_caption`` (with a leading
+    fontsize of 44) when Pillow isn't available — the
+    pre-Phase-1 behaviour, defensive against an unexpected import
+    environment.
+    """
+    if not hook:
+        return candidates[0], ""
+    try:
+        from PIL import ImageFont
+    except ImportError:  # pragma: no cover — PIL is a hard dep
+        return candidates[0], _wrap_caption(hook)
+    if font_path is None:
+        font_path = _find_font()
+    max_width = frame_width - 2 * safe_margin
+    last_lines: list[str] = []
+    last_size = candidates[-1]
+    for size in candidates:
+        try:
+            font = ImageFont.truetype(font_path, size)
+        except (OSError, IOError):  # pragma: no cover — font missing
+            return size, _wrap_caption(hook)
+        lines, fits = _pixel_wrap_lines(hook, font, max_width, max_lines)
+        if fits:
+            return size, "\n".join(lines)
+        last_lines = lines
+        last_size = size
+    # Floor: ship at the smallest size even if it truncates.
+    # Append an explicit ellipsis on the last line so the truncation
+    # is visible to the viewer rather than feeling like a cut-off bug.
+    if last_lines and not last_lines[-1].endswith("..."):
+        last_lines[-1] = last_lines[-1].rstrip(",.; ") + "..."
+    return last_size, "\n".join(last_lines)
+
+
+# ---------------------------------------------------------------------------
 # Brand pill PNGs
 # ---------------------------------------------------------------------------
 #
@@ -424,32 +534,45 @@ _SUBTITLES_FORCE_STYLE = (
 
 
 # Force-style for the Shorts (1080x1920 vertical) burn-in subtitles.
-# Three reasons this can't reuse ``_SUBTITLES_FORCE_STYLE``:
-#   1. Vertical frame is narrower (1080 vs 1920) so per-line char
-#      budgets that work on long-form spill past the visible edge.
-#      The matching wrap in ``captions.transcript_to_srt_window``
-#      uses ``wrap_max_chars=32`` — fits inside 1080 px at
-#      FontSize=34 with comfortable side margins.
-#   2. Shorts are watched on phones held close — the FontSize must
-#      step up (22 → 34) so cues are readable at 5–10 cm viewing.
-#   3. Position has to clear both the static hook caption (at
-#      ``y=h*0.70`` ≈ 1344) and the URL pill (at ``y=H-h-100`` ≈
-#      1820), AND sit firmly in the bottom third. ``MarginV=300``
-#      places the cue baseline at y≈1620 — between the hook
-#      (which fades after 3 s) and the URL pill, with enough
-#      vertical clearance for a 3-line cue at FontSize=34 not to
-#      overlap either.
+#
+# May 2026 upgrade (operator: "transcript should look visually good"):
+# moved from outline-only at FontSize=34 to a TikTok-style "subtitle
+# card" — bigger, bolder text on a semi-transparent rounded-feel box
+# that always reads against busy Grok-Imagine backgrounds:
+#
+#   * FontSize 34 → 48. Modern YouTube Shorts auto-captions sit
+#     around this size; phones held at 5-10 cm need it.
+#   * Bold=-1 (ASS "true"). Heavier strokes survive over photos.
+#   * BorderStyle 1 → 3 (opaque box). Combined with a translucent
+#     BackColour (&H80 alpha = 50 % opaque black), the cue sits in
+#     a card rather than relying purely on outline to read against
+#     bright imagery. Way more legible on phones.
+#   * MarginV 300 → 340. Larger card needs more clearance from the
+#     URL pill (y ≈ 1820) at the bottom; 340 places the card top
+#     at ~y≈1480, still firmly in the bottom third and below the
+#     hook overlay (which fades after 3 s).
+#   * Outline kept at 3 so the text has a hairline contour even
+#     where the card edges meet bright pixels. Shadow dropped to
+#     0 since the box already separates text from the image.
+#
+# Vertical frame is narrower (1080 vs 1920); the matching wrap in
+# ``captions.transcript_to_srt_window`` was tightened from
+# ``wrap_max_chars=32`` / ``wrap_max_lines=3`` to ``24`` / ``2`` so
+# the larger card holds at most 2 lines of ~24 chars each — fits
+# inside ~960 px wide at FontSize=48 with comfortable side margins
+# and never stretches taller than the available clearance.
 _SHORTS_SUBTITLES_FORCE_STYLE = (
     "FontName=DejaVu Sans,"
-    "FontSize=34,"
+    "FontSize=48,"
+    "Bold=-1,"
     "PrimaryColour=&H00FFFFFF,"
     "OutlineColour=&H00000000,"
-    "BackColour=&H00000000,"
-    "BorderStyle=1,"
-    "Outline=4,"
-    "Shadow=2,"
+    "BackColour=&H80000000,"
+    "BorderStyle=3,"
+    "Outline=3,"
+    "Shadow=0,"
     "Alignment=2,"
-    "MarginV=300"
+    "MarginV=340"
 )
 
 
@@ -534,7 +657,13 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
                              hook: Optional[str] = None,
                              bg_is_video: bool = False,
                              with_url_pill: bool = False,
-                             subtitles_path: Optional[str] = None) -> str:
+                             subtitles_path: Optional[str] = None,
+                             end_card: bool = False,
+                             end_card_duration: float = 3.0,
+                             total_duration: float = 55.0,
+                             end_card_main_text: str = "WATCH FULL EPISODE",
+                             end_card_sub_text: str = "Tap Subscribe ↗",
+                             end_card_image_input_label: Optional[str] = None) -> str:
     """filter_complex for the 1080x1920 Shorts build.
 
     Inputs:
@@ -584,50 +713,160 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
     #   brand pill → URL pill → hook (0-3s) → burn-in subtitles → [v]
     chain = base
     if hook:
-        wrapped = _wrap_caption(hook)
-        escaped = _drawtext_escape(wrapped)
+        # Auto-shrink-to-fit (May 2026 retune): start at the legacy
+        # fontsize=44 and shrink in 4-px steps only if the wrapped
+        # text would truncate at the larger size. Pixel-accurate
+        # word wrap via PIL ImageFont uses the actual frame width
+        # (1080 px) instead of the old conservative char budget.
+        # Output: ``(fontsize, wrapped)`` ready for drawtext.
+        hook_fontsize, wrapped = autofit_hook_overlay(
+            hook,
+            frame_width=width,
+            safe_margin=80,
+            max_lines=4,
+            font_path=_find_font(),
+        )
+        # May 26 2026 operator-caught regression (Tesla Ep485 + MAB):
+        # multi-line hooks rendered as ONE overflowing line with the
+        # `\n` byte showing up as the letter "n" between words —
+        # "major warning" → "majornwarning", "volume reductions" →
+        # "volumenreductions". The single-drawtext path emitted
+        # `text='line1\nline2'` and relied on ffmpeg drawtext's
+        # text= expansion to render `\n` as a newline. In practice
+        # the backslash gets eaten somewhere in the filter_complex
+        # parse → drawtext text= pipeline and only the literal "n"
+        # survives. Fix: stack one drawtext filter PER wrapped line
+        # with explicit y-offsets — sidesteps the `\n` escape
+        # entirely and produces deterministic per-line layout.
+        wrapped_lines = wrapped.split("\n") if wrapped else []
+        n_lines = max(len(wrapped_lines), 1)
+        line_spacing = 10
+        line_h = hook_fontsize + line_spacing
         # May 2026 operator review: hook is the static 0-3 s
         # opening title — separate from the burn-in transcript
         # that follows. Position lifted ABOVE the burn-in zone
         # so the two overlays don't visually collide during the
-        # first 3 s. ``y=h*0.55`` puts the hook around y≈1056 —
-        # inside the lower half but well above the subtitle
-        # baseline at y≈1620 (MarginV=300 in
-        # ``_SHORTS_SUBTITLES_FORCE_STYLE``).
-        #   * ``fontsize=44`` is still readable on a phone but
-        #     no longer dominates the slideshow.
+        # first 3 s. ``y=h*0.55`` puts the hook block CENTER
+        # around y≈1056 — inside the lower half but well above
+        # the subtitle baseline at y≈1620 (MarginV=300 in
+        # ``_SHORTS_SUBTITLES_FORCE_STYLE``). With multi-line
+        # hooks, line i is offset from the block center by
+        # ``(i - (n-1)/2) * line_h`` so the wrap stays visually
+        # centered regardless of line count.
+        #   * Default ``fontsize=44`` (auto-shrunk per hook length)
+        #     is readable on a phone but no longer dominates the
+        #     slideshow.
         #   * Outline-only (no ``box=1`` solid fill) keeps the
         #     imagery visible behind the words. A 4 px black
         #     outline + 2 px shadow stays readable on bright
         #     backgrounds without painting a black rectangle.
         hook_label = "[hooked]" if subtitles_path else "[v]"
-        hook_filter = (
-            f";{post_brand_label}drawtext=fontfile='{font_path}':"
-            f"text='{escaped}':"
-            f"fontsize=44:fontcolor=white:"
-            f"x=(w-text_w)/2:y=h*0.55:"
-            f"borderw=4:bordercolor=black:"
-            f"shadowx=2:shadowy=2:shadowcolor=black@0.7:"
-            f"line_spacing=10:"
-            f"enable='between(t,0,3)'"
-            f"{hook_label}"
-        )
-        chain += hook_filter
-        post_brand_label = hook_label
+        for i, line in enumerate(wrapped_lines):
+            escaped_line = _drawtext_escape(line)
+            offset_px = (i - (n_lines - 1) / 2.0) * line_h
+            sign = "+" if offset_px >= 0 else "-"
+            y_expr = f"h*0.55{sign}{abs(offset_px):.0f}"
+            is_last = (i == n_lines - 1)
+            line_label = hook_label if is_last else f"[hookln{i}]"
+            chain += (
+                f";{post_brand_label}drawtext=fontfile='{font_path}':"
+                f"text='{escaped_line}':"
+                f"fontsize={hook_fontsize}:fontcolor=white:"
+                f"x=(w-text_w)/2:y={y_expr}:"
+                f"borderw=4:bordercolor=black:"
+                f"shadowx=2:shadowy=2:shadowcolor=black@0.7:"
+                f"enable='between(t,0,3)'"
+                f"{line_label}"
+            )
+            post_brand_label = line_label
 
     if subtitles_path:
         escaped_sub = _subtitles_path_escape(subtitles_path)
         # Use the dedicated Shorts force-style so font + position
         # are tuned for the 1080x1920 vertical frame and don't
         # overlap the hook (above) or the URL pill (below).
+        sub_label = "[capted]" if end_card else "[v]"
         chain += (
             f";{post_brand_label}subtitles='{escaped_sub}'"
-            f":force_style='{_SHORTS_SUBTITLES_FORCE_STYLE}'[v]"
+            f":force_style='{_SHORTS_SUBTITLES_FORCE_STYLE}'{sub_label}"
         )
-        return chain
-    if hook:
+        post_brand_label = sub_label
+        if not end_card:
+            return chain
+    elif hook and not end_card:
         # Hook was the last filter — already terminated at [v].
         return chain
+
+    if end_card:
+        # Last-N-seconds CTA card. Two render paths, gated by
+        # ``end_card_image_input_label``:
+        #
+        # * PNG overlay (preferred). The caller renders the card
+        #   PNG via engine.publisher.generate_shorts_end_card —
+        #   that image composites the long-form thumbnail with
+        #   the CTA copy in a richer layout than ffmpeg can paint
+        #   inline. The label points at the ffmpeg input index
+        #   for the PNG (e.g. ``[4:v]``). We overlay it on top of
+        #   the slideshow with an ``enable`` clause for the last
+        #   N seconds.
+        #
+        # * Drawtext fallback (no PNG provided). drawbox + 2
+        #   drawtext filters paint the card inline — the
+        #   pre-PR-#420 behaviour. Useful for tests / when PNG
+        #   generation fails / for shows that opt-out of the
+        #   thumbnail-bearing card.
+        #
+        # Both paths bind to the same ``between(t, END-N, END)``
+        # enable window so the layer is atomic.
+        if total_duration <= end_card_duration:
+            end_card_start = 0.0
+        else:
+            end_card_start = max(0.0, total_duration - end_card_duration)
+        end_card_end = total_duration
+        enable_clause = (
+            f"between(t,{end_card_start:.2f},{end_card_end:.2f})"
+        )
+
+        if end_card_image_input_label:
+            # PNG path. The input is added as a video stream
+            # upstream (in _short_form_cmd) and labelled with
+            # whatever index the caller assigned, e.g. ``[4:v]``.
+            chain += (
+                f";{end_card_image_input_label}format=rgba[endcard];"
+                f"{post_brand_label}[endcard]overlay="
+                f"x=0:y=0:enable='{enable_clause}'[v]"
+            )
+            return chain
+
+        # Drawtext fallback path.
+        font_path = _drawtext_escape(_find_font())
+        escaped_main = _drawtext_escape(end_card_main_text)
+        escaped_sub = _drawtext_escape(end_card_sub_text)
+        chain += (
+            f";{post_brand_label}"
+            # 1. Translucent black backdrop.
+            f"drawbox=x=0:y=0:w=iw:h=ih:"
+            f"color=black@0.78:t=fill:enable='{enable_clause}'"
+            # 2. Headline.
+            f",drawtext=fontfile='{font_path}':"
+            f"text='{escaped_main}':"
+            f"fontsize=88:fontcolor=white:"
+            f"x=(w-text_w)/2:y=(h-text_h)/2-100:"
+            f"borderw=4:bordercolor=black:"
+            f"shadowx=2:shadowy=2:shadowcolor=black@0.7:"
+            f"enable='{enable_clause}'"
+            # 3. Sub-line — smaller, accent colour (cyan, matches
+            # the per-word caption highlight from PR #415).
+            f",drawtext=fontfile='{font_path}':"
+            f"text='{escaped_sub}':"
+            f"fontsize=56:fontcolor=0x00D4FF:"
+            f"x=(w-text_w)/2:y=(h+text_h)/2+40:"
+            f"borderw=3:bordercolor=black:"
+            f"enable='{enable_clause}'"
+            f"[v]"
+        )
+        return chain
+
     return chain + f";{post_brand_label}null[v]"
 
 
@@ -693,7 +932,12 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                     hook: Optional[str] = None,
                     bg_is_video: bool = False,
                     url_pill_in: Optional[str] = None,
-                    subtitles_path: Optional[str] = None) -> List[str]:
+                    subtitles_path: Optional[str] = None,
+                    end_card: bool = False,
+                    end_card_main_text: str = "WATCH FULL EPISODE",
+                    end_card_sub_text: str = "Tap Subscribe ↗",
+                    end_card_duration: float = 3.0,
+                    end_card_image_in: Optional[str] = None) -> List[str]:
     """ffmpeg command for the 1080x1920 Shorts build.
 
     When *bg_is_video* is True, *bg_in* is a pre-rendered vertical
@@ -718,10 +962,23 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
         bg_input = ["-loop", "1", "-framerate", str(fps), "-i", bg_in]
 
     extra_inputs: List[str] = []
+    # ffmpeg input order is fixed: [0:v] bg, [1:a] audio, [2:v] brand,
+    # then optional [3:v] url_pill, then optional [N:v] end_card_image.
+    # Compute the end-card image's input index based on what came
+    # before it so the filter graph references the right stream.
+    next_input_index = 3
     if url_pill_in:
-        extra_inputs = [
+        extra_inputs.extend([
             "-loop", "1", "-framerate", str(fps), "-i", url_pill_in,
-        ]
+        ])
+        next_input_index += 1
+
+    end_card_image_input_label: Optional[str] = None
+    if end_card and end_card_image_in:
+        extra_inputs.extend([
+            "-loop", "1", "-framerate", str(fps), "-i", end_card_image_in,
+        ])
+        end_card_image_input_label = f"[{next_input_index}:v]"
 
     return [
         "ffmpeg", "-y", "-threads", "0",
@@ -735,7 +992,13 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
         _short_form_filter_graph(1080, 1920, fps, hook,
                                  bg_is_video=bg_is_video,
                                  with_url_pill=bool(url_pill_in),
-                                 subtitles_path=subtitles_path),
+                                 subtitles_path=subtitles_path,
+                                 end_card=end_card,
+                                 end_card_duration=end_card_duration,
+                                 total_duration=duration,
+                                 end_card_main_text=end_card_main_text,
+                                 end_card_sub_text=end_card_sub_text,
+                                 end_card_image_input_label=end_card_image_input_label),
         "-map", "[v]", "-map", "1:a",
         *_VIDEO_ENCODE,
         "-r", str(fps),
@@ -875,7 +1138,12 @@ def build_short_video(audio_path: Path, cover_path: Path,
                       hook: Optional[str] = None,
                       scene_paths: Optional[Sequence[Path]] = None,
                       show_name: Optional[str] = None,
-                      subtitles_path: Optional[Path] = None) -> Path:
+                      subtitles_path: Optional[Path] = None,
+                      end_card: bool = False,
+                      end_card_main_text: str = "WATCH FULL EPISODE",
+                      end_card_sub_text: str = "Tap Subscribe ↗",
+                      end_card_duration: float = 3.0,
+                      end_card_image_path: Optional[Path] = None) -> Path:
     """Render a 1080x1920 vertical YouTube Shorts video.
 
     Parameters
@@ -958,12 +1226,21 @@ def build_short_video(audio_path: Path, cover_path: Path,
         bg_is_video=bg_is_video,
         url_pill_in=str(url_pill_path) if url_pill_path else None,
         subtitles_path=str(subtitles_path) if subtitles_path else None,
+        end_card=end_card,
+        end_card_main_text=end_card_main_text,
+        end_card_sub_text=end_card_sub_text,
+        end_card_duration=end_card_duration,
+        end_card_image_in=(
+            str(end_card_image_path)
+            if end_card_image_path and Path(end_card_image_path).exists()
+            else None
+        ),
     )
     logger.info(
         "Building Shorts video (%.1fs from %.1fs) → %s "
-        "(subtitles=%s)",
+        "(subtitles=%s, end_card=%s)",
         duration, start_offset, output_path.name,
-        bool(subtitles_path),
+        bool(subtitles_path), end_card,
     )
     _run_ffmpeg(cmd, label="shorts video")
     return output_path

@@ -436,7 +436,15 @@ def upload_image(
                 content_type="application/json",
             )
         except Exception as exc:  # noqa: BLE001 — log + soft-fail
-            logger.error(
+            # WARNING-level per-image: gallery upload is soft-fail by
+            # design (the audio pipeline doesn't depend on it), and
+            # when the bucket / credentials are misconfigured every
+            # one of the N images fails the same way — a per-image
+            # ERROR flood drowns out real issues. The aggregate is
+            # captured at INFO by ``run_show``'s per-aspect summary
+            # line ("Gallery: ep??? aspect=??? attempted=N uploaded=0
+            # bucket=??? first_failure=???").
+            logger.warning(
                 "Gallery R2 upload failed for image %s (%s): %s",
                 metadata.image_id, type(exc).__name__, exc,
             )

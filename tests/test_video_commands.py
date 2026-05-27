@@ -165,16 +165,25 @@ def test_short_form_filter_graph_without_hook_omits_caption():
 
 
 def test_short_form_filter_graph_burns_subtitles_when_path_provided():
-    """May 2026 operator review: Shorts had no synced captions at
-    all — only the 3-second static hook. With the new
-    ``subtitles_path`` arg the Shorts MP4 burns in cues from a
-    Shorts-windowed SRT using the dedicated
-    ``_SHORTS_SUBTITLES_FORCE_STYLE`` (FontSize=34, MarginV=300)
-    so the transcript actually shows up on the vertical format."""
+    """May 2026 operator review (round 2): Shorts captions upgraded
+    from FontSize=34 outline-only to FontSize=48 bold on a 50 %-opaque
+    box (TikTok-style "subtitle card"). The card has to stay
+    readable on busy Grok-Imagine backgrounds and sit firmly below
+    the 0–3 s hook overlay AND above the bottom URL pill — see the
+    block comment on ``_SHORTS_SUBTITLES_FORCE_STYLE`` for the
+    geometry math. Drift guard pins every field that affects
+    legibility."""
     graph = _short_form_filter_graph(subtitles_path="/tmp/short.srt")
     assert "subtitles=" in graph
-    assert "FontSize=34" in graph
-    assert "MarginV=300" in graph
+    # Caption text style.
+    assert "FontSize=48" in graph
+    assert "Bold=-1" in graph
+    # Background card: BorderStyle=3 + non-zero alpha BackColour =
+    # opaque box behind the words, not pure outline.
+    assert "BorderStyle=3" in graph
+    assert "BackColour=&H80000000" in graph
+    # Position: clear of URL pill (y≈1820) and hook (y≈1056).
+    assert "MarginV=340" in graph
     assert graph.endswith("[v]")
 
 
@@ -463,32 +472,42 @@ def test_drawtext_escape_escapes_real_newlines():
 
 
 def test_short_form_filter_graph_caption_has_no_real_newlines():
-    """End-to-end pin: the rendered Shorts filter graph for a
-    realistic multi-line hook MUST NOT contain real newline
-    characters inside the drawtext text= region. A real newline
-    there terminates ffmpeg's single-quoted parsing region and
-    breaks the entire filter graph — exactly what failed Tesla
-    Ep466's Shorts upload on May 8 2026."""
+    """End-to-end pin: each drawtext text= region in the rendered
+    Shorts filter graph MUST contain neither a real newline (which
+    closes ffmpeg's single-quoted parsing region — broke Tesla
+    Ep466's Shorts upload on May 8 2026) NOR a literal ``\\n``
+    escape (which silently rendered as the letter "n" between
+    wrap points — broke Tesla Ep485 / MAB Shorts on May 26 2026:
+    "major warning" → "majornwarning", "volume reductions" →
+    "volumenreductions"). The fix stacks one drawtext per
+    wrapped line, so each text= value is a single physical line
+    of plain words — no newline of any kind."""
     hook = (
         "California regulators just disclosed the Tesla Semi's "
         "battery sizes at 822 kWh and 548 kWh."
     )
     graph = _short_form_filter_graph(hook=hook)
-    # Find the drawtext text= region.
     import re as _re
-    m = _re.search(r"text='([^']*(?:\\'[^']*)*)'", graph)
-    assert m is not None, "drawtext text= region not found in graph"
-    text_value = m.group(1)
-    # No real newlines may appear inside the quoted region.
-    assert "\n" not in text_value, (
-        f"Real newline survived into drawtext text= value (would break "
-        f"ffmpeg parsing): {text_value!r}"
-    )
-    # But the literal escape sequence \n MUST be present so the rendered
-    # caption still wraps to multiple lines.
-    assert r"\n" in text_value, (
-        f"Multi-line hook should produce literal \\n breaks; got "
-        f"{text_value!r}"
+    # Every drawtext text= region in the graph must be newline-free
+    # AND must not contain the literal \n escape sequence.
+    text_values = _re.findall(r"text='([^']*(?:\\'[^']*)*)'", graph)
+    assert text_values, "no drawtext text= regions found in graph"
+    for tv in text_values:
+        assert "\n" not in tv, (
+            f"Real newline survived into drawtext text= value (would "
+            f"break ffmpeg parsing): {tv!r}"
+        )
+        assert r"\n" not in tv, (
+            f"Literal \\n escape in drawtext text= value (would render "
+            f"as the letter 'n' between words): {tv!r}"
+        )
+    # A long multi-line hook must produce MULTIPLE drawtext filters
+    # (one per wrapped line). Single-drawtext graph would be the
+    # broken legacy path.
+    drawtext_count = graph.count("drawtext=")
+    assert drawtext_count >= 2, (
+        f"long hook should produce >=2 stacked drawtext filters, "
+        f"got {drawtext_count}"
     )
 
 
@@ -918,3 +937,477 @@ def test_brand_pill_text_omits_ai_narrated_marker():
     assert "AI-narrated" not in _BRAND_PILL_TEXT
     assert "AI narrated" not in _BRAND_PILL_TEXT
     assert _BRAND_PILL_TEXT == "Nerra Network"
+
+
+# ---------------------------------------------------------------------------
+# Shorts end-screen CTA card — last-3s subscribe overlay
+# ---------------------------------------------------------------------------
+#
+# Operator priority #3 (May 2026): every Short ends with a 3-second
+# CTA card pointing the viewer at YouTube's own Subscribe button on
+# the Shorts player's right rail. drawbox backdrop + 2 drawtext lines.
+
+def test_short_form_filter_graph_omits_end_card_when_disabled():
+    """``end_card=False`` (default) must produce exactly the legacy
+    chain — no drawbox, no end-card drawtext, the existing
+    short-form drift guards stay green."""
+    graph = _short_form_filter_graph(end_card=False)
+    assert "drawbox" not in graph
+    assert "WATCH FULL EPISODE" not in graph
+    assert "Tap Subscribe" not in graph
+
+
+def test_short_form_filter_graph_appends_end_card_when_enabled():
+    """``end_card=True`` must add: a full-frame translucent backdrop,
+    a big headline drawtext, and a smaller sub-line drawtext — all
+    bound to the same ``between(t, total-3, total)`` enable window."""
+    graph = _short_form_filter_graph(
+        end_card=True, total_duration=55.0, end_card_duration=3.0,
+    )
+    # Backdrop covers the full frame at ~78 % opacity.
+    assert "drawbox=x=0:y=0:w=iw:h=ih" in graph
+    assert "color=black@0.78" in graph
+    # Headline + sub-line text.
+    assert "WATCH FULL EPISODE" in graph
+    assert "Tap Subscribe" in graph
+    # All three filters share a single enable window keyed off the
+    # passed ``total_duration``.
+    assert "between(t,52.00,55.00)" in graph
+    # Output is still a single [v] terminator.
+    assert graph.endswith("[v]")
+
+
+def test_short_form_filter_graph_end_card_window_scales_with_duration():
+    """A 30 s Short must still get a 3 s end card at t=27..30, not a
+    hard-coded t=52..55 window."""
+    graph = _short_form_filter_graph(
+        end_card=True, total_duration=30.0, end_card_duration=3.0,
+    )
+    assert "between(t,27.00,30.00)" in graph
+
+
+def test_short_form_filter_graph_end_card_custom_duration():
+    """``end_card_duration`` is operator-configurable; a 5 s card on
+    a 55 s clip should fire from t=50."""
+    graph = _short_form_filter_graph(
+        end_card=True, total_duration=55.0, end_card_duration=5.0,
+    )
+    assert "between(t,50.00,55.00)" in graph
+
+
+def test_short_form_filter_graph_end_card_custom_text():
+    """Per-show YAML can override the CTA copy (Russian shows, A/B
+    testing, etc.) — the override must appear verbatim in the
+    drawtext payload."""
+    graph = _short_form_filter_graph(
+        end_card=True, total_duration=55.0,
+        end_card_main_text="WATCH THE FULL SHOW",
+        end_card_sub_text="Subscribe now",
+    )
+    assert "WATCH THE FULL SHOW" in graph
+    assert "Subscribe now" in graph
+    # Defaults must NOT appear.
+    assert "WATCH FULL EPISODE" not in graph
+
+
+def test_short_form_filter_graph_end_card_composes_with_subtitles():
+    """When BOTH subtitles and the end card are present, captions
+    must stop at the [capted] label and the end-card chain becomes
+    the [v] terminator. No double-terminated graph."""
+    graph = _short_form_filter_graph(
+        end_card=True, subtitles_path="/tmp/short.srt", total_duration=55.0,
+    )
+    # Subtitles land at [capted], not [v].
+    assert "[capted]" in graph
+    # End card runs after — the only [v] is from the end-card chain.
+    assert graph.count("[v]") == 1
+    assert graph.endswith("[v]")
+    # End-card overlay paints over captions.
+    assert "drawbox" in graph
+    assert "WATCH FULL EPISODE" in graph
+
+
+def test_short_form_filter_graph_end_card_composes_with_hook_only():
+    """End card + hook (no subtitles): hook fires 0-3 s, end card
+    fires 52-55 s, both bound to drawtext but on opposite ends of
+    the clip. Both must coexist in the same chain ending at [v]."""
+    graph = _short_form_filter_graph(
+        end_card=True, hook="Today on the show.", total_duration=55.0,
+    )
+    # Hook still gates on first 3 s.
+    assert "between(t,0,3)" in graph
+    # End card gates on last 3 s.
+    assert "between(t,52.00,55.00)" in graph
+    assert graph.endswith("[v]")
+
+
+def test_short_form_filter_graph_end_card_degenerate_short_clip():
+    """If someone sets total_duration <= end_card_duration, the card
+    should render for the whole clip rather than fail / produce a
+    negative start time."""
+    graph = _short_form_filter_graph(
+        end_card=True, total_duration=2.0, end_card_duration=3.0,
+    )
+    assert "between(t,0.00,2.00)" in graph
+
+
+def test_short_form_cmd_threads_end_card_params(tmp_path, monkeypatch):
+    """``build_short_video(end_card=True, …)`` must pass the end-card
+    params down through ``_short_form_cmd`` into the filter graph."""
+    audio = tmp_path / "voice.mp3"
+    audio.write_bytes(b"\x00")
+    cover = tmp_path / "cover.jpg"
+    cover.write_bytes(b"\xFF\xD8")
+    out = tmp_path / "short.mp4"
+
+    captured = []
+    monkeypatch.setattr(
+        "engine.video.subprocess.run",
+        lambda cmd, **kw: (captured.append(list(cmd)),
+                           type("R", (), {"returncode": 0})())[1],
+    )
+    build_short_video(
+        audio, cover, out, duration=55.0,
+        end_card=True,
+        end_card_main_text="CUSTOM CTA",
+        end_card_sub_text="Subscribe →",
+        end_card_duration=4.0,
+    )
+    assert captured, "no ffmpeg cmd captured"
+    graph = captured[-1][captured[-1].index("-filter_complex") + 1]
+    assert "CUSTOM CTA" in graph
+    assert "Subscribe " in graph  # ASCII portion of the sub-text
+    assert "between(t,51.00,55.00)" in graph
+
+
+# ---------------------------------------------------------------------------
+# Shorts hook overlay auto-shrink-to-fit
+# ---------------------------------------------------------------------------
+#
+# Same shrink-to-fit pattern the thumbnail uses (see
+# tests/test_thumbnail_autofit.py). The 0-3 s drawtext hook used to
+# render at a fixed fontsize=44 with a char-based 26 × 4 wrap that
+# silently truncated > 104-char hooks. Auto-fit drops the font in
+# 4-px steps (44 → 40 → 36 → 32) until the wrapped block fits the
+# frame width without dropping words.
+
+def test_autofit_hook_overlay_short_hook_stays_at_44():
+    """A short hook (< 1 line at 44 px) must keep the legacy
+    fontsize=44 — preserves the existing visual for the common case."""
+    from engine.video import autofit_hook_overlay
+    size, wrapped = autofit_hook_overlay("Tesla beats Q1 target.")
+    assert size == 44
+    # Single line, no break inserted.
+    assert "\n" not in wrapped
+
+
+def test_autofit_hook_overlay_long_hook_shrinks():
+    """A hook that genuinely exceeds the 44-px 4-line budget must
+    shrink to a smaller size in the candidate ladder. (The original
+    char-based 26 × 4 = 104-char limit was conservative — a
+    pixel-accurate wrap at 44 px fits ~38 chars / line × 4 lines =
+    ~150 chars before needing to shrink.) This hook is ~170 chars
+    so it forces a shrink."""
+    from engine.video import autofit_hook_overlay
+    long_hook = (
+        "California regulators just disclosed the Tesla Semi's "
+        "battery sizes at 822 kWh and 548 kWh, alongside a revised "
+        "Cybertruck consumer range estimate that surprised analysts."
+    )
+    size, wrapped = autofit_hook_overlay(long_hook)
+    # Must drop below the legacy default 44.
+    assert size < 44, f"expected shrink for {len(long_hook)}-char hook, got {size}"
+    assert size >= 32
+    # Must NOT truncate at the chosen size — every source word fits.
+    src_words = long_hook.split()
+    out_words = wrapped.replace("\n", " ").split()
+    assert len(out_words) == len(src_words), (
+        f"words dropped during autofit: src={len(src_words)} "
+        f"out={len(out_words)} wrapped={wrapped!r}"
+    )
+
+
+def test_autofit_hook_overlay_91_char_hook_fits_at_44():
+    """Operator's original truncation complaint was at the char-based
+    104-char budget. With the pixel-accurate wrap a 91-char hook
+    fits comfortably at 44 px — no shrink needed. This is the
+    regression direction (i.e. don't shrink hooks that don't need
+    it)."""
+    from engine.video import autofit_hook_overlay
+    hook_91 = (
+        "California regulators just disclosed the Tesla Semi's "
+        "battery sizes at 822 kWh and 548 kWh."
+    )
+    assert len(hook_91) >= 80
+    size, wrapped = autofit_hook_overlay(hook_91)
+    assert size == 44, f"91-char hook should fit at 44 px, got {size}"
+    src_words = hook_91.split()
+    out_words = wrapped.replace("\n", " ").split()
+    assert len(out_words) == len(src_words)
+
+
+def test_autofit_hook_overlay_empty_hook():
+    from engine.video import autofit_hook_overlay
+    size, wrapped = autofit_hook_overlay("")
+    assert wrapped == ""
+    # Default font size still returned so callers don't have to
+    # special-case the empty path.
+    assert size == 44
+
+
+def test_autofit_hook_overlay_respects_max_lines():
+    """A 200-char hook MUST stay within max_lines=4 regardless of
+    which fontsize wins. Too many lines on a 9:16 frame collides
+    with the burn-in caption card at y≈1480."""
+    from engine.video import autofit_hook_overlay
+    runaway = "word " * 80  # 400 chars
+    _size, wrapped = autofit_hook_overlay(runaway, max_lines=4)
+    assert wrapped.count("\n") <= 3  # ≤4 lines
+
+
+def test_autofit_hook_overlay_floor_appends_ellipsis_on_truncation():
+    """When even the smallest fontsize can't fit, the floor renders
+    the wrapped lines + a visible "…" on the last line so the
+    truncation is OBVIOUS to a viewer rather than feeling like a
+    cut-off bug."""
+    from engine.video import autofit_hook_overlay
+    runaway = "supercalifragilistic " * 30
+    _size, wrapped = autofit_hook_overlay(
+        runaway, max_lines=2, candidates=(44, 32),
+    )
+    # The last line gets the ellipsis marker once we hit the floor.
+    assert wrapped.endswith("...")
+
+
+def test_short_form_filter_graph_long_hook_uses_smaller_font():
+    """End-to-end: a long hook in the actual filter graph should
+    emit a smaller fontsize=N drawtext, not the default 44."""
+    long_hook = (
+        "Tesla just disclosed an unprecedented restructuring of its "
+        "Cybercab manufacturing supply chain across three continents "
+        "to absorb the surprise tariff changes announced overnight."
+    )
+    graph = _short_form_filter_graph(hook=long_hook)
+    # The drawtext fontsize=N where N may be 40, 36, or 32 depending
+    # on the exact font metrics — assert it's NOT the default 44.
+    import re
+    m = re.search(r"fontsize=(\d+)", graph)
+    assert m, "no fontsize found in graph"
+    chosen = int(m.group(1))
+    assert chosen < 44, (
+        f"long hook should have shrunk below 44, got {chosen}"
+    )
+    assert chosen >= 32, f"smallest allowed is 32, got {chosen}"
+
+
+# ---------------------------------------------------------------------------
+# Shorts end-card PNG overlay path
+# ---------------------------------------------------------------------------
+#
+# May 2026 visual upgrade (PR #420): when a pre-rendered end-card
+# PNG is passed to build_short_video, the filter graph swaps the
+# drawbox+drawtext fallback for a single overlay= filter sourcing
+# the PNG. The drawtext path stays as the soft-failure fallback
+# (PNG generation failed → ship the text-only card).
+
+def test_short_form_filter_graph_end_card_image_uses_overlay():
+    """When ``end_card_image_input_label`` is provided, the filter
+    graph must overlay that image (NOT emit drawbox + drawtext)."""
+    graph = _short_form_filter_graph(
+        end_card=True, total_duration=55.0,
+        end_card_image_input_label="[3:v]",
+    )
+    # Overlay filter sourcing the image label.
+    assert "[3:v]format=rgba[endcard]" in graph
+    assert "[endcard]overlay=x=0:y=0:enable='between(t,52.00,55.00)'[v]" in graph
+    # Drawtext fallback is NOT emitted.
+    assert "drawbox" not in graph
+    assert "WATCH FULL EPISODE" not in graph
+
+
+def test_short_form_filter_graph_end_card_drawtext_when_no_image():
+    """No ``end_card_image_input_label`` keeps the legacy drawtext +
+    drawbox fallback path so the soft-failure behaviour ships."""
+    graph = _short_form_filter_graph(
+        end_card=True, total_duration=55.0,
+        end_card_image_input_label=None,
+    )
+    assert "drawbox" in graph
+    assert "WATCH FULL EPISODE" in graph
+    assert "[endcard]overlay" not in graph
+
+
+def test_short_form_filter_graph_end_card_image_composes_with_captions():
+    """Overlay path must compose cleanly with subtitles too —
+    captions terminate at ``[capted]`` and the overlay chains from
+    there to the final ``[v]``."""
+    graph = _short_form_filter_graph(
+        end_card=True, total_duration=55.0,
+        subtitles_path="/tmp/short.srt",
+        end_card_image_input_label="[4:v]",
+    )
+    assert "[capted]" in graph
+    assert "[4:v]format=rgba[endcard]" in graph
+    assert "[capted][endcard]overlay" in graph
+    assert graph.endswith("[v]")
+    assert graph.count("[v]") == 1
+
+
+def test_short_form_cmd_adds_end_card_image_as_input(tmp_path, monkeypatch):
+    """``build_short_video(end_card_image_path=path)`` must add the
+    image as another ffmpeg ``-i`` input AND wire the right index
+    label into the filter graph."""
+    audio = tmp_path / "voice.mp3"
+    audio.write_bytes(b"\x00")
+    cover = tmp_path / "cover.jpg"
+    cover.write_bytes(b"\xFF\xD8")
+    end_card = tmp_path / "end_card.png"
+    end_card.write_bytes(b"\x89PNG\r\n\x1a\n")  # minimal PNG magic
+    out = tmp_path / "short.mp4"
+
+    captured = []
+    monkeypatch.setattr(
+        "engine.video.subprocess.run",
+        lambda cmd, **kw: (captured.append(list(cmd)),
+                           type("R", (), {"returncode": 0})())[1],
+    )
+    build_short_video(
+        audio, cover, out, duration=55.0,
+        show_name="Tesla Shorts Time",  # → adds url_pill at [3:v]
+        end_card=True,
+        end_card_image_path=end_card,
+    )
+    assert captured, "no ffmpeg cmd captured"
+    cmd = captured[-1]
+    # The end-card PNG appears as a -i input.
+    assert str(end_card) in cmd
+    # Filter graph references the right index. With show_name=Tesla
+    # the URL pill takes [3:v], so the end-card lands at [4:v].
+    graph = cmd[cmd.index("-filter_complex") + 1]
+    assert "[4:v]format=rgba[endcard]" in graph
+
+
+def test_short_form_cmd_end_card_image_index_when_no_url_pill(tmp_path, monkeypatch):
+    """When the show passes ``show_name=None`` (legacy single
+    pill), there's no URL pill at [3:v], so the end-card PNG lands
+    at [3:v] instead of [4:v]."""
+    audio = tmp_path / "voice.mp3"
+    audio.write_bytes(b"\x00")
+    cover = tmp_path / "cover.jpg"
+    cover.write_bytes(b"\xFF\xD8")
+    end_card = tmp_path / "end_card.png"
+    end_card.write_bytes(b"\x89PNG\r\n\x1a\n")
+    out = tmp_path / "short.mp4"
+
+    captured = []
+    monkeypatch.setattr(
+        "engine.video.subprocess.run",
+        lambda cmd, **kw: (captured.append(list(cmd)),
+                           type("R", (), {"returncode": 0})())[1],
+    )
+    build_short_video(
+        audio, cover, out, duration=55.0,
+        show_name=None,  # legacy "Nerra Network" single pill, no URL pill
+        end_card=True,
+        end_card_image_path=end_card,
+    )
+    assert captured
+    cmd = captured[-1]
+    graph = cmd[cmd.index("-filter_complex") + 1]
+    assert "[3:v]format=rgba[endcard]" in graph
+
+
+def test_short_form_cmd_missing_end_card_image_falls_back_to_drawtext(
+    tmp_path, monkeypatch,
+):
+    """When the operator passes ``end_card_image_path`` but the file
+    doesn't exist on disk, build_short_video must fall back to the
+    drawtext path rather than crash or feed a missing file to
+    ffmpeg."""
+    audio = tmp_path / "voice.mp3"
+    audio.write_bytes(b"\x00")
+    cover = tmp_path / "cover.jpg"
+    cover.write_bytes(b"\xFF\xD8")
+    out = tmp_path / "short.mp4"
+
+    captured = []
+    monkeypatch.setattr(
+        "engine.video.subprocess.run",
+        lambda cmd, **kw: (captured.append(list(cmd)),
+                           type("R", (), {"returncode": 0})())[1],
+    )
+    build_short_video(
+        audio, cover, out, duration=55.0,
+        show_name="Tesla Shorts Time",
+        end_card=True,
+        end_card_image_path=tmp_path / "nonexistent_end_card.png",
+    )
+    assert captured
+    cmd = captured[-1]
+    graph = cmd[cmd.index("-filter_complex") + 1]
+    # Drawtext fallback in use.
+    assert "drawbox" in graph
+    assert "WATCH FULL EPISODE" in graph
+    # Filter graph does NOT reference any [N:v] for the missing image.
+    assert "[endcard]overlay" not in graph
+
+
+# ---------------------------------------------------------------------------
+# generate_shorts_end_card — PNG composition
+# ---------------------------------------------------------------------------
+
+def test_generate_shorts_end_card_produces_valid_png(tmp_path):
+    """Smoke test: feed a tiny stub thumbnail in, get a 1080×1920
+    PNG out with the expected text rendered."""
+    from PIL import Image
+    from engine.publisher import generate_shorts_end_card
+
+    thumb = tmp_path / "long_thumb.jpg"
+    Image.new("RGB", (1280, 720), (60, 80, 120)).save(thumb, format="JPEG")
+    out = tmp_path / "end_card.png"
+
+    generate_shorts_end_card(
+        thumb, out,
+        show_name="Tesla Shorts Time",
+    )
+
+    assert out.exists()
+    with Image.open(out) as img:
+        assert img.format == "PNG"
+        assert img.size == (1080, 1920)
+
+
+def test_generate_shorts_end_card_missing_thumbnail_still_renders(tmp_path):
+    """Long-form thumbnail can fail upstream; the end card must
+    still ship (just without the embedded thumbnail). Defensive
+    against an unexpected upstream failure on rare episodes."""
+    from PIL import Image
+    from engine.publisher import generate_shorts_end_card
+
+    out = tmp_path / "end_card.png"
+    generate_shorts_end_card(
+        tmp_path / "nonexistent.jpg", out,
+        show_name="Tesla Shorts Time",
+    )
+    assert out.exists()
+    with Image.open(out) as img:
+        assert img.size == (1080, 1920)
+
+
+def test_generate_shorts_end_card_custom_text(tmp_path):
+    """``main_text`` / ``sub_text`` are configurable per show."""
+    from PIL import Image
+    from engine.publisher import generate_shorts_end_card
+
+    thumb = tmp_path / "long_thumb.jpg"
+    Image.new("RGB", (1280, 720), (10, 10, 10)).save(thumb, format="JPEG")
+    out = tmp_path / "end_card.png"
+    # Default vs custom shouldn't crash either way — that's the
+    # contract we're verifying here.
+    generate_shorts_end_card(
+        thumb, out,
+        show_name="Russian Show",
+        main_text="СМОТРИТЕ ВЕСЬ ЭПИЗОД",
+        sub_text="Подписывайтесь ↗",
+    )
+    assert out.exists()

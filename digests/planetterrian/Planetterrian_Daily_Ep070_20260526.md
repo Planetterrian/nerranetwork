@@ -1,0 +1,48 @@
+# Planetterrian Daily
+🌍 **Planetterrian Daily** - Science, Longevity & Health Discoveries
+> **Satellites have measured sulfur dioxide released by refinery fires in Tehran.**
+---
+### Top 15 Science & Health Discoveries
+1. **Satellites Track SO₂ Emissions from Tehran Refinery Fires — Phys.org**
+   A research team used a constellation of satellites to investigate and quantify sulfur dioxide pollution after explosions and fires at oil storage and refining facilities in Tehran on March 7, 2026. The analysis focused on emissions from multiple sites damaged in the incident. Satellite observations allowed direct measurement of the atmospheric release without relying on ground reports. The work demonstrates how orbital sensors can document pollution events in regions with limited on-site access. Follow-up studies will likely compare these readings against models of dispersion and health impacts. Source: [phys.org](https://phys.org/news/2026-05-satellites-track-emissions-refinery-tehran.html)
+
+2. **Tiny On-Chip Circuit Powers Quantum and AI Technologies — Phys.org**
+   Researchers at Monash University created a nanoscale circuit that generates, directs, and reads light-based information on a single chip. The device integrates photon handling functions that previously required separate components. This integration reduces size and complexity for systems that rely on light for data processing. The circuit targets applications in quantum computing and artificial intelligence hardware. Next steps include scaling the design for broader testing in integrated photonic platforms. Source: [phys.org](https://phys.org/news/2026-05-tiny-chip-circuit-power-generation.html)
+
+3. **Giant Planet Factory Found Beyond Jupiter — Science Daily**
+   Scientists identified a dust-filled ring outside Jupiter that functioned as a planetesimal factory during the early Solar System. The ring produced multiple generations of space rocks with distinct compositions. This mechanism accounts for the varied meteorite types preserved from that era. The finding resolves questions about how certain primitive materials formed and survived. Further modeling will examine how similar rings operated around other giant planets. Source: [sciencedaily.com](https://www.sciencedaily.com/releases/2026/05/260525000455.htm)
+
+4. **Supercomputer Simulations Reveal Cosmic Magnetic Field Formation — Science Daily**
+   Researchers ran advanced plasma simulations to show how turbulence generates large-scale magnetic fields in the universe. The work explains field creation in stars, black holes, neutron star mergers, and solar eruptions. Turbulent motions stretch and organize magnetic field lines over vast distances. The simulations match observed field strengths in different cosmic environments. Future runs will test predictions against new telescope data on solar activity.
+
+5. **USC Team Identifies Alzheimer’s Inflammation Trigger and Drug Target — Science Daily**
+   USC researchers pinpointed the enzyme cPLA2 as a driver of brain inflammation in people carrying the high-risk APOE4 gene. The enzyme fuels harmful inflammatory responses while remaining necessary for normal brain function. Potential drug compounds were identified that reduce this inflammation without fully blocking the enzyme. The approach focuses on modulating rather than eliminating cPLA2 activity. Clinical testing of the compounds is the reported next phase.
+
+6. **Rattlesnakes Show High Vulnerability to Fungal and Parasitic Lung Disease — Phys.org**
+   A study examined disease susceptibility across snake species and found rattlesnakes particularly affected by ophidiomycosis and parasitic lung infections. These conditions contribute to population declines alongside habitat loss. The fungus Ophidiomyces ophidiicola has spread to many species since its discovery two decades ago. Data highlight the need for targeted monitoring in rattlesnake habitats. Conservation plans will incorporate disease screening protocols. Source: [phys.org](https://phys.org/news/2026-05-rattlesnakes-vulnerable-fungal-disease-parasitic.html)
+
+7. **Joint Engineering and Architecture Training Improves Climate Solutions — Phys.org**
+   Research in the International Journal of Collaborative Engineering shows that pairing environmental engineering and landscape architecture students yields stronger infrastructure designs. Students trained together handle real-world sustainability challenges more effectively than those in single-discipline programs. The approach produces graduates better prepared for interdisciplinary work. Projects in the study focused on climate-resilient systems. Universities are expanding similar joint curricula. Source: [phys.org](https://phys.org/news/2026-05-collaborative-climate.html)
+
+8. **Tropical Cyclones Create Distinct Moist Heat Waves in Japan — Phys.org**
+   Tokyo Metropolitan University researchers classified a new category of heat wave linked to approaching tropical cyclones. These events feature high humidity and heavy precipitation and now account for roughly one quarter of heat wave days in Japan over the past 30 years. Their frequency has increased during that period. The combination of heat and moisture can trigger additional hazards such as flooding. Monitoring systems are being updated to flag this pattern. Source: [phys.org](https://phys.org/news/2026-05-tropical-cyclones-unique-japan.html)
+
+9. **Diabetes Drug Linked to Exceptional Longevity in Women — ScienceAlert**
+   Observational data connect a common diabetes medication to longer lifespans among women who took it. The association appears in records tracking health outcomes over time. Researchers note the finding adds to evidence on metabolic pathways that influence aging. The study does not establish causation but identifies a signal for further investigation. Additional analyses will examine dose and duration effects. Source: [Google News](https://news.google.com/rss/articles/CBMingFBVV95cUxQeVFTWlJkQUJNQUhkd3pHcURwM2w0YjlqZlliWi13c19iRlRJQWVSM2xpc3ZCdjN2amtub3g4aFh0TUhnYTFpbXo4YUpRY0Z4ekg5eDlRVGpMMTRMTkhQc2xnUnd6TzBCMXZfbk5KOXpKMUpHSHJhRkFScXlOTS1OVkRMR3lQZ0cycGZyMkEyRUhqMVpoTEVvRDhidmNMQQ?oc=5)
+
+10. **Ancient Anesthetic Found on Ming Dynasty Surgical Tools — Phys.org**
+    Microscopic residues on scissors and tweezers from a 1348–1411 CE tomb in Jiangyin, China, show controlled use of a toxic chemical as an anesthetic. The evidence points to sophisticated pharmacological knowledge during the Ming period. The substance was applied in measured amounts during procedures. This marks the earliest documented instance of such targeted anesthetic use in the region. Further chemical analysis will identify the exact compound. Source: [phys.org](https://phys.org/news/2026-05-ancient-anesthetic-reveals-ming-china.html)
+
+11. **Four Decades of Data Reveal Hidden Amphipod Diversity in Italian Seas — Phys.org**
+    A study compiled 40 years of previously unpublished records on marine amphipods from Italian waters. These small crustaceans play key roles in marine ecosystems. The dataset shows greater species variety than earlier published accounts indicated. Researchers digitized and shared the full collection for broader use. Similar efforts are underway for other under-reported marine groups. Source: [phys.org](https://phys.org/news/2026-05-decades-overlooked-reveal-hidden-amphipod.html)
+
+12. **Laser Light Reveals New Three-Dimensional Magnetic Structures — Phys.org**
+    Femtosecond laser pulses enabled observation of previously unseen nanoscale magnetic states in three dimensions. The light acts as a remote switch to alter magnetism into novel configurations. The technique captures dynamics on trillionth-of-a-second timescales. Results expand understanding of magnetic behavior at small scales. Applications in data storage and spintronics are under exploration. Source: [phys.org](https://phys.org/news/2026-05-threedimensional-magnetic-laser.html)
+---
+### Planetterrian Spotlight
+USC researchers have linked the enzyme cPLA2 to excess brain inflammation in APOE4 carriers, a group already at elevated Alzheimer’s risk. The enzyme supports normal brain activity yet contributes to harmful inflammatory loops when dysregulated. Identified compounds can dial down this activity without complete blockade, preserving essential functions. This targeted approach could lead to earlier intervention strategies for genetically susceptible individuals. What blood-based markers might soon flag cPLA2-driven inflammation before symptoms appear?
+---
+### Science Deep Dive: Heat Waves Are Not All the Same
+Most people picture heat waves as dry, cloudless stretches of scorching air that bake the ground and spike dehydration risk. In reality, a distinct category called moist heat waves arrives with tropical cyclones, bringing high humidity and heavy rain alongside the heat. Right now, atmospheric patterns over the western Pacific are already capable of steering these systems toward land, where the combination of heat and moisture stresses both the body’s cooling mechanisms and infrastructure. These events have risen to roughly one quarter of all heat wave days in Japan over the past three decades. The added humidity prevents sweat from evaporating efficiently, raising heat-stress risk even when air temperatures are not at record highs. One practical step is to watch local forecasts for cyclone-linked humidity spikes and prepare cooling and hydration plans earlier than for classic dry heat waves.
+---
+New findings on inflammation pathways and atmospheric monitoring continue to refine how we track health and environmental risks.

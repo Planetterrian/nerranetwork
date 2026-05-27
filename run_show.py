@@ -2221,6 +2221,33 @@ def run(args: argparse.Namespace) -> None:
             "gallery_uploaded",
             int(youtube_urls.get("gallery_uploaded", 0) or 0),
         )
+        # Smart Shorts segment selection (May 2026): record the chosen
+        # offset and which mode resolved to it so the dashboard can
+        # surface smart-vs-fallback rate per show.
+        if "shorts_start_offset" in youtube_urls:
+            metrics.record(
+                "shorts_start_offset",
+                float(youtube_urls["shorts_start_offset"]),
+            )
+        if "shorts_start_mode_resolved" in youtube_urls:
+            metrics.record(
+                "shorts_start_mode_resolved",
+                str(youtube_urls["shorts_start_mode_resolved"]),
+            )
+        # Multi-Shorts counters (May 2026). Single-Short runs still
+        # report ``requested=1, uploaded=0/1`` so the dashboard can
+        # compute the fallback rate across the network without
+        # special-casing the legacy path.
+        if "shorts_count_requested" in youtube_urls:
+            metrics.record(
+                "shorts_count_requested",
+                int(youtube_urls.get("shorts_count_requested", 1) or 1),
+            )
+        if "shorts_count_uploaded" in youtube_urls:
+            metrics.record(
+                "shorts_count_uploaded",
+                int(youtube_urls.get("shorts_count_uploaded", 0) or 0),
+            )
         if youtube_urls.get("gallery_skipped_reason"):
             metrics.record(
                 "gallery_skipped_reason",
@@ -2994,11 +3021,13 @@ def _publish_youtube(
 
     from engine.captions import (
         find_transcript_for_episode,
+        transcript_to_ass_window,
         transcript_to_srt,
         transcript_to_srt_window,
     )
     from engine.publisher import (
         generate_episode_thumbnail,
+        generate_shorts_end_card,
         generate_shorts_thumbnail,
     )
     from engine.video import build_long_form_video, build_short_video
@@ -3425,98 +3454,309 @@ def _publish_youtube(
         config, episode_num=episode_num,
     ):
         try:
-            short_offset = resolve_shorts_start_offset(
-                config,
-                chapters_path if chapters_path.exists() else None,
-                audio_duration=_ep_duration,
-            )
             duration = float(config.youtube.short_duration_seconds or 55.0)
 
-            # Build a Shorts-windowed SRT (May 2026 operator review:
-            # Shorts had no synced captions at all). Reuse the Whisper
-            # transcript that already powers the long-form SRT, slice
-            # it to the Shorts time window, and rebase timestamps to
-            # the Shorts clip's own t=0 timeline. Same
-            # ``voice_intro_delay`` offset the long-form SRT uses so
-            # the cues land on speech in the final audio.
-            short_srt_path = None
-            if transcript_path is not None:
+            # Resolve the "shorts plan" — a list of (start_offset, hook)
+            # pairs to publish, one per Short. Legacy single-Short
+            # behaviour is the len==1 case of this loop; multiple
+            # Shorts requires ``shorts_per_episode > 1`` AND
+            # ``shorts_start_mode: smart`` so the top-N selector has
+            # something to rank.
+            shorts_count_yaml = max(
+                1, int(getattr(config.youtube, "shorts_per_episode", 1) or 1)
+            )
+            mode_resolved = (
+                "explicit" if getattr(
+                    config.youtube, "shorts_start_offset", None,
+                ) is not None
+                else (
+                    getattr(config.youtube, "shorts_start_mode", None)
+                    or "voice"
+                )
+            )
+            shorts_plan: "list[tuple[float, str]]" = []
+            if shorts_count_yaml > 1 and mode_resolved == "smart":
                 try:
-                    short_srt_candidate = work_dir / f"{base_name}_short.srt"
-                    _caption_offset = float(
+                    from engine.shorts_selector import (
+                        pick_top_n_engaging_windows,
+                    )
+                    voice_offset = float(
                         getattr(config.audio, "voice_intro_delay", 0.0) or 0.0
                     )
-                    transcript_to_srt_window(
-                        transcript_path,
-                        short_srt_candidate,
-                        window_start_seconds=short_offset,
-                        window_duration_seconds=duration,
-                        audio_offset_seconds=_caption_offset,
-                    )
-                    if short_srt_candidate.exists() and short_srt_candidate.stat().st_size > 0:
-                        short_srt_path = short_srt_candidate
-                    else:
-                        logger.info(
-                            "Shorts SRT empty — no cues fell inside the "
-                            "[%.1fs, %.1fs] window. Shorts ships without "
-                            "burned-in captions.",
-                            short_offset, short_offset + duration,
+                    if transcript_path is not None:
+                        windows = pick_top_n_engaging_windows(
+                            transcript_path,
+                            n=shorts_count_yaml,
+                            audio_offset=voice_offset,
+                            audio_duration=_ep_duration,
+                            window_duration=duration,
+                            min_start_final=voice_offset,
                         )
+                        shorts_plan = [
+                            (
+                                w.start_seconds,
+                                (w.opening_text or hook).strip() or hook,
+                            )
+                            for w in windows
+                        ]
                 except Exception as exc:  # pragma: no cover — best-effort
-                    logger.warning("Shorts caption generation failed: %s", exc)
+                    logger.warning(
+                        "Multi-Shorts top-N selection failed (%s) — "
+                        "falling back to single short", exc,
+                    )
+                    shorts_plan = []
 
-            build_short_video(
-                final_mp3, cover_path, short_video_path,
-                start_offset=short_offset,
-                duration=duration,
-                hook=hook or None,
-                scene_paths=short_scene_paths if len(short_scene_paths) >= 2 else None,
-                show_name=config.name,
-                subtitles_path=short_srt_path,
-            )
-            meta = build_short_metadata(
-                config,
-                episode_num=episode_num,
-                today_str=today_str,
-                hook=hook,
-                long_form_url=long_url,
-            )
-            short_thumb = (
-                short_thumbnail_path
-                if short_thumbnail_path and Path(short_thumbnail_path).exists()
-                else thumbnail_path
-            )
-            short_upload = upload_video(
-                short_video_path,
-                credentials=credentials,
-                title=meta["title"],
-                description=meta["description"],
-                tags=meta["tags"],
-                category_id=meta["category_id"],
-                default_language=meta["default_language"],
-                privacy_status=config.youtube.privacy_status,
-                thumbnail_path=short_thumb,
-            )
-            result["short_url"] = short_upload.watch_url
-            playlist_id = (
-                getattr(config.youtube, "podcast_playlist_id", None) or ""
-            ).strip()
-            if not playlist_id:
-                logger.info(
-                    "Podcast playlist ID empty — skipping playlist add."
+            if not shorts_plan:
+                # Single-Short fallback: legacy resolved offset + the
+                # episode-level hook. Same code path as before
+                # ``shorts_per_episode`` existed.
+                fallback_offset = resolve_shorts_start_offset(
+                    config,
+                    chapters_path if chapters_path.exists() else None,
+                    audio_duration=_ep_duration,
+                    transcript_path=transcript_path,
                 )
-            else:
-                add_video_to_playlist(
-                    credentials=credentials,
-                    video_id=short_upload.video_id,
-                    playlist_id=playlist_id,
+                shorts_plan = [(fallback_offset, hook)]
+
+            # Surface the resolved plan on the result dict. Single-
+            # Short fields stay for backwards compatibility with the
+            # dashboard / metrics consumers; the list-shaped fields
+            # are new and only useful when len(plan) > 1.
+            result["shorts_start_offset"] = round(shorts_plan[0][0], 2)
+            result["shorts_start_offsets"] = [round(o, 2) for o, _ in shorts_plan]
+            result["shorts_start_mode_resolved"] = mode_resolved
+            result["shorts_count_requested"] = shorts_count_yaml
+
+            # ---- Pre-loop assets shared across every Short ----
+            _yt = config.youtube
+            _end_card_enabled = bool(
+                getattr(_yt, "shorts_end_card_enabled", True)
+            )
+            _end_card_main = str(
+                getattr(_yt, "shorts_end_card_main_text", "WATCH FULL EPISODE")
+            )
+            _end_card_sub = str(
+                getattr(_yt, "shorts_end_card_sub_text", "Tap Subscribe ↗")
+            )
+            _end_card_dur = float(
+                getattr(_yt, "shorts_end_card_duration_seconds", 3.0) or 3.0
+            )
+            _end_card_image_path = None
+            if _end_card_enabled and thumbnail_path and Path(thumbnail_path).exists():
+                try:
+                    _end_card_image_candidate = work_dir / f"{base_name}_end_card.png"
+                    generate_shorts_end_card(
+                        thumbnail_path,
+                        _end_card_image_candidate,
+                        show_name=config.name,
+                        main_text=_end_card_main,
+                        sub_text=_end_card_sub,
+                    )
+                    if _end_card_image_candidate.exists():
+                        _end_card_image_path = _end_card_image_candidate
+                except Exception as exc:  # pragma: no cover — best-effort
+                    logger.warning(
+                        "Shorts end-card PNG render failed: %s — "
+                        "falling back to drawtext-only end card", exc,
+                    )
+
+            _caption_offset = float(
+                getattr(config.audio, "voice_intro_delay", 0.0) or 0.0
+            )
+
+            # ---- Per-Short loop ----
+            short_urls_out: "list[str]" = []
+            short_video_ids_out: "list[str]" = []
+            short_errors_out: "list[dict]" = []
+            multi = len(shorts_plan) > 1
+            for short_idx, (this_offset, this_hook) in enumerate(shorts_plan):
+                # Filename suffix is empty for the single-Short case so
+                # the legacy ``{base}_short.mp4`` path stays exactly the
+                # same when ``shorts_per_episode == 1``.
+                suffix = f"_{short_idx + 1}" if multi else ""
+                this_short_video_path = work_dir / f"{base_name}_short{suffix}.mp4"
+                this_short_thumb_path = (
+                    work_dir / f"{base_name}_short{suffix}_thumb.jpg"
+                    if multi else short_thumbnail_path
                 )
+                try:
+                    # Per-Short thumbnail: cycle through the available
+                    # scene images so each Short has a visually
+                    # distinct preview in YouTube's grid. Falls back
+                    # to the long-form cover for any iteration where
+                    # the scene path doesn't exist on disk.
+                    if multi or getattr(_yt, "shorts_thumbnail_from_scene", True):
+                        _thumb_base = cover_path
+                        if short_scene_paths:
+                            _thumb_base = short_scene_paths[
+                                short_idx % len(short_scene_paths)
+                            ]
+                        try:
+                            generate_shorts_thumbnail(
+                                _thumb_base,
+                                episode_num=episode_num,
+                                date_str=today_str,
+                                output_path=this_short_thumb_path,
+                                hook=this_hook,
+                                show_name=show_label,
+                            )
+                        except Exception as exc:  # pragma: no cover
+                            logger.warning(
+                                "Shorts thumbnail #%d failed: %s — "
+                                "falling back to long-form thumbnail",
+                                short_idx + 1, exc,
+                            )
+                            this_short_thumb_path = thumbnail_path
+
+                    # Per-Short caption (ASS first, SRT fallback) —
+                    # same selection logic as the single-Short path.
+                    this_srt_path = None
+                    if transcript_path is not None:
+                        try:
+                            ass_candidate = (
+                                work_dir / f"{base_name}_short{suffix}.ass"
+                            )
+                            transcript_to_ass_window(
+                                transcript_path,
+                                ass_candidate,
+                                window_start_seconds=this_offset,
+                                window_duration_seconds=duration,
+                                audio_offset_seconds=_caption_offset,
+                            )
+                            has_word_cues = (
+                                ass_candidate.exists()
+                                and ass_candidate.stat().st_size > 0
+                                and "Dialogue:" in ass_candidate.read_text(
+                                    encoding="utf-8", errors="replace",
+                                )
+                            )
+                            if has_word_cues:
+                                this_srt_path = ass_candidate
+                            else:
+                                srt_candidate = (
+                                    work_dir / f"{base_name}_short{suffix}.srt"
+                                )
+                                transcript_to_srt_window(
+                                    transcript_path,
+                                    srt_candidate,
+                                    window_start_seconds=this_offset,
+                                    window_duration_seconds=duration,
+                                    audio_offset_seconds=_caption_offset,
+                                )
+                                if srt_candidate.exists() and srt_candidate.stat().st_size > 0:
+                                    this_srt_path = srt_candidate
+                        except Exception as exc:  # pragma: no cover
+                            logger.warning(
+                                "Shorts caption #%d generation failed: %s",
+                                short_idx + 1, exc,
+                            )
+
+                    build_short_video(
+                        final_mp3, cover_path, this_short_video_path,
+                        start_offset=this_offset,
+                        duration=duration,
+                        hook=this_hook or None,
+                        scene_paths=(
+                            short_scene_paths
+                            if len(short_scene_paths) >= 2 else None
+                        ),
+                        show_name=config.name,
+                        subtitles_path=this_srt_path,
+                        end_card=_end_card_enabled,
+                        end_card_main_text=_end_card_main,
+                        end_card_sub_text=_end_card_sub,
+                        end_card_duration=_end_card_dur,
+                        end_card_image_path=_end_card_image_path,
+                    )
+                    meta = build_short_metadata(
+                        config,
+                        episode_num=episode_num,
+                        today_str=today_str,
+                        hook=this_hook,
+                        long_form_url=long_url,
+                    )
+                    upload_thumb = (
+                        this_short_thumb_path
+                        if this_short_thumb_path and Path(this_short_thumb_path).exists()
+                        else thumbnail_path
+                    )
+                    this_upload = upload_video(
+                        this_short_video_path,
+                        credentials=credentials,
+                        title=meta["title"],
+                        description=meta["description"],
+                        tags=meta["tags"],
+                        category_id=meta["category_id"],
+                        default_language=meta["default_language"],
+                        privacy_status=config.youtube.privacy_status,
+                        thumbnail_path=upload_thumb,
+                    )
+                    short_urls_out.append(this_upload.watch_url)
+                    short_video_ids_out.append(this_upload.video_id)
+                    playlist_id = (
+                        getattr(config.youtube, "podcast_playlist_id", None) or ""
+                    ).strip()
+                    if not playlist_id:
+                        if short_idx == 0:
+                            logger.info(
+                                "Podcast playlist ID empty — skipping playlist add."
+                            )
+                    else:
+                        try:
+                            add_video_to_playlist(
+                                credentials=credentials,
+                                video_id=this_upload.video_id,
+                                playlist_id=playlist_id,
+                            )
+                        except Exception as exc:  # pragma: no cover
+                            logger.warning(
+                                "Playlist add failed for short #%d: %s",
+                                short_idx + 1, exc,
+                            )
+                    # Best-effort cleanup of this Short's MP4 now
+                    # that YouTube has the canonical copy.
+                    try:
+                        if this_short_video_path.exists():
+                            this_short_video_path.unlink()
+                    except OSError:
+                        pass
+                except Exception as exc:
+                    logger.exception(
+                        "YouTube Shorts #%d publish failed: %s",
+                        short_idx + 1, exc,
+                    )
+                    err_type = type(exc).__name__
+                    err_msg = str(exc)[:1000]
+                    err_status = getattr(exc, "status_code", None) or getattr(
+                        getattr(exc, "resp", None), "status", None
+                    )
+                    short_errors_out.append({
+                        "idx": short_idx + 1,
+                        "type": err_type,
+                        "status": err_status,
+                        "message": err_msg,
+                    })
+
+            # ---- Aggregate results onto ``result`` ----
+            if short_urls_out:
+                # Backwards-compat fields (legacy consumers expect a
+                # single ``short_url`` / ``short_error``). Plural
+                # variants are new and present when len > 1.
+                result["short_url"] = short_urls_out[0]
+                if multi:
+                    result["short_urls"] = short_urls_out
+                    result["short_video_ids"] = short_video_ids_out
+            result["shorts_count_uploaded"] = len(short_urls_out)
+            if short_errors_out:
+                result["short_error"] = short_errors_out[0]
+                if multi:
+                    result["short_errors"] = short_errors_out
         except Exception as exc:
+            # Outer try / except that catches setup-stage errors
+            # (resolve_shorts_start_offset, plan construction) — the
+            # per-Short upload loop already catches and aggregates
+            # its own errors, so this rarely fires.
             logger.exception("YouTube Shorts publish failed: %s", exc)
-            # Mirror the long-form error capture so metrics.json
-            # carries actionable context for the operator. 1000 chars
-            # (was 300) — YouTube errors include the offending
-            # location at the END of the message.
             err_type = type(exc).__name__
             err_msg = str(exc)[:1000]
             err_status = getattr(exc, "status_code", None) or getattr(
@@ -3528,14 +3768,15 @@ def _publish_youtube(
                 "message": err_msg,
             }
 
-    # Best-effort cleanup of the rendered MP4s (large files; YouTube has
-    # the canonical copy now). Thumbnail kept on disk for debugging.
-    for video_file in (long_video_path, short_video_path):
-        try:
-            if video_file.exists():
-                video_file.unlink()
-        except OSError:
-            pass
+    # Best-effort cleanup of the long-form MP4 (large file; YouTube
+    # has the canonical copy now). Per-Short MP4s are cleaned up
+    # inside the loop above. Thumbnails are kept on disk for
+    # debugging.
+    try:
+        if long_video_path.exists():
+            long_video_path.unlink()
+    except OSError:
+        pass
 
     # Surface the Pexels safety-filter count so the caller can record
     # it as a metric. A spike here is the operator's signal that the
