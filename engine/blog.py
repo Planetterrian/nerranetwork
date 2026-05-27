@@ -705,6 +705,9 @@ def generate_blog_post_html(
         # "Watch on YouTube" button next to the existing podcast/summaries CTAs.
         "youtube_url": youtube_url or metadata.get("youtube_url", ""),
         "youtube_short_url": youtube_short_url or metadata.get("youtube_short_url", ""),
+        # For structured data in the blog post template (PodcastEpisode JSON-LD).
+        # Falls back gracefully so | tojson never receives Undefined.
+        "summary": metadata.get("hook", "") or metadata.get("title", ""),
     }
 
     return template.render(**context)
