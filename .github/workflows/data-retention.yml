@@ -14,19 +14,21 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: monthly-data-retention
+  cancel-in-progress: false
+
 jobs:
   archive:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
-
-      - uses: actions/setup-python@v6
+      - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'
+          requirements-file: 'requirements.txt'
+          fetch-depth: "1"
 
       - name: Archive old data files
         run: |

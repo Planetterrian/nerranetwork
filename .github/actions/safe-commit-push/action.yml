@@ -1,0 +1,104 @@
+name: "Safe Commit & Push"
+description: |
+  Reusable composite for safely committing and pushing changes with retry logic.
+  Used across many Nerra Network workflows that write back to main.
+
+inputs:
+  add-paths:
+    description: "Space or newline separated paths to git add (e.g. 'api/dashboard.json site/data/')"
+    required: true
+  commit-message:
+    description: "Commit message"
+    required: true
+  create-branch:
+    description: "If true, create a new branch instead of pushing directly to main (for PR-creating jobs)"
+    required: false
+    default: "false"
+  branch-name:
+    description: "Branch name to create when create-branch is true"
+    required: false
+    default: ""
+  pull-request:
+    description: "When create-branch is true, also open a PR"
+    required: false
+    default: "false"
+  pr-title:
+    description: "Title for the PR (only used if pull-request=true)"
+    required: false
+    default: ""
+  pr-body:
+    description: "Body for the PR (only used if pull-request=true)"
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure git
+      shell: bash
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Pull latest (best effort)
+      shell: bash
+      run: |
+        git pull --rebase --autostash origin main || true
+
+    - name: Add files
+      shell: bash
+      run: |
+        git add ${{ inputs.add-paths }}
+
+    - name: Check for changes
+      id: check
+      shell: bash
+      run: |
+        if git diff --cached --quiet; then
+          echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          echo "No changes to commit"
+        else
+          echo "has_changes=true" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Commit
+      if: steps.check.outputs.has_changes == 'true'
+      shell: bash
+      run: |
+        git commit -m "${{ inputs.commit-message }}"
+
+    - name: Push to main (with retry)
+      if: steps.check.outputs.has_changes == 'true' && inputs.create-branch != 'true'
+      shell: bash
+      run: |
+        for attempt in 1 2 3 4 5; do
+          if git push origin main; then
+            echo "Push succeeded on attempt $attempt"
+            exit 0
+          fi
+          echo "Push failed (attempt $attempt), rebasing and retrying in $((attempt * 2))s..."
+          git pull --rebase --autostash origin main || true
+          sleep $((attempt * 2))
+        done
+        echo "All push attempts failed"
+        exit 1
+
+    - name: Create branch + push (for PR workflows)
+      if: steps.check.outputs.has_changes == 'true' && inputs.create-branch == 'true'
+      shell: bash
+      run: |
+        BRANCH="${{ inputs.branch-name || 'automation/update-$(date +%Y%m%d-%H%M%S)' }}"
+        git checkout -b "$BRANCH"
+        git push -u origin "$BRANCH"
+
+    - name: Open Pull Request
+      if: steps.check.outputs.has_changes == 'true' && inputs.create-branch == 'true' && inputs.pull-request == 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh pr create \
+          --title "${{ inputs.pr-title }}" \
+          --body "${{ inputs.pr-body }}" \
+          --base main \
+          --head "${{ inputs.branch-name || 'automation/update-*' }}" || true

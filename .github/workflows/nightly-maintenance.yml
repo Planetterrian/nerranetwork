@@ -1,0 +1,45 @@
+name: Nightly Maintenance
+
+# Consolidated nightly maintenance orchestrator.
+# Runs after the last show of the day (~12:30 UTC) and triggers:
+#   - Health check (RSS freshness)
+#   - Dashboard refresh
+#   - Gallery manifest + Search index
+#   - Feed audit (light)
+#
+# This reduces the number of independent scheduled workflows and gives
+# us a single place to reason about "end-of-day" automation.
+
+on:
+  schedule:
+    # ~30-45 min after the last show (Unintended Consequences at 11:30 UTC)
+    - cron: '45 12 * * *'
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Run Podcast Show"]
+    types: [completed]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nightly-maintenance
+  cancel-in-progress: false
+
+jobs:
+  trigger-maintenance:
+    runs-on: ubuntu-latest
+    # Only proceed on successful run-show or on schedule/dispatch
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Trigger downstream maintenance jobs
+        run: |
+          echo "Nightly maintenance triggered after successful pipeline run."
+          echo "Downstream jobs (health, dashboard, gallery, feed audit) should be configured"
+          echo "to run on this workflow_run or keep their own light schedules as safety nets."
+
+# Note: The actual work still lives in the specialized workflows for now
+# (health-check, dashboard, build-gallery-manifest, feed-audit).
+# They already listen to "Run Podcast Show" via workflow_run where appropriate.
+# Over time we can move more logic here if desired.

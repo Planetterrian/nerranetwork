@@ -48,22 +48,10 @@ jobs:
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
 
     steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-python@v6
+      - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'
-
-      - uses: actions/cache@v5
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-gallery-${{ hashFiles('requirements.txt') }}
-          restore-keys: ${{ runner.os }}-pip-gallery-
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+          requirements-file: 'requirements.txt'
 
       - name: Build gallery manifest
         env:
@@ -78,26 +66,7 @@ jobs:
         # No secrets needed — purely local lake + metadata. Safe even if lake is empty.
         run: python scripts/build_search_index.py --out site/data/search-index.json
 
-      - name: Pull latest before committing
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git pull --rebase --autostash origin main || true
-
-      - name: Commit and push manifest
-        run: |
-          git add site/data/gallery-manifest.json
-          if git diff --cached --quiet; then
-            echo "No manifest changes to commit"
-            exit 0
-          fi
-          git commit -m "Update gallery manifest $(date -u +%Y-%m-%dT%H:%MZ)"
-          # Small retry in case two gallery runs raced.
-          for i in 1 2 3; do
-            if git push; then
-              exit 0
-            fi
-            git pull --rebase --autostash origin main || true
-            sleep 2
-          done
-          git push
+      - uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: "site/data/gallery-manifest.json site/data/search-index.json"
+          commit-message: "Update gallery manifest + search index $(date -u +%Y-%m-%dT%H:%MZ)"

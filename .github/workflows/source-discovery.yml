@@ -37,21 +37,20 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: monthly-source-discovery
+  cancel-in-progress: false
+
 jobs:
   discover:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: pip install pyyaml requests feedparser
+          requirements-file: 'requirements.txt'
+          extra-packages: "pyyaml requests feedparser"
 
       - name: Audit existing sources
         run: python check_sources.py --check-blocked
@@ -70,13 +69,10 @@ jobs:
           fi
           python discover_sources.py $ARGS
 
-      - name: Commit discovery report
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add reports/source_discovery_*.md
-          git diff --cached --quiet || git commit -m "Monthly source discovery report $(date +%Y-%m)"
-          git push
+      - uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: "reports/source_discovery_*.md"
+          commit-message: "Monthly source discovery report $(date +%Y-%m)"
 
       - name: Create PR if sources were auto-applied
         if: ${{ github.event.inputs.auto_apply == 'true' }}

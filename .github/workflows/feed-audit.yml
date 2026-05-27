@@ -12,22 +12,11 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
-
-      - uses: actions/setup-python@v6
+      - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'
-
-      - uses: actions/cache@v5
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-audit-${{ hashFiles('requirements.txt') }}
-          restore-keys: ${{ runner.os }}-pip-audit-
-
-      - name: Install dependencies
-        run: pip install pyyaml requests feedparser
+          requirements-file: 'requirements.txt'
+          extra-packages: "pyyaml requests feedparser"
 
       - name: Run feed audit
         id: audit
@@ -38,21 +27,10 @@ jobs:
           echo "exit_code=$EXIT_CODE" >> "$GITHUB_OUTPUT"
           exit 0
 
-      - name: Commit JSON report
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/feed_audit_*.json
-          if git diff --cached --quiet; then
-            echo "No new report to commit"
-          else
-            git commit -m "Feed audit report $(date +%Y-%m-%d)"
-            for attempt in 1 2 3 4; do
-              git pull --rebase origin main && git push origin main && break
-              echo "Push failed (attempt $attempt), retrying in $((attempt * 2))s..."
-              sleep $((attempt * 2))
-            done
-          fi
+      - uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: "data/feed_audit_*.json"
+          commit-message: "Feed audit report $(date +%Y-%m-%d)"
 
       - name: Warn if unhealthy feeds
         if: steps.audit.outputs.exit_code == '1'
