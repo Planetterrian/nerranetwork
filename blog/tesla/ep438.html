@@ -109,6 +109,23 @@
 }
     </script>
 
+    
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "PodcastEpisode",
+      "name": "",
+      "url": "",
+      "datePublished": "",
+      "description": "A Tesla owner\u0027s camera caught the moment a Mercedes EV owner escaped just before their vehicle caught fire.",
+      "associatedMedia": {
+        "@type": "MediaObject",
+        "contentUrl": ""
+      },
+      "transcript": ""
+    }
+    </script>
+
     <style>
         .blog-hero {
             position: relative;
@@ -734,6 +751,16 @@
                 <img src="../../assets/nerra-logo-icon.svg" alt="Nerra Network" width="36" height="36">
                 <span class="gradient-text">Nerra</span> Network
             </a>
+
+            
+            <div class="nn-global-search" style="position:relative;margin-left:auto;margin-right:0.5rem;max-width:180px;flex:1 1 auto;min-width:120px;">
+                <input type="search" id="nn-global-search-input"
+                       placeholder="Search…"
+                       style="width:100%;padding:6px 8px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.85rem;"
+                       aria-label="Search all episodes across the network">
+                <div id="nn-global-search-results"
+                     style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
 
             <ul class="nn-nav-links">
                 <li class="nn-nav-dropdown">
@@ -1537,6 +1564,8 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
                     <a href="../../privacy-policy.html">Privacy</a> &middot;
                     <a href="../../terms-of-service.html">Terms</a> &middot;
                     <a href="../../ai-disclosure.html">AI Disclosure</a>
+                    <span style="opacity:0.5;">&middot;</span>
+                    <span style="font-size:0.7rem;opacity:0.6;">Automation: reliable nightly + post-publish pipeline</span>
                 </div>
             </div>
         </div>
@@ -1594,5 +1623,133 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
 })();
 </script>
 
+
+    <script>
+    // Global search (Item 2, May 2026 review) — single fetch of the server-built
+    // Content Lake index (scripts/build_search_index.py + FTS at build time).
+    // Richer ranking, all shows, entities/topics, graceful fallback to legacy
+    // api/*.json during transition. Zero runtime backend cost.
+    (function () {
+        var input = document.getElementById('nn-global-search-input');
+        var resultsBox = document.getElementById('nn-global-search-results');
+        if (!input || !resultsBox) return;
+
+        var cached = null; // {episodes: [...]}
+
+        var INDEX_URL = '/site/data/search-index.json';
+        // Legacy fallback (old proto) — used only if new index 404s
+        var LEGACY_ENDPOINTS = [
+            '/api/tesla.json', '/api/models_agents.json', '/api/fascinating_frontiers.json',
+            '/api/omni_view.json', '/api/planetterrian.json', '/api/modern_investing.json',
+            '/api/env_intel.json', '/api/finansy_prosto.json', '/api/privet_russian.json',
+            '/api/unintended_consequences.json'
+        ];
+
+        function norm(s) { return (s || '').toLowerCase(); }
+
+        function scoreItem(it, q) {
+            // Simple but effective client ranker (title > hook > entities/show)
+            var t = norm(it.title), h = norm(it.hook), s = norm(it.show_name || it.show_slug),
+                ents = (it.entities || []).join(' ').toLowerCase();
+            var score = 0;
+            if (t.indexOf(q) !== -1) score += 100;
+            if (t.indexOf(q) === 0) score += 50; // starts with
+            if (h.indexOf(q) !== -1) score += 40;
+            if (ents.indexOf(q) !== -1) score += 25;
+            if (s.indexOf(q) !== -1) score += 10;
+            // Prefer recent
+            if (it.date) {
+                var y = parseInt(it.date.slice(0,4), 10) || 2020;
+                score += Math.max(0, (y - 2023) * 2);
+            }
+            return score;
+        }
+
+        async function loadIndex() {
+            if (cached) return cached;
+            try {
+                var res = await fetch(INDEX_URL, { credentials: 'same-origin' });
+                if (res.ok) {
+                    var data = await res.json();
+                    cached = { episodes: data.episodes || [] };
+                    return cached;
+                }
+            } catch (e) { /* fall through to legacy */ }
+            // Legacy multi-fetch path (kept for transition / forks without the new index)
+            var items = [];
+            for (var i = 0; i < LEGACY_ENDPOINTS.length; i++) {
+                try {
+                    var r = await fetch(LEGACY_ENDPOINTS[i], { credentials: 'same-origin' });
+                    if (!r.ok) continue;
+                    var d = await r.json();
+                    var eps = d.episodes || d || [];
+                    for (var j = 0; j < eps.length; j++) {
+                        var e = eps[j];
+                        items.push({
+                            title: e.title || e.episode_title || '',
+                            hook: e.hook || e.summary || '',
+                            show_slug: (d.slug || LEGACY_ENDPOINTS[i].split('/').pop().replace('.json','')),
+                            show_name: d.name || '',
+                            url: e.url || ('/' + (d.slug || '') + '.html'),
+                            date: e.date || '',
+                            entities: e.entities || []
+                        });
+                    }
+                } catch (_) {}
+            }
+            cached = { episodes: items };
+            return cached;
+        }
+
+        function renderResults(matches) {
+            if (!matches.length) {
+                resultsBox.innerHTML = '<div style="padding:8px 12px;color:var(--nn-text-muted);">No matches. The search index is refreshed automatically every night and after every episode.</div>';
+            } else {
+                var html = matches.slice(0, 10).map(function(m) {
+                    var label = (m.title || m.hook || '').substring(0, 78);
+                    var meta = (m.show_name || m.show_slug || '') + (m.date ? ' · ' + m.date : '');
+                    if (m.entities && m.entities.length) meta += ' · ' + m.entities.slice(0,2).join(', ');
+                    return '<a href="' + (m.url || '#') + '" style="display:block;padding:7px 10px;text-decoration:none;color:inherit;border-bottom:1px solid var(--nn-border);">' +
+                           '<strong>' + label + '</strong><br>' +
+                           '<small style="opacity:0.75">' + meta + '</small></a>';
+                }).join('');
+                resultsBox.innerHTML = html;
+            }
+            resultsBox.style.display = 'block';
+        }
+
+        input.addEventListener('focus', function () { loadIndex(); });
+
+        input.addEventListener('input', async function () {
+            var q = norm(input.value.trim());
+            if (q.length < 2) {
+                resultsBox.style.display = 'none';
+                return;
+            }
+            var idx = await loadIndex();
+            var eps = idx.episodes || [];
+            var scored = eps.map(function(e) {
+                return { item: e, score: scoreItem(e, q) };
+            }).filter(function(x) { return x.score > 0; })
+              .sort(function(a, b) { return b.score - a.score; })
+              .map(function(x) { return x.item; });
+            renderResults(scored);
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!resultsBox.contains(e.target) && e.target !== input) {
+                resultsBox.style.display = 'none';
+            }
+        });
+
+        // Keyboard escape convenience
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && resultsBox.style.display !== 'none') {
+                resultsBox.style.display = 'none';
+                input.blur();
+            }
+        });
+    })();
+    </script>
 </body>
 </html>
