@@ -56,13 +56,23 @@ jobs:
           python scripts/build_gallery_manifest.py --out site/data/gallery-manifest.json
           python scripts/build_search_index.py --out site/data/search-index.json
 
+      - name: Generate MIT Performance Page + Main Site
+        # Ensures the dedicated Modern Investing performance & lessons page
+        # and other pages that depend on fresh data stay up to date.
+        run: |
+          python generate_html.py --show modern_investing
+          # Optionally regenerate full site if needed:
+          # python generate_html.py --all
+
       - uses: ./.github/actions/safe-commit-push
         with:
           add-paths: |
             api/dashboard.json
             site/data/gallery-manifest.json
             site/data/search-index.json
-          commit-message: "Nightly maintenance: update dashboard + gallery + search index"
+            modern-investing-performance.html
+            modern-investing.html
+          commit-message: "Nightly maintenance: update dashboard + gallery + search index + MIT performance page"
 
       - name: Notify on failure (webhook)
         if: failure() && env.NOTIFICATION_WEBHOOK_URL != ''

@@ -1601,6 +1601,8 @@ def generate_show_page(slug, *, dry_run=False):
                     "total_trades": summary.get("total_trades", 0),
                     "win_rate": summary.get("win_rate", 0.0),
                     "last_updated": tracker.get("last_updated", ""),
+                    "derived_principles": tracker.get("derived_principles", []),
+                    "confidence_stats": tracker.get("confidence_calibration", {}),
                 }
         except Exception as e:
             print(f"Warning: could not load MIT performance tracker: {e}")
