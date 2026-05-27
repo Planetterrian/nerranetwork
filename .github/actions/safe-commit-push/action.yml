@@ -7,7 +7,13 @@ description: |
 
 inputs:
   add-paths:
-    description: "Space or newline separated paths to git add (e.g. 'api/dashboard.json site/data/')"
+    description: |
+      Paths to git add. Supports space-separated or (preferred for readability)
+      a YAML block scalar with one path per line, e.g.:
+        add-paths: |
+          api/dashboard.json
+          site/data/gallery-manifest.json
+      The action safely splits on whitespace/newlines.
     required: true
   commit-message:
     description: "Commit message"
@@ -49,8 +55,23 @@ runs:
 
     - name: Add files
       shell: bash
+      env:
+        ADD_PATHS: ${{ inputs.add-paths }}
       run: |
-        git add ${{ inputs.add-paths }}
+        # Robust multi-line / space-separated path handling.
+        # The raw ${{ inputs.add-paths }} expansion into the run: text (previous
+        # implementation) turned extra lines from YAML | blocks into bare shell
+        # commands → "Permission denied" (exactly as seen in nightly-maintenance
+        # failures after adding gallery/search/MIT/TST paths).
+        #
+        # Using env: + explicit splitting keeps the paths as data.
+        if [ -n "${ADD_PATHS:-}" ]; then
+          while IFS= read -r path || [ -n "$path" ]; do
+            # Trim whitespace and skip blanks
+            path="$(printf '%s' "$path" | xargs)"
+            [ -n "$path" ] && git add -- "$path" || true
+          done <<< "$ADD_PATHS"
+        fi
 
     - name: Check for changes
       id: check
