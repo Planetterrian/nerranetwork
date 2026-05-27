@@ -10,26 +10,11 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v6
+      - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'
-
-      - name: Cache pip
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install ruff
+          requirements-file: 'requirements.txt'
+          extra-packages: "ruff"
 
       - name: Lint with ruff
         run: ruff check engine/ run_show.py --select=E9,F63,F7,F82 --no-fix

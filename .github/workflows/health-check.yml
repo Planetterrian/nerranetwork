@@ -9,7 +9,11 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'requirements.txt'
+          fetch-depth: "1"
 
       - name: Check RSS feed freshness
         shell: python3 {0}

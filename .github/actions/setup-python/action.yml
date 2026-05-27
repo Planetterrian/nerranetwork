@@ -1,0 +1,57 @@
+name: "Setup Python + Pip"
+description: |
+  Reusable composite for Nerra Network workflows.
+  Handles checkout (optional), Python 3.12, pip cache, and requirements install.
+  Dramatically reduces duplication across workflows.
+
+inputs:
+  python-version:
+    description: "Python version to install"
+    required: false
+    default: "3.12"
+  requirements-file:
+    description: "Path to requirements file"
+    required: false
+    default: "requirements.txt"
+  fetch-depth:
+    description: "fetch-depth for checkout (0 = full history, needed for most commit jobs)"
+    required: false
+    default: "0"
+  extra-packages:
+    description: "Space-separated extra pip packages to install (e.g. 'ruff openai')"
+    required: false
+    default: ""
+  skip-checkout:
+    description: "Set to 'true' if checkout was already performed in the calling workflow"
+    required: false
+    default: "false"
+  cache:
+    description: "Enable pip caching (true/false)"
+    required: false
+    default: "true"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout
+      if: ${{ inputs.skip-checkout != 'true' }}
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: ${{ inputs.fetch-depth }}
+
+    - name: Set up Python ${{ inputs.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: ${{ inputs.cache == 'true' && 'pip' || '' }}
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f "${{ inputs.requirements-file }}" ]; then
+          pip install -r "${{ inputs.requirements-file }}"
+        fi
+        if [ -n "${{ inputs.extra-packages }}" ]; then
+          pip install ${{ inputs.extra-packages }}
+        fi

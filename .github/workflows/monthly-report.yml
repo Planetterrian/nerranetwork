@@ -49,6 +49,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: monthly-reports
+  cancel-in-progress: false
+
 jobs:
   generate:
     runs-on: ubuntu-latest
@@ -57,16 +61,11 @@ jobs:
     if: ${{ github.event_name != 'schedule' || github.event.schedule == '0 16 1 * *' }}
 
     steps:
-      - uses: actions/checkout@v5
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: pip install pyyaml requests tenacity openai
+          requirements-file: 'requirements.txt'
+          extra-packages: "pyyaml requests tenacity openai"
 
       - name: Run monthly reports
         env:
@@ -89,19 +88,10 @@ jobs:
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         run: python scripts/run_cross_show_briefing.py
 
-      - name: Commit reports
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add outputs/monthly_reports/ outputs/briefings/
-          git diff --cached --quiet || git commit -m "Add monthly reports for $(date +%Y-%m)"
-          for attempt in 1 2 3 4; do
-            git pull --rebase origin main && git push origin main && exit 0
-            echo "Push failed (attempt $attempt), retrying in $((attempt * 2))s..."
-            sleep $((attempt * 2))
-          done
-          echo "All push attempts failed"
-          exit 1
+      - uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: "outputs/monthly_reports/ outputs/briefings/"
+          commit-message: "Add monthly reports for $(date +%Y-%m)"
 
   publish-mit-monthly:
     # Fires every weekday at 22:00 UTC but the script's
@@ -116,18 +106,11 @@ jobs:
       }}
 
     steps:
-      - uses: actions/checkout@v5
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - uses: ./.github/actions/setup-python
         with:
           python-version: '3.12'
-          cache: 'pip'
-
-      - name: Install dependencies
-        # Full requirements.txt — this job needs yfinance, feedgen,
-        # boto3 (R2 upload), ffmpeg-python, and the engine deps.
-        run: pip install -r requirements.txt
+          requirements-file: 'requirements.txt'
+          # MIT monthly needs yfinance + engine deps for R2 + ffmpeg
 
       - name: Run MIT monthly episode
         env:
@@ -143,20 +126,7 @@ jobs:
           fi
           python scripts/run_monthly_mit_episode.py $ARGS
 
-      - name: Commit MIT monthly artefacts
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add digests/modern_investing/ modern_investing_podcast.rss
-          if git diff --cached --quiet; then
-            echo "Nothing to commit (most likely skipped by the last-trading-day gate)."
-            exit 0
-          fi
-          git commit -m "MIT monthly recap — $(date -u +%Y-%m)"
-          for attempt in 1 2 3 4; do
-            git pull --rebase origin main && git push origin main && exit 0
-            echo "Push failed (attempt $attempt), retrying in $((attempt * 2))s..."
-            sleep $((attempt * 2))
-          done
-          echo "All push attempts failed"
-          exit 1
+      - uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: "digests/modern_investing/ modern_investing_podcast.rss"
+          commit-message: "MIT monthly recap — $(date -u +%Y-%m)"
