@@ -434,6 +434,22 @@ decision); everything else has a live status card.
    (MP3s, markdown, JSON, HTML, TXT) remain at the `digests/` top level from
    before shows were migrated to subdirectories. These cannot be moved without
    breaking existing RSS feed URLs. New episodes now write to subdirectories.
+23. **GitHub push transients on large text commits ("fatal error in commit_refs")** —
+    Successful episode generation (run_show.py) can produce 8k–10k+ line commits
+    (full Whisper transcripts JSON+txt, _tts.txt, metrics, chapters, digests, blog
+    HTML, RSS updates). GitHub's ref-update service occasionally returns a server
+    error during `git push origin main` even after the pack is accepted. The
+    4-attempt rebase/merge loop in `.github/workflows/run-show.yml` handles
+    normal concurrency races between matrix jobs. On final exhaustion the step
+    now calls `scripts/create_recovery_pr.sh` which creates a `recovery/<show>-<run_id>-<ts>`
+    branch, pushes it, and opens a **draft PR** with the complete artifacts plus
+    operator instructions. The job exits 0 (data preserved). The PR appears in
+    the repo for the operator to merge. This is the hardened path for the
+    "Commit and push output" step (the finalize shared-pages push has a 5-attempt
+    loop + warning but no recovery PR because those pages are fully regenerable).
+    The `safe-commit-push` composite used by nightly + 8 other workflows does not
+    yet have the recovery escape hatch (lower risk callers). Drift guard:
+    the recovery script + the warning annotation in the Actions log.
 
 ### Resolved Issues (Feb 2026)
 
