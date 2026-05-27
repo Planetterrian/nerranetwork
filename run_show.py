@@ -3202,6 +3202,19 @@ def _publish_youtube(
     except Exception:  # pragma: no cover — best-effort
         _scene_contexts = []
 
+    # For TST: bias Grok Imagine visuals toward currently active narrative programs
+    narrative_keywords = None
+    if args.show == "tesla":
+        try:
+            from engine import tesla_memory
+            tracker = tesla_memory.load_narrative_tracker(Path(config.episode.output_dir))
+            narrative_keywords = [
+                p.get("display_name", k).lower()
+                for k, p in tracker.get("programs", {}).items()
+            ][:6]
+        except Exception:
+            narrative_keywords = None
+
     def _run_grok_path(*, aspect: str, label_suffix: str) -> "list[Path]":
         from engine.grok_imagine import (
             build_image_prompts,
@@ -3227,6 +3240,7 @@ def _publish_youtube(
                     yt, "grok_image_descriptor", "photorealistic news photo",
                 ),
                 per_scene_contexts=_scene_contexts,
+                narrative_keywords=narrative_keywords if 'narrative_keywords' in locals() else None,
             )
             result = fetch_scene_images_grok(
                 work_dir=work_dir,
@@ -3525,6 +3539,9 @@ def _publish_youtube(
                         getattr(config.audio, "voice_intro_delay", 0.0) or 0.0
                     )
                     if transcript_path is not None:
+                        shorts_threshold = float(
+                            getattr(getattr(config, "youtube", None), "shorts_min_score_threshold", 5.0) or 5.0
+                        )
                         windows = pick_top_n_engaging_windows(
                             transcript_path,
                             n=shorts_count_yaml,
@@ -3532,6 +3549,7 @@ def _publish_youtube(
                             audio_duration=_ep_duration,
                             window_duration=duration,
                             min_start_final=voice_offset,
+                            min_score_threshold=shorts_threshold,
                         )
                         shorts_plan = [
                             (

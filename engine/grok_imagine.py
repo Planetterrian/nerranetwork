@@ -141,6 +141,7 @@ def build_image_prompts(
     count: int = 8,
     show_descriptor: str = "",
     per_scene_contexts: Optional[List[str]] = None,
+    narrative_keywords: Optional[List[str]] = None,
 ) -> List[str]:
     """Build *count* image prompts that combine each query with a context.
 
@@ -195,6 +196,10 @@ def build_image_prompts(
 
     prompts: List[str] = []
 
+    narrative_boost = ""
+    if narrative_keywords:
+        narrative_boost = " | focus on: " + ", ".join(narrative_keywords[:4])
+
     # First pass: one image per query, up to count.
     for i, raw_query in enumerate(image_queries):
         if i >= count:
@@ -206,6 +211,8 @@ def build_image_prompts(
         ctx = _context_for(len(prompts))
         if ctx:
             parts.append(f"depicting: {ctx}")
+        if narrative_boost:
+            parts.append(narrative_boost)
         prompts.append(", ".join(parts))
 
     # Second pass: cycle queries until we hit count. Per-scene contexts
@@ -220,6 +227,8 @@ def build_image_prompts(
         ctx = _context_for(len(prompts))
         if ctx:
             parts.append(f"depicting: {ctx}")
+        if narrative_boost:
+            parts.append(narrative_boost)
         prompts.append(", ".join(parts))
 
     return prompts
