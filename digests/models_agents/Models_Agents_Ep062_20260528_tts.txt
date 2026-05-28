@@ -1,0 +1,163 @@
+What's up — welcome to Models and Agents, episode sixty-two, for May twenty-eighth, twenty twenty-six.
+
+The A I world never sleeps.
+
+Here's what you need to know today.
+
+CoreWeave’s new platform lets agents improve themselves between training and inference runs without manual retraining cycles.
+
+CoreWeave launched a unified agentic platform that closes the training-to-inference gap for continuous autonomous improvement.
+
+Perplexity open-sourced a Unigram tokenizer that cuts reranker latency five times versus Hugging Face.
+
+Multiple teams showed practical Qwenthree point six to thirty-fiveB-A3B inference on single consumer G P U's with strong context handling.
+
+Builders should watch how these infrastructure and tooling shifts affect agent deployment costs this week.
+
+CoreWeave launched a unified agentic A I platform that enables continuous autonomous agent improvement by closing the training-to-inference gap.
+
+The system supports self-improvement loops where agents can iterate on their own outputs without requiring full retraining cycles.
+
+It targets production workloads where agents need to adapt in real time rather than waiting for scheduled fine-tuning runs.
+
+Teams building long-running autonomous systems can now test tighter feedback loops between inference results and model updates.
+
+Watch for how other inference providers respond with similar continuous-improvement tooling.
+
+Perplexity released a rewritten Unigram tokenizer that delivers five times lower p50 latency than the Hugging Face tokenizers crate.
+
+It cuts production CPU utilization five to six times.
+
+The tokenizer targets reranker workloads where tokenization overhead previously dominated latency.
+
+It maintains compatibility with existing pipelines while reducing the CPU footprint for high-throughput search and retrieval tasks.
+
+Builders running reranking stages at scale should benchmark this drop-in replacement this week.
+
+A user demonstrated Qwenthree point six to thirty-fiveB-A3B-APEX-MTP-I-Compact running at thirty-seven tokens per second generation with seventy-two thousand context on a single RTX 3060 twelve gigabyte card.
+
+The setup uses spiritbuun’s koo-dah fork and mudler’s APEX quantization.
+
+It offloads a seventeen point three gigabyte model while keeping PPL at three point two five.
+
+The configuration achieves one hundred percent needle-in-haystack retrieval up to two hundred thousand tokens.
+
+MTP heads hurt performance on this hardware and should be left disabled.
+
+Krasis version one point zero added full Rust execution, four-bit and six-bit KV cache, and sensitivity-aware HQQ attention that mixes four, six, and eight-bit precision per layer.
+
+On an RTX 3070 Mobile eight gigabyte card it reaches two hundred twenty-two prompt tokens per second and twelve point four eight tokens per second generation for Qwenthree point six to thirty-fiveB-A3B Q four.
+
+The runtime now supports Ampere cards and reduces system RAM requirements to roughly one times model size plus overhead.
+
+Users running models that exceed VRAM should evaluate the new KV cache options.
+
+A diffusion-inspired framework for calibrated L L M as-a-Judge evaluation was released, focused on safety-critical autonomous vehicle video assessment.
+
+It applies iterative denoising to stress-test judge pipelines and produce more reliable structured scores.
+
+The approach targets domains where single-pass L L M judgments are currently too noisy for production use.
+
+Teams building evaluation harnesses for multimodal agents can experiment with the denoising loop.
+
+Snowflake acquired Natoma to expand governance capabilities for A I agents, focusing on M C P based controls.
+
+The move adds agent-specific policy and oversight tooling to Snowflake’s existing data platform.
+
+Enterprise teams already using Snowflake for data workloads gain a path to unified agent governance without additional vendors.
+
+Geordie A I closed a thirty million dollar Series A to build security and control layers for enterprise A I agents.
+
+The funding targets the growing demand for guardrails around autonomous agent deployments.
+
+Companies evaluating agent platforms now have another funded option focused on runtime safety rather than core orchestration.
+
+Microsoft introduced new cloud PC offerings that place A I agents under enterprise policy and access controls.
+
+The update integrates agent execution into existing Windows endpoint management surfaces.
+
+Organizations already managing devices through Microsoft Intune can extend the same controls to agent workloads.
+
+Salesforce reported that its A I agents now handle more support volume than human teams in certain workflows.
+
+The agents operate inside existing Service Cloud routing and escalation paths.
+
+Companies using Salesforce support tooling can evaluate agent-first configurations without changing their CRM backend.
+
+Zai replaced a standard ROFT network with its ZCube flattened bipartite topology on a thousand-G P U GLM-5.1 inference cluster.
+
+The change cut switch and optical module costs thirty-three percent.
+
+It raised throughput fifteen percent and reduced P99 first-token latency forty point six percent while keeping the same G P U's and model.
+
+The design specifically addresses asymmetric KV cache traffic created by prefill-decode disaggregation.
+
+Teams running large-scale disaggregated inference should examine the topology details.
+
+A complete Colab notebook demonstrates building semantic, hybrid, sparse, and quantized vector search inside PostgreSQL with the pgvector extension.
+
+The guide covers extension compilation, Psycopg integration, SentenceTransformers embeddings, and index configuration.
+
+Developers wanting to avoid separate vector databases can run the notebook to test production-grade search inside an existing Postgres instance.
+
+Chwen released Q-Judger, a twenty-seven billion vision-language model fine-tuned to score text-to-image outputs across five top-level quality dimensions with structured JSON output and chain-of-thought reasoning.
+
+The model supports fine-grained evaluation of realism, composition, anatomy, and safety attributes.
+
+Anyone building automated image generation pipelines now has an open judge model to integrate.
+
+A user shared a working stack using vLLM behind Lah-mah-swap and LibreChat for multi-user access with A P I keys and HTTPS termination via Apache.
+
+The setup targets fewer than ten concurrent users and highlights current concurrency limits in Lah-mah-swap.
+
+Teams needing simple self-hosted multi-tenant inference can adapt the described proxy and key-management pattern.
+
+OK, let's pop the hood on the network side of prefill-decode disaggregation.
+
+Everyone treats prefill-decode disaggregation as a simple split that just needs more G P U's.
+
+In practice the KV cache handoff between prefill and decode nodes creates highly directional, bursty traffic that standard fat-tree or rail-optimized topologies were never designed to carry.
+
+The prefill side generates large contiguous KV blocks that must cross the network in a short window.
+
+Decode nodes request smaller, latency-sensitive slices on different schedules.
+
+This mismatch produces leaf-switch hotspots and PFC backpressure even when aggregate bandwidth looks sufficient.
+
+Zai’s flattened bipartite design removes the spine layer entirely so every leaf pair has a direct path.
+
+It eliminates the static rail mapping that forces traffic through congested spines.
+
+The thirty-three percent hardware cost reduction and forty percent tail-latency improvement come directly from removing those forced hops rather than adding more bandwidth.
+
+When your decode cluster is larger than your prefill cluster or when context lengths vary widely, the topology choice matters more than raw switch speed.
+
+The practical test is whether your first-token P99 stays flat as you scale the decode pool.
+
+If it climbs, the network mapping is the next place to look.
+
+Run the Perplexity Unigram tokenizer in a reranker pipeline to measure the reported five times latency drop on your workload.
+
+Test spiritbuun’s fork plus mudler’s APEX quant on Qwenthree point six to thirty-fiveB-A3B if you need seventy thousand plus context on a twelve gigabyte card.
+
+Evaluate Krasis on an Ampere laptop G P U for models that previously required two cards.
+
+Add pgvector hybrid search to an existing Postgres application before reaching for a dedicated vector store.
+
+More inference providers are expected to announce continuous-improvement loops similar to CoreWeave’s platform.
+
+Additional open tokenizers targeting reranker and long-context workloads are likely following Perplexity’s release.
+
+Watch for further single-G P U quantization results on the Qwen3.6 family as the new forks mature.
+
+Tomorrow, keep an eye on additional single-G P U quantization results for the Qwen3.6 family.
+
+That wraps up today's A I briefing.
+
+Share this with a developer or builder who wants to stay current.
+
+Subscribe wherever you listen.
+
+See you tomorrow.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
