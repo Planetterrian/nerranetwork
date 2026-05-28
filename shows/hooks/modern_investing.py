@@ -550,6 +550,7 @@ def _evaluate_open_trade(tracker: dict, tracker_path: Path) -> None:
 
     # Recompute summary stats and save
     _recompute_summary(tracker)
+    _maybe_record_monthly_snapshot(tracker, today)
     _save_tracker(tracker, tracker_path)
 
 
@@ -1191,12 +1192,17 @@ def _build_taught_lessons_block(data: dict) -> str:
 
 
 def _load_lessons_learned(path: Path) -> dict:
-    """Load the lessons_learned ledger, or return a fresh structure."""
+    """Load the lessons_learned ledger, or return a fresh structure.
+    Normalizes to always use the 'entries' key for consistency (post day-one review fix).
+    """
     if path.exists():
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
             data.setdefault("metadata", {}).setdefault("schema_version", 1)
             data["metadata"].setdefault("last_updated", datetime.date.today().isoformat())
+            # Back-compat normalization (some early versions used "lessons")
+            if "lessons" in data and "entries" not in data:
+                data["entries"] = data.pop("lessons")
             data.setdefault("entries", [])
             return data
         except (json.JSONDecodeError, OSError) as exc:
@@ -1695,3 +1701,24 @@ def get_mit_confidence_calibration(tracker: dict) -> str:
     wr = high_conf_wins / len(high_conf) * 100 if high_conf else 0
 
     return f"High-confidence picks have been correct {wr:.0f}% of the time ({high_conf_wins}/{len(high_conf)}). Use this to calibrate how strongly to act on strong signals."
+
+
+def _maybe_record_monthly_snapshot(tracker: dict, today: "datetime.date") -> None:
+    """Append a lightweight monthly snapshot if we have crossed into a new month.
+    Populates the previously-empty monthly_snapshots list (post day-one review fix).
+    """
+    snapshots = tracker.setdefault("monthly_snapshots", [])
+    current_month = today.strftime("%Y-%m")
+    if snapshots and snapshots[-1].get("month") == current_month:
+        return
+    summary = tracker.get("summary", {})
+    snapshot = {
+        "month": current_month,
+        "total_trades": summary.get("total_trades", 0),
+        "win_rate_pct": summary.get("win_rate_pct", 0.0),
+        "cumulative_pnl": summary.get("cumulative_pnl", 0.0),
+        "alpha_vs_nasdaq": tracker.get("alpha", {}).get("ytd_vs_nasdaq", 0.0),
+    }
+    snapshots.append(snapshot)
+    if len(snapshots) > 24:
+        del snapshots[0]

@@ -60,29 +60,42 @@ def record_youtube_outcomes(
         if youtube_urls.get("short_error"):
             metrics.record("youtube_short_error", youtube_urls["short_error"])
 
+        # Rich YouTube feature metrics (May 2026 improvements observability)
         metrics.record("pexels_photos_filtered", int(youtube_urls.get("pexels_photos_filtered", 0) or 0))
+        metrics.record("grok_image_cost_usd", float(youtube_urls.get("grok_image_cost_usd", 0.0) or 0.0))
+        metrics.record("grok_images_generated", int(youtube_urls.get("grok_images_generated", 0) or 0))
+        metrics.record("image_provider", youtube_urls.get("image_provider", "pexels"))
+        metrics.record("gallery_attempted", int(youtube_urls.get("gallery_attempted", 0) or 0))
+        metrics.record("gallery_uploaded", int(youtube_urls.get("gallery_uploaded", 0) or 0))
+        if youtube_urls.get("gallery_skipped_reason"):
+            metrics.record("gallery_skipped_reason", youtube_urls["gallery_skipped_reason"])
 
-        metrics.record(
-            "grok_image_cost_usd",
-            float(youtube_urls.get("grok_image_cost_usd", 0.0) or 0.0),
-        )
-        metrics.record(
-            "grok_images_generated",
-            int(youtube_urls.get("grok_images_generated", 0) or 0),
-        )
-        metrics.record(
-            "image_provider",
-            youtube_urls.get("image_provider", "pexels"),
-        )
+        # Smart Shorts selector + multi-Shorts (May 2026)
+        if "shorts_start_mode_resolved" in youtube_urls:
+            metrics.record("shorts_start_mode_resolved", str(youtube_urls["shorts_start_mode_resolved"]))
+        metrics.record("shorts_count_requested", int(youtube_urls.get("shorts_count_requested", 1) or 1))
+        metrics.record("shorts_count_uploaded", int(youtube_urls.get("shorts_count_uploaded", 0) or 0))
+        if "shorts_start_offset" in youtube_urls:
+            metrics.record("shorts_start_offset", float(youtube_urls["shorts_start_offset"]))
+        if youtube_urls.get("shorts_start_offsets"):
+            metrics.record("shorts_start_offsets", youtube_urls["shorts_start_offsets"])
+        if youtube_urls.get("shorts_selector_scores"):
+            metrics.record("shorts_selector_scores", youtube_urls["shorts_selector_scores"])
 
-        metrics.record(
-            "gallery_attempted",
-            int(youtube_urls.get("gallery_attempted", 0) or 0),
-        )
-        metrics.record(
-            "gallery_uploaded",
-            int(youtube_urls.get("gallery_uploaded", 0) or 0),
-        )
+        # Thumbnail + hook overlay autofit decisions (for drift monitoring)
+        if "thumbnail_autofit_font_size" in youtube_urls:
+            metrics.record("thumbnail_autofit_font_size", int(youtube_urls["thumbnail_autofit_font_size"]))
+        if "hook_overlay_autofit_font_size" in youtube_urls:
+            metrics.record("hook_overlay_autofit_font_size", int(youtube_urls["hook_overlay_autofit_font_size"]))
+
+        # Caption generation mode for Shorts (per-word ASS vs legacy SRT)
+        if "shorts_caption_mode" in youtube_urls:
+            metrics.record("shorts_caption_mode", str(youtube_urls["shorts_caption_mode"]))
+
+        # End card (CTA) generation
+        metrics.record("shorts_end_card_enabled", bool(youtube_urls.get("shorts_end_card_enabled", True)))
+        if youtube_urls.get("shorts_end_card_generated") is not None:
+            metrics.record("shorts_end_card_generated", bool(youtube_urls["shorts_end_card_generated"]))
     except Exception:
         # Never let metrics recording break a publish
         logger = __import__("logging").getLogger(__name__)
