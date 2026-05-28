@@ -1,0 +1,101 @@
+What's up, welcome to Models and Agents, episode 62 for May 28th, 2026.
+The AI world never sleeps.
+Here's what you need to know today.
+Core Weave's new platform lets agents improve themselves between training and inference
+runs without manual retraining cycles.
+Core Weave launched a unified agentic platform that closes the training to inference gap for
+continuous autonomous improvement.
+Perplexity open sourced a unigram talkenizer that cuts re-rank or latency five times versus
+hugging face.
+Multiple teams showed practical QWN 3.6 to 35 BA3 bin inference on single consumer GPUs
+with strong context handling.
+Builders should watch how these infrastructure and tooling shifts affect agent deployment
+costs this week.
+Core Weave launched a unified agentic AI platform that enables continuous autonomous
+agent improvement by closing the training to inference gap.
+The system supports self-improvement loops where agents can iterate on their own outputs
+without requiring full retraining cycles.
+It targets production workloads where agents need to adapt in real time rather than waiting
+for scheduled fine-tuning runs.
+Teams building long-running autonomous systems can now test tighter feedback loops between
+inference results and model updates.
+Watch for how other inference providers respond with similar continuous improvement tooling.
+Ourplexity released a written unigram talkenizer that delivers five times lower P50 latency
+than the hugging face tokenizer's crate.
+It cuts production CPU utilization five to six times.
+The tokenizer targets re-ranker workloads where tokenization overhead previously dominated
+latency. It maintains compatibility with existing pipelines while reducing the CPU footprint for
+high throughput search and retrieval tasks. Builders running re-ranking stages at scale should
+benchmark this drop-in replacement this week. A user demonstrated QWN 3.6 to 35B, A3B,
+APX, MTP, iCompact, running a 37 tokens per second generation with 72,000 context on a single
+RTX 362GB card. The setup uses spirit viewons, CUDA, fork, and muddler's Apex quantization.
+It offloads a 17.3GB model while keeping PPL at 3.25.
+The configuration achieves 100% needle and haystack retrieval up to 200,000 tokens.
+MTP heads hurt performance on this hardware and should be left disabled.
+Crasse's version 1.0 added full rust execution, four bit and six bit KV cache,
+and sensitivity aware HQQ attention that mixes four, six, and eight bit precision per layer.
+On an RTX 370 mobile 8GB card, it reaches 222 prompt tokens per second and 12.48 tokens per
+second generation for QWN 3.6 to 35B, A3BQ4. The runtime now supports ampere cards and reduces system
+RAM requirements to roughly one times model size plus overhead. Users running models that exceed
+VRAM should evaluate the new KV cache options. A diffusion-inspired framework for calibrated LLM
+as a judge evaluation was released, focused on safety critical autonomous vehicle video assessment.
+It applies iterative denoising to stress test judge pipelines and produce more reliable structured
+scores. The approach target domains where single pass LLM judgments are currently too noisy for
+production use. Teams building evaluation harnesses for multimodal agents can experiment with the
+denoising loop. Snowflake acquired Natamato expand governance capabilities for AI agents,
+focusing on MCP-based controls. The move adds agent-specific policy and oversight tooling to
+snowflakes existing data platform. Enterprise teams already using Snowflake for data workloads
+gain a path to unified agent governance without additional vendors.
+Jordi AI closed a $30 million series A to build security and control layers for enterprise AI agents.
+The funding targets the growing demand for guardrails around autonomous agent deployments.
+Companies evaluating agent platforms Snow have another funded option focused on runtime safety
+rather than core orchestration. Microsoft introduced new cloud PC offerings that place AI agents under
+enterprise policy and access controls. The update integrates agent execution into existing
+Windows endpoint management surfaces. Organizations already managing devices through Microsoft
+Intune can extend the same controls to agent workloads. Salesforce reported that its AI
+agents now handle more support volume than human teams in certain workflows.
+The agents operate inside existing service cloud routing and escalation paths.
+Companies using Salesforce support tooling can evaluate agent first configurations without
+changing their CRM back end. Zair replaced a standard ROFT network with its ZCube flattened
+parted topology on 1000 GPU GLM 5.1 inference cluster. The change cuts switch and optical module cost
+33%. It raised throughput 15% and reduced P99 first token latency 40.6% while keeping the same
+GPUs and model. The design specifically addresses asymmetric KV cache traffic created by pre-fill
+decode disaggregation. Teams running large scale disaggregated inference should examine the topology
+details. A complete colab notebook demonstrates building semantic hybrid, sparse, and quantized
+vector search inside PostgreSQL with the PG vector extension. The guide covers extension compilation,
+PCI cop integration, sentence transformers and vettings, and index configuration. Developers wanting to
+avoid separate vector databases can run the notebook to test production grade search inside an
+existing PostgreSQL instance. Tuan released Q-Judger, a 27 billion vision language model fine-tuned
+to score text-to-image outputs across five top-level quality dimensions, with structured JSON output
+and chain-of-thought reasoning. The model supports fine-grained evaluation of realism, composition,
+anatomy, and safety attributes. Anyone building automated image generation pipelines now has an open
+judge model to integrate. A user shared a working stack using VLLM behind a law-moss swap and
+LibreChat for multi-user access with API keys and HTTPS termination via Apache. The setup targets
+fewer than 10 concurrent users and highlights current concurrency limits in law-moss swap.
+Teams needing simple self-hosted multi-tenant inference can adapt the described proxy
+and key management pattern. Okay, let's pop the hood on the network side of pre-fill decode
+disaggregation. Everyone treats pre-fill decode disaggregation as a simple split that just needs more
+GPUs. In practice, the KV cache handoff between pre-fill and decode nodes creates highly directional
+bursty traffic that standard fat tree or rail optimized apologies were never designed to carry.
+The pre-fill side generates large, contiguous KV blocks that must cross the network in a short window.
+Decode nodes request smaller, latency-sensitive slices on different schedules.
+This mismatch produces leaf switch hotspots and PFC backpressure even when aggregate bandwidth
+looks sufficient. Zai's flattened bipartite design removes the spine layer entirely, so every
+leaf pair has a direct path. It eliminates the static rail mapping that forces traffic through
+congested spines. The 33% hardware cost reduction and 40% tail latency improvement come directly from
+removing those forced hops rather than adding more bandwidth. When your decode cluster is larger than
+your pre-fill cluster or when context lengths vary widely, the topology choice matters more than raw
+switch speed. The practical test is whether your first token P99 stays flat as you scale the decode pool.
+If it climbs, the network mapping is the next place to look. Run the perplexity unigram tokenizer
+in a ranker pipeline to measure the reported five times latency drop on your workload.
+Test spirit boons fork plus muddler's apex quant on QWN3.6-35BE3B if you need 70,000 plus
+context on a 12-gigabyte card. Evaluate crosses on an Amperel laptop GPU for models that previously
+required two cards. Add PG-Vector Hybrid Search to an existing Postgres application before reaching
+for a dedicated vector store. More inference providers are expected to announce continuous
+improvement loops similar to Core Weaves platform. Additional open tokenizers targeting re-ranker
+and long context workloads are likely following perplexity's release. Watch for further single
+GPU quantization results on the QWN3.6 family as the new forks mature. Tomorrow keep an eye on additional
+single GPU quantization results for the QWN3.6 family. That wraps up today's AI briefing.
+Share this with a developer or builder who wants to stay current. Subscribe wherever you listen.
+See you tomorrow. This episode used AI voices synthesis of my voice.
+Editorial selection and analysis are my own.
