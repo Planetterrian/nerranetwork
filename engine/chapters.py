@@ -254,6 +254,15 @@ def parse_chapters(
                     words_per_segment,
                 )
 
+    # Post-processing robustness (added after reviewing May 28 episodes)
+    # Collapse consecutive duplicate titles (very common on quiet days).
+    if chapters:
+        deduped = [chapters[0]]
+        for ch in chapters[1:]:
+            if ch.title != deduped[-1].title:
+                deduped.append(ch)
+        chapters = deduped
+
     logger.info(
         "Parsed %d chapters for %s: %s",
         len(chapters),
