@@ -120,7 +120,7 @@ def build_weekly_recap_digest(
             f"   {body}"
         )
 
-    return "\n\n".join([
+    recap = "\n\n".join([
         title,
         hook,
         "━━━━━━━━━━━━━━━━━━━━",
@@ -139,7 +139,10 @@ def build_weekly_recap_digest(
         ),
     ])
 
-    # TST-specific enhancement: inject narrative memory framing when available
+    # TST-specific enhancement: inject narrative memory framing when available.
+    # This is intentionally best-effort (the narrative tracker lives in the
+    # gitignored content lake + digests/ on the runner). If anything fails we
+    # just ship the plain recap.
     if show_slug == "tesla":
         try:
             from engine import tesla_memory
@@ -149,9 +152,12 @@ def build_weekly_recap_digest(
             )
             narrative_block = tesla_memory.build_narrative_status_block(tracker)
             if narrative_block:
-                base += "\n\n" + narrative_block + "\n\nUse the narrative status above to highlight meaningful progress or open questions across the week."
+                recap += (
+                    "\n\n" + narrative_block +
+                    "\n\nUse the narrative status above to highlight meaningful "
+                    "progress or open questions across the week."
+                )
         except Exception:
             pass
 
-    return base
-    ])
+    return recap
