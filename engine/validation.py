@@ -404,7 +404,7 @@ def tst_validation_config() -> ValidationConfig:
             SectionRule(
                 name="Top News",
                 pattern=(
-                    r"(?:📰 \*\*Top 10 News Items\*\*|### Top 10 News Items|### Top News)"
+                    r"(?:📰 \*\*Top (?:10|12) News Items\*\*|### Top (?:10|12) News Items|### Top (?:10|12) News|### Top News)"
                     r"(.*?)"
                     r"(?=━━|## Short Spot|📉|### Tesla First Principles|## Tesla X Takeover|🎙️)"
                 ),
@@ -422,7 +422,7 @@ def tst_validation_config() -> ValidationConfig:
             SectionRule(
                 name="First Principles",
                 pattern=(
-                    r"(?:### Tesla First Principles|🧠\s*Tesla First Principles)"
+                    r"(?:###\s*Tesla First Principles|🧠\s*Tesla First Principles|###\s*First Principles)"
                     r"(.*?)"
                     r"(?=━━|### Daily Challenge|💪|$)"
                 ),
