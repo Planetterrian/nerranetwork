@@ -30,6 +30,20 @@ on:
     - cron: '15 12 * * *'
 
   workflow_dispatch:
+    inputs:
+      date:
+        description: "Target date (YYYYMMDD) for the audit (defaults to today)"
+        required: false
+        type: string
+      show:
+        description: "Limit audit to a single show slug (e.g. tesla, planetterrian)"
+        required: false
+        type: string
+      create_issues:
+        description: "Create GitHub issues for critical problems (default true)"
+        required: false
+        default: "true"
+        type: string
 
   workflow_run:
     workflows: ["Run Podcast Show"]
@@ -67,19 +81,19 @@ jobs:
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          INPUT_DATE: ${{ github.event.inputs.date || '' }}
-          INPUT_SHOW: ${{ github.event.inputs.show || '' }}
-          INPUT_CREATE_ISSUES: ${{ github.event.inputs.create_issues || 'true' }}
+          INPUT_DATE: ${{ inputs.date || '' }}
+          INPUT_SHOW: ${{ inputs.show || '' }}
+          INPUT_CREATE_ISSUES: ${{ inputs.create_issues || 'true' }}
         run: |
-          ARGS=""
-          if [ -n "$INPUT_DATE" ]; then ARGS="$ARGS --date $INPUT_DATE"; fi
-          if [ -n "$INPUT_SHOW" ]; then ARGS="$ARGS --show $INPUT_SHOW"; fi
+          ARGS=()
+          if [ -n "$INPUT_DATE" ]; then ARGS+=(--date "$INPUT_DATE"); fi
+          if [ -n "$INPUT_SHOW" ]; then ARGS+=(--show "$INPUT_SHOW"); fi
           if [ "${{ github.event_name }}" = "schedule" ] || [ "$INPUT_CREATE_ISSUES" = "true" ]; then
-            ARGS="$ARGS --create-issues"
+            ARGS+=(--create-issues)
           fi
 
           set +e
-          python review_episodes.py "$ARGS" 2>&1 | tee /tmp/audit_output.txt
+          python review_episodes.py "${ARGS[@]}" 2>&1 | tee /tmp/audit_output.txt
           EXIT_CODE=${PIPESTATUS[0]}
           set -e
 
@@ -178,7 +192,8 @@ jobs:
           fi
 
           echo "Auto-dispatching recovery for: $RETRY_SHOWS"
-          for s in $RETRY_SHOWS; do
+          read -ra SHOWS <<< "$RETRY_SHOWS"
+          for s in "${SHOWS[@]}"; do
             gh workflow run run-show.yml -f show="$s" --ref main || echo "Dispatch failed for $s"
           done
 

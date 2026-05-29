@@ -437,10 +437,17 @@ def extract_entities_and_topics(
 # ---------------------------------------------------------------------------
 
 def episode_search_url(show_slug: str, episode_num: int) -> str:
-    """Return the public URL for an episode (prefers show page + anchor for now)."""
-    # Convention: /tesla.html (or blog/tesla/...) — the JS + pages handle deep links
-    # For simplicity we point to the show page; client can highlight if needed.
-    return f"/{show_slug.replace('_', '-')}.html"
+    """Return the best public deep link for an episode.
+
+    Prefers the dedicated per-episode blog post (e.g. /blog/tesla/ep491.html)
+    which exists for all indexed episodes. Falls back to the show page.
+    """
+    slug = str(show_slug or '').replace('_', '-')
+    if not slug or not episode_num:
+        return f"/{slug}.html" if slug else "/"
+
+    # Per-episode blog posts are the canonical deep links
+    return f"/blog/{slug}/ep{episode_num}.html"
 
 
 if __name__ == "__main__":
