@@ -34,11 +34,11 @@ python run_show.py ocean_tech                 # Ep1 (debut prompts apply)
 | Prompts | `shows/prompts/<slug>_system.txt`, `_digest.txt`, `_podcast.txt`, `_weekly.txt` |
 | Output dirs | `digests/<slug>/`, `blog/<slug>/` |
 | Website registry | `shows/network_meta.yaml` (merged into `generate_html.py`) |
-| Cron + registration | `shows/scaffold_pending.yaml` + full **REGISTRATION PATCH** printed by scaffold (cron, health-check, Buttondown tag, cover art) |
+| Cron + registration | `shows/scaffold_pending.yaml` + full **REGISTRATION PATCH** printed by scaffold (cron, daily-audit quality gate, Buttondown tag, cover art) |
 
 ## Manual steps (greatly reduced)
 
-The scaffold now emits a **"REGISTRATION PATCH"** block with ready-to-paste snippets for cron, health-check, Buttondown tag, and cover art. Most of the previous manual work is now copy/paste.
+The scaffold now emits a **"REGISTRATION PATCH"** block with ready-to-paste snippets for cron, daily-audit (quality + RSS health + auto-remediation), Buttondown tag, and cover art. Most of the previous manual work is now copy/paste.
 
 Remaining manual steps:
 

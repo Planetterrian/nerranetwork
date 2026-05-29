@@ -3,11 +3,15 @@ name: Daily Audit & Automated Remediation
 # Consolidated post-publish quality + health gate.
 # Runs after the last show (~12:15 UTC safety net + on successful run-show completion).
 #
-# Responsibilities (consolidated from previous daily-review + health-check + light dashboard triggers):
+# Responsibilities:
+# - Episode quality review + AI scoring (hallucinations, repetition, short scripts)
+# - Missed episode detection + automated recovery (retry dispatch for shows without skip markers)
+# - RSS feed freshness / staleness health checks
+# - Production of structured api/daily-review.json for operators and dashboards
 # - Full episode quality review (including AI scoring for hallucinations, repetition, short scripts)
 # - Detection of missed episodes (with skip marker awareness)
 # - Automated recovery: dispatch retries for missed shows that lack skip markers
-# - RSS feed freshness / staleness health checks (moved from the late 18:00 health-check.yml)
+# - RSS feed freshness / staleness health checks (primary implementation)
 # - Production of structured api/daily-review.json (and daily-audit summary) for dashboard + operators
 #
 # This workflow is the primary "did everything ship and was it any good?" gate.
@@ -96,7 +100,7 @@ jobs:
             exit 0
           fi
 
-      - name: RSS Feed Freshness Health Check (consolidated from former health-check.yml)
+      - name: RSS Feed Freshness Health Check
         shell: python3 {0}
         run: |
           import xml.etree.ElementTree as ET

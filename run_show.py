@@ -1737,6 +1737,7 @@ def run(args: argparse.Namespace) -> None:
             # instead of being treated as broken output.
             _FLOOR_FIELD = getattr(config.llm, "min_podcast_word_floor", 600) or 600
             _HARD_FLOOR = max(_FLOOR_FIELD, int(_TARGET_WORDS * 0.4))
+            _SOFT_FLOOR = int(_TARGET_WORDS * 0.6)  # Below this we skip rather than publish a clearly thin episode
             _script_word_count = len(podcast_script.split())
             if _script_word_count < _HARD_FLOOR:
                 logger.warning(
@@ -1769,6 +1770,34 @@ def run(args: argparse.Namespace) -> None:
                     logger.warning("Failed to write thin-script skip marker: %s", exc)
                 save_usage(tracker, digests_dir)
                 sys.exit(2)  # Graceful skip (like insufficient articles) so matrix job stays green for other shows.
+            elif _script_word_count < _SOFT_FLOOR:
+                logger.warning(
+                    "Podcast script too thin for publication (%d words, soft floor %d) — "
+                    "skipping episode (better to have a documented skip than a rushed, low-value episode).",
+                    _script_word_count, _SOFT_FLOOR,
+                )
+                try:
+                    marker_path = digests_dir / f".skip_{today.strftime('%Y%m%d')}.json"
+                    marker_path.parent.mkdir(parents=True, exist_ok=True)
+                    marker_data = {
+                        "date": today.isoformat(),
+                        "show": config.slug,
+                        "show_name": config.name,
+                        "reason": "podcast_script_too_thin",
+                        "detail": (
+                            f"Script only {_script_word_count} words (soft floor {_SOFT_FLOOR} = 60% of target). "
+                            f"Episode would have been too thin/rushed to publish."
+                        ),
+                        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                        "word_count": _script_word_count,
+                        "soft_floor": _SOFT_FLOOR,
+                    }
+                    marker_path.write_text(json.dumps(marker_data, indent=2))
+                    logger.info("Skip marker written for thin podcast script: %s", marker_path.name)
+                except Exception as exc:
+                    logger.warning("Failed to write thin-script skip marker: %s", exc)
+                save_usage(tracker, digests_dir)
+                sys.exit(2)
             elif _script_word_count < _TARGET_WORDS:
                 logger.warning(
                     "Podcast script below target (%d words, target %d) — "
