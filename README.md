@@ -8,7 +8,12 @@ network migration May 2026; ElevenLabs retained only as emergency rollback),
 mixes intro/outro music, and publishes to RSS, GitHub Pages, YouTube (long-form
 + smart Shorts for enabled shows), and X/Twitter where configured.
 
-All shows are produced independently in Vancouver, Canada.
+Nerra Network produces shows for a **global audience** — independently produced
+in **Vancouver, British Columbia, Canada**. Globally focused shows (Tesla Shorts
+Time, Models & Agents, Fascinating Frontiers, etc.) carry no regional constraint;
+shows with a Canadian focus (Modern Investing Techniques, Финансы Просто,
+Environmental Intelligence) cover Canadian markets, policy, and personal finance
+alongside their global context.
 
 **Website:** [nerranetwork.com](https://nerranetwork.com)
 
@@ -17,14 +22,14 @@ All shows are produced independently in Vancouver, Canada.
 | Show | Schedule | Player | RSS |
 |------|----------|--------|-----|
 | **Tesla Shorts Time** | Daily | [Player](https://nerranetwork.com/tesla.html) | [RSS](https://nerranetwork.com/podcast.rss) |
-| **Omni View** | Odd days | [Player](https://nerranetwork.com/omni-view.html) | [RSS](https://nerranetwork.com/omni_view_podcast.rss) |
-| **Fascinating Frontiers** | Even days | [Player](https://nerranetwork.com/fascinating_frontiers.html) | [RSS](https://nerranetwork.com/fascinating_frontiers_podcast.rss) |
-| **Planetterrian Daily** | Odd days | [Player](https://nerranetwork.com/planetterrian.html) | [RSS](https://nerranetwork.com/planetterrian_podcast.rss) |
+| **Omni View** | Daily (Sun = weekly recap) | [Player](https://nerranetwork.com/omni-view.html) | [RSS](https://nerranetwork.com/omni_view_podcast.rss) |
+| **Fascinating Frontiers** | Daily (Sun = weekly recap) | [Player](https://nerranetwork.com/fascinating_frontiers.html) | [RSS](https://nerranetwork.com/fascinating_frontiers_podcast.rss) |
+| **Planetterrian Daily** | Daily (Sun = weekly recap) | [Player](https://nerranetwork.com/planetterrian.html) | [RSS](https://nerranetwork.com/planetterrian_podcast.rss) |
 | **Environmental Intelligence** | Odd weekdays | [Player](https://nerranetwork.com/env-intel.html) | [RSS](https://nerranetwork.com/env_intel_podcast.rss) |
-| **Models & Agents** | Odd days | [Player](https://nerranetwork.com/models-agents.html) | [RSS](https://nerranetwork.com/models_agents_podcast.rss) |
-| **Models & Agents for Beginners** | Even days | [Player](https://nerranetwork.com/models-agents-beginners.html) | [RSS](https://nerranetwork.com/models_agents_beginners_podcast.rss) |
+| **Models & Agents** | Daily (Sun = weekly recap) | [Player](https://nerranetwork.com/models-agents.html) | [RSS](https://nerranetwork.com/models_agents_podcast.rss) |
+| **Models & Agents for Beginners** | Daily (Sun = weekly recap) | [Player](https://nerranetwork.com/models-agents-beginners.html) | [RSS](https://nerranetwork.com/models_agents_beginners_podcast.rss) |
 | **Финансы Просто** | Even days | [Player](https://nerranetwork.com/ru/finansy-prosto.html) | [RSS](https://nerranetwork.com/finansy_prosto_podcast.rss) |
-| **Modern Investing Techniques** | Weekdays | [Player](https://nerranetwork.com/modern-investing.html) | [RSS](https://nerranetwork.com/modern_investing_podcast.rss) |
+| **Modern Investing Techniques** | Daily (Sat = weekend angle, Sun = recap) | [Player](https://nerranetwork.com/modern-investing.html) | [RSS](https://nerranetwork.com/modern_investing_podcast.rss) |
 | **Привет, Русский!** | Even days | [Player](https://nerranetwork.com/ru/privet-russian.html) | [RSS](https://nerranetwork.com/privet_russian_podcast.rss) |
 | **Unintended Consequences** | Weekdays (narrative) | [Player](https://nerranetwork.com/unintended-consequences.html) | [RSS](https://nerranetwork.com/unintended_consequences_podcast.rss) |
 

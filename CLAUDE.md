@@ -392,6 +392,23 @@ pytest tests/test_integration.py   # Pipeline integration tests
 Tests use AST extraction + `exec()` to load functions from show scripts because
 `tesla_shorts_time.py` has a `SystemExit` guard preventing import.
 
+**Phase 1 hardening guards (May 2026):** the network-evolution roadmap's first
+phase added safety nets that the `run-show.yml` smoke step now runs on every
+episode:
+
+- `tests/test_generator.py` — the LLM-call path (`load_prompt` incl. the new
+  shared-snippet include mechanism, `_call_grok` request/response shaping,
+  refusal detection, fallback-model resolution). Catches a breaking Grok
+  request/response change without spending credits.
+- `tests/test_show_memory.py` — pins `engine.tesla_memory`'s load/save/build
+  contract (and the first-run copy-isolation fix) *before* Phase 3 generalizes
+  it to other shows via `engine/show_memory.py`.
+- `tests/test_prompt_fidelity.py` — every show's prompts exist, are non-empty,
+  and render without a malformed-brace crash.
+- `tests/test_episode_validity.py` — the latest committed digest per show meets
+  a conservative word floor and isn't a refusal.
+- `tests/test_pipeline_safety.py` — the three safety scripts below.
+
 ### Code Style
 
 - No linter configured; scripts are large single-file programs
@@ -399,6 +416,29 @@ Tests use AST extraction + `exec()` to load functions from show scripts because
 - `logging` for all output; `sys.stdout` handler
 - `pathlib.Path` for all file operations
 - `tenacity` for retry logic on API calls
+
+### Prompt composition + pipeline safety scripts (Phase 1, May 2026)
+
+- **Shared prompt snippets.** `engine.generator.load_prompt` resolves
+  `<<include: relative/path.txt>>` directives (relative to the including
+  prompt's dir, recursive, cycle/depth-guarded) **before** `{placeholder}`
+  substitution. Canonical snippets live in `shows/prompts/_shared/`. The
+  mechanism is **opt-in**: a prompt with no directive renders byte-for-byte as
+  before, so existing prompts are unchanged. Do NOT bulk-rewrite prompts to use
+  includes without re-running `test_prompt_fidelity.py` + A/B listening (it
+  changes generated output). See `shows/prompts/_shared/README.md`.
+- **Fail-loud safety nets** (all *loud-but-non-blocking by default*; pass
+  `--strict` to hard-fail in a dedicated guard job):
+  - `scripts/backfill_content_lake.py` — evaluates the rebuilt lake and emits a
+    GitHub `::error::`/`::warning::` annotation when it's empty/thin (was a
+    silent failure mode that broke dedup/recaps/search).
+  - `scripts/youtube_quota_preflight.py` — sums quota for YouTube-enabled shows
+    and annotates when projected over the 10k/day budget (landmine #20). Wired
+    as a preflight step in `run-show.yml`.
+  - `scripts/post_run_summary.py` — positive heartbeat: composes an all-clear /
+    cost / quota / RSS-freshness line from `api/dashboard.json` and POSTs to
+    `NOTIFICATION_WEBHOOK_URL` (clean no-op when unset). Wired into the finalize
+    job.
 
 ## Current Refactoring Goal
 

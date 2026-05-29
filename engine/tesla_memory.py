@@ -14,6 +14,7 @@ into prompts via the tesla pre-fetch hook.
 
 from __future__ import annotations
 
+import copy
 import json
 import logging
 import re
@@ -121,8 +122,11 @@ DEFAULT_THEME_HISTORY: Dict[str, Any] = {
 # ---------------------------------------------------------------------------
 
 def _load_json(path: Path, default: Dict[str, Any]) -> Dict[str, Any]:
+    # deepcopy (not .copy()) so callers that mutate nested dicts (e.g. a
+    # brand-new show recording its first narrative update before any file
+    # exists) can never corrupt the shared module-level DEFAULT_* templates.
     if not path.exists():
-        return default.copy()
+        return copy.deepcopy(default)
     try:
         with path.open("r", encoding="utf-8") as f:
             data = json.load(f)
@@ -132,7 +136,7 @@ def _load_json(path: Path, default: Dict[str, Any]) -> Dict[str, Any]:
             return data
     except Exception as exc:
         logger.warning("Failed to load %s (%s) — using default", path.name, exc)
-        return default.copy()
+        return copy.deepcopy(default)
 
 
 def _save_json(path: Path, data: Dict[str, Any]) -> None:
