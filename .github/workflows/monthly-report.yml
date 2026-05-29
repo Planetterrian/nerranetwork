@@ -74,18 +74,21 @@ jobs:
       - name: Run monthly reports
         env:
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          INPUT_SHOW: ${{ github.event.inputs.show || '' }}
+          INPUT_MONTH: ${{ github.event.inputs.month || '' }}
+          INPUT_YEAR: ${{ github.event.inputs.year || '' }}
         run: |
           ARGS=""
-          if [ "${{ github.event.inputs.show }}" != "" ] && [ "${{ github.event.inputs.show }}" != "all" ]; then
-            ARGS="--show ${{ github.event.inputs.show }}"
+          if [ "$INPUT_SHOW" != "" ] && [ "$INPUT_SHOW" != "all" ]; then
+            ARGS="--show $INPUT_SHOW"
           fi
-          if [ "${{ github.event.inputs.month }}" != "" ]; then
-            ARGS="$ARGS --month ${{ github.event.inputs.month }}"
+          if [ "$INPUT_MONTH" != "" ]; then
+            ARGS="$ARGS --month $INPUT_MONTH"
           fi
-          if [ "${{ github.event.inputs.year }}" != "" ]; then
-            ARGS="$ARGS --year ${{ github.event.inputs.year }}"
+          if [ "$INPUT_YEAR" != "" ]; then
+            ARGS="$ARGS --year $INPUT_YEAR"
           fi
-          python scripts/run_monthly_report.py $ARGS
+          python scripts/run_monthly_report.py "$ARGS"
 
       - name: Generate cross-show briefing
         env:

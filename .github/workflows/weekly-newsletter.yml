@@ -60,19 +60,21 @@ jobs:
         env:
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
           BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
+          INPUT_SHOW: ${{ github.event.inputs.show || '' }}
+          INPUT_DRY_RUN: ${{ github.event.inputs.dry_run || '' }}
         run: |
           ARGS=""
-          if [ "${{ github.event.inputs.show }}" != "" ] && [ "${{ github.event.inputs.show }}" != "all" ]; then
-            ARGS="--show ${{ github.event.inputs.show }}"
+          if [ "$INPUT_SHOW" != "" ] && [ "$INPUT_SHOW" != "all" ]; then
+            ARGS="--show $INPUT_SHOW"
           fi
           # Scheduled runs (cron) actually send; manual dispatch respects the dry_run input.
           if [ "${{ github.event_name }}" = "schedule" ]; then
             echo "Scheduled run — sending for real"
-          elif [ "${{ github.event.inputs.dry_run }}" != "false" ]; then
+          elif [ "$INPUT_DRY_RUN" != "false" ]; then
             ARGS="$ARGS --dry-run"
             echo "Manual dispatch — dry run mode"
           fi
-          python scripts/run_weekly_newsletters.py $ARGS
+          python scripts/run_weekly_newsletters.py "$ARGS"
 
       - name: Generate cross-network intelligence briefing
         # Editorial synthesis across all 11 shows for the past 7 days.

@@ -1,0 +1,16 @@
+# actionlint configuration for Nerra Network
+# See: https://github.com/rhysd/actionlint/blob/main/docs/usage.md#configuration-file
+
+# We intentionally suppress some common stylistic ShellCheck warnings
+# that are very noisy in GitHub Actions contexts (especially around
+# expression expansion and common scripting patterns).
+shellcheck:
+  # These are mostly stylistic / false-positive in the Actions environment:
+  # - SC2086: Unquoted variables (very common because ${{ }} expansion happens before shell)
+  # - SC2034: Unused variables (often used for documentation or future use)
+  # - SC2044 / SC2035: find + glob patterns (widely used and usually safe here)
+  ignore:
+    - SC2086
+    - SC2034
+    - SC2044
+    - SC2035
