@@ -1,0 +1,205 @@
+name: Daily Audit & Automated Remediation
+
+# Consolidated post-publish quality + health gate.
+# Runs after the last show (~12:15 UTC safety net + on successful run-show completion).
+#
+# Responsibilities (consolidated from previous daily-review + health-check + light dashboard triggers):
+# - Full episode quality review (including AI scoring for hallucinations, repetition, short scripts)
+# - Detection of missed episodes (with skip marker awareness)
+# - Automated recovery: dispatch retries for missed shows that lack skip markers
+# - RSS feed freshness / staleness health checks (moved from the late 18:00 health-check.yml)
+# - Production of structured api/daily-review.json (and daily-audit summary) for dashboard + operators
+#
+# This workflow is the primary "did everything ship and was it any good?" gate.
+# It is intentionally earlier and more actionable than heavy nightly maintenance.
+#
+# Past incidents incorporated for prevention/detection:
+# - Missed episodes without markers (PT/UC May 29) → auto-retry dispatch + clear remediation JSON
+# - Dangerously short / thin scripts (Env Intel 710 words) → strengthened in review + generation gates
+# - LLM hallucinations & factual fabrications (Tesla Ep491) → pattern checks + AI review + JSON output
+# - Repetition loops and garbles ("nay-toe", "nassa", repeated phrases) → dedicated check_hallucination_patterns
+# - Workflow bloat → this + nightly-maintenance are now the two main post-pipeline workflows
+
+on:
+  schedule:
+    # Safety net + primary daily audit slot (after last show ~11:30 UTC)
+    - cron: '15 12 * * *'
+
+  workflow_dispatch:
+
+  workflow_run:
+    workflows: ["Run Podcast Show"]
+    types: [completed]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: daily-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Skip only if the triggering run-show job itself failed
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'requirements.txt'
+          extra-packages: "openai python-dotenv"
+          skip-checkout: 'true'
+
+      - name: Run Episode Quality Review + Structured Output
+        id: audit
+        env:
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_DATE: ${{ github.event.inputs.date || '' }}
+          INPUT_SHOW: ${{ github.event.inputs.show || '' }}
+          INPUT_CREATE_ISSUES: ${{ github.event.inputs.create_issues || 'true' }}
+        run: |
+          ARGS=""
+          if [ -n "$INPUT_DATE" ]; then ARGS="$ARGS --date $INPUT_DATE"; fi
+          if [ -n "$INPUT_SHOW" ]; then ARGS="$ARGS --show $INPUT_SHOW"; fi
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "$INPUT_CREATE_ISSUES" = "true" ]; then
+            ARGS="$ARGS --create-issues"
+          fi
+
+          set +e
+          python review_episodes.py "$ARGS" 2>&1 | tee /tmp/audit_output.txt
+          EXIT_CODE=${PIPESTATUS[0]}
+          set -e
+
+          echo "exit_code=$EXIT_CODE" >> "$GITHUB_OUTPUT"
+
+          SUMMARY=$(tail -n 40 /tmp/audit_output.txt | head -c 4000)
+          {
+            echo "summary<<SUMMARY_EOF"
+            echo "$SUMMARY"
+            echo "SUMMARY_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          if [ $EXIT_CODE -eq 1 ]; then
+            echo "::error::CRITICAL issues found — check GitHub issues + api/daily-review.json"
+            exit 1
+          elif [ $EXIT_CODE -eq 2 ]; then
+            echo "::warning::Warnings found"
+            exit 0
+          fi
+
+      - name: RSS Feed Freshness Health Check (consolidated from former health-check.yml)
+        shell: python3 {0}
+        run: |
+          import xml.etree.ElementTree as ET
+          from email.utils import parsedate_to_datetime
+          from datetime import datetime, timezone
+
+          FEEDS = {
+              "podcast.rss": ("Tesla Shorts Time", 48),
+              "omni_view_podcast.rss": ("Omni View", 96),
+              "fascinating_frontiers_podcast.rss": ("Fascinating Frontiers", 96),
+              "planetterrian_podcast.rss": ("Planetterrian Daily", 96),
+              "env_intel_podcast.rss": ("Environmental Intelligence", 120),
+              "models_agents_podcast.rss": ("Models & Agents", 96),
+              "models_agents_beginners_podcast.rss": ("Models & Agents for Beginners", 96),
+              "finansy_prosto_podcast.rss": ("Finansy Prosto", 96),
+              "privet_russian_podcast.rss": ("Privet Russian", 96),
+              "modern_investing_podcast.rss": ("Modern Investing", 120),
+              "unintended_consequences_podcast.rss": ("Unintended Consequences", 120),
+          }
+
+          now = datetime.now(timezone.utc)
+          stale = []
+          for rss_file, (name, max_hours) in FEEDS.items():
+              try:
+                  tree = ET.parse(rss_file)
+                  items = tree.getroot().findall(".//item")
+                  if not items:
+                      stale.append(f"{name}: no episodes")
+                      continue
+                  dates = []
+                  for item in items:
+                      pub = item.find("pubDate")
+                      if pub is not None and pub.text:
+                          try:
+                              dates.append(parsedate_to_datetime(pub.text))
+                          except Exception:
+                              pass
+                  if dates:
+                      latest = max(dates)
+                      age_h = (now - latest).total_seconds() / 3600
+                      if age_h > max_hours:
+                          stale.append(f"{name}: {age_h:.1f}h old (limit {max_hours}h)")
+              except Exception as e:
+                  stale.append(f"{name}: error {e}")
+
+          if stale:
+              print("::error::STALE RSS FEEDS: " + "; ".join(stale))
+              with open("has_stale_rss", "w") as f: f.write("\n".join(stale))
+          else:
+              print("RSS freshness: all feeds OK")
+
+      - name: Automated Remediation (retry missed shows using daily-review.json)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ ! -f api/daily-review.json ]; then
+            echo "No structured audit output — skipping auto-remediation"
+            exit 0
+          fi
+
+          RETRY_SHOWS=$(python3 - <<'PY'
+          import json
+          try:
+              data = json.load(open("api/daily-review.json"))
+              print(" ".join(data.get("remediation", {}).get("auto_retry_shows", [])))
+          except Exception:
+              print("")
+          PY
+          )
+
+          if [ -z "$RETRY_SHOWS" ]; then
+            echo "No auto-retries needed"
+            exit 0
+          fi
+
+          echo "Auto-dispatching recovery for: $RETRY_SHOWS"
+          for s in $RETRY_SHOWS; do
+            gh workflow run run-show.yml -f show="$s" --ref main || echo "Dispatch failed for $s"
+          done
+
+      - name: Notify + Persist Audit Artifacts
+        if: always()
+        env:
+          DAILY_REVIEW_WEBHOOK_URL: ${{ secrets.DAILY_REVIEW_WEBHOOK_URL || '' }}
+          EXIT_CODE: ${{ steps.audit.outputs.exit_code || '0' }}
+          SUMMARY: ${{ steps.audit.outputs.summary || '' }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          # Always commit the structured audit JSON so dashboard / operators can consume it
+          git add api/daily-review.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No new audit artifacts to persist"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git commit -m "Daily audit artifacts for $(date +%Y-%m-%d)" || true
+            git push origin main || echo "Push of audit artifacts failed (non-blocking)"
+          fi
+
+          # Webhook notification on problems
+          if [ -n "$DAILY_REVIEW_WEBHOOK_URL" ] && [ "$EXIT_CODE" != "0" ]; then
+            curl -s -X POST "$DAILY_REVIEW_WEBHOOK_URL" \
+              -H "Content-Type: application/json" \
+              -d "{\"text\":\"Nerra Daily Audit finished with exit $EXIT_CODE\\n$RUN_URL\"}" || true
+          fi

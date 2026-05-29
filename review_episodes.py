@@ -1134,6 +1134,51 @@ def check_tts_artifacts(ep: EpisodeReview) -> None:
         ))
 
 
+def check_hallucination_patterns(ep: EpisodeReview) -> None:
+    """
+    Static, cheap pattern detection for common LLM hallucinations and artifacts
+    observed in production (especially May 29 2026 incidents: fabricated claims,
+    garbled names, abrupt scenario shifts, repetition loops).
+    This runs on every review and complements the full AI review pass.
+    Helps prevent/flag the exact classes of issues that reached listeners.
+    """
+    text = (ep.tts_text or ep.digest_text or "").lower()
+    if not text:
+        return
+
+    findings = []
+
+    # Repeated filler phrases that indicate loops (seen across multiple shows)
+    fillers = ["now let us", "federal-provincial statements", "impact assessment act"]
+    for phrase in fillers:
+        count = text.count(phrase)
+        if count >= 5:
+            findings.append(f"Excessive repetition of '{phrase}' ({count}x) — likely LLM loop/hallucination")
+
+    # Garbled proper nouns that destroy credibility (direct from May 29 review log)
+    garbles = [
+        ("nay-toe", "NATO"),
+        ("nassa", "NASA"),
+        ("chwen", "Qwen"),
+        ("en-vidia", "Nvidia"),
+    ]
+    for bad, good in garbles:
+        if bad in text:
+            findings.append(f"Garble '{bad}' (should be '{good}') — breaks coherence and signals poor generation")
+
+    # Abrupt unexplained mid-episode scenario shifts (Env Intel Ep038)
+    if ("client-meeting" in text or "hypothetical client" in text) and len(text) > 3000:
+        findings.append("Abrupt mid-episode jump into hypothetical consulting scenario without setup — harms flow (known quality killer)")
+
+    if findings:
+        ep.issues.append(Issue(
+            ep.show_slug, ep.episode_num, "warning",
+            "LLM hallucination / generation artifact pattern detected",
+            " | ".join(findings) + ". These patterns have previously produced critical review failures and listener-facing problems. Strongly consider re-generation or deletion.",
+            file_path=str(ep.tts_path or ep.digest_path),
+        ))
+
+
 def _load_reviewer_settings(show_slug: str) -> tuple[str, int, float]:
     """Return (model, max_tokens, temperature) for reviewing this show.
 
@@ -1828,6 +1873,7 @@ def run_review(
         check_pipeline_metrics(ep)
         check_story_duplication(ep)
         check_tts_artifacts(ep)
+        check_hallucination_patterns(ep)  # New: detect common LLM fabrication patterns from past incidents (e.g. May 29 2026)
 
     # Cross-episode checks
     check_cross_episode_duplicates(episodes)
@@ -1883,6 +1929,13 @@ def run_review(
         else:
             logger.info("No actionable issues — skipping GitHub issue creation")
 
+    # Always write structured JSON for automation + dashboard + daily-audit workflow
+    json_path = PROJECT_ROOT / "api" / "daily-review.json"
+    try:
+        write_review_json(target_date, episodes, missed_issues, json_path)
+    except Exception as exc:
+        logger.warning("Failed to write daily-review.json: %s", exc)
+
     # Summary
     n_missed = sum(1 for i in missed_issues if i.severity == "critical")
     n_skipped = sum(1 for i in missed_issues if i.severity == "warning")
@@ -1899,6 +1952,72 @@ def run_review(
     elif total_warnings > 0:
         return 2
     return 0
+
+
+def write_review_json(
+    target_date: datetime.date,
+    episodes: List[EpisodeReview],
+    missed_issues: List[Issue],
+    output_path: Path,
+) -> None:
+    """Write a machine-readable summary for automation and the dashboard."""
+    all_issues = list(missed_issues)
+    for ep in episodes:
+        all_issues.extend(ep.issues)
+
+    critical = [i for i in all_issues if i.severity == "critical"]
+    warnings = [i for i in all_issues if i.severity == "warning"]
+
+    # Identify shows that should be auto-retried (missed with no skip marker)
+    retry_candidates = []
+    for issue in missed_issues:
+        if issue.severity == "critical" and "Missed episode" in issue.title:
+            retry_candidates.append(issue.show)
+
+    data = {
+        "date": target_date.isoformat(),
+        "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "summary": {
+            "episodes_reviewed": len(episodes),
+            "critical_issues": len(critical),
+            "warning_issues": len(warnings),
+            "missed_episodes": len([i for i in missed_issues if i.severity == "critical"]),
+            "skipped_episodes": len([i for i in missed_issues if i.severity == "warning"]),
+        },
+        "remediation": {
+            "auto_retry_shows": sorted(set(retry_candidates)),
+            "recommendation": (
+                "Run `gh workflow run run-show.yml -f show=<slug>` for the shows above "
+                "if they are not intentionally skipped."
+            ) if retry_candidates else "No automatic retries recommended.",
+        },
+        "missed_and_skipped": [
+            {
+                "show": i.show,
+                "severity": i.severity,
+                "title": i.title,
+                "detail": i.detail,
+            }
+            for i in missed_issues
+        ],
+        "episodes": [
+            {
+                "show": ep.show_slug,
+                "episode_num": ep.episode_num,
+                "critical": len([i for i in ep.issues if i.severity == "critical"]),
+                "warnings": len([i for i in ep.issues if i.severity == "warning"]),
+                "issues": [
+                    {"severity": i.severity, "title": i.title, "detail": i.detail}
+                    for i in ep.issues
+                ],
+            }
+            for ep in episodes
+        ],
+    }
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    logger.info("Wrote structured review summary to %s", output_path)
 
 
 def main():
