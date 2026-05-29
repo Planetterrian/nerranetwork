@@ -1630,12 +1630,13 @@ def generate_podcast_script(
         )
         retry_prompt = (
             f"The script you just wrote is only {word_count} words. "
-            f"Please rewrite it with more substance:\n"
-            f"- Add one missing element per story only if useful: a brief "
-            f"listener takeaway, a transition, or a one-sentence why-it-matters\n"
-            f"- Do NOT pad existing stories with filler or repeat content\n"
-            f"- Do NOT add new stories \u2014 just deepen the existing ones\n"
-            f"- Better to stay short than to repeat yourself\n\n"
+            f"Please rewrite it with significantly more substance and natural flow while "
+            f"staying strictly faithful to the provided stories:\n"
+            f"- For each story, add 1-2 listener takeaways, implications, a smooth transition, "
+            f"or a concrete 'why this matters' sentence drawn from the details already present\n"
+            f"- Expand the narrative voice with conversational bridges between stories\n"
+            f"- Do NOT invent new facts, new stories, or repeat any sentence verbatim\n"
+            f"- Aim for at least {min_words} words of real spoken content\n\n"
             f"Here is your short script to expand:\n\n{text}"
         )
         text2, meta2 = _call_grok(

@@ -1712,8 +1712,21 @@ def _maybe_record_monthly_snapshot(tracker: dict, today: "datetime.date") -> Non
     if snapshots and snapshots[-1].get("month") == current_month:
         return
     summary = tracker.get("summary", {})
+    # Emit a snapshot shape compatible with the public show page template
+    # (which expects portfolio_pct / nasdaq_pct / alpha_pct / trades / win_rate)
+    # and the richer snapshots produced by scripts/run_monthly_mit_episode.py.
+    # Daily hook snapshots (written on month rollover during a regular episode)
+    # don't have the full per-month closed-trade aggregation, so the three
+    # comparison percentages are left as None (template shows "—").
     snapshot = {
         "month": current_month,
+        "trades": summary.get("total_trades", 0),
+        "win_rate": summary.get("win_rate_pct", 0.0),
+        "portfolio_pct": None,
+        "nasdaq_pct": None,
+        "alpha_pct": None,
+        "portfolio_pnl": summary.get("cumulative_pnl", 0.0),
+        # Legacy keys kept for any direct consumers of the raw tracker
         "total_trades": summary.get("total_trades", 0),
         "win_rate_pct": summary.get("win_rate_pct", 0.0),
         "cumulative_pnl": summary.get("cumulative_pnl", 0.0),

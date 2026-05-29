@@ -255,8 +255,8 @@ class TestCheckMissedEpisodes:
 
     def test_not_scheduled_not_flagged(self):
         """A show not scheduled for the target date should not be flagged."""
-        # Day 14 is even — omni_view (odd schedule) should not be flagged
-        target = datetime.date(2026, 4, 14)
+        # Day 13 is odd — finansy_prosto (even schedule) should not be flagged
+        target = datetime.date(2026, 4, 13)
         found: list[EpisodeReview] = []
-        issues = check_missed_episodes(target, found, show_filter="omni_view")
+        issues = check_missed_episodes(target, found, show_filter="finansy_prosto")
         assert len(issues) == 0

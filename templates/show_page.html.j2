@@ -354,9 +354,9 @@
                             <td style="padding:6px 12px;font-weight:600;">{{ m.month }}</td>
                             <td style="padding:6px 12px;text-align:right;">{{ m.trades or 0 }}</td>
                             <td style="padding:6px 12px;text-align:right;">{{ "{:.0f}".format(m.win_rate or 0) }}%</td>
-                            <td style="padding:6px 12px;text-align:right;font-variant-numeric:tabular-nums;">{% if m.portfolio_pct is not none %}{{ "{:+.2f}".format(m.portfolio_pct) }}%{% else %}—{% endif %}</td>
-                            <td style="padding:6px 12px;text-align:right;font-variant-numeric:tabular-nums;color:var(--nn-text-muted);">{% if m.nasdaq_pct is not none %}{{ "{:+.2f}".format(m.nasdaq_pct) }}%{% else %}—{% endif %}</td>
-                            <td style="padding:6px 12px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:{% if (m.alpha_pct or 0) >= 0 %}#10b981{% else %}#ef4444{% endif %};">{% if m.alpha_pct is not none %}{{ "{:+.2f}".format(m.alpha_pct) }}%{% else %}—{% endif %}</td>
+                            <td style="padding:6px 12px;text-align:right;font-variant-numeric:tabular-nums;">{% if m.portfolio_pct is defined and m.portfolio_pct is not none %}{{ "{:+.2f}".format(m.portfolio_pct) }}%{% else %}—{% endif %}</td>
+                            <td style="padding:6px 12px;text-align:right;font-variant-numeric:tabular-nums;color:var(--nn-text-muted);">{% if m.nasdaq_pct is defined and m.nasdaq_pct is not none %}{{ "{:+.2f}".format(m.nasdaq_pct) }}%{% else %}—{% endif %}</td>
+                            <td style="padding:6px 12px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:{% if (m.alpha_pct or 0) >= 0 %}#10b981{% else %}#ef4444{% endif %};">{% if m.alpha_pct is defined and m.alpha_pct is not none %}{{ "{:+.2f}".format(m.alpha_pct) }}%{% else %}—{% endif %}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
