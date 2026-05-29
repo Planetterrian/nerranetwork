@@ -112,6 +112,9 @@
                     <a href="#episodes" class="nn-btn nn-btn-primary">{% if _is_ru %}Слушать{% else %}Listen Now{% endif %}</a>
                     <a href="{{ path_prefix }}{{ blog_page }}" class="nn-btn">{% if _is_ru %}Читать блог{% else %}Read Blog{% endif %}</a>
                     <a href="{{ path_prefix }}{{ summaries_page }}" class="nn-btn">{% if _is_ru %}Все выпуски{% else %}View Summaries{% endif %}</a>
+                    {% if narrative_page_url %}
+                    <a href="{{ path_prefix }}{{ narrative_page_url }}" class="nn-btn">{% if _is_ru %}Хронология{% else %}Story Tracker{% endif %}</a>
+                    {% endif %}
                     {% if apple_podcasts_url %}
                     <a href="{{ apple_podcasts_url | with_utm(campaign=show_slug) }}" class="nn-btn" target="_blank" rel="noopener" data-show="{{ show_slug }}">Apple Podcasts</a>
                     {% endif %}

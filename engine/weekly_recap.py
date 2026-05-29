@@ -160,4 +160,25 @@ def build_weekly_recap_digest(
         except Exception:
             pass
 
+    # Phase 3: same narrative framing for the generalized memory shows
+    # (Models & Agents, Fascinating Frontiers, Planetterrian). Best-effort.
+    else:
+        try:
+            from pathlib import Path as _Path
+            from engine import show_memory
+            mcfg = show_memory.get_config(show_slug)
+            if mcfg is not None:
+                tracker = show_memory.load_narrative_tracker(
+                    _Path("digests") / show_slug, mcfg
+                )
+                narrative_block = show_memory.build_narrative_status_block(tracker, mcfg.label)
+                if narrative_block:
+                    recap += (
+                        "\n\n" + narrative_block +
+                        "\n\nUse the narrative status above to highlight meaningful "
+                        "progress or open questions across the week."
+                    )
+        except Exception:
+            pass
+
     return recap

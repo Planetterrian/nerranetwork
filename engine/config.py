@@ -465,6 +465,12 @@ class ShowConfig:
     # depend on daily news cycles.
     narrative_mode: bool = False
     topic_queue_file: str = ""
+    # Recursive narrative-memory (Phase 3). When true, the show's pre_fetch
+    # hook injects a {narrative_memory_section} block (programs + open
+    # questions + mined themes) into the digest/podcast prompts, and its
+    # post_generate hook mines themes from each episode. Per-show config lives
+    # in engine.show_memory.SHOW_MEMORY_CONFIGS. Default false = no-op.
+    memory_enabled: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -636,6 +642,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         weekly_recap_on_sunday=bool(data.get("weekly_recap_on_sunday", False)),
         narrative_mode=bool(data.get("narrative_mode", False)),
         topic_queue_file=str(data.get("topic_queue_file", "") or ""),
+        memory_enabled=bool(data.get("memory_enabled", False)),
     )
     logger.info("Loaded config for '%s' from %s", config.name, path)
     return config
