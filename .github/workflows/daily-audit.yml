@@ -67,10 +67,11 @@ jobs:
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          INPUT_DATE: ${{ github.event.inputs.date || '' }}
-          INPUT_SHOW: ${{ github.event.inputs.show || '' }}
-          INPUT_CREATE_ISSUES: ${{ github.event.inputs.create_issues || 'true' }}
+          INPUT_DATE: ${{ (github.event.inputs || {}).date || '' }}
+          INPUT_SHOW: ${{ (github.event.inputs || {}).show || '' }}
+          INPUT_CREATE_ISSUES: ${{ (github.event.inputs || {}).create_issues || 'true' }}
         run: |
+          # shellcheck disable=SC2086
           ARGS=""
           if [ -n "$INPUT_DATE" ]; then ARGS="$ARGS --date $INPUT_DATE"; fi
           if [ -n "$INPUT_SHOW" ]; then ARGS="$ARGS --show $INPUT_SHOW"; fi
