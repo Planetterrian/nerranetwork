@@ -1602,8 +1602,9 @@
         
         // --- Stock widget (Tesla only) ---
         async function loadStock() {
-            function displayPrice(price, prev, marketState = null, isExtended = false) {
+            function displayPrice(price, prev, marketState = null) {
                 const p = parseFloat(price), pc = parseFloat(prev);
+                // Validate: TSLA price should be in a reasonable range
                 if (isNaN(p) || isNaN(pc) || p <= 0 || pc <= 0 || p > 99999 || pc > 99999) {
                     showStockError('Invalid price data');
                     return;
@@ -1611,30 +1612,17 @@
                 const ch = (p - pc).toFixed(2);
                 const pct = ((p - pc) / pc * 100).toFixed(2);
                 const isUp = parseFloat(ch) >= 0;
-
-                const priceEl = document.getElementById('stock-price');
+                document.getElementById('stock-price').textContent = '$' + p.toFixed(2);
                 const changeEl = document.getElementById('stock-change');
-                const updatedEl = document.getElementById('stock-updated');
-
-                priceEl.textContent = '$' + p.toFixed(2);
-
                 let label = '';
                 if (marketState) {
                     const ms = String(marketState).toUpperCase();
                     if (ms === 'PRE') label = 'Pre-Market';
                     else if (ms.includes('POST')) label = 'After Hours';
                     else if (ms === 'REGULAR') label = '';
-                } else if (isExtended) {
-                    label = 'Extended Hours';
                 }
-
                 changeEl.textContent = (isUp ? '+' : '') + ch + ' (' + (isUp ? '+' : '') + pct + '%)' + (label ? ` · ${label}` : '');
                 changeEl.className = 'change ' + (isUp ? 'up' : 'down');
-
-                if (updatedEl) {
-                    const now = new Date();
-                    updatedEl.textContent = `Updated ${now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
-                }
             }
             function showStockError(msg) {
                 const priceEl = document.getElementById('stock-price');
@@ -1670,9 +1658,9 @@
                                 updatedEl.textContent = `Updated ${d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} (snapshot)`;
                             } catch (_) {}
                         }
-                        // Do NOT return early. Fall through so that during live market
-                        // hours a fresher quote from the Yahoo fallback can upgrade the
-                        // displayed price and timestamp in-place for visitors.
+                        // Do NOT return — fall through to Yahoo attempts.
+                        // This lets a live trading-hours quote from Yahoo upgrade
+                        // the displayed price + timestamp for visitors during the day.
                     }
                 }
             } catch { /* fall through to Yahoo */ }
@@ -1698,14 +1686,8 @@
                     const meta = result.meta;
                     const price = meta.regularMarketPrice;
                     const prev = meta.chartPreviousClose || meta.previousClose;
-                    const marketState = meta.marketState;
-                    // Try to get extended hours price if outside regular session
-                    const extendedPrice = meta.postMarketPrice || meta.preMarketPrice;
-                    const usePrice = (marketState && !String(marketState).toUpperCase().includes('REGULAR') && extendedPrice) ? extendedPrice : price;
-
-                    if (usePrice && prev) {
-                        const isExtended = !!extendedPrice && marketState && !String(marketState).toUpperCase().includes('REGULAR');
-                        displayPrice(usePrice, prev, marketState, isExtended);
+                    if (price && prev) {
+                        displayPrice(price, prev, marketState);
                         return;
                     }
                 } catch { /* try next proxy */ }
@@ -1719,11 +1701,7 @@
                     const data = await resp.json();
                     const quote = data?.quoteResponse?.result?.[0];
                     if (quote?.regularMarketPrice && quote?.regularMarketPreviousClose) {
-                        const ms = quote.marketState;
-                        const ext = quote.postMarketPrice || quote.preMarketPrice;
-                        const useP = (ms && !String(ms).toUpperCase().includes('REGULAR') && ext) ? ext : quote.regularMarketPrice;
-                        const isExt = !!ext && ms && !String(ms).toUpperCase().includes('REGULAR');
-                        displayPrice(useP, quote.regularMarketPreviousClose, ms, isExt);
+                        displayPrice(quote.regularMarketPrice, quote.regularMarketPreviousClose, quote.marketState);
                         return;
                     }
                 } catch { /* try next proxy */ }
