@@ -1612,6 +1612,86 @@ def generate_tesla_narrative_page(*, dry_run=False):
     return out_path
 
 
+def _load_narrative_data(slug):
+    """Load a memory-enabled show's narrative tracker for its public page."""
+    import json
+    from engine import show_memory
+    mcfg = show_memory.get_config(slug)
+    if mcfg is None:
+        return None
+    tracker_path = ROOT / "digests" / slug / mcfg.narrative_filename
+    if not tracker_path.exists():
+        return None
+    try:
+        data = json.loads(tracker_path.read_text(encoding="utf-8"))
+        return {
+            "available": True,
+            "programs": data.get("programs", {}),
+            "last_updated": data.get("last_updated", ""),
+        }
+    except Exception:
+        return None
+
+
+def generate_narrative_page(slug, *, dry_run=False):
+    """Generate the public Narrative Tracker page for a memory-enabled show.
+
+    Generic counterpart to generate_tesla_narrative_page (Tesla keeps its own,
+    richer page). No-ops cleanly when the show has no memory config or no
+    committed tracker yet.
+    """
+    from engine import show_memory
+    cfg = NETWORK_SHOWS.get(slug)
+    mcfg = show_memory.get_config(slug)
+    if cfg is None or mcfg is None:
+        return None
+    narrative_data = _load_narrative_data(slug)
+    if not narrative_data:
+        return None
+
+    env = _get_jinja_env()
+    template = env.get_template("narrative_page.html.j2")
+    context = {
+        "narrative": narrative_data,
+        "show_name": cfg["name"],
+        "show_slug": slug,
+        "x_account": cfg.get("x_account") or "",
+        "brand_color": cfg.get("brand_color", ""),
+        "source_path": f"digests/{slug}/{mcfg.narrative_filename}",
+        "page_title": f"{cfg['name']} — Narrative Tracker | Nerra Network",
+        "meta_description": (
+            f"The ongoing storylines {cfg['name']} tracks over time — current status, "
+            "key open questions, and real progress across episodes."
+        ),
+        "og_image": cfg.get("podcast_image", ""),
+        "path_prefix": "",
+        "is_russian": False,
+        "t": {
+            "nav_shows": "Shows", "nav_blog": "Blog", "all_blog_posts": "All Blog Posts",
+            "show_blog_suffix": "Blog", "nav_start_here": "Start Here", "nav_listen": "How to Listen",
+            "nav_about": "About", "nav_player": "Player", "nav_home": "Home",
+            "footer_network_status": "Network Status",
+        },
+        "all_shows": _build_all_shows_list(),
+    }
+    html = template.render(**context)
+    out_path = ROOT / cfg["show_page"].replace(".html", "-narrative.html")
+    if dry_run:
+        print(f"[dry-run] Would write {out_path}")
+        return out_path
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote narrative page: {out_path}")
+    return out_path
+
+
+def generate_all_narrative_pages(*, dry_run=False):
+    """Generate narrative pages for every memory-configured show (except Tesla,
+    which has its own dedicated generator)."""
+    from engine import show_memory
+    for slug in show_memory.SHOW_MEMORY_CONFIGS:
+        generate_narrative_page(slug, dry_run=dry_run)
+
+
 def generate_show_page(slug, *, dry_run=False):
     """Render and write a show page for a single show."""
     cfg = NETWORK_SHOWS[slug]
@@ -1771,8 +1851,19 @@ def generate_show_page(slug, *, dry_run=False):
         page_title = f"{cfg['name']} — {hook_snippet} | Nerra Network"
         meta_description = f"Latest: {latest_episode_title}. {cfg.get('meta_description', '')}".strip()
 
+    # Phase 3: link to the show's public narrative tracker page when it has one
+    # (Tesla has a dedicated page; other shows use the generic generator).
+    from engine import show_memory as _sm
+    if slug == "tesla":
+        narrative_page_url = "tesla-narrative.html"
+    elif _sm.get_config(slug) is not None:
+        narrative_page_url = cfg["show_page"].replace(".html", "-narrative.html")
+    else:
+        narrative_page_url = ""
+
     context = {
         **cfg,
+        "narrative_page_url": narrative_page_url,
         "path_prefix": prefix,
         "show_name": cfg["name"],
         "show_slug": cfg["slug"],
@@ -1841,6 +1932,13 @@ def generate_all_show_pages(*, dry_run=False):
         tesla_narrative = generate_tesla_narrative_page(dry_run=dry_run)
         if tesla_narrative:
             paths.append(tesla_narrative)
+
+    # Phase 3: narrative pages for the other memory-enabled shows.
+    from engine import show_memory
+    for slug in show_memory.SHOW_MEMORY_CONFIGS:
+        result = generate_narrative_page(slug, dry_run=dry_run)
+        if result:
+            paths.append(result)
 
     return paths
 
@@ -2265,6 +2363,7 @@ def generate_sitemap(*, dry_run=False):
     from xml.sax.saxutils import escape as _esc
     import os
     from datetime import datetime, timezone
+    from engine.show_memory import get_config as _sm_get_config
 
     base = "https://nerranetwork.com"
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -2300,6 +2399,13 @@ def generate_sitemap(*, dry_run=False):
                      _lm_or_today(cfg["summaries_page"])))
         urls.append((f"{base}/blog/{slug}/index.html", "0.7",
                      _lm_or_today(f"blog/{slug}/index.html")))
+        # Public narrative tracker page (Tesla + Phase 3 memory shows), when present.
+        _narr = "tesla-narrative.html" if slug == "tesla" else (
+            cfg["show_page"].replace(".html", "-narrative.html")
+            if _sm_get_config(slug) else None
+        )
+        if _narr and (ROOT / _narr).exists():
+            urls.append((f"{base}/{_narr}", "0.6", _lm_or_today(_narr)))
 
     # Network blog hub
     urls.append((f"{base}/blog/index.html", "0.7",
@@ -2817,6 +2923,8 @@ def main():
         # Tesla Narrative page
         if args.show == "tesla":
             generate_tesla_narrative_page(dry_run=args.dry_run)
+        # Phase 3 narrative page for other memory-enabled shows (no-op otherwise)
+        generate_narrative_page(args.show, dry_run=args.dry_run)
         if args.blogs:
             generate_blog_posts(args.show, dry_run=args.dry_run)
             generate_blog_index(args.show, dry_run=args.dry_run)

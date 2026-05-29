@@ -1018,6 +1018,12 @@ def run(args: argparse.Namespace) -> None:
         # Merge extra context from hooks (e.g. price, change_str, x_posts_section)
         template_vars.update(extra_context)
 
+        # Phase 3 recursive memory: the digest/podcast prompts for memory-enabled
+        # shows reference {narrative_memory_section}, supplied by the show's
+        # pre_fetch hook. Default it to empty so a hook-load failure (or a show
+        # without memory) can never KeyError in prompt substitution.
+        template_vars.setdefault("narrative_memory_section", "")
+
         # 7. Generate digest
         #
         # Sunday weekly-recap mode (May 2026 schedule overhaul). When the

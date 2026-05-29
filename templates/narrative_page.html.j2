@@ -1,0 +1,111 @@
+{% extends "base.html.j2" %}
+
+{% block title %}{{ show_name }} — Narrative Tracker & Storylines{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1100px; padding: calc(var(--nav-height) + var(--sp-12)) 0 var(--sp-8);">
+  <style>
+    @media (max-width: 640px) {
+      .glass-card { padding: 14px !important; }
+      .program-card { padding: 14px !important; }
+    }
+    .program-card {
+      background: var(--nn-surface);
+      border: 1px solid var(--nn-border);
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: var(--sp-5);
+    }
+    .program-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .status-text { line-height: 1.5; margin-bottom: 10px; }
+    .meta-row { font-size: 0.85rem; color: var(--nn-text-muted); }
+  </style>
+
+  <div style="margin-bottom: var(--sp-8);">
+    <h1 style="font-size: 2.3rem; margin-bottom: 0.3rem;">{{ show_name }} — Narrative Tracker</h1>
+    <p style="font-size: 1.1rem; color: var(--nn-text-muted); max-width: 820px;">
+      {{ show_name }} maintains a living memory of the major ongoing storylines in its field — so
+      regular listeners get continuity, not just isolated daily headlines. This page shows the current
+      status of each tracked program, the last time we covered it in depth, and the key open questions
+      we're following.
+    </p>
+    <p style="font-size: 0.85rem; color: var(--nn-text-muted); margin-top: 0.4rem;">
+      Updated as episodes ship. Source: <code>{{ source_path }}</code>
+    </p>
+  </div>
+
+  {% if narrative and narrative.programs %}
+    <div class="glass-card" style="padding: var(--sp-6); margin-bottom: var(--sp-8);">
+      <h2 style="margin-top:0; margin-bottom: var(--sp-5);">Tracked Programs</h2>
+
+      {% for key, prog in narrative.programs.items() %}
+        <div class="program-card">
+          <div class="program-header">
+            <h3 style="margin:0; font-size:1.3rem;">{{ prog.display_name or key.title() }}</h3>
+            {% if prog.last_major_update_episode %}
+              <span class="meta-row">
+                Last deep coverage: <strong>Ep {{ prog.last_major_update_episode }}</strong> ({{ prog.last_major_update_date }})
+              </span>
+            {% else %}
+              <span class="meta-row">Not yet deeply covered on the show</span>
+            {% endif %}
+          </div>
+
+          <p class="status-text">{{ prog.status }}</p>
+
+          {% if prog.key_open_questions %}
+            <div style="margin-bottom: 8px;">
+              <strong style="font-size:0.9rem;">Key open questions:</strong>
+              <ul style="margin: 4px 0 0 18px; padding:0; font-size:0.9rem;">
+                {% for q in prog.key_open_questions %}
+                  <li>{{ q }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          {% endif %}
+
+          {% if prog.show_confidence %}
+            <div class="meta-row">
+              Show confidence on major timelines: <strong>{{ prog.show_confidence }}</strong>
+            </div>
+          {% endif %}
+
+          {% if prog.notable_claims %}
+            <div style="margin-top: 10px; font-size:0.85rem;">
+              <strong>Notable claims surfaced on the show:</strong>
+              {% for claim in prog.notable_claims %}
+                <div style="margin-top:4px; padding-left:8px; border-left:2px solid var(--nn-border);">
+                  Ep {{ claim.episode }} ({{ claim.date }}): "{{ claim.claim }}" — <em>Status: {{ claim.status }}</em>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p style="color: var(--nn-text-muted);">Narrative tracker data is being initialized.</p>
+  {% endif %}
+
+  <div style="margin-top: var(--sp-8); font-size:0.85rem; color:var(--nn-text-muted); line-height:1.5;">
+    <p>
+      This is part of {{ show_name }}'s long-term memory system (narrative tracking + theme mining from
+      our own episodes). The goal is for the show to become a genuinely useful running chronicle of its
+      field, not a stream of disposable daily recaps.
+    </p>
+    {% if x_account %}
+    <p style="margin-top:12px;">
+      Want to suggest an update to any program status? Reach out on X at
+      <a href="https://x.com/{{ x_account }}" target="_blank" rel="noopener">@{{ x_account }}</a>.
+    </p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

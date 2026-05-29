@@ -467,6 +467,35 @@ site-wide within a day without committing hundreds of HTML files):
   like the gallery. Live Buttondown subscriber count / referral need a runtime
   API dependency and were left out. Drift guards: `tests/test_phase2_growth.py`.
 
+### Recursive narrative memory generalized (Phase 3, May 2026)
+
+The content moat: Tesla's narrative-memory pattern generalized so other shows
+become longitudinal chronicles, not disposable daily recaps.
+
+- **`engine/show_memory.py`** — generalized engine (narrative tracker +
+  performance signals + auto-mined themes), parameterized by a `MemoryConfig`
+  (slug, label, file_prefix, seeded `default_programs`, `theme_keywords`).
+  `SHOW_MEMORY_CONFIGS` registers **Models & Agents, Fascinating Frontiers,
+  Planetterrian** (MIT already has its own `investment_tracker`; Tesla keeps
+  its bespoke `engine/tesla_memory.py` — a future cleanup could fold Tesla into
+  this engine).
+- **Flag-gated, single placeholder.** Prompts carry one
+  `{narrative_memory_section}` placeholder; the show's thin hook
+  (`shows/hooks/<slug>.py` → `show_memory.memory_pre_fetch/`
+  `memory_post_generate`) injects the composed section when
+  `config.memory_enabled` (new YAML flag, default false) is true, and an empty
+  string otherwise — so **disabled is a true byte-for-byte no-op**.
+  `run_show.py` `setdefault`s the key so a hook-load failure can never KeyError.
+- **Public "story tracker" pages.** `generate_narrative_page(slug)` +
+  `templates/narrative_page.html.j2` render `<show>-narrative.html` from the
+  committed `digests/<slug>/<slug>_narrative_tracker.json`; show pages link it
+  via a "Story Tracker" button. Sunday recaps inject the narrative block too.
+- **Seeded conservatively** (factual program status, no speculative claims);
+  themes accrue automatically from each digest. Operator can disable any show
+  with one YAML flag (`memory_enabled: false`) — per landmine #17, A/B-listen
+  before trusting the output change. Drift guards: `tests/test_phase3_memory.py`
+  (+ `tests/test_show_memory.py` still pins the untouched Tesla module).
+
 ## Current Refactoring Goal
 
 **Extract duplicated code from the show scripts into `engine/` modules.**
