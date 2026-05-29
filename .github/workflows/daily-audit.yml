@@ -170,35 +170,7 @@ jobs:
         if: always()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # shellcheck disable=SC2086
-          if [ ! -f api/daily-review.json ]; then
-            echo "No structured audit output — skipping auto-remediation"
-            exit 0
-          fi
-
-          RETRY_SHOWS=$(python3 - <<'PY'
-          import json
-          try:
-              data = json.load(open("api/daily-review.json"))
-              print(" ".join(data.get("remediation", {}).get("auto_retry_shows", [])))
-          except Exception:
-              print("")
-          PY
-          )
-
-          if [ -z "$RETRY_SHOWS" ]; then
-            echo "No auto-retries needed"
-            exit 0
-          fi
-
-          # shellcheck disable=SC2086
-          echo "Auto-dispatching recovery for: $RETRY_SHOWS"
-          # shellcheck disable=SC2086
-          read -ra SHOWS <<< "$RETRY_SHOWS"
-          for s in "${SHOWS[@]}"; do
-            gh workflow run run-show.yml -f show="$s" --ref main || echo "Dispatch failed for $s"
-          done
+        run: python scripts/dispatch_audit_retries.py
 
       - name: Notify + Persist Audit Artifacts
         if: always()
