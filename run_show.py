@@ -1844,6 +1844,36 @@ def run(args: argparse.Namespace) -> None:
             # Apply pronunciation fixes
             podcast_script = _apply_pronunciation(podcast_script, args.show)
 
+            # Lightweight Listener Value Score (automated pre-TTS quality gate)
+            # Scores the final script on dimensions that correlate with listener retention:
+            # memory/narrative continuity, concrete value, and overall engagement potential.
+            try:
+                from engine import listener_value_scorer
+                score_result = listener_value_scorer.score_script(
+                    podcast_script,
+                    show_slug=args.show,
+                    memory_blocks=template_vars  # passes the injected memory context
+                )
+                logger.info(
+                    "Listener Value Score for %s Ep%d: %.1f/10 (narrative: %.1f, value: %.1f, engagement: %.1f)",
+                    args.show, episode_num,
+                    score_result.get("overall", 0),
+                    score_result.get("narrative_continuity", 0),
+                    score_result.get("listener_value", 0),
+                    score_result.get("engagement_potential", 0)
+                )
+                if score_result.get("overall", 10) < 6.5:
+                    logger.warning(
+                        "Listener Value Score below threshold (%.1f). Consider review before publishing. "
+                        "Suggestions: %s",
+                        score_result.get("overall", 0),
+                        score_result.get("suggestions", "See full score output")
+                    )
+                # Record for later analysis
+                metrics.record("listener_value_overall", round(score_result.get("overall", 0), 1))
+            except Exception as exc:
+                logger.debug("Listener value scoring skipped (non-fatal): %s", exc)
+
             # Item 4: hard per-episode TTS char cap (checked after final script clean,
             # before any synthesis work). 0 = disabled (current default for all shows).
             max_per_tts = getattr(config, "max_tts_chars_per_episode", 0) or 0

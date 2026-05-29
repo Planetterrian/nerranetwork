@@ -862,13 +862,15 @@ def _correct_common_llm_text_mistakes(text: str) -> str:
         # The classic framing line (one of the framings in intros.py)
         (r"neither do['’]s the news cycle", "neither does the news cycle"),
         (r"Tela never sleeps", "Tesla never sleeps"),
-        # All common manglings of the show name the operator has seen
-        (r"\bTela Shorts? Time[,\s]*[Dd]aily\b", "Tesla Shorts Time Daily"),
-        (r"\bTesla Short['’]?s Time[,\s]*[Dd]aily\b", "Tesla Shorts Time Daily"),
-        (r"\bTesla Shorts? Time[,\s]*[Dd]aily\b", "Tesla Shorts Time Daily"),
+        # All common manglings of the show name the operator has seen.
+        # Made more permissive to catch periods, commas, and sentence breaks
+        # (e.g. "Tesla Short's time. Daily" or "Shorts Time. Daily episode").
+        (r"\bTela Shorts? Time[.,;\s]*[Dd]aily\b", "Tesla Shorts Time Daily"),
+        (r"\bTesla Short['’]?s Time[.,;\s]*[Dd]aily\b", "Tesla Shorts Time Daily"),
+        (r"\bTesla Shorts? Time[.,;\s]*[Dd]aily\b", "Tesla Shorts Time Daily"),
         (r"welcome to Tela Short", "welcome to Tesla Shorts Time Daily"),
         (r"welcome to Tesla Short['’]s Time", "welcome to Tesla Shorts Time Daily"),
-        # Catch the exact user-reported opening from Ep490
+        # Catch the exact user-reported opening from Ep490 / similar
         (r"welcome to Tela Short's Time, daily", "Welcome to Tesla Shorts Time Daily"),
     ]
     for pattern, repl in replacements:

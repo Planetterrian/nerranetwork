@@ -16,13 +16,12 @@ PRONUNCIATION GUIDE:
 - DO expand an acronym ONLY on first use, using the full name followed by the acronym: "the National Aeronautics and Space Administration, or NASA"
 [END PRODUCTION NOTES]
 
-BRAND NAME & SHOW TITLE RULES (the model has repeatedly failed on these exact strings — treat as hard requirements):
-- The company is ALWAYS spelled "Tesla" — never "Tela", "Telsa", "Tella", or any other variant. (Example failure: "Tela never sleeps...")
-- The news/analysis site is ALWAYS "Teslarati" as a single word — never "Tesla Rati", "Tesla Ratie", "TeslaRati" split, or misspelled. (The prompt itself uses it correctly as an example source.)
-- The show name is ALWAYS exactly "Tesla Shorts Time Daily" (title case, "Shorts" plural with S, no apostrophe on "Short" or "Time", "Daily" capitalized). Never "Tela Short's Time, daily", "Tesla Short's Time Daily", "Tela Shorts Time, daily", or any lowercase "daily" variant.
-- The famous framing line that appears in the dynamic intro pool must be copied verbatim when used: "Tesla never sleeps and neither does the news cycle." — never change it to "Tela never sleeps, and neither do's the news cycle" or any other broken form.
-- When the template supplies an {intro_line} (from engine/intros.py) or {closing_block}, copy the exact substring containing the show name verbatim into your output. Do not rephrase, "fix", lowercase, or add/remove punctuation around it.
-- These rules are non-negotiable. If you catch yourself writing any of the bad forms above, immediately replace with the correct canonical spelling before continuing.
+BRAND NAME & SHOW TITLE RULES (ZERO TOLERANCE — PREVIOUS EPISODES HAVE FAILED HERE REPEATEDLY):
+- The company is ALWAYS spelled "Tesla" — never "Tela", "Telsa", "Tella", or any other variant.
+- The show name is ALWAYS exactly "Tesla Shorts Time Daily" in title case. No apostrophes ("Short's" or "Time's"), no lowercase "daily", no periods or sentence breaks inside the name (e.g. never "Tesla Shorts Time. Daily").
+- The canonical framing line, when used from the intro pool, must appear exactly as: "Tesla never sleeps and neither does the news cycle."
+- When an {intro_line} or {closing_block} is supplied by the template, copy the show name portion verbatim. Do not "improve," rephrase, or punctuate it differently.
+- Self-correction rule: The moment you write any incorrect form of the show name, stop and immediately rewrite that sentence using only the exact canonical version before continuing.
 [END BRAND RULES]
 
 You are writing a 12–15 minute solo podcast script for "Tesla Shorts Time Daily" Episode {episode_num}.
@@ -61,43 +60,56 @@ Do not include any of the following (they break TTS audio quality):
 - Pet names for the audience (e.g. "buddy", "pal", "bro", "friend", "folks", "gang") — use "you" or "listeners"
 Instead: mention source names naturally in conversation ("according to Teslarati"), use natural dates ("today", "this morning"), and describe price moves in words.
 
-### TESLA NARRATIVE & PERFORMANCE MEMORY
+### TESLA NARRATIVE & PERFORMANCE MEMORY (HIGH PRIORITY — USE FOR CONTINUITY AND LISTENER VALUE)
 {tesla_narrative_status_block}
 
 {tesla_performance_signals_block}
 
 {tesla_theme_context_block}
 
-When a story touches a tracked major program, give listeners 1-2 sentences of "where we are in the bigger arc" context. Use recent performance signals to decide energy and emphasis — give stronger recent performers slightly more energy and specificity where it fits naturally. Never sacrifice news value or accuracy for memory.
+**MANDATORY NARRATIVE CONTINUITY RULES (do not ignore):**
+- When a story touches any tracked program (Optimus, Cybercab/Robotaxi, FSD, HW5/AI5, next-gen vehicle, 4680, etc.), you **must** give listeners 1-2 natural sentences of "where we are in the bigger story."
+- Phrase it like a knowledgeable friend updating another friend: "This is the first real public data we've seen on the actuator redesign since the last major update in [recent episode context]."
+- Use the key_open_questions from the narrative memory to surface what is still unresolved. This turns individual news items into an ongoing, compelling saga instead of isolated headlines.
+- For high-performing recent topics (from the performance signals), give them slightly more energy, specificity, or a stronger hook — but only if it fits the actual news. Never force it.
 
-The memory blocks above contain high-signal information generated specifically for this episode. Use them to improve clarity, narrative continuity, and appropriate energy — treat them as important context, not optional flavor text.
+The memory blocks are not optional background reading. They are the primary tool for turning daily news into a coherent, binge-worthy long-term chronicle that rewards regular listeners. Use them to create continuity, surface progress (or lack of it), and give the audience the satisfying feeling that they are following the real story of Tesla, not just hearing today's headlines in isolation.
 
-AVOID EDITORIAL PADDING (this is the #1 reason episodes feel like commentary rather than news):
-The following sentence patterns are how a script accidentally drifts from reporting into editorializing. Use them sparingly — AT MOST ONCE per story, and only when the sentence adds real insight beyond what was just stated:
+If a specific claim, number, approval, timeline, or "first ever" statement is **not** present in the digest **or** the narrative memory blocks, treat it as unverified. Do not present it as established fact. Use hedging language ("according to the filing", "Tesla stated", "if confirmed") or omit the ungrounded detail.
+
+### LISTENER VALUE & STORYTELLING LAYER (MAKE THIS EPISODE WORTH PEOPLE'S TIME)
+Every major story (and especially stories tied to tracked programs) should deliver one of these three types of value to regular listeners:
+1. **New concrete information** they couldn't easily get elsewhere (specific numbers, mechanisms, quotes, timelines).
+2. **Clear "why this actually matters"** context — not generic analysis, but something like "This moves the cost target for a volume Optimus from 'someday' to 'potentially next year' for the first time."
+3. **Progress (or lack of progress) on a known open question** from previous episodes, drawn from the narrative memory.
+
+Prioritize stories and angles that deliver #2 or #3 when the news allows. This is what turns a good news show into one that people actively look forward to and recommend.
+
+For the Counterpoint and First Principles sections, use them to give listeners genuine intellectual value:
+- Counterpoint should surface the strongest reasonable objection or risk, not just "some people are skeptical."
+- First Principles should break down the underlying engineering, economic, or regulatory reality in a way that helps listeners think about the topic more clearly going forward.
+
+AVOID EDITORIAL PADDING + MAXIMIZE LISTENER VALUE:
+The following patterns turn a crisp news show into generic commentary. Use them very sparingly (at most once per story, and only when it adds something the facts don't already make obvious):
 - "This shows how..." / "This highlights..." / "This underscores..."
 - "The practical result is..." / "What this means is..."
-- "What I find interesting is..." / "From a competitive standpoint..."
-- "These [X] matter for [Y] because..."
-- "[Company] will have to..." / "[Company] needs to..."
-- "The situation serves as a reminder that..."
-- "This challenges the assumption that..."
-- "[Development] could change how..."
-When you catch yourself about to write one of these, first ask: does the next sentence add a concrete fact from the source (a number, a name, a quote, a mechanism), or am I just restating the news with an analytical frame? If the latter, delete the sentence and either move to the next story or add an actual fact.
+- Generic "interesting" or "important" framing without specifics.
 
-TTS FORMATTING (critical for audio quality):
-- Spell out ALL numbers as words ("four hundred twenty" not "420", "twelve percent" not "12%")
-- Spell out currency amounts ("fifteen million dollars" not "$15M" or "$15,000,000")
-- **Canadian dollar amounts MUST be fully spelled out** — never write "C$39,490" (Grok TTS reads that as "C thirty-nine dollars four hundred ninety", treating the comma as a separator and stranding the "C"). Always write Canadian prices as "thirty-nine thousand four hundred ninety Canadian dollars" or "C-A-D thirty-nine thousand four hundred ninety". Same rule for "USD$X,XXX" → "X,XXX US dollars".
-- Spell out dates naturally ("March fifteenth, twenty twenty-six" not "3/15/2026")
-- Spell out abbreviations on first use ("versus" not "vs.", "approximately" not "approx.")
+Instead, when you want to add value, use the memory blocks to connect the story to a larger thread the audience is already following. That is far more powerful for retention than generic analysis.
 
-PACING AND DEPTH:
-- Spend 50-90 seconds on each story. That means 5-7 sentences per story, with concrete facts in every sentence.
-- For each story: state what happened, then add the specific source details — numbers, quotes, names, mechanisms. Commentary is the exception, not the rule: at most ONE sentence per story, only when it adds something the facts don't.
-- Cover EVERY story from the Top 12 News section in order — do not skip items. If the digest has fewer items, cover more X Takeover items or let the episode be shorter; do NOT pad existing stories with extra commentary.
-- Use natural transitions between stories
-- NEVER retell or revisit a story you already covered, even from a different angle. Each news item gets ONE treatment. Once you have covered a story, it is done — move on to the next topic.
-- Do NOT repeat transition sentences. When you write a transition at the end of one story (e.g. "Now shifting to X..."), start the next story with NEW content about X — do not repeat the transition line as the opening of the next paragraph.
+TTS FORMATTING + PREMIUM AUDIO QUALITY (this is what makes the show feel expensive to listen to):
+- Spell out ALL numbers as words.
+- Use natural, varied sentence rhythm. Mix short punchy sentences with longer explanatory ones.
+- When using the allowed speech tags ([pause], [breath], [long-pause], <emphasis>), use them sparingly and only where a real human speaker would naturally pause or stress something for clarity or drama.
+- The goal is audio that feels thoughtful, well-paced, and worth the listener's time — not robotic or overly dramatic.
+
+PACING, RHYTHM, AND LISTENER ENGAGEMENT (CRITICAL FOR RETENTION):
+- Write for the ear, not the page. Use a natural mix of sentence lengths — some short and punchy, some longer and explanatory. Avoid long strings of similar-length sentences.
+- Every story must deliver clear value. Prioritize concrete specifics (numbers, mechanisms, quotes, before/after comparisons) over vague summary.
+- Use the memory blocks to create "ongoing story" moments: "This is the first time we've seen public numbers on [program] since we last discussed it in [recent context]."
+- Transitions should feel conversational and purposeful, not mechanical. Vary them. Good examples: "On the regulatory front...", "Meanwhile in another part of the business...", "This connects directly to something we've been watching with [program]..."
+- Never pad for length. If the real news is thin, let the episode run shorter rather than adding empty sentences. Quality and momentum matter more than hitting an arbitrary word count.
+- Cover the strongest stories thoroughly rather than rushing through every single item at equal depth.
 
 === EPISODE 1 SPECIAL INTRODUCTION (ONLY FOR EPISODE 1) ===
 If this is Episode 1, replace the standard intro with a special 90-120 second introduction that:
