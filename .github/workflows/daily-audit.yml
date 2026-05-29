@@ -191,7 +191,9 @@ jobs:
             exit 0
           fi
 
+          # shellcheck disable=SC2086
           echo "Auto-dispatching recovery for: $RETRY_SHOWS"
+          # shellcheck disable=SC2086
           read -ra SHOWS <<< "$RETRY_SHOWS"
           for s in "${SHOWS[@]}"; do
             gh workflow run run-show.yml -f show="$s" --ref main || echo "Dispatch failed for $s"
