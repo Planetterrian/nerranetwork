@@ -9,6 +9,7 @@ guard fires on real regressions, not on a legitimately short news day.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -25,15 +26,38 @@ MIN_DIGEST_WORDS = 150
 SLUGS = discover_show_slugs()
 
 
+_EP_DATE_RE = re.compile(r"_Ep(\d+)_(\d{8})", re.IGNORECASE)
+
+
+def _sort_key(path: Path):
+    """Deterministic 'recency' key parsed from the filename.
+
+    Digest files are named ``Show_Ep<NN>_<YYYYMMDD>.md``. Sorting by
+    (date, episode_num) is stable across machines — unlike mtime, which is
+    identical for every file in a fresh CI checkout and would make the choice
+    of "latest" nondeterministic.
+    """
+    m = _EP_DATE_RE.search(path.stem)
+    if m:
+        return (1, m.group(2), int(m.group(1)))
+    # Files that don't match the episode pattern sort last (and are filtered
+    # out below anyway) — fall back to the name for total ordering.
+    return (0, path.stem, 0)
+
+
 def _latest_digest(cfg):
     out_dir = Path(cfg.episode.output_dir)
     if not out_dir.exists():
         return None
-    mds = [p for p in out_dir.glob("*.md") if "_tts" not in p.stem]
+    # Only true episode digests (Ep<NN>_<date>), never _tts scripts or stray .md.
+    mds = [
+        p for p in out_dir.glob("*.md")
+        if "_tts" not in p.stem and _EP_DATE_RE.search(p.stem)
+    ]
     if not mds:
         return None
-    mds.sort(key=lambda p: p.stat().st_mtime, reverse=True)
-    return mds[0]
+    mds.sort(key=_sort_key)
+    return mds[-1]
 
 
 @pytest.fixture(params=SLUGS)
