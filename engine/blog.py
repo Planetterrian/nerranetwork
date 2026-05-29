@@ -618,9 +618,26 @@ def generate_blog_post_html(
     ep_num = metadata.get("episode_num", 0)
     blog_url = f"https://nerranetwork.com/blog/{show_slug}/ep{ep_num:03d}.html"
 
-    # Final fallback: use show name if no title was extracted from the digest
-    if not metadata.get("title"):
-        metadata["title"] = show_config["name"]
+    # Per-episode title (SEO): digests lead with a "# <Show Name>" heading, so
+    # the extracted title is almost always just the show name — which would make
+    # every post's <title>, <h1>, and schema headline identical (terrible for
+    # per-episode SEO and discovery). Prefer the unique episode hook whenever the
+    # extracted title is empty or is just the show name. Fall back to the show
+    # name only when there is no hook either.
+    _extracted = (metadata.get("title") or "").strip()
+    _hook = (metadata.get("hook") or "").strip()
+    _show = show_config["name"]
+    _is_show_name = (
+        not _extracted
+        or _extracted == _show
+        or _extracted.startswith(_show)
+        or _show in _extracted
+    )
+    if _is_show_name and _hook:
+        clipped = _hook[:100].rstrip(" .,;:—-")
+        metadata["title"] = clipped + ("…" if len(_hook) > 100 else "")
+    elif not _extracted:
+        metadata["title"] = _show
 
     jsonld = _build_jsonld(metadata, show_config["name"], blog_url, show_config)
 
