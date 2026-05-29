@@ -1,4 +1,10 @@
-name: RSS Health Check
+name: RSS Health Check (Legacy / Late-day)
+
+# NOTE: Primary RSS freshness + episode quality + auto-remediation now lives in
+# daily-audit.yml (runs ~12:15 UTC, right after shows finish).
+# This late (18:00) workflow is retained for now as a secondary safety net on
+# days with very late publishing or manual runs.
+# Long-term target: retire or inline its logic fully into daily-audit.
 
 on:
   schedule:

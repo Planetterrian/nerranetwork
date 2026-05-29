@@ -2,13 +2,17 @@ name: Nightly Maintenance
 
 # Consolidated nightly maintenance orchestrator.
 # Runs after the last show of the day (~12:30 UTC) and triggers:
-#   - Health check (RSS freshness)
 #   - Dashboard refresh
 #   - Gallery manifest + Search index
-#   - Feed audit (light)
+#   - Content lake backfill
+#   - Regeneration of heavy transparency pages (MIT + TST narrative)
 #
-# This reduces the number of independent scheduled workflows and gives
-# us a single place to reason about "end-of-day" automation.
+# Note: RSS health checks and episode quality review + automated remediation
+# have been moved into the Daily Audit workflow (evolved from daily-review.yml)
+# so that quality gates and recovery actions happen earlier in the post-publish window.
+#
+# Goal: Fewer workflows, clearer ownership (Daily Audit = reactive + remediation,
+# Nightly = heavier, idempotent maintenance).
 
 on:
   schedule:
