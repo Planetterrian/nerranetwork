@@ -2,8 +2,18 @@
 """Backfill the Content Lake from existing markdown digest files.
 
 Scans all show digest directories and imports historical episodes.
+
+The content lake feeds cross-episode dedup, the Sunday weekly recaps, and the
+global site search.  When a rebuild silently produces an empty (or near-empty)
+lake — historically a quiet failure mode — those downstream features degrade
+without anyone noticing.  This script now evaluates the rebuilt lake and
+*fails loud*: it emits a GitHub ``::error::``/``::warning::`` annotation (visible
+in the Actions UI) so the failure can't hide.  By default it does NOT block the
+caller (the episode can still ship with degraded dedup); pass ``--strict`` to
+exit non-zero so a dedicated maintenance job can hard-fail instead.
 """
 
+import argparse
 import logging
 import re
 import sys
@@ -27,6 +37,43 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 SHOWS_DIR = Path("shows")
+
+# A healthy lake holds at least a week of episodes (weekly recap needs ~7 days).
+DEFAULT_WARN_BELOW = 7
+
+
+def evaluate_backfill(total_episodes: int, warn_below: int = DEFAULT_WARN_BELOW) -> tuple[str, str]:
+    """Classify a rebuilt lake. Returns ``(level, message)``.
+
+    level is one of ``"ok"``, ``"warning"`` (suspiciously small), or
+    ``"error"`` (empty — catastrophic). Pure function so it is unit-testable.
+    """
+    if total_episodes <= 0:
+        return (
+            "error",
+            "Content lake is EMPTY after backfill — cross-episode dedup, weekly "
+            "recaps, and global search will be broken. Check that committed "
+            "digests/<slug>/*.md exist and content_lake init succeeded.",
+        )
+    if total_episodes < warn_below:
+        return (
+            "warning",
+            f"Content lake has only {total_episodes} episodes after backfill "
+            f"(expected >= {warn_below}). Recaps/search may be thin.",
+        )
+    return ("ok", f"Content lake healthy: {total_episodes} episodes.")
+
+
+def _annotate(level: str, message: str) -> None:
+    """Emit a GitHub Actions annotation (no-op-friendly elsewhere) + log."""
+    if level == "error":
+        print(f"::error::{message}", flush=True)
+        logger.error(message)
+    elif level == "warning":
+        print(f"::warning::{message}", flush=True)
+        logger.warning(message)
+    else:
+        logger.info(message)
 
 
 def extract_episode_info(filepath: Path) -> dict | None:
@@ -55,7 +102,21 @@ def extract_hook_from_digest(text: str) -> str:
     return match.group(1).strip() if match else ""
 
 
-def main():
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="Backfill the Content Lake from committed digests.")
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit non-zero when the rebuilt lake is empty or below the warn threshold.",
+    )
+    parser.add_argument(
+        "--warn-below",
+        type=int,
+        default=DEFAULT_WARN_BELOW,
+        help=f"Warn (or fail under --strict) when fewer than N episodes land (default {DEFAULT_WARN_BELOW}).",
+    )
+    args = parser.parse_args(argv)
+
     init_db()
 
     total_imported = 0
@@ -131,6 +192,17 @@ def main():
         logger.info("  %s: %d episodes (%s to %s)",
                     show, info["count"], info["earliest"], info["latest"])
 
+    # Fail-loud evaluation: surface an empty/thin lake so it can't hide.
+    level, message = evaluate_backfill(stats.get("total_episodes", 0), args.warn_below)
+    _annotate(level, message)
+    if args.strict and level in ("error", "warning"):
+        return 1
+    if level == "error" and not args.strict:
+        # Loud but non-blocking by default so an episode still ships with
+        # (degraded) dedup rather than being blocked by a lake rebuild.
+        logger.error("Continuing despite empty lake (use --strict to hard-fail).")
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -106,10 +106,10 @@ jobs:
             echo "SUMMARY_EOF"
           } >> "$GITHUB_OUTPUT"
 
-          if [ $EXIT_CODE -eq 1 ]; then
+          if [ "$EXIT_CODE" -eq 1 ]; then
             echo "::error::CRITICAL issues found — check GitHub issues + api/daily-review.json"
             exit 1
-          elif [ $EXIT_CODE -eq 2 ]; then
+          elif [ "$EXIT_CODE" -eq 2 ]; then
             echo "::warning::Warnings found"
             exit 0
           fi

@@ -231,7 +231,10 @@ jobs:
           python -m pytest tests/test_config.py tests/test_schedule.py \
             tests/test_tts_grok.py tests/test_tesla_hook.py tests/test_rss.py \
             tests/test_review_remediation.py tests/test_show_scaffold.py \
-            tests/test_first_episode.py -q --tb=short
+            tests/test_first_episode.py tests/test_generator.py \
+            tests/test_show_memory.py tests/test_prompt_fidelity.py \
+            tests/test_episode_validity.py tests/test_pipeline_safety.py \
+            -q --tb=short
 
       - name: Create .env
         run: |
@@ -286,6 +289,14 @@ jobs:
         # covered. Backfill is fast (~5 s for ~50 episodes) and
         # rebuilds from the committed digests/<slug>/*.md files.
         run: python scripts/backfill_content_lake.py
+
+      - name: YouTube quota preflight
+        # Landmine #20: enabling YouTube on a 3rd daily show tips the
+        # @NerraNetwork channel past its 10k/day quota, after which uploads
+        # fail silently. Non-strict here: emits a loud ::error:: annotation if
+        # the enabled shows are projected over quota, but never blocks the
+        # episode (exit 0). Run a guard job with --strict to hard-fail instead.
+        run: python scripts/youtube_quota_preflight.py || true
 
       - name: Run show pipeline
         id: pipeline
@@ -608,3 +619,14 @@ jobs:
           echo "All push attempts failed for shared pages"
           echo "::warning::Shared pages (index, blog index, sitemap) could not be pushed after 5 attempts. They will be regenerated on the next successful nightly or manual run."
           exit 1
+
+      - name: Post daily health summary
+        # Positive heartbeat: the pipeline already notifies on failure, but
+        # nothing confirms a healthy day. This composes an all-clear / cost /
+        # quota / RSS-freshness line from the freshly-regenerated dashboard.json
+        # and posts it if NOTIFICATION_WEBHOOK_URL is set (clean no-op if not).
+        # Runs even if the shared-pages push had trouble.
+        if: always()
+        env:
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+        run: python scripts/post_run_summary.py || true

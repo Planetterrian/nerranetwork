@@ -55,6 +55,42 @@ def _resolve_fallback_model(config) -> str:
 # Prompt template loading
 # ---------------------------------------------------------------------------
 
+# Directive for composing prompts from shared snippets.  Chosen to use angle
+# brackets (not ``{...}``) so it survives ``str.format_map`` untouched and never
+# collides with template placeholders.  Resolved *before* substitution, so a
+# prompt with no directive renders byte-for-byte as before.
+#   <<include: _shared/accuracy_rules.txt>>
+_INCLUDE_RE = re.compile(r"<<\s*include:\s*([^>]+?)\s*>>")
+_MAX_INCLUDE_DEPTH = 10
+
+
+def _resolve_includes(raw: str, base_dir: Path, _seen: Optional[set] = None, _depth: int = 0) -> str:
+    """Recursively expand ``<<include: path>>`` directives.
+
+    Paths are resolved relative to *base_dir* (the directory of the file that
+    contains the directive).  Guards against cycles and runaway recursion so a
+    malformed shared snippet can never hang the pipeline.
+    """
+    if "<<include:" not in raw and "<<include :" not in raw and not _INCLUDE_RE.search(raw):
+        return raw
+    if _depth > _MAX_INCLUDE_DEPTH:
+        raise ValueError(f"Prompt include recursion exceeded {_MAX_INCLUDE_DEPTH} levels")
+    _seen = _seen or set()
+
+    def _sub(match: "re.Match") -> str:
+        rel = match.group(1).strip()
+        inc_path = (base_dir / rel).resolve()
+        key = str(inc_path)
+        if key in _seen:
+            raise ValueError(f"Circular prompt include detected: {rel}")
+        if not inc_path.exists():
+            raise FileNotFoundError(f"Included prompt snippet not found: {rel} (from {base_dir})")
+        nested = inc_path.read_text(encoding="utf-8")
+        return _resolve_includes(nested, inc_path.parent, _seen | {key}, _depth + 1)
+
+    return _INCLUDE_RE.sub(_sub, raw)
+
+
 def load_prompt(prompt_file: str, template_vars: Optional[Dict[str, Any]] = None) -> str:
     """Read a prompt template file and fill in ``{placeholder}`` variables.
 
@@ -67,11 +103,16 @@ def load_prompt(prompt_file: str, template_vars: Optional[Dict[str, Any]] = None
         Dict of values to substitute into ``{key}`` placeholders.  Uses
         ``str.format_map`` so missing keys raise ``KeyError``.  Pass
         ``None`` to skip substitution (useful for reference-only files).
+
+    Shared snippets can be composed in via ``<<include: relative/path.txt>>``
+    directives (resolved relative to *prompt_file*'s directory, before
+    placeholder substitution).  Prompts with no directive are unaffected.
     """
     path = Path(prompt_file)
     if not path.exists():
         raise FileNotFoundError(f"Prompt file not found: {path}")
     raw = path.read_text(encoding="utf-8")
+    raw = _resolve_includes(raw, path.parent)
     if template_vars is not None:
         return raw.format_map(template_vars)
     return raw
