@@ -363,6 +363,7 @@ jobs:
           python scripts/validate_digest_content.py "$OUTPUT_DIR" "$TODAY"
 
           # Validate RSS feed is well-formed XML (any .rss files modified by this run)
+          # shellcheck disable=SC2044
           find . -maxdepth 1 -name "*.rss" -newer "$OUTPUT_DIR" -type f -print0 2>/dev/null | while IFS= read -r -d '' rss; do
             if [ -f "$rss" ]; then
               python scripts/validate_rss_feed.py "$rss" || exit 1
