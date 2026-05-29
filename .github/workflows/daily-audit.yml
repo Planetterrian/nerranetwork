@@ -171,6 +171,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # shellcheck disable=SC2086
           if [ ! -f api/daily-review.json ]; then
             echo "No structured audit output — skipping auto-remediation"
             exit 0

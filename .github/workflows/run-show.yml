@@ -350,7 +350,9 @@ jobs:
             echo "WARNING: No final MP3 found for today in $OUTPUT_DIR"
           else
             # Validate MP3 is reasonable size (> 100KB = not empty/corrupt)
-            for mp3 in $(find "$OUTPUT_DIR" -name "*${TODAY}*.mp3" -not -name "*_raw.mp3" -type f 2>/dev/null); do
+            # Use safe null-delimited loop to satisfy shellcheck SC2044.
+            # shellcheck disable=SC2044
+            find "$OUTPUT_DIR" -name "*${TODAY}*.mp3" -not -name "*_raw.mp3" -type f -print0 2>/dev/null | while IFS= read -r -d '' mp3; do
               SIZE=$(stat -c%s "$mp3" 2>/dev/null || echo 0)
               if [ "$SIZE" -lt 100000 ]; then
                 echo "ERROR: MP3 $mp3 is suspiciously small (${SIZE} bytes)"
