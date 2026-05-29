@@ -43,7 +43,9 @@ def test_short_hook_renders_at_large_font(cover, tmp_path):
     """A 5-word hook fits trivially — must render and produce a JPEG
     around the YouTube long-form spec size."""
     out = tmp_path / "thumb.jpg"
-    result = generate_episode_thumbnail(
+    # generate_episode_thumbnail returns (output_path, final_hook_font);
+    # production unpacks the tuple (run_show.py). Mirror that here.
+    result, _hook_font = generate_episode_thumbnail(
         cover, episode_num=42, date_str="May 25, 2026",
         output_path=out, hook="Tesla beats Q1 delivery target",
         show_name="Tesla Shorts Time",
@@ -63,7 +65,9 @@ def test_long_hook_does_not_overflow_long_form_frame(cover, tmp_path):
         "next decade of solid-state battery integration in mass-market EVs"
     )
     out = tmp_path / "thumb.jpg"
-    result = generate_episode_thumbnail(
+    # generate_episode_thumbnail returns (output_path, final_hook_font);
+    # production unpacks the tuple (run_show.py). Mirror that here.
+    result, _hook_font = generate_episode_thumbnail(
         cover, episode_num=460, date_str="May 25, 2026",
         output_path=out, hook=long_hook,
         show_name="Tesla Shorts Time",
@@ -85,7 +89,9 @@ def test_shorts_thumbnail_long_hook_renders(tmp_path):
     file and not throw on the auto-fit loop."""
     cover = _make_cover(tmp_path / "cover.jpg", size=(1080, 1920))
     out = tmp_path / "short_thumb.jpg"
-    result = generate_episode_thumbnail(
+    # generate_episode_thumbnail returns (output_path, final_hook_font);
+    # production unpacks the tuple (run_show.py). Mirror that here.
+    result, _hook_font = generate_episode_thumbnail(
         cover, episode_num=460, date_str="May 25, 2026",
         output_path=out,
         hook=(
