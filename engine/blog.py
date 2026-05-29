@@ -694,6 +694,17 @@ def generate_blog_post_html(
         "blog_index_url": f"../../blog/{show_slug}/index.html",
         "tagline": show_config.get("tagline", ""),
         "transcript": transcript_text,
+        # PodcastEpisode JSON-LD fields. These were referenced by the template
+        # but never supplied, so url/datePublished/contentUrl/transcript all
+        # rendered empty. Populate them from the data we already have. The
+        # transcript lives inline on this page, so the transcript URL is this
+        # page's #transcript anchor (only when a transcript is actually present).
+        "page_url": blog_url,
+        "date": metadata.get("date_iso", "") or metadata.get("date", ""),
+        "audio_url": metadata.get("audio_url", ""),
+        "transcript_url": f"{blog_url}#transcript" if transcript_text else "",
+        # Russian shows render UI strings (incl. the AI badge) in Russian.
+        "_is_ru": show_slug in ("finansy_prosto", "privet_russian"),
         "related_posts": related_posts or [],
         # Use the show's Buttondown newsletter tag when set in
         # NETWORK_SHOWS — falls back to the display name. Russian

@@ -33,3 +33,21 @@
 {%- if onerror %} onerror="{{ onerror }}"{% endif -%}>
 </picture>
 {%- endmacro -%}
+
+{#- ai_badge: a small, honest "made with AI — transparently" chip that links to
+    the network AI-disclosure page. Turns the AI question into a trust signal
+    (and gets ahead of platform disclosure norms). Inline-styled so it renders
+    consistently regardless of which page embeds it.
+
+    Arguments:
+      path_prefix : relative path back to site root (for the disclosure link)
+      is_ru       : render the label in Russian for the RU shows
+-#}
+{%- macro ai_badge(path_prefix='', is_ru=false) -%}
+<a href="{{ path_prefix }}ai-disclosure.html" class="nn-ai-badge" rel="nofollow"
+   title="{% if is_ru %}Как мы используем ИИ — прозрачно{% else %}How we use AI — full transparency{% endif %}"
+   style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border:1px solid var(--nn-border);border-radius:100px;font-family:var(--font-ui);font-size:0.72rem;font-weight:600;color:var(--nn-text-muted);text-decoration:none;line-height:1.4;white-space:nowrap;">
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M11 12h1v4h1"/></svg>
+  {% if is_ru %}Создано с ИИ — прозрачно{% else %}Made with AI — transparently{% endif %}
+</a>
+{%- endmacro -%}

@@ -25,21 +25,28 @@
 }
     </script>
 
-    {# Medium item: Richer PodcastEpisode structured data #}
+    {# Richer PodcastEpisode structured data (supplements the BlogPosting
+       JSON-LD above). Built as a dict piped through tojson so the output is
+       always valid JSON even when a title contains quotes, and optional
+       members (audio, transcript) are emitted only when actually present. #}
+    {%- set _episode_ld = {
+        "@context": "https://schema.org",
+        "@type": "PodcastEpisode",
+        "name": (episode_title if (episode_title and episode_title != show_name) else (hook or episode_title or page_title)),
+        "url": (page_url or canonical_url),
+        "datePublished": (date or episode_date_iso),
+        "description": (summary or ""),
+        "inLanguage": ("ru" if _is_ru else "en"),
+        "isPartOf": {
+            "@type": "PodcastSeries",
+            "name": show_name,
+            "url": ("https://nerranetwork.com/" ~ show_page)
+        }
+    } -%}
+    {%- if audio_url %}{% set _ = _episode_ld.update({"associatedMedia": {"@type": "MediaObject", "contentUrl": audio_url}}) %}{% endif -%}
+    {%- if transcript_url %}{% set _ = _episode_ld.update({"transcript": transcript_url}) %}{% endif -%}
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "PodcastEpisode",
-      "name": "{{ title }}",
-      "url": "{{ page_url }}",
-      "datePublished": "{{ date }}",
-      "description": {{ (summary or "") | tojson }},
-      "associatedMedia": {
-        "@type": "MediaObject",
-        "contentUrl": "{{ audio_url }}"
-      },
-      "transcript": "{{ transcript_url }}"
-    }
+{{ _episode_ld | tojson }}
     </script>
 
     <style>
@@ -633,6 +640,7 @@
 {%- set _is_ru = (page_lang | default('en')) == 'ru' -%}
 
 {% block content %}
+    {% from "_macros.html.j2" import ai_badge %}
     <!-- Breadcrumb -->
     <nav aria-label="Breadcrumb" style="max-width:900px;margin:calc(72px + var(--sp-4)) auto 0;padding:0 var(--sp-6);font-family:var(--font-ui);font-size:0.82rem;">
         <ol style="list-style:none;display:flex;flex-wrap:wrap;gap:var(--sp-1);padding:0;margin:0;color:var(--nn-text-muted);">
@@ -725,7 +733,7 @@
 
             <!-- Transcript -->
             {% if transcript %}
-            <section class="blog-transcript">
+            <section class="blog-transcript" id="transcript">
                 <details>
                     <summary>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
@@ -737,13 +745,24 @@
             {% endif %}
 
             <!-- Share Buttons -->
+            {#- Each shared URL carries a per-network UTM tag (utm_medium=share)
+                so shared traffic is attributable in analytics. URLs are
+                url-encoded because with_utm introduces an '&' that would
+                otherwise break the outer share-intent query string. -#}
             <div class="share-buttons">
                 <span>Share:</span>
-                <a href="https://twitter.com/intent/tweet?url={{ canonical_url }}&text={{ page_title | urlencode }}" target="_blank" rel="noopener" aria-label="Share on Twitter">&#120143; Post</a>
-                <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ canonical_url }}" target="_blank" rel="noopener" aria-label="Share on LinkedIn">in LinkedIn</a>
-                <a href="https://wa.me/?text={{ (page_title ~ ' \u2014 ' ~ canonical_url) | urlencode }}" target="_blank" rel="noopener" aria-label="Share on WhatsApp">WhatsApp</a>
-                <a href="https://t.me/share/url?url={{ canonical_url }}&amp;text={{ page_title | urlencode }}" target="_blank" rel="noopener" aria-label="Share on Telegram">Telegram</a>
+                <a href="https://twitter.com/intent/tweet?url={{ canonical_url | with_utm(source='twitter', medium='share', campaign='blog') | urlencode }}&text={{ page_title | urlencode }}" target="_blank" rel="noopener" aria-label="Share on Twitter">&#120143; Post</a>
+                <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ canonical_url | with_utm(source='linkedin', medium='share', campaign='blog') | urlencode }}" target="_blank" rel="noopener" aria-label="Share on LinkedIn">in LinkedIn</a>
+                <a href="https://www.facebook.com/sharer/sharer.php?u={{ canonical_url | with_utm(source='facebook', medium='share', campaign='blog') | urlencode }}" target="_blank" rel="noopener" aria-label="Share on Facebook">Facebook</a>
+                <a href="https://wa.me/?text={{ (page_title ~ ' \u2014 ' ~ (canonical_url | with_utm(source='whatsapp', medium='share', campaign='blog'))) | urlencode }}" target="_blank" rel="noopener" aria-label="Share on WhatsApp">WhatsApp</a>
+                <a href="https://t.me/share/url?url={{ canonical_url | with_utm(source='telegram', medium='share', campaign='blog') | urlencode }}&amp;text={{ page_title | urlencode }}" target="_blank" rel="noopener" aria-label="Share on Telegram">Telegram</a>
+                <a href="mailto:?subject={{ page_title | urlencode }}&body={{ canonical_url | with_utm(source='email', medium='share', campaign='blog') | urlencode }}" aria-label="Share by email">&#9993; Email</a>
                 <button onclick="navigator.clipboard.writeText(window.location.href).then(function(){this.textContent='\u2713 Copied'}.bind(this))" aria-label="Copy link">&#128279; Copy link</button>
+            </div>
+
+            <!-- AI transparency badge (trust signal) -->
+            <div style="display:flex;justify-content:center;margin:var(--sp-4) 0;">
+                {{ ai_badge(path_prefix=path_prefix, is_ru=_is_ru) }}
             </div>
 
             {#- Per-episode feedback surface (Phase 4 of May 2026 audit).
