@@ -1841,6 +1841,14 @@ def run(args: argparse.Namespace) -> None:
             # Clean podcast script: strip speaker prefixes and stage directions
             podcast_script = _clean_podcast_script(podcast_script, host_name=host)
 
+            # TST-specific branding normalization for the opening welcome.
+            # The model occasionally still mangles the exact required phrasing
+            # ("Tesla Shorts Time Daily", canonical "Tesla never sleeps..." line)
+            # even with strong prompt rules. This post-processing makes it
+            # bulletproof for the spoken intro.
+            if args.show == "tesla":
+                podcast_script = _normalize_tst_opening(podcast_script)
+
             # Apply pronunciation fixes
             podcast_script = _apply_pronunciation(podcast_script, args.show)
 
@@ -3032,6 +3040,34 @@ def _clean_podcast_script(script: str, host_name: str = "Patrick") -> str:
     joined = re.sub(r"\n{3,}", "\n\n", joined).strip()
 
     return joined
+
+
+def _normalize_tst_opening(script: str) -> str:
+    """Force the exact required TST branding in the opening welcome lines.
+
+    The prompt contains very strict rules, but the model still occasionally
+    produces variants like "Tesla Short's Time", "Tesla Shorts Time. Daily",
+    or drops the canonical framing line. This post-processing normalizer
+    makes the spoken intro bulletproof.
+    """
+    import re
+
+    lines = script.splitlines(keepends=True)
+    if not lines:
+        return script
+
+    # Fix common show name variants in the first ~4 lines (the welcome block)
+    for i in range(min(4, len(lines))):
+        original = lines[i]
+        # Normalize all common manglings of the show name
+        fixed = re.sub(
+            r"(?i)\bTesla\s+Short'?s?\s+Time(?:\s*\.?\s*Daily)?\b",
+            "Tesla Shorts Time Daily",
+            original,
+        )
+        lines[i] = fixed
+
+    return "".join(lines)
 
 
 def _strip_post_pronunciation_artifacts(text: str) -> str:

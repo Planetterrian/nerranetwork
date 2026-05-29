@@ -57,7 +57,8 @@ _EPISODE_RE = re.compile(r"Ep(\d+)")
 _FILENAME_DATE_RE = re.compile(r"(\d{4})(\d{2})(\d{2})\.md$")
 
 # Source URLs in digest text
-_SOURCE_URL_RE = re.compile(r"Source:\s*(https?://\S+)")
+# Supports both bare URLs and Markdown links: Source: https://... or Source: [text](https://...)
+_SOURCE_URL_RE = re.compile(r"Source:\s*(?:\[.*?\]\()?(https?://[^\s\)]+)")
 
 # Date string → datetime
 _DATE_FORMATS = [
