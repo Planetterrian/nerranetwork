@@ -1,0 +1,64 @@
+Hey, welcome to Models and Agents, episode 63 on May 29, 2026. Let's see what shipped.
+Let's see what happened in the AI world today. And trust me, it's been busy.
+Anthropic's $65 billion series age at $965 billion valuation and $47 billion run rate revenue
+show Claude demand is scaling faster than most labs can match. Liquid AI shipped
+LFM 2.58B A1B with 128K context after 38 trillion pre-training tokens.
+A model kernel on 8 AMD MI 300X cards reached 3,300 output tokens per second on small models.
+Researchers also dropped right now Arabic 0.5B turbo and Arya Bata 2, while local builders
+mode agents toward direct HTML rendering. Anthropic announced a $65 billion series age round
+at a $965 billion post-money valuation. The round was led by Altimeter,
+Dragonear, Green Oaks, and Sequoia. The company separately reported that run rate revenue crossed
+$47 billion earlier this month from enterprise Claude deployments. The new capital will expand
+research and inference capacity. The round highlights how quickly production usage of frontier
+models is growing across industries. Liquid AI released LFM 2.58B A1B as an edge-focused model.
+It expands the prior LFM 2A B1B with a 128K context window and 38 trillion tokens of pre-training
+plus large-scale reinforcement learning. The model doubles the vocabulary to improve
+non-latent tokenization and supports tool-chaining on entry-level laptops. It is available now on
+hugging face. Right now, Arabic 0.5B turbo is a 518 million parameter Arabic specialized decoder.
+It was built on twin 2.5 0.5B by adding 27,032 Arabic tokens and continued pre-training on
+504 million Arabic tokens. The model reaches 35.9% mean accuracy on Arabic COPA,
+Heliswag and MMLU benchmarks. The quantized build runs at 635 tokens per second on a single
+H100. Ariobata 2 is a reasoning-focused model post-trained from GPT OSS 20B via reinforcement
+learning on physics-wala question banks. It all performs the base model on JEEE main, JEEE
+advanced, NEET, AIME and GPQA while using up to 64% fewer output tokens. The training combined
+prolonged reinforcement learning with larger rollout groups. Users report Gemma 426 BA4B
+running well on M5 Pro hardware. It shows strong generalist performance across creative writing,
+debugging, image classification, and tool augmented chat. The model uses less memory than twin
+3.635 BA3B while displaying more personality. A coding agent setup now renders responses directly
+as HTML in the browser. Switching the system prompt from markdown to HTML improved diagram
+quality and structure with inline SVGs, tables, and diagrams. The approach works with twin 3.627B
+and requires only a simple prompt change plus a web UI. A new model kernel runs the full
+decode sequence as one GPU resident program on 8 times MI 300X. It maps memory access to
+die topology and achieves up to 3,300 output tokens per second per request at batch size 1
+with no quantization. The team plans future support for large mixture of experts models.
+A Laura-based method uses hidden state probes to teach models to verbalize their actual confidence.
+The approach works across 7B to 70B models from four families with only a few hundred examples
+and under 10 minutes on an M3 Ultra. Activation patching confirms the effect is causal.
+Early benchmarks on an M5 Max with 128GB show stepfund 3.7 Flash delivering usable speeds
+at 32K to 64K context in Q4KS quantization. The model remains responsive below 16K context.
+Test LFM 2.58BA1. Be on a local laptop for tool chaining workflows, where 128K context
+matters more than raw size. Switch an existing coding agent prompt to HTML output
+and measure how quickly diagram rendering improves without extra post processing.
+Run the probe-targeted Laura recipe on a 7B to 13B model you already use for agent decision
+making to reduce overconfident errors. Benchmark stepfund 3.7 Flash against Gemma 426B
+on your M series hardware for mixed creative and coding tasks. More teams are expected to release
+small specialized models after the Arabic and SDEM examples shown today.
+Additional model kernel and single program inference work on AMD and Apple Silicon hardware is
+likely as memory bandwidth remains the bottleneck. Continued experiments with HTML and structured
+output formats for agents will appear as builders move away from markdown defaults.
+Okay, let's pop the hood on the probe-targeted fine-tuning approach. Everyone talks about LLM
+confidence as a simple prompt fix and practice the model already encodes correctness signals in
+its hidden states at 0.76 to 0.88AUROC. Yet surface text stays stuck at 99% because of training
+dynamics. The method extracts those internal signals with linear probes then uses the probe outputs
+as fine-tuning targets. This adds almost no inference cost after the short LLM and works across
+model scales because the probe only needs to read one activation position. The quality gain is
+largest on mid-sized models. At 70B the softmax already carries usable signal but the argmax
+text still collapses. Activation patching at the exact confidence token moves the output
+distribution with correlation 0.976. Apply it when you need the model to admit uncertainty on
+factual or multi-step tasks. Skip it if your pipeline already filters low probability tokens downstream.
+The gacha that bites most teams is seed sensitivity in the shape of the confidence distribution
+even when discrimination stays stable. Tomorrow keep an eye on more small specialized models
+and further monocernal inference experiments on AMD hardware. That wraps up today's AI briefing.
+Share this with a developer or builder who wants to stay current. Subscribe wherever you listen.
+See you tomorrow. This episode used AI voice synthesis of my voice. Editorial selection and
+analysis are my own.

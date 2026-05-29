@@ -1,0 +1,113 @@
+Hey, welcome to Models and Agents, episode sixty-three, on May twenty-ninth, twenty twenty-six. Let's see what shipped. Let's see what happened in the A I world today. And trust me, it's been busy.
+
+An-thropic's $65B Series H at $965B valuation and $47B run-rate revenue show Claude demand is scaling faster than most labs can match.
+
+Liquid A I shipped L F M two point five eight B A one B with one hundred twenty eight K context after thirty eight trillion pre-training tokens.
+
+A monokernel on eight A M D M I three hundred X cards reached three thousand three hundred output tokens per second on small models.
+
+Researchers also dropped RightNow Arabic zero point five B Turbo and Aryabhata two, while local builders moved agents toward direct H T M L rendering.
+
+An-thropic announced a sixty five billion dollar Series H round at a nine hundred sixty five billion dollar post-money valuation.
+
+The round was led by Altimeter, Dragoneer, Greenoaks, and Sequoia.
+
+The company separately reported that run-rate revenue crossed forty seven billion dollars earlier this month from enterprise Claude deployments.
+
+The new capital will expand research and inference capacity.
+
+The round highlights how quickly production usage of frontier models is growing across industries.
+
+Liquid A I released L F M two point five eight B A one B as an edge-focused model.
+
+It expands the prior L F M two eight B A one B with a one hundred twenty eight K context window and thirty eight trillion tokens of pre-training plus large-scale reinforcement learning.
+
+The model doubles the vocabulary to improve non-Latin tokenization and supports tool chaining on entry-level laptops.
+
+It is available now on Hugging Face.
+
+RightNow Arabic zero point five B Turbo is a five hundred eighteen million parameter Arabic-specialized decoder.
+
+It was built on Chwen two point five zero point five B by adding twenty seven thousand thirty two Arabic tokens and continued pre-training on five hundred four million Arabic tokens.
+
+The model reaches thirty five point nine percent mean accuracy on Arabic C O P A, HellaSwag, and M M L U benchmarks.
+
+The quantized build runs at six hundred thirty five tokens per second on a single H one hundred.
+
+Aryabhata two is a reasoning-focused model post-trained from G P T O S S twenty B via reinforcement learning on PhysicsWallah question banks.
+
+It outperforms the base model on J E E Main, J E E Advanced, N E E T, A I M E, and G P Q A while using up to sixty four percent fewer output tokens.
+
+The training combined prolonged reinforcement learning with larger rollout groups.
+
+Users report Gemma four twenty six B A four B running well on M five Pro hardware.
+
+It shows strong generalist performance across creative writing, debugging, image classification, and tool-augmented chat.
+
+The model uses less memory than Chwen three point six thirty five B A three B while displaying more personality.
+
+A coding agent setup now renders responses directly as H T M L in the browser.
+
+Switching the system prompt from markdown to H T M L improved diagram quality and structure with inline S V Gs, tables, and diagrams.
+
+The approach works with Chwen three point six twenty seven B and requires only a simple prompt change plus a web U I.
+
+A new monokernel runs the full decode sequence as one G P U resident program on eight times M I three hundred X.
+
+It maps memory access to die topology and achieves up to three thousand three hundred output tokens per second per request at batch size one with no quantization.
+
+The team plans future support for large mixture of experts models.
+
+A Laura-based method uses hidden-state probes to teach models to verbalize their actual confidence.
+
+The approach works across seven B to seventy B models from four families with only a few hundred examples and under ten minutes on an M three Ultra.
+
+Activation patching confirms the effect is causal.
+
+Early benchmarks on an M five Max with one hundred twenty eight G B show StepFun three point seven Flash delivering usable speeds at thirty two K to sixty four K context in Q four K S quantization.
+
+The model remains responsive below sixteen K context.
+
+Test L F M two point five eight B A one B on a local laptop for tool-chaining workflows where one hundred twenty eight K context matters more than raw size.
+
+Switch an existing coding agent prompt to H T M L output and measure how quickly diagram rendering improves without extra post-processing.
+
+Run the probe-targeted Laura recipe on a seven B to thirteen B model you already use for agent decision making to reduce overconfident errors.
+
+Benchmark StepFun three point seven Flash against Gemma four twenty six B on your M-series hardware for mixed creative and coding tasks.
+
+More teams are expected to release small specialized models after the Arabic and S T E M examples shown today.
+
+Additional monokernel and single-program inference work on A M D and Apple Silicon hardware is likely as memory bandwidth remains the bottleneck.
+
+Continued experiments with H T M L and structured output formats for agents will appear as builders move away from markdown defaults.
+
+OK, let's pop the hood on the probe-targeted fine-tuning approach.
+
+Everyone talks about L L M confidence as a simple prompt fix.
+
+In practice the model already encodes correctness signals in its hidden states at zero point seven six to zero point eight eight A U R O C.
+
+Yet surface text stays stuck at ninety nine percent because of training dynamics.
+
+The method extracts those internal signals with linear probes then uses the probe outputs as fine-tuning targets.
+
+This adds almost no inference cost after the short Laura pass and works across model scales because the probe only needs to read one activation position.
+
+The quality gain is largest on mid-sized models.
+
+At seventy B the softmax already carries usable signal but the argmax text still collapses.
+
+Activation patching at the exact confidence token moves the output distribution with correlation zero point nine seven six.
+
+Apply it when you need the model to admit uncertainty on factual or multi-step tasks.
+
+Skip it if your pipeline already filters low-probability tokens downstream.
+
+The gotcha that bites most teams is seed sensitivity in the shape of the confidence distribution even when discrimination stays stable.
+
+Tomorrow, keep an eye on more small specialized models and further monokernel inference experiments on A M D hardware.
+
+That wraps up today's A I briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
