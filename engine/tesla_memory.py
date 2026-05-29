@@ -185,42 +185,62 @@ def save_theme_history(history: Dict[str, Any], output_dir: Path) -> None:
 # ---------------------------------------------------------------------------
 
 def build_narrative_status_block(tracker: Dict[str, Any]) -> str:
-    """Produce a clean, prompt-friendly block about current major program status."""
+    """Produce a highly actionable narrative block for the LLM to create listener value and continuity."""
     programs = tracker.get("programs", {})
     if not programs:
         return ""
 
-    lines = ["### CURRENT TESLA NARRATIVE STATUS (major active programs)"]
+    lines = [
+        "### TESLA PROGRAM NARRATIVE MEMORY",
+        "Use this to give regular listeners a sense of ongoing stories and real progress (or the lack of it).",
+        "When a story touches one of these programs, include 1-2 natural sentences answering:",
+        "  - Where does today's development fit in the bigger arc for this program?",
+        "  - Does it meaningfully move any of the key open questions?",
+        "  - What should attentive listeners be watching for next?",
+        "",
+        "Tracked programs (with current status and open questions):"
+    ]
+
     for key, prog in programs.items():
         name = prog.get("display_name", key.title())
         status = prog.get("status", "Status not yet tracked.")
         last_ep = prog.get("last_major_update_episode")
         last_date = prog.get("last_major_update_date", "")
-        when = f" (last discussed Ep{last_ep}, {last_date})" if last_ep else ""
-        lines.append(f"- **{name}**: {status}{when}")
+        when = f" (last major update mentioned: Ep{last_ep}, {last_date})" if last_ep else ""
 
-    lines.append("\nWhen a news item touches one of these programs, briefly note the update relative to the status above.")
+        lines.append(f"\n**{name}**{when}")
+        lines.append(f"Current status: {status}")
+
+        questions = prog.get("key_open_questions", [])
+        if questions:
+            lines.append("Key open questions the show is following:")
+            for q in questions:
+                lines.append(f"  - {q}")
+
+    lines.append("\n--- End of narrative memory ---")
     return "\n".join(lines)
 
 
 def build_performance_signals_block(perf: Dict[str, Any]) -> str:
-    """Produce a short block of recent audience performance signals."""
+    """Produce audience performance signals the LLM can actually use for better emphasis and hooks."""
     signals = perf.get("recent_signals", {})
     if not any(signals.values()):
         return ""
 
-    lines = ["### RECENT AUDIENCE ENGAGEMENT SIGNALS (use to inform emphasis)"]
+    lines = ["### AUDIENCE PERFORMANCE SIGNALS (use to shape emphasis and hooks)"]
     if signals.get("strong_topics_last_30d"):
-        lines.append("- Strong recent topics: " + ", ".join(signals["strong_topics_last_30d"][:5]))
+        lines.append("Topics that have recently driven strong engagement: " + ", ".join(signals["strong_topics_last_30d"][:5]))
     if signals.get("strong_hook_styles"):
-        lines.append("- High-performing hook patterns: " + ", ".join(signals["strong_hook_styles"][:3]))
+        lines.append("Hook styles that have performed well lately: " + ", ".join(signals["strong_hook_styles"][:3]))
     if signals.get("notes"):
-        lines.append(f"- Notes: {signals['notes']}")
+        lines.append(f"Notes: {signals['notes']}")
+
+    lines.append("When a story aligns with a strong recent topic or hook style, consider leading with the most surprising or visual angle if the news supports it.")
     return "\n".join(lines)
 
 
 def build_theme_context_block(theme_history: Dict[str, Any], lookback_days: int = 30) -> str:
-    """Lightweight recurring theme summary for freshness + depth decisions."""
+    """Recurring theme signals the LLM can use to decide emphasis and avoid repetition."""
     themes = theme_history.get("recurring_themes", {})
     if not themes:
         return ""
@@ -229,9 +249,10 @@ def build_theme_context_block(theme_history: Dict[str, Any], lookback_days: int 
     if not top:
         return ""
 
-    lines = ["### RECURRING THEMES (last ~30 days — use for context, not repetition)"]
+    lines = ["### RECURRING THEMES (last ~30 days)"]
+    lines.append("These themes have been prominent recently. When a story aligns with one, consider whether it deserves extra depth or a connection back to the larger conversation.")
     for theme, count in top:
-        lines.append(f"- {theme}: appeared in ~{count} recent episodes")
+        lines.append(f"- {theme} (appeared in ~{count} recent episodes)")
     return "\n".join(lines)
 
 
