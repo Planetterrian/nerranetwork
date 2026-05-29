@@ -298,10 +298,18 @@ def send_newsletter(
             return None
         return email_id
     else:
-        logger.error(
-            "Newsletter send failed: %s %s",
-            resp.status_code, resp.text[:500],
-        )
+        error_detail = resp.text[:500]
+        if resp.status_code == 422 and "tag" in error_detail.lower():
+            logger.error(
+                "Newsletter send failed with tag filter error (likely invalid Buttondown tag identifier in YAML 'newsletter.tag'). "
+                "Current tag value(s): %s. Check your Buttondown Tags page for the exact slug/ID to use. Error: %s",
+                tags, error_detail,
+            )
+        else:
+            logger.error(
+                "Newsletter send failed: %s %s",
+                resp.status_code, error_detail,
+            )
         return None
 
 
