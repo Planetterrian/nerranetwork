@@ -1146,7 +1146,8 @@ def generate_episode_thumbnail(
     hook: str = "",
     show_name: str = "",
     size: tuple = (1280, 720),
-) -> Path:
+) -> tuple[Path, int | None]:
+    """Returns (thumbnail_path, hook_font_size_used or None)."""
     """Render an episode thumbnail by overlaying text on the show cover.
 
     Output is a JPEG at YouTube's recommended 1280x720 thumbnail spec by
@@ -1279,7 +1280,10 @@ def generate_episode_thumbnail(
         img.save(output_path, "JPEG", quality=88, optimize=True)
     else:
         img.save(output_path, "PNG")
-    return output_path
+    # Return the final hook font size used by autofit so callers can record
+    # the decision for observability of the May 2026 thumbnail improvements.
+    final_hook_font = font_size if 'font_size' in locals() else None
+    return output_path, final_hook_font
 
 
 def generate_shorts_thumbnail(

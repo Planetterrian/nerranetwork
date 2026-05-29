@@ -3105,7 +3105,7 @@ def _publish_youtube(
     show_label = config.publishing.rss_title or config.name
 
     try:
-        generate_episode_thumbnail(
+        _thumb_path, _thumb_hook_font = generate_episode_thumbnail(
             cover_path,
             episode_num=episode_num,
             date_str=today_str,
@@ -3113,6 +3113,8 @@ def _publish_youtube(
             hook=hook,
             show_name=show_label,
         )
+        if _thumb_hook_font is not None:
+            result["thumbnail_autofit_font_size"] = int(_thumb_hook_font)
     except Exception as exc:  # pragma: no cover - thumbnail rendering best-effort
         logger.warning("Long-form thumbnail generation failed: %s", exc)
         thumbnail_path = None  # type: ignore[assignment]
