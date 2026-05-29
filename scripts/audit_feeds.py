@@ -181,7 +181,6 @@ def main():
             entries = r.get("entry_count", 0)
             age = _format_age(r.get("latest_age_hours"))
             freshness = "FRESH" if r.get("fresh") else ("DEAD" if r.get("error") else "STALE")
-            label = f["label"] or f["url"][:50]
 
             if freshness != "FRESH":
                 any_issues = True

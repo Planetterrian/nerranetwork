@@ -58,7 +58,7 @@ def main():
         by_author.setdefault(author, []).append(p)
 
     print(f"\nTotal posts: {len(posts)}")
-    print(f"By account:")
+    print("By account:")
     for author, author_posts in sorted(by_author.items()):
         print(f"  {author}: {len(author_posts)} posts")
 

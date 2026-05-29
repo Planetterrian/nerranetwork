@@ -42,7 +42,6 @@ import json
 import logging
 import re
 import sys
-from dataclasses import asdict
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 

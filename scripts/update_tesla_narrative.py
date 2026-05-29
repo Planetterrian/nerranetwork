@@ -13,7 +13,6 @@ import argparse
 import json
 from datetime import datetime
 from pathlib import Path
-import sys
 
 TRACKER_PATH = Path("digests/tesla_shorts_time/tesla_narrative_tracker.json")
 

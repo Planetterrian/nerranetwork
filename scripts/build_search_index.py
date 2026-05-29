@@ -63,7 +63,7 @@ _ROOT = _SCRIPT_DIR.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from engine.content_lake import get_all_search_docs  # type: ignore
+from engine.content_lake import get_all_search_docs  # type: ignore  # noqa: E402
 
 
 DEFAULT_OUT = _ROOT / "site" / "data" / "search-index.json"

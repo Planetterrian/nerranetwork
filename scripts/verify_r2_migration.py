@@ -82,13 +82,13 @@ def verify() -> int:
                 print(msg)
                 errors.append(msg)
 
-    print(f"\n=== Summary ===")
+    print("\n=== Summary ===")
     print(f"  Total enclosures: {total}")
     print(f"  OK: {ok}")
     print(f"  Broken: {broken}")
 
     if errors:
-        print(f"\nBroken links:")
+        print("\nBroken links:")
         for e in errors:
             print(e)
         return 1

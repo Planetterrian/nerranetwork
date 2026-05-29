@@ -316,7 +316,7 @@ def _preflight_checks(config, *, dry_run: bool = False) -> None:
     max_w_img = getattr(config, "max_weekly_grok_images", 0) or 0
     if max_w_tts > 0 or max_w_img > 0:
         try:
-            import json as _json, re as _re
+            import json as _json
             # metrics live under the show's output dir (digests/<slug>/metrics_ep*.json)
             out_dir = Path(getattr(config, "output_dir", PROJECT_ROOT / "digests" / config.slug))
             metrics_files = sorted(out_dir.glob("metrics_ep*.json"))[-8:]  # last ~week
@@ -580,7 +580,6 @@ def run(args: argparse.Namespace) -> None:
         extra_context: dict = {}
 
         from engine.content_tracker import ContentTracker, SHOW_SECTION_PATTERNS
-        from engine.utils import deduplicate_by_entity
 
         # Prefer YAML-provided section patterns; fall back to hardcoded registry
         section_patterns = (
@@ -598,7 +597,7 @@ def run(args: argparse.Namespace) -> None:
 
         feed_dicts = [{"url": s.url, "label": s.label} for s in config.sources]
 
-        from concurrent.futures import ThreadPoolExecutor, as_completed
+        from concurrent.futures import ThreadPoolExecutor
 
         def _run_hook():
             if hook_module and hasattr(hook_module, "pre_fetch"):
@@ -1590,7 +1589,6 @@ def run(args: argparse.Namespace) -> None:
         audio_duration = 0.0
 
         if not args.skip_podcast:
-            from engine.generator import generate_podcast_script
 
             # Strip URLs, emojis, unicode decorations, and other metadata from
             # the digest before feeding it to the podcast script prompt.  The LLM
@@ -3099,7 +3097,6 @@ def _publish_youtube(
     work_dir.mkdir(parents=True, exist_ok=True)
     base_name = final_mp3.stem  # e.g. Tesla_Shorts_Time_Pod_Ep042_20260425
     long_video_path = work_dir / f"{base_name}.mp4"
-    short_video_path = work_dir / f"{base_name}_short.mp4"
     thumbnail_path = work_dir / f"{base_name}_thumb.jpg"
     short_thumbnail_path = work_dir / f"{base_name}_short_thumb.jpg"
     show_label = config.publishing.rss_title or config.name
