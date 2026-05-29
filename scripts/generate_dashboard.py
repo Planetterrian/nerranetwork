@@ -1274,6 +1274,37 @@ def build_network_rollup(
 # ---------------------------------------------------------------------------
 
 
+def _normalize_mit_monthly_snapshots(snapshots: list) -> list:
+    """Ensure every monthly snapshot dict has the keys expected by the
+    public show page template and management.html, using safe defaults.
+
+    This protects against historical snapshots written by the daily hook
+    (which used a different/minimal schema) or any future writer drift.
+    The three comparison percentages default to None (rendered as "—").
+    """
+    if not snapshots:
+        return []
+    normalized = []
+    for s in snapshots:
+        if not isinstance(s, dict):
+            continue
+        normalized.append({
+            "month": s.get("month"),
+            "trades": s.get("trades") if s.get("trades") is not None else s.get("total_trades", 0),
+            "win_rate": s.get("win_rate") if s.get("win_rate") is not None else s.get("win_rate_pct", 0.0),
+            "portfolio_pct": s.get("portfolio_pct"),
+            "nasdaq_pct": s.get("nasdaq_pct"),
+            "alpha_pct": s.get("alpha_pct"),
+            "portfolio_pnl": s.get("portfolio_pnl") if s.get("portfolio_pnl") is not None else s.get("cumulative_pnl", 0.0),
+            # preserve any extra fields
+            **{k: v for k, v in s.items() if k not in {
+                "month", "trades", "total_trades", "win_rate", "win_rate_pct",
+                "portfolio_pct", "nasdaq_pct", "alpha_pct", "portfolio_pnl", "cumulative_pnl"
+            }},
+        })
+    return normalized
+
+
 def aggregate_mit_performance(root: Path) -> Dict[str, Any]:
     """Read the Modern Investing trackers and return a dashboard-ready dict.
 
@@ -1422,7 +1453,7 @@ def aggregate_mit_performance(root: Path) -> Dict[str, Any]:
         "benchmark": benchmark,
         "alpha": alpha,
         "sectors": sectors,
-        "monthly_snapshots": tracker.get("monthly_snapshots") or [],
+        "monthly_snapshots": _normalize_mit_monthly_snapshots(tracker.get("monthly_snapshots") or []),
         "trades": trades_normalised,
         "lessons_learned": lessons_active,
         "taught_lessons_hot": taught_hot,

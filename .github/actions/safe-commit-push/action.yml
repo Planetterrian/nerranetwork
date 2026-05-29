@@ -60,8 +60,8 @@ runs:
         # word-splitting and stops paths from being misinterpreted as
         # executable commands (the cause of "Permission denied" on .json files).
         cat > /tmp/paths-to-add.txt << 'EOL'
-${{ inputs.add-paths }}
-EOL
+        ${{ inputs.add-paths }}
+        EOL
 
         # Drop blank lines and add the rest
         grep -v '^[[:space:]]*$' /tmp/paths-to-add.txt > /tmp/paths-clean.txt || true

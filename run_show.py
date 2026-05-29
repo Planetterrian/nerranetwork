@@ -1739,13 +1739,36 @@ def run(args: argparse.Namespace) -> None:
             _HARD_FLOOR = max(_FLOOR_FIELD, int(_TARGET_WORDS * 0.4))
             _script_word_count = len(podcast_script.split())
             if _script_word_count < _HARD_FLOOR:
-                logger.error(
-                    "Podcast script is clearly broken (%d words, hard floor %d) — "
-                    "aborting episode.",
+                logger.warning(
+                    "Podcast script too thin after dedup + retries (%d words, hard floor %d) — "
+                    "skipping episode for today (fresh material was insufficient for a full show).",
                     _script_word_count, _HARD_FLOOR,
                 )
+                # Write skip marker so daily review treats this as intentional thin-day skip
+                # rather than a crash (consistent with min_articles_skip and other content gates).
+                try:
+                    marker_path = digests_dir / f".skip_{today.strftime('%Y%m%d')}.json"
+                    marker_path.parent.mkdir(parents=True, exist_ok=True)
+                    marker_data = {
+                        "date": today.isoformat(),
+                        "show": config.slug,
+                        "show_name": config.name,
+                        "reason": "podcast_script_too_thin",
+                        "detail": (
+                            f"Script only {_script_word_count} words after all dedup, "
+                            f"validation, and length retries (hard floor {_HARD_FLOOR}). "
+                            f"Insufficient fresh synthesizable material on this cycle."
+                        ),
+                        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                        "word_count": _script_word_count,
+                        "hard_floor": _HARD_FLOOR,
+                    }
+                    marker_path.write_text(json.dumps(marker_data, indent=2))
+                    logger.info("Skip marker written for thin podcast script: %s", marker_path.name)
+                except Exception as exc:
+                    logger.warning("Failed to write thin-script skip marker: %s", exc)
                 save_usage(tracker, digests_dir)
-                sys.exit(1)
+                sys.exit(2)  # Graceful skip (like insufficient articles) so matrix job stays green for other shows.
             elif _script_word_count < _TARGET_WORDS:
                 logger.warning(
                     "Podcast script below target (%d words, target %d) — "
@@ -2815,7 +2838,20 @@ def _clean_digest_for_podcast(digest: str) -> str:
         line = re.sub(r"  +", " ", line).strip()
         lines.append(line)
 
-    return "\n".join(lines)
+    cleaned = "\n".join(lines)
+
+    # Collapse repetitive source citation footers that the LLM sometimes echoes
+    # multiple times (e.g. "**— phys.org**", "**— r/science**" appearing 4x).
+    # This reduces the "suspicious repetition" warnings and gives the podcast
+    # stage cleaner material on thin news days.
+    cleaned = re.sub(
+        r'(\*\*?[-–—]\s*(phys\.org|Science Daily|bioRxiv|r/science|Nature|MIT Technology Review|Fierce Biotech|STAT News|Ars Technica|Harvard|Google News|Quanta|Science News|Lifespan\.io)\*\*?\s*){2,}',
+        r'\1',
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+
+    return cleaned
 
 
 def _clean_podcast_script(script: str, host_name: str = "Patrick") -> str:

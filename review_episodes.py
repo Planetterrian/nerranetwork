@@ -114,7 +114,7 @@ SHOW_REGISTRY = {
         "min_audio_s": 240,
         "max_audio_s": 1500,
         "required_sections": [],
-        "schedule": "odd",
+        "schedule": "daily",
     },
     "fascinating_frontiers": {
         "name": "Fascinating Frontiers",
@@ -126,7 +126,7 @@ SHOW_REGISTRY = {
         "min_audio_s": 240,
         "max_audio_s": 1500,
         "required_sections": [],
-        "schedule": "even",
+        "schedule": "daily",
     },
     "planetterrian": {
         "name": "Planetterrian Daily",
@@ -138,7 +138,7 @@ SHOW_REGISTRY = {
         "min_audio_s": 240,
         "max_audio_s": 1500,
         "required_sections": [],
-        "schedule": "odd",
+        "schedule": "daily",
     },
     "env_intel": {
         "name": "Environmental Intelligence",
@@ -162,7 +162,7 @@ SHOW_REGISTRY = {
         "min_audio_s": 240,
         "max_audio_s": 1500,
         "required_sections": [],
-        "schedule": "odd",
+        "schedule": "daily",
     },
     "models_agents_beginners": {
         "name": "Models & Agents for Beginners",
@@ -174,7 +174,7 @@ SHOW_REGISTRY = {
         "min_audio_s": 180,
         "max_audio_s": 1500,
         "required_sections": [],
-        "schedule": "even",
+        "schedule": "daily",
     },
     "finansy_prosto": {
         "name": "Finansy Prosto",
@@ -198,7 +198,7 @@ SHOW_REGISTRY = {
         "min_audio_s": 300,
         "max_audio_s": 1800,
         "required_sections": ["Strategy Spotlight", "Practice Investment"],
-        "schedule": "weekday",
+        "schedule": "daily",
     },
     "privet_russian": {
         "name": "Privet Russian",
@@ -211,6 +211,18 @@ SHOW_REGISTRY = {
         "max_audio_s": 1200,
         "required_sections": [],
         "schedule": "even",
+    },
+    "unintended_consequences": {
+        "name": "Unintended Consequences",
+        "output_dir": "digests/unintended_consequences",
+        "prefix": "Unintended_Consequences_Ep",
+        "min_digest_chars": 2000,
+        "max_digest_chars": 20000,
+        "min_tts_words": 1300,
+        "min_audio_s": 300,
+        "max_audio_s": 1200,
+        "required_sections": [],
+        "schedule": "weekday",
     },
 }
 
