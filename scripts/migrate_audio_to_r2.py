@@ -23,7 +23,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # noqa: E402
 load_dotenv(PROJECT_ROOT / ".env")
 
 
@@ -113,8 +113,6 @@ def migrate(execute: bool = False) -> None:
                 continue
 
             total_files += 1
-            title_el = item.find("title")
-            title = title_el.text if title_el is not None else "?"
 
             # Already migrated?
             if public_base_url and public_base_url in url:

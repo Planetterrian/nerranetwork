@@ -23,6 +23,7 @@ incrementally in follow-up PRs.
 
 from __future__ import annotations
 
+import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -106,7 +107,7 @@ def run_publish_phase(
     config: Any,
     *,
     episode_num: int,
-    today: "datetime.date",
+    today: datetime.date,
     today_str: str,
     hook: str,
     digest_text: str,
@@ -151,8 +152,6 @@ def run_publish_phase(
 
     # YouTube (delegates to existing _publish_youtube for now)
     _t_yt = __import__("time").monotonic()
-    chapters_path_for_yt = digests_dir / f"chapters_ep{episode_num:03d}.json"
-
     outcomes["youtube_call_duration_s"] = __import__("time").monotonic() - _t_yt
 
     return outcomes
@@ -330,7 +329,7 @@ def run_tts_and_audio_phase(
     final_mp3: Path,
     digests_dir: Path,
     episode_num: int,
-    today: "datetime.date",
+    today: datetime.date,
     metrics: Any,
 ) -> None:
     """Run TTS synthesis + audio mixing phase.

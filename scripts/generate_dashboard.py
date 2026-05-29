@@ -38,15 +38,13 @@ from __future__ import annotations
 import argparse
 import datetime as _dt
 import json
-import os
 import re
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, List, Optional
 
 # Make `engine` importable when this script is run from anywhere.
 _SCRIPT_DIR = Path(__file__).resolve().parent
@@ -289,7 +287,6 @@ def item_4_output_dirs(shows: List[Dict[str, Any]]) -> Dict[str, Any]:
         if not cfg:
             continue
         slug = s["slug"]
-        expected_prefix = f"digests/{slug}"
         # Tesla is grandfathered: its historic output_dir is
         # "digests/tesla_shorts_time". Accept any path under digests/.
         out = cfg.episode.output_dir or ""

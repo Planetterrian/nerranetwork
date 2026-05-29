@@ -46,8 +46,8 @@ from typing import Any, Iterable
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from engine.config import load_config
-from engine.synthesizer import synthesize_monthly_report
+from engine.config import load_config  # noqa: E402
+from engine.synthesizer import synthesize_monthly_report  # noqa: E402
 
 logging.basicConfig(
     level=logging.INFO,
@@ -438,7 +438,6 @@ def run(
     from engine.publisher import (
         update_rss_feed,
         apply_op3_prefix,
-        get_next_episode_number,
     )
 
     today = _dt.date.today()

@@ -295,13 +295,12 @@ def _sting_padding_cmd(sting_path: str, padded_out: str,
     Produces: [pre_silence] + [sting] + [post_silence] so transitions
     have a natural breathing room around them.
     """
-    total_pad = pre_silence + post_silence
     return [
         "ffmpeg", "-y", "-threads", "0",
-        "-f", "lavfi", "-i", f"anullsrc=r=44100:cl=mono",
+        "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono",
         "-t", f"{pre_silence:.2f}",
         "-i", sting_path,
-        "-f", "lavfi", "-i", f"anullsrc=r=44100:cl=mono",
+        "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono",
         "-t", f"{post_silence:.2f}",
         "-filter_complex",
         "[0][1][2]concat=n=3:v=0:a=1",

@@ -8,7 +8,6 @@ import datetime
 import logging
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from pathlib import Path
 from threading import Lock
 from typing import Dict, List, Optional
 
@@ -497,7 +496,6 @@ def fetch_x_posts(
     """
     import datetime as _dt
     import os
-    import re
     from concurrent.futures import ThreadPoolExecutor, as_completed
 
     if not x_accounts:
@@ -614,7 +612,6 @@ def _parse_x_posts_multi(
     Tries structured POST_AUTHOR/POST_TITLE/POST_URL blocks first, then
     falls back to extracting any x.com/*/status/* URLs with surrounding text.
     """
-    import re
 
     # --- Attempt 1: structured POST_TITLE/POST_URL blocks ---
     posts = _parse_structured_blocks(text, handles, labels, now_iso)
@@ -691,7 +688,6 @@ def _parse_url_extraction(
 
     posts: List[Dict] = []
     seen_urls: set = set()
-    handle_set = {h.lower() for h in handles}
 
     for m in re.finditer(r"https?://(?:x\.com|twitter\.com)/(\w+)/status(?:es)?/(\d+)\S*", text):
         url = m.group(0).split(")")[0].rstrip(".,;")

@@ -270,7 +270,6 @@ def generate_registration_patch(spec: ScaffoldSpec) -> str:
     """
     slug = spec.slug
     rss_file = f"{slug}_podcast.rss"
-    page = slug_to_page(slug)
     cover = f"assets/covers/{slug.replace('_', '-')}.jpg"
 
     # Reasonable staleness threshold based on cadence
@@ -407,7 +406,7 @@ def scaffold_show(root: Path, spec: ScaffoldSpec, *, dry_run: bool = False) -> l
         (digest_dir / ".gitkeep").write_text("", encoding="utf-8")
         blog_dir.mkdir(parents=True, exist_ok=True)
         (blog_dir / ".gitkeep").write_text("", encoding="utf-8")
-        log.append(f"Created output dirs under digests/ and blog/")
+        log.append("Created output dirs under digests/ and blog/")
 
     merge_network_meta(root, build_network_meta_entry(spec), dry_run=dry_run)
     log.append(

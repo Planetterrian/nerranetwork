@@ -734,8 +734,8 @@ def build_closing_block(
     if not personality:
         logger.warning("No closing personality for show '%s' — using generic.", show_slug)
         base = (
-            f"Patrick: That's the show for today. Thanks for listening, "
-            f"and I'll see you tomorrow."
+            "Patrick: That's the show for today. Thanks for listening, "
+            "and I'll see you tomorrow."
         )
         return _maybe_append_youtube_cta(base, youtube_channel_handle)
 

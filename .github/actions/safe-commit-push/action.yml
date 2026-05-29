@@ -7,7 +7,12 @@ description: |
 
 inputs:
   add-paths:
-    description: "Space or newline separated paths to git add (e.g. 'api/dashboard.json site/data/')"
+    description: |
+      Paths to git add. Supports both space-separated and multi-line YAML block scalars
+      (the recommended form for readability in workflows). Example:
+        add-paths: |
+          api/dashboard.json
+          site/data/gallery-manifest.json
     required: true
   commit-message:
     description: "Commit message"
@@ -50,7 +55,19 @@ runs:
     - name: Add files
       shell: bash
       run: |
-        git add ${{ inputs.add-paths }}
+        # Safely handle multi-line add-paths (the documented usage pattern).
+        # Writing to a temp file + --pathspec-from-file prevents shell
+        # word-splitting and stops paths from being misinterpreted as
+        # executable commands (the cause of "Permission denied" on .json files).
+        cat > /tmp/paths-to-add.txt << 'EOL'
+${{ inputs.add-paths }}
+EOL
+
+        # Drop blank lines and add the rest
+        grep -v '^[[:space:]]*$' /tmp/paths-to-add.txt > /tmp/paths-clean.txt || true
+        if [ -s /tmp/paths-clean.txt ]; then
+          git add --pathspec-from-file=/tmp/paths-clean.txt || true
+        fi
 
     - name: Check for changes
       id: check
@@ -67,7 +84,10 @@ runs:
       if: steps.check.outputs.has_changes == 'true'
       shell: bash
       run: |
-        git commit -m "${{ inputs.commit-message }}"
+        # Use a temp file for the commit message to safely support
+        # multi-line messages and special characters.
+        printf '%s\n' "${{ inputs.commit-message }}" > /tmp/commit-msg.txt
+        git commit -F /tmp/commit-msg.txt
 
     - name: Push to main (with retry)
       if: steps.check.outputs.has_changes == 'true' && inputs.create-branch != 'true'
@@ -89,7 +109,11 @@ runs:
       if: steps.check.outputs.has_changes == 'true' && inputs.create-branch == 'true'
       shell: bash
       run: |
-        BRANCH="${{ inputs.branch-name || 'automation/update-$(date +%Y%m%d-%H%M%S)' }}"
+        if [ -n "${{ inputs.branch-name }}" ]; then
+          BRANCH="${{ inputs.branch-name }}"
+        else
+          BRANCH="automation/update-$(date +%Y%m%d-%H%M%S)"
+        fi
         git checkout -b "$BRANCH"
         git push -u origin "$BRANCH"
 
@@ -99,8 +123,14 @@ runs:
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
+        # Write title and body to files to handle newlines and special characters safely
+        printf '%s\n' "${{ inputs.pr-title }}" > /tmp/pr-title.txt
+        printf '%s\n' "${{ inputs.pr-body }}"  > /tmp/pr-body.txt
+
+        HEAD_REF="${{ inputs.branch-name || 'automation/update-*' }}"
+
         gh pr create \
-          --title "${{ inputs.pr-title }}" \
-          --body "${{ inputs.pr-body }}" \
+          --title "$(cat /tmp/pr-title.txt)" \
+          --body  "$(cat /tmp/pr-body.txt)" \
           --base main \
-          --head "${{ inputs.branch-name || 'automation/update-*' }}" || true
+          --head "$HEAD_REF" || true

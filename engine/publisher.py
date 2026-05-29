@@ -18,7 +18,7 @@ import re
 import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -1473,7 +1473,6 @@ def format_tst_digest_for_x(digest: str, *, max_chars: int = 25000) -> str:
       7. Final cleanup & truncation
     """
     PODCAST_URL = "https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939"
-    SEPARATOR = "\n\n\u2501" * 20 + "\n\n"  # ━━━━━━━━━━━━━━━━━━━━
     EMOJI_NUMBERS = [
         "1\ufe0f\u20e3", "2\ufe0f\u20e3", "3\ufe0f\u20e3", "4\ufe0f\u20e3",
         "5\ufe0f\u20e3", "6\ufe0f\u20e3", "7\ufe0f\u20e3", "8\ufe0f\u20e3",

@@ -20,12 +20,11 @@ Usage:
 """
 
 import json
-import os
 import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 import xml.etree.ElementTree as ET
 
 # Use the canonical NETWORK_SHOWS registry from ``generate_html.py``
@@ -145,7 +144,6 @@ class APIGenerator:
             for item in root.findall('.//item'):
                 title_elem = item.find('title')
                 pub_date_elem = item.find('pubDate')
-                link_elem = item.find('link')
                 description_elem = item.find('description')
                 duration_elem = item.find('itunes:duration', namespaces)
 
