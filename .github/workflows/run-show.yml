@@ -377,14 +377,18 @@ jobs:
           print(f'Digest content validated ({len(md_files)} file(s))')
           "
 
-          # Validate RSS feed is well-formed XML
-          RSS_FILES=$(find . -maxdepth 1 -name "*.rss" -newer "$OUTPUT_DIR" -type f 2>/dev/null || true)
-          for rss in *.rss; do
+          # Validate RSS feed is well-formed XML (any .rss files modified by this run)
+          find . -maxdepth 1 -name "*.rss" -newer "$OUTPUT_DIR" -type f -print0 2>/dev/null | while IFS= read -r -d '' rss; do
             if [ -f "$rss" ]; then
-              python3 -c "import xml.etree.ElementTree as ET; ET.parse('$rss'); print('RSS valid: $rss')" || {
-                echo "ERROR: RSS feed $rss is not valid XML"
-                exit 1
-              }
+              python3 -c "
+import xml.etree.ElementTree as ET, sys
+try:
+    ET.parse(sys.argv[1])
+    print('RSS valid:', sys.argv[1])
+except Exception as e:
+    print('ERROR: RSS feed', sys.argv[1], 'is not valid XML:', e)
+    sys.exit(1)
+" "$rss" || exit 1
             fi
           done
 
@@ -434,8 +438,8 @@ jobs:
 
           # Stage all generated output
           git add -A digests/ || true
-          git add *.rss || true
-          git add *.html || true
+          git add '*.rss' || true
+          git add '*.html' || true
           git add -A blog/ || true
           git add sitemap.xml || true
           # Tesla cached price for the public website widget. Written

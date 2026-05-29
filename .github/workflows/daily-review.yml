@@ -10,20 +10,6 @@ on:
   workflow_run:
     workflows: ["Run Podcast Show"]
     types: [completed]
-    inputs:
-      date:
-        description: 'Date to review (YYYY-MM-DD, default: today)'
-        required: false
-        type: string
-      show:
-        description: 'Review only a specific show (leave blank for all)'
-        required: false
-        type: string
-      create_issues:
-        description: 'Create GitHub issues for problems found'
-        required: false
-        type: boolean
-        default: true
 
 permissions:
   contents: read
@@ -57,26 +43,30 @@ jobs:
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Safe access to workflow_dispatch inputs (empty object for schedule/workflow_run)
+          INPUT_DATE: ${{ github.event.inputs.date || '' }}
+          INPUT_SHOW: ${{ github.event.inputs.show || '' }}
+          INPUT_CREATE_ISSUES: ${{ github.event.inputs.create_issues || 'true' }}
         run: |
           ARGS=""
 
           # Date: use input if provided, otherwise today
-          if [ -n "${{ inputs.date }}" ]; then
-            ARGS="$ARGS --date ${{ inputs.date }}"
+          if [ -n "${INPUT_DATE}" ]; then
+            ARGS="$ARGS --date ${INPUT_DATE}"
           fi
 
           # Show filter
-          if [ -n "${{ inputs.show }}" ]; then
-            ARGS="$ARGS --show ${{ inputs.show }}"
+          if [ -n "${INPUT_SHOW}" ]; then
+            ARGS="$ARGS --show ${INPUT_SHOW}"
           fi
 
           # Create issues: always on schedule, configurable on dispatch
-          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ inputs.create_issues }}" = "true" ]; then
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${INPUT_CREATE_ISSUES}" = "true" ]; then
             ARGS="$ARGS --create-issues"
           fi
 
           set +e
-          python review_episodes.py $ARGS 2>&1 | tee /tmp/review_output.txt
+          python review_episodes.py "$ARGS" 2>&1 | tee /tmp/review_output.txt
           EXIT_CODE=${PIPESTATUS[0]}
           set -e
 
@@ -110,22 +100,20 @@ jobs:
           SUMMARY: ${{ steps.review.outputs.summary }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          if [ "$EXIT_CODE" = "1" ]; then
-            SEVERITY="CRITICAL"
-          else
-            SEVERITY="WARNING"
-          fi
           python3 - <<'PY'
           import json, os, urllib.request
 
+          exit_code = os.environ.get("EXIT_CODE", "0")
+          severity = "critical" if exit_code == "1" else "warning"
+
           payload = {
-              "severity": os.environ["EXIT_CODE"] == "1" and "critical" or "warning",
-              "headline": f"Nerra daily review: {os.environ.get('EXIT_CODE')} — {('CRITICAL' if os.environ['EXIT_CODE']=='1' else 'warning')}",
+              "severity": severity,
+              "headline": f"Nerra daily review: {exit_code} — {('CRITICAL' if exit_code=='1' else 'warning')}",
               "summary": os.environ.get("SUMMARY", "")[:3500],
               "run_url": os.environ.get("RUN_URL", ""),
               # Slack-compatible fallback block
               "text": (
-                  f"*Nerra daily review finished with exit {os.environ['EXIT_CODE']}*\n"
+                  f"*Nerra daily review finished with exit {exit_code}*\n"
                   f"<{os.environ.get('RUN_URL','')}|Workflow run>\n"
                   f"```{os.environ.get('SUMMARY','')[:2500]}```"
               ),

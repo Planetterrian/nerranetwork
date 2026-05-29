@@ -60,18 +60,22 @@ jobs:
         run: python check_sources.py --check-blocked
 
       - name: Discover new sources
+        env:
+          INPUT_SHOW: ${{ github.event.inputs.show || '' }}
+          INPUT_MIN_SCORE: ${{ github.event.inputs.min_score || '' }}
+          INPUT_AUTO_APPLY: ${{ github.event.inputs.auto_apply || '' }}
         run: |
           ARGS="--report"
-          if [ "${{ github.event.inputs.show }}" != "" ] && [ "${{ github.event.inputs.show }}" != "all" ]; then
-            ARGS="$ARGS ${{ github.event.inputs.show }}"
+          if [ "$INPUT_SHOW" != "" ] && [ "$INPUT_SHOW" != "all" ]; then
+            ARGS="$ARGS $INPUT_SHOW"
           fi
-          if [ "${{ github.event.inputs.min_score }}" != "" ]; then
-            ARGS="$ARGS --min-score ${{ github.event.inputs.min_score }}"
+          if [ "$INPUT_MIN_SCORE" != "" ]; then
+            ARGS="$ARGS --min-score $INPUT_MIN_SCORE"
           fi
-          if [ "${{ github.event.inputs.auto_apply }}" == "true" ]; then
+          if [ "$INPUT_AUTO_APPLY" = "true" ]; then
             ARGS="$ARGS --apply"
           fi
-          python discover_sources.py $ARGS
+          python discover_sources.py "$ARGS"
 
       - uses: ./.github/actions/safe-commit-push
         with:
