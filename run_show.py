@@ -1052,6 +1052,12 @@ def run(args: argparse.Namespace) -> None:
                 is_weekly_recap = False
             else:
                 metrics.record("weekly_recap_mode", True)
+                # The Sunday recap text already embeds the narrative-memory
+                # block (engine.weekly_recap appends it), so clear the prompt's
+                # {narrative_memory_section} to avoid injecting the same content
+                # twice into the podcast prompt on recap days.
+                if template_vars.get("narrative_memory_section"):
+                    template_vars["narrative_memory_section"] = ""
         if not is_weekly_recap:
             logger.info("Generating digest ...")
             try:

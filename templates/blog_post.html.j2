@@ -24,30 +24,9 @@
   ]
 }
     </script>
-
-    {# Richer PodcastEpisode structured data (supplements the BlogPosting
-       JSON-LD above). Built as a dict piped through tojson so the output is
-       always valid JSON even when a title contains quotes, and optional
-       members (audio, transcript) are emitted only when actually present. #}
-    {%- set _episode_ld = {
-        "@context": "https://schema.org",
-        "@type": "PodcastEpisode",
-        "name": (episode_title if (episode_title and episode_title != show_name) else (hook or episode_title or page_title)),
-        "url": (page_url or canonical_url),
-        "datePublished": (date or episode_date_iso),
-        "description": (summary or ""),
-        "inLanguage": ("ru" if _is_ru else "en"),
-        "isPartOf": {
-            "@type": "PodcastSeries",
-            "name": show_name,
-            "url": ("https://nerranetwork.com/" ~ show_page)
-        }
-    } -%}
-    {%- if audio_url %}{% set _ = _episode_ld.update({"associatedMedia": {"@type": "MediaObject", "contentUrl": audio_url}}) %}{% endif -%}
-    {%- if transcript_url %}{% set _ = _episode_ld.update({"transcript": transcript_url}) %}{% endif -%}
-    <script type="application/ld+json">
-{{ _episode_ld | tojson }}
-    </script>
+    {# PodcastEpisode JSON-LD is emitted once, in the {{ jsonld }} array above
+       (engine/blog.py _build_jsonld) — including transcript + audio links —
+       so there is no duplicate PodcastEpisode block here. #}
 
     <style>
         .blog-hero {
