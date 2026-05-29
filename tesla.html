@@ -1667,10 +1667,12 @@
                         if (updatedEl && cached.fetched_at) {
                             try {
                                 const d = new Date(cached.fetched_at);
-                                updatedEl.textContent = `Updated ${d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
+                                updatedEl.textContent = `Updated ${d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} (snapshot)`;
                             } catch (_) {}
                         }
-                        return;
+                        // Do NOT return early. Fall through so that during live market
+                        // hours a fresher quote from the Yahoo fallback can upgrade the
+                        // displayed price and timestamp in-place for visitors.
                     }
                 }
             } catch { /* fall through to Yahoo */ }

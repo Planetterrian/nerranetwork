@@ -136,6 +136,7 @@
                     <span class="ticker">TSLA</span>
                     <span class="price" id="stock-price">--</span>
                     <span class="change" id="stock-change">--</span>
+                    <div id="stock-updated" style="font-size:0.7rem;opacity:0.6;margin-top:2px;"></div>
                 </div>
                 {% endif %}
             </div>
@@ -903,7 +904,7 @@
         {% if show_slug == 'tesla' %}
         // --- Stock widget (Tesla only) ---
         async function loadStock() {
-            function displayPrice(price, prev) {
+            function displayPrice(price, prev, marketState = null) {
                 const p = parseFloat(price), pc = parseFloat(prev);
                 // Validate: TSLA price should be in a reasonable range
                 if (isNaN(p) || isNaN(pc) || p <= 0 || pc <= 0 || p > 99999 || pc > 99999) {
@@ -915,14 +916,23 @@
                 const isUp = parseFloat(ch) >= 0;
                 document.getElementById('stock-price').textContent = '$' + p.toFixed(2);
                 const changeEl = document.getElementById('stock-change');
-                changeEl.textContent = (isUp ? '+' : '') + ch + ' (' + (isUp ? '+' : '') + pct + '%)';
+                let label = '';
+                if (marketState) {
+                    const ms = String(marketState).toUpperCase();
+                    if (ms === 'PRE') label = 'Pre-Market';
+                    else if (ms.includes('POST')) label = 'After Hours';
+                    else if (ms === 'REGULAR') label = '';
+                }
+                changeEl.textContent = (isUp ? '+' : '') + ch + ' (' + (isUp ? '+' : '') + pct + '%)' + (label ? ` · ${label}` : '');
                 changeEl.className = 'change ' + (isUp ? 'up' : 'down');
             }
             function showStockError(msg) {
                 const priceEl = document.getElementById('stock-price');
                 const changeEl = document.getElementById('stock-change');
+                const updatedEl = document.getElementById('stock-updated');
                 if (priceEl) priceEl.textContent = 'TSLA';
                 if (changeEl) changeEl.textContent = msg || 'Market data unavailable';
+                if (updatedEl) updatedEl.textContent = '';
             }
 
             // PRIMARY source: same-origin api/tsla.json written by the
@@ -942,8 +952,17 @@
                     const price = parseFloat(cached.price);
                     const prev = parseFloat(cached.prev_close);
                     if (price > 0 && prev > 0) {
-                        displayPrice(price, prev);
-                        return;
+                        displayPrice(price, prev, cached.market_state || null);
+                        const updatedEl = document.getElementById('stock-updated');
+                        if (updatedEl && cached.fetched_at) {
+                            try {
+                                const d = new Date(cached.fetched_at);
+                                updatedEl.textContent = `Updated ${d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} (snapshot)`;
+                            } catch (_) {}
+                        }
+                        // Do NOT return — fall through to Yahoo attempts.
+                        // This lets a live trading-hours quote from Yahoo upgrade
+                        // the displayed price + timestamp for visitors during the day.
                     }
                 }
             } catch { /* fall through to Yahoo */ }
@@ -970,7 +989,7 @@
                     const price = meta.regularMarketPrice;
                     const prev = meta.chartPreviousClose || meta.previousClose;
                     if (price && prev) {
-                        displayPrice(price, prev);
+                        displayPrice(price, prev, marketState);
                         return;
                     }
                 } catch { /* try next proxy */ }
@@ -984,7 +1003,7 @@
                     const data = await resp.json();
                     const quote = data?.quoteResponse?.result?.[0];
                     if (quote?.regularMarketPrice && quote?.regularMarketPreviousClose) {
-                        displayPrice(quote.regularMarketPrice, quote.regularMarketPreviousClose);
+                        displayPrice(quote.regularMarketPrice, quote.regularMarketPreviousClose, quote.marketState);
                         return;
                     }
                 } catch { /* try next proxy */ }
