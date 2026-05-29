@@ -77,6 +77,7 @@
 {% endblock %}
 
 {% block content %}
+    {% from "_macros.html.j2" import ai_badge %}
     <!-- Hero -->
     <section class="show-hero">
         <div class="show-hero-bg"></div>
@@ -130,6 +131,9 @@
                         Performance &amp; Lessons
                     </a>
                     {% endif %}
+                </div>
+                <div style="margin-top:var(--sp-3);">
+                    {{ ai_badge(path_prefix=path_prefix, is_ru=_is_ru) }}
                 </div>
                 {% if show_slug == 'tesla' %}
                 <div class="stock-widget" id="stock-widget">
