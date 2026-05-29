@@ -998,7 +998,7 @@ decision); everything else has a live status card.
     | `modern_investing` | (default 3) | Markets always produce 3+ stories on a weekday. |
     | `env_intel` | 2 | Alt-cadence (odd weekdays); 2 substantive stories enough. |
     | `models_agents_beginners` | 2 | Re-uses M&A pool; lower bar OK because tone is explanatory. |
-    | `planetterrian` | 2 | Edmonton-local news is sparse; 2 is the realistic floor. |
+    | `planetterrian` | 2 | Science/longevity/health show (NOT local news — that description was stale); primary-research days can be thin, so 2 is the realistic floor. |
     | `privet_russian` | 1 | Bilingual lesson show; one solid theme is sufficient. |
     | `unintended_consequences` | 0 | Narrative show — articles aren't the input, topic queue is. |
 
