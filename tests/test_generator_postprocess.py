@@ -217,3 +217,61 @@ class TestRetryWordCountOk:
             orig_words=500, retry_words=400, show_floor=600,
         ) is False
 
+
+# ---------------------------------------------------------------------------
+# _correct_common_llm_text_mistakes (TST Ep489/Ep490 branding + grammar slips)
+# ---------------------------------------------------------------------------
+
+class TestCorrectCommonLLMTextMistakes:
+    """Regression tests for the post-generation brand / title / grammar
+    fixer added after operator reported mangled openings in TST Ep490
+    (and similar issues in Ep489 and older runs).
+    """
+
+    def test_fixes_tela_brand(self):
+        from engine.generator import _correct_common_llm_text_mistakes
+        bad = "Tela never sleeps, and neither do's the news cycle."
+        out = _correct_common_llm_text_mistakes(bad)
+        assert "Tesla never sleeps" in out
+        assert "Tela" not in out
+
+    def test_fixes_tesla_rati_split(self):
+        from engine.generator import _correct_common_llm_text_mistakes
+        bad = "According to a Tesla Rati editor and Tesla Ratie analysis..."
+        out = _correct_common_llm_text_mistakes(bad)
+        assert "Teslarati" in out
+        assert "Tesla Rati" not in out
+        assert "Tesla Ratie" not in out
+
+    def test_normalizes_mangled_show_title_variants(self):
+        from engine.generator import _correct_common_llm_text_mistakes
+        cases = [
+            "welcome to Tela Short's Time, daily, episode four hundred ninety.",
+            "Welcome to Tesla Short's Time Daily.",
+            "welcome to Tela Shorts Time, daily",
+            "Thanks for tuning in to Tesla Shorts Time daily.",
+        ]
+        for bad in cases:
+            out = _correct_common_llm_text_mistakes(bad)
+            assert "Tesla Shorts Time Daily" in out
+            # No possessive on Short or Time, title case Daily
+            assert "Short's" not in out
+            assert "Shorts Time, daily" not in out.lower()
+
+    def test_fixes_dos_in_famous_framing_line(self):
+        from engine.generator import _correct_common_llm_text_mistakes
+        bad = "Tela never sleeps, and neither do's the news cycle."
+        out = _correct_common_llm_text_mistakes(bad)
+        assert "neither does the news cycle" in out
+        assert "do's" not in out
+
+    def test_is_idempotent_and_preserves_good_text(self):
+        from engine.generator import _correct_common_llm_text_mistakes
+        good = (
+            "Tesla never sleeps and neither does the news cycle. "
+            "Welcome to Tesla Shorts Time Daily, episode 490. "
+            "According to Teslarati..."
+        )
+        out = _correct_common_llm_text_mistakes(good)
+        assert out == good  # no change on clean input
+

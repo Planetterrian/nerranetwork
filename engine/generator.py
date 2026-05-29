@@ -815,7 +815,66 @@ def _sanitize_podcast_script(text: str) -> str:
         r"\1",
         text_joined,
     )
+
+    # Fix chronic LLM brand / show-title / grammar slips (TST "Tela",
+    # "Tesla Rati", "Short's Time, daily", "do's the news cycle", etc.).
+    # This is the belt-and-braces layer after all the prompt defenses.
+    text_joined = _correct_common_llm_text_mistakes(text_joined)
+
     return text_joined
+
+
+def _correct_common_llm_text_mistakes(text: str) -> str:
+    """Fix chronic LLM generation slips on brands, show titles, and set phrases.
+
+    These are defense-in-depth post-processing fixes. The primary defense is
+    strong negative examples + verbatim-copy instructions in the per-show
+    prompts (especially the Tesla podcast prompt), but the model still
+    occasionally emits:
+
+    - "Tela" for "Tesla"
+    - "Tesla Rati" / "Tesla Ratie" for "Teslarati"
+    - Mangled show title: "Tela Short's Time, daily", "Tesla Short's Time Daily",
+      lowercase "daily", wrong capitalization, etc.
+    - Grammar slips in the famous framing line: "neither do's the news cycle"
+
+    Historical incidents:
+    - TST Ep489 / Ep490 (and earlier runs): the exact phrases the operator
+      reported at the top of the episode.
+    - Multiple pre-2026-05 transcripts: "Tesla Rati(e)" splits.
+
+    Called at the end of _sanitize_podcast_script (for the spoken script) and
+    at the end of generate_digest (so the .md / blog / RSS / newsletter also
+    stay clean). Safe to run multiple times; replacements are idempotent.
+    """
+    import re
+
+    # --- Tesla family brand names (highest priority) ---
+    # Standalone "Tela" (the most common hallucination on TST)
+    text = re.sub(r"\bTela\b", "Tesla", text)
+    # Split/mangled Teslarati (appears in prompts as an example source)
+    text = re.sub(r"\bTesla Rati(e)?\b", "Teslarati", text, flags=re.IGNORECASE)
+
+    # --- TST show title and the famous framing line ---
+    # The model has a persistent habit of mangling the exact strings that
+    # appear in engine/intros.py personality pools and in this prompt.
+    replacements = [
+        # The classic framing line (one of the framings in intros.py)
+        (r"neither do['’]s the news cycle", "neither does the news cycle"),
+        (r"Tela never sleeps", "Tesla never sleeps"),
+        # All common manglings of the show name the operator has seen
+        (r"\bTela Shorts? Time[,\s]*[Dd]aily\b", "Tesla Shorts Time Daily"),
+        (r"\bTesla Short['’]?s Time[,\s]*[Dd]aily\b", "Tesla Shorts Time Daily"),
+        (r"\bTesla Shorts? Time[,\s]*[Dd]aily\b", "Tesla Shorts Time Daily"),
+        (r"welcome to Tela Short", "welcome to Tesla Shorts Time Daily"),
+        (r"welcome to Tesla Short['’]s Time", "welcome to Tesla Shorts Time Daily"),
+        # Catch the exact user-reported opening from Ep490
+        (r"welcome to Tela Short's Time, daily", "Welcome to Tesla Shorts Time Daily"),
+    ]
+    for pattern, repl in replacements:
+        text = re.sub(pattern, repl, text, flags=re.IGNORECASE)
+
+    return text
 
 
 # ---------------------------------------------------------------------------
@@ -1197,6 +1256,11 @@ def generate_digest(
     # kept appending the same stamp. Post-processing is the
     # belt-and-braces fix.
     text = _strip_hallucinated_timestamps(text)
+
+    # Apply the same brand / show-title / grammar corrections that protect
+    # the podcast script. This keeps the .md (blog, RSS show notes, newsletter,
+    # GitHub Pages, etc.) consistent with the spoken version.
+    text = _correct_common_llm_text_mistakes(text)
 
     return text
 
