@@ -1,18 +1,22 @@
 name: Nightly Maintenance
 
-# Consolidated nightly maintenance orchestrator.
-# Runs after the last show of the day (~12:30 UTC) and triggers:
-#   - Dashboard refresh
-#   - Gallery manifest + Search index
-#   - Content lake backfill
-#   - Regeneration of heavy transparency pages (MIT + TST narrative)
+# Consolidated nightly maintenance orchestrator (the "heavy" post-publish job).
+# Runs after the last show of the day (~12:45 UTC) and on successful run-show completions.
 #
-# Note: RSS health checks and episode quality review + automated remediation
-# have been moved into the Daily Audit workflow (evolved from daily-review.yml)
-# so that quality gates and recovery actions happen earlier in the post-publish window.
+# Responsibilities:
+#   - Full dashboard regeneration (api/dashboard.json)
+#   - Gallery manifest + Search index rebuild
+#   - Content lake backfill (for search)
+#   - Regeneration of heavy transparency pages (MIT performance + TST narrative)
+#   - Safe commit + push of all the above artifacts
 #
-# Goal: Fewer workflows, clearer ownership (Daily Audit = reactive + remediation,
-# Nightly = heavier, idempotent maintenance).
+# Clear ownership split:
+# - Daily Audit (daily-audit.yml)     → Quality review, missed episode detection + auto-retry,
+#                                         RSS freshness, early remediation.
+# - Nightly Maintenance (this file)   → Heavier, idempotent artifact & index builds.
+#
+# This split keeps the daily gate fast and actionable while the nightly job owns
+# the more expensive data processing.
 
 on:
   schedule:

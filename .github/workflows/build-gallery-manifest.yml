@@ -9,16 +9,16 @@ name: Build Gallery Manifest + Search Index
 # Both builders are safe/no-op on missing data and avoid timestamp-only commits.
 #
 # Triggers:
-#   * Nightly at 03:30 UTC — well after run-show.yml finishes its
-#     last slot (~12:00 UTC) and the dashboard refresh.
-#   * After every successful "Run Podcast Show" workflow run, so the
-#     gallery + search reflect new episodes within minutes.
-#   * On push to main affecting the builders or templates.
+#   * Nightly at 03:30 UTC (safety / full rebuild after everything settles).
+#   * After every successful "Run Podcast Show" (via workflow_run) so new
+#     episodes appear in the gallery + search within minutes.
+#   * On push to main touching the builder scripts or templates.
 #   * workflow_dispatch for manual runs.
+#
+# Note: nightly-maintenance.yml also runs the gallery + search builders as
+# part of its artifact refresh (for immediate post-show consistency).
 
 on:
-  schedule:
-    - cron: '30 3 * * *'
   workflow_dispatch:
   workflow_run:
     workflows: ["Run Podcast Show"]

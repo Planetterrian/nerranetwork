@@ -360,7 +360,7 @@ jobs:
           fi
 
           # Check digest content for LLM refusal text
-          python3 -c "
+          python3 << PYEOF
           import re, pathlib, sys
           output_dir = '$OUTPUT_DIR'
           today = '$(date +%Y%m%d)'
@@ -375,20 +375,22 @@ jobs:
                   print(f'ERROR: Digest {f.name} is suspiciously short ({len(text.strip())} chars)')
                   sys.exit(1)
           print(f'Digest content validated ({len(md_files)} file(s))')
-          "
+          PYEOF
 
           # Validate RSS feed is well-formed XML (any .rss files modified by this run)
           find . -maxdepth 1 -name "*.rss" -newer "$OUTPUT_DIR" -type f -print0 2>/dev/null | while IFS= read -r -d '' rss; do
             if [ -f "$rss" ]; then
-              python3 -c "
-import xml.etree.ElementTree as ET, sys
-try:
-    ET.parse(sys.argv[1])
-    print('RSS valid:', sys.argv[1])
-except Exception as e:
-    print('ERROR: RSS feed', sys.argv[1], 'is not valid XML:', e)
-    sys.exit(1)
-" "$rss" || exit 1
+              python3 << 'PYEOF' "$rss" || exit 1
+                import xml.etree.ElementTree as ET
+                import sys
+
+                try:
+                    ET.parse(sys.argv[1])
+                    print('RSS valid:', sys.argv[1])
+                except Exception as e:
+                    print('ERROR: RSS feed', sys.argv[1], 'is not valid XML:', e)
+                    sys.exit(1)
+              PYEOF
             fi
           done
 

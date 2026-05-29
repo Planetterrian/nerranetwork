@@ -86,7 +86,7 @@ class TestScaffold:
 
 def test_generate_registration_patch_contains_key_sections():
     """Medium item: The scaffold now emits a rich registration patch that covers
-    cron, health-check, Buttondown tag, and cover art to reduce manual onboarding steps.
+    cron, daily-audit (quality + RSS health), Buttondown tag, and cover art to reduce manual onboarding steps.
     """
     from engine.show_scaffold import ScaffoldSpec, generate_registration_patch
 
@@ -103,7 +103,7 @@ def test_generate_registration_patch_contains_key_sections():
 
     assert "REGISTRATION PATCH" in patch
     assert "run-show.yml" in patch
-    assert "health-check.yml" in patch
+    assert "daily-audit.yml" in patch or "health-check" not in patch  # health-check logic consolidated into daily-audit
     assert "Buttondown tag" in patch
     assert "ocean-tech.jpg" in patch or "ocean_tech" in patch
     assert "test_medium_podcast.rss" not in patch  # sanity: this is for the test show only

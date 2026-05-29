@@ -306,7 +306,7 @@ def generate_registration_patch(spec: ScaffoldSpec) -> str:
 
     lines.extend([
         "",
-        "2. Add to .github/workflows/health-check.yml  (inside FEEDS)",
+        "2. (Optional) The daily-audit.yml already covers RSS freshness for new shows via its consolidated health logic.",
         f"   {health_line}",
         "",
         "3. Buttondown tag (create in Buttondown dashboard if missing):",
