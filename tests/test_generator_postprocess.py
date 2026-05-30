@@ -219,6 +219,52 @@ class TestRetryWordCountOk:
 
 
 # ---------------------------------------------------------------------------
+# _podcast_expansion_retry_threshold — no dead band vs run_show's soft floor
+# ---------------------------------------------------------------------------
+
+class TestPodcastExpansionRetryThreshold:
+    """Tesla Ep493 (2026-05-30) was skipped without an expansion attempt:
+    the script came in at 874 words (→818 after dedup). The old retry bar
+    was ``max(600, min_words * 0.5)`` = 800 words for Tesla (min_words=1600),
+    so 874 cleared it and no expansion ran — but run_show.py's publication
+    soft floor is ``int(min_words * 0.6)`` = 960, so the runner skipped the
+    episode. Any script in the 800–960 band was neither rescued nor
+    published. The retry threshold must stay at or above that soft floor so
+    the two checks can't open a dead band."""
+
+    # Mirror of run_show.py's _SOFT_FLOOR computation. If that formula
+    # changes, this test (and the helper's docstring) must be revisited.
+    @staticmethod
+    def _run_show_soft_floor(min_words: int) -> int:
+        return int(min_words * 0.6)
+
+    def test_tesla_ep493_word_count_now_triggers_retry(self):
+        """874 words at Tesla's min_words=1600 must now trigger the
+        expansion retry (it cleared the old 800-word bar and was skipped
+        at the 960 soft floor)."""
+        from engine.generator import _podcast_expansion_retry_threshold
+        threshold = _podcast_expansion_retry_threshold(1600)
+        assert 874 < threshold
+
+    @pytest.mark.parametrize("min_words", [1000, 1200, 1500, 1600, 2000, 2800])
+    def test_threshold_never_below_soft_floor(self, min_words):
+        """For every plausible target the retry threshold must be >= the
+        runner's soft floor, so a script that would be skipped always gets
+        an expansion attempt first."""
+        from engine.generator import _podcast_expansion_retry_threshold
+        assert (
+            _podcast_expansion_retry_threshold(min_words)
+            >= self._run_show_soft_floor(min_words)
+        )
+
+    def test_absolute_floor_of_600(self):
+        """Very small targets still keep the network-wide 600-word
+        absolute retry floor."""
+        from engine.generator import _podcast_expansion_retry_threshold
+        assert _podcast_expansion_retry_threshold(100) == 600
+
+
+# ---------------------------------------------------------------------------
 # _correct_common_llm_text_mistakes (TST Ep489/Ep490 branding + grammar slips)
 # ---------------------------------------------------------------------------
 

@@ -780,6 +780,25 @@ def _retry_word_count_ok(orig_words: int, retry_words: int,
     return retry_words >= threshold
 
 
+def _podcast_expansion_retry_threshold(min_words: int) -> int:
+    """Word count below which ``generate_podcast_script`` triggers a
+    one-shot expansion retry.
+
+    This MUST stay at or above ``run_show.py``'s publication soft floor
+    (``int(min_words * 0.6)``) so the two checks can't open a dead band:
+    a script that clears this bar but falls under the soft floor would be
+    accepted here and then silently skipped by the runner, never getting
+    an expansion attempt (Tesla Ep493, 2026-05-30 — 874 words cleared the
+    old 50%/800-word bar but fell under the 60%/960 soft floor and the
+    episode was skipped). The ~10% margin above the soft floor covers the
+    dedup pass that runs between generation and the skip check and trims a
+    few percent off the count (Ep493 went 874 → 818). ``600`` is the
+    network-wide absolute floor.
+    """
+    soft_floor = int(min_words * 0.6)
+    return max(600, int(soft_floor * 1.1))
+
+
 def _sanitize_podcast_script(text: str) -> str:
     """Strip known LLM artifacts that break TTS quality.
 
@@ -1660,11 +1679,19 @@ def generate_podcast_script(
                                               show_name=config.name,
                                               min_podcast_words=min_words)
 
-    # Retry once if podcast script is catastrophically short (< 50% of
-    # target).  Above that, accept the shorter script — fresh content
-    # matters more than hitting a word count.
+    # Retry once if the podcast script is below the publication soft floor.
+    # run_show.py skips any episode under 60% of the target word count
+    # (its _SOFT_FLOOR), so a script in that band is unpublishable anyway —
+    # we should always attempt an expansion rather than accept it and let
+    # the runner silently skip the episode. The threshold sits ~10% *above*
+    # the soft floor because a dedup pass runs between here and the skip
+    # check, trimming a few percent off the count (Tesla Ep493 went
+    # 874 → 818 and was skipped without ever getting an expansion attempt —
+    # it cleared the old 50%/800-word retry bar but fell under the 60%/960
+    # soft floor). Expanding here gives the episode a real chance to clear
+    # the floor instead of being thrown away.
     word_count = len(text.split())
-    _retry_threshold = max(600, int(min_words * 0.5))
+    _retry_threshold = _podcast_expansion_retry_threshold(min_words)
     if word_count < _retry_threshold:
         logger.warning(
             "Podcast script for '%s' is very short (%d words, retry threshold %d). "
