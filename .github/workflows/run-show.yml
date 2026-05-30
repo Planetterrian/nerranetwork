@@ -450,6 +450,12 @@ jobs:
           # checkout. (Bug caught May 2026 when UC Ep001 was about to
           # ship Cobra Effect twice.)
           git add -A shows/topic_queues/ || true
+          # Deep-dive queues — same persistence requirement as topic_queues.
+          # A deep-dive run marks its entry produced in shows/deep_dives/<show>.yaml;
+          # without committing it the entry stays ``when: next`` and the deep dive
+          # RE-FIRES on the next run (caught May 2026: SpaceX Ep059/Ep060 each
+          # re-queued because this directory wasn't staged).
+          git add -A shows/deep_dives/ || true
 
           # Exclude MP3 files (hosted on R2, not in git)
           git reset HEAD -- '*.mp3' 2>/dev/null || true

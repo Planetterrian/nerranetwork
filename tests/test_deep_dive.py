@@ -156,21 +156,23 @@ class TestDeepDiveConfig:
 
 class TestShippedMITDeepDive:
 
-    def test_current_spacex_entry_is_next_and_research_grounded(self):
+    def test_spacex_entries_are_retired_and_research_grounded(self):
         data = yaml.safe_load(
             Path("shows/deep_dives/modern_investing.yaml").read_text()
         )
-        # The original spacex-ipo entry is retired (produced) so it can't
-        # re-fire; the replacement is the live one.
-        old = next(e for e in data["queue"] if e["id"] == "spacex-ipo")
-        assert old["produced"] is True
-        assert "when" not in old  # must not re-fire
+        # BOTH SpaceX entries are produced (Ep059 + the live-research Ep060) and
+        # carry no ``when`` — neither may re-fire. The runner's mark-produced
+        # didn't persist because shows/deep_dives/ wasn't staged in the commit
+        # step (now fixed), so they're recorded here by hand.
+        for slug, ep in (("spacex-ipo", 59), ("spacex-ipo-current", 60)):
+            e = next(x for x in data["queue"] if x["id"] == slug)
+            assert e["produced"] is True, f"{slug} must be produced (no re-fire)"
+            assert e.get("episode_number") == ep
+            assert "when" not in e, f"{slug} must not carry when: (would re-fire)"
 
         entry = next(e for e in data["queue"] if e["id"] == "spacex-ipo-current")
-        assert entry["when"] == "next"
-        assert entry["produced"] is False
-        # Time-sensitive topic MUST carry live-research queries (the whole
-        # point of the v2 episode — Ep059 was stale without them).
+        # Time-sensitive topic carries live-research queries (the whole point of
+        # the v2 episode — Ep059 was stale without them).
         assert entry["web_search_queries"], "SpaceX deep dive needs live research queries"
         brief = entry["brief"].lower()
         assert "spacex" in brief and "ipo" in brief
@@ -179,6 +181,16 @@ class TestShippedMITDeepDive:
         assert "short-term" in brief and "medium-term" in brief and "long-term" in brief
         # And set the current market backdrop, not just the company.
         assert "market backdrop" in brief or "ipo environment" in brief
+
+    def test_run_show_workflow_commits_deep_dive_queue(self):
+        """The run-show workflow MUST stage shows/deep_dives/ so a deep dive's
+        mark-produced persists. Without it the entry stays ``when: next`` and
+        re-fires (SpaceX Ep059 + Ep060 both re-queued before this fix)."""
+        wf = Path(".github/workflows/run-show.yml").read_text()
+        assert "git add -A shows/deep_dives/" in wf, (
+            "run-show.yml must stage shows/deep_dives/ in the commit step, "
+            "alongside shows/topic_queues/, or deep dives re-fire."
+        )
 
     def test_deep_dive_prompts_exist_and_reference_topic(self):
         digest = Path("shows/prompts/modern_investing_deep_dive.txt").read_text()
