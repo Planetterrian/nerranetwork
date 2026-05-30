@@ -576,6 +576,19 @@ _SHORTS_SUBTITLES_FORCE_STYLE = (
 )
 
 
+def _shorts_subtitle_style(margin_v: Optional[int] = None) -> str:
+    """Shorts caption ``force_style``, optionally overriding ``MarginV`` (px
+    from the bottom edge).
+
+    The default 340 is tuned for YouTube Shorts. Instagram Reels / TikTok draw
+    their caption + CTA UI over the bottom ~16% of the frame, so the social
+    variant lifts captions higher (a larger MarginV) to keep them readable.
+    """
+    if margin_v is None:
+        return _SHORTS_SUBTITLES_FORCE_STYLE
+    return _SHORTS_SUBTITLES_FORCE_STYLE.replace("MarginV=340", f"MarginV={int(margin_v)}")
+
+
 def _long_form_filter_graph(*, width: int = 1920, height: int = 1080,
                             fps: int = 30,
                             bg_is_video: bool = False,
@@ -663,7 +676,8 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
                              total_duration: float = 55.0,
                              end_card_main_text: str = "WATCH FULL EPISODE",
                              end_card_sub_text: str = "Tap Subscribe ↗",
-                             end_card_image_input_label: Optional[str] = None) -> str:
+                             end_card_image_input_label: Optional[str] = None,
+                             caption_margin_v: Optional[int] = None) -> str:
     """filter_complex for the 1080x1920 Shorts build.
 
     Inputs:
@@ -788,7 +802,7 @@ def _short_form_filter_graph(width: int = 1080, height: int = 1920,
         sub_label = "[capted]" if end_card else "[v]"
         chain += (
             f";{post_brand_label}subtitles='{escaped_sub}'"
-            f":force_style='{_SHORTS_SUBTITLES_FORCE_STYLE}'{sub_label}"
+            f":force_style='{_shorts_subtitle_style(caption_margin_v)}'{sub_label}"
         )
         post_brand_label = sub_label
         if not end_card:
@@ -937,7 +951,8 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                     end_card_main_text: str = "WATCH FULL EPISODE",
                     end_card_sub_text: str = "Tap Subscribe ↗",
                     end_card_duration: float = 3.0,
-                    end_card_image_in: Optional[str] = None) -> List[str]:
+                    end_card_image_in: Optional[str] = None,
+                    caption_margin_v: Optional[int] = None) -> List[str]:
     """ffmpeg command for the 1080x1920 Shorts build.
 
     When *bg_is_video* is True, *bg_in* is a pre-rendered vertical
@@ -998,7 +1013,8 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                                  total_duration=duration,
                                  end_card_main_text=end_card_main_text,
                                  end_card_sub_text=end_card_sub_text,
-                                 end_card_image_input_label=end_card_image_input_label),
+                                 end_card_image_input_label=end_card_image_input_label,
+                                 caption_margin_v=caption_margin_v),
         "-map", "[v]", "-map", "1:a",
         *_VIDEO_ENCODE,
         "-r", str(fps),
@@ -1143,8 +1159,15 @@ def build_short_video(audio_path: Path, cover_path: Path,
                       end_card_main_text: str = "WATCH FULL EPISODE",
                       end_card_sub_text: str = "Tap Subscribe ↗",
                       end_card_duration: float = 3.0,
-                      end_card_image_path: Optional[Path] = None) -> Path:
+                      end_card_image_path: Optional[Path] = None,
+                      drop_url_pill: bool = False,
+                      caption_margin_v: Optional[int] = None) -> Path:
     """Render a 1080x1920 vertical YouTube Shorts video.
+
+    ``drop_url_pill`` / ``caption_margin_v`` support the multi-platform
+    "safe-zone" variant: dropping the bottom-centre URL pill and lifting the
+    captions (larger MarginV) keeps content clear of the bottom UI band that
+    Instagram Reels and TikTok draw over. They default to YouTube behaviour.
 
     Parameters
     ----------
@@ -1195,6 +1218,11 @@ def build_short_video(audio_path: Path, cover_path: Path,
         _make_show_pill(show_name, brand_path)
         url_pill_path = work_dir / "_url_pill_v1.png"
         _make_url_pill(url_pill_path)
+        if drop_url_pill:
+            # Social safe-zone variant: keep the top brand pill, drop the
+            # bottom-centre URL pill (the caption carries the link, and the
+            # bottom band is covered by IG/TikTok UI anyway).
+            url_pill_path = None
     else:
         brand_path = work_dir / "_brand_pill_v2.png"
         _make_brand_pill(brand_path)
@@ -1235,6 +1263,7 @@ def build_short_video(audio_path: Path, cover_path: Path,
             if end_card_image_path and Path(end_card_image_path).exists()
             else None
         ),
+        caption_margin_v=caption_margin_v,
     )
     logger.info(
         "Building Shorts video (%.1fs from %.1fs) → %s "
