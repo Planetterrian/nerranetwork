@@ -22,6 +22,45 @@ import run_monthly_mit_episode as monthly  # type: ignore
 
 
 # ---------------------------------------------------------------------------
+# TTS call-signature guard (regression for the speak(output_path=...) crash)
+# ---------------------------------------------------------------------------
+
+class TestTtsCallSignature:
+    """The monthly episode used to call the legacy ElevenLabs ``speak()`` with
+    stale kwargs (``output_path=``, ``model=``) and no ``api_key``, crashing the
+    monthly-report workflow. Guard that it calls the canonical ``synthesize()``
+    dispatcher with only real parameters."""
+
+    _SCRIPT = _REPO_ROOT / "scripts" / "run_monthly_mit_episode.py"
+
+    def test_uses_synthesize_not_legacy_speak(self):
+        src = self._SCRIPT.read_text(encoding="utf-8")
+        assert "from engine.tts import synthesize" in src
+        assert "output_path=voice_mp3" not in src  # the old buggy kwarg
+
+    def test_synthesize_call_kwargs_are_all_valid(self):
+        import ast
+        import inspect
+        from engine.tts import synthesize
+
+        valid = set(inspect.signature(synthesize).parameters)
+        tree = ast.parse(self._SCRIPT.read_text(encoding="utf-8"))
+        calls = [
+            n for n in ast.walk(tree)
+            if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+            and n.func.id == "synthesize"
+        ]
+        assert calls, "expected a synthesize() call in the monthly episode script"
+        for call in calls:
+            for kw in call.keywords:
+                if kw.arg is None:  # **kwargs spread — skip
+                    continue
+                assert kw.arg in valid, (
+                    f"synthesize() has no parameter {kw.arg!r} — stale TTS call"
+                )
+
+
+# ---------------------------------------------------------------------------
 # is_last_trading_day_of_month
 # ---------------------------------------------------------------------------
 
