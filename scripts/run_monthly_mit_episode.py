@@ -39,6 +39,7 @@ import calendar
 import datetime as _dt
 import json
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import Any, Iterable
@@ -432,7 +433,7 @@ def run(
         return 0
 
     # TTS -> audio mix -> upload -> RSS update
-    from engine.tts import speak
+    from engine.tts import synthesize
     from engine.audio import mix_with_music, get_audio_duration
     from engine.storage import upload_episode
     from engine.publisher import (
@@ -447,16 +448,36 @@ def run(
     voice_mp3 = mit_dir / f"{mp3_basename}_voice.mp3"
     final_mp3 = mit_dir / f"{mp3_basename}.mp3"
 
-    speak(
-        text=script,
-        output_path=voice_mp3,
-        voice_id=config.tts.voice_id,
-        model=config.tts.model,
+    # Resolve TTS provider + API key the same way run_show.py does (the whole
+    # network is on Grok TTS — the legacy speak() ElevenLabs path took different
+    # kwargs, which is why this used to crash).
+    tts_provider = (config.tts.provider or "elevenlabs").lower()
+    if tts_provider == "grok":
+        tts_api_key = (os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY") or "").strip()
+    else:
+        tts_api_key = (os.getenv("ELEVENLABS_API_KEY") or "").strip()
+    if not tts_api_key:
+        raise RuntimeError(
+            f"No TTS API key for provider '{tts_provider}' "
+            "(set GROK_API_KEY/XAI_API_KEY, or ELEVENLABS_API_KEY)."
+        )
+
+    synthesize(
+        script,
+        config.tts.voice_id,
+        voice_mp3,
+        api_key=tts_api_key,
+        provider=tts_provider,
+        max_chars=config.tts.max_chars,
+        model_id=config.tts.model,
         stability=config.tts.stability,
         similarity_boost=config.tts.similarity_boost,
         style=config.tts.style,
-        use_speaker_boost=config.tts.use_speaker_boost,
-        max_chars=config.tts.max_chars,
+        language_code=config.tts.language_code,
+        speed=config.tts.speed,
+        apply_text_normalization=config.tts.apply_text_normalization,
+        speech_wrap_open=config.tts.speech_wrap_open,
+        speech_wrap_close=config.tts.speech_wrap_close,
     )
     logger.info("Voice synthesised: %s", voice_mp3)
 
