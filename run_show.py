@@ -675,6 +675,7 @@ def run(args: argparse.Namespace) -> None:
         # today / flagged when: next, or forced via --deep-dive <id>.
         deep_dive_topic: dict = {}
         is_deep_dive = False
+        deep_dive_research_block = ""
         _dd_cfg = getattr(config, "deep_dive", None)
         _forced_dd = getattr(args, "deep_dive", None)
         if _forced_dd or (_dd_cfg and _dd_cfg.enabled and _dd_cfg.queue_file):
@@ -707,6 +708,9 @@ def run(args: argparse.Namespace) -> None:
                     config.llm.podcast_prompt_file = _dd_cfg.podcast_prompt_file
                 if _dd_cfg.system_prompt_file:
                     config.llm.system_prompt_file = _dd_cfg.system_prompt_file
+                # Deep dives want a fuller episode than the show's daily target.
+                if getattr(_dd_cfg, "min_podcast_words", 0):
+                    config.llm.min_podcast_words = _dd_cfg.min_podcast_words
                 logger.info(
                     "Deep-dive mode: topic %r (%s)%s",
                     deep_dive_topic.get("id"), deep_dive_topic.get("title"),
@@ -715,6 +719,32 @@ def run(args: argparse.Namespace) -> None:
                 metrics.record("deep_dive_mode", True)
                 metrics.record("deep_dive_topic_id", deep_dive_topic.get("id", ""))
                 # Skip the fetch threadpool entirely — articles stays [].
+
+                # Live grounding for a time-sensitive deep dive: if the queue
+                # entry lists ``web_search_queries``, pull the current, sourced
+                # state of the topic (web + X) so the episode reflects what's
+                # being reported today instead of the model's training cutoff.
+                # Best-effort — failure leaves the static brief in charge.
+                _dd_queries = deep_dive_topic.get("web_search_queries") or []
+                if _dd_queries:
+                    try:
+                        from engine.deep_dive_research import research_current_context
+                        logger.info(
+                            "Deep-dive: running live web+X research (%d queries) ...",
+                            len(_dd_queries),
+                        )
+                        with metrics.stage("deep_dive_research"):
+                            deep_dive_research_block = research_current_context(
+                                deep_dive_topic.get("title", ""),
+                                _dd_queries,
+                                x_handles=deep_dive_topic.get("x_handles") or None,
+                                today=today,
+                            )
+                        metrics.record(
+                            "deep_dive_research_chars", len(deep_dive_research_block),
+                        )
+                    except Exception as exc:  # noqa: BLE001 — never block the episode
+                        logger.warning("Deep-dive research errored: %s", exc)
 
         # Either alternate-content mode bypasses the news-fetch / slow-news /
         # validation machinery and feeds a single topic straight into the
@@ -805,7 +835,11 @@ def run(args: argparse.Namespace) -> None:
         # 5a2. Web search fallback — if articles below quality threshold, try Grok web_search
         web_articles: list = []
         min_quality = getattr(config, "min_articles", 6) or 6
-        if len(articles) < min_quality and getattr(config, "web_search_queries", None):
+        if (
+            not _topic_driven
+            and len(articles) < min_quality
+            and getattr(config, "web_search_queries", None)
+        ):
             logger.info(
                 "Articles (%d) below quality threshold (%d) — trying web search ...",
                 len(articles), min_quality,
@@ -910,7 +944,8 @@ def run(args: argparse.Namespace) -> None:
         #      to supplement with evergreen segments so the LLM has enough material.
         min_quality = getattr(config, "min_articles", 6) or 6
         if (
-            not slow_news_mode
+            not _topic_driven
+            and not slow_news_mode
             and len(articles) < min_quality
             and config.slow_news.enabled
         ):
@@ -1038,6 +1073,14 @@ def run(args: argparse.Namespace) -> None:
             template_vars["topic_title"] = _topic.get("title", "")
             template_vars["topic_brief"] = _topic.get("brief", "")
             template_vars["topic_category"] = _topic.get("category", "")
+            # Live current-state research for a time-sensitive deep dive (empty
+            # for narrative shows or when research was unavailable). The deep-
+            # dive brief prompt consumes {current_research}.
+            template_vars["current_research"] = deep_dive_research_block or (
+                "(No live research was retrieved for this episode. Do NOT invent "
+                "current developments — rely on the brief, and explicitly flag any "
+                "time-sensitive claim as needing verification.)"
+            )
         # Slow news day context injection
         if slow_news_mode and selected_segs:
             from engine.slow_news import build_slow_news_prompt_context

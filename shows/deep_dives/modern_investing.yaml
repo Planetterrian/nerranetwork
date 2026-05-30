@@ -25,9 +25,12 @@
 #   produced_date:  null until produced (runner fills in)
 
 queue:
+  # Produced as Ep059 on 2026-05-30 (deep_dive_mode confirmed in metrics).
+  # The runner's mark-produced commit didn't land on main, so it's recorded
+  # here by hand to stop it re-firing. Superseded by spacex-ipo-current below,
+  # which adds live web+X research + a stronger, non-evasive brief.
   - id: spacex-ipo
     title: "The SpaceX IPO and How to Invest in IPOs"
-    when: next
     brief: >
       A two-part deep dive. PART ONE — the SpaceX IPO question: walk through
       where SpaceX actually stands as a private company (its scale, Starlink as
@@ -52,6 +55,98 @@ queue:
       newly public company — including which account (TFSA / RRSP / FHSA /
       taxable) and the case for simply waiting a few quarters. Keep it
       educational, balanced, and explicit that none of it is financial advice.
+    category: special
+    produced: true
+    episode_number: 59
+    produced_date: '2026-05-30'
+
+  # Replacement SpaceX IPO deep dive (May 2026). Ep059 shipped stale/evasive
+  # ("no announced IPO ... speculative") because the deep-dive pipeline ran off
+  # this static brief with no live grounding and the model's training cutoff
+  # predated the filing. This entry adds ``web_search_queries`` + ``x_handles``
+  # so run_show pulls the CURRENT, sourced state (web + X) at generation time
+  # and the brief instructs the host to report it with attribution.
+  - id: spacex-ipo-current
+    title: "The SpaceX IPO: How Retail Investors Can Get Ready"
+    when: next
+    # Live research the runner pulls (web + X) before generation; results are
+    # injected into the brief prompt's {current_research} block.
+    web_search_queries:
+      - "SpaceX IPO S-1 SEC filing 2026"
+      - "SpaceX IPO date June 2026 timeline"
+      - "SpaceX IPO valuation expected share price"
+      - "SpaceX IPO underwriters Starlink spinoff structure"
+      - "how can retail investors buy SpaceX IPO allocation"
+      - "SpaceX IPO analysis what investors should know"
+      - "SpaceX Starlink revenue 2026 profitability"
+      - "2026 IPO market conditions tech listings investor appetite"
+      - "SpaceX bull bear case long term investment thesis"
+      - "recent high profile IPO first day pop lockup performance 2024 2025"
+    x_handles:
+      - SpaceX
+      - elonmusk
+    brief: >
+      An amazing, current, decision-useful deep dive timed to the SpaceX IPO that
+      gets the listener genuinely ready to act across SHORT, MEDIUM, and LONG-TERM
+      horizons. This is the show's flagship deep dive — be thorough, specific, and
+      richly detailed (aim long, not thin). Ground EVERY time-sensitive claim in
+      the {current_research} block (live web + X pulled today) and ATTRIBUTE it —
+      never fall back to "nothing has been announced / speculative" if the
+      research shows a filing or a timeline.
+
+      PART ONE — WHERE THINGS STAND RIGHT NOW (current situation + market): report
+      the latest on any S-1 / draft registration with the SEC, the reported
+      timeline (recent reporting has pointed to a possible mid-June 2026 listing —
+      confirm the exact expected date and status against the current research and
+      attribute it), the expected valuation and share-price range, the deal
+      structure (whether it's SpaceX and/or a Starlink entity), named underwriters,
+      and what is still [UNCONFIRMED]. Set the MARKET BACKDROP: the 2026 IPO
+      environment and investor appetite, the interest-rate / risk backdrop, and
+      how comparable recent space/tech listings have been received — because that
+      context shapes how this deal prices and trades. Then SpaceX as a business:
+      Starlink as the cash-generative engine vs. the launch business, subscriber
+      and revenue trajectory, and recent valuation figures from the research.
+
+      PART TWO — HOW TO GET READY AND PARTICIPATE: the realistic mechanics for THIS
+      deal (whether retail can get any allocation at the offer price and how,
+      broker eligibility / funding / conditional-offer-to-buy windows on platforms
+      available to Canadians and Americans — Interactive Brokers, Questrade,
+      Wealthsimple, Robinhood / SoFi where applicable — vs. simply buying once it
+      trades), how to read the S-1 for what matters (revenue quality and
+      concentration, path to free cash flow, share/voting structure and Musk's
+      control, dilution, use of proceeds, government-contract concentration),
+      valuation discipline vs. comparable public names, and account choice (TFSA /
+      RRSP / FHSA / taxable) plus CAD/USD currency risk for Canadians.
+
+      PART THREE — THE SHORT / MEDIUM / LONG-TERM HOLDING FRAMEWORK (the heart of
+      this episode — give each horizon real, distinct, actionable depth):
+      • SHORT-TERM (IPO day to a few weeks): the first-day-pop dynamic and why
+        chasing it is risky, allocation reality, opening-day volatility and the
+        bid/ask, whether a retail investor should play the open at all, and how to
+        set a rule in advance rather than react. Frame trading the open as the
+        highest-risk path.
+      • MEDIUM-TERM (roughly 3-18 months): the ~180-day lock-up expiry and the
+        supply wave when insiders/early investors can sell, the first couple of
+        earnings reports as a public company as the real test, the case for
+        waiting for post-lock-up weakness, and dollar-cost-averaging a position in
+        rather than buying all at once.
+      • LONG-TERM (multi-year): the actual investment thesis — Starlink's recurring
+        cash engine and subscriber growth, Starship economics and launch dominance,
+        the total addressable market, and the optionality (Mars / future
+        businesses) — weighed honestly against the long-term risks (key-man / Musk
+        concentration, demanding valuation, competition, regulatory and capital
+        intensity, dual-class control). Position sizing for a volatile single-name
+        growth stock, and what would confirm or break the thesis over years.
+
+      PART FOUR — LESSONS FROM PAST HIGH-PROFILE IPOs: walk through what actually
+      happened to a few well-known recent large IPOs and direct listings (use the
+      current research and well-established history — first-day pops that
+      round-tripped, lock-up-expiry drawdowns, hype-vs-fundamentals), state the
+      documented base rate that IPOs tend to underperform over the first
+      one-to-three years, and convert all of it into a concrete, repeatable
+      readiness checklist a retail investor can run for the SpaceX IPO across all
+      three horizons. Keep it balanced (genuine bull AND bear), precise with
+      attributed numbers, and explicit that none of it is financial advice.
     category: special
     produced: false
     episode_number: null
