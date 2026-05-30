@@ -516,7 +516,8 @@ def convert_md_to_blog_html(md_text: str) -> tuple[str, list[dict]]:
 # ---------------------------------------------------------------------------
 
 def _build_jsonld(metadata: dict, show_name: str, blog_url: str,
-                   show_config: dict | None = None) -> str:
+                   show_config: dict | None = None,
+                   *, transcript_url: str = "", audio_url: str = "") -> str:
     """Build Schema.org JSON-LD: BlogPosting + PodcastEpisode (as array).
 
     PodcastEpisode enables Google's podcast features in Search results, links
@@ -570,6 +571,14 @@ def _build_jsonld(metadata: dict, show_name: str, blog_url: str,
         }
         if show_config.get("podcast_image"):
             podcast_episode["image"] = f"https://nerranetwork.com/{show_config['podcast_image']}"
+
+    # Transcript + audio (supplied by generate_blog_post_html once the TTS
+    # transcript has been loaded). Emitted only when present so the JSON stays
+    # tight. This is the single canonical PodcastEpisode for the page.
+    if transcript_url:
+        podcast_episode["transcript"] = transcript_url
+    if audio_url:
+        podcast_episode["associatedMedia"] = {"@type": "MediaObject", "contentUrl": audio_url}
 
     # ``ensure_ascii=False`` so Cyrillic show names ("Финансы Просто",
     # "Привет, Русский!") render as readable Unicode in the page source
@@ -627,19 +636,20 @@ def generate_blog_post_html(
     _extracted = (metadata.get("title") or "").strip()
     _hook = (metadata.get("hook") or "").strip()
     _show = show_config["name"]
+    # Match the show-name fallback without over-reaching: equality or a
+    # leading "# <Show Name> — subtitle" heading. Deliberately NOT a bare
+    # substring check, so a genuinely unique title that merely *mentions* the
+    # show name mid-sentence keeps its own title.
     _is_show_name = (
         not _extracted
         or _extracted == _show
         or _extracted.startswith(_show)
-        or _show in _extracted
     )
     if _is_show_name and _hook:
         clipped = _hook[:100].rstrip(" .,;:—-")
         metadata["title"] = clipped + ("…" if len(_hook) > 100 else "")
     elif not _extracted:
         metadata["title"] = _show
-
-    jsonld = _build_jsonld(metadata, show_config["name"], blog_url, show_config)
 
     # Source domains for display
     source_domains = []
@@ -668,6 +678,15 @@ def generate_blog_post_html(
                 transcript_text = strip_speech_tags(_raw)
     except Exception:
         pass  # Non-fatal — transcript is optional
+
+    # Build JSON-LD now that the transcript is known, so the (single, canonical)
+    # PodcastEpisode block can carry the transcript + audio links.
+    _transcript_url = f"{blog_url}#transcript" if transcript_text else ""
+    _audio_url = metadata.get("audio_url", "")
+    jsonld = _build_jsonld(
+        metadata, show_config["name"], blog_url, show_config,
+        transcript_url=_transcript_url, audio_url=_audio_url,
+    )
 
     template = template_env.get_template("blog_post.html.j2")
 

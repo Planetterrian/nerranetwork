@@ -137,9 +137,20 @@ class TestBlogPostRender:
         assert ep["url"].startswith("https://nerranetwork.com/blog/tesla/")
         assert ep["datePublished"], "datePublished must not be empty"
         assert ep["name"], "name must not be empty"
-        assert ep["isPartOf"]["@type"] == "PodcastSeries"
+        # Single canonical PodcastEpisode (from engine/blog.py _build_jsonld)
+        # links to its series and carries the transcript.
+        series = ep.get("partOfSeries") or ep.get("isPartOf")
+        assert series and series["@type"] == "PodcastSeries"
         assert ep["inLanguage"] == "en"
         assert ep["transcript"].endswith("#transcript")
+
+    def test_only_one_podcastepisode_block(self, html):
+        # Consolidation: exactly one PodcastEpisode across all JSON-LD on the page.
+        eps = []
+        for b in _ld_json_blocks(html):
+            items = b if isinstance(b, list) else [b]
+            eps += [x for x in items if x.get("@type") == "PodcastEpisode"]
+        assert len(eps) == 1, f"expected exactly one PodcastEpisode, found {len(eps)}"
 
     def test_share_row_has_facebook_email_and_utm(self, html):
         assert "facebook.com/sharer" in html
