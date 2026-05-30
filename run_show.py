@@ -132,6 +132,18 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="YouTube only: MP3 + digest on disk, rebuild/upload videos (skips TTS/RSS/X)",
     )
+    parser.add_argument(
+        "--deep-dive",
+        metavar="TOPIC_ID",
+        default=None,
+        help=(
+            "Force this run to produce a standalone deep-dive episode for the "
+            "given topic id from the show's deep_dive.queue_file, bypassing the "
+            "news fetch. Without this flag, deep dives still fire automatically "
+            "when a queue entry is scheduled for today (date:) or flagged "
+            "when: next."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -655,11 +667,73 @@ def run(args: argparse.Namespace) -> None:
             metrics.record("narrative_topic_id", narrative_topic.get("id", ""))
             # Skip the fetch threadpool entirely — articles stays [].
 
+        # Deep-dive override (May 2026). A normally news-driven show can
+        # produce an occasional standalone single-subject episode without
+        # permanently switching to narrative_mode. Resolve up-front (like
+        # narrative_mode) so this run bypasses the news fetch + slow-news +
+        # digest-validation path. Fires when a queue entry is scheduled for
+        # today / flagged when: next, or forced via --deep-dive <id>.
+        deep_dive_topic: dict = {}
+        is_deep_dive = False
+        _dd_cfg = getattr(config, "deep_dive", None)
+        _forced_dd = getattr(args, "deep_dive", None)
+        if _forced_dd or (_dd_cfg and _dd_cfg.enabled and _dd_cfg.queue_file):
+            if not (_dd_cfg and _dd_cfg.queue_file):
+                _skip_episode(
+                    "deep_dive_unconfigured",
+                    f"--deep-dive {_forced_dd!r} given but show has no "
+                    f"deep_dive.queue_file configured.",
+                )
+                return
+            from engine.topic_queue import pick_deep_dive_topic
+            _dd_queue = PROJECT_ROOT / _dd_cfg.queue_file
+            deep_dive_topic = pick_deep_dive_topic(
+                _dd_queue, today.isoformat(), force_id=_forced_dd,
+            ) or {}
+            if _forced_dd and not deep_dive_topic:
+                _skip_episode(
+                    "deep_dive_not_found",
+                    f"--deep-dive {_forced_dd!r} matched no unproduced entry "
+                    f"in {_dd_cfg.queue_file}.",
+                )
+                return
+            if deep_dive_topic:
+                is_deep_dive = True
+                # Swap in the deep-dive prompts for this run only (config is a
+                # per-run object, so this doesn't leak to other shows/days).
+                if _dd_cfg.digest_prompt_file:
+                    config.llm.digest_prompt_file = _dd_cfg.digest_prompt_file
+                if _dd_cfg.podcast_prompt_file:
+                    config.llm.podcast_prompt_file = _dd_cfg.podcast_prompt_file
+                if _dd_cfg.system_prompt_file:
+                    config.llm.system_prompt_file = _dd_cfg.system_prompt_file
+                logger.info(
+                    "Deep-dive mode: topic %r (%s)%s",
+                    deep_dive_topic.get("id"), deep_dive_topic.get("title"),
+                    " [forced]" if _forced_dd else "",
+                )
+                metrics.record("deep_dive_mode", True)
+                metrics.record("deep_dive_topic_id", deep_dive_topic.get("id", ""))
+                # Skip the fetch threadpool entirely — articles stays [].
+
+        # Either alternate-content mode bypasses the news-fetch / slow-news /
+        # validation machinery and feeds a single topic straight into the
+        # digest+podcast chain.
+        _topic_driven = bool(
+            getattr(config, "narrative_mode", False) or is_deep_dive
+        )
+        _active_topic = narrative_topic or deep_dive_topic
+
         with metrics.stage("fetch_and_dedup"):
             with ThreadPoolExecutor(max_workers=3) as executor:
                 hook_future = executor.submit(_run_hook)
-                fetch_future = executor.submit(_run_fetch)
-                x_fetch_future = executor.submit(_run_x_fetch)
+                # Topic-driven runs (narrative mode + deep dives) take their
+                # input from a curated topic, not the news cycle — skip the RSS
+                # and X fetches entirely. (Narrative shows like UC also have no
+                # sources, but deep-dive shows like MIT do, so the guard must be
+                # explicit, not rely on an empty feed list.)
+                fetch_future = None if _topic_driven else executor.submit(_run_fetch)
+                x_fetch_future = None if _topic_driven else executor.submit(_run_x_fetch)
 
                 try:
                     extra_context = hook_future.result(timeout=60)
@@ -670,24 +744,26 @@ def run(args: argparse.Namespace) -> None:
                     )
                     extra_context = {}
 
-                try:
-                    articles = fetch_future.result(timeout=120)
-                except Exception as exc:
-                    logger.error("RSS fetch failed: %s", exc)
-                    articles = []
-                    # Distinguish a structural fetch failure from a genuine
-                    # slow-news day. Without this flag, slow_news mode would
-                    # happily ship an evergreen-only episode when feeds are
-                    # actually broken, masking the outage from operators.
-                    rss_fetch_failed = True
+                if fetch_future is not None:
+                    try:
+                        articles = fetch_future.result(timeout=120)
+                    except Exception as exc:
+                        logger.error("RSS fetch failed: %s", exc)
+                        articles = []
+                        # Distinguish a structural fetch failure from a genuine
+                        # slow-news day. Without this flag, slow_news mode would
+                        # happily ship an evergreen-only episode when feeds are
+                        # actually broken, masking the outage from operators.
+                        rss_fetch_failed = True
 
-                try:
-                    x_posts = x_fetch_future.result(timeout=120)
-                    if x_posts:
-                        tracker["services"]["x_api"]["search_calls"] = len(x_posts)
-                except Exception as exc:
-                    logger.warning("X account fetch failed: %s — continuing with RSS only", exc)
-                    x_posts = []
+                if x_fetch_future is not None:
+                    try:
+                        x_posts = x_fetch_future.result(timeout=120)
+                        if x_posts:
+                            tracker["services"]["x_api"]["search_calls"] = len(x_posts)
+                    except Exception as exc:
+                        logger.warning("X account fetch failed: %s — continuing with RSS only", exc)
+                        x_posts = []
 
         if rss_fetch_failed and not articles and not x_posts:
             _skip_episode(
@@ -768,7 +844,7 @@ def run(args: argparse.Namespace) -> None:
         )
         metrics.record("article_count", len(articles))
 
-        if not articles and not getattr(config, "narrative_mode", False):
+        if not articles and not _topic_driven:
             logger.warning("No articles found even after expanded search. Skipping episode.")
             _skip_episode("no_articles", "No articles found even after expanded search.")
 
@@ -797,7 +873,7 @@ def run(args: argparse.Namespace) -> None:
 
         if (
             len(articles) < skip_threshold
-            and not getattr(config, "narrative_mode", False)
+            and not _topic_driven
         ):
             from engine.slow_news import is_slow_news_day, load_segment_library, select_segments
 
@@ -951,17 +1027,17 @@ def run(args: argparse.Namespace) -> None:
             "recent_content_summary": content_tracker_summary,
             "recent_deep_dive_topics": deep_dive_topics_text,
         }
-        # Narrative-mode shows feed a topic from the queue into the digest
-        # prompt instead of news articles. Stage the topic vars here so the
-        # downstream digest prompt template can resolve ``{topic_title}``,
-        # ``{topic_brief}``, and ``{topic_category}``. (The actual queue
-        # pick + skip-when-empty happens further up — see narrative_mode
-        # branch around the fetch stage.)
-        if getattr(config, "narrative_mode", False):
-            narrative_topic = locals().get("narrative_topic") or {}
-            template_vars["topic_title"] = narrative_topic.get("title", "")
-            template_vars["topic_brief"] = narrative_topic.get("brief", "")
-            template_vars["topic_category"] = narrative_topic.get("category", "")
+        # Topic-driven runs (narrative-mode shows + deep-dive episodes) feed a
+        # single curated topic into the digest prompt instead of news articles.
+        # Stage the topic vars here so the downstream digest prompt template can
+        # resolve ``{topic_title}``, ``{topic_brief}``, and ``{topic_category}``.
+        # (The actual queue pick + skip-when-empty happens further up — see the
+        # narrative_mode / deep-dive branch around the fetch stage.)
+        if _topic_driven:
+            _topic = _active_topic or {}
+            template_vars["topic_title"] = _topic.get("title", "")
+            template_vars["topic_brief"] = _topic.get("brief", "")
+            template_vars["topic_category"] = _topic.get("category", "")
         # Slow news day context injection
         if slow_news_mode and selected_segs:
             from engine.slow_news import build_slow_news_prompt_context
@@ -1123,7 +1199,11 @@ def run(args: argparse.Namespace) -> None:
         _val_factory = SHOW_VALIDATION_CONFIGS.get(config.slug)
         _exact_dups: list = []  # Populated by validate_digest for 100% cross-episode matches
         _empty_section_issues: list = []  # Mandatory sections that came back empty (0 items)
-        if _val_factory and not is_weekly_recap:
+        # Deep-dive digests have a different shape than the show's normal news
+        # format, so the daily-format validator (and the structural-integrity
+        # gate below) would false-positive on them — skip both for deep dives,
+        # as we already do for weekly recaps.
+        if _val_factory and not is_weekly_recap and not is_deep_dive:
             _val_config = _val_factory()
             _recent = content_tracker.get_recent_headlines(days=7)
             _val_passed, _val_issues, _exact_dups = _validate_digest(
@@ -1488,8 +1568,9 @@ def run(args: argparse.Namespace) -> None:
         #     the podcast LLM call — gives the episode a structurally sound
         #     digest to expand. Gated on a daily-format validation config
         #     (narrative / weekly-recap shows have their own fixed shape and
-        #     may legitimately have no HOOK label).
-        if _val_factory and not is_weekly_recap:
+        #     may legitimately have no HOOK label). Deep dives are skipped too
+        #     — their digest shape isn't the daily news format.
+        if _val_factory and not is_weekly_recap and not is_deep_dive:
             _struct_defects: list = []
             if not _extract_hook(x_thread):
                 _struct_defects.append("the **HOOK:** line is missing")
@@ -1628,8 +1709,28 @@ def run(args: argparse.Namespace) -> None:
                     "Failed to mark topic as produced (non-fatal): %s", exc,
                 )
 
-        # Post-generation hook (e.g. extract trade picks for Modern Investing tracker)
-        if hook_module and hasattr(hook_module, "post_generate"):
+        # Deep-dive episodes: mark the topic produced in the deep-dive queue so
+        # a ``when: next`` entry doesn't fire again on tomorrow's news episode.
+        if is_deep_dive and deep_dive_topic:
+            try:
+                from engine.topic_queue import mark_topic_produced
+                _dd_queue = PROJECT_ROOT / config.deep_dive.queue_file
+                mark_topic_produced(
+                    _dd_queue,
+                    topic_id=deep_dive_topic.get("id", ""),
+                    episode_num=episode_num,
+                    produced_date=today.isoformat(),
+                )
+            except Exception as exc:  # noqa: BLE001
+                logger.warning(
+                    "Failed to mark deep-dive topic as produced (non-fatal): %s",
+                    exc,
+                )
+
+        # Post-generation hook (e.g. extract trade picks for Modern Investing
+        # tracker). Skipped on deep dives — a standalone deep dive has no daily
+        # trade pick / portfolio segment for the hook to parse.
+        if hook_module and hasattr(hook_module, "post_generate") and not is_deep_dive:
             try:
                 hook_module.post_generate(config, digest_text=x_thread, episode_num=episode_num)
             except Exception as exc:
@@ -1714,17 +1815,17 @@ def run(args: argparse.Namespace) -> None:
 
             if hook:
                 effective_hook = hook
-            elif getattr(config, "narrative_mode", False):
-                # Narrative-mode shows shouldn't fall back to a news framing.
-                # The hook is the topic title (or show name) so the LLM has
-                # something concrete to anchor the opening to. Logged as a
-                # warning so the operator can investigate why digest hook
-                # extraction returned empty for a topic-queue-driven show.
-                _topic = locals().get("narrative_topic") or {}
+            elif _topic_driven:
+                # Topic-driven runs (narrative mode + deep dives) shouldn't fall
+                # back to a news framing. The hook is the topic title (or show
+                # name) so the LLM has something concrete to anchor the opening
+                # to. Logged as a warning so the operator can investigate why
+                # digest hook extraction returned empty for a topic-driven run.
+                _topic = _active_topic or {}
                 effective_hook = (_topic.get("title") if isinstance(_topic, dict)
                                   else "") or config.name
                 logger.warning(
-                    "Narrative-mode show %s has no extractable hook — using "
+                    "Topic-driven run for %s has no extractable hook — using "
                     "topic title (%r) as the {hook} fallback. Investigate the "
                     "digest output if this happens repeatedly.",
                     config.slug, effective_hook,

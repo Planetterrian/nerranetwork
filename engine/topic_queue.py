@@ -82,6 +82,67 @@ def pick_next_topic(queue_path: Path) -> Optional[Dict[str, Any]]:
     return None
 
 
+def pick_deep_dive_topic(
+    queue_path: Path,
+    today_iso: str,
+    force_id: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
+    """Select a deep-dive topic for this run, or ``None`` for a normal
+    (news) episode.
+
+    Unlike ``pick_next_topic`` (which always returns the first unproduced
+    entry), deep dives only fire when explicitly scheduled or forced, so
+    a news-driven show isn't hijacked by a stale queue. Among entries that
+    are not yet ``produced``:
+
+      1. ``force_id`` given (``--deep-dive <id>``) — the matching entry,
+         regardless of its schedule. Returns ``None`` if the id is unknown
+         or already produced (caller decides whether to skip or fall back).
+      2. an entry whose ``date`` equals *today_iso* (a scheduled deep dive).
+      3. an entry flagged ``when: next`` (fires on the very next run).
+
+    The returned dict is a shallow copy; use ``mark_topic_produced`` to
+    record completion.
+    """
+    data = _load_queue(queue_path)
+    queue = data.get("queue", [])
+
+    def _valid_unproduced() -> list:
+        out = []
+        for entry in queue:
+            if not isinstance(entry, dict) or entry.get("produced") is True:
+                continue
+            if not all(entry.get(k) for k in ("id", "title", "brief")):
+                logger.error(
+                    "Deep-dive queue entry missing id/title/brief — skipping: %s",
+                    entry,
+                )
+                continue
+            out.append(entry)
+        return out
+
+    candidates = _valid_unproduced()
+
+    if force_id:
+        for entry in candidates:
+            if entry.get("id") == force_id:
+                return dict(entry)
+        logger.warning(
+            "pick_deep_dive_topic: forced id %r not found among unproduced "
+            "entries in %s", force_id, queue_path,
+        )
+        return None
+
+    # Scheduled-for-today wins over a generic "next" flag.
+    for entry in candidates:
+        if str(entry.get("date", "")) == today_iso:
+            return dict(entry)
+    for entry in candidates:
+        if str(entry.get("when", "")).lower() == "next":
+            return dict(entry)
+    return None
+
+
 def mark_topic_produced(
     queue_path: Path,
     topic_id: str,
