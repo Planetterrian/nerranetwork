@@ -144,25 +144,34 @@ class TestDeepDiveConfig:
 
 class TestShippedMITDeepDive:
 
-    def test_spacex_ipo_is_next_and_unproduced(self):
+    def test_current_spacex_entry_is_next_and_research_grounded(self):
         data = yaml.safe_load(
             Path("shows/deep_dives/modern_investing.yaml").read_text()
         )
-        entry = next(e for e in data["queue"] if e["id"] == "spacex-ipo")
+        # The original spacex-ipo entry is retired (produced) so it can't
+        # re-fire; the replacement is the live one.
+        old = next(e for e in data["queue"] if e["id"] == "spacex-ipo")
+        assert old["produced"] is True
+        assert "when" not in old  # must not re-fire
+
+        entry = next(e for e in data["queue"] if e["id"] == "spacex-ipo-current")
         assert entry["when"] == "next"
         assert entry["produced"] is False
-        # Brief must mention both the specific case and the general framework.
+        # Time-sensitive topic MUST carry live-research queries (the whole
+        # point of the v2 episode — Ep059 was stale without them).
+        assert entry["web_search_queries"], "SpaceX deep dive needs live research queries"
         brief = entry["brief"].lower()
-        assert "spacex" in brief
-        assert "ipo" in brief
+        assert "spacex" in brief and "ipo" in brief
+        assert "current_research" in brief  # brief tells the host to ground in live research
 
     def test_deep_dive_prompts_exist_and_reference_topic(self):
         digest = Path("shows/prompts/modern_investing_deep_dive.txt").read_text()
         podcast = Path(
             "shows/prompts/modern_investing_deep_dive_podcast.txt"
         ).read_text()
-        # Brief prompt must consume the queue topic + emit a HOOK line.
+        # Brief prompt must consume the queue topic, the live research, + emit a HOOK.
         assert "{topic_title}" in digest and "{topic_brief}" in digest
+        assert "{current_research}" in digest
         assert "**HOOK:**" in digest
         # Podcast prompt must consume the brief + the extracted hook.
         assert "{digest}" in podcast and "{hook}" in podcast
@@ -172,6 +181,7 @@ class TestShippedMITDeepDive:
         v = {
             "today_str": "May 31, 2026", "topic_title": "T",
             "topic_brief": "B", "topic_category": "special",
+            "current_research": "- per Reuters (date): ...",
             "episode_num": 7, "hook": "H", "digest": "D",
         }
         load_prompt("shows/prompts/modern_investing_deep_dive.txt", v)

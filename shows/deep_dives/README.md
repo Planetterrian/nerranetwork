@@ -44,6 +44,17 @@ Append an entry to `shows/deep_dives/<show>.yaml`:
       speculative), the better the episode. Two-part briefs ("PART ONE … PART
       TWO …") work well for a specific case + a reusable technique.
     when: next                      # OR: date: 2026-06-15
+    # OPTIONAL — live grounding for a TIME-SENSITIVE topic. When present, the
+    # runner pulls the current, sourced state of the topic (Grok web_search +
+    # x_search) at generation time and injects it into the brief prompt's
+    # {current_research} block, which the prompt is told to prioritise over the
+    # model's (older) training data. Omit for evergreen topics. Best-effort:
+    # if research is unavailable the episode falls back to the static brief.
+    web_search_queries:
+      - "current state of <topic> 2026"
+      - "<topic> latest news analysis"
+    x_handles:                      # optional — bias x_search to these accounts
+      - SomeAccount
     produced: false
     episode_number: null            # runner fills these in
     produced_date: null
@@ -51,6 +62,13 @@ Append an entry to `shows/deep_dives/<show>.yaml`:
 
 Leave `produced: false` until it runs. The next matching run produces it and
 flips `produced: true` with the episode number and date.
+
+> **Time-sensitive topics (IPOs, breaking policy):** always add
+> `web_search_queries`. Without them the episode is grounded only in the
+> model's training cutoff — the first SpaceX IPO deep dive (MIT Ep059) shipped
+> "no announced IPO … speculative" for exactly this reason. With them, the
+> brief should instruct the host to report the live state *with attribution*
+> rather than hedge.
 
 ## Enabling deep dives for another show
 
