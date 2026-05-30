@@ -176,3 +176,36 @@ class TestShippedMITDeepDive:
         }
         load_prompt("shows/prompts/modern_investing_deep_dive.txt", v)
         load_prompt("shows/prompts/modern_investing_deep_dive_podcast.txt", v)
+
+
+# ---------------------------------------------------------------------------
+# Deep-dive vs Sunday weekly-recap precedence
+# ---------------------------------------------------------------------------
+
+class TestDeepDiveVsWeeklyRecap:
+    """A deep dive scheduled onto a Sunday must win over the automatic Sunday
+    weekly recap — otherwise the run builds a recap digest but uses the
+    deep-dive podcast prompt (a broken hybrid) AND marks the deep-dive topic
+    produced, burning the slot. The monthly MIT episode is a separate entry
+    point and is intentionally not involved."""
+
+    import datetime as _dt
+
+    SUNDAY = _dt.date(2026, 5, 31)   # the next MIT run after the SpaceX merge
+    WEEKDAY = _dt.date(2026, 5, 29)  # a Friday
+
+    def test_recap_fires_on_sunday_normally(self):
+        from run_show import _resolve_weekly_recap
+        assert _resolve_weekly_recap(True, self.SUNDAY, is_deep_dive=False) is True
+
+    def test_deep_dive_suppresses_sunday_recap(self):
+        from run_show import _resolve_weekly_recap
+        assert _resolve_weekly_recap(True, self.SUNDAY, is_deep_dive=True) is False
+
+    def test_no_recap_on_weekday(self):
+        from run_show import _resolve_weekly_recap
+        assert _resolve_weekly_recap(True, self.WEEKDAY, is_deep_dive=False) is False
+
+    def test_opt_out_show_never_recaps(self):
+        from run_show import _resolve_weekly_recap
+        assert _resolve_weekly_recap(False, self.SUNDAY, is_deep_dive=False) is False

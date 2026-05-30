@@ -1109,9 +1109,10 @@ def run(args: argparse.Namespace) -> None:
         # content lake. The rest of the pipeline (podcast script gen,
         # TTS, publish) runs unchanged on this synthetic digest, so
         # listeners get the same narrative quality as a daily episode.
-        is_weekly_recap = (
-            bool(getattr(config, "weekly_recap_on_sunday", False))
-            and today.weekday() == 6
+        is_weekly_recap = _resolve_weekly_recap(
+            getattr(config, "weekly_recap_on_sunday", False),
+            today,
+            is_deep_dive,
         )
         from engine.generator import generate_digest, LLMRefusalError
         if is_weekly_recap:
@@ -3032,6 +3033,28 @@ def _empty_mandatory_section_issues(item_count_issues: list) -> list:
     long digest and is deliberately NOT treated as structural.
     """
     return [i for i in item_count_issues if re.search(r":\s*0\s+items", i)]
+
+
+def _resolve_weekly_recap(
+    weekly_recap_on_sunday: bool,
+    today: "datetime.date",
+    is_deep_dive: bool,
+) -> bool:
+    """Whether this run is a Sunday weekly-recap episode.
+
+    True when the show opts into Sunday recaps and today is Sunday — UNLESS a
+    deep dive has already claimed this run. A deep dive is an explicit operator
+    action (scheduled / ``when: next`` / ``--deep-dive``) and takes precedence
+    over the automatic recap, so a deep dive that lands on a Sunday still airs
+    as the deep dive instead of being silently turned into a recap (which would
+    also burn the deep-dive queue slot). The monthly MIT episode is a separate
+    entry point (scripts/run_monthly_mit_episode.py) and does not interact here.
+    """
+    return (
+        bool(weekly_recap_on_sunday)
+        and today.weekday() == 6  # Monday=0 … Sunday=6
+        and not is_deep_dive
+    )
 
 
 def _extract_hook(digest: str) -> str | None:
