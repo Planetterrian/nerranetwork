@@ -708,6 +708,9 @@ def run(args: argparse.Namespace) -> None:
                     config.llm.podcast_prompt_file = _dd_cfg.podcast_prompt_file
                 if _dd_cfg.system_prompt_file:
                     config.llm.system_prompt_file = _dd_cfg.system_prompt_file
+                # Deep dives want a fuller episode than the show's daily target.
+                if getattr(_dd_cfg, "min_podcast_words", 0):
+                    config.llm.min_podcast_words = _dd_cfg.min_podcast_words
                 logger.info(
                     "Deep-dive mode: topic %r (%s)%s",
                     deep_dive_topic.get("id"), deep_dive_topic.get("title"),

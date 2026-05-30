@@ -326,6 +326,12 @@ class DeepDiveConfig:
     digest_prompt_file: str = ""    # outline / brief expansion prompt
     podcast_prompt_file: str = ""   # full-script prompt
     system_prompt_file: str = ""    # optional system-prompt override
+    # Deep dives want more depth than a daily episode. When > 0, this overrides
+    # the show's llm.min_podcast_words for a deep-dive run, so the thin-script
+    # retry + length gate push the episode to full length instead of accepting
+    # a daily-sized script (MIT Ep059 shipped 1,252 words against a 1,300 daily
+    # target — far short of a real deep dive). 0 = inherit the show's value.
+    min_podcast_words: int = 0
 
 
 @dataclass

@@ -130,6 +130,14 @@ class TestDeepDiveConfig:
         assert c.deep_dive.podcast_prompt_file.endswith(
             "modern_investing_deep_dive_podcast.txt"
         )
+        # Deep dives push a fuller word target than the daily show (Ep059 was
+        # only 1252 words) so the length gate drives a real deep dive.
+        assert c.deep_dive.min_podcast_words >= 2000
+        assert c.deep_dive.min_podcast_words > c.llm.min_podcast_words
+
+    def test_deep_dive_min_words_defaults_to_inherit(self):
+        from engine.config import DeepDiveConfig
+        assert DeepDiveConfig().min_podcast_words == 0
 
     def test_news_shows_default_to_no_deep_dive(self):
         """A show without a deep_dive: block must stay news-driven."""
@@ -163,6 +171,10 @@ class TestShippedMITDeepDive:
         brief = entry["brief"].lower()
         assert "spacex" in brief and "ipo" in brief
         assert "current_research" in brief  # brief tells the host to ground in live research
+        # Must structure the investment perspective by holding horizon.
+        assert "short-term" in brief and "medium-term" in brief and "long-term" in brief
+        # And set the current market backdrop, not just the company.
+        assert "market backdrop" in brief or "ipo environment" in brief
 
     def test_deep_dive_prompts_exist_and_reference_topic(self):
         digest = Path("shows/prompts/modern_investing_deep_dive.txt").read_text()
