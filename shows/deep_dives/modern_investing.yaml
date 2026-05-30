@@ -68,7 +68,11 @@ queue:
   # and the brief instructs the host to report it with attribution.
   - id: spacex-ipo-current
     title: "The SpaceX IPO: How Retail Investors Can Get Ready"
-    when: next
+    # Produced as Ep060 on 2026-05-30 (deep_dive_topic_id confirmed in metrics;
+    # hook: "SpaceX filed its S-1 on May 20 targeting a June 12 Nasdaq listing
+    # at roughly $1.8 trillion"). Recorded by hand because the runner's
+    # mark-produced wasn't committed (shows/deep_dives/ wasn't staged — fixed in
+    # .github/workflows/run-show.yml). Marked produced so it can't re-fire.
     # Live research the runner pulls (web + X) before generation; results are
     # injected into the brief prompt's {current_research} block.
     web_search_queries:
@@ -148,6 +152,6 @@ queue:
       three horizons. Keep it balanced (genuine bull AND bear), precise with
       attributed numbers, and explicit that none of it is financial advice.
     category: special
-    produced: false
-    episode_number: null
-    produced_date: null
+    produced: true
+    episode_number: 60
+    produced_date: '2026-05-30'
