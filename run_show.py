@@ -1122,6 +1122,7 @@ def run(args: argparse.Namespace) -> None:
         from engine.validation import validate_digest as _validate_digest, SHOW_VALIDATION_CONFIGS
         _val_factory = SHOW_VALIDATION_CONFIGS.get(config.slug)
         _exact_dups: list = []  # Populated by validate_digest for 100% cross-episode matches
+        _empty_section_issues: list = []  # Mandatory sections that came back empty (0 items)
         if _val_factory and not is_weekly_recap:
             _val_config = _val_factory()
             _recent = content_tracker.get_recent_headlines(days=7)
@@ -1237,6 +1238,14 @@ def run(args: argparse.Namespace) -> None:
                         if "has only" in i.lower() or "below minimum" in i.lower()
                            or ("item" in i.lower() and "minimum" in i.lower())
                     ]
+                    # A mandatory section that came back with ZERO items is a
+                    # structural defect (vs. a soft "8 of 10" shortfall): it
+                    # guts the downstream podcast even when the digest is long.
+                    # Captured here and acted on by the structural-integrity
+                    # gate below (7d).
+                    _empty_section_issues = _empty_mandatory_section_issues(
+                        _item_count_issues
+                    )
                     if _item_count_issues:
                         _digest_char_count = len(x_thread.strip())
                         if _digest_char_count < 1500:
@@ -1467,6 +1476,79 @@ def run(args: argparse.Namespace) -> None:
                 )
                 save_usage(tracker, digests_dir)
                 sys.exit(1)
+
+        # 7d. Structural-integrity gate — a digest can clear the char floor
+        #     above yet still be broken in ways that gut the downstream
+        #     podcast: a missing **HOOK:** line and/or a mandatory section
+        #     that came back empty. Tesla Ep493 (2026-05-30) shipped a
+        #     12.7k-char digest with no HOOK and an empty "First Principles"
+        #     section; the podcast stage then dropped the whole main-news
+        #     body and the episode was skipped as too thin. One targeted
+        #     regeneration with a corrective suffix here — before we spend
+        #     the podcast LLM call — gives the episode a structurally sound
+        #     digest to expand. Gated on a daily-format validation config
+        #     (narrative / weekly-recap shows have their own fixed shape and
+        #     may legitimately have no HOOK label).
+        if _val_factory and not is_weekly_recap:
+            _struct_defects: list = []
+            if not _extract_hook(x_thread):
+                _struct_defects.append("the **HOOK:** line is missing")
+            if _empty_section_issues:
+                _struct_defects.append(
+                    "these mandatory sections came back empty: "
+                    + "; ".join(_empty_section_issues)
+                )
+            if _struct_defects:
+                logger.warning(
+                    "Digest is structurally broken (%s) — regenerating once "
+                    "before the podcast stage ...",
+                    "; ".join(_struct_defects),
+                )
+                metrics.record("digest_structural_regen", True)
+                _struct_suffix = (
+                    "\n\nCRITICAL: Your previous attempt was structurally "
+                    "invalid: " + "; ".join(_struct_defects) + ". You MUST "
+                    "output a one-sentence **HOOK:** line right after the "
+                    "date/price block, AND fill EVERY mandatory section "
+                    "(Top 12 News Items, Tesla X Takeover, Short Spot, Tesla "
+                    "First Principles) with real content. Do NOT leave any "
+                    "mandatory section empty and do NOT omit the HOOK. Use the "
+                    "available articles to write any thin section with extra "
+                    "depth rather than leaving it blank."
+                )
+                try:
+                    with metrics.stage("generate_digest_structural_retry"):
+                        _x_struct = generate_digest(
+                            template_vars, config, tracker=tracker,
+                            prompt_suffix=_struct_suffix,
+                        )
+                    # Only swap in the retry if it restored the HOOK (the most
+                    # reliable structural signal) and isn't shorter garbage.
+                    if (
+                        _extract_hook(_x_struct)
+                        and len(_x_struct.strip()) >= _MIN_DIGEST_CHARS
+                    ):
+                        logger.info(
+                            "Structural retry produced a digest with a HOOK "
+                            "(%d chars) — using it",
+                            len(_x_struct.strip()),
+                        )
+                        x_thread = _x_struct
+                    else:
+                        logger.warning(
+                            "Structural retry did not restore a usable HOOK — "
+                            "keeping original (podcast prompt will still be told "
+                            "to cover all stories).",
+                        )
+                except LLMRefusalError:
+                    logger.error(
+                        "Structural digest retry refused by LLM — keeping original",
+                    )
+                except Exception as exc:
+                    logger.warning(
+                        "Structural digest retry failed: %s — keeping original",
+                        exc,
+                    )
 
         # Extract the daily hook (headline) from the digest
         hook = _extract_hook(x_thread)
@@ -2834,6 +2916,21 @@ def _extract_segment_summaries(
             if summary:
                 summaries[seg["id"]] = summary
     return summaries
+
+
+def _empty_mandatory_section_issues(item_count_issues: list) -> list:
+    """From a digest validator's item-count issues, return only those that
+    report a mandatory section with ZERO items (e.g.
+    ``Section 'First Principles': 0 items (minimum 1)``).
+
+    A 0-item section is a structural defect: it guts the downstream podcast
+    even when the digest clears the character floor (Tesla Ep493 shipped a
+    12.7k-char digest with an empty First Principles section, and the
+    podcast then dropped the whole main-news body). A soft shortfall like
+    ``has only 8 items (minimum 10)`` is usually a formatting mismatch on a
+    long digest and is deliberately NOT treated as structural.
+    """
+    return [i for i in item_count_issues if re.search(r":\s*0\s+items", i)]
 
 
 def _extract_hook(digest: str) -> str | None:
