@@ -20,8 +20,14 @@ Checks performed:
 
 Exit codes:
     0 — all episodes OK (or no episodes today)
-    1 — critical issues found (episodes that should be considered for removal)
-    2 — warnings only (fixable for future episodes)
+    1 — OPERATIONAL problem that should page the operator: a missed episode
+        (a show that was due but produced no output and has no skip marker).
+        The daily-audit workflow red-X's / notifies on this.
+    2 — non-paging notices only: editorial-quality criticals (short script,
+        repetition, garbles) AND warnings. These are recorded in the GitHub
+        issue + api/daily-review.json for review, but do NOT fail the run —
+        otherwise the audit pages daily for routine quality notes. (Operator
+        decision, May 2026.)
 """
 
 from __future__ import annotations
@@ -1818,6 +1824,31 @@ def format_for_claude(
 # Main
 # ---------------------------------------------------------------------------
 
+def _review_exit_code(
+    operational_critical: int,
+    editorial_critical: int,
+    total_warnings: int,
+) -> int:
+    """Map review tallies to a process exit code.
+
+    Operator decision (May 2026): the daily audit should PAGE (red-X /
+    notify) only for OPERATIONAL problems — a show that was due but produced
+    no episode (``operational_critical``). Editorial-quality criticals
+    (short script, repetition, garbles) and warnings are recorded in the
+    GitHub issue + ``api/daily-review.json`` but must NOT fail the run, or
+    the audit pages daily for routine notes.
+
+      1 — operational problem (missed episode): page.
+      2 — editorial criticals and/or warnings only: recorded, non-paging.
+      0 — clean.
+    """
+    if operational_critical > 0:
+        return 1
+    if editorial_critical > 0 or total_warnings > 0:
+        return 2
+    return 0
+
+
 def run_review(
     target_date: datetime.date,
     create_issues: bool = False,
@@ -1886,14 +1917,22 @@ def run_review(
     else:
         logger.info("Skipping AI review (no GROK_API_KEY)")
 
-    # Report
-    total_critical = sum(1 for i in missed_issues if i.severity == "critical")
+    # Report. Two buckets of "critical":
+    #   - operational_critical: a show that was due but didn't ship (missed
+    #     episode, no skip marker). This is the only thing that should PAGE
+    #     the operator (exit 1) — an episode is actually missing.
+    #   - editorial_critical: content-quality problems on episodes that DID
+    #     ship (short script, repetition, garbles). Recorded in the issue +
+    #     JSON, but does NOT page (exit 2) — otherwise the audit fails daily
+    #     for routine notes. (Operator decision, May 2026.)
+    operational_critical = sum(1 for i in missed_issues if i.severity == "critical")
+    editorial_critical = 0
     total_warnings = sum(1 for i in missed_issues if i.severity == "warning")
     for ep in episodes:
         n_crit = sum(1 for i in ep.issues if i.severity == "critical")
         n_warn = sum(1 for i in ep.issues if i.severity == "warning")
         n_info = sum(1 for i in ep.issues if i.severity == "info")
-        total_critical += n_crit
+        editorial_critical += n_crit
         total_warnings += n_warn
 
         if ep.issues:
@@ -1907,6 +1946,8 @@ def run_review(
                            "  [%s] %s: %s", issue.severity.upper(), issue.title, issue.detail)
         else:
             logger.info("%s Ep%03d: OK", ep.show_name, ep.episode_num)
+
+    total_critical = operational_critical + editorial_critical
 
     # Claude Code output
     if output_format == "claude":
@@ -1947,11 +1988,10 @@ def run_review(
     parts.extend([f"{total_critical} critical", f"{total_warnings} warning(s)"])
     logger.info("=== Review complete: %s ===", ", ".join(parts))
 
-    if total_critical > 0:
-        return 1
-    elif total_warnings > 0:
-        return 2
-    return 0
+    # Exit 1 ONLY for operational problems (a missed episode) so the daily
+    # audit pages the operator when something genuinely didn't ship. Editorial
+    # criticals + warnings return 2 (recorded, non-paging). See module docstring.
+    return _review_exit_code(operational_critical, editorial_critical, total_warnings)
 
 
 def write_review_json(

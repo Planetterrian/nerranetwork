@@ -106,17 +106,23 @@ jobs:
             echo "SUMMARY_EOF"
           } >> "$GITHUB_OUTPUT"
 
+          # Exit 1 = OPERATIONAL problem only (a due episode is missing) — page.
+          # Exit 2 = editorial-quality notes + warnings — recorded in the GitHub
+          # issue + api/daily-review.json, but must NOT fail the run (otherwise
+          # the audit pages daily for routine quality notes). Operator decision,
+          # May 2026.
           if [ "$EXIT_CODE" -eq 1 ]; then
-            echo "::error::CRITICAL issues found — check GitHub issues + api/daily-review.json"
+            echo "::error::Operational problem — a due episode is missing. See GitHub issue + api/daily-review.json"
             exit 1
           elif [ "$EXIT_CODE" -eq 2 ]; then
-            echo "::warning::Warnings found"
+            echo "::warning::Quality notes recorded (non-paging) — see GitHub issue + api/daily-review.json"
             exit 0
           fi
 
       - name: RSS Feed Freshness Health Check
         shell: python3 {0}
         run: |
+          import sys
           import xml.etree.ElementTree as ET
           from email.utils import parsedate_to_datetime
           from datetime import datetime, timezone
@@ -161,8 +167,15 @@ jobs:
                   stale.append(f"{name}: error {e}")
 
           if stale:
+              # A feed not updating past its (cadence-aware) limit is an
+              # OPERATIONAL problem — episodes aren't reaching subscribers — so
+              # this fails the job and pages the operator, same tier as a missed
+              # episode. (Editorial-quality notes do NOT fail the run; see the
+              # review step above.) Thresholds already tolerate alt-cadence /
+              # weekend gaps, so a trip here means multiple missed cycles.
               print("::error::STALE RSS FEEDS: " + "; ".join(stale))
               with open("has_stale_rss", "w") as f: f.write("\n".join(stale))
+              sys.exit(1)
           else:
               print("RSS freshness: all feeds OK")
 
@@ -191,9 +204,13 @@ jobs:
             git push origin main || echo "Push of audit artifacts failed (non-blocking)"
           fi
 
-          # Webhook notification on problems
-          if [ -n "$DAILY_REVIEW_WEBHOOK_URL" ] && [ "$EXIT_CODE" != "0" ]; then
+          # Webhook notification ONLY on operational problems (exit 1 = a
+          # missed episode). Editorial-quality notes (exit 2) are recorded in
+          # the GitHub issue + JSON and must not ping — that daily noise is
+          # exactly what the May 2026 operator change removed. (A stale RSS
+          # feed fails its own step, which red-X's the run separately.)
+          if [ -n "$DAILY_REVIEW_WEBHOOK_URL" ] && [ "$EXIT_CODE" = "1" ]; then
             curl -s -X POST "$DAILY_REVIEW_WEBHOOK_URL" \
               -H "Content-Type: application/json" \
-              -d "{\"text\":\"Nerra Daily Audit finished with exit $EXIT_CODE\\n$RUN_URL\"}" || true
+              -d "{\"text\":\"Nerra Daily Audit: a due episode is missing (operational) — $RUN_URL\"}" || true
           fi
