@@ -130,10 +130,14 @@ class TestDeepDiveConfig:
         assert c.deep_dive.podcast_prompt_file.endswith(
             "modern_investing_deep_dive_podcast.txt"
         )
-        # Deep dives push a fuller word target than the daily show (Ep059 was
-        # only 1252 words) so the length gate drives a real deep dive.
-        assert c.deep_dive.min_podcast_words >= 2000
+        # Deep dives push a fuller word target than the daily show so the
+        # expansion retry fires — but tuned so a ~1300-word deep dive still
+        # SHIPS (a 2400 target skipped the strong Ep060 at its 1440 soft floor).
         assert c.deep_dive.min_podcast_words > c.llm.min_podcast_words
+        assert 1500 <= c.deep_dive.min_podcast_words <= 2000
+        # Soft floor (0.6 x target) must sit below the ~1300 words this content
+        # reliably produces, so a good-content episode ships rather than skips.
+        assert int(c.deep_dive.min_podcast_words * 0.6) <= 1100
 
     def test_deep_dive_min_words_defaults_to_inherit(self):
         from engine.config import DeepDiveConfig
@@ -198,6 +202,27 @@ class TestShippedMITDeepDive:
         }
         load_prompt("shows/prompts/modern_investing_deep_dive.txt", v)
         load_prompt("shows/prompts/modern_investing_deep_dive_podcast.txt", v)
+
+
+class TestDeepDiveMarkProducedAfterThinGate:
+    """A deep-dive topic must be marked produced ONLY after the podcast script
+    clears the thin-script gate — otherwise a skipped deep dive (script too
+    thin) burns its queue slot and a ``when: next`` entry never re-fires.
+    (Regression: SpaceX Ep060 skipped at the soft floor; the mark must come
+    after that skip, not at digest-save before generation.)"""
+
+    def test_mark_produced_comes_after_thin_script_skip(self):
+        from pathlib import Path
+        src = (Path(__file__).resolve().parent.parent / "run_show.py").read_text()
+        thin_skip = src.index("Podcast script too thin for publication")
+        # The deep-dive mark_topic_produced must appear AFTER the thin-script
+        # skip in source order.
+        dd_mark = src.index(
+            "Failed to mark deep-dive topic as produced", thin_skip
+        )
+        assert dd_mark > thin_skip
+        # And there must be no deep-dive mark BEFORE the thin gate.
+        assert "Failed to mark deep-dive topic as produced" not in src[:thin_skip]
 
 
 # ---------------------------------------------------------------------------
