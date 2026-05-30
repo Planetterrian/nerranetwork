@@ -419,6 +419,28 @@ class YouTubeConfig:
     # offset so they ignore this knob and always produce 1 Short.
     shorts_per_episode: int = 1
 
+    # ---- Multi-platform distribution (Instagram Reels / TikTok / etc.) ----
+    # When true, each published Short additionally gets (1) a "safe-zone"
+    # variant MP4 with overlays lifted out of the bottom/right bands that IG
+    # Reels and TikTok draw their own UI (caption + action rail) over, and
+    # (2) a "<short>.social.json" sidecar carrying per-platform caption +
+    # hashtags. Actual posting is handled by engine.social_publisher, which is
+    # a clean no-op until the platform API credentials are configured. Default
+    # false → YouTube-only behaviour is byte-for-byte unchanged.
+    multi_platform_enabled: bool = False
+    instagram_enabled: bool = False
+    tiktok_enabled: bool = False
+    # Safe-zone overlay tuning for the social variant (1080×1920). IG/TikTok
+    # cover the bottom ~16% (caption + CTA) and right ~12% (like/share rail).
+    # Captions are bottom-centre, so only the vertical margin needs lifting;
+    # the URL pill + end-card are dropped (the caption text carries the link).
+    social_caption_margin_v: int = 480     # ASS MarginV (px from bottom)
+    social_drop_url_pill: bool = True
+    social_drop_end_card: bool = True
+    # R2 bucket key prefix for ready-to-post social assets (video + sidecar).
+    # Empty = keep assets local only (no upload).
+    social_r2_prefix: str = ""
+
 
 @dataclass
 class ShowConfig:

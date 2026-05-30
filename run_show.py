@@ -3914,6 +3914,36 @@ def _publish_youtube(
                                 "Playlist add failed for short #%d: %s",
                                 short_idx + 1, exc,
                             )
+                    # Multi-platform distribution (Instagram Reels / TikTok).
+                    # No-op unless config.youtube.multi_platform_enabled; renders
+                    # a safe-zone variant + social.json sidecar, optionally hosts
+                    # on R2, and posts where credentialed. Best-effort.
+                    try:
+                        from engine.social_distribution import distribute_short
+                        dist = distribute_short(
+                            config,
+                            audio_path=final_mp3, cover_path=cover_path,
+                            work_dir=work_dir, base_name=base_name, short_suffix=suffix,
+                            start_offset=this_offset, duration=duration,
+                            hook=this_hook or "", show_name=config.name,
+                            show_url="https://nerranetwork.com",
+                            scene_paths=(
+                                short_scene_paths if len(short_scene_paths) >= 2 else None
+                            ),
+                            subtitles_path=this_srt_path,
+                            long_form_url=long_url,
+                            short_youtube_url=this_upload.watch_url,
+                            show_keywords=getattr(config, "keywords", None),
+                            is_ru=(config.slug in ("finansy_prosto", "privet_russian")),
+                        )
+                        if dist.get("posted"):
+                            result.setdefault("social_posted", []).append(dist["posted"])
+                    except Exception as exc:  # noqa: BLE001
+                        logger.warning(
+                            "Social distribution #%d failed (non-fatal): %s",
+                            short_idx + 1, exc,
+                        )
+
                     # Best-effort cleanup of this Short's MP4 now
                     # that YouTube has the canonical copy.
                     try:
