@@ -1,0 +1,58 @@
+# Deep-dive queue for Modern Investing Techniques.
+#
+# These are SPECIAL standalone single-subject episodes, distinct from the
+# daily markets show. The runner (run_show.py) checks this queue at the start
+# of every MIT run via the show's ``deep_dive:`` config block. A deep-dive
+# episode fires when:
+#   1. an entry's ``date:`` equals today's date (a scheduled deep dive), OR
+#   2. an entry is flagged ``when: next`` (fires on the very next MIT run), OR
+#   3. it's forced: ``python run_show.py modern_investing --deep-dive <id>``.
+# When one fires, that single episode bypasses the news fetch and runs off the
+# topic using the deep-dive prompts; the show auto-reverts to daily news after.
+#
+# To schedule a future deep dive: add an entry with a ``date: YYYY-MM-DD`` (the
+# date MIT runs that day) OR ``when: next``. Keep ``produced: false`` until it
+# runs — the runner flips it to true and records the episode number + date.
+#
+# Entry schema (shares shows/topic_queues schema + scheduling keys):
+#   id:             unique slug (also the --deep-dive argument)
+#   title:          episode title-ish phrase ({topic_title} in the prompt)
+#   brief:          EXACTLY what the episode must cover ({topic_brief})
+#   when:           "next" to fire on the next run (optional)
+#   date:           YYYY-MM-DD to fire on a specific run date (optional)
+#   produced:       false until produced
+#   episode_number: null until produced (runner fills in)
+#   produced_date:  null until produced (runner fills in)
+
+queue:
+  - id: spacex-ipo
+    title: "The SpaceX IPO and How to Invest in IPOs"
+    when: next
+    brief: >
+      A two-part deep dive. PART ONE — the SpaceX IPO question: walk through
+      where SpaceX actually stands as a private company (its scale, Starlink as
+      the cash-generative engine versus the launch business, its most recent
+      private-market / tender-offer valuation, and why Musk has historically
+      kept it private). Be explicit that, as of recording, there is NO formally
+      announced or priced SpaceX IPO — treat any IPO as speculative and explain
+      the realistic paths a retail investor has today to get exposure to
+      SpaceX-adjacent value (private-market platforms and their high minimums
+      and accreditation rules, funds/holding companies that carry SpaceX
+      stakes, and the caveats of each), versus simply waiting for a public
+      listing. PART TWO — the reusable framework for investing in IPOs in
+      general: how the traditional IPO process works (underwriters, the roadshow,
+      pricing, the first-day "pop"), how a direct listing and an SPAC differ,
+      why retail investors rarely get allocation at the offer price and what
+      that means, the role and danger of the post-IPO lock-up expiry, how to
+      read an S-1 / prospectus (what actually matters — revenue quality, path to
+      profitability, share structure and dilution, insider selling), the
+      historical base rates on IPO performance (the well-documented tendency to
+      underperform over the first one-to-three years), and a disciplined
+      checklist a Canadian or US retail investor can apply before buying any
+      newly public company — including which account (TFSA / RRSP / FHSA /
+      taxable) and the case for simply waiting a few quarters. Keep it
+      educational, balanced, and explicit that none of it is financial advice.
+    category: special
+    produced: false
+    episode_number: null
+    produced_date: null

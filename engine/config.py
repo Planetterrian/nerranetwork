@@ -301,6 +301,34 @@ class SlowNewsConfig:
 
 
 @dataclass
+class DeepDiveConfig:
+    """Per-episode deep-dive override (May 2026).
+
+    Lets a normally news-driven show (e.g. Modern Investing) produce an
+    occasional standalone single-subject deep-dive episode without
+    permanently switching to ``narrative_mode``. The runner checks
+    ``queue_file`` at the start of each run; if a topic is scheduled for
+    today (``date: YYYY-MM-DD``) or flagged ``when: next``, that single
+    episode bypasses the news fetch + slow-news + digest-validation path
+    and runs off the topic with the deep-dive prompt files, then
+    auto-reverts to the normal daily pipeline. A specific topic can also
+    be forced on demand via ``run_show.py <show> --deep-dive <id>``,
+    regardless of schedule. Queue entries share the
+    ``shows/topic_queues`` schema (id / title / brief / produced /
+    episode_number / produced_date) plus the optional ``date`` / ``when``
+    scheduling keys.
+    """
+    enabled: bool = False
+    queue_file: str = ""            # e.g. "shows/deep_dives/modern_investing.yaml"
+    # Prompt overrides used only on a deep-dive run. Empty = fall back to
+    # the show's normal llm.*_prompt_file (rarely what you want — a deep
+    # dive has a different shape than a daily news episode).
+    digest_prompt_file: str = ""    # outline / brief expansion prompt
+    podcast_prompt_file: str = ""   # full-script prompt
+    system_prompt_file: str = ""    # optional system-prompt override
+
+
+@dataclass
 class ContentFreshnessConfig:
     """Per-show article freshness filter overrides."""
     lookback_days: int = 0          # 0 = use pipeline default (1 or 3 based on episode count)
@@ -487,6 +515,10 @@ class ShowConfig:
     # depend on daily news cycles.
     narrative_mode: bool = False
     topic_queue_file: str = ""
+    # Per-episode deep-dive override (see DeepDiveConfig). Distinct from
+    # narrative_mode: the show stays news-driven by default and only a
+    # scheduled / forced episode runs as a standalone deep dive.
+    deep_dive: DeepDiveConfig = field(default_factory=DeepDiveConfig)
     # Recursive narrative-memory (Phase 3). When true, the show's pre_fetch
     # hook injects a {narrative_memory_section} block (programs + open
     # questions + mined themes) into the digest/podcast prompts, and its
@@ -664,6 +696,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         weekly_recap_on_sunday=bool(data.get("weekly_recap_on_sunday", False)),
         narrative_mode=bool(data.get("narrative_mode", False)),
         topic_queue_file=str(data.get("topic_queue_file", "") or ""),
+        deep_dive=_build_nested(DeepDiveConfig, data.get("deep_dive")),
         memory_enabled=bool(data.get("memory_enabled", False)),
     )
     logger.info("Loaded config for '%s' from %s", config.name, path)

@@ -247,6 +247,18 @@ slow_news:
   max_segments: 2
   cooldown_days: 30
 
+# Special standalone single-subject episodes (May 2026). When a topic in the
+# queue is scheduled for today (date:) or flagged when: next — or forced via
+# `python run_show.py modern_investing --deep-dive <id>` — that one episode
+# bypasses the daily news fetch and runs as a deep dive using the prompts
+# below, then auto-reverts to the normal daily markets show. Add future deep
+# dives by appending entries to shows/deep_dives/modern_investing.yaml.
+deep_dive:
+  enabled: true
+  queue_file: shows/deep_dives/modern_investing.yaml
+  digest_prompt_file: shows/prompts/modern_investing_deep_dive.txt
+  podcast_prompt_file: shows/prompts/modern_investing_deep_dive_podcast.txt
+
 youtube:
   podcast_playlist_id: PLRHMnzNNXPYCnD0HJiNss4SZPLBsH7z6v
   enabled: false                # Phase 2 — flip after quota raise

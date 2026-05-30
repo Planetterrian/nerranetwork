@@ -46,8 +46,11 @@ def test_validator_block_gated_on_not_weekly_recap():
     source = _RUN_SHOW.read_text(encoding="utf-8")
     # The gate must reference both the validator factory AND the
     # ``is_weekly_recap`` flag so a daily-format check doesn't fire
-    # on a recap digest.
-    assert "if _val_factory and not is_weekly_recap:" in source, (
+    # on a recap digest. (May 2026: the gate also carries a trailing
+    # ``and not is_deep_dive`` so standalone deep-dive episodes — which
+    # have their own non-daily shape — skip the daily validator too. We
+    # match the prefix so either tail is accepted.)
+    assert "if _val_factory and not is_weekly_recap" in source, (
         "Daily-format validator block in run_show.py must be gated on "
         "``not is_weekly_recap``. Without the gate, recap digests get "
         "overwritten with daily content on Sundays. See May 10 2026 "
