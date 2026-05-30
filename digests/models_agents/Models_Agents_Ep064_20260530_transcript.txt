@@ -1,0 +1,218 @@
+Pull up a chair, this is Models and Agents, episode 64,
+on May 30th, 2026.
+Let's see what shipped.
+Their signal and noise in AI every day.
+Let's get to the signal.
+Windows users can now steer codex agents directly
+on their machines while stepping away.
+Open AI extended computer use capabilities
+to windows for codex, letting the agent act on local desktops
+and continue tasks from the mobile app.
+Step fun released a 198 billion MOE vision language model
+optimized for coding agents, while Hermes agent added tool search
+to reduce MCP context bloat.
+Builders should test the new Windows support this week
+and evaluate the MIMO memory architecture
+for long-term knowledge updates without retraining.
+Open AI added Windows support for codex computer use,
+allowing the agent to perform actions directly
+on Windows machines and continue tasks
+started from the chat GPT mobile app.
+The feature enables users to start, review, and steer
+work remotely while the agent keeps running locally.
+This expands codex beyond macOS and browser environments,
+giving developers a path to run autonomous coding sessions
+on standard Windows hardware.
+Early access means reliability is still limited
+and users should expect iteration on edge cases
+like window management and file permissions.
+Watch for expanded mobile to desktop handoff features
+and tighter integration with local development tools
+in the coming weeks.
+This development continues the steady maturation
+of autonomous agents and tool use protocols
+with reliability on long horizon task
+remaining a key open question.
+Step fun released step 3.7 flash,
+a 198 billion MOE vision language model
+with native vision support and 256,000 context.
+It includes an advisor mode aimed at coding agents
+and search workflows.
+The model targets agent use cases
+where vision and long context matter.
+Builders working on multimodal coding agents
+should test it against current,
+trend, and Gemini vision setups
+to see where the MOE routing helps.
+Grif released Pantheon Reasoning 27b,
+a dense twin 3.627b fine tune
+that keeps thinking tags active
+across multi-turn conversations.
+Training data combined Pantheon roleplay
+with full reasoning traces from Opus 4.6,
+WorldSim and text adventure sources.
+The model is positioned as a successor
+to both the Pantheon series and earlier codex releases.
+Roleplay and agent developers can try the GGUFquants
+to see whether the added reasoning traces
+improve character consistency over non-reasoning baselines.
+Nvidia introduced X token,
+a projection guided cross tokenizer,
+knowledge distillation method,
+that improves on gold.
+On lemma 3.21b, it raised average performance
+by 3.82 points and lifted GSM 1000 accuracy
+from 2.56 to 15.54.
+The technique addresses structural failures
+in prior distillation approaches when tokenizers differ.
+Teams doing model compression or student teacher setups
+should examine the method for small model reasoning gains.
+A detailed la-ma.cpp perplexity benchmark
+compared multiple Q-Winth 3.6 to 27b quants
+from unsloth, m-radar marker, and others
+using mean KLD and top token match.
+Q-6K and Q-5KM variants stayed close to BF16
+while Q-4K XL offered the best quality to size trade-off
+for 16 gigabyte cards.
+Lower quants below Q-4 showed sharp KLD increases.
+Anyone running Q-Winth 3.6 to 27b locally
+should review the tables before choosing between unsloth Q-4K XL
+and radar marker IQ-4XS.
+A developer created a training script to convert Gemma-431b
+dense into a native MOE model by adding a router and experts
+while preserving the enable MOE block config.
+The experiment targets knowledge updates
+and capability gains through the MOE structure.
+Early results are pending full runs on B300 hardware.
+Researchers interested in post-training dense Gemma-4 models
+should watch for public checkpoints and training code.
+Hermes agent added tool search to the MCP layer
+using BM25 progressive schema disclosure.
+Andthropic evals showed accuracy gains from 49% to 74%
+on Opus-4 by reducing context below.
+The update targets long horizon agents
+that previously hit token limits when exposing many tools.
+Teams building MCP compatible agents
+should test the new search mechanism
+to see how it affects tool selection reliability.
+This update advances standardization of agent and tool protocols
+directly addressing reliability questions
+for long horizon agents.
+Genesis AI released Genesis World 1.0,
+a four component simulation platform covering physics,
+rendering, compilation and tooling
+for robotics foundation model evaluation.
+It achieved a 0.8996 Pearson correlation between simulation
+and real world robot rollouts while cutting policy evaluation time
+from over 200 hours to under 0.5 hours.
+NICS and quadrants components support scalable testing.
+Robotics researchers and simulation teams
+should evaluate the platform for faster iteration
+on foundation models.
+Agent Trove provides 1.7 million
+agentic interaction traces in shared GBT format,
+the largest open collection currently available.
+A Python tutorial shows how to stream the data,
+normalized turns, extract commands
+and export successful trajectories into clean SFT data sets.
+The resource targets researchers building
+or fine tuning agent models.
+Developers working on agent training pipelines
+should pull the data set to augment existing SFT collections.
+Folloc V2 runs a fully local voice assistant
+on 16 gigabyte VRAM using Quen 3.5 to 9B for generation,
+Quen 3.1.7B for ASR and TTS,
+plus BGE embeddings for semantic search over obsidian vaults.
+It supports home assistant control,
+agentic long-term memory, acoustic bargin
+and custom wakewords without special models.
+The project includes a chat UI and scripts
+for creating new voices.
+Linux and Windows users looking for private voice agents
+should clone the repo and test the obsidian integration.
+Shadow AI is a Windows-only voice first companion
+that runs locally, supports any language made conversation,
+includes web search via a local CRXNG instance
+and builds persistent memory across sessions.
+It offers optional Google integration and skill learning
+while keeping all data on device.
+The project is open source under agpl3.0
+and uses a bring your own key model with Gemini.
+Windows developers wanting a always listening local assistant
+should review the GitHub for setup
+and planned local model additions.
+A community port of Flash attention too
+for V100 GPUs delivered three to 24 time speedups
+on forward and backward passes,
+depending on sequence length and batch size,
+with memory reductions up to 93%.
+Benchmarks covered causal and non-causal attention
+across multiple head and dimension configurations.
+V100 owners running older inference stacks
+should test the AI bond implementation
+to reclaim memory and reduce latency.
+Test open AI codex computer use on a Windows machine
+for local file and IDE tasks
+to see how the mobile handoff performs in practice.
+Run the pantheon rezoning 27 BGGUF quant on a roleplay
+or agent workflow and compare thinking trace consistency
+against a standard twin 3.627B.
+Evaluate Hermes agent tool search on an MCP setup
+with many tools to measure the reported accuracy lift
+on Opus 4.
+Benchmark unslawed Q4KXL versus M radar marker IQ4XS
+on Q-Went 3.6227B using your own prompts
+to decide the right quant for 16 GB cards.
+Cloneful it to V2 and connected to your obsidian vault
+to test semantic voice search over personal notes.
+More Windows and mobile extensions
+for codex style computer use expected
+as open AI iterates on the early release.
+Additional MOE conversion experiments on Gemma 431B
+likely to appear on hugging face
+following the initial proof of concept.
+Expanded robotics simulation benchmarks
+using Genesis world 1.0
+as more teams adopt the platform for policy evaluation.
+Okay, let's pop the hood on memory models
+versus RAG for continual updates.
+Everyone talks about giving LLM's new knowledge
+as if retrieval or fine-tuning are the only two levers.
+In practice, MIMO style memory models
+insert a small dedicated network
+that stores facts parametrically
+while the main model stays frozen.
+The memory model is trained on synthetic QA pairs
+distilled from new documents
+then updated via task vector merging
+when fresh data arrives.
+This avoids the catastrophic forgetting
+that occurs when you fine-tune the full LLM.
+Inside steps, the context window
+and noise problems of RAG.
+The trade-off is upfront compute.
+Roughly 180H200 GPU hours to train a 14B memory model
+plus another 240 hours to generate reflections
+plus an 11% to 19% accuracy drop
+versus full retraining.
+The approach shines when your corpus changes slowly
+and you need synthesis across many documents
+rather than exact look up.
+Use it when you already have a strong frozen reasoning model
+and want to swap in updated knowledge
+without touching the base weights.
+Stick with RAG when you need source citations
+or face rapidly changing data.
+Before we go, keep an eye on further memory model merging results
+and smaller scale MIMO variants
+as researchers optimize the reflection generation pipeline.
+That's models and agents for today.
+If you found this useful,
+share it with someone who's trying to keep up
+with all these changes and subscribe
+so you don't miss tomorrow's update.
+The AI world moves fast.
+We'll help you keep up.
+See you tomorrow.
+This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.

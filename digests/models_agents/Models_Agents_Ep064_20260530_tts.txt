@@ -1,0 +1,149 @@
+Pull up a chair, this is Models and Agents, episode sixty-four, on May thirtieth, twenty twenty-six. Let's see what shipped. There's signal and noise in A I every day. Let's get to the signal.
+
+Windows users can now steer Codex agents directly on their machines while stepping away.
+
+Open A I extended computer-use capabilities to Windows for Codex, letting the agent act on local desktops and continue tasks from the mobile app.
+
+StepFun released a 198B MoE vision-language model optimized for coding agents, while Hermes Agent added tool search to reduce M C P context bloat.
+
+Builders should test the new Windows support this week and evaluate the MeMo memory architecture for long-term knowledge updates without retraining.
+
+Open A I added Windows support for Codex computer use, allowing the agent to perform actions directly on Windows machines and continue tasks started from the ChatGPT mobile app.
+
+The feature enables users to start, review, and steer work remotely while the agent keeps running locally.
+
+This expands Codex beyond macOS and browser environments, giving developers a path to run autonomous coding sessions on standard Windows hardware.
+
+Early access means reliability is still limited and users should expect iteration on edge cases like window management and file permissions.
+
+Watch for expanded mobile-to-desktop handoff features and tighter integration with local development tools in the coming weeks.
+
+This development continues the steady maturation of autonomous agents and tool-use protocols, with reliability on long-horizon tasks remaining a key open question.
+
+StepFun released Step 3.7 Flash, a 198B MoE vision-language model with native vision support and two hundred fifty-six thousand context.
+
+It includes an Advisor Mode aimed at coding agents and search workflows.
+
+The model targets agentic use cases where vision and long context matter.
+
+Builders working on multimodal coding agents should test it against current Chwen and Gemini vision setups to see where the MoE routing helps.
+
+Gryphe released Pantheon-Reasoning-27B, a dense Chwen 3.6 27B fine-tune that keeps thinking tags active across multi-turn conversations.
+
+Training data combined Pantheon roleplay with full reasoning traces from Opus 4.6, WorldSim, and text adventure sources.
+
+The model is positioned as a successor to both the Pantheon series and earlier Codex releases.
+
+Roleplay and agent developers can try the GGUF quants to see whether the added reasoning traces improve character consistency over non-reasoning baselines.
+
+En-vidia introduced X-Token, a projection-guided cross-tokenizer knowledge distillation method that improves on GOLD.
+
+On Lah-mah-3.2-1B it raised average performance by three point eight two points and lifted GSMeight thousand accuracy from two point five six to fifteen point five four.
+
+The technique addresses structural failures in prior distillation approaches when tokenizers differ.
+
+Teams doing model compression or student-teacher setups should examine the method for small-model reasoning gains.
+
+A detailed Lah-mah.cpp perplexity benchmark compared multiple Qwenthree point six to twenty-sevenB quants from Unsloth, mradermacher, and others using mean KLD and top-token match.
+
+Q6_K and Q5_K_M variants stayed close to BF16 while Q4_K_XL offered the best quality-to-size trade-off for sixteen GB cards.
+
+Lower quants below Q four showed sharp KLD increases.
+
+Anyone running Qwenthree point six to twenty-sevenB locally should review the tables before choosing between Unsloth Q4_K_XL and mradermacher IQ4_XS.
+
+A developer created a training script to convert Gemma 4 31B dense into a native MoE model by adding a router and experts while preserving the enable_moe_block config.
+
+The experiment targets knowledge updates and capability gains through the MoE structure.
+
+Early results are pending full runs on B300 hardware.
+
+Researchers interested in post-training dense Gemma 4 models should watch for public checkpoints and training code.
+
+Hermes Agent added Tool Search to the M C P layer using BM25 progressive schema disclosure.
+
+An-thropic evals showed accuracy gains from forty nine percent to seventy four percent on Opus 4 by reducing context bloat.
+
+The update targets long-horizon agents that previously hit token limits when exposing many tools.
+
+Teams building M C P compatible agents should test the new search mechanism to see how it affects tool selection reliability.
+
+This update advances standardization of agent and tool protocols, directly addressing reliability questions for long-horizon agents.
+
+Genesis A I released Genesis World 1.0, a four-component simulation platform covering physics, rendering, compilation, and tooling for robotics foundation model evaluation.
+
+It achieved a zero point eight nine nine six Pearson correlation between simulation and real-world robot rollouts while cutting policy evaluation time from over two hundred hours to under zero point five hours.
+
+Nyx and Quadrants components support scalable testing.
+
+Robotics researchers and simulation teams should evaluate the platform for faster iteration on foundation models.
+
+AgentTrove provides one point seven million agentic interaction traces in ShareGPT format, the largest open collection currently available.
+
+A Python tutorial shows how to stream the data, normalize turns, extract commands, and export successful trajectories into clean SFT datasets.
+
+The resource targets researchers building or fine-tuning agent models.
+
+Developers working on agent training pipelines should pull the dataset to augment existing SFT collections.
+
+Fulloch V2 runs a fully local voice assistant on sixteen GB VRAM using Qwenthree point five to nineB for generation, Qwen3-1.7B for ASR and TTS, plus bge embeddings for semantic search over Obsidian vaults.
+
+It supports Home Assistant control, agentic long-term memory, acoustic barge-in, and custom wakewords without special models.
+
+The project includes a Chat UI and scripts for creating new voices.
+
+Linux and Windows users looking for private voice agents should clone the repo and test the Obsidian integration.
+
+Shadow A I is a Windows-only voice-first companion that runs locally, supports any language mid-conversation, includes web search via a local SearXNG instance, and builds persistent memory across sessions.
+
+It offers optional Google integration and skill learning while keeping all data on-device.
+
+The project is open source under AGPL-3.0 and uses a bring-your-own-key model with Gemini.
+
+Windows developers wanting a always-listening local assistant should review the GitHub for setup and planned local model additions.
+
+A community port of Flash Attention 2 for V100 G P U's delivered three to twenty four times speedups on forward and backward passes depending on sequence length and batch size, with memory reductions up to ninety three percent.
+
+Benchmarks covered causal and non-causal attention across multiple head and dimension configurations.
+
+V100 owners running older inference stacks should test the A I bond implementation to reclaim memory and reduce latency.
+
+Test Open A I Codex computer use on a Windows machine for local file and IDE tasks to see how the mobile handoff performs in practice.
+
+Run the Pantheon-Reasoning-27B GGUF quant on a roleplay or agent workflow and compare thinking-trace consistency against a standard Chwen 3.6 27B.
+
+Evaluate Hermes Agent Tool Search on an M C P setup with many tools to measure the reported accuracy lift on Opus 4.
+
+Benchmark Unsloth Q4_K_XL versus mradermacher IQ4_XS on Qwenthree point six to twenty-sevenB using your own prompts to decide the right quant for sixteen GB cards.
+
+Clone Fulloch V2 and connect it to your Obsidian vault to test semantic voice search over personal notes.
+
+More Windows and mobile extensions for Codex-style computer use expected as Open A I iterates on the early release.
+
+Additional MoE conversion experiments on Gemma 4 31B likely to appear on Hugging Face following the initial proof-of-concept.
+
+Expanded robotics simulation benchmarks using Genesis World 1.0 as more teams adopt the platform for policy evaluation.
+
+OK, let's pop the hood on memory models versus rag for continual updates.
+
+Everyone talks about giving L L M's new knowledge as if retrieval or fine-tuning are the only two levers.
+
+In practice, MeMo-style memory models insert a small dedicated network that stores facts parametrically while the main model stays frozen.
+
+The memory model is trained on synthetic QA pairs distilled from new documents, then updated via task-vector merging when fresh data arrives.
+
+This avoids the catastrophic forgetting that occurs when you fine-tune the full L L M and sidesteps the context-window and noise problems of raw rag.
+
+The tradeoff is upfront compute, roughly one hundred eighty H200 G P U hours to train a fourteen B memory model plus another two hundred forty hours to generate reflections, plus an eleven to nineteen percent accuracy drop versus full retraining.
+
+The approach shines when your corpus changes slowly and you need synthesis across many documents rather than exact lookup.
+
+Use it when you already have a strong frozen reasoning model and want to swap in updated knowledge without touching the base weights.
+
+Stick with rag when you need source citations or face rapidly changing data.
+
+Before we go, keep an eye on further memory-model merging results and smaller-scale MeMo variants as researchers optimize the reflection-generation pipeline.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
