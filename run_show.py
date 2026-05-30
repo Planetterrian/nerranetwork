@@ -1753,23 +1753,11 @@ def run(args: argparse.Namespace) -> None:
                     "Failed to mark topic as produced (non-fatal): %s", exc,
                 )
 
-        # Deep-dive episodes: mark the topic produced in the deep-dive queue so
-        # a ``when: next`` entry doesn't fire again on tomorrow's news episode.
-        if is_deep_dive and deep_dive_topic:
-            try:
-                from engine.topic_queue import mark_topic_produced
-                _dd_queue = PROJECT_ROOT / config.deep_dive.queue_file
-                mark_topic_produced(
-                    _dd_queue,
-                    topic_id=deep_dive_topic.get("id", ""),
-                    episode_num=episode_num,
-                    produced_date=today.isoformat(),
-                )
-            except Exception as exc:  # noqa: BLE001
-                logger.warning(
-                    "Failed to mark deep-dive topic as produced (non-fatal): %s",
-                    exc,
-                )
+        # Deep-dive topics are marked produced LATER — only after the
+        # podcast script clears the thin-script gate (see step 8b) — so a
+        # skipped deep dive (e.g. the script came out too thin) does NOT burn
+        # the queue slot. Marking here, before generation, would consume the
+        # topic even on a skip.
 
         # Post-generation hook (e.g. extract trade picks for Modern Investing
         # tracker). Skipped on deep dives — a standalone deep dive has no daily
@@ -2067,6 +2055,27 @@ def run(args: argparse.Namespace) -> None:
                     )
                     save_usage(tracker, digests_dir)
                     sys.exit(1)
+
+            # Deep-dive episodes: NOW that the script has cleared the thin-script
+            # gate (8b) and the pre-TTS duration gate (8c), mark the topic
+            # produced in the deep-dive queue. Done here (not before generation)
+            # so a skipped deep dive never burns its queue slot — a ``when: next``
+            # entry that skipped on a thin script will correctly fire again.
+            if is_deep_dive and deep_dive_topic:
+                try:
+                    from engine.topic_queue import mark_topic_produced
+                    _dd_queue = PROJECT_ROOT / config.deep_dive.queue_file
+                    mark_topic_produced(
+                        _dd_queue,
+                        topic_id=deep_dive_topic.get("id", ""),
+                        episode_num=episode_num,
+                        produced_date=today.isoformat(),
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning(
+                        "Failed to mark deep-dive topic as produced (non-fatal): %s",
+                        exc,
+                    )
 
             # Update Content Lake with podcast script (non-fatal)
             if _lake_record is not None:
