@@ -1,0 +1,156 @@
+Good to have you on models and agents, episode 65.
+It's May 31st, 2026.
+And we're looking at what actually shipped in the last week.
+Six episodes from the 25th through the 31st
+gave us a clear picture.
+Steady, practical movement on agent tooling and infrastructure
+rather than headline grabbing benchmark leaps.
+The thread that ran through everything
+was lowering the friction of getting
+agents to work reliably in real environments.
+Whether that means starting conversations
+straight from structured data, tightening the guard rails
+around what they can touch, or giving them ways
+to improve without waiting for the next full training run.
+One of the more immediate changes landed in data set.
+Version 1.0 alpha 30 added a keyboard slash shortcut
+that surfaces a jump menu for databases, tables, and queries.
+Plug-in hooks now let extensions add their own entries
+to that menu and its empty state.
+And the separate data set agent plugin
+uses those hooks to drop a form directly into the interface.
+From inside a normal database view,
+you can open a fresh agent conversation
+without switching tools.
+That matters because it removes one of the small
+but persistent barriers between looking at data
+and letting an agent act on it.
+In the agents and tool use program,
+this kind of integration directly attacks
+the long horizon reliability problem,
+the show has been tracking.
+Agents become easier to reach exactly
+where the data already lives.
+From there it's natural to ask how we make the instructions
+we give agents more dependable in the first place.
+A new paper on skill opt treats markdown skill files
+as trainable parameters.
+A frontier model proposes bounded edits,
+add, delete, or replace,
+and only keeps changes that improve
+a held out validation set.
+When the edit budget stays between four and eight proposals,
+skills typically settle after one to four accepted edits.
+Removing the budget cap though,
+cause performance to drop across the tasks they tested.
+The method gives teams a repeatable loop
+for turning ad hoc instructions into validated components,
+another incremental step on the same reliability track.
+Andthropics engineering post on containing
+clawed agents pushes the same idea further
+into day-to-day operations.
+Permissions have to grow alongside capabilities
+instead of staying fixed from the start.
+Sandbox limits are applied to file system, network,
+and code execution scope.
+And the advice is to begin narrow and expand
+only after demonstrated safe behavior.
+That pattern feeds directly into the standardization
+of agent and tool protocols we've been following.
+Because it turns sandboxing from a one time setup
+into an ongoing discipline that scales
+with what the agent can actually do.
+Core Weaves' new unified agentic platform
+tries to close another part of the loop.
+It lets agents iterate on their own outputs
+in self-improvement cycles without waiting
+for full retraining runs.
+The system is aimed at production workloads
+that need real-time adaptation rather than scheduled updates.
+So builders of long-running autonomous systems
+now have tighter feedback mechanisms
+they can test in deployment.
+That connects back to the earlier tooling stories.
+Once you can start an agent from data
+and keep its instructions validated,
+the next constraint is how quickly it can learn
+from what it just did.
+Open AI's extension of Codex computer use capabilities
+to Windows machines broadens the environments
+where those same agents can operate.
+The agent cannot perform local desktop actions
+and continue tasks that were started
+from the chat GPT mobile app,
+all while running on standard Windows hardware.
+Users can start, review, and steer the work remotely.
+Early access still shows limited reliability on edge cases
+but the move removes the previous macOS
+or browser-only restrictions
+and gives teams another concrete place
+to run autonomous coding agents.
+Speed improvements in retrieval also showed up this week.
+Perplexity open sourced a unigram tokenizer
+that cuts re-ranker latency by a factor of five
+against the prior hugging face baseline.
+For any pipeline that feeds context to agents
+that latency reduction is a direct, measurable win
+and how quickly relevant information can be assembled.
+On the model side, liquid AI released LFM 2.58 BA1B,
+a model with 128,000 context trained on 38 trillion tokens
+and positioned for edge devices.
+It adds another practical option
+for running capable agents on local or low power hardware.
+Step fun introduced a 198 billion parameter
+and mixture of experts vision language model
+tuned specifically for coding agents
+while multiple teams demonstrated that
+twin 3.6 35 BA3B can be inferred on single consumer GPUs
+with strong context retention.
+Together these releases expand the set of places
+where agent workloads can run
+without depending on the largest cloud clusters.
+Andthropics $65 billion series H round
+at a $965 billion post money valuation
+led by altimeter, dragoneer, greenoaks and Sequoia
+sits alongside these releases.
+The company reported run rate revenue
+above $47 billion driven by enterprise cloud usage.
+And the capital is earmarked for expanded research
+and inference capacity.
+In the Frontier models program,
+this continues the pattern of capability
+and price leadership trading hands
+while raising questions about the next release cadence.
+In the AI compute and inference program,
+the added resources could ease supply constraints
+and further bend the inference cost curve
+we've been monitoring.
+If you haven't tried the data set jump menu
+with the agent plugin yet,
+this week gives you a low friction place
+to test starting conversations directly from structured data.
+You can also experiment with skill opt style validation loops
+on your own markdown instructions
+to see how quickly they stabilize
+under a controlled edit budget.
+When you grandfile our network access
+to any new tool using agent
+andthropic sandboxing patterns are worth reviewing
+as a concrete reference.
+Testing the new Windows Codec support on a local machine
+lets you compare steering workflows
+against the earlier Mac OS path.
+Keep watching for further agent framework releases
+that build on the sandboxing
+and continuous improvement patterns reported this week.
+And look for more detail on how core weaves platform
+handles production feedback loops in the coming days.
+That's models and agents for today.
+If this helped you stay current,
+share it with someone else who's tracking the same changes
+and subscribe so you catch tomorrow's update.
+The AI world keeps moving.
+We'll help you keep up.
+See you tomorrow.
+This episode used AI voice synthesis of my voice,
+editorial selection and analysis are my own.
