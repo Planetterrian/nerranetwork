@@ -264,3 +264,40 @@ class TestWeeklyRecapHelper:
         assert "Story B happened." in out
         # Recap-mode framing instruction at the bottom for the host.
         assert "Sunday weekly recap" in out
+
+    def test_recap_framing_pushes_continuity_stakes_and_forward_look(self, monkeypatch):
+        """The host-framing must steer the narration toward the
+        'where we are now' continuity, explicit stakes, concrete
+        specifics, and forward-looking beats that make a recap valuable
+        (and that the listener-value scorer rewards). Without this, the
+        generated recap scripts read as a flat list of items and score
+        ~1.9/10 (see TST Ep494)."""
+        from engine import weekly_recap
+        import engine.content_lake as _cl
+
+        def fake_query(slug, start, end):
+            return [
+                {"episode_num": 1, "date": "2026-04-28",
+                 "hook": "Story A.", "digest_md": "Body A."},
+                {"episode_num": 2, "date": "2026-04-29",
+                 "hook": "Story B.", "digest_md": "Body B."},
+            ]
+
+        monkeypatch.setattr(_cl, "query_show_range", fake_query)
+        from datetime import date
+        out = weekly_recap.build_weekly_recap_digest(
+            "tesla", "Tesla Shorts Time", date(2026, 5, 3),
+        )
+        assert out is not None
+        low = out.lower()
+        # Continuity ('where we are now') cues.
+        assert "where we are now" in low
+        assert "since we last" in low
+        assert "update on" in low
+        # Stakes framing.
+        assert "why this matters" in low
+        assert "what this means for" in low
+        # Specifics + forward look.
+        assert "numbers" in low
+        assert "watch for next week" in low
+        assert "open question" in low
