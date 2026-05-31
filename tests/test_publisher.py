@@ -20,7 +20,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from engine.publisher import (
+    _markdown_to_rss_html,
     apply_op3_prefix,
+    build_show_notes_footer,
     format_digest_for_x,
     format_tst_digest_for_x,
     get_next_episode_number,
@@ -1141,3 +1143,57 @@ class TestFormatTstDigestForX:
 
         # Within default char limit
         assert len(result) <= 25000
+
+# ---------------------------------------------------------------------------
+# build_show_notes_footer — RSS description footer driving listeners to site
+# ---------------------------------------------------------------------------
+
+class TestBuildShowNotesFooter:
+    """The RSS episode description gains a footer linking the network home
+    page (always) and the per-episode blog page (when the show publishes a
+    blog page for the episode). Lets podcast-app / YouTube listeners reach
+    the full transcript + sources and discover the rest of the network."""
+
+    BASE = "https://nerranetwork.com"
+
+    def test_blog_link_present_when_has_blog(self):
+        out = build_show_notes_footer(self.BASE, "tesla", 461, has_blog=True)
+        assert f"{self.BASE}/blog/tesla/ep461.html" in out
+        assert "transcript" in out.lower()
+
+    def test_blog_link_zero_padded_to_three_digits(self):
+        out = build_show_notes_footer(self.BASE, "omni_view", 7, has_blog=True)
+        assert "/blog/omni_view/ep007.html" in out
+
+    def test_no_blog_link_when_not_a_network_show(self):
+        out = build_show_notes_footer(self.BASE, "some_show", 12, has_blog=False)
+        assert "/blog/" not in out
+        # The network home-page link is still always present.
+        assert self.BASE in out
+
+    def test_network_home_link_always_present(self):
+        for has_blog in (True, False):
+            out = build_show_notes_footer(self.BASE, "tesla", 1, has_blog=has_blog)
+            assert "Nerra Network" in out
+            assert f"]({self.BASE})" in out
+            assert "nerranetwork.com" in out
+
+    def test_empty_base_url_returns_empty(self):
+        """Caller can append unconditionally without a dangling footer."""
+        assert build_show_notes_footer("", "tesla", 1, has_blog=True) == ""
+
+    def test_trailing_slash_in_base_url_is_normalised(self):
+        out = build_show_notes_footer("https://nerranetwork.com/", "tesla", 5, has_blog=True)
+        assert "https://nerranetwork.com//" not in out
+        assert "https://nerranetwork.com/blog/tesla/ep005.html" in out
+
+    def test_footer_renders_to_anchors_through_rss_html(self):
+        """The footer is markdown; _markdown_to_rss_html must turn its links
+        into real <a> anchors so podcast apps show clickable links, not raw
+        markdown brackets."""
+        footer = build_show_notes_footer(self.BASE, "tesla", 461, has_blog=True)
+        rendered = _markdown_to_rss_html("Episode body.\n\n" + footer)
+        assert f'<a href="{self.BASE}/blog/tesla/ep461.html">' in rendered
+        assert f'<a href="{self.BASE}">' in rendered
+        # No leftover markdown link brackets.
+        assert "](" not in rendered

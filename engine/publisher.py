@@ -117,6 +117,49 @@ def _markdown_to_rss_html(md: str) -> str:
     return "\n\n".join(paragraphs)
 
 
+def build_show_notes_footer(
+    base_url: str,
+    show_slug: str,
+    episode_num: int,
+    *,
+    has_blog: bool,
+    blog_path_prefix: str = "blog",
+) -> str:
+    """Build the website + per-episode blog-post footer appended to an RSS
+    episode description, so listeners on Apple / Spotify / Amazon / YouTube
+    can click back to the site for the full transcript and sources.
+
+    Returns markdown (rendered to ``<a>`` anchors by
+    :func:`_markdown_to_rss_html`):
+
+      - a per-episode blog link (full show notes / transcript / sources) when
+        ``has_blog`` is true (the show actually publishes a blog page for this
+        episode — i.e. it is in ``NETWORK_SHOWS``), and
+      - always the network home-page link.
+
+    Returns ``""`` when ``base_url`` is empty so callers can append
+    unconditionally without emitting a dangling footer.
+    """
+    site = (base_url or "").rstrip("/")
+    if not site:
+        return ""
+    parts: list[str] = []
+    if has_blog and show_slug:
+        blog_url = (
+            f"{site}/{blog_path_prefix.strip('/')}/{show_slug}/ep{episode_num:03d}.html"
+        )
+        parts.append(
+            "📝 Full show notes, transcript & sources: "
+            f"[read the episode page]({blog_url})"
+        )
+    domain = site.split("//", 1)[-1]
+    parts.append(
+        "🌐 Part of the Nerra Network — explore every show at "
+        f"[{domain}]({site})."
+    )
+    return "\n\n".join(parts)
+
+
 def _add_existing_entry_to_feed(fg, ep_data: dict, channel_image: str = "") -> None:
     """Re-add a parsed existing episode to the feed generator."""
     entry = fg.add_entry()

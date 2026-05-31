@@ -2668,6 +2668,27 @@ def run(args: argparse.Namespace) -> None:
         if youtube_long_url:
             episode_desc += f"\n\n🎬 Watch on YouTube: {youtube_long_url}"
 
+        # Drive listeners from the podcast apps back to the website: link the
+        # network home page plus this episode's blog page (full show notes,
+        # transcript, and sources). The blog page only exists for shows in
+        # NETWORK_SHOWS, so gate the per-episode link on membership and fall
+        # back to the network home page otherwise. The footer is markdown;
+        # publisher._markdown_to_rss_html renders it to real <a> anchors.
+        try:
+            from generate_html import NETWORK_SHOWS as _NETWORK_SHOWS_RSS
+            _has_blog = config.slug in _NETWORK_SHOWS_RSS
+        except Exception:  # noqa: BLE001 — never let show-notes linking break RSS
+            _has_blog = False
+        from engine.publisher import build_show_notes_footer
+        _notes_footer = build_show_notes_footer(
+            config.publishing.base_url,
+            config.slug,
+            episode_num,
+            has_blog=_has_blog,
+        )
+        if _notes_footer:
+            episode_desc += "\n\n" + _notes_footer
+
         # If no R2 URL but analytics is enabled, build URL and prefix it
         feed_audio_url = rss_audio_url
         if not feed_audio_url and config.analytics.enabled:
