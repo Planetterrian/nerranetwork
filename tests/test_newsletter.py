@@ -251,10 +251,23 @@ class TestSendNewsletter(unittest.TestCase):
         result = send_newsletter("Subj", "Body", api_key="key")
         self.assertEqual(result, "unknown")
 
+    @patch("engine.newsletter.requests.get")
     @patch("engine.newsletter.requests.post")
-    def test_zero_recipients_with_tags_returns_none(self, mock_post):
+    def test_zero_recipients_with_tags_returns_none(self, mock_post, mock_get):
         """Buttondown can accept the email and send to 0 subscribers when
         tag filters match nobody. That's a misconfiguration, not success."""
+        import engine.newsletter as _nl
+        _nl._TAG_ID_CACHE.clear()
+        # Resolve the tag name -> id so the flow reaches the POST and we
+        # actually exercise the num_recipients==0 branch (not the
+        # unresolved-tag early return).
+        get_resp = MagicMock()
+        get_resp.status_code = 200
+        get_resp.json.return_value = {
+            "results": [{"name": "ghost-tag", "id": "tag_ghost"}], "next": None,
+        }
+        mock_get.return_value = get_resp
+
         mock_resp = MagicMock()
         mock_resp.status_code = 201
         mock_resp.json.return_value = {"id": "eid", "num_recipients": 0}
@@ -464,11 +477,34 @@ def test_send_newsletter_uses_v2_filter_tree_when_tags_set(monkeypatch):
     """When tags are passed, the request body's ``filters`` must
     match Buttondown's current ``{filters, groups, predicate}``
     schema — old ``{operator, predicates}`` was rejected with
-    HTTP 422 missing-field errors on filters/groups/predicate."""
+    HTTP 422 missing-field errors on filters/groups/predicate.
+
+    May 31 2026: each leaf ``value`` must be the resolved tag
+    *identifier* (TypeID), not the display name — passing the name
+    returns HTTP 422 "Tag filters must be valid tag identifiers" and
+    blocked every show network-wide. The name->id map comes from
+    GET /v1/tags."""
     import json as _json
     from engine import newsletter
+    newsletter._TAG_ID_CACHE.clear()
 
     captured = {}
+
+    # GET /v1/tags resolves the display names to TypeIDs.
+    class _GetResp:
+        status_code = 200
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {
+                "results": [
+                    {"name": "Tesla Shorts Time", "id": "tag_tesla"},
+                    {"name": "Privet Russian", "id": "tag_privet"},
+                ],
+                "next": None,
+            }
 
     class _Resp:
         status_code = 200
@@ -480,6 +516,7 @@ def test_send_newsletter_uses_v2_filter_tree_when_tags_set(monkeypatch):
         captured["payload"] = _json.loads(_json.dumps(json))
         return _Resp()
 
+    monkeypatch.setattr(newsletter.requests, "get", lambda *a, **kw: _GetResp())
     monkeypatch.setattr(newsletter.requests, "post", _fake_post)
 
     out = newsletter.send_newsletter(
@@ -496,9 +533,10 @@ def test_send_newsletter_uses_v2_filter_tree_when_tags_set(monkeypatch):
     # Buttondown's predicate enum: "and" or "or" (not "any"/"all").
     assert filters["predicate"] in {"and", "or"}
     assert filters["groups"] == []
-    # Each tag becomes a leaf condition.
-    leaf_tags = {f["value"] for f in filters["filters"]}
-    assert leaf_tags == {"Tesla Shorts Time", "Privet Russian"}
+    # Each tag becomes a leaf condition whose value is the resolved
+    # tag IDENTIFIER (TypeID), NOT the display name.
+    leaf_values = {f["value"] for f in filters["filters"]}
+    assert leaf_values == {"tag_tesla", "tag_privet"}
     # No leftover keys from the old schema. May 26 2026: Buttondown
     # tightened the leaf-condition field enum — ``"tag"`` now 422s,
     # ``"subscriber.tags"`` is the accepted form, and the operator
@@ -509,6 +547,68 @@ def test_send_newsletter_uses_v2_filter_tree_when_tags_set(monkeypatch):
     # Old keys must NOT appear.
     assert "predicates" not in filters
     assert "operator" not in filters
+
+
+def test_send_newsletter_refuses_send_when_tags_unresolvable(monkeypatch):
+    """If no tag name resolves to a Buttondown tag ID, the send must be
+    refused (return None) rather than fall through to an unfiltered
+    network-wide blast to every subscriber."""
+    from engine import newsletter
+    newsletter._TAG_ID_CACHE.clear()
+
+    class _GetResp:
+        status_code = 200
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"results": [], "next": None}  # no tags exist
+
+    def _no_post(*a, **kw):
+        raise AssertionError("must not POST when no tag id resolves")
+
+    monkeypatch.setattr(newsletter.requests, "get", lambda *a, **kw: _GetResp())
+    monkeypatch.setattr(newsletter.requests, "post", _no_post)
+
+    out = newsletter.send_newsletter(
+        subject="s", body="b", api_key="key", tags=["Nonexistent Show"],
+    )
+    assert out is None
+
+
+def test_resolve_tag_ids_maps_names_to_ids(monkeypatch):
+    """_resolve_tag_ids paginates GET /v1/tags and maps name -> id."""
+    from engine import newsletter
+    newsletter._TAG_ID_CACHE.clear()
+
+    pages = [
+        {"results": [{"name": "A", "id": "tag_a"}], "next": "https://api.buttondown.com/v1/tags?page=2"},
+        {"results": [{"name": "B", "id": "tag_b"}], "next": None},
+    ]
+    calls = {"n": 0}
+
+    class _GetResp:
+        status_code = 200
+
+        def __init__(self, body):
+            self._body = body
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return self._body
+
+    def _fake_get(*a, **kw):
+        body = pages[calls["n"]]
+        calls["n"] += 1
+        return _GetResp(body)
+
+    monkeypatch.setattr(newsletter.requests, "get", _fake_get)
+    out = newsletter._resolve_tag_ids(["A", "B"], "key")
+    assert out == {"A": "tag_a", "B": "tag_b"}
+    assert calls["n"] == 2  # followed the `next` cursor
 
 
 def test_send_newsletter_omits_filters_when_no_tags(monkeypatch):
