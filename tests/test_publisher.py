@@ -520,6 +520,47 @@ class TestPostToX:
             access_token="my_at", access_token_secret="my_ats",
         )
 
+    def test_403_logs_structured_api_detail(self, caplog):
+        """A bare '403 Forbidden' hides why X refused. The error log must
+        surface tweepy's structured api_messages / api_codes / response
+        body so the operator can tell duplicate-content from a permissions
+        or access-tier problem."""
+        import logging as _logging
+
+        # Simulate a tweepy.Forbidden-like exception carrying X API detail.
+        class _FakeResponse:
+            text = '{"detail":"oauth1 app permissions"}'
+
+        exc = Exception("403 Forbidden")
+        exc.api_codes = [453]
+        exc.api_messages = [
+            "You currently have access to a subset of X API V2 endpoints"
+        ]
+        exc.response = _FakeResponse()
+
+        mock_tweepy = MagicMock()
+        mock_client = MagicMock()
+        mock_tweepy.Client.return_value = mock_client
+        mock_client.create_tweet.side_effect = exc
+
+        with patch.dict(sys.modules, {"tweepy": mock_tweepy}):
+            with caplog.at_level(_logging.ERROR):
+                result = post_to_x(
+                    "Hello",
+                    consumer_key="ck", consumer_secret="cs",
+                    access_token="at", access_token_secret="ats",
+                )
+        assert result is None
+        logged = caplog.text
+        assert "api_codes=[453]" in logged
+        assert "subset of X API V2 endpoints" in logged
+        assert "oauth1 app permissions" in logged
+
+    def test_describe_x_error_never_raises_on_plain_exception(self):
+        from engine.publisher import _describe_x_error
+        out = _describe_x_error(ValueError("boom"))
+        assert "ValueError" in out and "boom" in out
+
 
 # ===================================================================
 # TEST: format_digest_for_x

@@ -1032,6 +1032,34 @@ def save_summary_to_github_pages(
 # X / Twitter posting
 # ---------------------------------------------------------------------------
 
+def _describe_x_error(exc: Exception) -> str:
+    """Build a detailed, single-line description of a tweepy / X API error.
+
+    tweepy's ``HTTPException`` subclasses (``Forbidden`` / ``Unauthorized`` /
+    ``TooManyRequests`` / …) carry the X API's structured error detail on
+    ``.api_messages`` / ``.api_codes`` / ``.api_errors`` and the raw response
+    body on ``.response.text``. A bare ``str(exc)`` is often just
+    ``"403 Forbidden"``, which hides *why* X refused — duplicate content, an
+    app without write permission, or a free-tier posting cap are all 403s
+    with very different fixes. Surface whatever detail is available.
+
+    Best-effort — never raises (it runs inside an error handler).
+    """
+    parts = [f"{type(exc).__name__}: {exc}"]
+    try:
+        for attr in ("api_codes", "api_messages", "api_errors"):
+            val = getattr(exc, attr, None)
+            if val:
+                parts.append(f"{attr}={val}")
+        resp = getattr(exc, "response", None)
+        body = getattr(resp, "text", None) if resp is not None else None
+        if body:
+            parts.append(f"body={str(body)[:500]}")
+    except Exception:  # noqa: BLE001 — diagnostics must never raise
+        pass
+    return " | ".join(parts)
+
+
 def post_to_x(
     text: str,
     *,
@@ -1061,7 +1089,9 @@ def post_to_x(
         return tweet_url
 
     except Exception as exc:
-        logger.error("X post failed: %s", exc)
+        # Surface the X API's structured reason (duplicate content vs.
+        # missing app write-permission vs. free-tier cap are all 403s).
+        logger.error("X post failed: %s", _describe_x_error(exc))
         return None
 
 
