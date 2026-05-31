@@ -129,13 +129,30 @@ def build_weekly_recap_digest(
         "━━━━━━━━━━━━━━━━━━━━",
         "## Recap framing for the host",
         (
-            "This is a Sunday weekly recap. The host should weave the "
-            "stories above into a single coherent narrative — not a "
-            "list of news items. Group related threads, call out the "
-            "most consequential development of the week, draw forward "
-            "connections (\"what to watch next week\"), and end with "
-            "one practical takeaway listeners can use. Keep the same "
-            "voice and pacing as a daily episode."
+            "This is a Sunday weekly recap — a 'where we are now' episode, "
+            "NOT a list of news items. Weave the stories above into one "
+            "coherent narrative built on these four beats:\n\n"
+            "1. CONTINUITY — situate each major thread in its ongoing arc so "
+            "a returning listener feels the through-line. Use natural "
+            "'where we are now' language: 'since we last covered...', 'the "
+            "ongoing story of...', 'an update on...', 'where the story "
+            "stands now'. Group related threads rather than walking episode "
+            "by episode.\n"
+            "2. STAKES — for each major thread, say plainly WHY THIS MATTERS: "
+            "'what this means for' owners / investors / fans, and the "
+            "practical consequence. Don't just report that something "
+            "happened; explain why a listener should care.\n"
+            "3. SPECIFICS — keep the concrete numbers from the week (prices, "
+            "percentages, counts, dates). Specific figures are what make a "
+            "recap credible and memorable.\n"
+            "4. FORWARD LOOK — close by calling out the single most "
+            "consequential development of the week, then an explicit "
+            "'what to watch for next week' beat and the biggest open "
+            "question heading into next week, and finish with one practical "
+            "takeaway listeners can use.\n\n"
+            "Keep the same voice and pacing as a daily episode, and give the "
+            "week the depth it deserves — this is a full-length episode, not "
+            "a quick skim."
         ),
     ])
 
