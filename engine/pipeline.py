@@ -24,8 +24,11 @@ incrementally in follow-up PRs.
 from __future__ import annotations
 
 import datetime
+import logging
 from pathlib import Path
 from typing import Any, Dict, Optional
+
+logger = logging.getLogger(__name__)
 
 # Placeholder for future phase result types
 PublishResult = Dict[str, Any]
@@ -292,6 +295,28 @@ def run_generation_phase(
             pod_vars.setdefault("closing_block", "Thanks for listening.")
 
     pod_vars.setdefault("tone_hint", "natural and conversational")
+
+    # Append the rotating Nerra Network cross-promo to the spoken closing.
+    # Done HERE (after closing_block is resolved from any source) so it covers
+    # every path: build_closing_block, the episode-1 closing, AND shows whose
+    # pre-fetch hook supplied closing_block via extra_context (e.g. Tesla). The
+    # promo is English-only and varies by day + show so every English sibling
+    # eventually gets advertised. Russian shows get "" → no change.
+    _promo_date = datetime.date.today()
+    _show_slug = getattr(config, "slug", "") or (
+        getattr(args, "show", "") if args is not None else ""
+    )
+    if _show_slug:
+        try:
+            from engine.network_promo import build_network_promo
+            _promo = build_network_promo(_show_slug, _promo_date, episode_num)
+            if _promo:
+                _close = str(pod_vars.get("closing_block", "")).rstrip()
+                # Idempotent — don't double-append if already present.
+                if "nerranetwork.com" not in _close.lower():
+                    pod_vars["closing_block"] = f"{_close} {_promo}".strip()
+        except Exception as exc:  # noqa: BLE001 — promo must never break a run
+            logger.warning("Network promo append failed (non-fatal): %s", exc)
 
     # Merge pod_vars into the main template_vars for the podcast prompt
     # (the podcast prompt expects many of the same keys + digest, etc.)
