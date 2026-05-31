@@ -166,6 +166,55 @@ def validate_api_key(api_key: str) -> bool:
 _VALID_STATUSES = {"about_to_send", "draft", "scheduled"}
 
 
+# Buttondown tag display-name -> tag identifier (TypeID) cache. Populated
+# lazily from GET /v1/tags the first time a name is needed in a process.
+_TAG_ID_CACHE: Dict[str, str] = {}
+
+
+def _resolve_tag_ids(tag_names: List[str], api_key: str) -> Dict[str, str]:
+    """Resolve Buttondown tag display names to their tag identifiers.
+
+    Buttondown's email ``filters`` require tag *identifiers* (TypeIDs like
+    ``tag_…``); passing a display name returns HTTP 422 ``"Tag filters must
+    be valid tag identifiers."`` (this silently blocked every show's
+    newsletter network-wide — see send_newsletter). Subscribers still carry
+    tag *names* in their ``tags`` array, so we map name -> id via the
+    paginated ``GET /v1/tags`` endpoint.
+
+    Best-effort: returns only the names it could resolve; the caller decides
+    how to handle misses. Resolved pairs are cached per-process so a run that
+    sends several shows only pays for one tag fetch.
+    """
+    need = [t for t in tag_names if t and t not in _TAG_ID_CACHE]
+    if need:
+        try:
+            url: Optional[str] = f"{BUTTONDOWN_API_BASE}/tags"
+            params: Optional[Dict[str, str]] = {"page_size": "100"}
+            while url:
+                resp = requests.get(
+                    url,
+                    headers={"Authorization": f"Token {api_key}"},
+                    params=params,
+                    timeout=15,
+                )
+                resp.raise_for_status()
+                payload = resp.json() or {}
+                for tag in (payload.get("results") or []):
+                    name = tag.get("name")
+                    tid = tag.get("id")
+                    if name and tid:
+                        _TAG_ID_CACHE[name] = tid
+                # The ``next`` URL is fully qualified and already carries
+                # the cursor — drop our params so we don't override it.
+                url = payload.get("next") or None
+                params = None
+        except Exception as exc:  # noqa: BLE001 — caller handles empty result
+            logger.error(
+                "Failed to fetch Buttondown tags for id resolution: %s", exc,
+            )
+    return {t: _TAG_ID_CACHE[t] for t in tag_names if t in _TAG_ID_CACHE}
+
+
 def send_newsletter(
     subject: str,
     body: str,
@@ -243,20 +292,40 @@ def send_newsletter(
         # or "or" are accepted (not "any"/"all").
         #
         # May 26 2026: Buttondown tightened the ``field`` enum on
-        # the leaf condition; ``field: "tag"`` now returns HTTP 422
-        # with a literal_error listing the accepted values:
-        # ``subscriber.churn_date``, ``subscriber.click_rate``,
-        # ``subscriber.last_click_date``, ``subscriber.last_open_date``,
-        # ``subscriber.open_rate``, ``subscriber.price``,
-        # ``subscriber.source``, ``subscriber.status``,
-        # ``subscriber.subscription_date``, ``subscriber.tags``,
-        # ``subscriber.upgrade_date``. Tag membership now lives at
-        # ``subscriber.tags``; the operator for "subscriber has this
-        # tag" is ``contains`` because tags is a list field.
+        # the leaf condition; ``field: "tag"`` now 422s. Tag
+        # membership lives at ``subscriber.tags`` with operator
+        # ``contains`` (tags is a list field).
+        #
+        # May 31 2026: the leaf ``value`` must be the tag's
+        # *identifier* (Buttondown TypeID, e.g. ``tag_abc123``), NOT
+        # its display name. Passing the name returns HTTP 422
+        #   {"detail":[{"value":"Tag filters must be valid tag identifiers."}]}
+        # which silently blocked EVERY show's newsletter network-wide
+        # (0 successful sends across 90 attempts). Subscribers still
+        # carry tag *names* in their ``tags`` array, so resolve
+        # name -> id via GET /v1/tags before building the filter.
+        tag_id_map = _resolve_tag_ids(tags, api_key)
+        resolved_ids = [tag_id_map[t] for t in tags if t in tag_id_map]
+        missing = [t for t in tags if t not in tag_id_map]
+        if missing:
+            logger.error(
+                "Could not resolve Buttondown tag id(s) for %s — those "
+                "subscribers will not be targeted. Verify the tag name(s) "
+                "match the Buttondown Tags page exactly.", missing,
+            )
+        if not resolved_ids:
+            # Never fall through to an unfiltered ``data`` (that would
+            # blast the email to the ENTIRE network's subscriber list).
+            logger.error(
+                "No tag filters resolved to Buttondown tag IDs (requested "
+                "%s). Refusing to send to avoid an unfiltered network-wide "
+                "blast.", tags,
+            )
+            return None
         data["filters"] = {
             "filters": [
-                {"field": "subscriber.tags", "operator": "contains", "value": t}
-                for t in tags
+                {"field": "subscriber.tags", "operator": "contains", "value": tid}
+                for tid in resolved_ids
             ],
             "groups": [],
             "predicate": "or",  # OR semantics across the listed tags
