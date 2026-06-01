@@ -1,0 +1,57 @@
+# Fascinating Frontiers
+🚀 **Fascinating Frontiers** - Space & Astronomy News
+> **A rare pair-instability supernova may have erased one of the universe's most massive stars without leaving any remnant behind.**
+---
+### Top 15 Space & Astronomy Stories
+1. **Spaceport facility bonds become U.S. law** — SpaceNews
+   The new bonds allow spaceports to issue debt for infrastructure projects that previously relied on limited public funding. This change targets facilities that support orbital launches and reentry operations. Project finance experts note the bonds embed in existing public finance structures rather than creating standalone programs. Observers expect the first issuances to target upgrades at existing coastal and inland sites. Next step is state-level implementation guidance for bond eligibility. Source: [spacenews.com](https://spacenews.com/spaceport-facility-bonds-are-now-law-and-they-fundamentally-change-space-infrastructure-finance/)
+
+2. **Venus, Jupiter and Mercury align for June viewing** — Space.com
+   The three planets reach peak visibility in the western sky after sunset throughout the month. Venus and Jupiter appear close together while Mercury climbs higher each evening. Observers can track the changing separations with binoculars or the naked eye from mid-northern latitudes. The alignment offers repeated opportunities to compare the planets' brightness and colors against the twilight glow. No special equipment is required beyond clear western horizons. Source: [space.com](https://www.space.com/stargazing/3-bright-planets-light-up-junes-night-sky-heres-where-and-when-to-look)
+
+3. **Lick Observatory trust transfers in 1888** — Astronomy Magazine
+   James Lick's $700,000 bequest funded the 36-inch refractor that became the world's largest telescope at the time. The trust moved to the University of California on June 1 after years of construction on Mount Hamilton. The site choice exploited high-elevation air clarity for sharper stellar images. The observatory later produced the first photographic atlas of the Moon and measured stellar radial velocities. Its instruments remain in use for public outreach and research today. Source: [astronomy.com](https://www.astronomy.com/today-in-the-history-of-astronomy/june-1-1888-lick-observatory-changes-hands/)
+
+4. **Astronomers map hidden black hole merger population** — Space.com
+   The new catalog reveals mergers that occurred in environments previously missed by earlier gravitational-wave detectors. Researchers describe the collection as the astronomical equivalent of uncovering an ancient civilization. Data come from improved waveform modeling that separates overlapping signals in LIGO-Virgo-KAGRA archives. The findings tighten constraints on how massive stars evolve in dense clusters. Follow-up papers will test whether the population alters current estimates of merger rates. Source: [space.com](https://www.space.com/astronomy/black-holes/astronomers-discover-a-lost-world-of-black-hole-mergers-its-the-astronomical-equivalent-of-uncovering-an-ancient-civilization)
+
+5. **May's Blue Moon captured in global photos** — Space.com
+   The second full moon of May appeared smaller than average because it occurred near apogee. Photographers recorded the event from multiple continents under varying weather conditions. The images highlight the Moon's surface details despite the reduced angular size. This was the smallest full moon of 2026. Observers can compare the archived shots with upcoming full moons to see the difference in apparent diameter. Source: [space.com](https://www.space.com/stargazing/astrophotography/mays-blue-moon-wows-stargazers-worldwide-see-these-stunning-photos-of-the-smallest-full-moon-of-2026)
+
+6. **China flies Long March 12B on surprise debut** — SpaceNews
+   The reusable booster lifted four Qianfan satellites into orbit without prior public notice. The launch marked the first flight of the 12B variant designed for rapid turnaround. Payload deployment occurred successfully into the target low-Earth orbit. The mission adds another vehicle option to China's growing launch manifest. Industry analysts will watch the booster's recovery attempt for signs of reusability progress. Source: [spacenews.com](https://spacenews.com/china-conducts-surprise-launch-of-long-march-12b-delivers-qianfan-satellites-on-debut-flight/)
+
+7. **Pair-instability supernova candidate identified** — Phys.org
+   The explosion appears to have completely destroyed its progenitor star, leaving no neutron star or black hole remnant. Observations match models of stars between 140 and 260 solar masses that undergo runaway oxygen fusion. The event was posted to arXiv on May 15 and stands as one of the clearest examples recorded. Data include light-curve shapes and spectral features that rule out other supernova classes. Additional archival searches are planned to locate similar past events. Source: [phys.org](https://phys.org/news/2026-05-giant-star-destroyed-universe-rarest.html)
+
+8. **New Glenn explosion delays Artemis lander schedule** — Space.com
+   The May 28 test flight failure removes a key cargo vehicle from near-term lunar logistics planning. NASA had intended to use New Glenn for delivering infrastructure ahead of crewed landings. The company now faces an estimated year or longer before the next launch attempt. This setback compounds existing delays in the overall Artemis timeline. Program managers are evaluating alternative commercial providers for the affected payloads. Source: [space.com](https://www.space.com/space-exploration/launches-spacecraft/a-pretty-significant-setback-how-blue-origins-rocket-explosion-affects-nasas-moon-plans)
+
+9. **New Glenn loss tightens global launch capacity** — SpaceNews
+   The grounded booster removes one of the few vehicles capable of lifting large national-security payloads. Industry forecasts already projected a shortfall through 2027. Remaining operators face increased demand and longer wait times for rides. The incident highlights the narrow margin between current fleet size and projected mission cadence. Satellite builders are reassessing manifest dates for affected spacecraft. Source: [spacenews.com](https://spacenews.com/new-glenn-failure-worsens-constrained-launch-market/)
+
+10. **China tests direct-to-device satellite links** — SpaceNews
+    Four experimental satellites reached orbit on a hypergolic rocket to validate phone-to-satellite connectivity. The mission supports multiple national projects aimed at extending coverage to remote regions. Early tests will measure signal strength and latency from handheld devices. Successful results could accelerate deployment of operational constellations. Additional launches are scheduled later this year to expand the test network. Source: [spacenews.com](https://spacenews.com/china-launches-test-direct-to-device-satellites-for-multiple-projects/)
+
+11. **Student-led team finds Rosetta Stone for fast radio bursts** — Phys.org
+    The rare stellar system provides a natural laboratory for studying the extreme physics behind repeating radio signals. University of Sydney astronomers combined radio and optical data to pinpoint the source environment. The discovery supplies the clearest evidence yet linking a specific stellar configuration to the burst mechanism. Further monitoring will track how the system's orbital motion modulates the signal properties. The work opens a new window on compact-object interactions. Source: [phys.org](https://phys.org/news/2026-05-student-astronomer-rosetta-stone-mysterious.html)
+
+12. **Mercury reaches highest evening altitude of 2026** — Astronomy Magazine
+    The planet stands 10 degrees above the western horizon half an hour after sunset at magnitude –0.5. Observers in mid-northern latitudes have a brief window each clear evening to spot it before it sinks. The elongation offers the best geometry for viewing surface features through small telescopes. Mercury will drop lower each subsequent week. This appearance marks the peak of its current evening apparition. Source: [astronomy.com](https://www.astronomy.com/observing/the-sky-today-monday-june-1-2026/)
+
+13. **Full Moon calendar for 2026 released** — Astronomy Magazine
+    The guide lists exact times and dates when Earth lies directly between the Sun and Moon. It also notes which full moons coincide with perigee or apogee. Observers can use the dates to plan lunar photography or naked-eye viewing sessions. The calendar covers all twelve months with phase illustrations. Monthly updates will appear as new orbital data refine the predictions. Source: [astronomy.com](https://www.astronomy.com/observing/full-moon-calendar-dates-times-types/)
+
+14. **Longest-period young transiting exoplanets found** — Universe Today
+    The newly confirmed worlds orbit their stars at distances that place them among the widest known transiting systems. Their youth allows direct comparison with formation models that predict rapid migration inward. Transit timing and radial-velocity follow-up provided the orbital periods and masses. The systems serve as benchmarks for how gas giants evolve before disk dispersal. Additional observations will search for sibling planets in the same systems. Source: [universetoday.com](https://www.universetoday.com/articles/longest-period-young-transiting-exoplanets-discovered)
+
+15. **Stacked black hole visualizations span 1978 to today** — r/astronomy
+    The composite merges a 1978 IBM punch-card simulation, modern numerical runs, a photograph of the M87 black hole, and an artist's drawing. Blue spots mark the earliest computed photon rings from the 1978 model. The exercise shows how resolution and physical assumptions have improved over nearly five decades. Viewers can trace the evolution of predicted shadow size and surrounding emission. The image is posted for public discussion on image-processing techniques. Source: [reddit.com](https://www.reddit.com/r/Astronomy/comments/1ttroyb/i_stacked_a_drawing_a_photo_and_ten_computer/)
+---
+### Cosmic Spotlight
+The identification of a candidate pair-instability supernova stands out because the star is thought to have vanished entirely rather than collapsing into a compact remnant. Light-curve and spectral data align with theoretical predictions for stars in the 140–260 solar-mass range undergoing explosive oxygen burning. This event supplies one of the strongest observational anchors yet for models that previously rested on simulations alone. Archival searches are now underway to locate additional examples. What fraction of the first stars ended their lives this way remains an open question.
+---
+### Cosmic Deep Dive: Pair-Instability Supernovae
+If the Sun were scaled to the size of a basketball, a pair-instability supernova progenitor would be a star roughly the diameter of Earth's orbit around that basketball. Inside such a star, temperatures climb past 300 million degrees and photons spontaneously convert into electron-positron pairs, robbing the core of pressure support. The resulting collapse triggers runaway oxygen fusion that releases energy equivalent to detonating 10^52 ergs in seconds. No compact remnant survives because the entire star is unbound. The lingering mystery is why so few clear examples appear in current surveys despite the expected abundance of massive stars in the early universe.
+---
+Today's launches and sky events keep the calendar full for both professionals and backyard observers.
