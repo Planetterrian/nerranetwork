@@ -1,0 +1,85 @@
+Pull up a chair. This is Models and Agents episode 66 on June 1, 2026. Let's see what shipped.
+New week in AI, and the last week was anything to go by, buckle up. Let's get into it.
+Open AI's model cracked an 80 year math problem by leaning on its native strengths
+in structured reasoning rather than brute force. Open AI published a solution to a long standing
+math problem that had resisted human efforts for decades. The work shows how current reasoning
+models can exploit structured search and verification patterns that differ from typical human approaches.
+Nvidia released a large open source collection of physical AI agent tools and skills.
+JetBrains shipped Mellum 2, a 12 billion parameter mixture of experts coding model.
+DeepSeq V4 Flash showed strong high-context performance on DGX Spark hardware.
+Builders should watch how these releases affect agent reliability and local inference economics
+this week. An open AI model produced a solution to a famous math problem that had stumped
+human mathematicians for 80 years. Ars Technica's write-up focuses on clarifying the method beyond
+open AI's original presentation. Practitioners working on formal reasoning or theorem-proofing
+pipelines now have a concrete example of where test time compute delivers outsized gains.
+The solution highlights how the model leaned on structured search rather than brute force computation.
+Watch for follow-up papers that dissect the exact search strategy and whether it generalizes
+beyond this single problem. This development continues the ongoing conversation around reasoning
+models and the cost versus benefit of test time compute. JetBrains released Mellum 2, a 12 billion
+parameter model with 2.5 billion active parameters focused on coding. The reasoning variant reportedly
+matches twin 3.59 billion on coding tasks while trailing the smaller twin 3.54 billion on general
+benchmarks. Models and a technical report are available on hugging face under archive identifier
+2605.31268. Builders evaluating small coding agents should test whether the routing improves
+multi-file edit consistency compared with dense 9 billion base lines. I use a reported running
+the original MX FP8 slash MX FP4 deep seek V4 flash on a two-node DGX spark setup with VLLM.
+The run achieved roughly 1680 to 2150 tokens per second pre-fill and 37 to 49 tokens per second
+decode across 4,000 to 256,000 context at batch size one. The model maintains stable performance at
+256,000 context with low degradation and handled 3 to 4 concurrent requests without major issues.
+It outperformed several denser models on private high-context retrieval and reasoning tests while
+consuming roughly 280 watts at load. Inclusion AI open-source Ling 2.61T, a roughly one trillion
+parameter model with 63 billion active parameters and 1 million native context. 256,000 tokens are
+exposed via API. Local users are prioritizing three questions before adoption whether quality
+per active parameter justifies the size whether practical serving is feasible and whether the long
+context remains stable. Developers tracking the open versus closed gap should monitor early
+independent long-context evaluations. Nvidia published a substantial set of open-source tools and
+skills aimed at physical AI agents. The release targets robotics and embodied scenarios,
+complementing earlier simulation work. Developers building hardware adjation agents can now pull
+the components directly rather than starting from scratch. Expect integration examples with
+existing frameworks in the coming weeks. This release adds concrete pieces to the maturing picture
+of agent tool use and interoperability standards. Microsoft will present updates to its agent framework
+at build 2026 starting June 2nd. The session will cover new agent orchestration and interoperability
+features alongside Microsoft Foundry announcements. Attendees and remote viewers should watch for
+concrete SDK changes and sample code that demonstrate multi agent workflows. Cadence and Nvidia
+announced chip stack AI super agent and autonomous electronic design automation agent.
+The system combines cadence tools with Nvidia infrastructure to automate chip design steps.
+Hardware teams working on complex systems on chips can evaluate early access to reduce manual
+iteration cycles. A former data scientist released vibe ETL, a visual data manipulation platform
+built on pollers and react flow. The project emphasizes zero copy arrow transport, a native
+breadth-first search layout algorithm, an isolated Python sub-process execution with a 30-second
+timeout. The repository is MIT licensed and designed for community extensions via manifest-driven
+tool additions. Users needing fast local extract transform load pipelines without heavy dependencies
+should clone and test the launcher scripts. A community graph summarized May 2026 open model releases
+including ring, command, step fun and LFM families. The post notes that may felt lighter after April's
+activity and flags minimax m3 as an imminent arrival. Developers tracking open-weight progress can
+use the graph as a quick reference for which families to benchmark next. Okay, let's pop the hood
+on agent permission scoping. Everyone talks about giving agents tools as if access is a simple
+on or off switch. In practice, permission models must encode task intent, temporal scope,
+and blast radius limits simultaneously. The core mechanism starts with workload identity issued
+at deployment, rather than static service account keys. The identity carries only the minimal
+credentials required for the declared task and is revoked on completion. This adds a small
+issuance latency of tens of milliseconds but eliminates the long-lived credential surface
+that agents otherwise accumulate. When the agent attempts an action outside its declared scope,
+the system can either deny or escalate. Most teams still default to human in the loop
+for everything which reintroduces friction and does not scale. The practical decision point is whether
+the task's blast radius justifies the extra round trip or whether scoped, expiring credentials are
+sufficient. The gacha that bites teams is assuming agents will self-limit exploration. Without explicit
+scoping, they will probe every available path exactly as described in recent enterprise security
+reporting. Test Melem 2 on multi-file refactoring tasks to see whether its routing improves consistency
+over dense 9 billion coding models. Run the post to deep-seek V4 Flash Docker Compose on compatible
+ARM nodes if you need stable 256,000 context at low power. Clone vibe ETL and feed it a messy
+historical data set to evaluate the polar's backed visual pipeline against your current extract
+transform load stack. Watch Microsoft's build sessions on the agent framework for concrete multi-agent
+orchestration patterns you can prototype immediately. In Vidya and Enterprise partners are expected
+to publish integration examples for the new physical AI agent toolkit within the next two weeks.
+Mini Max M3 is scheduled for release in roughly 10 days. Build 2026 begins June 2nd with multiple
+Microsoft agent framework announcements. Early access programs for the cadence in Vidya,
+autonomous electronic design automation agent are anticipated shortly after Computex. Tomorrow,
+keep an eye on early independent evaluations of the 1 trillion parameter open model and any follow-up
+papers on the 80 year math solution. That's models and agents for today. If you found this useful,
+share it with someone who's trying to keep up with all these changes and subscribe so you don't
+miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow.
+And before you go, this show is part of the NARA network, a family of daily podcasts covering tech,
+science, markets, and more. If you enjoyed today's episode, give models and agents for beginners a
+listen. Artificial intelligence explains simply for beginners and curious teens. You can explore the
+whole lineup at NARAnetwork.com. This episode used AI voice synthesis of my voice. Editorial
+selection and analysis are by own.

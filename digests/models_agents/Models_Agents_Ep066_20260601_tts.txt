@@ -1,0 +1,133 @@
+Pull up a chair, this is Models and Agents, episode sixty-six, on June first, twenty twenty-six. Let's see what shipped. New week in A I. And if last week was anything to go by, buckle up. Let's get into it.
+
+Open A I’s model cracked an 80-year math problem by leaning on its native strengths in structured reasoning rather than brute force.
+
+Open A I published a solution to a long-standing math problem that had resisted human efforts for decades.
+
+The work shows how current reasoning models can exploit structured search and verification patterns that differ from typical human approaches.
+
+En-vidia released a large open-source collection of physical A I agent tools and skills.
+
+JetBrains shipped Mellum 2, a twelve billion parameter mixture of experts coding model.
+
+Deep Seek-V4-Flash showed strong high-context performance on DGX Spark hardware.
+
+Builders should watch how these releases affect agent reliability and local inference economics this week.
+
+An Open A I model produced a solution to a famous math problem that had stumped human mathematicians for eighty years.
+
+Ars Technica’s write-up focuses on clarifying the method beyond Open A I’s original presentation.
+
+Practitioners working on formal reasoning or theorem-proving pipelines now have a concrete example of where test-time compute delivers outsized gains.
+
+The solution highlights how the model leaned on structured search rather than brute force computation.
+
+Watch for follow-up papers that dissect the exact search strategy and whether it generalizes beyond this single problem.
+
+This development continues the ongoing conversation around reasoning models and the cost versus benefit of test-time compute.
+
+JetBrains released Mellum 2, a twelve billion parameter model with two point five billion active parameters focused on coding.
+
+The reasoning variant reportedly matches Chwen three point five nine billion on coding tasks while trailing the smaller Chwen three point five four billion on general benchmarks.
+
+Models and a technical report are available on Hugging Face under arXiv identifier two six zero five point three one two six eight.
+
+Builders evaluating small coding agents should test whether the routing improves multi-file edit consistency compared with dense nine billion baselines.
+
+A user reported running the original MXFP eight slash MXFP four Deep Seek-V4-Flash on a two-node DGX Spark setup with vLLM.
+
+The run achieved roughly sixteen hundred eighty to twenty one hundred fifty tokens per second prefill and thirty seven to forty nine tokens per second decode across four thousand to two hundred fifty six thousand context at batch size one.
+
+The model maintained stable performance at two hundred fifty six thousand context with low degradation and handled three to four concurrent requests without major issues.
+
+It outperformed several denser models on private high-context retrieval and reasoning tests while consuming roughly two hundred eighty watts at load.
+
+InclusionAI open-sourced Ling-2.6-1T, a roughly one trillion parameter model with sixty three billion active parameters and one million native context.
+
+Two hundred fifty six thousand tokens are exposed via A P I.
+
+Local users are prioritizing three questions before adoption: whether quality per active parameter justifies the size, whether practical serving is feasible, and whether the long context remains stable.
+
+Developers tracking the open-versus-closed gap should monitor early independent long-context evaluations.
+
+En-vidia published a substantial set of open-source tools and skills aimed at physical A I agents.
+
+The release targets robotics and embodied scenarios, complementing earlier simulation work.
+
+Developers building hardware-adjacent agents can now pull the components directly rather than starting from scratch.
+
+Expect integration examples with existing frameworks in the coming weeks.
+
+This release adds concrete pieces to the maturing picture of agent tool use and interoperability standards.
+
+Microsoft will present updates to its Agent Framework at BUILD twenty twenty six starting June second.
+
+The session will cover new agent orchestration and interoperability features alongside Microsoft Foundry announcements.
+
+Attendees and remote viewers should watch for concrete S D K changes and sample code that demonstrate multi-agent workflows.
+
+Cadence and En-vidia announced ChipStack A I Super Agent, an autonomous electronic design automation agent.
+
+The system combines Cadence tools with En-vidia infrastructure to automate chip design steps.
+
+Hardware teams working on complex systems on chips can evaluate early access to reduce manual iteration cycles.
+
+A former data scientist released VibeETL, a visual data-manipulation platform built on Polars and React Flow.
+
+The project emphasizes zero-copy Arrow transport, a native breadth-first search layout algorithm, and isolated Python subprocess execution with a thirty second timeout.
+
+The repository is MIT-licensed and designed for community extensions via manifest-driven tool additions.
+
+Users needing fast local extract-transform-load pipelines without heavy dependencies should clone and test the launcher scripts.
+
+A community graph summarized May twenty twenty six open-model releases including Ring, Command, StepFun, and LFM families.
+
+The post notes that May felt lighter after April’s activity and flags Mini Max-M3 as an imminent arrival.
+
+Developers tracking open-weight progress can use the graph as a quick reference for which families to benchmark next.
+
+OK, let's pop the hood on agent permission scoping.
+
+Everyone talks about giving agents tools as if access is a simple on or off switch.
+
+In practice, permission models must encode task intent, temporal scope, and blast-radius limits simultaneously.
+
+The core mechanism starts with workload identity issued at deployment rather than static service-account keys.
+
+The identity carries only the minimal credentials required for the declared task and is revoked on completion.
+
+This adds a small issuance latency of tens of milliseconds but eliminates the long-lived credential surface that agents otherwise accumulate.
+
+When the agent attempts an action outside its declared scope, the system can either deny or escalate.
+
+Most teams still default to human in the loop for everything, which reintroduces friction and does not scale.
+
+The practical decision point is whether the task’s blast radius justifies the extra round-trip or whether scoped, expiring credentials are sufficient.
+
+The gotcha that bites teams is assuming agents will self-limit exploration.
+
+Without explicit scoping they will probe every available path, exactly as described in recent enterprise security reporting.
+
+Test Mellum 2 on multi-file refactoring tasks to see whether its routing improves consistency over dense nine billion coding models.
+
+Run the posted Deep Seek-V4-Flash Docker compose on compatible ARM nodes if you need stable two hundred fifty six thousand context at low power.
+
+Clone VibeETL and feed it a messy historical dataset to evaluate the Polars-backed visual pipeline against your current extract-transform-load stack.
+
+Watch Microsoft’s BUILD sessions on the Agent Framework for concrete multi-agent orchestration patterns you can prototype immediately.
+
+En-vidia and enterprise partners are expected to publish integration examples for the new physical A I agent toolkit within the next two weeks.
+
+Mini Max-M3 is scheduled for release in roughly ten days.
+
+BUILD twenty twenty six begins June second with multiple Microsoft Agent Framework announcements.
+
+Early access programs for the Cadence–En-vidia autonomous electronic design automation agent are anticipated shortly after Computex.
+
+Tomorrow, keep an eye on early independent evaluations of the one trillion parameter open model and any follow-up papers on the eighty year math solution.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And before you go — this show is part of the Nerra Network, a family of daily podcasts covering tech, science, markets, and more.
+
+If you enjoyed today's episode, give Models and Agents for Beginners a listen: artificial intelligence explained simply, for beginners and curious teens. You can explore the whole lineup at nerranetwork dot com.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
