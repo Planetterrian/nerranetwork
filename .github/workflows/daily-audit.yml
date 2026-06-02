@@ -26,8 +26,17 @@ name: Daily Audit & Automated Remediation
 
 on:
   schedule:
-    # Safety net + primary daily audit slot (after last show ~11:30 UTC)
-    - cron: '15 12 * * *'
+    # Missed-episode sweep + issue creation. Runs LATE enough that the day's
+    # slate has actually finished. The scheduled crons end at 11:30 UTC, but
+    # GitHub Actions routinely delivers scheduled events hours late (observed
+    # 3-6h in May-Jun 2026), so shows can finish as late as ~16:00 UTC. The
+    # old 12:15 slot ran *before* the tail and produced false "missed episode"
+    # alarms + spurious auto-retries (e.g. 2026-06-02: audit at 12:15 flagged
+    # MIT/Tesla/UC missed; they actually published at 14:21/14:59/15:51).
+    # Per-episode quality review still runs immediately via the workflow_run
+    # trigger below, so this later slot only delays the missed-sweep, not the
+    # quality checks. Tune later if GitHub delays worsen.
+    - cron: '15 16 * * *'
 
   workflow_dispatch:
     inputs:
