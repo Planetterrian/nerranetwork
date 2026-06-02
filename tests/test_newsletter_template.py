@@ -551,7 +551,7 @@ def test_cross_network_renders_adjacent_shows():
         },
     ]
     out = nt._build_cross_network_html(siblings, "#E31937")
-    assert "Across the Nerra Network" in out
+    assert "More from the Nerra Network" in out
     assert "MIT" in out
     assert "Oil hit" in out
     assert "M&amp;A" not in out  # name passes through; only hook is escaped
@@ -647,7 +647,7 @@ def test_wrap_with_branding_full_render_order_with_engagement_blocks():
     featured = out.find("10 minutes")
     body = out.find("## Body content")
     p_s = out.find("One more thing.")
-    cross = out.find("Across the Nerra Network")
+    cross = out.find("More from the Nerra Network")
     share = out.find("Share:")
     foot = out.find("Listen to the podcast")
     # Documented block order (preheader → hero → stats → featured →
@@ -664,7 +664,7 @@ def test_wrap_with_branding_omits_engagement_blocks_by_default():
         show_reply_share=False,
     )
     assert "10 minutes" not in out
-    assert "Across the Nerra Network" not in out
+    assert "More from the Nerra Network" not in out
     assert "Share:" not in out
 
 
