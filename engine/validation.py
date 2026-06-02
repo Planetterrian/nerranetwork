@@ -201,6 +201,17 @@ def check_section_overlap(
     return overlaps
 
 
+# A section with this many characters of prose is "not empty" even if it
+# contains zero ``**bold**`` list items. Many shows lead with a PROSE feature
+# (FF "Cosmic Spotlight", PT "Planetterrian Spotlight", EI "Lead Story", MI
+# "Strategy Spotlight", FP/PR leads, MAB "The Big Story", M&A "Top Story").
+# Those have no bold items, so the item-counter returns 0 and — when the
+# section is mandatory (min_items>=1) — run_show treats "0 items" as a
+# structural defect and forces a wasteful digest regenerate (often degrading
+# quality). Below this floor the section is genuinely empty and still flags.
+_PROSE_CONTENT_FLOOR = 200
+
+
 def check_item_counts(
     digest_text: str,
     sections: List[SectionRule],
@@ -221,24 +232,27 @@ def check_item_counts(
             continue
 
         count = len(items)
+        prose_chars = len(_extract_section_text(digest_text, section.pattern))
         if section.min_items and count < section.min_items:
-            issues.append(
-                f"Section '{section.name}': {count} items (minimum {section.min_items})"
-            )
+            # Prose-aware structural guard (network-wide): a mandatory section
+            # with 0 bold items but real prose content is a prose lead, NOT a
+            # structural defect. Suppress the "0 items" signal that would
+            # otherwise trigger a regenerate; a genuinely empty section
+            # (< floor) still flags and regenerates.
+            if not (count == 0 and prose_chars >= _PROSE_CONTENT_FLOOR):
+                issues.append(
+                    f"Section '{section.name}': {count} items (minimum {section.min_items})"
+                )
         if section.max_items and count > section.max_items:
             issues.append(
                 f"Section '{section.name}': {count} items (maximum {section.max_items})"
             )
-        # Prose sections (no list items) are validated by length instead.
-        # ``0 chars`` on a mandatory prose section reads as structural and
-        # triggers the regenerate; a full section passes silently.
-        if section.min_chars:
-            prose = _extract_section_text(digest_text, section.pattern)
-            n_chars = len(prose)
-            if n_chars < section.min_chars:
-                issues.append(
-                    f"Section '{section.name}': {n_chars} chars (minimum {section.min_chars})"
-                )
+        # Optional explicit prose-length floor (stricter than the structural
+        # guard above). ``0 chars`` reads as structural and regenerates.
+        if section.min_chars and prose_chars < section.min_chars:
+            issues.append(
+                f"Section '{section.name}': {prose_chars} chars (minimum {section.min_chars})"
+            )
     return issues
 
 
