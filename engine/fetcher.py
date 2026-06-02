@@ -337,6 +337,25 @@ def _fetch_single_feed(
             )
             articles = articles[:max_articles]
 
+        # Visibility: a feed that yields 0 usable articles is ambiguous —
+        # it could be blocked/empty (0 entries parsed) or simply filtered
+        # out (entries parsed but none matched the recency/keyword filters).
+        # The old "Fetched 0 articles" log hid the difference, so a feed
+        # silently going dark (Cloudflare block returning an empty body)
+        # looked identical to a quiet news day. Surface the parsed count.
+        if not articles:
+            n_entries = len(feed.entries)
+            if n_entries == 0:
+                logger.warning(
+                    "Feed yielded 0 entries (likely blocked/empty/stale URL): %s",
+                    source_name,
+                )
+            else:
+                logger.info(
+                    "Feed %s: parsed %d entries but 0 passed recency/keyword "
+                    "filters", source_name, n_entries,
+                )
+
         return (feed_url, articles, source_name)
 
     except requests.RequestException as exc:
@@ -482,6 +501,31 @@ def fetch_rss_articles(
 # ---------------------------------------------------------------------------
 # X / Twitter account fetcher (via xAI Grok x_search)
 # ---------------------------------------------------------------------------
+
+def x_fetch_allowed(
+    x_accounts: list,
+    x_enabled: bool,
+    x_fetch_enabled: Optional[bool] = None,
+) -> bool:
+    """Whether to fetch X posts as a *content source* for this show.
+
+    Decouples X *sourcing* from X *posting*. A show with curated
+    ``x_accounts`` can read them for content even when it never posts to X
+    (``x_enabled: false``) — set ``x_fetch_enabled: true`` in its YAML.
+
+    Resolution:
+      - no ``x_accounts`` → never fetch.
+      - ``x_fetch_enabled`` explicitly set (True/False) → honour it.
+      - otherwise default to ``x_enabled`` (preserves the pre-existing
+        behaviour where X fetch piggy-backed on the X-posting flag, so
+        every other show is byte-for-byte unchanged).
+    """
+    if not x_accounts:
+        return False
+    if x_fetch_enabled is not None:
+        return bool(x_fetch_enabled)
+    return bool(x_enabled)
+
 
 def fetch_x_posts(
     x_accounts: list,

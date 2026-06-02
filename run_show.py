@@ -627,15 +627,20 @@ def run(args: argparse.Namespace) -> None:
             )
 
         def _run_x_fetch():
-            # Skip the X API call if X posting is disabled for this show —
-            # before May 12 2026 the fetch ran whenever ``x_accounts`` was
-            # configured, regardless of ``x_enabled``, so shows with X
-            # posting off still paid for X API calls and ingested X posts
-            # that were never used. Operator-caught during the May 12 2026
-            # pipeline audit.
-            if not config.x_accounts or not config.publishing.x_enabled:
+            # X *sourcing* is decoupled from X *posting* (May 2026 MAB audit).
+            # The May 12 2026 change gated X fetch on ``x_enabled`` to stop
+            # non-posting shows paying for unused X calls — but that also
+            # silently dropped curated X accounts as a CONTENT source for
+            # shows like MAB. A show now opts back in with
+            # ``x_fetch_enabled: true`` in its YAML; unset still defaults to
+            # ``x_enabled`` so every other show is unchanged.
+            from engine.fetcher import x_fetch_allowed, fetch_x_posts
+            if not x_fetch_allowed(
+                config.x_accounts,
+                config.publishing.x_enabled,
+                getattr(config, "x_fetch_enabled", None),
+            ):
                 return []
-            from engine.fetcher import fetch_x_posts
             return fetch_x_posts(config.x_accounts, keywords=config.keywords)
 
         articles = []
@@ -3104,8 +3109,12 @@ def _empty_mandatory_section_issues(item_count_issues: list) -> list:
     podcast then dropped the whole main-news body). A soft shortfall like
     ``has only 8 items (minimum 10)`` is usually a formatting mismatch on a
     long digest and is deliberately NOT treated as structural.
+
+    ``0 chars`` covers prose sections validated by length rather than item
+    count (e.g. MAB's "The Big Story"), so a genuinely empty prose section
+    still triggers a regenerate while a full one does not.
     """
-    return [i for i in item_count_issues if re.search(r":\s*0\s+items", i)]
+    return [i for i in item_count_issues if re.search(r":\s*0\s+(?:items|chars)", i)]
 
 
 def _resolve_weekly_recap(

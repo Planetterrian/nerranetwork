@@ -485,8 +485,20 @@ def enforce_x_char_limit(text: str, max_chars: int = 280) -> str:
 # HTTP constants
 # ---------------------------------------------------------------------------
 
+# Use a real browser User-Agent. The previous bot UA
+# ("PodcastBot/1.0 …") was silently blocked or served empty/challenge
+# pages by Cloudflare-fronted publishers (TechCrunch, MIT Tech Review,
+# Wired, The Verge, Ars Technica, Reddit), which returned HTTP 200 with
+# zero entries — counted as "0 articles, 0 failed" and invisible in the
+# logs. A browser UA + Accept header restores those feeds. (May 2026
+# MAB sourcing audit — the show had silently collapsed onto Reddit +
+# The Decoder because the high-signal AI feeds were all returning 0.)
 DEFAULT_HEADERS = {
-    "User-Agent": "PodcastBot/1.0 (+https://github.com/Planetterrian/nerranetwork)"
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    ),
+    "Accept": "application/rss+xml, application/atom+xml, application/xml, text/xml, text/html;q=0.9, */*;q=0.8",
 }
 HTTP_TIMEOUT_SECONDS = 10
 

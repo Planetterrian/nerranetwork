@@ -125,6 +125,11 @@ class SectionRule:
     pattern: str = ""
     min_items: int = 0
     max_items: int = 0  # 0 = no max
+    # Minimum prose length (chars) for PROSE sections that have no list
+    # items (e.g. MAB's "The Big Story" is 8-12 sentences, not bullets).
+    # Counting ``**bold**`` items there always returns 0 and falsely trips
+    # the structural-retry. 0 = disabled (item-count validation only).
+    min_chars: int = 0
     # If True, section is optional (don't flag if missing)
     optional: bool = False
 
@@ -224,6 +229,16 @@ def check_item_counts(
             issues.append(
                 f"Section '{section.name}': {count} items (maximum {section.max_items})"
             )
+        # Prose sections (no list items) are validated by length instead.
+        # ``0 chars`` on a mandatory prose section reads as structural and
+        # triggers the regenerate; a full section passes silently.
+        if section.min_chars:
+            prose = _extract_section_text(digest_text, section.pattern)
+            n_chars = len(prose)
+            if n_chars < section.min_chars:
+                issues.append(
+                    f"Section '{section.name}': {n_chars} chars (minimum {section.min_chars})"
+                )
     return issues
 
 
@@ -574,7 +589,12 @@ def mab_validation_config() -> ValidationConfig:
                     r"(.*?)"
                     r"(?=━━|### Cool Stuff|## Cool Stuff|### Cool Tools|## Cool Tools|$)"
                 ),
-                min_items=1,
+                # Prose section (8-12 sentences), NOT a bullet list — validate
+                # by length, not ``**bold**`` item count. The old min_items=1
+                # always saw 0 items and regenerated the digest on essentially
+                # every episode (wasteful + the retry introduced repetition).
+                min_items=0,
+                min_chars=250,
             ),
         ],
         forbidden_patterns=[

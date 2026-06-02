@@ -3,10 +3,17 @@ slug: models_agents_beginners
 weekly_recap_on_sunday: true   # May 2026: daily cadence; Sunday slot recaps the past 7 days from the content lake.
 description: "An AI podcast for beginners and teens — learn about models, agents, and the AI revolution in plain language. We explain the jargon, encourage experimentation, and help you understand the most exciting technology of our generation."
 
+# Read the curated X accounts below for CONTENT even though this show does
+# not POST to X (publishing.x_enabled: false). Without this, the May 12 2026
+# fetch-gating left MAB sourcing only from RSS — see engine.fetcher.x_fetch_allowed.
+x_fetch_enabled: true
+
 sources:
   # Major AI Labs & Research
-  - url: https://openai.com/blog/rss.xml
-    label: OpenAI Blog
+  # OpenAI moved their feed: /blog/rss.xml now 307-redirects and yields
+  # 0 entries. The live feed is /news/rss.xml (verified 200 + fresh).
+  - url: https://openai.com/news/rss.xml
+    label: OpenAI News
   # Removed: ai.meta.com/blog/rss/ (404), anthropic.com/rss.xml (404),
   # mistral.ai/feed.xml (404) — lab blogs removed or moved
 
@@ -31,7 +38,9 @@ sources:
     label: One Useful Thing (Ethan Mollick)
   - url: https://www.engadget.com/rss.xml
     label: Engadget
-  - url: https://www.livescience.com/feeds/all
+  # Live Science moved their feed: /feeds/all now 301/404s. Live URL is
+  # /home/feed/site.xml (verified 200 + fresh).
+  - url: https://www.livescience.com/home/feed/site.xml
     label: Live Science
   - url: https://theconversation.com/us/articles.atom
     label: The Conversation
