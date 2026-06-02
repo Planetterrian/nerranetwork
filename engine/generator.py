@@ -524,12 +524,28 @@ def _validate_llm_output(
             # below trip the detector at high story counts even though
             # nothing is hallucinated. Spec v2 follow-up after Ep459.
             "it matters", "matters for", "this matters",
+            # Omni View "Steel Man" format (Phase 4): every story states
+            # "the strongest case for each side ... rests on ...". With
+            # 20-40 stories these per-story framing phrases recur 30-44x and
+            # tripped 3 futile digest regenerations (regen can't change a
+            # prompt-mandated format) — Ep068 burned ~6 min on this. Treat
+            # as structural, like "this matters for". (Genuine monotony of
+            # the steel-man framing is a separate prompt concern.)
+            "strongest case", "case for", "rests on", "the strongest",
+            "they differ", "differ on", "each side",
         }
         # Podcast scripts are longer and naturally have more repeated phrases
         _rep_threshold = 5 if stage == "podcast_script" else 4
         for phrase, count in bigram_counts.most_common(5):
             # Skip common phrases
             if phrase in _COMMON_BIGRAMS:
+                continue
+            # Bold markdown in a repeated phrase is a structural label/header
+            # (e.g. "**what happened (neutral):**", "**steel-man each side:**",
+            # "**memory hook:**") — never a hallucination loop, which lives in
+            # plain prose. Skip generically so per-story bold labels at high
+            # story counts don't trigger futile regenerations.
+            if "**" in phrase:
                 continue
             # Skip phrases that are mostly stopwords or very short tokens
             tokens = phrase.split()
@@ -582,6 +598,10 @@ def _validate_llm_output(
             "hook:** sounds like", "hook:** think of",
             "**example sentence:**", "example sentence: the",
             "**example translation:**",
+            # Omni View "Steel Man" per-story framing (Phase 4) — see the
+            # bigram allowlist above. Structural, not hallucination.
+            "the strongest case", "strongest case for", "rests on the",
+            "they differ on", "case for the", "differ on the",
         }
         # Regex patterns for pedagogical trigrams that can't be enumerated
         # (mirrors _PEDAGOGICAL_PATTERNS in review_episodes.py)
@@ -596,6 +616,10 @@ def _validate_llm_output(
         ]
         for phrase, count in trigram_counts.most_common(5):
             if phrase in _COMMON_TRIGRAMS:
+                continue
+            # Bold markdown = structural label/header, never a hallucination
+            # loop (see the bigram loop). Skip generically.
+            if "**" in phrase:
                 continue
             tokens = phrase.split()
             if all(len(t) <= 3 for t in tokens):
