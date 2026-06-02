@@ -906,3 +906,54 @@ def test_no_brand_alpha_hex_in_template():
         "8-digit alpha hex on {brand} found in code (Outlook strips "
         "alpha): " + ", ".join(matches)
     )
+
+
+# ---------------------------------------------------------------------------
+# Readability v3 (Jun 2026): de-dupe the headline + cadence-aware eyebrow
+# ---------------------------------------------------------------------------
+
+class TestDailyReadabilityCleanup:
+    """A daily newsletter used to (a) say "If you only have 10 minutes this
+    week" — wrong cadence — and (b) show the episode hook twice: once in the
+    featured card, again as the body's leading ``## <hook>`` heading. Both
+    made it feel busy/repetitive."""
+
+    _HOOK = "China's 39% jump in Tesla wholesale volume signals a turnaround"
+
+    def _render(self):
+        import datetime
+        from engine.newsletter_template import wrap_with_branding
+        body = f"## {self._HOOK}\n\nThe actual story body starts here with detail.\n"
+        return wrap_with_branding(
+            "tesla", body,
+            daily_label="Ep 497", daily_date=datetime.date(2026, 6, 2),
+            featured_episode={"episode_num": 497, "title": self._HOOK,
+                              "hook": self._HOOK, "date": "Jun 2, 2026"},
+            issue_number=497,
+        )
+
+    def test_daily_eyebrow_is_cadence_correct(self):
+        html = self._render()
+        assert "Today's episode" in html
+        assert "this week" not in html
+
+    def test_headline_not_duplicated(self):
+        html = self._render()
+        # Hook shows once (featured card), not again as a body heading.
+        assert html.count("China's 39% jump") == 1
+        assert f"## {self._HOOK}" not in html  # leading body H2 stripped
+
+    def test_weekly_keeps_this_week_eyebrow(self):
+        import datetime
+        from engine.newsletter_template import wrap_with_branding
+        html = wrap_with_branding(
+            "tesla", "## Weekly recap\n\nBody.\n",
+            week_ending=datetime.date(2026, 6, 1),
+            featured_episode={"episode_num": 496, "title": "A big week",
+                              "hook": "A big week", "date": "Jun 1, 2026"},
+        )
+        assert "this week" in html  # weekly cadence wording preserved
+
+    def test_body_uses_readable_type(self):
+        html = self._render()
+        assert "font-size:16px;line-height:1.7" in html

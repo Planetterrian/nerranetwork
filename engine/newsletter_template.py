@@ -566,6 +566,33 @@ def _strip_repeated_show_title(body_md: str, show_name: str) -> str:
     return body_md
 
 
+def _strip_leading_heading_matching(body_md: str, headline: str) -> str:
+    """Drop a leading ``# ...`` / ``## ...`` heading if it (closely) repeats
+    *headline* — the episode hook the featured-episode card already shows.
+
+    A daily body usually opens with ``## <hook>``; the featured card above it
+    shows the same hook, so the reader meets the headline twice before any
+    content. Strip the duplicate so the body starts with the actual story.
+    Conservative: only removes a leading markdown heading, only when its text
+    matches the headline (ignoring case/punctuation), never body prose.
+    """
+    if not body_md or not headline:
+        return body_md
+
+    def _norm(s: str) -> str:
+        s = re.sub(r"^[#*\s_>-]+|[#*\s_]+$", "", s)
+        return re.sub(r"[^a-z0-9 ]+", "", s.lower()).strip()
+
+    lines = body_md.lstrip().split("\n")
+    first = lines[0].strip()
+    if not first.startswith("#"):
+        return body_md
+    nf, nh = _norm(first), _norm(headline)
+    if nf and nh and (nf == nh or nf.startswith(nh[:40]) or nh.startswith(nf[:40])):
+        return "\n".join(lines[1:]).lstrip()
+    return body_md
+
+
 _MD_TABLE_HEADER_RE = re.compile(
     r"""
     ^[ \t]*(?:\|[^\n]*\|)[ \t]*\n          # header row (pipe-bounded)
@@ -738,13 +765,16 @@ def episode_link_table(
 
 
 def _build_featured_episode_html(
-    featured: Optional[Dict[str, Any]], show: Dict[str, str]
+    featured: Optional[Dict[str, Any]], show: Dict[str, str],
+    eyebrow: str = "🎧 If you only have 10 minutes this week",
 ) -> str:
-    """Render the "If you only have 10 minutes" block at top of body.
+    """Render the "listen to this episode" CTA card at the top of the body.
 
     *featured* is a dict with at least ``episode_num``, ``hook``, and
     ``date``. We compute the listen URL from ``episode_blog_url``.
-    Returns an empty string if no featured episode is provided.
+    Returns an empty string if no featured episode is provided. *eyebrow*
+    is the small uppercase label above the title — cadence-aware so a daily
+    doesn't say "this week".
     """
     if not featured:
         return ""
@@ -791,7 +821,7 @@ def _build_featured_episode_html(
         '<div style="font-size:11px;font-weight:700;'
         f'color:{eyebrow_color};letter-spacing:0.08em;'
         'text-transform:uppercase;margin-bottom:6px;">'
-        '🎧 If you only have 10 minutes this week'
+        f'{eyebrow}'
         '</div>'
         f'<div style="font-size:17px;font-weight:600;color:#0f172a;'
         f'line-height:1.4;margin:0 0 10px;">'
@@ -1300,7 +1330,14 @@ def wrap_with_branding(
                 }
         except Exception:  # noqa: BLE001 — best-effort fallback only
             featured_with_slug = None
-    featured_block = _build_featured_episode_html(featured_with_slug, show)
+    # Cadence-aware eyebrow: a daily must not say "this week".
+    featured_eyebrow = (
+        "🎧 Today's episode" if daily_date is not None
+        else "🎧 If you only have 10 minutes this week"
+    )
+    featured_block = _build_featured_episode_html(
+        featured_with_slug, show, eyebrow=featured_eyebrow
+    )
     # Russian shows that need the disclaimer (currently only Финансы
     # Просто) get the Cyrillic version. Spec §4.4.
     disclaimer_lang = "ru" if slug == "finansy_prosto" else "en"
@@ -1322,6 +1359,13 @@ def wrap_with_branding(
     body_clean = _strip_repeated_show_title(
         (markdown_body or "").strip(), show["name"]
     )
+    # De-duplicate the headline: the featured card already shows the episode
+    # hook, so drop a leading ``## <hook>`` heading from the body. Otherwise
+    # the reader meets the same title twice (card + body) before any content.
+    if featured_with_slug and featured_with_slug.get("hook"):
+        body_clean = _strip_leading_heading_matching(
+            body_clean, featured_with_slug["hook"]
+        )
     # Pre-render any markdown tables in the body to inline HTML so they
     # survive Outlook / Yahoo / ProtonMail. Non-table markdown is left
     # alone for Buttondown's renderer to handle.
@@ -1360,10 +1404,12 @@ def wrap_with_branding(
             'cellspacing="0" border="0" '
             'class="surface-white" '
             'style="background:#ffffff;">'
-            '<tr><td style="padding:8px 24px;'
+            '<tr><td style="padding:16px 24px 24px;'
             "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
             'Roboto,Helvetica,Arial,sans-serif;'
-            'font-size:15px;line-height:1.6;color:#0f172a;">'
+            # 16px / 1.7 line-height reads far easier than the old 15/1.6 on a
+            # phone — the body is the point of the email, so give it room.
+            'font-size:16px;line-height:1.7;color:#1f2937;">'
             f'{body_clean}'
             '</td></tr></table>'
         )
