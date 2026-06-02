@@ -403,8 +403,19 @@ def build_long_form_metadata(
     description = "\n\n".join(pieces).strip().replace("<", "").replace(">", "")
     description = _truncate(description, YOUTUBE_DESC_MAX)
 
+    # Per-episode entity tags: prepend the day's specific entities (from the
+    # hook) ahead of the show's static tags, so each upload's tag set reflects
+    # its actual topic. Applies to any YouTube-enabled show.
+    try:
+        from engine.shorts_hashtags import extract_entity_phrases
+        _entity_tags = extract_entity_phrases(
+            hook, show_keywords=list(getattr(config, "keywords", []) or []),
+            max_phrases=8,
+        )
+    except Exception:  # noqa: BLE001 — tags must never block an upload
+        _entity_tags = []
     tags = _build_tags(
-        list(config.youtube.tags or []),
+        _entity_tags + list(config.youtube.tags or []),
         list(getattr(config, "keywords", []) or []),
         network_tags=[],  # already merged into youtube.tags via _defaults.yaml
     )
@@ -483,8 +494,16 @@ def build_short_metadata(
     description = "\n\n".join(pieces).strip().replace("<", "").replace(">", "")
     description = _truncate(description, YOUTUBE_DESC_MAX)
 
+    try:
+        from engine.shorts_hashtags import extract_entity_phrases
+        _entity_tags = extract_entity_phrases(
+            hook, show_keywords=list(getattr(config, "keywords", []) or []),
+            max_phrases=8,
+        )
+    except Exception:  # noqa: BLE001
+        _entity_tags = []
     tags = _build_tags(
-        list(config.youtube.tags or []) + ["shorts", "podcast clip"],
+        _entity_tags + list(config.youtube.tags or []) + ["shorts", "podcast clip"],
         list(getattr(config, "keywords", []) or []),
         network_tags=[],
     )
