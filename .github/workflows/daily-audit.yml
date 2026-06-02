@@ -54,9 +54,10 @@ on:
         default: "true"
         type: string
 
-  workflow_run:
-    workflows: ["Run Podcast Show"]
-    types: [completed]
+# Runs ONCE per day (the 16:15 cron) + on manual dispatch. Previously it also
+# triggered on every "Run Podcast Show" completion (workflow_run), so it ran
+# ~10x/day; that per-episode trigger was removed — the once-daily sweep already
+# reviews ALL of the day's committed episodes via discover_episodes().
 
 permissions:
   contents: read
@@ -70,8 +71,6 @@ jobs:
   audit:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    # Skip only if the triggering run-show job itself failed
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout

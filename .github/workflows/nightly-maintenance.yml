@@ -20,12 +20,17 @@ name: Nightly Maintenance
 
 on:
   schedule:
-    # ~30-45 min after the last show (Unintended Consequences at 11:30 UTC)
-    - cron: '45 12 * * *'
+    # Runs ONCE per day, after the day's slate has finished. The crons end at
+    # 11:30 UTC but GitHub delivers scheduled events 3-6h late (observed
+    # May-Jun 2026), so shows finish as late as ~16:00. Run at 16:45 so the
+    # regenerated dashboard / gallery / search index / narrative pages reflect
+    # the whole day. Previously this also triggered on every "Run Podcast Show"
+    # completion (workflow_run) — that ran it ~10x/day and churned the repo
+    # with redundant maintenance commits; the per-show trigger was removed.
+    # (Each show already refreshes the shared site pages in its own finalize
+    # step, so intraday freshness is unaffected.)
+    - cron: '45 16 * * *'
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Run Podcast Show"]
-    types: [completed]
 
 permissions:
   contents: write
@@ -37,7 +42,6 @@ concurrency:
 jobs:
   generate-artifacts:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - uses: actions/checkout@v5
