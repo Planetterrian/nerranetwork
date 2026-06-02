@@ -151,7 +151,12 @@ llm:
   podcast_prompt_file: shows/prompts/omni_view_podcast.txt
   digest_temperature: 0.5
   podcast_temperature: 0.7
-  max_tokens: 4000
+  # Steel-man format is verbose (~1.6k chars/story). 4000 truncated the
+  # 22-story digest mid-way (losing the later sections + tripping retries);
+  # the story count is now 12 (5+2+2+1+1+1) and this gives headroom to
+  # finish all sections without truncation. Digest still lands well under
+  # the 30k-char "too long" guard.
+  max_tokens: 10000
   podcast_max_tokens: 8000
   min_podcast_words: 900
 

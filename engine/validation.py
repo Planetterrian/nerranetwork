@@ -519,9 +519,16 @@ def ov_validation_config() -> ValidationConfig:
             SectionRule(
                 name="Top Stories",
                 pattern=(
-                    r"(?:### Top \d+|### Today's Top)"
+                    # Omni View's digest leads with "## Top stories (5)"
+                    # (level-2 header, lowercase, count suffix). The old
+                    # `### Top \d+` pattern never matched it, so "Top Stories
+                    # missing" fired a full digest regenerate on EVERY episode
+                    # (Ep068 burned ~232s on it). Match the real header (and
+                    # keep the legacy forms as fallbacks).
+                    r"(?:#{2,3}\s*Top stories|#{2,3}\s*Today's Top|### Top \d+)"
                     r"(.*?)"
-                    r"(?=━━|### (?:Deep Dive|Closing)|$)"
+                    r"(?=━━|#{2,3}\s*Top world|#{2,3}\s*Top business|"
+                    r"### (?:Deep Dive|Closing)|$)"
                 ),
                 min_items=5,
             ),

@@ -499,7 +499,9 @@ class TestLoadConfigRealFiles:
         assert "election" in cfg.keywords
         assert cfg.llm.model == "grok-4.3"
         assert cfg.llm.digest_temperature == 0.5
-        assert cfg.llm.max_tokens == 4000
+        # Raised 4000 -> 10000 so the steel-man digest (now 12 stories)
+        # completes without truncation. See shows/omni_view.yaml.
+        assert cfg.llm.max_tokens == 10000
         assert cfg.tts.stability == 0.5
         assert cfg.tts.style == 0.0
         # OV got its own dedicated theme in May 2026 (replaced LubechangeOilers.mp3).
