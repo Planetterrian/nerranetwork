@@ -931,7 +931,6 @@ def _build_reply_share_html(
     Buttondown's per-issue archive URL isn't known until after send).
     """
     name = show["name"]
-    brand = show["brand_color"]
     target = (archive_url or show["show_page"]).strip()
 
     # Russian-language localization for the reply CTA + share text.
@@ -942,18 +941,12 @@ def _build_reply_share_html(
             'Патрик читает каждое.'
         )
         share_text = f'Слушаю «{name}» — рекомендую:'
-        share_x_label = "Поделиться в X"
-        share_li_label = "Поделиться в LinkedIn"
-        share_wa_label = "Поделиться в WhatsApp"
     else:
         reply_html = (
             '💬 <strong>Reply to this email</strong> — '
             'Patrick reads every one.'
         )
-        share_text = f"I'm reading {name} this week — give it a listen:"
-        share_x_label = "Share on X"
-        share_li_label = "Share on LinkedIn"
-        share_wa_label = "Share on WhatsApp"
+        share_text = f"I'm enjoying {name} — give it a listen:"
 
     # Pre-encode the share intents (URL-encoded query strings).
     import urllib.parse as _u
@@ -970,19 +963,26 @@ def _build_reply_share_html(
         + _u.urlencode({"text": f"{share_text} {target}"})
     )
 
-    def _chip(href: str, label: str) -> str:
-        # Border uses a solid neutral slate (#cbd5e1) instead of the
-        # brand-color-with-alpha (`{brand}55`) that Outlook desktop
-        # strips down to a full-saturation brand border. Solid slate
-        # gives the chip clear definition on white in every client
-        # without competing with the brand-color text.
+    # Share intents are low-conversion in email, so they're rendered as one
+    # subtle text line (not competing pill buttons) — the reply CTA above is
+    # the high-value action and stays prominent.
+    def _share_link(href: str, label: str) -> str:
         return (
             f'<a href="{href}" '
-            f'style="display:inline-block;color:{brand};text-decoration:none;'
-            f'font-weight:600;font-size:13px;padding:6px 12px;'
-            f'margin:2px;border:1px solid #cbd5e1;border-radius:100px;'
-            f'background:#ffffff;">{label}</a>'
+            f'style="color:#64748b;text-decoration:none;font-weight:600;">'
+            f'{label}</a>'
         )
+
+    share_label = "Поделиться:" if is_russian else "Share:"
+    share_line = (
+        '<p class="text-muted" '
+        'style="font-size:12px;color:#64748b;margin:0;line-height:1.5;">'
+        f'{share_label} '
+        + _share_link(twitter, "X") + ' · '
+        + _share_link(linkedin, "LinkedIn") + ' · '
+        + _share_link(whatsapp, "WhatsApp")
+        + '</p>'
+    )
 
     return (
         '<table role="presentation" width="100%" cellpadding="0" '
@@ -993,14 +993,10 @@ def _build_reply_share_html(
         'style="padding:8px 16px 20px;'
         "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
         'Roboto,Helvetica,Arial,sans-serif;color:#475569;">'
-        '<p style="font-size:13px;margin:0 0 10px;line-height:1.5;">'
+        '<p style="font-size:14px;margin:0 0 8px;line-height:1.5;">'
         f'{reply_html}'
         '</p>'
-        '<div>'
-        + _chip(twitter, share_x_label)
-        + _chip(linkedin, share_li_label)
-        + _chip(whatsapp, share_wa_label)
-        + '</div>'
+        f'{share_line}'
         '</td></tr></table>'
     )
 
@@ -1088,8 +1084,30 @@ def _build_footer_html(show: Dict[str, str]) -> str:
         )
 
     listen = _btn(show["show_page"], "▶ Listen to the podcast")
-    watch = _btn(show["youtube_playlist_url"], "📺 Watch on YouTube")
-    blog = _btn(show["blog_page"], "📝 Read the blog")
+
+    # Secondary destinations as subtle text links (not competing buttons) so
+    # the footer has ONE primary CTA. Watch/Blog were full brand buttons.
+    def _link(href: str, label: str) -> str:
+        if not href:
+            return ""
+        return (
+            f'<a href="{href}" '
+            f'style="color:#64748b;text-decoration:none;font-weight:600;">'
+            f'{label}</a>'
+        )
+
+    secondary_links = [
+        link for link in (
+            _link(show["youtube_playlist_url"], "📺 Watch on YouTube"),
+            _link(show["blog_page"], "📝 Read the blog"),
+        ) if link
+    ]
+    secondary = (
+        '<p class="text-muted" style="font-size:13px;color:#64748b;'
+        'margin:14px 0 0;line-height:1.6;">'
+        + ' &nbsp;·&nbsp; '.join(secondary_links)
+        + '</p>'
+    ) if secondary_links else ""
 
     return (
         f'<table role="presentation" width="100%" cellpadding="0" '
@@ -1100,12 +1118,8 @@ def _build_footer_html(show: Dict[str, str]) -> str:
         f'style="padding:32px 24px;'
         f"font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
         f'Roboto,Helvetica,Arial,sans-serif;color:#0f172a;">'
-        f'<p style="font-size:14px;color:#475569;margin:0 0 16px;">'
-        f'Catch up on more {name}:'
-        f'</p>'
-        f'<div style="line-height:1.8;">'
-        f'{listen}{watch}{blog}'
-        f'</div>'
+        f'<div>{listen}</div>'
+        f'{secondary}'
         # AI-disclosure line — bumped from #94a3b8 (3.0:1 on white) to
         # #475569 (6.4:1) so light-mode hits AA. Spec §1.3.
         # The voice provider is now "Grok TTS (xAI)" for every show
