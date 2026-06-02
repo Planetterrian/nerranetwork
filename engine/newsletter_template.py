@@ -931,7 +931,6 @@ def _build_reply_share_html(
     Buttondown's per-issue archive URL isn't known until after send).
     """
     name = show["name"]
-    brand = show["brand_color"]
     target = (archive_url or show["show_page"]).strip()
 
     # Russian-language localization for the reply CTA + share text.
@@ -942,18 +941,12 @@ def _build_reply_share_html(
             'Патрик читает каждое.'
         )
         share_text = f'Слушаю «{name}» — рекомендую:'
-        share_x_label = "Поделиться в X"
-        share_li_label = "Поделиться в LinkedIn"
-        share_wa_label = "Поделиться в WhatsApp"
     else:
         reply_html = (
             '💬 <strong>Reply to this email</strong> — '
             'Patrick reads every one.'
         )
         share_text = f"I'm enjoying {name} — give it a listen:"
-        share_x_label = "Share on X"
-        share_li_label = "Share on LinkedIn"
-        share_wa_label = "Share on WhatsApp"
 
     # Pre-encode the share intents (URL-encoded query strings).
     import urllib.parse as _u
@@ -1104,10 +1097,10 @@ def _build_footer_html(show: Dict[str, str]) -> str:
         )
 
     secondary_links = [
-        l for l in (
+        link for link in (
             _link(show["youtube_playlist_url"], "📺 Watch on YouTube"),
             _link(show["blog_page"], "📝 Read the blog"),
-        ) if l
+        ) if link
     ]
     secondary = (
         '<p class="text-muted" style="font-size:13px;color:#64748b;'
