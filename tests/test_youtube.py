@@ -252,12 +252,52 @@ def test_build_long_form_metadata_truncates_title_to_100_chars():
         config,
         episode_num=1,
         today_str="2026-04-26",
-        hook="Y" * 80,
+        hook="Y" * 120,  # hook alone exceeds the 100-char cap
         digest_text="A short digest body.",
         audio_url="https://audio.nerranetwork.com/tesla/ep001.mp3",
     )
     assert len(meta["title"]) <= vm.YOUTUBE_TITLE_MAX
     assert meta["title"].endswith("...")
+
+
+def test_long_form_title_front_loads_hook_for_seo():
+    """The keyword-rich hook must lead the title (it's what viewers scan and
+    YouTube weights most), not the show name + 'Ep N'."""
+    config = _make_config(rss_title="Tesla Shorts Time")
+    meta = vm.build_long_form_metadata(
+        config, episode_num=7, today_str="2026-04-26",
+        hook="Cybercab gets a wireless battery system",
+        digest_text="body", audio_url="https://x/ep.mp3",
+    )
+    title = meta["title"]
+    assert title.startswith("Cybercab gets a wireless battery system")
+    assert "| Tesla Shorts Time" in title
+    assert "Ep 7" not in title  # episode number no longer clutters the title
+
+
+def test_long_form_description_has_entity_hashtags():
+    """Long-form descriptions now carry entity hashtags (Shorts already did),
+    so YouTube renders the first 3 as clickable topic links above the title."""
+    config = _make_config()
+    meta = vm.build_long_form_metadata(
+        config, episode_num=7, today_str="2026-04-26",
+        hook="Tesla Cybercab unveiled with new battery",
+        digest_text="body", audio_url="https://x/ep.mp3",
+    )
+    hashtag_lines = [l for l in meta["description"].splitlines() if l.strip().startswith("#")]
+    assert hashtag_lines, "long-form description should contain a hashtag line"
+    assert "#podcast" in hashtag_lines[0]
+    # At least one entity hashtag derived from the hook.
+    assert any("#Tesla" in l or "#Cybercab" in l for l in hashtag_lines)
+
+
+def test_short_title_keeps_shorts_suffix_when_hook_is_long():
+    """When the headline is long, the #Shorts classifier hint must survive
+    even if the show name is dropped."""
+    config = _make_config(rss_title="Tesla Shorts Time")
+    title = vm._build_seo_title("Z" * 88, "Tesla Shorts Time", suffix="#Shorts")
+    assert len(title) <= vm.YOUTUBE_TITLE_MAX
+    assert title.endswith("#Shorts")
 
 
 def test_build_long_form_metadata_includes_disclosure_and_utm():
