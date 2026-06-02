@@ -106,6 +106,35 @@ def _truncate(text: str, max_len: int) -> str:
     return text[: max_len - 3].rstrip() + "..."
 
 
+def _build_seo_title(hook: str, show_name: str, *, suffix: str = "") -> str:
+    """Build a search-optimised YouTube title that FRONT-LOADS the hook.
+
+    YouTube weights the first words of a title most heavily for search and
+    viewers scan the start, so the keyword-rich episode hook leads — not the
+    show name + "Ep N" (which wasted the most valuable real estate and isn't
+    searched). Shape: ``"<hook> | <show>[ <suffix>]"``, trimmed to fit
+    ``YOUTUBE_TITLE_MAX``. If the hook alone is too long the hook wins (keywords
+    matter most) and the show-name tail is dropped; a ``suffix`` like
+    ``#Shorts`` (the Shorts classifier hint) is preserved when possible.
+    """
+    hook = (hook or "").strip().rstrip(".")
+    show = (show_name or "").strip()
+    suffix = (suffix or "").strip()
+    if not hook:
+        base = f"{show} {suffix}".strip()
+        return _truncate(base, YOUTUBE_TITLE_MAX)
+    tail = f" | {show}" if show else ""
+    if suffix:
+        tail = f"{tail} {suffix}" if tail else f" {suffix}"
+    if len(hook) + len(tail) <= YOUTUBE_TITLE_MAX:
+        return (hook + tail).strip()
+    # Hook + show won't both fit — keep the #Shorts suffix (classifier) if it
+    # fits, otherwise the hook alone (truncated). Keywords > show name.
+    if suffix and len(hook) + 1 + len(suffix) <= YOUTUBE_TITLE_MAX:
+        return f"{hook} {suffix}"
+    return _truncate(hook, YOUTUBE_TITLE_MAX)
+
+
 # ---------------------------------------------------------------------------
 # Chapter formatting
 # ---------------------------------------------------------------------------
@@ -272,10 +301,13 @@ def build_long_form_metadata(
         getattr(config.publishing, "rss_title", "")
         or getattr(config, "name", "")
     )
-    title_seed = f"{rss_title} — Ep {episode_num}: {hook}" if hook else (
-        f"{rss_title} — Ep {episode_num} — {today_str}"
-    )
-    title = _truncate(title_seed.strip(), YOUTUBE_TITLE_MAX)
+    # SEO: front-load the keyword-rich hook (was "{show} — Ep N: {hook}",
+    # which buried the topic behind the show name + episode number).
+    if hook:
+        title = _build_seo_title(hook, rss_title)
+    else:
+        title = _truncate(f"{rss_title} — Ep {episode_num} — {today_str}".strip(),
+                          YOUTUBE_TITLE_MAX)
 
     base_url = getattr(config.publishing, "base_url",
                        "https://nerranetwork.com").rstrip("/")
@@ -333,6 +365,20 @@ def build_long_form_metadata(
         cleaned = [line.strip() for line in photo_attribution if line.strip()]
         if cleaned:
             pieces.append("Photos via Pexels:\n" + "\n".join(cleaned))
+    # SEO: entity hashtags so YouTube renders the first 3 as clickable topic
+    # links above the title (a discovery lever Shorts already had but long-form
+    # was missing). Same heuristic extractor as Shorts; static tail "#podcast".
+    try:
+        from engine.shorts_hashtags import extract_hashtags, format_hashtag_line
+        _extracted = extract_hashtags(
+            hook, show_keywords=list(getattr(config, "keywords", []) or []),
+            max_hashtags=5,
+        )
+        _hashtag_line = format_hashtag_line(_extracted, ("#podcast",))
+        if _hashtag_line:
+            pieces.append(_hashtag_line)
+    except Exception:  # noqa: BLE001 — hashtags must never block an upload
+        pass
     disclosure = (config.youtube.synthetic_disclosure or "").strip()
     if disclosure:
         pieces.append(disclosure)
@@ -392,8 +438,9 @@ def build_short_metadata(
         or getattr(config, "name", "")
     )
     headline = hook.strip() if hook else f"Ep {episode_num} highlight"
-    title_seed = f"{headline} | {rss_title} #Shorts"
-    title = _truncate(title_seed.strip(), YOUTUBE_TITLE_MAX)
+    # Same front-loaded builder as long-form; keeps the #Shorts classifier
+    # hint even when the headline is long.
+    title = _build_seo_title(headline, rss_title, suffix="#Shorts")
 
     pieces: List[str] = [headline]
     if long_form_url:
