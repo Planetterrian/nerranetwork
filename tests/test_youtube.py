@@ -901,3 +901,27 @@ def test_append_youtube_line_idempotent():
     )
     # No second occurrence appended.
     assert out.count("https://www.youtube.com/watch?v=abc") == 1
+
+
+def test_long_form_tags_include_per_episode_entities():
+    """Per-episode entity tags (from the hook) must lead the tag list, ahead
+    of the show's static tags — so each upload's tags reflect its topic."""
+    config = _make_config()
+    meta = vm.build_long_form_metadata(
+        config, episode_num=3, today_str="2026-06-02",
+        hook="Tesla Cybercab gets a wireless FSD update",
+        digest_text="body", audio_url="https://x/a.mp3",
+    )
+    assert "tesla cybercab" in meta["tags"]
+    assert "fsd" in meta["tags"]
+    # Tags stay within YouTube's cap.
+    assert len(",".join(meta["tags"])) <= vm.YOUTUBE_TAG_TOTAL_MAX
+
+
+def test_short_tags_include_per_episode_entities():
+    config = _make_config()
+    meta = vm.build_short_metadata(
+        config, episode_num=3, today_str="2026-06-02",
+        hook="OpenAI ships a new Cybercab model", long_form_url="https://youtu.be/x",
+    )
+    assert "openai" in meta["tags"]

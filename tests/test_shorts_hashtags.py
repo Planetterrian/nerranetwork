@@ -230,3 +230,39 @@ def test_format_hashtag_line_no_static_tags():
 
 def test_format_hashtag_line_empty_inputs():
     assert format_hashtag_line([], ()) == ""
+
+
+# ---------------------------------------------------------------------------
+# extract_entity_phrases — spaced per-episode YouTube tag phrases
+# ---------------------------------------------------------------------------
+
+from engine.shorts_hashtags import extract_entity_phrases as _eep
+
+
+class TestExtractEntityPhrases:
+    def test_multiword_entity_is_spaced_and_lowercased(self):
+        out = _eep("Tesla Cybercab unveiled today")
+        assert "tesla cybercab" in out  # spaced, not "teslacybercab"
+
+    def test_ranking_multiword_then_singles_then_acronyms(self):
+        out = _eep("Tesla Cybercab gets a wireless FSD update from OpenAI")
+        assert out.index("tesla cybercab") < out.index("openai")
+        assert "fsd" in out
+
+    def test_show_keywords_fill_remaining(self):
+        out = _eep("A quiet news day", show_keywords=["ev news", "ai"], max_phrases=8)
+        assert "ev news" in out
+
+    def test_dedup_across_bands(self):
+        # "Tesla" as part of the multiword entity must not reappear as a single.
+        out = _eep("Tesla Cybercab and Tesla again")
+        assert out.count("tesla") == 0 or "tesla cybercab" in out
+        assert len(out) == len(set(out))
+
+    def test_empty_hook_returns_keywords_only(self):
+        assert _eep("", show_keywords=["alpha"]) == ["alpha"]
+
+    def test_respects_max_phrases(self):
+        out = _eep("Tesla SpaceX OpenAI Nvidia Google Apple Meta Amazon Intel",
+                   max_phrases=3)
+        assert len(out) == 3

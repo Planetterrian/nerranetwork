@@ -274,3 +274,64 @@ def format_hashtag_line(
     parts = [f"#{b}" for b in hashtag_bodies if b]
     parts.extend(static_tags)
     return " ".join(parts)
+
+
+def extract_entity_phrases(
+    hook: str,
+    *,
+    show_keywords: Optional[Sequence[str]] = None,
+    max_phrases: int = 8,
+) -> List[str]:
+    """Per-episode YouTube tag phrases — SPACED + lowercased.
+
+    Unlike :func:`extract_hashtags` (which CamelCase-joins tokens for use after
+    a ``#``), this keeps spaces so the result reads as natural search tags
+    ("tesla cybercab", not "TeslaCybercab"). Used to augment a show's static
+    ``youtube.tags`` with the day's specific entities, so every episode's tag
+    set reflects its actual topic — applies to any YouTube-enabled show.
+
+    Ranking (deduped case-insensitively across bands): multi-word Title-Case
+    entities first, then single proper nouns, then acronyms, then the show's
+    own keywords to fill remaining slots.
+    """
+    out: List[str] = []
+    seen: set = set()
+
+    def _add(phrase: str) -> None:
+        p = " ".join(phrase.split()).strip().lower()
+        if p and p not in seen:
+            seen.add(p)
+            out.append(p)
+
+    def _edge_strip(tok: str) -> str:
+        return tok.strip(".,!?:;\"'()[]{}")
+
+    tokens = (hook or "").split()
+    # 1) multi-word Title-Case runs ("Tesla Cybercab")
+    i = 0
+    while i < len(tokens):
+        if _is_proper_noun(tokens[i]):
+            run = [tokens[i]]
+            j = i + 1
+            while j < len(tokens) and _is_proper_noun(tokens[j]):
+                run.append(tokens[j])
+                j += 1
+            if len(run) >= 2:
+                _add(" ".join(_edge_strip(t) for t in run))
+            i = j
+        else:
+            i += 1
+    # 2) single proper nouns
+    for t in tokens:
+        if _is_proper_noun(t):
+            _add(_edge_strip(t))
+    # 3) acronyms (TSLA, FSD, ...)
+    for t in tokens:
+        if _is_acronym(t):
+            _add(_edge_strip(t))
+    # 4) show keywords fill remaining slots
+    for kw in (show_keywords or []):
+        _add(str(kw))
+
+    return out[:max_phrases]
+
