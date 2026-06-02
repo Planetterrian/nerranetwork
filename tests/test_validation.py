@@ -392,3 +392,27 @@ class TestPrebuiltConfigs:
     def test_ov_config(self):
         config = ov_validation_config()
         assert len(config.sections) > 0
+
+
+def test_ov_top_stories_matches_real_header():
+    """Omni View's digest header is '## Top stories (5)' (level-2, lowercase,
+    count suffix). The old `### Top \\d+` pattern never matched it, so 'Top
+    Stories missing' fired a full digest regenerate on EVERY episode (Ep068
+    ~232s). Pin the corrected pattern against the real header shape."""
+    digest = (
+        "# Omni View\n\n**HOOK:** Something happened.\n\n"
+        "## Top stories (5)\n"
+        "### 1) A neutral headline about the lead story today\n"
+        "**What happened (neutral):** Plain-language summary of the event.\n"
+        "**Steel-man each side:** The strongest case for one side rests on X. "
+        "The strongest case for the other rests on Y.\n\n"
+        "### 2) A second neutral headline covering another major story\n"
+        "**What happened (neutral):** Another summary here.\n"
+        "**Steel-man each side:** Both sides framed fairly here.\n\n"
+        "### 3) Third headline\n**What happened (neutral):** x.\n**Steel-man each side:** y.\n\n"
+        "### 4) Fourth headline\n**What happened (neutral):** x.\n**Steel-man each side:** y.\n\n"
+        "### 5) Fifth headline\n**What happened (neutral):** x.\n**Steel-man each side:** y.\n\n"
+        "## Top world stories (2)\n### 6) World headline\n**What happened (neutral):** z.\n"
+    )
+    passed, issues, _ = validate_digest(digest, ov_validation_config())
+    assert not any("Top Stories" in i for i in issues), issues
