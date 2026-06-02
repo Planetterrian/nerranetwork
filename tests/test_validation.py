@@ -17,8 +17,66 @@ from engine.validation import (
     ov_validation_config,
     mab_validation_config,
     ma_validation_config,
+    ei_validation_config,
+    mi_validation_config,
 )
 import re as _re
+
+
+def _structural(issues):
+    """Mirror run_show._empty_mandatory_section_issues."""
+    return [i for i in issues if _re.search(r":\s*0\s+(?:items|chars)", i)]
+
+
+class TestProseSectionStructuralGuardNetworkWide:
+    """Many shows lead with a PROSE feature (FF 'Cosmic Spotlight', PT
+    'Planetterrian Spotlight', EI 'Lead Story', MI 'Strategy Spotlight')
+    set to min_items>=1. Those have no **bold** items, so the item-counter
+    returns 0 and run_show used to force a wasteful digest regenerate on
+    every episode (FF Ep087 confirmed). The prose-aware guard suppresses the
+    '0 items' signal when real prose is present; a genuinely empty section
+    still triggers the regenerate.
+    """
+
+    _PROSE = ("This is a substantial prose lead with real content. " * 8)
+
+    def _digest(self, header, body):
+        return f"# Show\n\n{header}\n{body}\n"
+
+    def test_ff_prose_cosmic_spotlight_not_structural(self):
+        d = (
+            "# FF\n\n### Top 15 Space Stories\n"
+            + "".join(f"{i}. **Story {i} headline goes here**\n   Body text.\n"
+                     for i in range(1, 9))
+            + "\n━━━━\n### Cosmic Spotlight\n" + self._PROSE + "\n"
+        )
+        _, issues, _ = validate_digest(d, ff_validation_config())
+        assert not [i for i in _structural(issues) if "Cosmic Spotlight" in i]
+
+    def test_ff_empty_cosmic_spotlight_still_structural(self):
+        d = ("# FF\n\n### Top 15 Space Stories\n1. **A headline here today**\n   B.\n"
+             "\n━━━━\n### Cosmic Spotlight\n\n")
+        _, issues, _ = validate_digest(d, ff_validation_config())
+        assert [i for i in _structural(issues) if "Cosmic Spotlight" in i]
+
+    def test_pt_ei_mi_prose_leads_not_structural(self):
+        for cfg, header, name in [
+            (pt_validation_config(), "### Planetterrian Spotlight", "Planetterrian Spotlight"),
+            (ei_validation_config(), "### Lead Story", "Lead Story"),
+            (mi_validation_config(), "### Strategy Spotlight", "Strategy Spotlight"),
+        ]:
+            _, issues, _ = validate_digest(self._digest(header, self._PROSE), cfg)
+            assert not [i for i in _structural(issues) if name in i], name
+
+    def test_list_section_thin_count_still_warns(self):
+        # A list section below target (but non-zero) still gets the soft
+        # item-count warning — the guard only suppresses the 0-items case.
+        cfg = ValidationConfig(sections=[
+            SectionRule(name="Stories", pattern=r"(?:### Stories)(.*?)(?=$)", min_items=5),
+        ])
+        d = "# X\n\n### Stories\n1. **First headline here**\n2. **Second headline here**\n"
+        issues = check_item_counts(d, cfg.sections)
+        assert any("Stories" in i and "2 items" in i for i in issues)
 
 
 class TestMaTopStoryProse:
