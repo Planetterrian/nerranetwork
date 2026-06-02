@@ -483,6 +483,11 @@ class ShowConfig:
     description: str = ""
     sources: List[SourceConfig] = field(default_factory=list)
     x_accounts: List[XAccountConfig] = field(default_factory=list)
+    # X *sourcing* toggle, independent of X *posting* (publishing.x_enabled).
+    # None = inherit x_enabled (back-compat); True/False = explicit override.
+    # Lets a non-posting show (e.g. MAB) still read its curated X accounts
+    # for content. See engine.fetcher.x_fetch_allowed.
+    x_fetch_enabled: Optional[bool] = None
     keywords: List[str] = field(default_factory=list)
     web_search_queries: List[str] = field(default_factory=list)
     min_articles: int = 3  # Minimum articles before expanding search
@@ -672,6 +677,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         description=data.get("description", ""),
         sources=_build_sources(data.get("sources")),
         x_accounts=_build_x_accounts(data.get("x_accounts")),
+        x_fetch_enabled=data.get("x_fetch_enabled"),
         keywords=data.get("keywords", []),
         web_search_queries=data.get("web_search_queries", []),
         min_articles=data.get("min_articles", 3),

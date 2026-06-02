@@ -299,3 +299,33 @@ class TestPatternCoverage:
         once = scrub_scaffold(text)
         twice = scrub_scaffold(once)
         assert once == twice
+
+
+# ---------------------------------------------------------------------------
+# 'Source Name' placeholder leak (MAB Cool-Stuff title template)
+# ---------------------------------------------------------------------------
+
+class TestSourceNamePlaceholderScrub:
+    """MAB's digest prompt used to template ``Title: Source Name``; the model
+    echoed the literal placeholder (committed MAB Ep056 + Ep057 retry). The
+    prompt is fixed, but the sanitizer scrubs any that slip through before a
+    subscriber sees it."""
+
+    def test_strips_trailing_colon_source_name(self):
+        out = scrub_scaffold("Redesign your room with Claude:** Source Name")
+        assert "Source Name" not in out
+        assert "Redesign your room with Claude" in out
+
+    def test_strips_plain_colon_source_name(self):
+        out = scrub_scaffold("A fun new tool: Source Name")
+        assert "Source Name" not in out
+        assert "A fun new tool" in out
+
+    def test_strips_bare_source_name_line(self):
+        out = scrub_scaffold("**Source Name**")
+        assert "Source Name" not in out
+
+    def test_real_prose_unaffected(self):
+        # Defensive: ordinary sentences must survive untouched.
+        s = "The model remembers the whole book at once."
+        assert scrub_scaffold(s) == s

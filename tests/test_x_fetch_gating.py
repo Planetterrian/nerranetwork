@@ -1,93 +1,72 @@
-"""Verify X-post fetching is gated by ``publishing.x_enabled``.
+"""Verify X-post *fetching* is gated correctly, decoupled from X *posting*.
 
-Before May 12 2026 the ``_run_x_fetch()`` closure in run_show.py
-gated only on ``config.x_accounts`` — so any show that had
-accounts configured ran the X API call on every cron tick, even
-when X posting was disabled for that show. Six shows fit this
-shape (Env Intel, MAB, M&A pre-PR, FP, PR, MIT pre-PR) and were
-silently spending X API quota for content that was never used.
+History:
+  - Before May 12 2026 ``_run_x_fetch()`` gated only on ``x_accounts`` —
+    so shows with accounts configured ran the X API call every tick even
+    with posting off, spending quota on unused content.
+  - May 12 2026: gated on ``publishing.x_enabled`` too.
+  - May 2026 (MAB sourcing audit): that coupling ALSO killed X as a
+    *content source* for non-posting shows (MAB had collapsed onto
+    RSS-only). The gate now lives in ``engine.fetcher.x_fetch_allowed``
+    and a show opts X sourcing back in with ``x_fetch_enabled: true`` —
+    independent of whether it posts. Unset still inherits ``x_enabled``,
+    so every other show is unchanged.
 
-The gate is now ``not x_accounts or not publishing.x_enabled`` so
-both flags must agree before the API call goes out. These tests
-pin the new contract.
+These tests pin the real ``x_fetch_allowed`` helper (no test-only copy).
 """
 
-from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
-
-
-def _make_config(*, x_accounts, x_enabled):
-    """Build a minimal config namespace matching what run_show uses."""
-    return SimpleNamespace(
-        x_accounts=x_accounts,
-        keywords=["test", "keywords"],
-        publishing=SimpleNamespace(x_enabled=x_enabled),
-    )
-
-
-def _fetch_under_gate(config):
-    """Replica of the gate logic in run_show.py:_run_x_fetch().
-
-    Kept here as a test-only copy because the production function is
-    a closure inside run() — not importable. The gate predicate is
-    one line; pinning it here guards against silent regression."""
-    if not config.x_accounts or not config.publishing.x_enabled:
-        return []
-    from engine.fetcher import fetch_x_posts
-    return fetch_x_posts(config.x_accounts, keywords=config.keywords)
+from engine.fetcher import x_fetch_allowed
 
 
 def test_skip_when_no_accounts():
-    """Empty x_accounts → no fetch, no API call."""
-    cfg = _make_config(x_accounts=[], x_enabled=True)
-    with patch("engine.fetcher.fetch_x_posts") as mock_fetch:
-        result = _fetch_under_gate(cfg)
-    assert result == []
-    mock_fetch.assert_not_called()
+    """Empty x_accounts → never fetch, regardless of flags."""
+    assert x_fetch_allowed([], True, True) is False
+    assert x_fetch_allowed([], True, None) is False
 
 
-def test_skip_when_x_posting_disabled():
-    """x_accounts configured but x_enabled=False → no fetch.
-
-    This is the May 12 2026 fix. The previous code only checked
-    accounts; this assertion would have failed before the fix."""
-    cfg = _make_config(x_accounts=["@example"], x_enabled=False)
-    with patch("engine.fetcher.fetch_x_posts") as mock_fetch:
-        result = _fetch_under_gate(cfg)
-    assert result == []
-    mock_fetch.assert_not_called()
+def test_default_inherits_x_enabled():
+    """x_fetch_enabled unset (None) → behaves exactly like the old gate:
+    fetch iff x_enabled. Pins back-compat for every non-opted-in show."""
+    assert x_fetch_allowed(["@a"], True, None) is True
+    assert x_fetch_allowed(["@a"], False, None) is False
 
 
-def test_fetch_when_both_configured():
-    """Accounts + posting both on → fetch runs."""
-    cfg = _make_config(x_accounts=["@example"], x_enabled=True)
-    with patch("engine.fetcher.fetch_x_posts", return_value=[{"id": 1}]) as mock_fetch:
-        result = _fetch_under_gate(cfg)
-    assert result == [{"id": 1}]
-    mock_fetch.assert_called_once_with(["@example"], keywords=["test", "keywords"])
+def test_explicit_override_enables_fetch_without_posting():
+    """The MAB fix: posting off (x_enabled False) but x_fetch_enabled True
+    → fetch the curated accounts for content anyway."""
+    assert x_fetch_allowed(["@a"], False, True) is True
 
 
-def test_skip_when_both_disabled():
-    """Neither flag set → no fetch (degenerate case but worth pinning)."""
-    cfg = _make_config(x_accounts=[], x_enabled=False)
-    with patch("engine.fetcher.fetch_x_posts") as mock_fetch:
-        result = _fetch_under_gate(cfg)
-    assert result == []
-    mock_fetch.assert_not_called()
+def test_explicit_override_can_disable_fetch_while_posting():
+    """x_fetch_enabled False wins even if the show posts (x_enabled True)."""
+    assert x_fetch_allowed(["@a"], True, False) is False
 
 
-def test_yaml_state_shows_with_x_disabled_have_dormant_accounts():
-    """The four shows that keep X posting off (Env Intel, MAB, FP,
-    PR) all still have ``x_accounts`` configured in their YAML —
-    they just won't fetch any more. Pinning so a future YAML edit
-    that removes ``x_accounts`` to "fix" this isn't needed (and
-    so re-enabling X on these shows later is a single-flag flip)."""
+def test_mab_resolves_to_fetch_enabled_from_yaml():
+    """MAB posts to nobody (x_enabled False) but opts into X sourcing
+    (x_fetch_enabled True), so the gate now ALLOWS the fetch — reversing
+    the dormant-accounts behaviour for this show specifically."""
     from engine.config import load_config
 
-    for slug in ("env_intel", "models_agents_beginners", "finansy_prosto", "privet_russian"):
+    cfg = load_config("shows/models_agents_beginners.yaml")
+    assert cfg.publishing.x_enabled is False
+    assert cfg.x_fetch_enabled is True
+    assert cfg.x_accounts, "MAB must keep its curated X accounts"
+    assert x_fetch_allowed(
+        cfg.x_accounts, cfg.publishing.x_enabled, cfg.x_fetch_enabled
+    ) is True
+
+
+def test_other_non_posting_shows_stay_dormant():
+    """Shows that did NOT opt in (no x_fetch_enabled) still don't fetch
+    while posting is off — unchanged behaviour."""
+    from engine.config import load_config
+
+    for slug in ("env_intel", "finansy_prosto", "privet_russian"):
         cfg = load_config(f"shows/{slug}.yaml")
-        # X disabled — gate should block fetch.
-        assert cfg.publishing.x_enabled is False, (
-            f"{slug}: expected x_enabled False (gate blocks fetch); "
-            f"if you re-enable, update this test."
-        )
+        assert cfg.publishing.x_enabled is False
+        # Not opted in → inherits x_enabled=False → no fetch.
+        assert x_fetch_allowed(
+            cfg.x_accounts, cfg.publishing.x_enabled,
+            getattr(cfg, "x_fetch_enabled", None),
+        ) is False

@@ -163,6 +163,12 @@ _RAW_RULES: List[Tuple[str, str, str]] = [
     (r"(?im)^\s*Source:\s*General concept\s*\n?", "", "Source: General concept"),
     (r"\(full URL from pre-fetched:\s*[^)]*\)", "", "(full URL from pre-fetched: …)"),
     (r"\(full URL from pre[ -]?fetched\s*[^)]*\)", "", "(full URL from pre-fetched: variant)"),
+    # MAB "Cool Stuff" title template used to end ``: Source Name`` — the
+    # model echoed the literal placeholder (committed in MAB Ep056 + the
+    # Ep057 retry). The prompt no longer carries it; this scrubs any that
+    # already leaked or slip through (``Title:** Source Name`` / ``Title: Source Name``).
+    (r"(?i)\s*:\*{0,2}\s*Source Name\b", "", "': Source Name' placeholder"),
+    (r"(?im)^\s*\*{0,2}Source Name\*{0,2}\s*$", "", "bare 'Source Name' line"),
     # NOTE: box-drawing horizontal rules (━━━ / ─── / ═══) are NOT
     # scrubbed here — they're converted to proper ``<hr>`` separators
     # by ``engine.newsletter_body.replace_box_rules_with_hr`` in the

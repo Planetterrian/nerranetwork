@@ -535,6 +535,15 @@ def _validate_llm_output(
             tokens = phrase.split()
             if all(len(t) <= 3 for t in tokens):
                 continue
+            # Skip speaker-attribution bigrams (e.g. "host: the", "patrick:
+            # this", "olya: now"): the first token is a dialogue label ending
+            # in a colon, so the repeat is the script format, not a
+            # hallucination. The enumerated allowlist only covered the bold
+            # "**host:**" / named "patrick:" forms — a plain "Host:" label
+            # (Models & Agents) slipped through and triggered wasteful
+            # repetition retries that can't fix a format artifact.
+            if tokens and tokens[0].endswith(":"):
+                continue
             # Skip date-shape fragments — purely structural, not hallucination.
             if _is_date_fragment(phrase):
                 continue
@@ -590,6 +599,11 @@ def _validate_llm_output(
                 continue
             tokens = phrase.split()
             if all(len(t) <= 3 for t in tokens):
+                continue
+            # Speaker-attribution trigrams (e.g. "host: the first") are a
+            # dialogue-format artifact, not hallucination — see the bigram
+            # loop above.
+            if tokens and tokens[0].endswith(":"):
                 continue
             if any(p.match(phrase) for p in _PEDAGOGICAL_TRIGRAM_PATTERNS):
                 continue

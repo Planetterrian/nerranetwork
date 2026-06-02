@@ -15,7 +15,83 @@ from engine.validation import (
     ff_validation_config,
     pt_validation_config,
     ov_validation_config,
+    mab_validation_config,
+    ma_validation_config,
 )
+import re as _re
+
+
+class TestMaTopStoryProse:
+    """Models & Agents' 'Top Story' is a 4-6 sentence PROSE lead, not a list.
+    The old min_items=1 forced a regenerate that shrank the digest (Ep066:
+    12.9k -> 9.0k chars). Now validated by length."""
+
+    _FULL = (
+        "# M&A\n\n### Top Story\n"
+        "OpenAI's model cracked an 80-year math problem by leaning on structured "
+        "reasoning rather than brute force. It beat prior methods on the benchmark "
+        "by a wide margin. Builders can try the approach through the API today. "
+        "Watch for follow-up releases as other labs respond over the coming weeks.\n\n"
+        "━━━━\n### Model Updates\n**A new model**\nDetails here.\n"
+    )
+    _EMPTY = "# M&A\n\n### Top Story\n\n### Model Updates\n**X**\nY.\n"
+
+    def test_full_prose_top_story_not_flagged(self):
+        _, issues, _ = validate_digest(self._FULL, ma_validation_config())
+        assert not [i for i in issues if "Top Story" in i]
+
+    def test_empty_top_story_flags_zero_chars(self):
+        _, issues, _ = validate_digest(self._EMPTY, ma_validation_config())
+        ts = [i for i in issues if "Top Story" in i]
+        assert any(_re.search(r":\s*0\s+chars", i) for i in ts)
+
+
+class TestMabBigStoryProse:
+    """MAB's 'The Big Story' is an 8-12 sentence PROSE section, not a bullet
+    list. The old ``min_items=1`` counted ``**bold**`` items, found 0 on a
+    perfectly good prose section, and forced a wasteful (quality-degrading)
+    digest regenerate on essentially every episode. It's now validated by
+    ``min_chars`` instead.
+    """
+
+    _FULL = (
+        "# MAB\n\n### The Big Story\n"
+        "A new open AI model just launched with a million-token memory. Imagine "
+        "reading an entire book and remembering every page at once. Until now, "
+        "models forgot the start of long chats. This matters for students across "
+        "a whole textbook. You can try a free version today on the model's site.\n\n"
+        "━━━━\n### Cool Stuff & Try This\n"
+        "**A fun image tool**\nIt turns sketches into art.\n"
+    )
+    _EMPTY = "# MAB\n\n### The Big Story\n\n### Cool Stuff & Try This\n**Tool**\nBody.\n"
+
+    def _struct(self, issues):
+        # Mirror run_show._empty_mandatory_section_issues.
+        return [i for i in issues if _re.search(r":\s*0\s+(?:items|chars)", i)]
+
+    def test_full_prose_big_story_not_flagged(self):
+        _, issues, _ = validate_digest(self._FULL, mab_validation_config())
+        assert not [i for i in issues if "The Big Story" in i]
+        assert self._struct(issues) == []  # no structural regenerate
+
+    def test_empty_big_story_flags_zero_chars_and_triggers_regenerate(self):
+        _, issues, _ = validate_digest(self._EMPTY, mab_validation_config())
+        bs = [i for i in issues if "The Big Story" in i]
+        assert any(_re.search(r":\s*0\s+chars", i) for i in bs)
+        assert self._struct(issues)  # structural regenerate fires
+
+    def test_min_chars_field_on_section_rule(self):
+        rule = SectionRule(name="x", pattern=r"### x(.*)$", min_chars=100)
+        assert rule.min_chars == 100 and rule.min_items == 0
+
+
+def test_mab_digest_prompt_has_no_source_name_placeholder():
+    """The 'Cool Stuff' title template used to end ': Source Name', which the
+    model echoed verbatim into digests/blog/newsletter. It must not return."""
+    from pathlib import Path
+
+    text = Path("shows/prompts/mab_digest.txt").read_text(encoding="utf-8")
+    assert "Source Name" not in text
 from engine.content_tracker import TST_SECTION_PATTERNS, FF_SECTION_PATTERNS
 
 
