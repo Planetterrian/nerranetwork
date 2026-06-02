@@ -1,0 +1,193 @@
+What's up — welcome to Models and Agents, episode sixty-seven, on June second, twenty twenty-six.
+
+Let's see what shipped.
+
+There's signal and noise in A I every day.
+
+Let's get to the signal.
+
+Enterprise teams can now run governed A I agents inside existing procurement systems instead of leaking data to personal ChatGPT accounts.
+
+Zip launched five Superagents plus a native M C P implementation that keeps every action inside compliance controls.
+
+Alibaba released Qwen3.7-Plus with vision, tool use, and autonomous iteration.
+
+JetBrains shipped Mellum2, a twelve billion parameter mixture of experts model aimed at specialized coding workflows.
+
+En-vidia expanded its agent tooling for both PCs and enterprise deployments.
+
+Zip announced five Superagents and a procurement-native Model Context Protocol implementation.
+
+The implementation connects its platform directly to Claude, ChatGPT, and other M C P compatible assistants while preserving roles, permissions, and full audit trails.
+
+The agents run on a shared LangGraph-based execution engine with separate preprocessing, orchestration, synthesis, and post-processing nodes.
+
+The orchestration node uses a ReAct loop to decide between vector search, structured A P I calls, or policy lookups.
+
+Every high-impact action still routes through human checkpoints.
+
+The system explicitly avoids training on customer data via zero-retention agreements with model providers.
+
+Procurement teams at Open A I, An-thropic, Block, and Snowflake are already using the platform.
+
+An-thropic doubled its procurement volume without adding headcount.
+
+The Superagents and M C P server are in beta now, with general availability expected this summer.
+
+This development continues the maturation of agent tool use and the M C P interoperability layer that the show has been tracking.
+
+Attentive listeners should watch for how other platforms adopt similar governed execution patterns.
+
+Alibaba’s Chwen team released Qwen3.7-Plus on the Bailian platform.
+
+The model adds vision and video understanding, deep reasoning, tool invocation, and autonomous iteration capabilities.
+
+It is positioned for self-programming and multi-step agent workflows rather than pure chat.
+
+No parameter count or benchmark numbers were disclosed in the announcement.
+
+Builders working on vision-grounded agents should test the Bailian integration this week.
+
+JetBrains released Mellum2, a twelve billion parameter mixture of experts model.
+
+It was trained on ten point six trillion tokens and licensed under Apache two point zero.
+
+The model targets A I assisted coding workflows where low latency matters more than frontier reasoning depth.
+
+No M M L U or coding-specific benchmarks were shared.
+
+Developers already inside JetBrains tools should try swapping it into existing agent chains for narrow code-editing subtasks.
+
+This open-weight release fits the ongoing narrowing of the performance gap with closed frontier models.
+
+Open A I frontier models and Codex are now generally available on Amazon Bedrock.
+
+Enterprises can use existing security, compliance, and governance workflows without new integrations.
+
+The move also signals future availability of cybersecurity capabilities such as Daybreak.
+
+No pricing or specific model versions were listed.
+
+Teams already on Bedrock should evaluate whether routing Open A I calls through the service reduces their current compliance overhead.
+
+A developer ran a multi-agent orchestrator on Qwenthree point six to twenty-sevenB via Ollama on a single three thousand ninety graphics card for two weeks.
+
+Plan generation stayed close to Claude quality while tool-call format errors hit roughly twelve percent.
+
+Long-context drift appeared past fourteen thousand tokens.
+
+The test showed the model works as a planner when every tool call is gated, but not as an autonomous executor.
+
+En-vidia released new tools aimed at enterprise A I agents.
+
+The announcement builds on its existing agentic A I PC and data-center platforms.
+
+It emphasizes support across literally every computer maker for the RTX Spark agentic platform.
+
+No specific S D K names, install commands, or benchmark numbers were provided.
+
+Teams evaluating on-device agents should watch for the first public RTX Spark S D K release.
+
+Jensen Huang positioned RTX Spark as an attempt to reinvent the single most important tool of humanity.
+
+The platform targets local agent execution rather than cloud-only workflows.
+
+No concrete performance numbers or early-access program details were released.
+
+Developers building local agents should monitor partner PC announcements for the first devices shipping with the stack.
+
+Simon Willison reported that the Codex desktop app has been updated and restored.
+
+The update returns local Codex functionality after a period of unavailability.
+
+No version number or changelog details were shared.
+
+Users who rely on the desktop client should reinstall and test current compatibility with their local workflows.
+
+GitHub switched Copilot to token-based billing.
+
+Early users are reporting price increases compared with the previous flat monthly rate.
+
+The change took effect the day after the April announcement window closed.
+
+No exact per-token rates or organization-level examples were published.
+
+Teams should audit their current usage patterns before the next billing cycle.
+
+Hugging Face’s Niels Rogge added conference support to paperswithcode dot co.
+
+The site now indexes all CVPR twenty twenty-six papers with arXiv IDs, task categories, GitHub links, and Hugging Face artifacts.
+
+Users can filter accepted oral and spotlight papers.
+
+Researchers preparing for next week’s conference can use the new view to quickly surface relevant agent and multimodal work.
+
+A new benchmark tested five frontier models on twenty real CVEs across eighteen Python projects.
+
+Agents were scored on whether they produced a correct security patch that also passed hidden regression tests.
+
+Best solve rate reached fifty percent overall and sixty percent under full advisory prompts.
+
+No model reliably identified vulnerabilities from file-and-function hints alone.
+
+The work highlights that passing tests does not guarantee the vulnerability is closed.
+
+OK, let's pop the hood on non-koo-dah inference realities.
+
+Everyone talks about running local agents as if koo-dah is the only practical path.
+
+In practice, SYCL and ROCm backends force different memory layouts and kernel choices that change both throughput and developer effort.
+
+On Intel Arc hardware, Qwenthree point six to thirty-fiveB-A3B reached nine hundred seventy-seven tokens per second prompt processing at Q4_K with a two hundred sixty-two thousand context window.
+
+That result came only after careful ngl and thread tuning.
+
+The same workload on ROCm still requires manual workarounds for MI50 cards and lacks mature flash-attention equivalents.
+
+The quality gap is smaller than the tooling gap.
+
+Models themselves run, yet missing optimized kernels for common agent operations like structured JSON decoding or long-context summarization keep non-koo-dah stacks behind.
+
+When the workload is a small number of parallel thirty billion class agents and you already own the hardware, the non-koo-dah route is worth the extra setup time.
+
+Otherwise the koo-dah ecosystem still wins on both speed of iteration and library availability.
+
+The gotcha that bites most teams is assuming a working Lah-mah.cpp binary means production-ready agent throughput.
+
+Test Zip’s M C P server inside Claude or ChatGPT if your team already uses procurement tools.
+
+It surfaces governed data without leaving audit trails.
+
+Try Qwen3.7-Plus on Bailian for any vision-plus-tool-use agent loop you have been running on Claude three point five.
+
+Swap Mellum2 into a narrow code-editing sub-agent inside an existing JetBrains workflow to measure latency versus larger models.
+
+Run the CVE-Bench tasks against your current agent setup to see where it fails the hidden regression tests even when surface tests pass.
+
+Check the new paperswithcode dot co CVPR view for agent-related papers before the conference next week.
+
+Zip Superagents and M C P move from beta to general availability this summer.
+
+First RTX Spark-enabled PCs are expected from multiple hardware partners in the coming months.
+
+CVPR twenty twenty-six begins next week in Denver with new agent and multimodal tracks.
+
+Further Open A I capability expansions on AWS Bedrock, including Daybreak cybersecurity features, are planned but undated.
+
+Tomorrow, keep an eye on the first public RTX Spark S D K release and any early partner PC announcements.
+
+That wraps up today's A I briefing.
+
+Share this with a developer or builder who wants to stay current.
+
+Subscribe wherever you listen.
+
+See you tomorrow.
+
+And before you go — this show is part of the Nerra Network, a family of daily podcasts covering tech, science, markets, and more.
+
+If you enjoyed today's episode, give Modern Investing Techniques a listen: modern strategies for Canadian and U.S. investors.
+
+You can explore the whole lineup at nerranetwork dot com.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
