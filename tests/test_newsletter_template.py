@@ -601,10 +601,12 @@ def test_reply_share_renders_three_intents():
     show = nt._load_show_branding("tesla")
     out = nt._build_reply_share_html(show)
     assert "Reply to this email" in out
-    assert "Share on X" in out
-    assert "Share on LinkedIn" in out
-    assert "Share on WhatsApp" in out
-    # Twitter intent uses query params.
+    # Share intents are now a subtle "Share: X · LinkedIn · WhatsApp" text
+    # line (not competing pill buttons), but all three intents still render.
+    assert "Share:" in out
+    assert ">X</a>" in out
+    assert ">LinkedIn</a>" in out
+    assert ">WhatsApp</a>" in out
     assert "twitter.com/intent/tweet" in out
     assert "linkedin.com/sharing" in out
     assert "wa.me" in out
@@ -646,7 +648,7 @@ def test_wrap_with_branding_full_render_order_with_engagement_blocks():
     body = out.find("## Body content")
     p_s = out.find("One more thing.")
     cross = out.find("Across the Nerra Network")
-    share = out.find("Share on X")
+    share = out.find("Share:")
     foot = out.find("Listen to the podcast")
     # Documented block order (preheader → hero → stats → featured →
     # body → p_s → cross-network → reply/share → footer).
@@ -663,7 +665,7 @@ def test_wrap_with_branding_omits_engagement_blocks_by_default():
     )
     assert "10 minutes" not in out
     assert "Across the Nerra Network" not in out
-    assert "Share on X" not in out
+    assert "Share:" not in out
 
 
 def test_wrap_with_branding_show_reply_share_default_is_on():
