@@ -891,19 +891,23 @@ def _build_cross_network_html(
         )
     if not rows:
         return ""
+    # Light treatment: white background + a thin top rule instead of a solid
+    # slate "card", so this reads as a quiet "more from the network" list near
+    # the foot of the email rather than another competing panel.
     return (
         '<table role="presentation" width="100%" cellpadding="0" '
         'cellspacing="0" border="0" '
-        'class="surface-f8fafc" '
-        'style="background:#f8fafc;">'
+        'class="surface-white" '
+        'style="background:#ffffff;">'
         '<tr><td '
-        'style="padding:24px;'
+        'style="padding:8px 24px 4px;border-top:1px solid #e2e8f0;'
         "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
         'Roboto,Helvetica,Arial,sans-serif;">'
         '<div class="text-muted" '
         'style="font-size:11px;font-weight:700;color:#475569;'
-        'letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">'
-        '🌐 Across the Nerra Network'
+        'letter-spacing:0.08em;text-transform:uppercase;'
+        'margin:16px 0 4px;">'
+        '🌐 More from the Nerra Network'
         '</div>'
         '<table role="presentation" width="100%" cellpadding="0" '
         'cellspacing="0" border="0">'
