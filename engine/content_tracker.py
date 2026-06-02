@@ -742,32 +742,44 @@ class ContentTracker:
         articles: List[Dict],
         similarity_threshold: float = 0.65,
         days: Optional[int] = None,
+        url_days: Optional[int] = None,
     ) -> List[Dict]:
         """Filter out articles that are too similar to recently covered stories.
 
         Uses two complementary checks:
-        1. **URL match** — catches the same story syndicated across sources
-           (different domains but identical path slug).
-        2. **Title similarity** — catches rephrased versions of the same story.
+        1. **URL match** — exact normalized-URL match means the *same article*
+           was re-fetched (publishers keep stories in their RSS feed for days,
+           so the same URL re-surfaces). This has zero false-positive risk, so
+           it uses a WIDER window (``url_days``, default 7 — matching the
+           validation-time cross-episode check ``get_recent_headlines(days=7)``).
+           Previously this used the same narrow 3-day window as title
+           similarity, so a story lingering in a feed for 4-7 days re-shipped
+           and was only caught (non-blocking) at validation. (FF Ep087.)
+        2. **Title similarity** — fuzzy, so it stays on the narrower ``days``
+           window to avoid dropping legitimately-distinct follow-up stories.
 
         More aggressive than the in-episode dedup (0.85 threshold) because
         cross-episode repetition is more noticeable to listeners.
         """
         day_window = days or 3
+        url_window = url_days or max(day_window, 7)
         recent_headlines = self.get_recent_headlines(days=day_window)
-        recent_urls = self.get_recent_urls(days=day_window)
+        recent_urls = self.get_recent_urls(days=url_window)
 
         if (not recent_headlines and not recent_urls) or not articles:
             return articles
 
         recent_norm = [norm_headline_for_similarity(h) for h in recent_headlines if h]
         filtered = []
+        url_dropped = 0
+        title_dropped = 0
         for article in articles:
             # URL-based check (exact path match ignoring query params)
             article_url = (article.get("url") or "").strip()
             if article_url and recent_urls:
                 norm_url = _normalize_url_for_dedup(article_url)
                 if norm_url and norm_url in recent_urls:
+                    url_dropped += 1
                     logger.debug(
                         "Filtering article by URL match: %s...", article_url[:80]
                     )
@@ -784,6 +796,7 @@ class ContentTracker:
                     continue
                 if calculate_similarity(norm_title, r) >= similarity_threshold:
                     is_repeat = True
+                    title_dropped += 1
                     logger.debug(
                         "Filtering recently-covered article: %s...", title[:60]
                     )
@@ -791,10 +804,12 @@ class ContentTracker:
             if not is_repeat:
                 filtered.append(article)
 
-        dropped = len(articles) - len(filtered)
+        dropped = url_dropped + title_dropped
         if dropped:
             logger.info(
-                "Filtered %d articles similar to recently covered stories", dropped
+                "Filtered %d articles similar to recently covered stories "
+                "(%d by URL ≤%dd, %d by title ≤%dd)",
+                dropped, url_dropped, url_window, title_dropped, day_window,
             )
         return filtered
 

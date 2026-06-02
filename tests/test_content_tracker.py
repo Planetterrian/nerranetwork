@@ -301,6 +301,60 @@ class TestFilterRecentArticles:
         filtered = tracker.filter_recent_articles(articles, similarity_threshold=0.65)
         assert len(filtered) == 2
 
+    def _ep(self, days_ago, headlines, urls):
+        d = (datetime.date.today() - datetime.timedelta(days=days_ago)).isoformat()
+        return {"date": d, "headlines": headlines, "urls": urls,
+                "quote_author": None, "sections": {}}
+
+    def test_url_match_drops_refetched_article_up_to_7_days(self, tmp_path):
+        """A publisher keeps a story in its feed for days; the SAME URL
+        re-surfacing 5 days later must be dropped even with the 3-day title
+        window, because URL-exact match has zero false-positive risk and uses
+        a 7-day window (matching the validation check). FF Ep087 lingering
+        almanac/news stories were missed here before."""
+        tracker = ContentTracker("test_show", tmp_path)
+        tracker.load()
+        tracker.data["episodes"].append(
+            self._ep(5, ["Pair-Instability Supernova Erases Massive Star"],
+                     ["https://space.com/pair-instability-supernova-2026"])
+        )
+        articles = [
+            # Same URL, rewritten title, 5 days old -> dropped by URL match.
+            {"title": "A completely rephrased headline about the star",
+             "url": "https://space.com/pair-instability-supernova-2026"},
+            {"title": "Brand new distinct discovery", "url": "https://space.com/fresh"},
+        ]
+        filtered = tracker.filter_recent_articles(articles, days=3)
+        urls = {a["url"] for a in filtered}
+        assert "https://space.com/pair-instability-supernova-2026" not in urls
+        assert "https://space.com/fresh" in urls
+
+    def test_title_similarity_stays_on_narrow_window(self, tmp_path):
+        """A title-similar (not URL-identical) story from 5 days ago is NOT
+        dropped under a 3-day title window — the fuzzy match must stay narrow
+        so legitimately-distinct follow-ups aren't over-filtered."""
+        tracker = ContentTracker("test_show", tmp_path)
+        tracker.load()
+        tracker.data["episodes"].append(
+            self._ep(5, ["Pair-Instability Supernova Erases Massive Star"],
+                     ["https://space.com/old-url"])
+        )
+        articles = [{"title": "Pair-Instability Supernova Erases Massive Star",
+                     "url": "https://space.com/today-different-url"}]
+        filtered = tracker.filter_recent_articles(articles, days=3)
+        assert len(filtered) == 1  # title match at 5d is beyond the 3d title window
+
+    def test_url_match_beyond_window_kept(self, tmp_path):
+        """A same-URL article older than the 7-day URL window is kept."""
+        tracker = ContentTracker("test_show", tmp_path)
+        tracker.load()
+        tracker.data["episodes"].append(
+            self._ep(9, ["Old Story"], ["https://space.com/nine-days-old"])
+        )
+        articles = [{"title": "Old Story resurfaces", "url": "https://space.com/nine-days-old"}]
+        filtered = tracker.filter_recent_articles(articles, days=3)
+        assert len(filtered) == 1
+
 
 class TestGetSummaryForPrompt:
     def test_empty_tracker_returns_empty(self, tmp_path):
