@@ -90,6 +90,29 @@ x_accounts:
 
 min_articles_skip: 4
 
+# Drop recurring almanac / evergreen content that Space.com, Astronomy.com,
+# etc. republish daily — moon calendars, "planets visible this month"
+# roundups, "this day in history" anniversaries, supermoon/blue-moon photo
+# galleries, telescope-deal posts. These kept shipping as 100%-identical
+# cross-episode repeats (FF Ep087 had 12). Case-insensitive regex on title;
+# tune as needed. See engine.utils.drop_excluded_titles.
+exclude_title_patterns:
+  - 'full moon calendar'
+  - '(moon|lunar) calendar'
+  - 'this day in (space )?history'
+  - '\bon this day\b'
+  - 'on \w+ \d{1,2},? 1[89]\d{2}'          # "...on June 1 1888" anniversaries
+  - 'evening skies?\b'
+  - 'morning skies?\b'
+  - '(night|evening|morning) sky (this|tonight|for|in)'
+  - '\bsky this (week|month)\b'
+  - 'what to see in the (night|evening) sky'
+  - 'highest point in (the )?(evening|morning) sky'
+  - '(super|blue|harvest|wolf|pink|strawberry|blood|hunter|snow|worm|flower|buck|sturgeon|corn|beaver|cold)\s+moon\b'
+  - '(telescope|binoculars?) deals?'
+  - 'best (telescopes?|binoculars?|star projectors?)\b'
+  - 'meteor shower.*(peak|tonight|when to|how to|watch)'
+
 keywords:
   - space
   - astronomy

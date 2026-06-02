@@ -310,3 +310,92 @@ class TestStripSpeechTags:
         assert "<emphasis>" not in out and "</emphasis>" not in out
         assert "three" in out  # inner text preserved
         assert "Let's get into it." in out
+
+
+# ---------------------------------------------------------------------------
+# drop_excluded_titles — almanac / evergreen content filter
+# ---------------------------------------------------------------------------
+
+from engine.utils import drop_excluded_titles as _drop_excluded_titles
+
+
+class TestDropExcludedTitles:
+    """Suppress recurring almanac/evergreen titles (FF Ep087 shipped 12 as
+    100%-identical cross-episode repeats). Must drop the recurring content
+    while never touching real news."""
+
+    def test_no_patterns_is_noop(self):
+        arts = [{"title": "Anything goes"}]
+        kept, dropped = _drop_excluded_titles(arts, [])
+        assert dropped == 0 and kept == arts
+
+    def test_empty_articles(self):
+        assert _drop_excluded_titles([], ["x"]) == ([], 0)
+
+    def test_drops_real_ff_almanac_titles(self):
+        pats = [
+            r"full moon calendar", r"(moon|lunar) calendar",
+            r"this day in (space )?history", r"on \w+ \d{1,2},? 1[89]\d{2}",
+            r"evening skies?\b", r"highest point in (the )?(evening|morning) sky",
+            r"(super|blue|strawberry|blood)\s+moon\b",
+            r"best (telescopes?|binoculars?)\b",
+        ]
+        almanac = [
+            "Full Moon Calendar Lists All 2026 Dates and Phases",
+            "Venus Jupiter and Mercury Shine in June Evening Skies",
+            "Lick Observatory Ownership Transfers on June 1 1888",
+            "May Blue Moon Appears Smallest of 2026 in Global Photos",
+            "Mercury Reaches Highest Point in Evening Sky for 2026",
+            "The Best Telescopes for Beginners in 2026",
+        ]
+        kept, dropped = _drop_excluded_titles([{"title": t} for t in almanac], pats)
+        assert dropped == len(almanac) and kept == []
+
+    def test_keeps_real_news(self):
+        pats = [r"full moon calendar", r"evening skies?\b", r"(blue|super)\s+moon\b"]
+        news = [
+            "Giant Star Likely Destroyed in Rare Pair-Instability Supernova",
+            "China Launches Long March 12B on Unannounced Maiden Flight",
+            "Young Exoplanets Found With Longest Known Orbital Periods",
+        ]
+        arts = [{"title": t} for t in news]
+        kept, dropped = _drop_excluded_titles(arts, pats)
+        assert dropped == 0 and kept == arts
+
+    def test_case_insensitive(self):
+        kept, dropped = _drop_excluded_titles(
+            [{"title": "FULL MOON CALENDAR for the year"}], [r"full moon calendar"]
+        )
+        assert dropped == 1 and kept == []
+
+    def test_invalid_pattern_is_skipped_not_raised(self):
+        # A bad regex must not crash the fetch.
+        kept, dropped = _drop_excluded_titles(
+            [{"title": "Real news story"}], [r"(unclosed"]
+        )
+        assert dropped == 0 and len(kept) == 1
+
+
+def test_ff_yaml_exclude_patterns_filter_almanac_keep_news():
+    """End-to-end: the patterns committed in fascinating_frontiers.yaml drop
+    the recurring almanac titles and keep real news."""
+    from engine.config import load_config
+
+    cfg = load_config("shows/fascinating_frontiers.yaml")
+    assert cfg.exclude_title_patterns, "FF must declare exclude_title_patterns"
+    almanac = [
+        "Full Moon Calendar Lists All 2026 Dates and Phases",
+        "Venus Jupiter and Mercury Shine in June Evening Skies",
+        "Lick Observatory Ownership Transfers on June 1 1888",
+        "Mercury Reaches Highest Point in Evening Sky for 2026",
+    ]
+    news = [
+        "Giant Star Likely Destroyed in Rare Pair-Instability Supernova",
+        "Webb Telescope Reveals Water Vapor on Distant Exoplanet",
+    ]
+    kept, dropped = _drop_excluded_titles(
+        [{"title": t} for t in almanac + news], cfg.exclude_title_patterns
+    )
+    kept_titles = {a["title"] for a in kept}
+    assert dropped == len(almanac)
+    assert all(t in kept_titles for t in news)
