@@ -489,6 +489,11 @@ class ShowConfig:
     # for content. See engine.fetcher.x_fetch_allowed.
     x_fetch_enabled: Optional[bool] = None
     keywords: List[str] = field(default_factory=list)
+    # Case-insensitive regex patterns; articles whose TITLE matches any are
+    # dropped at fetch time. For suppressing recurring almanac/evergreen
+    # content (moon calendars, planet-visibility roundups, "this day in
+    # history") — see engine.utils.drop_excluded_titles.
+    exclude_title_patterns: List[str] = field(default_factory=list)
     web_search_queries: List[str] = field(default_factory=list)
     min_articles: int = 3  # Minimum articles before expanding search
     min_articles_skip: int = 3  # Hard cutoff — skip episode if fewer articles
@@ -679,6 +684,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         x_accounts=_build_x_accounts(data.get("x_accounts")),
         x_fetch_enabled=data.get("x_fetch_enabled"),
         keywords=data.get("keywords", []),
+        exclude_title_patterns=data.get("exclude_title_patterns", []),
         web_search_queries=data.get("web_search_queries", []),
         min_articles=data.get("min_articles", 3),
         min_articles_skip=data.get("min_articles_skip", 3),

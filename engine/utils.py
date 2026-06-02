@@ -326,6 +326,44 @@ def extract_primary_entity(title: str, description: str = "") -> str:
     return max(filtered_runs, key=len)
 
 
+def drop_excluded_titles(articles: list, patterns: list) -> tuple:
+    """Drop articles whose title matches any of *patterns*.
+
+    *patterns* are case-insensitive regular expressions. Returns
+    ``(kept_articles, dropped_count)``.
+
+    Purpose: suppress recurring almanac / evergreen content that feeds
+    republish across episodes and that isn't news — e.g. Fascinating
+    Frontiers kept shipping "Full Moon Calendar Lists All 2026 Dates",
+    "Venus Jupiter Mercury Shine in June Evening Skies", and
+    "Lick Observatory Ownership Transfers on June 1 1888" (caught as
+    100%-identical cross-episode repeats but shipped anyway because the
+    repeat check is non-blocking). Filtering at fetch time stops them
+    reaching the digest. Configured per-show via ``exclude_title_patterns``.
+    """
+    if not patterns or not articles:
+        return articles, 0
+    import re
+    compiled = []
+    for p in patterns:
+        try:
+            compiled.append(re.compile(p, re.IGNORECASE))
+        except re.error as exc:
+            logger.warning("Invalid exclude_title_pattern %r: %s", p, exc)
+    if not compiled:
+        return articles, 0
+    kept = []
+    dropped = 0
+    for art in articles:
+        title = art.get("title") or ""
+        if any(c.search(title) for c in compiled):
+            dropped += 1
+            logger.debug("Excluded almanac/evergreen title: %s", title[:80])
+            continue
+        kept.append(art)
+    return kept, dropped
+
+
 def deduplicate_by_entity(
     articles: list,
     max_per_entity: int = 2,

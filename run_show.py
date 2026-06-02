@@ -3017,6 +3017,20 @@ def _fetch_with_expansion(
             cutoff_hours, "on" if use_keywords else "off", len(articles),
         )
 
+        # Drop recurring almanac/evergreen titles (moon calendars, planet-
+        # visibility roundups, "this day in history") that feeds republish
+        # across episodes. Per-show ``exclude_title_patterns``; no-op when
+        # unset, so every other show is unchanged.
+        _excl = list(getattr(config, "exclude_title_patterns", []) or []) if config else []
+        if _excl:
+            from engine.utils import drop_excluded_titles
+            articles, _n_excluded = drop_excluded_titles(articles, _excl)
+            if _n_excluded:
+                logger.info(
+                    "Excluded %d article(s) matching exclude_title_patterns",
+                    _n_excluded,
+                )
+
         articles = deduplicate_by_entity(articles, max_per_entity=2)
         # Reduce dedup lookback for young shows (< 10 episodes) to avoid
         # over-filtering when the content tracker has very few episodes.
