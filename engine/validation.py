@@ -558,7 +558,12 @@ def ma_validation_config() -> ValidationConfig:
                     r"(.*?)"
                     r"(?=━━|### Model Updates|## Model Updates|$)"
                 ),
-                min_items=1,
+                # Prose lead story (4-6 sentences), NOT a bullet list. The old
+                # min_items=1 counted 0 ``**bold**`` items on a perfectly good
+                # prose section and forced a regenerate that shrank the digest
+                # (Ep066: 12.9k → 9.0k chars). Validate by length instead.
+                min_items=0,
+                min_chars=250,
             ),
             SectionRule(
                 name="Model Updates",

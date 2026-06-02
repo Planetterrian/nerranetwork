@@ -16,8 +16,34 @@ from engine.validation import (
     pt_validation_config,
     ov_validation_config,
     mab_validation_config,
+    ma_validation_config,
 )
 import re as _re
+
+
+class TestMaTopStoryProse:
+    """Models & Agents' 'Top Story' is a 4-6 sentence PROSE lead, not a list.
+    The old min_items=1 forced a regenerate that shrank the digest (Ep066:
+    12.9k -> 9.0k chars). Now validated by length."""
+
+    _FULL = (
+        "# M&A\n\n### Top Story\n"
+        "OpenAI's model cracked an 80-year math problem by leaning on structured "
+        "reasoning rather than brute force. It beat prior methods on the benchmark "
+        "by a wide margin. Builders can try the approach through the API today. "
+        "Watch for follow-up releases as other labs respond over the coming weeks.\n\n"
+        "━━━━\n### Model Updates\n**A new model**\nDetails here.\n"
+    )
+    _EMPTY = "# M&A\n\n### Top Story\n\n### Model Updates\n**X**\nY.\n"
+
+    def test_full_prose_top_story_not_flagged(self):
+        _, issues, _ = validate_digest(self._FULL, ma_validation_config())
+        assert not [i for i in issues if "Top Story" in i]
+
+    def test_empty_top_story_flags_zero_chars(self):
+        _, issues, _ = validate_digest(self._EMPTY, ma_validation_config())
+        ts = [i for i in issues if "Top Story" in i]
+        assert any(_re.search(r":\s*0\s+chars", i) for i in ts)
 
 
 class TestMabBigStoryProse:

@@ -263,3 +263,46 @@ class TestCallGrok:
         monkeypatch.delenv("XAI_API_KEY", raising=False)
         with pytest.raises(RuntimeError):
             _call_grok("hello")
+
+
+class TestSpeakerLabelRepetitionSkip:
+    """Plain ``Host:`` speaker labels are a dialogue-format artifact, not a
+    hallucination. They must NOT inflate the suspicious-repetition count (which
+    would trigger wasteful retries that shorten the episode — Models & Agents
+    Ep066 flagged 'host: the' x18 and lost ~200 words to anti-repetition regens).
+    Genuine topic repetition must still be caught.
+    """
+
+    def _validate(self):
+        from engine.generator import _validate_llm_output
+        return _validate_llm_output
+
+    def test_host_label_bigrams_not_flagged(self):
+        validate = self._validate()
+        # 18 host lines that all start "Host: The" (the artifact that tripped
+        # the detector) but whose remaining content is genuinely distinct, so
+        # ONLY the speaker-label bigram/trigram repeats.
+        topics = [
+            "quantum annealing surprised everyone", "robots folded laundry quickly",
+            "compilers optimized themselves overnight", "satellites mapped deep oceans",
+            "drones delivered medicine remotely", "sensors detected faint tremors",
+            "batteries charged within seconds", "telescopes captured distant galaxies",
+            "algorithms sorted petabytes instantly", "vaccines reached rural clinics",
+            "turbines harvested gentle breezes", "microscopes revealed hidden proteins",
+            "printers fabricated tiny gears", "rovers climbed steep craters",
+            "antennas captured weak signals", "reactors fused light isotopes",
+            "cameras tracked migrating whales", "engines burned cleaner fuels",
+        ]
+        lines = [f"Host: The {t}." for t in topics]
+        script = " ".join(lines)
+        n = validate(script, stage="podcast_script", show_name="Models & Agents")
+        assert n == 0, f"speaker-label phrases should not be flagged (got {n})"
+
+    def test_genuine_repetition_still_flagged(self):
+        validate = self._validate()
+        # Real topic loop: "mixture of experts" repeated far above threshold,
+        # NOT behind a speaker label.
+        script = ("We discuss the mixture of experts approach. " * 8) + \
+                 " ".join(f"Word{i} filler text here." for i in range(60))
+        n = validate(script, stage="podcast_script", show_name="Models & Agents")
+        assert n >= 1, "genuine repetition must still be detected"
