@@ -306,3 +306,58 @@ class TestSpeakerLabelRepetitionSkip:
                  " ".join(f"Word{i} filler text here." for i in range(60))
         n = validate(script, stage="podcast_script", show_name="Models & Agents")
         assert n >= 1, "genuine repetition must still be detected"
+
+
+class TestStructuralLabelAndSteelManRepetitionSkip:
+    """Omni View's 'Steel Man' format (Phase 4) emits per-story template
+    labels ('**what happened (neutral):**', '**steel-man each side:**') and
+    framing ('the strongest case for X rests on...') for every story. Across
+    20-40 stories these recur 30-44x and triggered 3 futile digest
+    regenerations (Ep068 burned ~6 min). They're structural — like the
+    already-allowlisted 'this matters for' — so the detector must not flag
+    them. Bold markdown labels are skipped generically; genuine prose loops
+    are still caught."""
+
+    def _validate(self):
+        from engine.generator import _validate_llm_output
+        return _validate_llm_output
+
+    def _steel_man_digest(self):
+        import random
+        random.seed(7)
+        words = ["alpha", "bravo", "cobalt", "delta", "ember", "flint", "gust",
+                 "hazel", "ion", "jade", "kelp", "lumen", "mica", "onyx", "pike",
+                 "quill", "rune", "sable", "tide", "umber", "vane", "wisp"]
+        uniq = lambda n: " ".join(random.choice(words) for _ in range(n))
+        parts = []
+        for i in range(20):
+            parts.append(
+                f"{i+1}. **What happened (neutral):** {uniq(12)}. "
+                f"**Steel-man each side:** The strongest case for {uniq(2)} rests "
+                f"on {uniq(8)}. The strongest case for {uniq(2)} rests on {uniq(8)}. "
+                f"They differ on {uniq(3)}."
+            )
+        return "# Omni View\n\n" + "\n\n".join(parts)
+
+    def test_steel_man_template_not_flagged(self):
+        n = self._validate()(self._steel_man_digest(), stage="digest",
+                             show_name="Omni View")
+        assert n == 0, f"steel-man template phrases must not flag (got {n})"
+
+    def test_bold_label_phrases_skipped(self):
+        # A bold label repeated many times must never count (the surrounding
+        # prose is unique per line so only the label repeats).
+        import random
+        random.seed(3)
+        words = ["alpha", "bravo", "cobalt", "delta", "ember", "flint", "gust",
+                 "hazel", "ion", "jade", "kelp", "lumen", "mica", "onyx", "pike"]
+        uniq = lambda n: " ".join(random.choice(words) for _ in range(n))
+        txt = "# X\n\n" + "\n".join(
+            f"{i}. **Memory Hook:** {uniq(9)}." for i in range(30)
+        )
+        assert self._validate()(txt, stage="digest", show_name="Test") == 0
+
+    def test_genuine_prose_loop_still_caught(self):
+        txt = ("# X\n\n" + ("the engine stalls and the engine stalls once more. " * 8)
+               + " ".join(f"separate remark {i} on a distinct subject." for i in range(40)))
+        assert self._validate()(txt, stage="digest", show_name="Test") >= 1
