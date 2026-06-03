@@ -1,0 +1,107 @@
+Hey everyone, welcome to Models and Agents, episode sixty-eight, for June third, twenty twenty-six. Your daily A I briefing. The A I world never sleeps. Here's what you need to know today.
+
+En-vidia released Cosmos 3, a two-tower omnimodal world model for physical A I.
+
+H Company dropped the Holo3.1 family of Chwen 3.5-based V L M's for computer-use agents across web, desktop, and mobile.
+
+Nous Research shipped Hermes Desktop, a native GUI front end for its agent CLI, while Microsoft launched Scout, an autonomous agent for Microsoft 365 built on OpenClaw.
+
+En-vidia's Cosmos 3 pairs an autoregressive reasoner with a diffusion generator so builders can now train agents that jointly reason about physics, generate worlds, and output actions.
+
+En-vidia released Cosmos 3, an open omnimodal foundation model that pairs an autoregressive V L M reasoner with a diffusion generator in a two-tower Mixture-of-Transformers architecture.
+
+The model unifies physical reasoning, world generation, and action generation for physical A I applications.
+
+It targets developers building agents that must understand dynamics, simulate environments, and produce executable actions in one pipeline.
+
+Builders working on robotics, simulation, or embodied agents can now start from a single pretrained checkpoint instead of stitching separate perception and control models.
+
+Watch for fine-tuning recipes and early agent benchmarks on physical tasks in the coming weeks.
+
+This release moves the A I Compute and Inference program forward by giving teams a unified checkpoint for embodied work rather than separate perception and control stacks.
+
+Holo3.1 is a family of vision-language models fine-tuned from the Chwen 3.5 series specifically for computer-use agents.
+
+Sizes range from 0.8B to 35B-A3B parameters with native function calling and support for web, desktop, and mobile environments.
+
+Quantized checkpoints in BF16, FP8, NVFP4, and Q four GGUF enable local deployment.
+
+Builders should test the 9B or 4B variants first for UI grounding and mobile automation tasks where the smaller models already deliver strong results.
+
+The Holo3.1 family advances the Open-Weight Models program by extending the Chwen 3.5 base with native tool use across three device classes.
+
+The latest Lah-mah.cpp builds now support Mellum and Granite embedding models through two merged PRs.
+
+Users can run these models with the same binary that handles their main L L M's, removing the need for separate embedding servers.
+
+The update is immediately useful for teams already on Lah-mah.cpp who want consistent quantization and KV-cache behavior across retrieval and generation.
+
+Hermes Desktop provides a native cross-platform GUI that shares the same agent core, skills, and memory as the Hermes Agent CLI v0.15.2.
+
+It adds streaming tool output without requiring a terminal.
+
+The release targets users who want the full Hermes agent experience without managing CLI sessions.
+
+Early testers should watch for how well the shared memory layer handles long-running multi-turn tasks across GUI and CLI modes.
+
+This update continues the Agents and Tool Use program by removing the terminal barrier while preserving the same memory and skill layer already in the CLI.
+
+Microsoft launched Scout, an autonomous A I agent built on OpenClaw that operates inside Microsoft 365.
+
+It handles multi-step workflows across Outlook, Teams, and SharePoint without constant user supervision.
+
+The agent is positioned for enterprise users who need reliable execution inside the Microsoft ecosystem rather than general web agents.
+
+Early adopters should test its sandbox constraints on sensitive mailbox and calendar operations.
+
+Open A I released three purpose-built plugins for Codex covering public equity investing, sales workflows, and creative production.
+
+Each plugin turns natural-language prompts into domain-specific Codex actions.
+
+Teams already using Codex can activate the relevant plugin to reduce prompt engineering for those verticals.
+
+The sales plugin in particular targets faster prep and smarter outreach sequences.
+
+A detailed benchmark shows Lah-mah.cpp build b9455 achieving seventy plus tokens per second on Qwenthree point six to twenty-sevenB-MTP with tensor-split across two RTX 3090s and MTP speculative decoding.
+
+The setup uses unified KV cache and flash attention for long contexts up to two hundred sixty-two thousand tokens.
+
+Users running dual-G P U consumer hardware now have a concrete configuration to match or exceed earlier vLLM results on the same cards.
+
+Test the 9B Holo3.1 checkpoint on a mobile automation workflow to see how native function calling changes your agent scaffolding.
+
+Spin up Hermes Desktop alongside the CLI version on a long-running research task to compare memory persistence across interfaces.
+
+Run the new Mellum embeddings through your existing Lah-mah.cpp retrieval pipeline and measure recall lift versus your current embedder.
+
+Activate the sales plugin in Codex on a real outreach sequence and compare token usage against your hand-crafted prompts.
+
+More organizations are expected to receive Claude Mythos Preview access through the expanded Project Glasswing program.
+
+Additional Cosmos 3 fine-tuning examples and agent benchmarks are anticipated from En-vidia in the next two weeks.
+
+Further quantized releases for the Holo3.1 family are likely as the community tests the 0.8B and 4B variants on edge devices.
+
+OK, let's pop the hood on context-free value vectors in deep attention layers.
+
+Everyone assumes attention layers always need the full residual stream to compute value vectors.
+
+In practice, the deepest layers often perform better when they learn a context-free lookup table of token-specific values instead.
+
+The core insight is that preserving the original token embedding without mixing in surrounding context reduces noise once the model has already built rich representations in earlier layers.
+
+This Bank of Values approach stores the values as sparse parameters, eliminating repeated computation and KV-cache pressure for those layers.
+
+The quality gain is largest in the final third of the network.
+
+Adding the context-dependent component back on top yields almost no extra benchmark improvement.
+
+Teams should consider switching the last eight to ten layers to this pattern when memory or latency is the binding constraint, especially on models under one billion parameters where full context mixing is expensive relative to the benefit.
+
+Tomorrow, keep an eye on the first community agent benchmarks that use the Cosmos 3 checkpoint for physical tasks.
+
+That wraps up today's A I briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow. And before you go — this show is part of the Nerra Network, a family of daily podcasts covering tech, science, markets, and more. If you enjoyed today's episode, give Unintended Consequences a listen: true stories of good intentions that backfired.
+
+You can explore the whole lineup at nerranetwork dot com.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
