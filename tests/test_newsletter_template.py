@@ -16,6 +16,87 @@ from engine import newsletter_template as nt
 # Per-show branding lookup
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# render_markdown_body — the Ep500 "wall of raw markdown" fix
+# ---------------------------------------------------------------------------
+
+class TestRenderMarkdownBody:
+    """The body is wrapped in a <table> for the dark-mode bg flip, and
+    CommonMark doesn't parse markdown inside an HTML block — so Buttondown
+    shipped the body as literal ``**``/``###``/``>`` text on mobile
+    (Tesla Ep500 newsletter, Jun 2026). ``render_markdown_body`` renders
+    the body to HTML ourselves so it never leaks raw markdown again."""
+
+    def test_headings_become_html_no_hash_leak(self):
+        out = nt.render_markdown_body("## Big Section\n\n### Sub")
+        assert "## Big Section" not in out
+        assert "### Sub" not in out
+        assert "<h2" in out and "Big Section" in out
+        assert "<h3" in out and "Sub" in out
+
+    def test_bold_and_italic_render(self):
+        out = nt.render_markdown_body("A **bold** and *italic* word.")
+        assert "<strong>bold</strong>" in out
+        assert "<em>italic</em>" in out
+        assert "**" not in out
+
+    def test_markdown_links_render_to_anchors(self):
+        out = nt.render_markdown_body(
+            "See [the source](https://example.com/x) now."
+        )
+        assert '<a href="https://example.com/x"' in out
+        assert "[the source]" not in out
+
+    def test_preserves_pipeline_injected_inline_anchors(self):
+        """``render_source_links_as_html`` injects inline ``<a target=_blank>``
+        anchors mid-line *before* we run. They must pass through, not get
+        escaped into visible ``&lt;a&gt;`` text (the screenshot bug)."""
+        line = (
+            '1. **Story:** body text. Source: '
+            '<a href="https://news.google.com" target="_blank" '
+            'rel="noopener">Google News</a>'
+        )
+        out = nt.render_markdown_body(line)
+        assert "&lt;a" not in out
+        assert 'href="https://news.google.com"' in out
+        assert 'target="_blank"' in out
+        assert "Google News</a>" in out
+        # Rendered as an ordered-list item, not raw "1.".
+        assert "<ol" in out and "<li" in out
+
+    def test_blockquote_becomes_accent_card(self):
+        out = nt.render_markdown_body("> **The hook line.**")
+        assert "border-left:4px solid" in out
+        assert "The hook line." in out
+        assert "&gt;" not in out and "> **" not in out
+
+    def test_lists_render_with_items(self):
+        ol = nt.render_markdown_body("1. First\n2. Second")
+        assert ol.count("<li") == 2 and "<ol" in ol
+        ul = nt.render_markdown_body("- Alpha\n- Beta")
+        assert ul.count("<li") == 2 and "<ul" in ul
+
+    def test_standalone_html_block_passes_through(self):
+        """Pre-rendered single-line HTML (markdown tables converted
+        upstream, TSLA block, vocab cards, styled <hr>) must pass through
+        untouched, not get escaped."""
+        html_line = '<table role="presentation"><tr><td>x</td></tr></table>'
+        out = nt.render_markdown_body(html_line)
+        assert out.strip() == html_line
+        assert "&lt;table" not in out
+
+    def test_no_blank_lines_in_output(self):
+        """Output must contain no blank lines so the surrounding <table>
+        stays one CommonMark raw-HTML block (otherwise Buttondown would
+        re-parse the tail as markdown)."""
+        out = nt.render_markdown_body("# H\n\npara one\n\n## H2\n\npara two")
+        assert "\n\n" not in out
+
+    def test_empty_body_is_empty(self):
+        assert nt.render_markdown_body("") == ""
+        assert nt.render_markdown_body("   \n  ") == ""
+
+
 def test_load_show_branding_uses_network_shows_for_known_slug():
     show = nt._load_show_branding("tesla")
     # Pulled straight from generate_html.NETWORK_SHOWS["tesla"].
@@ -106,19 +187,22 @@ def test_footer_html_omits_youtube_when_playlist_missing():
 # Top-level wrap_with_branding
 # ---------------------------------------------------------------------------
 
-def test_wrap_with_branding_weekly_keeps_markdown_in_middle():
+def test_wrap_with_branding_weekly_renders_body_to_html_in_middle():
     body_md = "## This week\n\nA paragraph with **bold** text."
     out = nt.wrap_with_branding(
         "tesla", body_md,
         week_ending=datetime.date(2026, 4, 30),
     )
-    # Hero appears before the markdown.
+    # Hero appears before the rendered body, body before the footer.
     hero_idx = out.find("Tesla Shorts Time")
-    body_idx = out.find("## This week")
+    body_idx = out.find("This week")
     footer_idx = out.find("Listen to the podcast")
     assert 0 <= hero_idx < body_idx < footer_idx
-    # The original markdown is preserved verbatim (no transformation).
-    assert body_md in out
+    # The body is rendered to HTML — no raw markdown leaks (the Ep500 bug).
+    assert "## This week" not in out
+    assert "**bold**" not in out
+    assert "<h2" in out
+    assert "<strong>bold</strong>" in out
 
 
 def test_wrap_with_branding_daily_uses_episode_pill():
@@ -386,11 +470,12 @@ def test_wrap_with_branding_renders_all_blocks_in_order():
     pre = out.find("Inbox preview teaser")
     hero = out.find("Tesla Shorts Time")
     stats = out.find("TSLA close")
-    body = out.find("## Body content")
+    body = out.find("Body content")  # rendered into an <h2>, no raw "##"
     p_s = out.find("One more thing.")
     foot = out.find("Listen to the podcast")
     # All present and in the documented order.
     assert 0 <= pre < hero < stats < body < p_s < foot
+    assert "## Body content" not in out  # body is rendered to HTML
 
 
 def test_wrap_with_branding_renders_disclaimer_when_flagged():
@@ -418,8 +503,11 @@ def test_wrap_with_branding_strips_redundant_title():
     out = nt.wrap_with_branding(
         "tesla", body, week_ending=datetime.date(2026, 4, 30),
     )
-    # The repeated "Weekly" line is gone; the section heading remains.
-    assert "## Big picture" in out
+    # The repeated "Weekly" line is gone; the section heading remains
+    # (now rendered to an <h2>, not raw markdown).
+    assert "## Big picture" not in out
+    assert "Big picture" in out
+    assert "<h2" in out
     # Hero still shows the show name (this lives in the gradient block
     # not the markdown body).
     assert "Tesla Shorts Time" in out
@@ -645,7 +733,7 @@ def test_wrap_with_branding_full_render_order_with_engagement_blocks():
     hero = out.find("Tesla Shorts Time")
     stats = out.find("TSLA close")
     featured = out.find("10 minutes")
-    body = out.find("## Body content")
+    body = out.find("Body content")  # rendered into an <h2>, no raw "##"
     p_s = out.find("One more thing.")
     cross = out.find("More from the Nerra Network")
     share = out.find("Share:")
@@ -653,6 +741,7 @@ def test_wrap_with_branding_full_render_order_with_engagement_blocks():
     # Documented block order (preheader → hero → stats → featured →
     # body → p_s → cross-network → reply/share → footer).
     assert 0 <= pre < hero < stats < featured < body < p_s < cross < share < foot
+    assert "## Body content" not in out  # body rendered to HTML
 
 
 def test_wrap_with_branding_omits_engagement_blocks_by_default():
