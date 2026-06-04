@@ -1,0 +1,171 @@
+What's up, welcome to Models and Agents, Episode 70.
+It's June 4th, 2026.
+The AI world never sleeps.
+Here's what you need to know today.
+Gemma 412b puts capable local agents on laptops
+with only 16 gigabytes VRAM under an Apache 2.0 license.
+Google released the 12b model today,
+bringing the total Gemma downloads to 150 million.
+The model supports full agent workflows
+that previously needed larger systems.
+It runs on consumer hardware at around 18 tokens per second
+while handling 45,000 token prompts
+for complete retro game implementations.
+The Apache 2.0 license allows unrestricted commercial use
+and local fine tuning.
+Early tests already show end-to-end coding agents
+running entirely offline.
+OpenAI added agentic coding and drug discovery tools
+to its GPT Rosalind Life Sciences series,
+and Dava, ServiceNow, and Snowflake all moved autonomous agents
+into production workflows this week.
+Google released Gemma 412b today
+with improved instruction following and tool use stability.
+The 12b checkpoint remains runnable on consumer GPUs
+and joins the existing 150 million download milestone.
+Local runs already demonstrate full end-to-end coding
+agents without any cloud-round trips.
+Builders working on privacy sensitive
+or offline agents should test the eight-bit
+quantized heretic variant this week.
+This release continues the steady narrowing
+of the open-weight performance gap
+with closed frontier models.
+OpenAI extended its Life Sciences series
+with GPT 5.5 level agentic coding and tool use.
+The update adds stronger domain intelligence
+for drug discovery and experimental design.
+It targets enterprise-scale research workflows
+that combine code generation with wet lab planning.
+Early users report tighter integration
+between analysis scripts and molecular design loops.
+Life Sciences teams should evaluate
+the new tool calling surface this week.
+Researchers applied GRPO with LLM as judge remords
+and human reference injection to quen3.5 to 9b.
+The resulting Polaris 9b model follows
+length instructions up to 12,000 tokens
+while staying competitive with 27b baselines.
+Training used only 1,400 prompt story pairs
+and 4a100 GPUs.
+The work shows length generalization
+serves as a useful stress test for creative writing models.
+Writer's experimenting with long-form local generation
+should try the released weights.
+Meta delayed the developer release of its next open model
+while internal testing continues.
+No new parameter count or benchmark details
+were shared in the announcement.
+The pause suggests meta is prioritizing stability
+over the rapid cadence scene with LMA3.
+Andava is embedding chat GPT enterprise
+and codex agents into its software delivery pipelines.
+The program automates workflows
+and enforces an AI native culture across enterprise code bases.
+The focus stays on measurable acceleration
+rather than experimental prototypes.
+Teams adopting similar agent augmented delivery
+should study Andava's governance patterns.
+Service now launched a new suite of autonomous agents
+aimed at enterprise workflows.
+The agents target repeatable back-off as processes
+with explicit human in the loop checkpoints.
+Early adopters should monitor how the platform handles
+long-running task state.
+This deployment adds another data point
+on reliability of long horizon agents in production.
+Snowflake announced deeper investment in autonomous agents
+to compete in the enterprise software race.
+The move pairs its data platform
+with agent orchestration layers for analytics and ETL.
+Data teams should watch for native integration patterns
+that reduce context passing overhead.
+Karei.ai highlighted a shift
+toward coordinated multi-agent CUTS
+to more experienced systems.
+The systems handoff context across specialized agents
+for context center automation.
+CX teams should evaluate handoff latency
+and state consistency before scaling.
+A new GitHub repo called ATTNHU
+collects clean, pie torch implementations
+of multiple transformer attention variants.
+It includes minimax M3 sparse attention,
+aimed at SLM experiments and computer vision encoders.
+The maintainer invites PRS for additional mechanisms.
+Researchers swapping attention module should clone the repo
+and benchmark on their target sequence lengths.
+A detailed single prompt run shows the 8-bit
+heretic variant of Gemma 412b
+riding a complete 467-line retro cyberpunk brick breaker game.
+The run finished in one four-minute stream
+at 18.76 tokens per second on an RX 6,800.
+Cache reuse hit 96.4% across turns
+thanks to llama.cpplcp checkpoints.
+Local coding agent builders should replicate
+the exact chat template and KB cache settings.
+Users report Q8 underscore zero, delivering 29% faster
+pre-fill than Q6 underscore K
+on the Jetson AGX or in 64 GB.
+The result holds despite higher memory traffic,
+indicating the device is compute bound
+rather than bandwidth bound.
+The observation applies to Q3.6 to 27b class models.
+Edge deploy team should retest their preferred quant
+on the orin before locking a deployment config.
+Okay, let's pop the hood on deferred
+positional encoding in KV caches.
+Everyone treats positional encoding as a fixed property
+baked into the KV cache at right time.
+In practice, it is a separate transformation
+that can be applied later inside the attention kernel.
+Lazy attention keeps raw keys and values
+without positional offsets, then injects rotary
+or ALIBI adjustments on the fly during the mat mall.
+The approach removes the need to materialize new caches
+when the same prefix is reused at different positions.
+It cuts time to first token by roughly 1.37 times
+under skewed document distributions.
+The tradeoff appears in kernel complexity
+because every attention call now carries extra index arithmetic.
+That overhead stays under 5% on modern GPUs.
+Teams running long context rag should adopt deferred encoding
+when prefix reuse exceeds 30% of total tokens.
+Otherwise, the simpler static cache remains easier to debug.
+Run Gemma 412b locally with the eight bid heretic weights
+for offline coding agents.
+The single prompt game demo proves it handles
+20,000 plus token contexts at usable speed.
+Test GPT Rosalind's new tool use surface
+on a small drug discovery workflow
+to see how the life sciences fine tune changes
+agent reliability.
+Clone the at and hut repo and swap attention mechanisms
+inside a 7B to 9B SLM to measure latency
+versus quality on your target task.
+Compare Q8 underscore 0 versus Q6 underscore K
+on any Jetson AGX or in workload
+before finalizing an edge deployment.
+Meta's next open model remains an extended testing.
+Open AI continues expanding the GPT Rosalind
+series with additional domain specific tool packs
+expected soon.
+Our guide papers on learnable rank, Laura, and dynamic
+logic level gating suggest new fine tuning
+and unsombling patterns will appear in libraries soon.
+Tomorrow keep an eye on early adopter case studies
+from the service now and snowflake agent platforms.
+That's models and agents for today.
+If you found this useful, share it with someone
+who's trying to keep up with all these changes
+and subscribe so you don't miss tomorrow's update.
+The AI world moves fast will help you keep up.
+See you tomorrow.
+And before you go, this show is part of the NERA network,
+a family of daily podcasts covering tech, science,
+markets, and more.
+If you enjoyed today's episode, give Tesla shorts time
+a listen, your daily deep dive into everything Tesla.
+You can explore the whole lineup at NERAnetwork.com.
+This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.

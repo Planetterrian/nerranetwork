@@ -1,0 +1,149 @@
+What's up — welcome to Models and Agents, episode seventy. It's June fourth, twenty twenty-six. The A I world never sleeps. Here's what you need to know today.
+
+Gemma 4 12B puts capable local agents on laptops with only 16GB VRAM under an Apache 2.0 license.
+
+Google released the 12B model today, bringing the total Gemma downloads to 150 million.
+
+The model supports full agent workflows that previously needed larger systems.
+
+It runs on consumer hardware at around 18 tokens per second while handling forty-five thousand-token prompts for complete retro-game implementations.
+
+The Apache 2.0 license allows unrestricted commercial use and local fine-tuning.
+
+Early tests already show end-to-end coding agents running entirely offline.
+
+Open A I added agentic coding and drug-discovery tools to its G P T Rosalind life-sciences series.
+
+Endava, ServiceNow, and Snowflake all moved autonomous agents into production workflows this week.
+
+Google released Gemma 4 12B today with improved instruction following and tool-use stability.
+
+The 12B checkpoint remains runnable on consumer G P U's and joins the existing 150-million-download milestone.
+
+Local runs already demonstrate full end-to-end coding agents without any cloud round-trips.
+
+Builders working on privacy-sensitive or offline agents should test the 8-bit quantized heretic variant this week.
+
+This release continues the steady narrowing of the open-weight performance gap with closed frontier models.
+
+Open A I extended its life-sciences series with G P T 5.5-level agentic coding and tool use.
+
+The update adds stronger domain intelligence for drug discovery and experimental design.
+
+It targets enterprise-scale research workflows that combine code generation with wet-lab planning.
+
+Early users report tighter integration between analysis scripts and molecular design loops.
+
+Life-sciences teams should evaluate the new tool-calling surface this week.
+
+Researchers applied GRPO with L L M as-judge rewards and human-reference injection to Qwenthree point five to nineB.
+
+The resulting POLARIS-9B model follows length instructions up to twelve thousand tokens while staying competitive with 27B baselines.
+
+Training used only one thousand four hundred prompt-story pairs and four A100 G P U's.
+
+The work shows length generalization serves as a useful stress test for creative-writing models.
+
+Writers experimenting with long-form local generation should try the released weights.
+
+Meta delayed the developer release of its next open model while internal testing continues.
+
+No new parameter count or benchmark details were shared in the announcement.
+
+The pause suggests Meta is prioritizing stability over the rapid cadence seen with Lah-mah 3.
+
+Endava is embedding ChatGPT Enterprise and Codex agents into its software-delivery pipelines.
+
+The program automates workflows and enforces an A I native culture across enterprise codebases.
+
+The focus stays on measurable acceleration rather than experimental prototypes.
+
+Teams adopting similar agent-augmented delivery should study Endava's governance patterns.
+
+ServiceNow launched a new suite of autonomous agents aimed at enterprise workflows.
+
+The agents target repeatable back-office processes with explicit human-in-the-loop checkpoints.
+
+Early adopters should monitor how the platform handles long-running task state.
+
+This deployment adds another data point on reliability of long-horizon agents in production.
+
+Snowflake announced deeper investment in autonomous agents to compete in the enterprise software race.
+
+The move pairs its data platform with agent orchestration layers for analytics and ETL.
+
+Data teams should watch for native integration patterns that reduce context-passing overhead.
+
+Kore dot A I highlighted a shift toward coordinated multi-agent customer-experience systems.
+
+The systems hand off context across specialized agents for contact-center automation.
+
+CX teams should evaluate handoff latency and state consistency before scaling.
+
+A new GitHub repo called attnhut collects clean Pie Torch implementations of multiple transformer attention variants.
+
+It includes Mini Max M3 sparse attention aimed at SLM experiments and computer-vision encoders.
+
+The maintainer invites PRs for additional mechanisms.
+
+Researchers swapping attention modules should clone the repo and benchmark on their target sequence lengths.
+
+A detailed single-prompt run shows the 8-bit Heretic variant of Gemma 4 12B writing a complete 467-line retro cyberpunk brick-breaker game.
+
+The run finished in one four-minute stream at 18.76 tokens per second on an RX 6800.
+
+Cache reuse hit 96.4 percent across turns thanks to Lah-mah.cpp LCP checkpoints.
+
+Local coding-agent builders should replicate the exact chat template and KV-cache settings.
+
+Users report q8_0 delivering 29 percent faster prefill than q6_k on the Jetson AGX Orin 64GB.
+
+The result holds despite higher memory traffic, indicating the device is compute-bound rather than bandwidth-bound.
+
+The observation applies to Qwenthree point six to twenty-sevenB-class models.
+
+Edge-deploy teams should re-test their preferred quant on the Orin before locking a deployment config.
+
+OK, let's pop the hood on deferred positional encoding in KV caches.
+
+Everyone treats positional encoding as a fixed property baked into the KV cache at write time.
+
+In practice it is a separate transformation that can be applied later inside the attention kernel.
+
+LazyAttention keeps raw keys and values without positional offsets, then injects rotary or ALiBi adjustments on the fly during the matmul.
+
+The approach removes the need to materialize new caches when the same prefix is reused at different positions.
+
+It cuts time-to-first-token by roughly 1.37 times under skewed document distributions.
+
+The tradeoff appears in kernel complexity because every attention call now carries extra index arithmetic.
+
+That overhead stays under five percent on modern G P U's.
+
+Teams running long-context rag should adopt deferred encoding when prefix reuse exceeds 30 percent of total tokens.
+
+Otherwise the simpler static cache remains easier to debug.
+
+Run Gemma 4 12B locally with the 8-bit Heretic weights for offline coding agents.
+
+The single-prompt game demo proves it handles twenty thousand-plus token contexts at usable speed.
+
+Test G P T Rosalind's new tool-use surface on a small drug-discovery workflow to see how the life-sciences fine-tune changes agent reliability.
+
+Clone the attnhut repo and swap attention mechanisms inside a 7B to 9B SLM to measure latency versus quality on your target task.
+
+Compare q8_0 versus q6_k on any Jetson AGX Orin workload before finalizing an edge deployment.
+
+Meta's next open model remains in extended testing.
+
+Open A I continues expanding the G P T Rosalind series with additional domain-specific tool packs expected soon.
+
+arXiv papers on learnable-rank Laura and dynamic logit-level gating suggest new fine-tuning and ensembling patterns will appear in libraries soon.
+
+Tomorrow, keep an eye on early-adopter case studies from the ServiceNow and Snowflake agent platforms.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And before you go — this show is part of the Nerra Network, a family of daily podcasts covering tech, science, markets, and more.
+
+If you enjoyed today's episode, give Tesla Shorts Time a listen: your daily deep dive into everything Tesla. You can explore the whole lineup at nerranetwork dot com.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
