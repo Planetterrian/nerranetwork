@@ -732,6 +732,282 @@ def convert_md_tables_to_html(body_md: str, *, brand: str = "#6B47FF") -> str:
     return "\n".join(out_lines)
 
 
+# ---------------------------------------------------------------------------
+# Full markdown body → inline-styled HTML
+# ---------------------------------------------------------------------------
+#
+# WHY THIS EXISTS (operator-caught, Tesla Ep500 newsletter, Jun 2026):
+# Buttondown renders the email ``body`` field as CommonMark. BUT CommonMark
+# does NOT parse markdown *inside* an HTML block element. The body is wrapped
+# in a ``surface-white`` <table> (so the dark-mode <style> can flip its
+# background), and the moment the markdown lives inside that <table>,
+# Buttondown stops converting it — every ``**bold**``, ``## heading``,
+# ``> quote`` and numbered list ships as literal text. On a phone that reads
+# as an unbroken wall of ``**`` / ``###`` / ``>`` characters.
+#
+# Fix: render the body to HTML ourselves *before* it goes in the table. That
+# both repairs the rendering and lets us give the body a real typographic
+# hierarchy — scannable sections with breathing room instead of a slab.
+
+# AA-on-white link colour (4.6:1), matches ``_render_md_inline_to_html``.
+_BODY_LINK_STYLE = "color:#2563eb;text-decoration:underline;"
+
+_INLINE_ANCHOR_RE = re.compile(r"<a\b[^>]*>.*?</a>", re.IGNORECASE | re.DOTALL)
+
+
+def _md_inline_rich(text: str) -> str:
+    """Render inline markdown (links, bold, italic, code) to HTML.
+
+    Escapes ``& < >`` first, so this only runs on plain-markdown text
+    (paragraphs / headings / list items / blockquotes) — never on the
+    pre-rendered standalone HTML lines, which the block parser passes
+    through untouched.
+
+    Exception: a couple of upstream transforms inject inline ``<a>``
+    anchors *mid-line* (``render_source_links_as_html`` turns
+    ``Source: [label](url)`` into an HTML anchor before we run). Those
+    are protected behind placeholders so we don't escape their angle
+    brackets into visible ``&lt;a&gt;`` text. Style them to match our
+    own links if they lack an inline colour.
+
+    Bold/italic carry NO inline colour so they inherit their parent's
+    colour, which the dark-mode universal selector flips correctly
+    (``<strong>``/``<em>`` aren't in that selector list).
+    """
+    # 1. Pull existing inline anchors out so escaping can't mangle them.
+    anchors: List[str] = []
+
+    def _stash(m: "re.Match[str]") -> str:
+        a = m.group(0)
+        # Give pipeline-injected anchors (target=_blank, no style) the
+        # same AA-on-white link colour our markdown links use.
+        if "style=" not in a.lower():
+            a = a.replace("<a ", f'<a style="{_BODY_LINK_STYLE}" ', 1)
+        anchors.append(a)
+        return f"\x00A{len(anchors) - 1}\x00"
+
+    text = _INLINE_ANCHOR_RE.sub(_stash, text)
+
+    esc = (
+        text.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+    )
+    # Links: [label](http(s)://url)
+    esc = re.sub(
+        r"\[([^\]]+)\]\((https?://[^)\s]+)\)",
+        rf'<a href="\2" style="{_BODY_LINK_STYLE}">\1</a>',
+        esc,
+    )
+    # Bold (** or __) before italic so the markers don't collide.
+    esc = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", esc)
+    esc = re.sub(r"__([^_]+)__", r"<strong>\1</strong>", esc)
+    # Italic (single * not part of a ** pair).
+    esc = re.sub(r"(?<![*\w])\*([^*\n]+)\*(?!\w)", r"<em>\1</em>", esc)
+    # Inline code.
+    esc = re.sub(
+        r"`([^`]+)`",
+        r'<code style="background:#f1f5f9;padding:1px 5px;border-radius:4px;'
+        r'font-size:0.92em;">\1</code>',
+        esc,
+    )
+    # Drop any stray unmatched bold markers (malformed pairs from the LLM).
+    esc = esc.replace("**", "")
+    # 2. Restore the protected inline anchors.
+    for idx, anchor in enumerate(anchors):
+        esc = esc.replace(f"\x00A{idx}\x00", anchor)
+    return esc
+
+
+_HEADING_RE = re.compile(r"^(#{1,6})\s+(.*\S)\s*$")
+_HR_RE = re.compile(r"^\s*(?:[-*_]\s*){3,}$")
+_OL_RE = re.compile(r"^\s*\d+[.)]\s+(.*)$")
+_UL_RE = re.compile(r"^\s*[-*+•]\s+(.*)$")
+_QUOTE_RE = re.compile(r"^\s*>\s?(.*)$")
+_DASHES_ONLY_RE = re.compile(r"^[\s\-—–*_]+$")
+
+
+def render_markdown_body(
+    body_md: str, *, brand: str = "#6B47FF", slug: str = ""
+) -> str:
+    """Render a cleaned digest markdown body to inline-styled HTML.
+
+    Produces a clean, scannable hierarchy:
+
+      - ``#`` / ``##``  → section headings with a hairline divider above
+        and a short brand-coloured underline accent (scan anchors)
+      - ``###`` +       → bold sub-headings
+      - ``> quote``     → a brand-accented highlight card (the episode hook)
+      - ``1.`` / ``-``  → real lists with generous item spacing
+      - paragraphs      → 16px / 1.7 line-height prose
+      - ``---``         → a subtle rule
+
+    Pre-rendered single-line HTML blocks (markdown tables converted
+    upstream, the TSLA stock-watch block, Russian vocab cards, styled
+    ``<hr>``s) are detected by a leading ``<`` and passed through verbatim.
+
+    All blocks are joined with single newlines and contain no blank lines,
+    so the whole thing stays one CommonMark "raw HTML block" once wrapped
+    in the body table — Buttondown passes it through instead of re-parsing.
+    Light-mode colours are WCAG AA on white / ``#f8fafc``; dark mode is
+    handled by ``_DARK_MODE_STYLE`` (universal text flip + ``.card`` bg).
+    """
+    if not body_md or not body_md.strip():
+        return ""
+
+    lines = body_md.split("\n")
+    blocks: List[str] = []
+    i = 0
+    n = len(lines)
+
+    def _para(text_lines: List[str]) -> str:
+        joined = " ".join(s.strip() for s in text_lines if s.strip())
+        if not joined:
+            return ""
+        return (
+            '<p style="margin:0 0 14px;font-size:16px;line-height:1.7;'
+            f'color:#1f2937;">{_md_inline_rich(joined)}</p>'
+        )
+
+    while i < n:
+        raw = lines[i]
+        stripped = raw.strip()
+
+        # 1. Blank line — skip (block separator).
+        if not stripped:
+            i += 1
+            continue
+
+        # 2. Pre-rendered HTML block (single line) — pass through.
+        if stripped.startswith("<"):
+            blocks.append(stripped)
+            i += 1
+            continue
+
+        # 3. Horizontal rule.
+        if _HR_RE.match(stripped):
+            blocks.append(
+                '<hr style="border:none;border-top:1px solid #e5e7eb;'
+                'margin:24px 0;" />'
+            )
+            i += 1
+            continue
+
+        # 4. Heading.
+        m = _HEADING_RE.match(stripped)
+        if m:
+            level = len(m.group(1))
+            inner = _md_inline_rich(m.group(2))
+            if level <= 2:
+                # Major section: divider above + brand underline accent.
+                blocks.append(
+                    '<h2 style="margin:30px 0 12px;padding-top:18px;'
+                    'border-top:1px solid #eef0f3;font-size:19px;'
+                    'line-height:1.3;font-weight:700;color:#0f172a;'
+                    'letter-spacing:-0.01em;">'
+                    '<span style="display:inline-block;'
+                    f'border-bottom:3px solid {brand};padding-bottom:2px;">'
+                    f'{inner}</span></h2>'
+                )
+            elif level == 3:
+                blocks.append(
+                    '<h3 style="margin:24px 0 8px;font-size:16px;'
+                    'line-height:1.35;font-weight:700;color:#0f172a;">'
+                    f'{inner}</h3>'
+                )
+            else:
+                blocks.append(
+                    '<h4 style="margin:20px 0 6px;font-size:13px;'
+                    'line-height:1.4;font-weight:700;color:#475569;'
+                    'text-transform:uppercase;letter-spacing:0.05em;">'
+                    f'{inner}</h4>'
+                )
+            i += 1
+            continue
+
+        # 5. Blockquote (collect consecutive ``>`` lines).
+        if _QUOTE_RE.match(raw):
+            quote_lines: List[str] = []
+            while i < n and _QUOTE_RE.match(lines[i]):
+                content = _QUOTE_RE.match(lines[i]).group(1).strip()
+                # Drop separator-only quote lines (e.g. a stray ``--``).
+                if content and not _DASHES_ONLY_RE.match(content):
+                    quote_lines.append(content)
+                i += 1
+            if quote_lines:
+                inner = _md_inline_rich(" ".join(quote_lines))
+                blocks.append(
+                    '<table role="presentation" width="100%" cellpadding="0" '
+                    'cellspacing="0" border="0" class="card" '
+                    'style="background:#f8fafc;border-radius:10px;'
+                    'margin:6px 0 18px;">'
+                    '<tr><td style="padding:14px 18px;'
+                    f'border-left:4px solid {brand};font-size:16px;'
+                    'line-height:1.6;color:#0f172a;font-weight:600;">'
+                    f'{inner}</td></tr></table>'
+                )
+            continue
+
+        # 6. Ordered list.
+        if _OL_RE.match(raw):
+            items: List[str] = []
+            while i < n and _OL_RE.match(lines[i]):
+                items.append(_OL_RE.match(lines[i]).group(1).strip())
+                i += 1
+            lis = "".join(
+                '<li style="margin:0 0 10px;font-size:16px;line-height:1.7;'
+                f'color:#1f2937;">{_md_inline_rich(it)}</li>'
+                for it in items if it
+            )
+            blocks.append(
+                '<ol style="margin:0 0 16px;padding-left:22px;">'
+                f'{lis}</ol>'
+            )
+            continue
+
+        # 7. Unordered list.
+        if _UL_RE.match(raw):
+            items = []
+            while i < n and _UL_RE.match(lines[i]):
+                items.append(_UL_RE.match(lines[i]).group(1).strip())
+                i += 1
+            lis = "".join(
+                '<li style="margin:0 0 8px;font-size:16px;line-height:1.7;'
+                f'color:#1f2937;">{_md_inline_rich(it)}</li>'
+                for it in items if it
+            )
+            blocks.append(
+                '<ul style="margin:0 0 16px;padding-left:22px;">'
+                f'{lis}</ul>'
+            )
+            continue
+
+        # 8. Paragraph — gather consecutive plain lines until a blank
+        #    line or a line that starts a different block.
+        para_lines = [raw]
+        i += 1
+        while i < n:
+            nxt = lines[i]
+            nxt_s = nxt.strip()
+            if (
+                not nxt_s
+                or nxt_s.startswith("<")
+                or _HEADING_RE.match(nxt_s)
+                or _HR_RE.match(nxt_s)
+                or _QUOTE_RE.match(nxt)
+                or _OL_RE.match(nxt)
+                or _UL_RE.match(nxt)
+            ):
+                break
+            para_lines.append(nxt)
+            i += 1
+        para = _para(para_lines)
+        if para:
+            blocks.append(para)
+
+    return "\n".join(b for b in blocks if b)
+
+
 def episode_blog_url(slug: str, episode_num: int) -> str:
     """Canonical per-episode permalink on nerranetwork.com.
 
@@ -1385,10 +1661,18 @@ def wrap_with_branding(
             body_clean, featured_with_slug["hook"]
         )
     # Pre-render any markdown tables in the body to inline HTML so they
-    # survive Outlook / Yahoo / ProtonMail. Non-table markdown is left
-    # alone for Buttondown's renderer to handle.
+    # survive Outlook / Yahoo / ProtonMail.
     body_clean = convert_md_tables_to_html(
         body_clean, brand=show["brand_color"]
+    )
+    # Render the REST of the body markdown to HTML ourselves. We can't
+    # rely on Buttondown's markdown→HTML here because the body gets
+    # wrapped in a <table> below and CommonMark doesn't parse markdown
+    # inside an HTML block — which shipped the body as a wall of raw
+    # ``**``/``###``/``>`` characters on mobile (Tesla Ep500, Jun 2026).
+    # Doing it here also gives the body a real, scannable hierarchy.
+    body_clean = render_markdown_body(
+        body_clean, brand=show["brand_color"], slug=slug
     )
 
     # Two trust-and-tracking blocks added in spec v2: a "view in
@@ -1408,13 +1692,12 @@ def wrap_with_branding(
             show, issue_number, send_date, slug=slug,
         )
 
-    # Wrap the body markdown in a ``surface-white`` table so the
-    # dark-mode ``<style>`` override flips its background. Without
-    # this wrapper Buttondown's markdown→HTML conversion produces
-    # bare ``<p>`` tags that the email client renders against its
-    # own page background, which on iOS Mail dark mode results in
-    # near-black body text (Buttondown default `#0f172a`-ish) against
-    # a darkening surface — barely readable. Spec v2 follow-up.
+    # Wrap the (now fully-rendered HTML) body in a ``surface-white``
+    # table so the dark-mode ``<style>`` override flips its background.
+    # The inner content is HTML with no blank lines, so Buttondown
+    # treats the whole table as one CommonMark raw-HTML block and passes
+    # it through verbatim instead of trying (and failing) to re-parse
+    # markdown inside it. Spec v2 follow-up + Ep500 render fix.
     body_wrapped = ""
     if body_clean.strip():
         body_wrapped = (
