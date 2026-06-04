@@ -217,6 +217,50 @@ class TestRetryWordCountOk:
             orig_words=500, retry_words=400, show_floor=600,
         ) is False
 
+    def test_ep500_publication_floor_rejects_shortening_below_soft_floor(self):
+        """Tesla Ep500 (2026-06-04): the repetition retry took an
+        already-publishable 1128-word script down to 1003 words. With
+        only the hard-floor gate (max(902, 650)=902), 1003 passed and
+        the swap happened — then dedup trimmed it to 954, under Tesla's
+        960-word publication soft floor, and the flagship was skipped.
+
+        With ``publication_floor=960`` supplied, the gate now also
+        requires the retry to clear 960*1.1 = 1056 (because the 1128
+        original already cleared that margin), so 1003 is REJECTED and
+        the publishable original is kept."""
+        from engine.generator import _retry_word_count_ok
+        assert _retry_word_count_ok(
+            orig_words=1128, retry_words=1003, show_floor=600,
+            publication_floor=960,
+        ) is False
+        # A retry that stays above the dedup margin (1056) is still fine.
+        assert _retry_word_count_ok(
+            orig_words=1128, retry_words=1080, show_floor=600,
+            publication_floor=960,
+        ) is True
+
+    def test_publication_floor_skipped_when_original_already_thin(self):
+        """If the original is itself below the publication soft floor
+        (the episode is heading for a skip regardless), the publication
+        guard must NOT block a cleaner retry — only the hard-floor and
+        80%-of-original constraints apply. orig=900 < 1056 margin, so
+        the publication clause is inert; retry=820 clears 80% (720) and
+        floor+50 (650) → ACCEPT."""
+        from engine.generator import _retry_word_count_ok
+        assert _retry_word_count_ok(
+            orig_words=900, retry_words=820, show_floor=600,
+            publication_floor=960,
+        ) is True
+
+    def test_publication_floor_default_is_inert(self):
+        """Omitting ``publication_floor`` (default 0) preserves the
+        original two-constraint behaviour byte-for-byte — no caller that
+        skips the new arg sees a behaviour change."""
+        from engine.generator import _retry_word_count_ok
+        assert _retry_word_count_ok(
+            orig_words=1128, retry_words=1003, show_floor=600,
+        ) is True
+
 
 # ---------------------------------------------------------------------------
 # _podcast_expansion_retry_threshold — no dead band vs run_show's soft floor

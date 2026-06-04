@@ -793,11 +793,12 @@ def _strip_metadata_from_script(script: str) -> str:
 
 
 def _retry_word_count_ok(orig_words: int, retry_words: int,
-                         show_floor: int) -> bool:
+                         show_floor: int,
+                         publication_floor: int = 0) -> bool:
     """Decide whether a podcast-script retry's word count is healthy
     enough to swap in. Both repetition-retry paths use this gate.
 
-    Two failure modes the gate protects against:
+    Three failure modes the gate protects against:
 
       1. ``Omni View Ep059 (2026-05-23)`` — anti-repetition retry
          replaced an 883-word original with a 555-word "cleaner"
@@ -808,13 +809,33 @@ def _retry_word_count_ok(orig_words: int, retry_words: int,
       2. Drastic shrinkage even above the floor. A retry that's
          lost 20%+ of word count almost certainly lost real
          content along with the repetition.
+      3. ``Tesla Ep500 (2026-06-04)`` — the repetition retry took an
+         already-publishable 1128-word script down to 1003 words.
+         That cleared the hard-floor gate (1003 > 650), so the swap
+         happened, but the dedup pass then trimmed it to 954 — under
+         Tesla's 960-word *publication* soft floor — and the flagship
+         episode was skipped. Cleaning up repetition is never worth
+         turning a shippable episode into a skipped one, so when
+         ``publication_floor`` is supplied and the ORIGINAL already
+         clears it (with a ~10% dedup margin), the retry must clear it
+         too.
 
-    Returns True when ``retry_words`` clears BOTH:
-      * 80 % of the original word count, AND
+    Returns True when ``retry_words`` clears ALL of:
+      * 80 % of the original word count,
       * the per-show ``min_podcast_word_floor`` + 50-word margin
-        (so the downstream hard-floor check has headroom).
+        (so the downstream hard-floor check has headroom), AND
+      * (when ``publication_floor`` is given and the original was
+        already publishable) the publication soft floor + ~10% margin
+        for the dedup pass that runs before the runner's skip check.
     """
     threshold = max(int(orig_words * 0.8), show_floor + 50)
+    if publication_floor:
+        # ~10% margin mirrors ``_podcast_expansion_retry_threshold`` —
+        # the dedup pass between here and run_show's skip check trims a
+        # few percent off the word count.
+        pub_margin = int(publication_floor * 1.1)
+        if orig_words >= pub_margin:
+            threshold = max(threshold, pub_margin)
     return retry_words >= threshold
 
 
@@ -1813,12 +1834,17 @@ def generate_podcast_script(
                 show_floor = (
                     getattr(config.llm, "min_podcast_word_floor", 600) or 600
                 )
-                if not _retry_word_count_ok(orig_words, retry_words, show_floor):
+                # Mirror run_show.py's publication soft floor (int(target*0.6))
+                # so the retry can't shorten a publishable script below it.
+                pub_floor = int(min_words * 0.6)
+                if not _retry_word_count_ok(orig_words, retry_words, show_floor,
+                                            publication_floor=pub_floor):
                     logger.warning(
                         "Repetition retry for '%s' has fewer repetitions but "
-                        "would drop word count too far (%d → %d, show floor=%d) "
-                        "— keeping original",
+                        "would drop word count too far (%d → %d, show floor=%d, "
+                        "publication floor=%d) — keeping original",
                         config.name, orig_words, retry_words, show_floor,
+                        pub_floor,
                     )
                 else:
                     logger.info(
@@ -1886,12 +1912,16 @@ def generate_podcast_script(
                 show_floor = (
                     getattr(config.llm, "min_podcast_word_floor", 600) or 600
                 )
-                # See ``_retry_word_count_ok`` for the OV Ep059
-                # incident this guard protects against (anti-rep
-                # retry replaced 883-word original with 555-word
-                # retry that then tripped the 600-word hard floor).
+                pub_floor = int(min_words * 0.6)
+                # See ``_retry_word_count_ok`` for the OV Ep059 +
+                # Tesla Ep500 incidents this guard protects against
+                # (anti-rep retry replaced 883-word original with
+                # 555-word retry that tripped the 600-word hard floor;
+                # publication_floor stops a retry shortening a
+                # publishable script below run_show's skip threshold).
                 if not critical_rr and _retry_word_count_ok(
                     orig_words, retry_words, show_floor,
+                    publication_floor=pub_floor,
                 ):
                     logger.info(
                         "Anti-repetition retry cleared critical loops for '%s' "
