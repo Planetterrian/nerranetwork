@@ -36,7 +36,7 @@ class TestRenderMarkdownBody:
 
     def test_bold_and_italic_render(self):
         out = nt.render_markdown_body("A **bold** and *italic* word.")
-        assert "<strong>bold</strong>" in out
+        assert "<strong" in out and ">bold</strong>" in out
         assert "<em>italic</em>" in out
         assert "**" not in out
 
@@ -75,6 +75,37 @@ class TestRenderMarkdownBody:
         assert ol.count("<li") == 2 and "<ol" in ol
         ul = nt.render_markdown_body("- Alpha\n- Beta")
         assert ul.count("<li") == 2 and "<ul" in ul
+
+    def test_news_list_keeps_continuous_numbering(self):
+        """The digest's 'Top N' items are a marker line + indented body +
+        a blank line before the next item. That used to render as one
+        <ol> PER item (so every item showed '1.') and split the body off
+        as a detached paragraph (Ep501, Jun 2026). It must now be ONE
+        <ol> with the body folded into each <li>."""
+        body = (
+            "1. **First story:** June 04, 2026, Source A\n"
+            "   Body of the first story. Source: x.com\n"
+            "\n"
+            "2. **Second story:** June 04, 2026, Source B\n"
+            "   Body of the second story. Source: y.com\n"
+            "\n"
+            "3. **Third story:** June 04, 2026, Source C\n"
+            "   Body of the third story. Source: z.com\n"
+        )
+        out = nt.render_markdown_body(body)
+        assert out.count("<ol") == 1          # single continuous list
+        assert out.count("<li") == 3          # not 3 separate one-item lists
+        assert "Body of the first story." in out   # continuation folded in
+        assert "Body of the third story." in out
+        # The body folds INTO the <li>, not into a sibling <p>.
+        assert out.count("<p ") == 0
+
+    def test_bold_carries_explicit_colour(self):
+        """Bold text must carry an inline colour so Buttondown's theme
+        stylesheet can't recolour it with the account accent (that shipped
+        story titles as low-contrast Tesla-red on the dark email)."""
+        out = nt.render_markdown_body("A **bold title** here.")
+        assert '<strong style="color:#0f172a;">bold title</strong>' in out
 
     def test_standalone_html_block_passes_through(self):
         """Pre-rendered single-line HTML (markdown tables converted
@@ -202,7 +233,7 @@ def test_wrap_with_branding_weekly_renders_body_to_html_in_middle():
     assert "## This week" not in out
     assert "**bold**" not in out
     assert "<h2" in out
-    assert "<strong>bold</strong>" in out
+    assert "<strong" in out and ">bold</strong>" in out
 
 
 def test_wrap_with_branding_daily_uses_episode_pill():
@@ -793,7 +824,7 @@ def test_render_html_table_handles_inline_markdown_in_cells():
         ["Header"],
         [["**bold**"], ["[link](https://x.com)"]],
     )
-    assert "<strong>bold</strong>" in out
+    assert "<strong" in out and ">bold</strong>" in out
     assert '<a href="https://x.com"' in out
 
 
