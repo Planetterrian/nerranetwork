@@ -313,8 +313,12 @@ _DARK_MODE_STYLE = """\
     /* Cards (slightly lifted "panel" surfaces). */
     .card { background:#1e293b !important; background-color:#1e293b !important; }
 
-    /* Primary text on every dark-mode surface. */
-    body, p, h1, h2, h3, h4, td, span, div, li {
+    /* Primary text on every dark-mode surface. ``strong``/``b``/``em``/
+     * ``i``/``code`` are listed explicitly: we now set an inline colour
+     * on bold text (so Buttondown's theme accent can't recolour it), and
+     * that inline colour has to be flipped here for dark mode. */
+    body, p, h1, h2, h3, h4, td, span, div, li,
+    strong, b, em, i, code {
       color:#e2e8f0 !important;
     }
     /* Secondary / muted text — class-targeted so it doesn't override
@@ -800,8 +804,17 @@ def _md_inline_rich(text: str) -> str:
         esc,
     )
     # Bold (** or __) before italic so the markers don't collide.
-    esc = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", esc)
-    esc = re.sub(r"__([^_]+)__", r"<strong>\1</strong>", esc)
+    # Explicit colour (not a bare <strong>) so Buttondown's theme
+    # stylesheet can't recolour it with the account accent — that's why
+    # story titles shipped as low-contrast Tesla-red on the dark email
+    # (Ep501, Jun 2026). The dark-mode @media flips it via the strong/b
+    # selector.
+    esc = re.sub(
+        r"\*\*([^*]+)\*\*", r'<strong style="color:#0f172a;">\1</strong>', esc
+    )
+    esc = re.sub(
+        r"__([^_]+)__", r'<strong style="color:#0f172a;">\1</strong>', esc
+    )
     # Italic (single * not part of a ** pair).
     esc = re.sub(r"(?<![*\w])\*([^*\n]+)\*(?!\w)", r"<em>\1</em>", esc)
     # Inline code.
@@ -825,6 +838,103 @@ _OL_RE = re.compile(r"^\s*\d+[.)]\s+(.*)$")
 _UL_RE = re.compile(r"^\s*[-*+•]\s+(.*)$")
 _QUOTE_RE = re.compile(r"^\s*>\s?(.*)$")
 _DASHES_ONLY_RE = re.compile(r"^[\s\-—–*_]+$")
+
+
+def _collect_list(lines: List[str], start: int, ordered: bool):
+    """Collect a (possibly loose, multi-line) markdown list starting at
+    *start*. Returns ``(items, next_index)`` where each item is
+    ``(head_text, [continuation_lines])``.
+
+    The digest's news items look like::
+
+        1. **Title:** date, source
+           Body sentence. Source: [label](url)
+
+        2. **Next title:** ...
+
+    i.e. a numbered marker line, an *indented* continuation line with the
+    body + source, then a blank line before the next item. Naive
+    line-by-line parsing turned each item into its own ``<ol>`` (so every
+    item rendered as "1.") and split the body into a detached paragraph
+    (Ep501, Jun 2026). This collector keeps one list with continuous
+    numbering and folds each item's continuation into that item:
+
+      - a blank line followed by another marker → loose list, keep going
+      - a blank line followed by an indented line → continuation paragraph
+      - an indented (or hanging) non-marker line → continuation of the item
+      - a non-indented, non-marker line (or EOF) → the list ends
+    """
+    rx = _OL_RE if ordered else _UL_RE
+    items: List[tuple] = []
+    i = start
+    n = len(lines)
+    while i < n:
+        line = lines[i]
+        m = rx.match(line)
+        if m:
+            items.append((m.group(1).strip(), []))
+            i += 1
+            continue
+        if not line.strip():
+            j = i + 1
+            while j < n and not lines[j].strip():
+                j += 1
+            if j < n and rx.match(lines[j]):
+                i = j  # loose list — next item follows a blank line
+                continue
+            if j < n and lines[j].startswith((" ", "\t")) and items:
+                items[-1][1].append("")  # paragraph break within the item
+                i = j
+                continue
+            break  # list ended
+        if line.startswith((" ", "\t")) and items:
+            items[-1][1].append(line.strip())
+            i += 1
+            continue
+        break  # non-indented, non-marker line ends the list
+    return items, i
+
+
+def _render_list(items: List[tuple], ordered: bool) -> str:
+    """Render collected list items to an inline-styled <ol>/<ul>.
+
+    Each item: the marker line (bold title + any meta) on the first row,
+    then any folded continuation as a normal-weight sub-block — so a news
+    item reads as "**Title** … / body … / Source" instead of a detached
+    paragraph.
+    """
+    tag = "ol" if ordered else "ul"
+    lis: List[str] = []
+    for head, body in items:
+        if not head and not any(body):
+            continue
+        head_html = _md_inline_rich(head)
+        # Group continuation lines into paragraphs (blank = paragraph break).
+        paras: List[str] = []
+        buf: List[str] = []
+        for bl in body:
+            if bl:
+                buf.append(bl)
+            elif buf:
+                paras.append(" ".join(buf))
+                buf = []
+        if buf:
+            paras.append(" ".join(buf))
+        body_html = "".join(
+            '<div style="margin-top:4px;font-weight:400;color:#334155;">'
+            f"{_md_inline_rich(p)}</div>"
+            for p in paras if p.strip()
+        )
+        lis.append(
+            '<li style="margin:0 0 16px;padding-left:4px;font-size:16px;'
+            f'line-height:1.7;color:#1f2937;">{head_html}{body_html}</li>'
+        )
+    if not lis:
+        return ""
+    return (
+        f'<{tag} style="margin:0 0 18px;padding-left:24px;">'
+        f'{"".join(lis)}</{tag}>'
+    )
 
 
 def render_markdown_body(
@@ -948,38 +1058,20 @@ def render_markdown_body(
                 )
             continue
 
-        # 6. Ordered list.
+        # 6. Ordered list (continuous numbering + folded continuation).
         if _OL_RE.match(raw):
-            items: List[str] = []
-            while i < n and _OL_RE.match(lines[i]):
-                items.append(_OL_RE.match(lines[i]).group(1).strip())
-                i += 1
-            lis = "".join(
-                '<li style="margin:0 0 10px;font-size:16px;line-height:1.7;'
-                f'color:#1f2937;">{_md_inline_rich(it)}</li>'
-                for it in items if it
-            )
-            blocks.append(
-                '<ol style="margin:0 0 16px;padding-left:22px;">'
-                f'{lis}</ol>'
-            )
+            items, i = _collect_list(lines, i, ordered=True)
+            html = _render_list(items, ordered=True)
+            if html:
+                blocks.append(html)
             continue
 
         # 7. Unordered list.
         if _UL_RE.match(raw):
-            items = []
-            while i < n and _UL_RE.match(lines[i]):
-                items.append(_UL_RE.match(lines[i]).group(1).strip())
-                i += 1
-            lis = "".join(
-                '<li style="margin:0 0 8px;font-size:16px;line-height:1.7;'
-                f'color:#1f2937;">{_md_inline_rich(it)}</li>'
-                for it in items if it
-            )
-            blocks.append(
-                '<ul style="margin:0 0 16px;padding-left:22px;">'
-                f'{lis}</ul>'
-            )
+            items, i = _collect_list(lines, i, ordered=False)
+            html = _render_list(items, ordered=False)
+            if html:
+                blocks.append(html)
             continue
 
         # 8. Paragraph — gather consecutive plain lines until a blank
