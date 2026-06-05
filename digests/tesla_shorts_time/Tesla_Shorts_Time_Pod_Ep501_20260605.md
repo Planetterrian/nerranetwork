@@ -1,0 +1,67 @@
+# Tesla Shorts Time
+**REAL-TIME TSLA price:** $410.83 ▼ $7.62 (1.8%)
+> **Tesla ending free Supercharging for new Model 3s on June 15 removes a key ownership perk just as buyers weigh total costs against rivals.**
+---
+### Top 12 News Items
+1. **Tesla Free Supercharging Offer for Model 3 Ends June 15:** June 05, 2026, Teslarati
+   Tesla updated its configurator to show the free Supercharging incentive for Model 3 Premium and Performance variants will stop after June 15. The change affects new orders placed after that cutoff. Buyers who order before the date still receive lifetime free access at Superchargers. The move comes as Tesla adjusts incentives while Model Y updates continue rolling out. Source: [x.com](https://x.com/Teslarati/status/2062892461756744161)
+
+2. **Model Y RWD/AWD Now Include Larger 16” Screen and Black Headliner:** June 05, 2026, Teslarati
+   The base Model Y rear-wheel-drive and all-wheel-drive trims now ship with the 16-inch center screen and black headliner previously reserved for higher trims. These were the versions formerly labeled Standard Range. The update narrows the visible differences between entry and Premium models. Production changes appear to be rolling through current builds. Source: [x.com](https://x.com/Teslarati/status/2062891501709938899)
+
+3. **Tesla Adds “Coastal Blue” Color Option for Model Y in Europe:** June 05, 2026, Teslarati
+   European buyers can now select Coastal Blue on the Model Y for an extra €1,300. This brings Tesla’s blue palette to four shades. The color joins existing options without changes to other markets or pricing tiers. Availability started showing in the configurator this week. Source: [x.com](https://x.com/Teslarati/status/2062891312127324428)
+
+4. **Tesla VP Raj Jegannathan Officially Departs Tesla:** June 05, 2026, Not a Tesla App
+   Raj Jegannathan, Tesla’s AI Infrastructure VP, left after 13 years to become CTO at ChronoScale. His departure highlights internal shifts toward fleet utilization projects. The move follows a period of expanding AI hardware demands across vehicle and robot programs. No immediate replacement has been named. Source: [notateslaapp.com](https://www.notateslaapp.com/news/4252/tesla-vp-raj-jegannathan-officially-departs-tesla)
+
+5. **2026 MG S6 Review: New mid-size SUV takes the value fight to Tesla, BYD, Zeekr and Geely:** June 05, 2026, EV Central
+   The MG S6 enters the mid-size electric SUV segment with pricing aimed directly at Tesla Model Y and Chinese competitors. Early reviews note competitive range and features at a lower entry price. The vehicle expands MG’s push into markets where Tesla holds strong share. Deliveries are expected later this year. Source: [Google News](https://news.google.com/rss/articles/CBMisAFBVV95cUxPOE5nRElZSTljZHZ5Vk1PYUFOeHBBcWdUSEhWX2h2UHpPSlZoQlZXWU5jdXZXMkxlSy1JUkxWRVhIX0xDNG9MU1QxNFl1TWNPdDNwRkxsaFlZdW9ZSDV2UDVPYXNMRlpoOEY5MFFwRzZMVGxRb3pkVG9OSW10b1I1dEdjdkIwMTJqdUlFYTJSVU5kR1Y2LXBSbk5MMzVDRWs5STNxbk1KelJVMGpPVW1pTQ?oc=5)
+
+6. **This is what happens when you race a Chevy Corvette ZR1X against a 'spicy' tuned Tesla Model S Plaid:** June 05, 2026, AOL.com
+   A tuned Model S Plaid faced a Corvette ZR1X in a straight-line comparison that highlighted differences in power delivery and traction. The Tesla maintained an edge in initial acceleration despite the Corvette’s higher top-end power. The test used public roads and standard drag-strip protocols. Results reflect aftermarket modifications on the Tesla side. Source: [Google News](https://news.google.com/rss/articles/CBMiggFBVV95cUxObl83cnQ4TTk0M1d2dm1HZFFGa0FydHRSSnZXaUxBVUR0WVZkZ2p1cmNRQXZxVjBfNms5eGhQUnNSSkdqRVh1NTBjV2JlU2tDQk9CZVRBdlNtUnBiQzV0a3VvX001ZnRuOUI2YXc2bmtod1ZLRVEwNzVpc3JrRzNlMHVB?oc=5)
+
+7. **JPMorgan Upgrades Tesla With A Major Price Target Hike:** June 05, 2026, Investor's Business Daily
+   JPMorgan raised its Tesla rating to Neutral and lifted the price target to $475, citing robotaxi and Optimus potential. The upgrade reverses the bank’s prior bearish stance that had targeted significant downside. Analysts now see software and robotics as primary long-term drivers. The new target implies roughly 13 percent upside from recent levels. Source: [Google News](https://news.google.com/rss/articles/CBMirgFBVV95cUxPRll0M1gwZDdMWl81RkJBLUw1TnRfZm5STXR0aHVCTmxrUDVXcS1XR3hOOFRZNU5FRWVKbUY2TloyUWJhbGo0bzVIZGZGSEo2SzNzTGNZaTVPVkhCeGZxcS1CVXB4UUtJUHhPNkIzSGVuS2tURDZ3MDBkWGhwenVJOGsxTXptYkJLTm9GTy1fVlBkajY2N0VSSDFaM3JNTTBfS0RCaGRUSFBIM19hV2c?oc=5)
+
+8. **US carmaker Tesla has passed the 300,000 sales mark in the UK:** June 05, 2026, Electrifying.com
+   Tesla cumulative UK sales crossed 300,000 units, led by Model Y volume. The milestone reflects steady growth despite limited local production. Registrations continue to outpace most rivals in the premium EV segment. No specific quarterly breakdown was released with the announcement. Source: [Google News](https://news.google.com/rss/articles/CBMihAFBVV95cUxQdk5sVmVORndvcHFKcms4bnJ1U1pmM1dJRTlZQjBKaG55TWtzN1hTTDBDVXVCMG9GNEs2LVlab2owOHpvZ1JNZXl2OTVHXzVtZnE3Q0hUNTdLSGFIRzZIRW4wQ29wd2k2V19mUGd3cWZjYkpCTmhPQWNaYVVKZmxHQ2FzY1Y?oc=5)
+
+9. **Tesla's Robotaxi Now Covers All of Austin Metro Area:** June 05, 2026, EVANNEX Aftermarket Tesla Accessories - Tesla News
+   Tesla expanded unsupervised robotaxi operations to the full Austin metro region, more than doubling the prior service zone. The update builds on earlier limited-area testing. Fleet size and ride availability details were not disclosed. Expansion continues the gradual rollout ahead of broader regulatory decisions. Source: [evannex.com](https://evannex.com/blogs/news/teslas-robotaxi-now-covers-all-of-austin-metro-area)
+
+10. **Tesla Japan sales jump 182% in May 2026, YTD up 157%:** June 05, 2026, r/teslainvestorsclub
+    Tesla Japan deliveries rose 182 percent year-over-year in May, pushing year-to-date growth to 157 percent. Model Y accounted for the majority of the increase. The surge follows earlier price adjustments and new inventory arrivals. Monthly registration data confirmed the jump. Source: [reddit.com](https://www.reddit.com/r/teslainvestorsclub/comments/1txi82d/tesla_japan_sales_jump_182_in_may_2026_ytd_up_157/)
+
+11. **Sales Champion for Four Consecutive Months, How Much Do Koreans Love Tesla?:** June 05, 2026, Gasgoo
+    Tesla maintained the top spot in South Korea’s imported EV segment for the fourth straight month. Model Y demand drove the result amid broader import growth. The brand now holds roughly one-third of the import EV market. Local competitors have yet to close the gap. Source: [Google News](https://news.google.com/rss/articles/CBMizgFBVV95cUxOMm5lQnpia3hMNklHTGZnTVZid3pCMHNMNmdhLVhXeEtqazdvZjRVbFMyMHFyaWpEbFhrU3JsS29MYkpleW90NDZUQUhSWHM1TUdpbkZkRWxRcHpONzhXN3ZOaTY5MS1hU1l1NHRyWHVPaTUtSGJSdmNoZ0w4TEhWU2oyQWtGQUJSQS15cEZxOXkwQ2NqUG1yWG42TlJrU2Nkdjc1ZlVjV1pIR2JoTEpJX0RzSDR4VmI4aV9TU0YxMzhBc1hrWExiT3h3d0dGdw?oc=5)
+
+12. **Tesla Recalls 173 Cybertrucks After Wheel Detachment Risk Discovered in Rotor Components:** June 05, 2026, EVTech.News
+    Tesla issued a recall covering 173 Cybertrucks due to a potential wheel detachment linked to rotor components. The issue was identified during internal quality checks. Affected vehicles will receive inspections and replacements at service centers. No customer incidents have been reported so far. Source: [Google News](https://news.google.com/rss/articles/CBMiugFBVV95cUxNMUZEd0RmeU1DRUczZkZEU3h1d0VaeEtxcDNGS3ZzVzE2ZmJBdDJScG9UTkVfcXFweHByOEJBQS1FeGFiUWZIY1pvMW1NRHVSSkpQVUd6UlNpay1OZmcxajVLZlZYUktLbGh0QzUzVmR0dHpNMTloaDQ3TnkxRXhjTFRFYjM2emM5Yl9zYV9DTHZ3dmI0YlZIaTUxX3Y4SkFfOV9jZ084aWgzTjNWRmpjY1JmMlNvbnRhX1E?oc=5)
+---
+## Tesla X Takeover: What's Hot Right Now
+Here are the most interesting, fresh Tesla developments that have everyone talking.
+
+1. **Bitcoin Selloff Wipes Out $220 Million Tesla Crypto Gains:** A recent Bitcoin price drop erased roughly $220 million in paper gains on Tesla’s holdings. The company still holds the original Bitcoin purchased in 2021. No sales were executed during the move. The episode underscores ongoing volatility in Tesla’s treasury strategy. Source: [Google News](https://news.google.com/rss/articles/CBMimwFBVV95cUxQRTB5NVJJWmhLQzlzdlRkSFJieF9XR0V0a040Vm44bnN5N0dRYnZtQnhoTE9jUTBHTU5LUVpvSWFLRzBtUHpyN1Z1WkQ4eWFqOWF6NE4tSWF6ZjJnaWE0eExWbUhUYWxkYjFydmV1VkwydkJXVUY1SE5Gb0d0Y1B0Mm14NmIxT2pRSF93d3ZCTWVaSlEyeDcwY0pBSQ?oc=5)
+
+2. **Tesla Japan Sales Surge 182 Percent in May:** Monthly registrations in Japan more than doubled versus last year, extending a strong year-to-date trend. Model Y volume led the increase after earlier price cuts. The result marks one of Tesla’s fastest-growing markets outside North America and Europe. Inventory positioning appears to have supported the jump. Source: [reddit.com](https://www.reddit.com/r/teslainvestorsclub/comments/1txi82d/tesla_japan_sales_jump_182_in_may_2026_ytd_up_157/)
+
+3. **MG S6 Enters Direct Competition With Model Y:** MG launched the S6 mid-size electric SUV priced to challenge the Model Y and several Chinese rivals. Early reviews highlight competitive range and equipment levels at a lower starting price. The vehicle widens the field of value-focused alternatives in multiple export markets. Deliveries begin later this year. Source: [Google News](https://news.google.com/rss/articles/CBMisAFBVV95cUxPOE5nRElZSTljZHZ5Vk1PYUFOeHBBcWdUSEhWX2h2UHpPSlZoQlZXWU5jdXZXMkxlSy1JUkxWRVhIX0xDNG9MU1QxNFl1TWNPdDNwRkxsaFlZdW9ZSDV2UDVPYXNMRlpoOEY5MFFwRzZMVGxRb3pkVG9OSW10b1I1dEdjdkIwMTJqdUlFYTJSVU5kR1Y2LXBSbk5MMzVDRWs5STNxbk1KelJVMGpPVW1pTQ?oc=5)
+
+4. **Corvette ZR1X Takes on Tuned Model S Plaid:** A head-to-head acceleration test pitted a factory Corvette ZR1X against a modified Model S Plaid. The Tesla held an early advantage thanks to instant torque and all-wheel drive, while the Corvette pulled ahead at higher speeds. The comparison used public roads and standard timing equipment. Results reflect the specific tuning on the Tesla. Source: [Google News](https://news.google.com/rss/articles/CBMiggFBVV95cUxObl83cnQ4TTk0M1d2dm1HZFFGa0FydHRSSnZXaUxBVUR0WVZkZ2p1cmNRQXZxVjBfNms5eGhQUnNSSkdqRVh1NTBjV2JlU2tDQk9CZVRBdlNtUnBiQzV0a3VvX001ZnRuOUI2YXc2bmtod1ZLRVEwNzVpc3JrRzNlMHVB?oc=5)
+
+5. **Tesla Cybertruck Recall Targets 173 Units:** A small batch of Cybertrucks is being recalled over a rotor component that could affect wheel retention. The issue was caught during factory checks before customer deliveries. Service centers will inspect and replace affected parts at no cost. No on-road failures have been linked to the defect. Source: [Google News](https://news.google.com/rss/articles/CBMiugFBVV95cUxNMUZEd0RmeU1DRUczZkZEU3h1d0VaeEtxcDNGS3ZzVzE2ZmJBdDJScG9UTkVfcXFweHByOEJBQS1FeGFiUWZIY1pvMW1NRHVSSkpQVUd6UlNpay1OZmcxajVLZlZYUktLbGh0QzUzVmR0dHpNMTloaDQ3TnkxRXhjTFRFYjM2emM5Yl9zYV9DTHZ3dmI0YlZIaTUxX3Y4SkFfOV9jZ084aWgzTjNWRmpjY1JmMlNvbnRhX1E?oc=5)
+---
+## Short Spot
+**Tesla Recalls 173 Cybertrucks After Wheel Detachment Risk Discovered in Rotor Components:** June 05, 2026, EVTech.News
+Tesla is recalling 173 early Cybertrucks after internal checks found a rotor component that could lead to wheel detachment. The affected units will be inspected and repaired at service centers. No customer reports of the issue have surfaced yet. The recall highlights ongoing quality-control focus as production scales. Source/Post: [Google News](https://news.google.com/rss/articles/CBMiugFBVV95cUxNMUZEd0RmeU1DRUczZkZEU3h1d0VaeEtxcDNGS3ZzVzE2ZmJBdDJScG9UTkVfcXFweHByOEJBQS1FeGFiUWZIY1pvMW1NRHVSSkpQVUd6UlNpay1OZmcxajVLZlZYUktLbGh0QzUzVmR0dHpNMTloaDQ3TykxRXhjTFRFYjM2emM5Yl9zYV9DTHZ3dmI0YlZIaTUxX3Y4SkFfOV9jZ084aWgzTjNWRmpjY1JmMlNvbnRhX1E?oc=5)
+---
+### Tesla First Principles
+
+Taking a step back from today's headlines, the sudden availability of Coastal Blue and the expanded 16-inch screen on base Model Y trims shows how quickly Tesla can alter visible product details without new hardware platforms. Most automakers treat color and interior trim changes as multi-year programs tied to major refreshes. Tesla’s approach treats these elements as software-configurable options that can appear in the configurator within weeks. The result is a manufacturing system that decouples styling variety from structural engineering cycles.
+
+This flexibility rests on a single shared body and interior architecture across trims. Adding a new paint or headliner color requires only supplier coordination and software updates rather than new tooling or assembly-line rebalancing. The same logic applies to the screen size change now reaching the former Standard Range models. Once the larger display and its mounting are validated on higher trims, propagating it downward costs little marginal engineering effort. Data from earlier Model 3 and Y refreshes already demonstrated that such updates can be executed inside a single quarter.
+
+The practical implication is that Tesla can respond to regional taste shifts or competitive pressure with far lower fixed costs than rivals. Where legacy manufacturers must amortize expensive die changes across hundreds of thousands of units, Tesla spreads the expense across a smaller set of core components and lets software handle differentiation. Over time this reduces the penalty for maintaining a broad color and feature mix, allowing the company to test demand signals in smaller markets before committing to larger production runs.
+---
+Feedback welcome at [@teslashortstime](https://x.com/teslashortstime).
