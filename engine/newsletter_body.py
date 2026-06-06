@@ -102,46 +102,54 @@ def render_tsla_price_block(body: str) -> str:
         price = match.group(1) or ""
         arrow = match.group(2) or ""
         delta = match.group(3) or ""
-        # Up = green, Down = red, no arrow = neutral slate.
-        # Operator caught (TST Ep465, May 6 2026) the prior #10b981
-        # / #ef4444 pair failing the newsletter contrast hard-block:
-        # both clear AA on white but fall to 2.32 / 3.44 on the
-        # cream `#fef2f2` price-block surface. Bumped to Tailwind
-        # emerald-700 / red-700 so the arrows clear AA on cream.
+        # The PRICE stays a high-contrast neutral in both modes (dark
+        # `#111827` flips to light via the universal dark override). Only
+        # the DELTA carries direction colour. Earlier the price used
+        # ``brand-text-tesla`` (→ light red in dark mode) on a red-tinted
+        # surface, which rendered as muddy red-on-red on down days
+        # (operator screenshot, Ep502, Jun 2026). Neutral card surface +
+        # neutral price + a direction-coloured delta fixes that.
+        #
+        # Delta colour: up = emerald, down = rose, flat = slate. Light-mode
+        # inline values clear WCAG AA on the `#f8fafc` card; the
+        # ``.delta-up``/``.delta-down`` classes swap to lighter variants in
+        # dark mode (class beats the universal ``span`` override) so the
+        # direction signal survives instead of washing out to grey.
         if arrow == "▲":
-            delta_color = "#047857"  # emerald-700, 5.01:1 on cream
+            delta_color = "#047857"  # emerald-700, AA on #f8fafc
+            delta_class = "delta-up"
         elif arrow == "▼":
-            delta_color = "#b91c1c"  # red-700, 5.91:1 on cream
+            delta_color = "#b91c1c"  # red-700, AA on #f8fafc
+            delta_class = "delta-down"
         else:
             delta_color = "#475569"
+            delta_class = "delta-flat"
         delta_html = ""
         if arrow or delta:
             delta_html = (
-                f' <span style="color:{delta_color};font-size:14px;'
-                f'font-weight:600;">{arrow} {delta}</span>'.strip()
-            )
-        # Dark-mode rules in `_DARK_MODE_STYLE` flip ``.surface-tsla``
-        # to a dark slate background. Without the class hook the cream
-        # `#fef2f2` survives into dark mode and the dark-text override
-        # turns the whole block into light-on-light = invisible. Spec
-        # v2 follow-up after the May 2 Tesla daily render bug.
+                f' <span class="{delta_class}" style="color:{delta_color};'
+                f'font-size:14px;font-weight:600;">{arrow} {delta}</span>'
+            ).rstrip()
+        # Neutral ``card`` surface (flips to dark slate in dark mode) +
+        # a brand-red left accent. No same-hue text-on-tint contrast trap.
         return (
             '<table role="presentation" cellpadding="0" cellspacing="0" '
             'border="0" '
             'class="surface-white" '
             'style="background:#ffffff;margin:0 0 16px;">'
             '<tr><td '
-            'class="surface-tsla" '
-            'style="padding:10px 14px;border-left:4px solid #E31937;'
-            'background:#fef2f2;border-radius:0 6px 6px 0;'
+            'class="card" '
+            'style="padding:12px 16px;border-left:4px solid #E31937;'
+            'background:#f8fafc;border-radius:0 8px 8px 0;'
+            'border:1px solid #eef0f3;border-left:4px solid #E31937;'
             "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',"
             'Roboto,Helvetica,Arial,sans-serif;">'
             '<div class="text-muted" '
             'style="font-size:11px;font-weight:700;color:#475569;'
             'text-transform:uppercase;letter-spacing:0.06em;'
             'margin-bottom:2px;">TSLA today</div>'
-            '<div class="brand-text-tesla" '
-            'style="font-size:18px;font-weight:700;color:#0f172a;'
+            '<div '
+            'style="font-size:20px;font-weight:700;color:#111827;'
             'line-height:1.2;">'
             f'{price}{delta_html}'
             '</div>'
