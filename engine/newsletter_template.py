@@ -295,6 +295,17 @@ _DARK_MODE_STYLE = """\
    * Spec references: §1.3 light-mode contrast swaps, §1.4 dark-mode
    * brand tokens + ``.preheader`` hide.
    */
+  /* Opt INTO native dark-mode handling. Without this, Apple Mail (iOS)
+   * runs its OWN automatic colour transform on the email and ignores the
+   * @media rules below — and its transform renders our near-black
+   * (#0f172a) section headings DIMMER than the body text, so the main
+   * headings looked washed-out/unreadable on the operator's phone while
+   * our Chromium previews (which honour @media) looked fine. Declaring
+   * color-scheme tells Apple Mail "this email ships its own dark styles,
+   * use them" so the @media block actually applies. */
+  :root { color-scheme: light dark; }
+  body { color-scheme: light dark; }
+
   body, table, td, p, h1, h2, h3, h4, span, div, a {
     -webkit-text-size-adjust:100%;
     -ms-text-size-adjust:100%;
@@ -333,6 +344,11 @@ _DARK_MODE_STYLE = """\
     strong, b, em, i, code {
       color:#e2e8f0 !important;
     }
+    /* Section headings are the BRIGHTEST text so they read as headings,
+     * not as dimmer-than-body labels (the exact regression on the
+     * operator's phone). Dedicated, simple selector + pure white, placed
+     * AFTER the universal rule so it wins for h1-h4. */
+    h1, h2, h3, h4 { color:#ffffff !important; }
     /* Secondary / muted text — class-targeted so it doesn't override
      * other usages. */
     .text-muted { color:#94a3b8 !important; }
@@ -1021,15 +1037,16 @@ def render_markdown_body(
             level = len(m.group(1))
             inner = _md_inline_rich(m.group(2))
             if level <= 2:
-                # Major section: divider above + brand underline accent.
+                # Major section: brand left-bar accent. The text is a
+                # direct child of <h2> (no inner <span>) so the dark-mode
+                # ``h1,h2,h3,h4`` white rule wins — an inner span would be
+                # caught by the universal ``span`` rule (#e2e8f0) and the
+                # heading would render dimmer than intended.
                 blocks.append(
-                    '<h2 style="margin:30px 0 12px;padding-top:18px;'
-                    'border-top:1px solid #eef0f3;font-size:19px;'
+                    '<h2 style="margin:30px 0 12px;padding:2px 0 2px 12px;'
+                    f'border-left:4px solid {brand};font-size:19px;'
                     'line-height:1.3;font-weight:700;color:#0f172a;'
-                    'letter-spacing:-0.01em;">'
-                    '<span style="display:inline-block;'
-                    f'border-bottom:3px solid {brand};padding-bottom:2px;">'
-                    f'{inner}</span></h2>'
+                    f'letter-spacing:-0.01em;">{inner}</h2>'
                 )
             elif level == 3:
                 blocks.append(

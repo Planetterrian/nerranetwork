@@ -924,6 +924,31 @@ def test_wrap_with_branding_includes_dark_mode_style_block():
     assert "#e2e8f0" in out  # dark text
 
 
+def test_dark_mode_opts_into_native_color_scheme():
+    """``color-scheme: light dark`` makes Apple Mail (iOS) use our @media
+    dark styles instead of running its own colour transform — which had
+    rendered the near-black section headings dimmer than body text
+    ('main headings very light/unreadable', operator report Jun 2026).
+    Without the opt-in the @media rules below are ignored on iOS Mail."""
+    out = nt.wrap_with_branding(
+        "tesla", "## A Section\n\nBody.", week_ending=datetime.date(2026, 4, 30),
+    )
+    assert "color-scheme: light dark" in out
+
+
+def test_dark_mode_headings_are_brightest_text():
+    """Section headings must be the BRIGHTEST text in dark mode (pure
+    white via a dedicated h1-h4 rule placed after the universal text
+    rule), so they read as headings rather than dimmer-than-body labels."""
+    out = nt.wrap_with_branding(
+        "tesla", "## A Section\n\nBody.", week_ending=datetime.date(2026, 4, 30),
+    )
+    assert "h1, h2, h3, h4 { color:#ffffff !important; }" in out
+    # The h2 text is a direct child (no inner <span> the universal span
+    # rule would dim) so the white heading rule actually wins.
+    assert "<h2" in out and "<span" not in out.split("<h2", 1)[1].split("</h2>", 1)[0]
+
+
 def test_hero_alt_text_describes_show_not_file():
     show = nt._load_show_branding("tesla")
     hero = nt._build_hero_html(show, "Pill")
