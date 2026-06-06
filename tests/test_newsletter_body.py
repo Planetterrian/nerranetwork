@@ -93,6 +93,21 @@ class TestTeslaPriceBlock:
         text = "Some prose, no TSLA price line here."
         assert render_tsla_price_block(text) == text
 
+    def test_price_is_neutral_high_contrast_not_brand_red(self):
+        """The PRICE must stay a high-contrast neutral (dark `#111827`,
+        flipped to light in dark mode) — NOT brand red on the tinted
+        surface, which rendered as muddy red-on-red on down days
+        (operator screenshot, Ep502, Jun 2026). Only the delta carries
+        direction colour, via the ``delta-up``/``delta-down`` classes that
+        survive the dark-mode text override."""
+        up = render_tsla_price_block("**TSLA today:** $390.82 ▲ $9.44 (2.5%)")
+        assert "color:#111827" in up           # neutral price
+        assert "brand-text-tesla" not in up     # not the muddy red class
+        assert 'class="delta-up"' in up         # direction survives dark mode
+        down = render_tsla_price_block("**TSLA today:** $372.80 ▼ $5.20 (-1.4%)")
+        assert "color:#111827" in down
+        assert 'class="delta-down"' in down
+
 
 # ---------------------------------------------------------------------------
 # Hook → blockquote
@@ -673,12 +688,14 @@ class TestCanonicalScrubIntegration:
 
 class TestTeslaArrowAaGuard:
     """Both arrow colors must clear WCAG AA (4.5:1) on the price
-    block's cream `#fef2f2` background so the newsletter contrast
+    block's neutral `#f8fafc` card background so the newsletter contrast
     hard-block doesn't fire on any future TST send. Pin the arrow
     colors AND the AA result so a future palette tweak can't drop
-    below the threshold without CI flagging it."""
+    below the threshold without CI flagging it. (Surface moved from the
+    old red-tinted cream to a neutral card in Jun 2026 — the muddy
+    red-price-on-red-tint down-day render, Ep502.)"""
 
-    CREAM_BG = "#fef2f2"
+    CREAM_BG = "#f8fafc"
 
     def _ratio(self, fg, bg):
         from engine.contrast_validator import contrast_ratio

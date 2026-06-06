@@ -310,8 +310,20 @@ _DARK_MODE_STYLE = """\
       background-color:#0f172a !important;
     }
 
-    /* Cards (slightly lifted "panel" surfaces). */
-    .card { background:#1e293b !important; background-color:#1e293b !important; }
+    /* Cards (slightly lifted "panel" surfaces). A subtle border helps
+     * them read as distinct panels against the near-black page. */
+    .card {
+      background:#1e293b !important;
+      background-color:#1e293b !important;
+      border-color:#334155 !important;
+    }
+
+    /* Stock-watch delta direction colours — lighter variants so the
+     * up/down signal survives dark mode (class beats the universal
+     * ``span`` text override). */
+    .delta-up   { color:#34d399 !important; }   /* emerald-400 */
+    .delta-down { color:#fb7185 !important; }   /* rose-400 */
+    .delta-flat { color:#94a3b8 !important; }   /* slate-400 */
 
     /* Primary text on every dark-mode surface. ``strong``/``b``/``em``/
      * ``i``/``code`` are listed explicitly: we now set an inline colour
@@ -1051,9 +1063,11 @@ def render_markdown_body(
                     'cellspacing="0" border="0" class="card" '
                     'style="background:#f8fafc;border-radius:10px;'
                     'margin:6px 0 18px;">'
-                    '<tr><td style="padding:14px 18px;'
+                    '<tr><td class="card" style="padding:14px 18px;'
+                    'border:1px solid #eef0f3;'
                     f'border-left:4px solid {brand};font-size:16px;'
-                    'line-height:1.6;color:#0f172a;font-weight:600;">'
+                    'line-height:1.6;color:#0f172a;font-weight:600;'
+                    'border-radius:10px;">'
                     f'{inner}</td></tr></table>'
                 )
             continue
@@ -1184,7 +1198,8 @@ def _build_featured_episode_html(
         'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\','
         'Roboto,Helvetica,Arial,sans-serif;">'
         f'<div class="card" '
-        f'style="background:#f8fafc;border-left:3px solid {brand};'
+        f'style="background:#f8fafc;border:1px solid #eef0f3;'
+        f'border-left:3px solid {brand};'
         f'border-radius:8px;padding:18px 18px 16px;">'
         '<div style="font-size:11px;font-weight:700;'
         f'color:{eyebrow_color};letter-spacing:0.08em;'
