@@ -1,0 +1,93 @@
+Glad you're here. Welcome to Models and Agents episode 72. It's June 6th, 2026. Plenty of model
+releases and agent benchmarks moving today. Microsoft just gained the freedom to build its
+own frontier models after a contract changed with OpenAI, and the first MAI family is already shipping.
+Microsoft announced seven in-house MAI models that cover reasoning, code, image generation,
+transcription, and voice. The models were trained from scratch on licensed data with no distillation
+from other labs. A large wave of open-weight releases also arrived this week across large language
+models, vision language models, text-to-speech, and world models. Builders are watching how fast the
+new MAI models reach competitive levels on agentic and coding tasks now that Microsoft can iterate on
+its own. Microsoft revealed that a contract change roughly six months ago lifted prior
+restrictions on its AI superintelligence team. The team can now pursue superintelligence using
+its own researchers, data, and custom silicon. The first MAI family includes the 35 billion
+active parameter MAI thinking one reasoning model, plus specialized models for code, image generation,
+transcription across 43 languages, and multilingual voice. All models were trained from scratch
+on commercially licensed data. They are available today through Microsoft Foundry with third-party
+weight tuning supported on OpenRouter, fireworks, and base 10. Enterprise customers can already use
+frontier tuning to customize the models inside governed environments. The move shows Microsoft
+building a vertically integrated stack while keeping its open AI partnership in place.
+On the frontier models track, this development adds a new independent player that can set its own
+release cadence and cost trajectory. Anthropic release new research showing that Claude Opus 4.7
+matches or exceeds dedicated NMR spectroscopy software on molecular structure interpretation tasks.
+The work focuses on helping chemists understand molecular structures from NMR data before manipulating
+the molecules. Builders working on scientific tooling can now test whether Opus 4.7 can replace or
+augment existing NMR analysis pipelines without custom fine tuning. Deepseek V4 Flash is now
+runnable via an early llama.cpp pull request. Early users report strong intelligence for its size,
+along with native FP4 to FP8 hybrid quantization that holds up well. The model targets the 80-140
+gigabyte local inference space. Custom three-bit quants created to match the original tensor layout
+show reliable correctness despite slower speeds and missing GPU and FAS support.
+This release continues the open-weight model's arc where families like Deepseek keep narrowing the
+performance gap with closed frontier systems. Google ship Gemma 4.12b as a fully open dense
+any-to-any model. It supports text, image, audio, and video with 256-kele on context and coverage
+of 140-plus languages. Quantization-aware training variants of the Gemma 4 family deliver speed
+and VRAM gains on AMD hardware with no measurable quality loss versus standard quants.
+Nvidia released Nemotron 3 Ultra, a 550-billion hybrid Mamba MOE model with 55-billion active parameters.
+It offers 1 million context and a reported MMLU of 89.1. An NVFP4 variant claims roughly 5 times
+throughput on blackwell hardware and is described as the first openly weighted 550-billion hybrid
+Mamba transformer. Alibaba position twin 3.7-plus as a multimodal model built to function as a
+full autonomous agent rather than a chat interface. The release emphasizes agentic capabilities across
+modalities. Developers exploring agent frameworks should test whether the model's native agent
+behaviors reduce the need for heavy scaffolding compared with prior twin releases.
+This sits squarely in the agents and tool use track where the open question remains how reliably
+long horizon agents perform without extensive scaffolding. RedNote opensource dots dot tts, a 2-billion
+parameter continuous text-to-speech model under Apache 2.0. It performs direct text-to-speech at 48
+kilohertz with zero shot voice cloning and skips the traditional phoneme pipeline entirely.
+Teams building local voice agents now have a fully open continuous alternative to codec-based tts
+stacks. A new modular agent called OpenLumara was released with a roughly 4k token default system
+prompt and full modularity down to core features. It includes built-in security controls such as sandboxed
+shell access and HTTP black and white lists. The project is designed for local models.
+Runs efficiently on modest hardware carries a gpl2 license and is available on github.
+Simon Willison released MicroPython WASMs, an alpha-pi-pi package that runs MicroPython inside a
+WebAssembly sandbox. It enforces memory and CPU limits, controlled host function access,
+and no file system or network access by default. A CLI mode lets users try it immediately
+with the command UVX MicroPython WASM-C Print Hello World. The package targets safe plug-in
+execution inside Python applications such as data set. Users running Gemma 4 models on an AMD
+7900 XTX reported that quantization-aware training versions deliver 1.3 to 1.5 times speed-ups
+and meaningful VRAM savings versus standard quants. The 12B QAT variant cut generation time by 45%
+with identical constraint following behavior on long context and creative tasks. A user running
+twin 3.627b on an RTX 5,060 Ti found that enabling the NKVO flag to keep KV cache in RAM allowed
+the full model to stay on GPU with F16 cache precision. The approach trades a modest tokens per second drop
+for higher context capacity and better cache quality than quantized KV. It proved useful when fitting
+larger context windows without dropping layers. Okay, let's pop the hood on KV cache quantization.
+Everyone talks about it as a simple turn it on and save VRAM toggle. In practice it is a precision
+versus throughput negotiation that depends on model architecture, context length, and downstream
+task. Attention keys and values are not equally sensitive to quantization. Value vectors often
+tolerate lower precision better than keys because they are summed rather than used for similarity
+lookups. Lower bit KV formats therefore introduce small per token errors that accumulate across long
+contexts. That is why some teams see reasoning degradation only after 32k to 64k tokens even when
+perplexity looks acceptable. New methods such as KVRN attempt to close this gap by learning per channel
+scales that preserve the distribution of important value dimensions. They deliver Q5-level
+KLD at roughly 4-bit storage in early lama.cpp tests. Aggressive KV quantization can still hurt
+multi-step agent trajectories more than single-turned-chat because small embedding drift compounds when the
+model must maintain consistent state across tool calls. When you are running agents with 50k plus context
+or long horizon planning keep at least 5-6 bits on the value cache unless you have measured task
+specific tolerance. For shorter chat workloads the memory win is usually worth it. This engineering
+detail directly informs the reasoning models track where cost versus benefit remains an open question.
+Install MicroPython WASM via UVX and test a simple sandbox script to see whether it meets your plugin
+or data transformation needs without full python privileges. Run the early deep seek V4 Flash Lama.cpp
+build on a model you already used for coding or reasoning and compare output stability against
+your current quant. Test Gemma 412b QAT versus the standard Q4KM quant on your longest context workflow
+to measure the real speed and VRAM difference on your hardware.
+Tridots.tts2b for any local voice agent project that needs zero-shot cloning without a separate phoneme
+step. More labs are expected to follow red notes continuous TTS approach now that a fully
+open non-codec pipeline is available. Microsoft's frontier tuning environment will likely see
+additional enterprise case studies as more customers test MAI models on proprietary workflows.
+Further Lama.cpp and VLLM support for the new hybrid Mamba Moe and Sparse Moe models should arrive
+as the current PR is mature. Tomorrow keep an eye on additional open-weight audio and video
+model releases following this week's cluster. That's models and agents for today. If you found
+this useful, share it with someone who's trying to keep up with all these changes and subscribe
+so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow
+and before you go, this show is part of the NERA network, a family of daily podcasts covering tech,
+science, markets, and more. If you enjoyed today's episode, give fascinating
+frontiers a listen. The most fascinating news from space and science. You can explore the whole
+lineup at NERAnetwork.com. This episode used AI voice synthesis of my voice. Editorial selection
+and analysis are my own.
