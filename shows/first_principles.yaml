@@ -28,11 +28,19 @@ llm:
   podcast_temperature: 0.7
   max_tokens: 4800
   podcast_max_tokens: 9000
-  # Comfortably below the prompt's 2,000-2,800-word target so a healthy
-  # episode never trips run_show's 0.6x soft floor (= 780 words) and gets
-  # skipped — and so the repetition retry can't shrink a publishable
-  # script below the floor (the Ep500 fix, June 2026).
-  min_podcast_words: 1300
+  # Target is 2,000-2,800 spoken words (15-18 min). Set to 2,000 so:
+  #  - run_show's soft floor (0.6x = 1,200 words) is comfortably cleared
+  #    by a healthy episode, so a real episode is never skipped;
+  #  - the generator's expansion-retry threshold (~0.66x = 1,320 words)
+  #    fires whenever a first pass comes in thin, re-prompting for "at
+  #    least min_podcast_words" of real content — the safety net that
+  #    pulls a short draft back up to length.
+  # Raised from 1,300 (June 2026): Ep1 shipped at ~1,060 words / ~8 min
+  # because the old digest prompt's per-segment sentence caps summed to
+  # ~800 words and never triggered the expansion retry. The digest prompt
+  # now writes a 1,600-2,000-word brief and this floor catches any
+  # residual shortfall. See landmine on Ep1 length below.
+  min_podcast_words: 2000
   podcast_chain: true
 
 tts:
