@@ -35,12 +35,19 @@ llm:
   #    fires whenever a first pass comes in thin, re-prompting for "at
   #    least min_podcast_words" of real content — the safety net that
   #    pulls a short draft back up to length.
-  # Raised from 1,300 (June 2026): Ep1 shipped at ~1,060 words / ~8 min
-  # because the old digest prompt's per-segment sentence caps summed to
-  # ~800 words and never triggered the expansion retry. The digest prompt
-  # now writes a 1,600-2,000-word brief and this floor catches any
-  # residual shortfall. See landmine on Ep1 length below.
-  min_podcast_words: 2000
+  # Tuned over two June 2026 regenerations:
+  #  - Ep1 v1 shipped ~1,060 words / ~8 min: the digest prompt's per-segment
+  #    sentence caps summed to ~800 words, so the brief (and thus the episode)
+  #    was thin.
+  #  - Ep1 v2 (raised sentence caps) hit ~1,590 words / ~10.6 min, but the
+  #    podcast stage rewrote the ~1,600-word brief at ~1:1 instead of
+  #    expanding it.
+  # Fix: the digest prompt now targets a 2,000-2,600-word brief (debut at the
+  # top) AND the podcast prompt demands genuine expansion, so the spoken
+  # script should land at 2,000-2,800 (15-18 min). This floor (2,200) keeps
+  # the soft skip floor at 1,320 (cleared by any healthy episode) and fires
+  # the generator's expansion retry (~1,452) on a thin pass.
+  min_podcast_words: 2200
   podcast_chain: true
 
 tts:
