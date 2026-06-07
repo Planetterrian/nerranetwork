@@ -5,8 +5,11 @@ Covers:
 - Every cron line in ``.github/workflows/run-show.yml`` has a matching
   entry in the gate's ``CRON_MAP`` (drift between the two would silently
   break a show — schedule fires but nothing runs).
-- The 7 daily shows carry ``weekly_recap_on_sunday: true`` in their
-  YAML; the 3 alt-cadence shows do NOT (Привет, ФП, Env Intel).
+- The 7 daily *news* shows carry ``weekly_recap_on_sunday: true`` in their
+  YAML; the alt-cadence shows do NOT (Привет, ФП, Env Intel, UC).
+- ``first_principles`` is a daily *narrative* show: it runs every day
+  (``day_filter`` None) but, like Unintended Consequences, deliberately does
+  NOT carry the Sunday-recap flag (its topic queue is evergreen, not news).
 - Only Tesla and Models & Agents for Beginners have
   ``youtube.enabled: true`` (post quota-cap).
 """
@@ -151,6 +154,35 @@ def test_alt_cadence_show_does_not_recap(slug):
     assert not cfg.get("weekly_recap_on_sunday", False), (
         f"{slug} is alt-cadence but has weekly_recap_on_sunday=true — "
         f"either flip the cadence to daily or drop the flag."
+    )
+
+
+# ---------------------------------------------------------------------------
+# Daily narrative shows (run every day, topic-queue-driven, no recap)
+# ---------------------------------------------------------------------------
+
+DAILY_NARRATIVE_SHOWS = ["first_principles"]
+
+
+@pytest.mark.parametrize("slug", DAILY_NARRATIVE_SHOWS)
+def test_daily_narrative_show_runs_daily_without_recap(slug):
+    """A daily *narrative* show runs every day (``day_filter`` None in
+    CRON_MAP) but is topic-queue-driven and evergreen, so it must NOT
+    carry ``weekly_recap_on_sunday`` (there's no week of news to recap)
+    and MUST declare ``narrative_mode: true`` with a topic queue. This
+    documents why first_principles is intentionally absent from both
+    DAILY_SHOWS (recap-required) and ALT_CADENCE_SHOWS (sub-daily)."""
+    cfg = yaml.safe_load((SHOWS_DIR / f"{slug}.yaml").read_text(encoding="utf-8"))
+    assert cfg.get("narrative_mode") is True, f"{slug} must set narrative_mode: true"
+    assert cfg.get("topic_queue_file"), f"{slug} must set topic_queue_file"
+    assert not cfg.get("weekly_recap_on_sunday", False), (
+        f"{slug} is a daily narrative show — it must NOT carry the "
+        f"weekly_recap_on_sunday flag."
+    )
+    cron_map = _extract_cron_map()
+    no_filter = {s for (s, df) in cron_map.values() if df is None}
+    assert slug in no_filter, (
+        f"{slug} should run daily (day_filter=None) in CRON_MAP."
     )
 
 

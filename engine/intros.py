@@ -573,6 +573,57 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
             ),
         ],
     },
+    "first_principles": {
+        "host": "Patrick",
+        "show_name": "First Principles Daily",
+        "greetings": [
+            "Welcome to",
+            "Welcome back to",
+            "Good to have you here for",
+            "Glad you're with us on",
+            "Let's get into",
+            "Thanks for tuning in to",
+        ],
+        "openers": [
+            "episode {ep}.",
+            "episode {ep}, for {date}.",
+            "episode {ep}. It's {date}.",
+            "episode {ep} — for {date}.",
+        ],
+        "framings": [
+            "Today we reason from raw materials, not analogy.",
+            "Today's question: what would this cost if you only paid for the atoms?",
+            "Let's run the magic wand number and the Idiot Index on today's subject.",
+            "Today, one example of first-principles thinking in action.",
+            "Today, an industry whose Idiot Index is begging to be attacked.",
+            "Let's break something down to its raw materials and build the reasoning back up.",
+        ],
+        "day_colors": {
+            0: {
+                "framings": [
+                    "Starting the week by asking what things should actually cost.",
+                    "Monday — a fresh first-principles teardown to start the week.",
+                ],
+            },
+            4: {
+                "framings": [
+                    "Closing the week with one more look at where the next ten-x is hiding.",
+                    "Friday — let's wrap the week reasoning from the ground up.",
+                ],
+            },
+        },
+        "closings": [
+            (
+                "That's First Principles Daily for today. If this changed how you see what things cost, "
+                "share it with someone who'd appreciate it, and subscribe wherever you listen. "
+                "I'm Patrick in Vancouver — one example or one opportunity, every day. See you tomorrow."
+            ),
+            (
+                "That's a wrap on today's first-principles breakdown. The ideas travel further when you "
+                "pass them on — send this to a fellow builder. I'm Patrick in Vancouver. See you tomorrow."
+            ),
+        ],
+    },
 }
 
 

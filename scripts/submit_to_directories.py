@@ -34,6 +34,8 @@ SHOWS = [
     ("finansy_prosto", "Финансы Просто", "finansy_prosto_podcast.rss"),
     ("modern_investing", "Modern Investing Techniques", "modern_investing_podcast.rss"),
     ("privet_russian", "Привет, Русский!", "privet_russian_podcast.rss"),
+    ("unintended_consequences", "Unintended Consequences", "unintended_consequences_podcast.rss"),
+    ("first_principles", "First Principles Daily", "first_principles_podcast.rss"),
 ]
 
 

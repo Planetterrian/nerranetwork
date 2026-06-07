@@ -1,0 +1,153 @@
+name: "First Principles Daily"
+slug: first_principles
+description: "A daily narrative podcast that applies Elon Musk's first-principles framework — the 'magic wand number' (what something would cost if you only paid for raw materials) and the 'Idiot Index' (how many times more a finished part costs than its materials) — to the real world. Episodes alternate: one day a concrete example of first-principles thinking inside one of Musk's companies, the next a deep exposé on an industry ripe for the same treatment. Produced by the Nerra Network in Vancouver."
+
+# Narrative mode: topic-queue-driven (no RSS fetch). The runner runs
+# ``generate_digest()`` with topic template vars from ``topic_queue_file``
+# (outline via first_principles_episode.txt), then the podcast chain
+# expands it into the full spoken script. The queue is ordered
+# alternately (debut -> concrete_example -> opportunity_area -> ...), and
+# ``pick_next_topic`` is sequential, so the show alternates per episode.
+narrative_mode: true
+topic_queue_file: shows/topic_queues/first_principles.yaml
+
+# Daily (7x/week). Narrative show — no Sunday weekly recap; the topic
+# queue is evergreen and plays out at its own pace (see test_schedule.py:
+# first_principles is a daily *narrative* show, deliberately NOT carrying
+# weekly_recap_on_sunday).
+weekly_recap_on_sunday: false
+
+min_articles_skip: 0       # Narrative show — articles aren't the input.
+
+llm:
+  provider: xai
+  system_prompt_file: shows/prompts/first_principles_system.txt
+  digest_prompt_file: shows/prompts/first_principles_episode.txt
+  podcast_prompt_file: shows/prompts/first_principles_podcast.txt
+  digest_temperature: 0.55
+  podcast_temperature: 0.7
+  max_tokens: 4800
+  podcast_max_tokens: 9000
+  # Comfortably below the prompt's 2,000-2,800-word target so a healthy
+  # episode never trips run_show's 0.6x soft floor (= 780 words) and gets
+  # skipped — and so the repetition retry can't shrink a publishable
+  # script below the floor (the Ep500 fix, June 2026).
+  min_podcast_words: 1300
+  podcast_chain: true
+
+tts:
+  # Inherit the blessed network chain from shows/_defaults.yaml verbatim:
+  # provider=grok, voice_id=kdif6sqjcyiq (Patrick's English voice),
+  # language_code=en, single-call synthesis, <fast> whole-script wrap,
+  # voice EQ + sidechain ducking + EBU R128 -16 LUFS + VBR encode.
+  # Per landmine #17: NO custom voice settings, NO phonetic respellings,
+  # NO programmatic tag injection. Pacing/pronunciation are handled at the
+  # prompt level (acronyms expanded, numbers/units spelled out), never by
+  # changing the voice or adding TTS tweaks.
+  {}
+
+audio:
+  # Voice-only at launch (like Unintended Consequences) — no music_file,
+  # so the runner's ``if config.audio.music_file:`` guard cleanly skips
+  # the mix step. Documentary pacing comes from the prompt, not music.
+  transition_sting: assets/music/transition_sting.mp3
+  voice_intro_delay: 10.0
+  intro_duration: 10.0
+  overlap_duration: 15.0
+  fade_duration: 30.0
+  outro_duration: 30.0
+  outro_crossfade: 0.0
+  outro_fade_out_duration: 10.0
+  intro_volume: 0.5
+  overlap_volume: 0.4
+  fade_volume: 0.3
+  outro_volume: 0.5
+
+publishing:
+  rss_file: first_principles_podcast.rss
+  rss_title: First Principles Daily
+  rss_description: "A daily narrative podcast that reasons about the world from first principles — Elon Musk's 'magic wand number' and 'Idiot Index'. Episodes alternate between a concrete example of first-principles thinking inside one of Musk's companies and a deep exposé on an industry ripe for the same treatment."
+  rss_summary: "Reason from raw materials, not analogy. One example or one opportunity, every day."
+  rss_link: https://nerranetwork.com/first-principles.html
+  rss_author: Patrick
+  rss_email: patrick@planetterrian.com
+  rss_image: https://nerranetwork.com/assets/covers/first-principles-daily.jpg
+  rss_category: Technology
+  rss_subcategory: Tech News
+  rss_keywords: "first principles, Elon Musk, SpaceX, Tesla, engineering, cost, manufacturing, innovation, idiot index"
+  guid_prefix: first-principles
+  base_url: https://nerranetwork.com
+  audio_subdir: digests/first_principles
+  summaries_json: digests/first_principles/summaries_first_principles.json
+  summaries_podcast_name: first_principles
+  # No distribution at launch (operator decision): X posting disabled.
+  x_enabled: false
+
+episode:
+  prefix: First_Principles
+  filename_pattern: "{prefix}_Ep{num:03d}_{date:%Y%m%d}.mp3"
+  output_dir: digests/first_principles
+  mp3_glob: "First_Principles_Ep*.mp3"
+
+chapters:
+  enabled: true
+  # Markers match the section phrasing the podcast prompt produces (the
+  # prompt and these markers are authored together so chapters land
+  # correctly in Apple/Spotify).
+  section_markers:
+    - pattern: "Welcome.*First Principles|First Principles Daily|first episode"
+      title: "Introduction"
+    - pattern: "first principle|magic wand|raw material|atoms"
+      title: "The First Principle"
+    - pattern: "idiot index|finished part|cost of the materials|times more"
+      title: "The Idiot Index"
+    - pattern: "what they did|how they|the breakthrough|the redesign|the engineering"
+      title: "The Breakdown"
+    - pattern: "opportunity|what if|imagine if|ripe for|the potential|could be"
+      title: "The Opportunity"
+    - pattern: "lesson|takeaway|principle to remember|what this teaches|the bigger idea"
+      title: "The Lesson"
+    - pattern: "that.?s.*for today|until next time|see you tomorrow|one example or one opportunity"
+      title: "Closing"
+
+newsletter:
+  # Off at launch (operator decision). Flip ``enabled: true`` + add a
+  # Buttondown tag/start_date to turn on per-episode email later.
+  enabled: false
+
+content_tracking:
+  enabled: true
+
+slow_news:
+  # Narrative show — the topic queue is the input, not RSS. Slow-news
+  # fallback never fires; present only to satisfy the config schema.
+  enabled: false
+
+content_freshness:
+  # Narrative show — episodes are evergreen; the queue prevents repeats.
+  lookback_days: 0
+  similarity_threshold: 1.0
+
+youtube:
+  # Disabled — network YouTube quota cap (only TST + MAB; landmine #20).
+  # image_queries are still required by test_visual_assets and are kept
+  # curated/disambiguated (landmine #14) so a future enablement is safe.
+  podcast_playlist_id: ""
+  enabled: false
+  channel: en
+  category_id: 28                # Science & Technology
+  default_language: en
+  privacy_status: public
+  publish_long_form: true
+  publish_shorts: true
+  synthetic_disclosure: "All audio narration is generated using AI voice synthesis. Curated and produced by Patrick at the Nerra Network in Vancouver, Canada."
+  image_queries:
+    - "rocket engine factory"
+    - "engineering blueprint schematic"
+    - "raw metal ingots foundry"
+    - "exploded view machine parts"
+    - "automated assembly line robots"
+    - "spacecraft engine test fire"
+    - "engineer examining components"
+    - "cost analysis spreadsheet engineering"
+  image_query_prefix: "engineering"

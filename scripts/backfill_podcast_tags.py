@@ -49,6 +49,7 @@ SHOW_FEEDS: Dict[str, str] = {
     "finansy_prosto_podcast.rss": "finansy_prosto",
     "privet_russian_podcast.rss": "privet_russian",
     "unintended_consequences_podcast.rss": "unintended_consequences",
+    "first_principles_podcast.rss": "first_principles",
 }
 
 
