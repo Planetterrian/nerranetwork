@@ -151,9 +151,11 @@ TST received a full recursive improvement architecture (analogous to MIT):
   `shows/first_principles.yaml`; a **daily narrative** show
   (`narrative_mode: true`, topic-queue-driven like UC — no news fetch).
   Applies the first-principles "magic wand number" + "Idiot Index" lens,
-  alternating per episode between a concrete example inside one of Elon
-  Musk's companies (`category: concrete_example`) and an industry ripe for
-  it (`category: opportunity_area`); Ep1 is a combined debut. Patrick voice
+  alternating per episode between a concrete example of the thinking in
+  action (`category: concrete_example` — historical and modern: Ford,
+  Bessemer, containerization, solar, batteries, mRNA, and *sometimes*
+  Musk's teams, deliberately not Musk-only) and an industry ripe for it
+  (`category: opportunity_area`); Ep1 is a combined debut. Patrick voice
   (inherits Grok `kdif6sqjcyiq`). Distribution OFF at launch (no newsletter,
   no X, no YouTube). Queue: `shows/topic_queues/first_principles.yaml`.
 - All shows delegate X posting to `engine.publisher.post_to_x()`

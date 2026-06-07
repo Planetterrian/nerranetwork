@@ -1220,7 +1220,7 @@ NETWORK_SHOWS = {
         "name": "First Principles Daily",
         "slug": "first_principles",
         "display_order": 12,
-        "description": "Reasoning about the world from first principles — Elon Musk's 'magic wand number' and 'Idiot Index' — applied to real engineering and the industries ripe for it.",
+        "description": "Reasoning about the world from first principles — the 'magic wand number' and the 'Idiot Index' — applied to the great cost breakthroughs of history and today, and the industries still ripe for one.",
         "show_page": "first-principles.html",
         "summaries_page": "first-principles-summaries.html",
         "json_path": "digests/first_principles/summaries_first_principles.json",
@@ -1234,9 +1234,9 @@ NETWORK_SHOWS = {
         "hero_tagline": "Reason from raw materials, not analogy.",
         "schedule": "Daily",
         "episode_length": "~15-18 min",
-        "about_text": "A daily narrative podcast that reasons from first principles. Each episode alternates between a concrete example of first-principles thinking inside one of Elon Musk's companies — SpaceX, Tesla, Starlink — and a deep exposé on an industry ripe for the same treatment. The recurring tools are the 'magic wand number' (what a thing would cost if you only paid for its raw materials) and the 'Idiot Index' (how many times more the finished thing costs than the materials inside it).",
+        "about_text": "A daily narrative podcast that reasons from first principles. Each episode alternates between a concrete example of first-principles thinking in action — drawn from across history and modern industry, from Henry Ford and Bessemer steel to solar, batteries, and yes sometimes SpaceX — and a deep exposé on an industry ripe for the same treatment. The recurring tools are the 'magic wand number' (what a thing would cost if you only paid for its raw materials) and the 'Idiot Index' (how many times more the finished thing costs than the materials inside it). Elon Musk popularized that language; the method is much older and much bigger than any one person.",
         "about_host": "Hosted by Patrick in Vancouver.",
-        "description_long": "A daily narrative podcast that takes one idea seriously: most of the world runs on reasoning by analogy, and reasoning from first principles — building up from raw materials and physics — is how the biggest leaps actually happen. Episodes alternate between a concrete example of this thinking inside one of Elon Musk's companies and a deep look at an industry whose Idiot Index is begging to be attacked.",
+        "description_long": "A daily narrative podcast that takes one idea seriously: most of the world runs on reasoning by analogy, and reasoning from first principles — building up from raw materials and physics — is how the biggest leaps actually happen. Episodes alternate between a concrete example of this thinking in action — historical breakthroughs like the moving assembly line, Bessemer steel, and the shipping container, modern cost curves like solar and batteries, and occasionally one of Musk's teams — and a deep look at an industry whose Idiot Index is begging to be attacked.",
         "related_show": "tesla",
         "related_reason": "If you enjoy First Principles Daily, you might also like Tesla Shorts Time — the daily rundown on the company where a lot of this thinking shows up first.",
         "apple_podcasts_url": None,
@@ -1258,6 +1258,7 @@ NETWORK_SHOWS = {
             {
                 "title": "Going Deeper",
                 "resources": [
+                    {"name": "The Box (Marc Levinson)", "url": "https://press.princeton.edu/books/paperback/9780691170817/the-box", "desc": "How the shipping container — not any one genius — remade the cost of global trade"},
                     {"name": "Construction Physics", "url": "https://www.construction-physics.com/", "desc": "First-principles writing on why building things costs what it does"},
                     {"name": "Works in Progress", "url": "https://worksinprogress.co/", "desc": "Essays on progress, cost disease, and what's actually possible"},
                 ],
@@ -1271,7 +1272,7 @@ NETWORK_SHOWS = {
             {"q": "What's the cadence?", "a": "Every day, alternating: one day a concrete example, the next an opportunity area. Episode 1 is a longer premiere that introduces the framework with two worked examples — the SpaceX Raptor engine, and an industry ripe for first-principles thinking."},
             {"q": "Where do the numbers come from?", "a": "Well-established public figures wherever possible. Cost estimates and Idiot-Index figures are reasoned out loud and clearly flagged as approximate ('roughly', 'on the order of') — the show makes the reasoning visible so you can judge it, and never presents a back-of-the-envelope number as a measured fact."},
             {"q": "How long are episodes?", "a": "15-18 minutes — long enough to genuinely walk through the reasoning, short enough for a commute."},
-            {"q": "Is this just Elon Musk fan content?", "a": "No. His teams are the clearest modern practitioners of this thinking, so they're a rich source of concrete examples — but the bigger point is the method itself, and half the episodes are about industries (housing, desalination, nuclear, fertilizer, and more) where no one has applied it yet."},
+            {"q": "Is this just Elon Musk fan content?", "a": "No. Musk popularized the 'magic wand number' and 'Idiot Index' language and his teams are vivid modern examples, but first-principles thinking is old and widespread — the show draws on Henry Ford and the moving assembly line, Bessemer steel, the shipping container, the Haber-Bosch process, and modern cost curves like solar, batteries, and mRNA, as well as the industries (housing, desalination, nuclear, the power grid, and more) where no one has applied it yet. Musk's teams appear as some examples among many, never as the whole show."},
         ],
     },
 }
