@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Automated daily podcast generation system running 11 shows via a unified
+Automated daily podcast generation system running 12 shows via a unified
 `run_show.py` runner + per-show YAML configs, plus 4 legacy standalone scripts
 (deprecated — see note below). Shows use **Grok TTS** (`engine.tts.grok_speak_chunk`)
 and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
@@ -20,6 +20,7 @@ and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
 | Modern Investing Techniques | — | `shows/modern_investing.yaml` | Daily | — (X disabled) | Grok TTS (custom) |
 | Привет, Русский! | — | `shows/privet_russian.yaml` | Even days | — (X disabled) | Grok TTS (Olya) |
 | Unintended Consequences | — | `shows/unintended_consequences.yaml` | Weekdays | — (X disabled) | Grok TTS (custom) |
+| First Principles Daily | — | `shows/first_principles.yaml` | Daily | — (X disabled) | Grok TTS (custom) |
 
 > Sunday recap: shows on a daily cadence with `weekly_recap_on_sunday: true`
 > in their YAML have their Sunday slot rewritten as a weekly-recap episode
@@ -146,6 +147,15 @@ TST received a full recursive improvement architecture (analogous to MIT):
   `shows/privet_russian.yaml`; bilingual Russian language learning podcast
   for English speakers. Even days only. Uses **ElevenLabs TTS**
   (`eleven_flash_v2_5` with `language_code: ru`). X posting disabled.
+- **FPD** (First Principles Daily) runs via `run_show.py` +
+  `shows/first_principles.yaml`; a **daily narrative** show
+  (`narrative_mode: true`, topic-queue-driven like UC — no news fetch).
+  Applies the first-principles "magic wand number" + "Idiot Index" lens,
+  alternating per episode between a concrete example inside one of Elon
+  Musk's companies (`category: concrete_example`) and an industry ripe for
+  it (`category: opportunity_area`); Ep1 is a combined debut. Patrick voice
+  (inherits Grok `kdif6sqjcyiq`). Distribution OFF at launch (no newsletter,
+  no X, no YouTube). Queue: `shows/topic_queues/first_principles.yaml`.
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:
@@ -570,7 +580,7 @@ Phase 2 (complete):
   `record_tts_usage`, `record_x_post`, `save_usage`
 
 Phase 3 (current):
-- All 11 shows now run via `run_show.py` + YAML configs in production (CI/CD).
+- All 12 shows now run via `run_show.py` + YAML configs in production (CI/CD).
 - Legacy scripts (`digests/{tesla_shorts_time,omni_view,fascinating_frontiers,
   planetterrian}.py`) are **deprecated** — retained for reference only.
 - `run_show.py` is the canonical entry point; legacy scripts are not called
@@ -1050,6 +1060,7 @@ decision); everything else has a live status card.
     | `planetterrian` | 2 | Science/longevity/health show (NOT local news — that description was stale); primary-research days can be thin, so 2 is the realistic floor. |
     | `privet_russian` | 1 | Bilingual lesson show; one solid theme is sufficient. |
     | `unintended_consequences` | 0 | Narrative show — articles aren't the input, topic queue is. |
+    | `first_principles` | 0 | Narrative show — topic queue is the input (alternates concrete example / opportunity area). |
 
     **Landmine:** changing the default from `3` would silently
     re-tune four shows (the ones currently pinned at `4` would still

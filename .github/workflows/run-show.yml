@@ -33,6 +33,10 @@ on:
     # markets, crypto, lessons learned, what to prepare for, long-term
     # insights); Sun = weekly recap.
     - cron: '0 10 * * *'
+    # First Principles Daily: Daily at 10:30 UTC. Narrative show —
+    # topic-queue-driven, no daily news fetch. Alternates concrete
+    # example / opportunity area per episode. Runs all 7 days.
+    - cron: '30 10 * * *'
     # Tesla Shorts Time: Daily at 11:00 UTC (Sunday = weekly recap)
     - cron: '0 11 * * *'
     # Unintended Consequences: Weekdays at 11:30 UTC. Narrative show —
@@ -57,6 +61,7 @@ on:
           - privet_russian
           - modern_investing
           - unintended_consequences
+          - first_principles
           - all
       test_mode:
         description: 'Dry run: fetch + digest only (no TTS, no R2 upload, no RSS, no X, no commit)'
@@ -89,7 +94,7 @@ jobs:
 
           if event_name == "workflow_dispatch":
               if dispatch_show == "all":
-                  shows = ["tesla", "omni_view", "fascinating_frontiers", "planetterrian", "env_intel", "models_agents", "models_agents_beginners", "finansy_prosto", "privet_russian", "modern_investing", "unintended_consequences"]
+                  shows = ["tesla", "omni_view", "fascinating_frontiers", "planetterrian", "env_intel", "models_agents", "models_agents_beginners", "finansy_prosto", "privet_russian", "modern_investing", "unintended_consequences", "first_principles"]
               else:
                   shows = [dispatch_show]
           else:
@@ -121,6 +126,7 @@ jobs:
                   "0 9 * * *":        ("models_agents_beginners",  None),
                   "30 9 2-31/2 * *":  ("finansy_prosto",          "even"),
                   "0 10 * * *":       ("modern_investing",         None),
+                  "30 10 * * *":      ("first_principles",         None),
                   "0 11 * * *":       ("tesla",                    None),
                   "30 11 * * 1-5":    ("unintended_consequences", "weekday"),
               }

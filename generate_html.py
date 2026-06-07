@@ -1216,6 +1216,64 @@ NETWORK_SHOWS = {
             {"q": "Do you fact-check?", "a": "Yes. Episodes draw on academic papers, government archives, investigative journalism, and retrospective analyses. When the historical record is uncertain, we hedge rather than fabricate ('estimates suggest…', 'by most accounts…'). Errors are corrected in the show notes when caught."},
         ],
     },
+    "first_principles": {
+        "name": "First Principles Daily",
+        "slug": "first_principles",
+        "display_order": 12,
+        "description": "Reasoning about the world from first principles — Elon Musk's 'magic wand number' and 'Idiot Index' — applied to real engineering and the industries ripe for it.",
+        "show_page": "first-principles.html",
+        "summaries_page": "first-principles-summaries.html",
+        "json_path": "digests/first_principles/summaries_first_principles.json",
+        "json_format": "wrapped",
+        "rss_file": "first_principles_podcast.rss",
+        "podcast_image": "assets/covers/first-principles-daily.jpg",
+        "x_account": None,
+        "brand_color": "#0F766E",          # Deep teal — engineering, clarity, depth
+        "brand_color_dark": "#115E59",
+        "tagline": "Reason from raw materials, not analogy.",
+        "hero_tagline": "Reason from raw materials, not analogy.",
+        "schedule": "Daily",
+        "episode_length": "~15-18 min",
+        "about_text": "A daily narrative podcast that reasons from first principles. Each episode alternates between a concrete example of first-principles thinking inside one of Elon Musk's companies — SpaceX, Tesla, Starlink — and a deep exposé on an industry ripe for the same treatment. The recurring tools are the 'magic wand number' (what a thing would cost if you only paid for its raw materials) and the 'Idiot Index' (how many times more the finished thing costs than the materials inside it).",
+        "about_host": "Hosted by Patrick in Vancouver.",
+        "description_long": "A daily narrative podcast that takes one idea seriously: most of the world runs on reasoning by analogy, and reasoning from first principles — building up from raw materials and physics — is how the biggest leaps actually happen. Episodes alternate between a concrete example of this thinking inside one of Elon Musk's companies and a deep look at an industry whose Idiot Index is begging to be attacked.",
+        "related_show": "tesla",
+        "related_reason": "If you enjoy First Principles Daily, you might also like Tesla Shorts Time — the daily rundown on the company where a lot of this thinking shows up first.",
+        "apple_podcasts_url": None,
+        "spotify_url": None,
+        "theme_color": "#0F766E",
+        "meta_description": "First Principles Daily — a daily podcast that reasons from raw materials, not analogy, using Elon Musk's magic-wand number and Idiot Index on real engineering and the industries ripe for it.",
+        "meta_keywords": "first principles, Elon Musk, SpaceX, Tesla, engineering, idiot index, cost, manufacturing, innovation",
+        "audience": "For engineers, builders, founders, and the endlessly curious — anyone who wants to understand WHY something costs what it costs and where the next 10x is hiding.",
+        "source_highlights": ["Primary engineering accounts", "Company technical disclosures", "Reputable trade and science press", "First-principles cost reasoning"],
+        "resource_categories": [
+            {
+                "title": "Foundations",
+                "resources": [
+                    {"name": "Elon Musk (Walter Isaacson)", "url": "https://www.simonandschuster.com/books/Elon-Musk/Walter-Isaacson/9781982181284", "desc": "Where the 'magic wand number' and 'Idiot Index' are laid out in the subject's own words"},
+                    {"name": "The Case for Space (Robert Zubrin)", "url": "https://www.penguinrandomhouse.com/", "desc": "First-principles economics of getting to orbit and beyond"},
+                    {"name": "How Big Things Get Done (Bent Flyvbjerg)", "url": "https://www.penguinrandomhouse.com/", "desc": "Why megaprojects blow their budgets — and the few that don't"},
+                ],
+            },
+            {
+                "title": "Going Deeper",
+                "resources": [
+                    {"name": "Construction Physics", "url": "https://www.construction-physics.com/", "desc": "First-principles writing on why building things costs what it does"},
+                    {"name": "Works in Progress", "url": "https://worksinprogress.co/", "desc": "Essays on progress, cost disease, and what's actually possible"},
+                ],
+            },
+        ],
+        "tools": [
+            {"name": "Topic Submission", "url": "https://nerranetwork.com/first-principles.html", "desc": "Know an industry with an outrageous Idiot Index, or a great example of first-principles engineering? The topic queue is operator-curated and suggestions are welcome.", "badge": "Free"},
+        ],
+        "faq": [
+            {"q": "What is this show?", "a": "A daily podcast that reasons about the world from first principles. Each episode either dissects a concrete example of first-principles thinking inside one of Elon Musk's companies, or makes the case for an industry that's ripe for the same treatment. The tools are the 'magic wand number' (the raw-material cost floor) and the 'Idiot Index' (finished cost divided by material cost)."},
+            {"q": "What's the cadence?", "a": "Every day, alternating: one day a concrete example, the next an opportunity area. Episode 1 is a longer premiere that introduces the framework with two worked examples — the SpaceX Raptor engine, and an industry ripe for first-principles thinking."},
+            {"q": "Where do the numbers come from?", "a": "Well-established public figures wherever possible. Cost estimates and Idiot-Index figures are reasoned out loud and clearly flagged as approximate ('roughly', 'on the order of') — the show makes the reasoning visible so you can judge it, and never presents a back-of-the-envelope number as a measured fact."},
+            {"q": "How long are episodes?", "a": "15-18 minutes — long enough to genuinely walk through the reasoning, short enough for a commute."},
+            {"q": "Is this just Elon Musk fan content?", "a": "No. His teams are the clearest modern practitioners of this thinking, so they're a rich source of concrete examples — but the bigger point is the method itself, and half the episodes are about industries (housing, desalination, nuclear, fertilizer, and more) where no one has applied it yet."},
+        ],
+    },
 }
 
 
@@ -1305,6 +1363,11 @@ _SHOW_PICKER_TAGS = {
     "unintended_consequences": {
         "topics": ["history", "policy", "technology", "narrative"],
         "audience": ["enthusiasts", "professionals", "students"],
+        "language": ["english"],
+    },
+    "first_principles": {
+        "topics": ["engineering", "tech", "innovation", "narrative"],
+        "audience": ["builders", "professionals", "enthusiasts"],
         "language": ["english"],
     },
 }

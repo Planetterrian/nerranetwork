@@ -32,6 +32,7 @@ RSS_FEEDS = [
     "privet_russian_podcast.rss",
     "modern_investing_podcast.rss",
     "unintended_consequences_podcast.rss",
+    "first_principles_podcast.rss",
     "network.rss",
 ]
 
