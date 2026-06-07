@@ -1,18 +1,11 @@
-# First Principles Daily — topic queue.
-#
-# Ordered alternately so sequential pick_next_topic() yields the cadence:
-# debut -> concrete_example -> opportunity_area -> concrete_example -> ...
-# Each entry: id, title, brief, category, produced, episode_number, produced_date.
-# Categories: debut | concrete_example | opportunity_area.
-# Keep briefs factual and well-established; the prompts hedge all estimates.
 queue:
 - id: debut-raptor-and-opportunity
   title: 'The Magic Wand Number: Raptor, and the Industry That Forgot It'
   brief: 'Series premiere. Introduce the show and its two tools — the "magic wand number" (what a thing would cost if you only paid for its raw materials) and the "Idiot Index" (how many times more the finished part costs than the materials inside it), using the well-known story of a rocket part that cost far more than the metal in it. Worked example one (concrete): the development path of SpaceX''s Raptor engine — the full-flow staged-combustion cycle burning methane and liquid oxygen, and the drive across versions to slash part count, mass, and cost per engine by reasoning from physics rather than copying legacy engine designs. Worked example two (opportunity): housing and construction, a high-Idiot-Index industry where the finished cost of a home vastly exceeds the raw materials, held up by fragmented trades, on-site hand assembly, permitting, and land — and where a from-scratch, factory-built approach could compress cost toward the material floor.'
   category: debut
-  produced: false
-  episode_number: null
-  produced_date: null
+  produced: true
+  episode_number: 1
+  produced_date: '2026-06-07'
 - id: tesla-gigacasting
   title: 'Tesla Gigacasting: Replacing Dozens of Parts With One'
   brief: 'Concrete example. Conventional car bodies are assembled from dozens or hundreds of stamped and welded steel parts, each needing tooling, fixtures, robots, and labor. Tesla asked what physics actually required and moved to "gigacasting" — casting large sections of the underbody as single aluminum pieces on enormous high-pressure die-casting machines. Trace the first-principles reasoning: the old approach''s Idiot Index was driven by assembly complexity, not material; collapsing many parts into one cuts tooling, robots, floor space, and weld points. Cover the trade-offs honestly — repairability, alloy development, and casting-machine scale.'
@@ -22,14 +15,14 @@ queue:
   produced_date: null
 - id: water-desalination
   title: 'Desalination: Why Fresh Water Costs More Than Physics Demands'
-  brief: 'Opportunity area. There is a hard thermodynamic floor to the energy needed to separate salt from seawater (the minimum energy of separation), and modern reverse-osmosis plants already operate within a few times of it — but the delivered cost of desalinated water is still dominated by capital cost, energy, pre-treatment, and brine disposal rather than the membranes themselves. Reason about the magic-wand floor (the theoretical minimum energy) versus the finished cost, locate where the Idiot Index actually lives, and lay out where a from-scratch redesign — energy recovery, modular plants, cheaper clean power, brine handling — could push cost toward the floor. Flag every figure as approximate.'
+  brief: Opportunity area. There is a hard thermodynamic floor to the energy needed to separate salt from seawater (the minimum energy of separation), and modern reverse-osmosis plants already operate within a few times of it — but the delivered cost of desalinated water is still dominated by capital cost, energy, pre-treatment, and brine disposal rather than the membranes themselves. Reason about the magic-wand floor (the theoretical minimum energy) versus the finished cost, locate where the Idiot Index actually lives, and lay out where a from-scratch redesign — energy recovery, modular plants, cheaper clean power, brine handling — could push cost toward the floor. Flag every figure as approximate.
   category: opportunity_area
   produced: false
   episode_number: null
   produced_date: null
 - id: starlink-user-terminal
   title: 'The Starlink Dish: Phased Arrays at Consumer Prices'
-  brief: 'Concrete example. Military-grade phased-array antennas historically cost a fortune, which "by analogy" should have made a home satellite-internet dish wildly expensive. Starlink instead targeted a mass-manufacturable flat user terminal. Trace the first-principles push to drive the terminal''s cost down through integration and volume manufacturing — reportedly subsidized early on, with cost falling over successive hardware revisions. Use it to show how a high starting Idiot Index in a low-volume specialty product collapses when you redesign for mass production. Keep cost figures clearly approximate.'
+  brief: Concrete example. Military-grade phased-array antennas historically cost a fortune, which "by analogy" should have made a home satellite-internet dish wildly expensive. Starlink instead targeted a mass-manufacturable flat user terminal. Trace the first-principles push to drive the terminal's cost down through integration and volume manufacturing — reportedly subsidized early on, with cost falling over successive hardware revisions. Use it to show how a high starting Idiot Index in a low-volume specialty product collapses when you redesign for mass production. Keep cost figures clearly approximate.
   category: concrete_example
   produced: false
   episode_number: null
@@ -42,7 +35,7 @@ queue:
   episode_number: null
   produced_date: null
 - id: tesla-4680-dry-electrode
-  title: 'The 4680 Cell and the Dry Electrode Bet'
+  title: The 4680 Cell and the Dry Electrode Bet
   brief: 'Concrete example. Conventional battery-electrode manufacturing coats slurry onto foil and then bakes off the solvent in long, energy-hungry drying ovens — a step that adds enormous capital cost and factory footprint. The dry-electrode approach (from Tesla''s Maxwell acquisition) asks whether the solvent and the ovens are even necessary. Trace the first-principles reasoning behind the larger 4680 cell format and dry coating: fewer process steps, less factory, lower cost per kilowatt-hour — and be candid about how hard the manufacturing ramp has been. Keep figures approximate.'
   category: concrete_example
   produced: false
@@ -64,7 +57,7 @@ queue:
   produced_date: null
 - id: healthcare-diagnostics
   title: 'Blood Tests: When the Reagents Cost Pennies'
-  brief: 'Opportunity area. Many common lab diagnostics use tiny quantities of inexpensive reagents, yet the billed price can be enormous — a textbook high Idiot Index, where the cost lives in instruments, labor, billing, intermediaries, and regulation rather than materials. Reason carefully about the magic-wand floor (reagent and sample cost) versus delivered price, and where the gap actually sits. Examine the first-principles opportunity of automation, point-of-care devices, and transparent pricing — while being honest about why healthcare cost is uniquely sticky (safety, liability, reimbursement). Hedge all numbers and avoid singling out any company.'
+  brief: Opportunity area. Many common lab diagnostics use tiny quantities of inexpensive reagents, yet the billed price can be enormous — a textbook high Idiot Index, where the cost lives in instruments, labor, billing, intermediaries, and regulation rather than materials. Reason carefully about the magic-wand floor (reagent and sample cost) versus delivered price, and where the gap actually sits. Examine the first-principles opportunity of automation, point-of-care devices, and transparent pricing — while being honest about why healthcare cost is uniquely sticky (safety, liability, reimbursement). Hedge all numbers and avoid singling out any company.
   category: opportunity_area
   produced: false
   episode_number: null
@@ -85,14 +78,14 @@ queue:
   produced_date: null
 - id: optimus-actuators
   title: 'Optimus: Designing the Robot Joint From Scratch'
-  brief: 'Concrete example. Off-the-shelf industrial robot actuators are precision, low-volume, and expensive — so building a humanoid robot "by analogy" from existing parts would be cost-prohibitive at scale. Tesla''s approach with Optimus was to design custom actuators and integrate motors, gearing, sensors, and control as a high-volume automotive-style part. Trace the first-principles reasoning that designing for mass manufacturing, rather than buying specialty components, is what could move a humanoid robot from a lab curiosity toward an affordable product. Be candid that this is early and unproven, and keep figures approximate.'
+  brief: Concrete example. Off-the-shelf industrial robot actuators are precision, low-volume, and expensive — so building a humanoid robot "by analogy" from existing parts would be cost-prohibitive at scale. Tesla's approach with Optimus was to design custom actuators and integrate motors, gearing, sensors, and control as a high-volume automotive-style part. Trace the first-principles reasoning that designing for mass manufacturing, rather than buying specialty components, is what could move a humanoid robot from a lab curiosity toward an affordable product. Be candid that this is early and unproven, and keep figures approximate.
   category: concrete_example
   produced: false
   episode_number: null
   produced_date: null
 - id: carbon-capture
   title: 'Pulling Carbon From Air: A Thermodynamic Floor and a Long Way to Go'
-  brief: 'Opportunity area. Direct air capture has a real thermodynamic minimum energy to separate dilute carbon dioxide from the atmosphere, but today''s delivered cost per ton sits far above any material floor, dominated by energy, sorbents, and capital. Reason about the magic-wand floor (minimum separation energy) versus current cost, and where the enormous Idiot Index lives. Examine the first-principles opportunity — cheaper clean energy, better sorbents, scale and learning curves — while being rigorously honest that the gap is large and the physics is genuinely hard. Hedge every estimate and avoid hype.'
+  brief: Opportunity area. Direct air capture has a real thermodynamic minimum energy to separate dilute carbon dioxide from the atmosphere, but today's delivered cost per ton sits far above any material floor, dominated by energy, sorbents, and capital. Reason about the magic-wand floor (minimum separation energy) versus current cost, and where the enormous Idiot Index lives. Examine the first-principles opportunity — cheaper clean energy, better sorbents, scale and learning curves — while being rigorously honest that the gap is large and the physics is genuinely hard. Hedge every estimate and avoid hype.
   category: opportunity_area
   produced: false
   episode_number: null
