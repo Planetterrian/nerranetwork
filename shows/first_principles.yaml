@@ -28,26 +28,16 @@ llm:
   podcast_temperature: 0.7
   max_tokens: 4800
   podcast_max_tokens: 9000
-  # Target is 2,000-2,800 spoken words (15-18 min). Set to 2,000 so:
-  #  - run_show's soft floor (0.6x = 1,200 words) is comfortably cleared
-  #    by a healthy episode, so a real episode is never skipped;
-  #  - the generator's expansion-retry threshold (~0.66x = 1,320 words)
-  #    fires whenever a first pass comes in thin, re-prompting for "at
-  #    least min_podcast_words" of real content — the safety net that
-  #    pulls a short draft back up to length.
-  # Tuned over two June 2026 regenerations:
-  #  - Ep1 v1 shipped ~1,060 words / ~8 min: the digest prompt's per-segment
-  #    sentence caps summed to ~800 words, so the brief (and thus the episode)
-  #    was thin.
-  #  - Ep1 v2 (raised sentence caps) hit ~1,590 words / ~10.6 min, but the
-  #    podcast stage rewrote the ~1,600-word brief at ~1:1 instead of
-  #    expanding it.
-  # Fix: the digest prompt now targets a 2,000-2,600-word brief (debut at the
-  # top) AND the podcast prompt demands genuine expansion, so the spoken
-  # script should land at 2,000-2,800 (15-18 min). This floor (2,200) keeps
-  # the soft skip floor at 1,320 (cleared by any healthy episode) and fires
-  # the generator's expansion retry (~1,452) on a thin pass.
-  min_podcast_words: 2200
+  # Length reality (June 2026): grok-4.3 produces ~1,200-1,500-word podcast
+  # scripts per single call network-wide (Tesla ~1,290, M&A ~1,420, etc.) —
+  # ~9-11 min audio — and resists prompt escalation past that ceiling. Three
+  # First Principles regenerations (8 -> 10.6 -> 10.1 min) confirmed the
+  # plateau. The show is positioned as a ~10-12 min long-form daily (label on
+  # the show page matches). The prompts still ask for the top of the range to
+  # keep output maximized. This floor (1,500) keeps the soft skip floor at 900
+  # and fires the expansion retry (~990) only on a genuinely thin pass, so a
+  # healthy ~1,480-word episode ships clean without a wasteful retry.
+  min_podcast_words: 1500
   podcast_chain: true
 
 tts:
