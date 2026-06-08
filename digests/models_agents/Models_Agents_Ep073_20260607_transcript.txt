@@ -1,0 +1,78 @@
+Glad you're here. Welcome to Models and Agents episode 73 for June 7th, 2026.
+Plenty of model releases and agent benchmarks moving today. Looking back at seven episodes from
+2026 June 1st to 2026 June 7th, the stories that mattered while we learned and what to watch next.
+This week, the frontier kept advancing on reasoning tasks while open-weight models closed
+more ground on practical agent workflows. Microsoft and Google both shipped models that run
+serious agent loops on modest hardware and Nvidia tied perception and action generation together
+in one checkpoint. The through line across these releases is test time compute and standardized
+tool protocols moving from research demos into production constraints. OpenAI produced a solution
+to an 80-year-old math problem that had resisted human mathematicians.
+The approach relied on structured search and verification loops rather than typical human proof
+strategies. Ars Technica clarified how the model exploited those patterns at scale. Practitioners
+now have a concrete case where extra test time compute yields verifiable gains on formal reasoning
+benchmarks. Microsoft followed with its own MAI thinking one reasoning model trained from scratch
+on licensed data without distillation from other systems. The 35 billion active parameter version
+matches leading models on software engineering benchmarks and was preferred over Sonnet 4.6 in blind
+tests. MAI code one flash uses 5 billion active parameters and targets direct integration with GitHub
+co-pilot and versus code at lower inference cost. Since we last covered the reasoning model track
+these releases show the cost benefit question moving from theoretical to measurable trade-offs on
+real benchmarks. The open weight side delivered Gemma 412b this week. The model runs full agent workflows
+on a laptop with 16 gigabytes of VRAM and ships under an Apache 2.0 license. Community tests
+already show it completing retro game implementations inside a single 45,000 token prompt
+at 18 tokens per second on consumer AMD hardware. 150 million total Gemma downloads were recorded
+alongside the release. This narrows the open versus closed performance gap on agentic tasks while
+keeping commercial terms wide open. JetBrains added melum 2, a 12 billion parameter mixture of experts
+coding model aimed at specialized workflows. Nvidia released Cosmos 3, an open omnimodal foundation
+model that pairs an auto regressive vision language model reasoner with a diffusion generator
+in a two-tower mixture of transformers layout. The architecture unifies physical reasoning,
+world simulation, and executable action generation inside one pre-trained checkpoint.
+Robotics and embodied agent teams can now start from that single starting point instead of
+stitching separate perception and control stacks. On the agent tooling side, zip launched 5 super
+agents plus a native model context protocol implementation. The system keeps every action inside
+compliance controls and routes high impact steps through human checkpoints. It runs on a
+or the orchestration node uses a react loop to choose between vector search, structured API calls,
+or policy lookups. Alibaba released twin 3.7 plus with vision, tool use, and autonomous iteration
+capabilities. Age company introduced the hollow 3.1 family of twin 3.5 based vision language models
+for computer use agents across web, desktop, and mobile. Microsoft announced Project Solara,
+a chip-to-cloud platform that runs AI agents natively on enterprise devices instead of traditional
+applications. The platform spends custom silicon through cloud orchestration and targets workloads
+where agents replace conventional software interfaces. Since we last covered the agents and tool use track,
+these releases move the reliability and standardization questions forward by adding audit trails
+and hardware level persistence. Anthropic reported that internal cloud usage now drives 8 times
+quarterly code output from its own engineers, with 76% success on open ended coding tasks.
+OpenAI began rolling out a new memory system to chat GPT plus and pro users.
+And Dava, service now, and snowflake all moved autonomous agents into production deployments this
+week. Google added agentic coding and drug discovery tools to its GPT Rosalind Life Sciences
+series. Nvidia expanded its open source collection of physical AI agent tools and skills.
+Uber set a $1,500 monthly cap for employee on coding agent tools. Anthropic expanded project
+glass wing access while responding to the new White House AI executive order.
+Microsoft and Mayo Clinic began building a frontier healthcare model.
+If you have not yet tried Gemma 412b on a local laptop,
+this week is a good time because the Apache 2.0 license and 16GB VRAM footprint let you run
+full agent scaffolds without cloud calls. Point the land graph engine from the zip release at your
+own policy documents to see how the react orchestration node behaves under real compliance
+constraints. Load the Cosmos 3 checkpoint if you are building robotics or simulation agents,
+and test whether the two tower layout removes the need for separate perception and control fine
+tunes. Keep an eye on how quickly the MAI models reach competitive, agentic, and coding benchmarks,
+now that Microsoft can iterate independently on its own data and silicon.
+The biggest open question heading into next week remains how the inference cost curve will shift
+once these medium sized reasoning models and on device checkpoints move from early access into
+widespread use. Okay, let's pop the hood on the Cosmos 3 architecture for a moment.
+The two tower mixture of Transformers design runs an auto regressive vision language model
+reasoner in one tower while a diffusion generator sits in the second. During inference,
+the reasoner proposes actions or world states and the diffusion tower renders them into executable
+outputs or simulated environments without requiring a separate control policy network.
+That removes one layer of handoff latency and lets the model train end to end on trajectories that
+include both perception and action tokens. The tradeoff is higher memory bandwidth demand during the
+joint forward pass. So teams will still need to decide whether the unified checkpoint saves enough
+engineering time to justify the extra hardware at deployment scale. So when you are choosing between
+stitching separate models or starting from Cosmos 3, the decision comes down to whether your workload
+values rapid iteration over minimal peak memory. Tomorrow keep an eye on any follow-up benchmarks from
+the MAI family once external developers gain broader access. That's models and agents for today.
+If you found this useful, share it with someone who's trying to keep up with all these changes
+and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up.
+See you tomorrow and before you go, this show is part of the NARA network, a family of daily
+podcast covering tech, science, markets, and more. If you enjoyed today's episode, give Planetarian
+Daily a listen. Daily breakthroughs in science, health, and longevity. You can explore the whole
+lineup at NARAnetwork.com. This episode used AI voice synthesis of my voice. Editorial selection
+and analysis are my own.
