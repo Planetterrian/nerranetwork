@@ -1,0 +1,57 @@
+# Planetterrian Daily
+🌍 **Planetterrian Daily** - Science, Longevity & Health Discoveries
+> **Acetylcholine surges in the brain when expected rewards fail, prompting mice to switch strategies in a virtual maze.**
+---
+### Top 15 Science & Health Discoveries
+1. **Brain signal drives habit switching in mice — Science Daily**
+   Researchers tracked mice in a virtual maze and observed that the absence of an expected reward triggered a rapid increase in acetylcholine release. Blocking acetylcholine reduced the animals' willingness to abandon familiar paths and explore alternatives. The findings point to a specific neurotransmitter mechanism that supports behavioural flexibility when outcomes change. The study used direct observation of neurotransmitter dynamics during task performance. Future work will examine whether similar acetylcholine dynamics operate in human decision-making under uncertainty.
+
+2. **Nanoscale gold metamaterials boost heat transfer fourfold — Science Daily**
+   Engineers constructed gold-based metamaterials that increased energy flow across nanoscale gaps by up to four times compared with conventional materials. The structures exploit near-field radiative heat transfer that conventional theory predicts should be limited at these scales. Measurements confirmed the enhancement held across multiple gap distances and material configurations. The result challenges assumptions about thermal transport limits in miniaturised systems. Applications under investigation include chip-level cooling and compact energy devices.
+
+3. **Outdoor play from ages 2–4 linked to fewer later difficulties — r/science**
+   A study following children found that more time spent playing outdoors between ages two and four correlated with reduced emotional and behavioural problems by age eight. Researchers adjusted for socioeconomic status, screen time, and parental mental health. Each additional outdoor play day per week was associated with a 6–14% increase in the likelihood of healthy mental health scores. The analysis drew on repeated behavioural assessments across early and middle childhood. The work adds longitudinal evidence on physical environment and emotional development.
+
+4. **Targeted brain stimulation mimics deep-sleep memory effects — r/science**
+   Stimulating specific brain activity patterns in awake mice produced memory improvements comparable to those seen after natural deep sleep. The protocol activated circuits normally engaged during slow-wave sleep without inducing unconsciousness. Memory tasks showed gains in recall accuracy after the stimulation sessions. The approach demonstrates that certain sleep-dependent processes can be engaged independently of behavioural sleep. Researchers plan to test whether analogous non-invasive methods can be developed for humans.
+
+5. **Ancient tooth grooves attributed to natural wear, not picking — Science Daily**
+   Examination of teeth from wild primates revealed grooves previously interpreted as evidence of tooth-picking behaviour. The patterns matched those produced by normal chewing and environmental abrasion alone. A related analysis indicated that a common modern dental defect appears absent in non-human primates, suggesting contemporary diets or habits may alter tooth morphology. The study compared fossil and living primate dentition directly. It reframes interpretations of dental markings in archaeological records.
+
+6. **Dental calculus reveals shifts in Japan’s oral microbiome — Phys.org**
+   DNA extracted from dental calculus of Edo-period and modern Japanese skeletal remains showed distinct microbial communities across time periods and regions. Several oral bacterial species exhibited phylogenetic differences linked to historical dietary or environmental changes. The work demonstrates that preserved calculus can track long-term human-microbe co-evolution. Comparisons between pre-modern and contemporary samples highlighted both continuity and divergence in microbial composition. The authors note calculus as a new archive for reconstructing population health history.
+
+7. **Antibiotic breakdown products still promote resistance in water — Phys.org**
+   Experiments showed that antibiotics and their degradation products continue to select for resistant bacteria after wastewater treatment and release into rivers and coastal waters. Resistance genes persisted and spread even at concentrations below typical detection thresholds for the parent compounds. The study marks the first direct demonstration of this effect in marine and freshwater settings. Samples were collected on World Oceans Day from multiple discharge sites. The findings indicate that current treatment standards may not fully address resistance selection pressures.
+
+8. **Koala overpopulation risks starvation in South Australia — Science Daily**
+   Surveys indicate South Australia’s koala numbers have risen beyond the carrying capacity of local eucalyptus forests. Continued growth without intervention is projected to cause widespread foliage depletion and subsequent population collapse. Researchers modelled fertility-control strategies as a targeted alternative to culling or relocation. The analysis incorporated vegetation recovery rates and koala reproductive biology. Implementation timing is identified as critical to preventing irreversible habitat damage.
+
+9. **Nitrate source, not total intake, tied to dementia risk — Science Daily**
+   A cohort of more than 54,000 adults was followed to assess nitrate consumption from different dietary origins. Higher intake from vegetables was associated with lower dementia incidence, while nitrate and nitrite from processed meats and drinking water correlated with elevated risk. The study separated vegetable-derived nitrate from other sources in the same individuals. Effect estimates remained after adjustment for overall diet quality and cardiovascular factors. The results suggest metabolic handling differs by nitrate origin.
+
+10. **Solar arrays on rewetted peatland support birds and carbon storage — Phys.org**
+    Field measurements in Germany showed that photovoltaic installations on restored peatlands created nesting and foraging habitat for multiple bird species. The combination of rewetting and panel shading reduced greenhouse-gas emissions from the peat while generating electricity. Bird surveys recorded higher species diversity than on drained agricultural peatland. The study quantified both carbon fluxes and avian use across replicated plots. The land-use model is now being evaluated at additional sites.
+
+11. **Specific neurons register reward disappointment in mice — r/science**
+    Researchers identified a discrete population of neurons that activate when an animal receives less reward than anticipated. Activity in these cells scaled with the degree of shortfall and predicted subsequent behavioural adjustments. Optogenetic suppression of the population reduced the likelihood of strategy switching after negative outcomes. The work maps a neural substrate for a “disappointment meter” that guides learning. Mapping to human imaging data is listed as a next step.
+
+12. **Scalable model links personal genome sequences to gene function — Nature**
+    A new computational framework predicts how individual DNA variants affect gene expression across whole genomes. The method processes personal variant sets efficiently enough for population-scale application. Validation used existing functional datasets to confirm accuracy on held-out samples. The approach addresses computational bottlenecks that previously limited sequence-to-function modelling for many individuals. It is positioned for integration with large biobank resources.
+
+13. **E-cigarette use after quitting raises lung cancer incidence — Nature**
+    Analysis of 4.5 million Korean adults found that individuals who switched to e-cigarettes after smoking cessation showed higher lung cancer rates and mortality than those who remained abstinent. The elevated risk persisted after adjustment for prior smoking duration and intensity. Complete cessation without subsequent e-cigarette use produced the lowest observed incidence. The nationwide retrospective design captured long-term outcomes across a broad age range. The authors note the need for continued monitoring of alternative nicotine products.
+
+14. **AI changes question-asking in mathematics and physics — Nature**
+    Review of recent applications shows machine-learning tools are altering how researchers formulate problems rather than simply accelerating calculations. In both fields, models surface previously unconsidered relationships that guide new theoretical work. Human intuition remains central to interpreting outputs and designing follow-up experiments. The article contrasts this pattern with earlier automation efforts in the same disciplines. Continued progress is expected to depend on tighter integration between model outputs and domain expertise.
+
+15. **Rising early-onset cancer rates prompt mechanistic searches — Nature**
+    Incidence of several cancers in adults under 50 has increased across multiple countries, yet the drivers remain unclear and appear tumour-specific. Candidate explanations include changes in diet, microbiome composition, environmental exposures, and reproductive patterns. No single factor accounts for the breadth of affected sites. Large-scale cohort studies are now examining molecular signatures that distinguish early-onset from later-onset cases. Clarifying mechanisms is required before prevention strategies can be prioritised.
+---
+### Planetterrian Spotlight
+The study of acetylcholine release during unrewarded trials shows a concrete cellular signal that updates behaviour when expectations are violated. The same population of neurons could be relevant to disorders involving behavioural rigidity. Mapping these dynamics in humans would clarify whether the mechanism generalises beyond rodents. What behavioural or imaging markers might reveal analogous acetylcholine activity during human decision-making under changing rewards?
+---
+### Science Deep Dive: How Nitrate Source Changes Dementia Risk
+Most people hear “nitrate” and picture a single harmful compound to avoid in water or cured meats. In reality the same molecule behaves differently depending on its dietary origin. Right now, as you eat a salad, nitrate from leafy greens is converted by oral bacteria into nitric oxide that supports vascular function; the same nitrate swallowed from processed meat or contaminated water follows different metabolic routes that can form compounds linked to oxidative stress. A study of more than 54,000 adults found vegetable-derived nitrate associated with lower dementia incidence while equivalent amounts from meat or water showed the opposite pattern. The contrast arises because vegetable matrices supply antioxidants and fibre that alter downstream chemistry. One practical step is to track where nitrate appears in your own diet rather than treating all sources as equivalent; future dietary guidelines may begin separating these origins when discussing cognitive risk.
+---
+New measurements keep refining which signals inside the brain and environment actually move health outcomes.
