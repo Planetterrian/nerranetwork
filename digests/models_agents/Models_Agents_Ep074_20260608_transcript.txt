@@ -1,0 +1,113 @@
+Good to have you on models and agents, episode 74 on June 8, 2026.
+Let's see what shipped, new week in AI, and if last week was anything to go by, buckle
+up.
+Let's get into it.
+Enterprise agents just gained a built-in, factuality check that keeps requiring until multi-hop questions
+have enough evidence.
+Google Research added a sufficient context agent to the Gemini Enterprise Agent platform.
+The agent repeatedly issues new searches until collected passages provide enough grounding
+from multi-hop, multi-source questions.
+This raises factuality accuracy by as much as 34% compared with ordinary, retrieval, augmented
+generation pipelines on the same queries.
+The approach targets enterprise deployments where hallucinated multi-hop answers create
+real risk.
+Builders working on research or compliance agents should test the new capability against
+their existing retrieval stacks this week.
+This development fits into the maturing, agent, and tool use arc, where reliability of long
+horizon agents remains a key open question the show continues to track.
+Local inference users can now combine D-flash speculative decoding with KV cache compression
+on twin 3.627b for up to 3.26 times throughput on an RTX 5,090 while keeping perplexity within
+0.04% of baseline.
+Open clinical de-identification and VLLM monitoring tools also drop today.
+Google Research released an agentic retrieval augmented generation framework inside the Gemini
+Enterprise Agent platform built around a sufficient context agent.
+The agent repeatedly issues new searches until the collected passages provide enough
+grounding to answer multi-hop, multi-source questions reliably.
+This raises factuality accuracy by as much as 34% compared with ordinary, retrieval, augmented
+generation pipelines on the same queries.
+The approach is aimed at enterprise deployments where hallucinated multi-hop answers create
+real risk.
+Builders working on research or compliance agents should test the new capability against
+their existing retrieval stacks this week.
+Watch for whether the same re-query loop appears in consumer Gemini interfaces or open agent
+frameworks.
+Twin 3.627b with D-flash speculative decoding and KV cache compression on an RTX 5,090 reached
+3.26x throughput using the Q40 turbo-4 strategy.
+Perplexity on wiki text 2 stayed within 0.02% of the KQ8 VQ51 baseline.
+Q5KXL quantization outperformed NVFP4 Q80 across every tested KV strategy, delivering both
+higher baseline tokens per second and better scaling under compression.
+The Draftor model achieved 30-51% acceptance rates thanks to cross-attention rather than
+token by token speculation.
+Code quality on Tetris generation tasks actually improves slightly under the best compression setting.
+This update narrows the open-weight performance gap while directly addressing inference cost
+curve questions.
+The show has been following in AI compute and inference.
+Medi's released an open multilingual clinical de-identification model and synthetic data
+set designed to strip patient identifiers while preserving symptoms, labs, medications,
+and treatment timelines.
+The model was trained on dynamically prompted synthetic notes that vary language, document
+type, length, and identifier families to match messy hospital exports.
+It is available on hugging face along with the data set and an interactive demo extractor.
+Hospitals still need policy and audit layers around the model, but it provides a reproducible
+starting point for privacy preserving clinical pipelines.
+Google's Gemma 4 QAT Q40 GGUF files for the E2B and E4B variants contain additional
+per layer projection tensors that are absent from larger 12B plus checkpoints and from unsloss
+UDQ4K XL equivalents.
+The Google Q40 files are larger on disk than unsloss Q4K XL versions despite the nominally
+lower precision because the extra tensors are stored at higher internal precision.
+Users analyzing GGUF structure with cobald CPP or Lama bundle tools can now compare these
+layouts directly.
+Recent open checkpoints now handle multi-object spatial relationships and short text rendering
+at roughly 70-80% reliability.
+Two megapixel images can be generated in under two minutes on a single consumer GPU when
+resolution and step count are reduced for iteration.
+The post argues that structured prompting, often viewed as a limitation, is actually what
+production pipelines require.
+VLLM doctor is a new open source command line interface that pulls metrics from a VLLM
+at metrics endpoint or Prometheus and runs rule-based checks for Q pressure, high time to first
+token over time, per output token, and KV cache exhaustion across pods.
+Each diagnosis includes the triggering metrics, confidence level, likely causes, and
+concrete remediation steps.
+Output is available in human readable text or JSON, plus a watch mode.
+The project is still early and welcomes feedback on missing diagnoses.
+Install from the GitHub repo and point it at any running VLLM server to start.
+The full benchmark scripts, config.yaml, raw data, and generated Tetris artifacts from
+the D-flash plus KV compression tests are available on request, while the author prepares
+a public GitHub repo.
+Reproduction commands cover perplexity on wiki text to coding task throughput and code quality
+scoring.
+Anyone running blama.cpp with D-flash support can request the exact model keys used.
+OK, let's pop the hood on this one.
+Everyone talks about speculative decoding as a simple speed knob.
+In practice, it is a tight coupling between drafter size, acceptance rate, and KV cache layout
+that only works when the drafter and target share enough cross-attention structure.
+The D-flash approach replaces token by token speculation with a single cross-attention
+forward pass from a smaller drafter, which is why a five-bit drafter can still propose
+useful sequences at 30 to 51 percent acceptance.
+Adding KV compression on top changes the memory bandwidth trade-off.
+Q40-Turbo-4 keeps perplexity statistically identical to the KQ8-VQ51 baseline while
+cutting cache traffic enough to reach 3.18 times throughput on an RTX 5,090.
+The quality gain disappears once the drafter's acceptance rate falls below about 25 percent.
+Which is why Turbo2-TCQ variants show both higher speed-up and measurable perplexity degradation.
+Run the compressed path on memory-bound local setups.
+Fall back to full precision KV when you need maximum acceptance on long-context agent traces.
+The gacha that bites most teams is assuming the drafter and target quantizations can be chosen independently.
+Mis-matched layouts destroy the cross-attention benefit.
+Run the Q40-Turbo-4D flash configuration on twin 3.627b if you need faster local coding agents
+without measurable quality loss. Test Medi's PII on your own synthetic clinical notes
+to see how well it preserves lab values and medication timelines while stripping identifiers.
+Point VLLM doctor at any production VLLM endpoint to surface KV cache pressure before it causes timeouts.
+Compare Google's Gemma 4 QAT-Q4-0GGUF against unslots the UD-Q4K-XL on the same E4B checkpoint
+to measure the effect of the extra projection tensors.
+Further releases of Gemma 4 QAT variants at additional sizes are expected in the coming weeks.
+A public GitHub repo with full D-flash benchmark scripts and artifacts is scheduled after cleanup.
+Expanded agentic retrieval augmented generation patterns are likely to appear in open frameworks
+following the Gemma 9 Enterprise announcement. Tomorrow, keep an eye on whether the
+sufficient context agent pattern surfaces in open agent frameworks or consumer Gemma 9 interfaces.
+That's models and agents for today. If you found this useful, share it with someone who's
+trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+The AI world moves fast. We'll help you keep up. See you tomorrow and before you go,
+this show is part of the Naran Network, a family of daily podcasts covering tech,
+science, markets and more. If you enjoyed today's episode, give environmental intelligence a listen.
+The environment and climate policy brief for Canada. You can explore the whole lineup at Naranetwork.com.
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.
