@@ -2102,6 +2102,44 @@ def run(args: argparse.Namespace) -> None:
             if args.show == "tesla":
                 podcast_script = _normalize_tst_opening(podcast_script)
 
+            # Weekly recap: republish the digest from the clean narrative.
+            # On recap days x_thread is the build_weekly_recap_digest scaffold
+            # — a PROMPT for the podcast LLM, not publishable prose. It carries
+            # per-episode source HTML, "REAL-TIME TSLA price:" headers, and a
+            # "Recap framing for the host" instruction block, all of which were
+            # leaking verbatim into the newsletter / blog / RSS. The narrative
+            # the LLM actually wrote lives in the podcast script; capture it
+            # here (after speaker/stage-direction cleanup, before TTS-only
+            # pronunciation spacing like "T S L A") and republish it. Daily
+            # episodes are untouched.
+            if is_weekly_recap and podcast_script.strip():
+                _hdr_lines = []
+                for _ln in x_thread.split("\n"):
+                    if _ln.startswith("━"):
+                        break
+                    if _ln.startswith("# ") or _ln.startswith("**HOOK:"):
+                        _hdr_lines.append(_ln)
+                _recap_header = "\n".join(_hdr_lines).strip() or f"# {config.name} — Weekly Recap"
+                x_thread = _recap_header + "\n\n" + podcast_script.strip()
+                try:
+                    from engine.utils import strip_lone_surrogates as _scrub_sur
+                    digest_md.write_text(_scrub_sur(x_thread), encoding="utf-8")
+                except Exception as _exc:  # noqa: BLE001
+                    logger.warning("Recap digest rewrite failed (non-fatal): %s", _exc)
+                # Keep the content lake's stored digest in sync with what we
+                # publish, so next week's recap doesn't pull this scaffold back.
+                if _lake_record is not None:
+                    try:
+                        from engine.content_lake import store_episode as _store_ep2
+                        _lake_record.digest_md = x_thread
+                        _store_ep2(_lake_record)
+                    except Exception:  # noqa: BLE001
+                        pass
+                logger.info(
+                    "Weekly recap: republished digest from clean narrative "
+                    "(%d chars) — scaffold no longer published.", len(x_thread),
+                )
+
             # Apply pronunciation fixes
             podcast_script = _apply_pronunciation(podcast_script, args.show)
 

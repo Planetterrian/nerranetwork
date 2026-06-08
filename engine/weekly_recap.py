@@ -20,10 +20,46 @@ unchanged.
 from __future__ import annotations
 
 import logging
+import re
 from datetime import date, timedelta
 from typing import Optional
 
 logger = logging.getLogger(__name__)
+
+
+# Patterns that must not survive into a per-episode recap body. These come
+# from the source daily digests (a "Read more (sources)" line, raw or markdown
+# links, a real-time stock-price header) and were leaking verbatim into the
+# Sunday recap newsletter/blog before being scrubbed (June 2026).
+_HTML_TAG_RE = re.compile(r"</?[a-zA-Z][^>]*>")
+_MD_LINK_RE = re.compile(r"\[([^\]]+)\]\((?:[^)]+)\)")
+_BARE_URL_RE = re.compile(r"https?://\S+")
+_READ_MORE_RE = re.compile(r"(?im)^\s*(?:\*+\s*)?read more.*$")
+_PRICE_HDR_RE = re.compile(
+    r"(?im)^\s*\*{0,2}\s*(?:REAL-?TIME\s+)?TSLA(?:\s+today)?\b.*$"
+)
+
+
+def _sanitize_recap_body(text: str) -> str:
+    """Strip source-link / stock-price residue from a per-episode recap body.
+
+    The recap scaffold feeds both the podcast LLM and (historically) the
+    published digest, so any raw HTML anchor, markdown link, "Read more"
+    line, or "REAL-TIME TSLA price:" header that rode along from the source
+    digest showed up as garbage. Markdown links collapse to their visible
+    text; tags / bare URLs / source + price lines are removed outright.
+    """
+    if not text:
+        return text
+    text = _MD_LINK_RE.sub(r"\1", text)      # [Google News](url) -> Google News
+    text = _HTML_TAG_RE.sub("", text)        # drop <a ...>, </a>, etc.
+    text = _READ_MORE_RE.sub("", text)       # drop "Read more (sources): ..."
+    text = _PRICE_HDR_RE.sub("", text)       # drop "REAL-TIME TSLA price:" lines
+    text = _BARE_URL_RE.sub("", text)        # drop any leftover bare URLs
+    # Collapse the blank lines the removals leave behind.
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    text = re.sub(r"[ \t]{2,}", " ", text)
+    return text.strip()
 
 
 def build_weekly_recap_digest(
@@ -112,9 +148,9 @@ def build_weekly_recap_digest(
             body_paragraphs.append(p)
             if len(body_paragraphs) >= 2:
                 break
-        body = "\n\n".join(body_paragraphs)[:1000]
+        body = _sanitize_recap_body("\n\n".join(body_paragraphs))[:1000]
 
-        title_line = ep_hook or f"Episode {ep_num}"
+        title_line = _sanitize_recap_body(ep_hook) or f"Episode {ep_num}"
         items.append(
             f"{idx}. **From Ep {ep_num} ({ep_date}): {title_line}**\n"
             f"   {body}"
