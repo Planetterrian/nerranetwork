@@ -1,0 +1,74 @@
+Hey everyone, welcome to Models and Agents, Episode 75. It's June 9th, 2026. Lots of news to
+walk through. Let's start with what actually matters. AI agents now deliver 26 minutes of
+autonomous work per session, shifting the build versus buy math for developers who need more than
+search snippets. A Harvard and Proplexity Study compared autonomous agents against search assistance
+on the same tasks. Agents completed 26 minutes of independent work per session versus 33 seconds
+for search assistance. The evaluation drew from real user sessions rather than synthetic benchmarks.
+Agents showed gains in multi-step reasoning and tool chaining. Builders working on research or
+data gathering workflows can now prototype agent loops that replace multiple search and summarize
+steps. Watch for follow-up work on failure modes when tasks require external verification or
+long context retention. This development sits within the ongoing maturation of autonomous agents
+and tool use. It begins to address questions around reliability of long horizon agents by providing
+session length measurements from actual usage. Gemma 426BA4BIT models were tested in MLX 4bit,
+6bit and 8bit QAT variants on MMLU underscore PRO and human eVAL using an M5 Pro MacBook.
+The 6bit non QAT version reached 58% MMLU underscore PRO and 98% human eVAL. That version outperformed
+the QAT 8bit model on both benchmarks. The QAT version showed no statistically significant edge
+over standard 4bit quantization in these runs. Builders testing code understanding should compare
+Q6 against QAT 8bit on their own data sets before switching. Gemma 431b outperformed both
+twin 3.627b slash 35b and Opus 4.7 at explaining and refactoring messy academic code bases with niche
+variable names. It tracked cross-file dependencies more reliably than twin models,
+but often attempted unauthorized directory changes. The 31b variant handled 65,000
+contexts while maintaining coherent multi-part edits. Researches maintaining legacy research
+code should test Gemma 431b before defaulting to larger closed models. This result continues the
+narrowing performance gap between open-weight families and closed frontier models on specialized
+tasks. Users are actively seeking head-to-head numbers between Unsloth Gemma 4 4bit QAT and
+standard 8bit PTQ on the same base weights. Early anecdotal reports suggest QAT preserves more
+accuracy at 4bit than expected, but controlled benchmarks remain sparse. Anyone running local code
+or math workloads should publish their own MMLU underscore PRAO or psychode results to close the
+gap. More Gemma 4 QAT versus standard quant comparisons are expected as Unsloth and MLX users publish
+larger test suites. An agent successfully changed two separate hugging-faced spaces to generate
+and assemble a navigable 3D Paris gallery without custom orchestration code. The workflow demonstrates
+current limits of zero-shot multi-space composition using only public endpoints. Developers experimenting
+with visual agents can replicate the pattern today by exposing their own spaces as callable tools.
+Additional agent-chainy examples on hugging-faced spaces are likely as the pattern spreads.
+A modified Jetson Orrin NX running Gemma 4 26b a 4b Ud Q2, underscore K underscore XL,
+achieved 14.65 tokens per second at 8000 context and 10.21 tokens per second at 60,000 context
+while supporting multiple tool calls. The build required a custom heat sink and case to stay under
+40 watts while hitting 65,000 context targets. Local agent builders needing silent, low-power
+inference should review the exact quant and cooling choices. Further local hardware builds for
+Hermes style agents on Jetson and similar edge platforms are on the horizon. Tiny Search V 0.2.0
+switched its default backend to CRXNG, capping output at 8000 tokens for smaller local models used
+with MCP agents. The tool crawls, chunks, and re-ranks results before returning a compact context blob.
+Users running twin 3.5 to 9b or similar with Klein or Roo should test the CRXNG option to reduce prompt
+bloat. The NVIDIA Q-Tile Python tutorial walks through Q-Tile setup in Colab, implementing
+tiled kernels for vector addition, matrix addition, and matrix multiplication with PyTorch fallbacks.
+It includes driver checks, correctness validation, and median runtime benchmarks at each stage.
+Anyone moving matrix workloads to custom kudos style Python kernels should follow the Colab notebook.
+Anthropics new posts examines why agent tooling progressed faster in code than biology,
+citing pre-car era database designs that hinder agent navigation. It calls for new infrastructure
+that treats biode databases as first-class agent environments. Researchers building biology
+agents should read the full piece before designing retrieval layers. Everyone treats high-level
+frameworks like PyTorch as sufficient for matrix work. In practice, tiling decisions determine whether
+a kernel stays memory bound or becomes compute bound on modern GPUs. CU Tile exposes explicit
+tile sizes so developers can match L2 cache lines and register pressure to the specific operation.
+For vector addition, the overhead of tiling is small, but matrix multiplication sees clear wins
+once tiled dimensions align with warp scheduling. The trade-off appears in launch latency and the need
+to keep fallback path for unsupported shapes. Teams should profile both tiled and untiled versions
+on their target batch sizes before committing to custom kernels. Test Gemma 431b on a messy academic
+code base you maintain. Compare dependency tracking against your current model. Chain 2 public
+hugging face spaces following the Paris gallery example if you need quick visual agent prototypes.
+Run tiny search v0.2.0 with your local CRX-NG instance against TWIN 3.5-9b to measure context
+reduction on research queries. Follow the QTile colab notebook and benchmark tiled matrix multiplication
+against PyTorch on your own GPU shapes. Keep an eye on more Gemma 4QAT versus standard
+quant comparisons expected as unsloth and MLX users published larger test suites. Additional agent
+chaining examples on hugging face spaces are likely as the pattern spreads. Further local hardware
+builds for Hermes style agents on Jetson and similar edge platforms will appear soon. Tomorrow keep an
+eye on new agent reliability measurements that may extend the Harvard and perplexity session length
+findings. That's models and agents for today. If you found this useful, share it with someone who's
+trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+The AI world moves fast. We'll help you keep up. See you tomorrow. And before you go,
+this show is part of the NARA network, a family of daily podcasts covering tech, science,
+markets, and more. If you enjoyed today's episode, give models and agents for beginners a listen.
+Artificial intelligence explains simply for beginners and curious teens. You can explore the whole
+lineup at NARAnetwork.com. This episode used AI voice synthesis of my voice. Editorial selection
+and analysis are my own.
