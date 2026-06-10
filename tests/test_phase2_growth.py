@@ -228,7 +228,10 @@ class TestHomepageAudienceSurfaces:
     def test_social_proof_threshold_constant(self):
         import generate_html
 
-        assert generate_html.MIN_SOCIAL_PROOF_SUBSCRIBERS >= 100, (
-            "social proof below ~100 subscribers reads as anti-proof; "
+        # June 2026 website review: floor lowered 100 -> 50 so the badge
+        # appears during the early-growth phase; 50 real readers is
+        # credible proof, single digits are not.
+        assert generate_html.MIN_SOCIAL_PROOF_SUBSCRIBERS >= 50, (
+            "social proof below ~50 subscribers reads as anti-proof; "
             "keep the floor"
         )
