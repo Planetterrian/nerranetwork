@@ -229,6 +229,21 @@ TST received a full recursive improvement architecture (analogous to MIT):
   `shows/privet_russian.yaml`; bilingual Russian language learning podcast
   for English speakers. Even days only. Uses **ElevenLabs TTS**
   (`eleven_flash_v2_5` with `language_code: ru`). X posting disabled.
+- **June 10 2026 Russian-shows pass** (FP + PR; review:
+  [`docs/russian_shows_review_2026_06_10.md`](docs/russian_shows_review_2026_06_10.md);
+  drift guards: `tests/test_russian_shows_quality_pass.py`): the spoken +
+  RSS AI disclosures are now LOCALIZED (`_AI_DISCLOSURE_RU` /
+  `_AI_DISCLOSURE_RSS_RU` in `run_show.py`, gated on `_RUSSIAN_SHOWS`) —
+  closing the "English disclosure on the Olya voice" wart from two prior
+  reviews; Russian feeds title episodes "Выпуск N: …"; closing-pool
+  coverage + `where` anchors fixed (FP's "Вот и всё" variant matched no
+  pattern; PR had ONE closing ever — now 3 rotating); floors FP 900→1000,
+  PR 650→800 (PR keeps `min_podcast_word_floor: 550`); NEW
+  `engine/vocab_tracker.py` + `shows/hooks/privet_russian.py` give PR
+  vocabulary memory — spaced-repetition review callbacks + a
+  no-reteach/theme-rotation list via `{vocab_review_section}` (Animals had
+  run 3 consecutive episodes; words never reappeared). Audio-affecting
+  changes → A/B-listen per landmine #17.
 - **FPD** (First Principles Daily) runs via `run_show.py` +
   `shows/first_principles.yaml`; a **daily narrative** show
   (`narrative_mode: true`, topic-queue-driven like UC — no news fetch).

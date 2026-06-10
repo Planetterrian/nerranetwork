@@ -114,7 +114,10 @@ llm:
   podcast_temperature: 0.75
   max_tokens: 4000
   podcast_max_tokens: 5000
-  min_podcast_words: 650
+  # June 10 2026 review: 650 -> 800. The prompt targets 900-1,200 words
+  # but the floor sat at 650, so short episodes never tripped the
+  # expand-retry. The floor now sits just under the prompt's low end.
+  min_podcast_words: 800
   min_podcast_word_floor: 550   # Specialist language-learning show with slower bilingual pacing; allow slightly thinner days rather than aborting good episodes.
 
 tts:
@@ -183,15 +186,18 @@ episode:
 chapters:
   enabled: true
   section_markers:
+    # June 10 2026: positional `where` anchors (the Tesla chapter-bug
+    # class — "Privyet"/"poka" recur naturally inside lesson content).
     - pattern: "Privyet|welcome to Privyet"
       title: "Привет! Welcome"
+      where: start
     - pattern: "word of the day|first word"
       title: "Word of the Day"
-    - pattern: "vocabulary builder|let's learn more|more words"
+    - pattern: "vocabulary builder|let's learn more|let's build more|more words|more new words"
       title: "Vocabulary Builder"
-    - pattern: "grammar bite|grammar time|how Russian works"
+    - pattern: "grammar bite|grammar time|how Russian works|little grammar|quick grammar|grammar moment"
       title: "Grammar Bite"
-    - pattern: "word origins|where.*come from|etymology|history of"
+    - pattern: "word origins|where.*comes? from|etymology|history of|cool about one of today's words|story behind"
       title: "Word Origins Deep Dive"
     - pattern: "culture corner|fun fact|did you know"
       title: "Culture Corner"
@@ -199,6 +205,7 @@ chapters:
       title: "Practice Time"
     - pattern: "molodets|well done|poka|see you"
       title: "Closing"
+      where: end
 
 newsletter:
   enabled: true
