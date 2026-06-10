@@ -328,6 +328,7 @@ def record_performance_signal(output_dir: Path, signal_type: str, value: Any) ->
 _THEME_STOPWORDS = {
     "status", "last", "major", "update", "episode", "date", "open",
     "questions", "question", "show", "following", "mentioned", "current",
+    "narrative", "memory", "program", "programs", "tracked", "models",
     "today", "tesla", "story", "stories", "news", "daily", "source",
     "sources", "according", "report", "reports", "reported", "company",
     "week", "month", "year", "time", "first", "this", "that", "with",

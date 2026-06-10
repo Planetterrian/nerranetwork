@@ -32,6 +32,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
+# Shared template/news-boilerplate stopword set — vocabulary that must
+# never count as a "theme". The pre-June-2026 code mined bigrams from the
+# narrative TEMPLATE on every episode, so "open questions" / "questions
+# show" / "show following" reached counts of 96/72/72 on Models & Agents,
+# Fascinating Frontiers, AND Planetterrian while real topics (dark
+# matter, gene editing) sat in the 20s.
+from engine.tesla_memory import _THEME_STOPWORDS
+
 logger = logging.getLogger(__name__)
 
 
@@ -185,10 +193,13 @@ def build_narrative_status_block(tracker: Dict[str, Any], label: str) -> str:
     lines = [
         f"### {label} PROGRAM NARRATIVE MEMORY",
         "Use this to give regular listeners a sense of ongoing stories and real progress (or the lack of it).",
-        "When a story touches one of these programs, include 1-2 natural sentences answering:",
+        "When a story touches one of these programs, MAKE THE CONTINUITY AUDIBLE — open that story with a",
+        "short callback a regular listener recognizes, e.g. 'Remember, the show covered [program] on",
+        "[last covered date] — today's news moves that forward because...'. Then answer naturally:",
         "  - Where does today's development fit in the bigger arc for this program?",
         "  - Does it meaningfully move any of the key open questions?",
         "  - What should attentive listeners be watching for next?",
+        "If the show covered the same program YESTERDAY, do not re-explain it — say only what is NEW today.",
         "",
         "Tracked programs (with current status and open questions):",
     ]
@@ -198,7 +209,15 @@ def build_narrative_status_block(tracker: Dict[str, Any], label: str) -> str:
         status = prog.get("status", "Status not yet tracked.")
         last_ep = prog.get("last_major_update_episode")
         last_date = prog.get("last_major_update_date", "")
-        when = f" (last major update mentioned: Ep{last_ep}, {last_date})" if last_ep else ""
+        when = f" (status last reviewed: Ep{last_ep}, {last_date})" if last_ep else ""
+        # Auto-tracked freshness (June 2026, ported from the Tesla fix):
+        # when the show last actually discussed this program on air —
+        # kept current by auto_update_narrative_from_digest, unlike the
+        # operator-curated status above.
+        ment_ep = prog.get("last_mentioned_episode")
+        ment_date = prog.get("last_mentioned_date", "")
+        if ment_ep and ment_ep != last_ep:
+            when += f" (last covered on air: Ep{ment_ep}, {ment_date})"
 
         lines.append(f"\n**{name}**{when}")
         lines.append(f"Current status: {status}")
@@ -297,30 +316,36 @@ def record_performance_signal(output_dir: Path, cfg: MemoryConfig, signal_type: 
 
 def update_theme_history_from_digest(output_dir: Path, cfg: MemoryConfig,
                                      digest_text: str, episode_num: int) -> None:
-    """Lightweight theme extraction from the just-generated digest + narrative context."""
+    """Theme extraction from the just-generated digest CONTENT only.
+
+    June 2026 fix (ported from tesla_memory): never mine the narrative
+    status block — it's our own prompt template and re-counts the same
+    phrases every episode. Existing polluted histories are scrubbed of
+    all-stopword keys on update.
+    """
     history = load_theme_history(output_dir, cfg)
     themes = history.setdefault("recurring_themes", {})
+
+    # One-time scrub of pre-fix template-noise entries.
+    for noise_key in list(themes.keys()):
+        words_in_key = noise_key.split()
+        if words_in_key and all(w in _THEME_STOPWORDS for w in words_in_key):
+            del themes[noise_key]
 
     text_lower = (digest_text or "").lower()
     for kw in cfg.theme_keywords:
         if kw in text_lower:
             themes[kw] = themes.get(kw, 0) + 1
 
-    # Also extract simple bigram themes from the narrative status block if
-    # present (surfaces emerging phrases the show itself is using).
-    try:
-        tracker = load_narrative_tracker(output_dir, cfg)
-        narrative_text = build_narrative_status_block(tracker, cfg.label).lower()
-        words = [
-            w for w in re.findall(r"\b[a-z]{4,}\b", narrative_text)
-            if w not in {"status", "last", "major", "update", "episode", "date"}
-        ]
-        for i in range(len(words) - 1):
-            bigram = f"{words[i]} {words[i+1]}"
-            if len(bigram) > 8:
-                themes[bigram] = themes.get(bigram, 0) + 1
-    except Exception:  # noqa: BLE001
-        pass
+    # Bigram themes from the DIGEST content (never the template).
+    words = [
+        w for w in re.findall(r"\b[a-z]{4,}\b", text_lower)
+        if w not in _THEME_STOPWORDS
+    ]
+    for i in range(len(words) - 1):
+        bigram = f"{words[i]} {words[i+1]}"
+        if len(bigram) > 8:
+            themes[bigram] = themes.get(bigram, 0) + 1
 
     sorted_themes = dict(sorted(themes.items(), key=lambda x: x[1], reverse=True)[:30])
     history["recurring_themes"] = sorted_themes
@@ -329,6 +354,59 @@ def update_theme_history_from_digest(output_dir: Path, cfg: MemoryConfig,
         "top_themes": list(sorted_themes.keys())[:8],
     })
     save_theme_history(history, output_dir, cfg)
+
+
+def _program_mention_keywords(key: str, prog: Dict[str, Any]) -> List[str]:
+    """Derive on-air mention keywords for a program from its key and
+    display name (e.g. ``starship_mars`` / "Starship & Mars" →
+    ["starship", "mars"]). Tokens under 4 chars are dropped except
+    well-known short acronyms."""
+    tokens: set[str] = set()
+    for part in re.split(r"[_\s&/]+", key.lower()):
+        if len(part) >= 4 or part in {"llm", "ai", "jwst", "fsd"}:
+            tokens.add(part)
+    for part in re.split(r"[_\s&/]+", str(prog.get("display_name", "")).lower()):
+        part = part.strip("()")
+        if len(part) >= 4 or part in {"llm", "ai", "jwst", "fsd"}:
+            tokens.add(part)
+    return [t for t in tokens if t not in _THEME_STOPWORDS]
+
+
+def auto_update_narrative_from_digest(
+    output_dir: Path, cfg: MemoryConfig, digest_text: str,
+    episode_num: int, date_str: str,
+) -> List[str]:
+    """Auto-advance per-program ``last_mentioned`` freshness from a digest.
+
+    Ported from the Tesla June 2026 fix: the M&A/FF/PT narrative trackers
+    were seeded May 29 and NO program was ever updated (every
+    ``last_major_update_episode`` still None) — the continuity anchors
+    the prompt block promises were empty. This records
+    ``last_mentioned_episode/date`` when the digest demonstrably
+    discusses a tracked program; the operator-curated ``status`` text is
+    never touched. Returns the program keys detected.
+    """
+    text_lower = (digest_text or "").lower()
+    if not text_lower.strip():
+        return []
+
+    tracker = load_narrative_tracker(output_dir, cfg)
+    programs = tracker.get("programs", {})
+    mentioned: List[str] = []
+    for key, prog in programs.items():
+        kws = _program_mention_keywords(key, prog)
+        if kws and any(kw in text_lower for kw in kws):
+            prog["last_mentioned_episode"] = episode_num
+            prog["last_mentioned_date"] = date_str
+            mentioned.append(key)
+
+    if mentioned:
+        save_narrative_tracker(tracker, output_dir, cfg)
+        logger.info(
+            "[%s] narrative tracker: recorded mentions in Ep%s for %s",
+            cfg.slug, episode_num, ", ".join(mentioned),
+        )
+    return mentioned
 
 
 # ---------------------------------------------------------------------------
@@ -405,6 +483,13 @@ def memory_post_generate(config, slug: str, digest_text: str, episode_num: int) 
     try:
         out_dir = Path(config.episode.output_dir)
         update_theme_history_from_digest(out_dir, cfg, digest_text, episode_num)
+        # Auto-advance per-program "last covered on air" freshness (June
+        # 2026, ported from Tesla) — curated status text stays
+        # operator-only via scripts/update_tesla_narrative.py --slug.
+        from datetime import date as _date
+        auto_update_narrative_from_digest(
+            out_dir, cfg, digest_text, episode_num, _date.today().isoformat(),
+        )
     except Exception as exc:  # noqa: BLE001
         logger.warning("%s memory post_generate failed (non-fatal): %s", slug, exc)
 

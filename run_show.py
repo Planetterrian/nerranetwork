@@ -4483,23 +4483,26 @@ def _build_teaser(config, episode_num: int, today_str: str, extra_context: dict)
             f"🎧 Listen + show notes: "
             f"https://nerranetwork.com/blog/tesla/ep{episode_num:03d}.html"
         )
-    elif slug == "omni_view":
+    elif slug in ("omni_view", "fascinating_frontiers", "planetterrian"):
+        # June 2026 network pass: these teasers were identical every day
+        # except the date ("Episode N: Balanced news perspectives.") and
+        # linked the generic summaries page. Lead with the episode hook
+        # and link the episode's blog post, keeping each show's emoji
+        # identity.
+        _branding = {
+            "omni_view": "📰⚖️ Omni View",
+            "fascinating_frontiers": "🚀🌌 Fascinating Frontiers",
+            "planetterrian": "🌍🧬 Planetterrian Daily",
+        }
+        hook_text = (extra_context.get("hook") or "").strip()
+        if len(hook_text) > 200:
+            hook_text = hook_text[:199].rstrip() + "…"
+        hook_line = f"{hook_text}\n\n" if hook_text else ""
         teaser = (
-            f"📰⚖️ Omni View — {today_str}\n\n"
-            f"Episode {episode_num}: Balanced news perspectives.\n"
-            f"🎧 Read & listen: https://nerranetwork.com/omni-view-summaries.html"
-        )
-    elif slug == "fascinating_frontiers":
-        teaser = (
-            f"🚀🌌 Fascinating Frontiers — {today_str}\n\n"
-            f"Episode {episode_num}: Space & astronomy news.\n"
-            f"🎧 Read & listen: https://nerranetwork.com/fascinating-frontiers-summaries.html"
-        )
-    elif slug == "planetterrian":
-        teaser = (
-            f"🌍🧬 Planetterrian Daily — {today_str}\n\n"
-            f"Episode {episode_num}: Science, longevity & health.\n"
-            f"🎧 Read & listen: https://nerranetwork.com/planetterrian-summaries.html"
+            f"{_branding[slug]} Ep {episode_num}\n\n"
+            f"{hook_line}"
+            f"🎧 Listen + notes: "
+            f"https://nerranetwork.com/blog/{slug}/ep{episode_num:03d}.html"
         )
     elif slug == "modern_investing":
         # June 2026 quality pass: MIT previously fell to the generic
@@ -4520,7 +4523,31 @@ def _build_teaser(config, episode_num: int, today_str: str, extra_context: dict)
             f"https://nerranetwork.com/modern-investing-performance.html"
         )
     else:
-        teaser = f"{config.name} Episode {episode_num} — {today_str}"
+        # Generic fallback (June 2026 network pass): lead with the
+        # episode hook + link the episode blog post when available,
+        # instead of the date-only post that read identically every day.
+        hook_text = (extra_context.get("hook") or "").strip()
+        if len(hook_text) > 200:
+            hook_text = hook_text[:199].rstrip() + "…"
+        blog_url = ""
+        try:
+            from generate_html import NETWORK_SHOWS
+            if slug in NETWORK_SHOWS:
+                blog_url = (
+                    f"https://nerranetwork.com/blog/{slug}/"
+                    f"ep{episode_num:03d}.html"
+                )
+        except Exception:
+            blog_url = ""
+        if hook_text or blog_url:
+            parts = [f"🎙️ {config.name} Ep {episode_num}"]
+            if hook_text:
+                parts.append(hook_text)
+            if blog_url:
+                parts.append(f"🎧 Listen + notes: {blog_url}")
+            teaser = "\n\n".join(parts)
+        else:
+            teaser = f"{config.name} Episode {episode_num} — {today_str}"
     return _append_youtube_line(teaser, extra_context)
 
 
