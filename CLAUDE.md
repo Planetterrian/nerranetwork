@@ -674,6 +674,48 @@ Rejected after verification: nav-cover empty alts (correct WCAG — visible
 text adjacent), search loading state (already exists), blog next-episode nav
 (already exists).
 
+### Scheduled Show Review Agent (June 2026)
+
+The manual quality-pass workflow (Tesla #573/#576, MIT #574, network #575)
+is now automated and reproducible. A scheduled Claude Code agent
+([`.github/workflows/show-review.yml`](.github/workflows/show-review.yml),
+Tue + Fri 07:00 UTC) reviews ONE target per run — the least-recently-
+reviewed of the 12 shows + a cross-cutting `network` target, per
+[`docs/reviews/review_state.yaml`](docs/reviews/review_state.yaml) /
+`scripts/pick_review_target.py` — following the codified playbook in
+[`.claude/commands/review-show.md`](.claude/commands/review-show.md)
+(same P0/P1/P2 method as the manual passes; transcripts as ears; hard
+guardrails baked in). Output is always a **draft PR** on branch
+`agent/review-<slug>-<YYYYMMDD>` with prompt/audio changes called out
+under "⚠️ A/B-listen required" — the operator's merge is the ship gate,
+so landmine #17 is preserved. New review docs go to `docs/reviews/`;
+merging a review PR advances the rotation. Run `/review-show <slug>` in
+any Claude Code session for a manual pass with identical methodology.
+The loop is **recursive, not just scheduled**: every review appends to a
+per-target ledger ([`docs/reviews/ledger/`](docs/reviews/ledger/)) with
+measurable `predictions:` the NEXT review must score (`hit`/`partial`/
+`miss` — a miss reopens the problem) and a `do_not_retry` list built from
+operator verdicts (closed-unmerged review PRs = rejections; git reverts
+of review commits = failed A/B listens — never re-proposed). Reviews
+start from `scripts/review_snapshot.py <slug>` (deterministic
+length/tic/chapter/cost/OP3 numbers — the cross-episode repeated-phrase
+detector finds boilerplate tics mechanically). When the agent edits a
+prompt and `GROK_API_KEY` is present it regenerates a digest via
+`run_show.py <slug> --test` and pastes before/after OUTPUT excerpts into
+the PR. `network` runs additionally meta-review the ledgers and may
+propose edits to the playbook itself (drift guards pin the safety
+language). The Daily Audit also dispatches an out-of-rotation review via
+`scripts/dispatch_quality_reviews.py` when a show ships editorial-
+critical issues (max 1/day, skips shows with an open review PR;
+`daily-audit.yml` gained `actions: write` + `pull-requests: read` for
+this). A review PR opening pings `NOTIFICATION_WEBHOOK_URL` (no-op when
+unset). Setup + tuning: [`docs/REVIEW_AGENT.md`](docs/REVIEW_AGENT.md).
+Drift guards: `tests/test_review_agent.py` (rotation covers every show —
+scaffolded new shows must be added to the state file; playbook keeps its
+safety language; ledger schema; snapshot + dispatcher logic). Requires
+the `ANTHROPIC_API_KEY` secret + Claude GitHub App (one-time operator
+setup).
+
 ### Recursive narrative memory generalized (Phase 3, May 2026)
 
 The content moat: Tesla's narrative-memory pattern generalized so other shows
