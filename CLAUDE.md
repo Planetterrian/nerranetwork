@@ -557,6 +557,56 @@ use the original Short, unchanged. Full setup + limitations:
 [`docs/social_distribution.md`](docs/social_distribution.md). Drift guards:
 `tests/test_social_distribution.py`.
 
+### Audience-growth pass (June 2026)
+
+Full network review + growth implementation —
+[`docs/network_review_2026_06.md`](docs/network_review_2026_06.md) is the
+canonical writeup (market analysis, first real audience numbers, roadmap,
+operator checklist). Shipped, all no-ops when secrets unset:
+
+- **Audience read-back.** `scripts/fetch_op3_stats.py` (needs
+  `OP3_API_TOKEN`) + `scripts/fetch_buttondown_stats.py` run in nightly
+  maintenance before the dashboard build → `api/op3_stats.json`,
+  `api/buttondown_stats.json`, public `site/data/popular_episodes.json`.
+  Surfaces: dashboard "Audience" card, homepage "Most Played This Week"
+  rail, homepage "Join N+ readers" social proof (hidden < 100 subs).
+  OP3 response shapes are pinned in `tests/test_op3_stats.py` — verified
+  live June 2026 (`monthlyDownloads`/`weeklyDownloads`; episode
+  `downloads1/3/7/30/All` keys are OMITTED when the data span is young).
+- **Adjacency-map bug fixed.** `newsletter.network_adjacencies` (and the
+  other newsletter composition keys) had been mis-indented under
+  `cost_circuit_breakers:` in `shows/_defaults.yaml` — newsletter +
+  synthesizer read an empty map, so the cross-network email module was
+  silently degraded network-wide. Drift guard pins the location. NOTE:
+  there are deliberately THREE curated cross-show mappings — web
+  (`generate_html.NETWORK_SHOWS[slug]["related_show"]`), email
+  (`newsletter.network_adjacencies`), audio/X
+  (`engine/network_promo.ENGLISH_SHOWS`). Do not consolidate casually;
+  each is tested and serves a different surface.
+- **Newsletter growth loop.** Every show now gets a deterministic
+  Buttondown slug (`<show>-ep<num>-<hook>`; was Russian-only) so the
+  view-in-browser/archive link renders pre-send on dailies AND weeklies;
+  reply/share row gained a localized "Forwarded this email? Subscribe
+  here" line (UTM `forward_subscribe`).
+- **X cross-promo reply.** Flag `publishing.x_cross_promo` (network
+  default true in `_defaults.yaml`, dataclass default false) posts a
+  second tweet threaded under the teaser: "Follow @{x_handle}" + one
+  sibling plug from the `network_promo` rotation. `x_handle` set only for
+  tesla/@teslashortstime + the PLANETTERRIAN_X_ shows/@planetterrian;
+  OV/M&A/MIT pending operator confirmation. Roughly doubles posts/day per
+  X app — flip the flag off if the free-tier cap trips.
+- **Podcasting 2.0 channel tags.** `update_rss_feed` now injects
+  `podcast:funding` (→ `/#newsletter`) + `podcast:person` (host) on every
+  rebuild via `_inject_channel_funding_person_tags` (same pattern as
+  `podcast:locked`); empty kwargs = byte-for-byte legacy behavior.
+- Sitemap: + `player.html` + `modern-investing-performance.html`,
+  − `404.html`. Nightly site-regen step now passes the marketing env vars
+  (was silently stripping analytics tags on nightly rebuilds).
+- **Known wart (operator decision pending):** Russian shows speak the
+  ENGLISH `_AI_DISCLOSURE` line at the end of every episode; a localized
+  `_AI_DISCLOSURE_RU` is a one-liner in `run_show.py` but changes shipped
+  audio → landmine #17 A/B-listen first.
+
 ## Current Refactoring Goal
 
 **Extract duplicated code from the show scripts into `engine/` modules.**
