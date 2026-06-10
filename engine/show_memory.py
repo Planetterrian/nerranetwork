@@ -37,8 +37,9 @@ from typing import Any, Dict, List
 # narrative TEMPLATE on every episode, so "open questions" / "questions
 # show" / "show following" reached counts of 96/72/72 on Models & Agents,
 # Fascinating Frontiers, AND Planetterrian while real topics (dark
-# matter, gene editing) sat in the 20s.
-from engine.tesla_memory import _THEME_STOPWORDS
+# matter, gene editing) sat in the 20s. ``_extract_bigrams`` is shared so
+# the echo filter below sees exactly what the miner produces.
+from engine.tesla_memory import _THEME_STOPWORDS, _extract_bigrams
 
 logger = logging.getLogger(__name__)
 
@@ -314,42 +315,140 @@ def record_performance_signal(output_dir: Path, cfg: MemoryConfig, signal_type: 
     save_performance_tracker(perf, output_dir, cfg)
 
 
+def update_performance_from_op3(output_dir: Path, cfg: MemoryConfig,
+                                op3_show_stats: Dict[str, Any]) -> int:
+    """Refresh a show's performance tracker from real OP3 download data.
+
+    June 10 2026 (ported from tesla_memory): the performance loop was
+    dead network-wide — ``record_performance_signal`` had no production
+    callers, so the performance block injected static (usually empty)
+    text. Derives ``strong_topics_last_30d`` from tracked-program
+    mentions in the most-downloaded recent episodes' titles (titles are
+    hook-first), REPLACING the list wholesale so stale entries can't
+    accumulate. Returns the number of strong topics recorded.
+    """
+    episodes = (op3_show_stats or {}).get("episodes") or []
+    scored = [e for e in episodes if isinstance(e, dict) and e.get("title")]
+    if not scored:
+        logger.info("[%s] no OP3 episode data — performance tracker unchanged", cfg.slug)
+        return 0
+
+    def _downloads(e: Dict[str, Any]) -> int:
+        for k in ("downloads_30d", "downloads_7d", "downloads_all_time"):
+            v = e.get(k)
+            if isinstance(v, (int, float)) and v > 0:
+                return int(v)
+        return 0
+
+    scored.sort(key=_downloads, reverse=True)
+    top = [e for e in scored[:5] if _downloads(e) > 0]
+
+    narrative = load_narrative_tracker(output_dir, cfg)
+    programs = narrative.get("programs", {})
+
+    strong_topics: List[str] = []
+    top_titles: List[str] = []
+    for e in top:
+        title = str(e.get("title", ""))
+        top_titles.append(f"{title[:80]} ({_downloads(e)} dl)")
+        lowered = title.lower()
+        for key, prog in programs.items():
+            name = prog.get("display_name", key.title())
+            if _program_mentioned(key, prog, lowered) and name not in strong_topics:
+                strong_topics.append(name)
+
+    perf = load_performance_tracker(output_dir, cfg)
+    signals = perf.setdefault("recent_signals", {})
+    signals["strong_topics_last_30d"] = strong_topics[:5]
+    signals["top_episodes"] = top_titles
+    signals["notes"] = (
+        "Auto-derived nightly from OP3 download data "
+        "(scripts/update_performance_trackers.py). Topics = tracked "
+        "programs mentioned in the hooks of the most-downloaded episodes."
+    )
+    save_performance_tracker(perf, output_dir, cfg)
+    logger.info(
+        "[%s] performance tracker refreshed from OP3: %d strong topics (%s)",
+        cfg.slug, len(strong_topics), ", ".join(strong_topics) or "none",
+    )
+    return len(strong_topics)
+
+
+def _narrative_prose_bigrams(output_dir: Path, cfg: MemoryConfig) -> set:
+    """Bigrams occurring in the narrative tracker's own prose.
+
+    June 10 2026 fix (ported from tesla_memory): the digest-only mining
+    fix wasn't enough — the narrative status block is injected into every
+    digest prompt and the LLM echoes its wording into continuity
+    sentences, so tracker prose was re-mined as a "theme" daily. The
+    signature: chains of overlapping bigrams with identical counts.
+    Filtering bigrams that appear verbatim in tracker status/questions/
+    claims text breaks the echo loop.
+    """
+    tracker = load_narrative_tracker(output_dir, cfg)
+    texts: List[str] = []
+    for prog in tracker.get("programs", {}).values():
+        texts.append(str(prog.get("display_name", "")))
+        texts.append(str(prog.get("status", "")))
+        texts.extend(str(q) for q in prog.get("key_open_questions", []) or [])
+        texts.extend(str(c) for c in prog.get("notable_claims", []) or [])
+    return set(_extract_bigrams(" ".join(texts).lower()))
+
+
 def update_theme_history_from_digest(output_dir: Path, cfg: MemoryConfig,
                                      digest_text: str, episode_num: int) -> None:
     """Theme extraction from the just-generated digest CONTENT only.
 
     June 2026 fix (ported from tesla_memory): never mine the narrative
     status block — it's our own prompt template and re-counts the same
-    phrases every episode. Existing polluted histories are scrubbed of
-    all-stopword keys on update.
+    phrases every episode. June 10 follow-up (also ported): filter
+    narrative-prose ECHO (the LLM repeats tracker wording in continuity
+    sentences), strip URLs before mining, and make the update idempotent
+    per episode. Existing polluted histories are scrubbed on update.
     """
     history = load_theme_history(output_dir, cfg)
     themes = history.setdefault("recurring_themes", {})
+    evolution = history.setdefault("theme_evolution", [])
 
-    # One-time scrub of pre-fix template-noise entries.
+    if any(e.get("episode") == episode_num for e in evolution):
+        logger.info(
+            "[%s] theme history already has Ep%s — skipping duplicate mining run",
+            cfg.slug, episode_num,
+        )
+        return
+
+    echo_bigrams = _narrative_prose_bigrams(output_dir, cfg)
+
+    # One-time scrub of pre-fix noise entries (exempting curated
+    # keywords): keys containing ANY stopword can only be legacy (the
+    # miner filters stopwords before pairing), and echo bigrams came
+    # from our own tracker prose.
     for noise_key in list(themes.keys()):
+        if noise_key in cfg.theme_keywords:
+            continue
         words_in_key = noise_key.split()
-        if words_in_key and all(w in _THEME_STOPWORDS for w in words_in_key):
+        if words_in_key and any(w in _THEME_STOPWORDS for w in words_in_key):
+            del themes[noise_key]
+        elif noise_key in echo_bigrams:
             del themes[noise_key]
 
-    text_lower = (digest_text or "").lower()
+    # Strip URLs before mining — digests carry "Source: https://..."
+    # lines whose tokens otherwise become junk bigrams ("google https").
+    text_lower = re.sub(r"https?://\S+", " ", (digest_text or "").lower())
     for kw in cfg.theme_keywords:
         if kw in text_lower:
             themes[kw] = themes.get(kw, 0) + 1
 
-    # Bigram themes from the DIGEST content (never the template).
-    words = [
-        w for w in re.findall(r"\b[a-z]{4,}\b", text_lower)
-        if w not in _THEME_STOPWORDS
-    ]
-    for i in range(len(words) - 1):
-        bigram = f"{words[i]} {words[i+1]}"
-        if len(bigram) > 8:
-            themes[bigram] = themes.get(bigram, 0) + 1
+    # Bigram themes from the DIGEST content (never the template, never
+    # tracker-prose echo).
+    for bigram in _extract_bigrams(text_lower):
+        if bigram in echo_bigrams or bigram in cfg.theme_keywords:
+            continue
+        themes[bigram] = themes.get(bigram, 0) + 1
 
     sorted_themes = dict(sorted(themes.items(), key=lambda x: x[1], reverse=True)[:30])
     history["recurring_themes"] = sorted_themes
-    history.setdefault("theme_evolution", []).append({
+    evolution.append({
         "episode": episode_num,
         "top_themes": list(sorted_themes.keys())[:8],
     })
@@ -370,6 +469,21 @@ def _program_mention_keywords(key: str, prog: Dict[str, Any]) -> List[str]:
         if len(part) >= 4 or part in {"llm", "ai", "jwst", "fsd"}:
             tokens.add(part)
     return [t for t in tokens if t not in _THEME_STOPWORDS]
+
+
+def _program_mentioned(key: str, prog: Dict[str, Any], text_lower: str) -> bool:
+    """Word-boundary program detection (June 10 2026, ported from Tesla).
+
+    The previous substring matching advanced freshness on partial-word
+    hits ("mars" inside "marsupial", "agent" inside "reagent") — and
+    these matches now drive on-air "last covered" callbacks, so false
+    positives produce wrong spoken lines. Plurals still match via an
+    optional trailing "s"/"es".
+    """
+    for kw in _program_mention_keywords(key, prog):
+        if re.search(rf"\b{re.escape(kw)}(?:e?s)?\b", text_lower):
+            return True
+    return False
 
 
 def auto_update_narrative_from_digest(
@@ -394,8 +508,7 @@ def auto_update_narrative_from_digest(
     programs = tracker.get("programs", {})
     mentioned: List[str] = []
     for key, prog in programs.items():
-        kws = _program_mention_keywords(key, prog)
-        if kws and any(kw in text_lower for kw in kws):
+        if _program_mentioned(key, prog, text_lower):
             prog["last_mentioned_episode"] = episode_num
             prog["last_mentioned_date"] = date_str
             mentioned.append(key)

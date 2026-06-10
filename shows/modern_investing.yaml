@@ -146,9 +146,15 @@ llm:
   podcast_temperature: 0.7
   max_tokens: 4000
   podcast_max_tokens: 8000
-  min_podcast_words: 1300
+  # June 10 2026 review: 1300 -> 1800. The prompt demanded "2500-3500
+  # words" while this floor enforced 1300 — conflicting anchors let the
+  # model satisfy the smallest (recent episodes averaged ~1360). The
+  # prompt now states ONE reachable target (2,000-2,200 words ~ 12-14
+  # min); this floor sits under it so the expand-retry fires on
+  # anything short of a real full-length episode.
+  min_podcast_words: 1800
   # June 2026 quality pass (mirrors Tesla): 4 of 10 recent episodes
-  # shipped under the 1300-word target with listener_value averaging
+  # shipped under the old 1300-word target with listener_value averaging
   # 3.4/10. The expand-retry now fires on ANY below-target script.
   podcast_expand_below_target: true
   podcast_chain: true
@@ -211,8 +217,13 @@ episode:
 chapters:
   enabled: true
   section_markers:
+    # June 10 2026: positional `where` anchors + tightened patterns (the
+    # Tesla chapter-bug class — see engine/chapters.py). Bare "wraps up"
+    # matched mid-script sentences; two of the four closing-pool variants
+    # ("That's it for today's..." / "That's your...") matched NO pattern.
     - pattern: "Welcome.*Modern Investing|first episode of Modern Investing|Good morning.*Modern Investing|This is Modern Investing|Modern Investing Techniques.*episode"
       title: "Introduction"
+      where: start
     - pattern: "market pulse|market overview|here's where markets|let's check the pulse|check.*pulse"
       title: "Market Pulse"
     - pattern: "strategy spotlight|strategy of the day|today's strategy|educational centrepiece"
@@ -227,10 +238,11 @@ chapters:
       title: "Tools & Techniques"
     - pattern: "quick hits|rapid fire|shorter items|rapid-fire"
       title: "Quick Hits"
-    - pattern: "portfolio tracker|running total|portfolio performance|simulated track record"
+    - pattern: "portfolio tracker|running total|portfolio performance|simulated track record|simulated portfolio has completed|win rate"
       title: "Portfolio Performance"
-    - pattern: "That's Modern Investing|wraps up|wraps up.*episode"
+    - pattern: "That.?s.*Modern Investing|that wraps up|that.?s it for today"
       title: "Closing"
+      where: end
 
 newsletter:
   enabled: true

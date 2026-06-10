@@ -379,7 +379,7 @@ def update_performance_from_op3(output_dir: Path, op3_show_stats: Dict[str, Any]
     signals["top_episodes"] = top_titles
     signals["notes"] = (
         "Auto-derived nightly from OP3 download data "
-        "(scripts/update_tesla_performance.py). Topics = tracked programs "
+        "(scripts/update_performance_trackers.py). Topics = tracked programs "
         "mentioned in the hooks of the most-downloaded recent episodes."
     )
     save_performance_tracker(perf, output_dir)

@@ -153,7 +153,11 @@ llm:
   podcast_temperature: 0.75
   max_tokens: 5000
   podcast_max_tokens: 6000
-  min_podcast_words: 900
+  # June 10 2026 review: 900 -> 1200. The prompt targets 1,300-1,700
+  # words but the floor sat at 900, so 5 of 8 recent episodes shipped
+  # at 810-880 words without tripping the expand-retry. The floor now
+  # sits just under the prompt's own low end.
+  min_podcast_words: 1200
   # June 2026 network quality pass: chronic below-target episodes —
   # the expand-retry now fires on ANY below-target script.
   podcast_expand_below_target: true
@@ -210,8 +214,12 @@ episode:
 chapters:
   enabled: true
   section_markers:
+    # June 10 2026: positional `where` anchors; the closing pool's "And
+    # that's a wrap!" variant matched no pattern, so 50% of recent
+    # episodes shipped with NO Closing chapter at all.
     - pattern: "welcome to Models and Agents for Beginners"
       title: "Welcome"
+      where: start
     - pattern: "big story|biggest news"
       title: "The Big Story"
     - pattern: "deep dive|how it works|under the hood"
@@ -220,8 +228,9 @@ chapters:
       title: "Cool Stuff & Try This"
     - pattern: "quick bits|rapid fire|quick round"
       title: "Quick Bits"
-    - pattern: "that's it for today|that's models and agents"
+    - pattern: "that's it for today|that's models and agents|that.?s a wrap"
       title: "Closing"
+      where: end
 
 newsletter:
   enabled: true
