@@ -104,6 +104,14 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: "/review-show ${{ steps.pick.outputs.slug }}"
+          # The daily audit's dispatch_quality_reviews.py triggers this
+          # workflow via `gh workflow run` with GITHUB_TOKEN, so the
+          # initiating actor is github-actions (a bot). Without this
+          # allowlist the action refuses bot-initiated runs — which broke
+          # the event-driven review path (observed 2026-06-10 on the
+          # fascinating_frontiers dispatch). Human dispatches are
+          # unaffected.
+          allowed_bots: "github-actions"
           claude_args: |
             --model claude-opus-4-8
             --allowedTools "Bash,Read,Write,Edit,MultiEdit,Glob,Grep,WebFetch,WebSearch"
