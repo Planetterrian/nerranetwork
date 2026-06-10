@@ -247,14 +247,13 @@ youtube:
   # legacy voice-intro start. Falls back to voice mode when the
   # heuristic can't find a clear winner. See engine.shorts_selector.
   shorts_start_mode: smart
-  # Publish 2 Shorts per episode (May 2026 retune). Each is sourced
-  # from a different non-overlapping engaging window via
-  # ``engine.shorts_selector.pick_top_n_engaging_windows``; each
-  # gets a distinct headline, thumbnail, and caption track. Quota
-  # math: Tesla long + 2 shorts = 4 800 + MAB long + 2 shorts
-  # = 4 800 = 9 600 / 10 000 daily YouTube quota. Tight on retries;
-  # if uploads start 429-ing dial one of them back to 1.
-  shorts_per_episode: 2
+  # 1 Short per episode (June 2026 four-show expansion). Was 2 during
+  # the May 2026 retune; dropped back to 1 to free quota for the
+  # Fascinating Frontiers + Modern Investing Shorts-only launch while
+  # the quota-increase request is pending. Restore to 2 only after the
+  # increase lands AND FF/MIT long-form is re-evaluated (see CLAUDE.md
+  # landmine #20 quota math).
+  shorts_per_episode: 1
   # Shorter clips perform better on the Shorts surface — 40 s lands
   # in the 30-45 s "high completion rate" sweet spot vs the previous
   # 55 s near-max. Same generation cost, better algorithmic signal.

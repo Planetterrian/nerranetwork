@@ -46,10 +46,19 @@ def main(argv=None) -> int:
     slugs = ", ".join(summary["enabled_slugs"]) or "(none)"
     print(
         f"YouTube-enabled shows: {slugs} | projected {summary['total_units']} "
-        f"units/day vs quota {summary['daily_quota']} "
-        f"(headroom {summary['headroom_units']})",
+        f"units/day across all channels",
         flush=True,
     )
+    # Quota is per channel (@NerraNetwork = en, @NerraRU = ru) — print
+    # one line per channel so the headroom that matters is visible.
+    for ch, entry in sorted((summary.get("per_channel") or {}).items()):
+        ch_slugs = ", ".join(entry["enabled_slugs"]) or "(none)"
+        print(
+            f"  channel '{ch}': {entry['total_units']} units/day "
+            f"({ch_slugs}) vs quota {entry['daily_quota']} "
+            f"(headroom {entry['headroom_units']})",
+            flush=True,
+        )
 
     if summary["over_quota"]:
         warning = format_quota_warning(summary) or "YouTube quota exceeded."

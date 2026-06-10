@@ -1077,20 +1077,33 @@ decision); everything else has a live status card.
     alt-cadence shows NOT carrying it, and the YouTube quota cap
     (only TST and MAB enabled — see also landmine #20).
 
-20. **YouTube quota cap (May 2026)** — the YouTube Data API quota for
-    the `@NerraNetwork` channel is 10,000 units/day; each `videos.insert`
-    costs 1,600 units. With 7 daily English shows × 2 videos
-    (long-form + Shorts) = 14 uploads/day requested but only 6 fit in
-    quota. The May 2026 schedule overhaul disabled YouTube on every
-    English show except Tesla and MAB — operator-chosen pair (TST is
-    the largest property; MAB is the educational beginner-friendly
-    flagship). Re-enabling other shows requires either (a) a quota
-    increase from YouTube, (b) staggering uploads across days, or
-    (c) skipping Shorts on most shows. Until then the
-    `test_only_tst_and_mab_enable_youtube` drift guard fails CI on any
-    accidental re-enable. Russian channel `@NerraRU` has its own quota
-    so Финансы Просто and Привет, Русский! could be re-enabled
-    independently.
+20. **YouTube quota cap (May 2026; four-show expansion June 2026)** —
+    the YouTube Data API quota is 10,000 units/day **per channel**;
+    each `videos.insert` costs 1,600 units (plus thumbnail 50 /
+    playlist 50 / caption 400 on the paper model in
+    `engine/youtube_quota.py`). The May 2026 schedule overhaul had
+    disabled YouTube on every English show except Tesla and MAB
+    (long-form + 2 Shorts each). **June 2026 expansion (operator
+    decision, quota-increase request submitted and pending):**
+    - Tesla + MAB dropped from 2 Shorts to 1 each.
+    - Fascinating Frontiers + Modern Investing enabled **Shorts-only**
+      (`publish_long_form: false`) on `@NerraNetwork`. Flip
+      `publish_long_form: true` per show once the increase is granted.
+    - Финансы Просто + Привет, Русский! enabled **full format** on
+      `@NerraRU` (`channel: ru`, its own 10k/day quota; both run even
+      days only ≈ 7,600 paper-units). Requires the
+      `YOUTUBE_REFRESH_TOKEN_RU` secret — uploads no-op with a logged
+      warning until it's set.
+    EN channel paper-math now projects 11,000/day — the SAME paper
+    level as the previous Tesla+MAB 2-Shorts config, which ran in
+    production without quota failures (the documented-cost model is
+    conservative vs. actual charging), so the daily preflight
+    `::error::` annotation is expected until the increase lands.
+    `estimate_network_daily_units` groups per channel since June 2026
+    (a RU show never counts against the EN budget). Drift guards:
+    `test_only_tst_and_mab_enable_youtube` pins the exact enabled set,
+    `test_youtube_expansion_quota_shape` pins the 1-Short /
+    Shorts-only / ru-channel shape so a partial revert fails CI.
 
 21. **`min_articles_skip` is tuned per-show, not per-network (May 2026)**
     — `engine/config.py` defaults `min_articles_skip` to `3` (a show

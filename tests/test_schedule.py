@@ -190,14 +190,23 @@ def test_daily_narrative_show_runs_daily_without_recap(slug):
 # YouTube quota cap (post-May-2026 schedule)
 # ---------------------------------------------------------------------------
 
-YOUTUBE_ENABLED_SHOWS = {"tesla", "models_agents_beginners"}
+# June 2026 four-show expansion (operator-approved): Tesla + MAB dropped
+# from 2 Shorts to 1 each to free quota; Fascinating Frontiers + Modern
+# Investing launched Shorts-only (publish_long_form: false) on
+# @NerraNetwork while the quota-increase request is pending; both Russian
+# shows launched full-format on @NerraRU, which has its own 10k/day quota.
+YOUTUBE_ENABLED_SHOWS = {
+    "tesla", "models_agents_beginners",
+    "fascinating_frontiers", "modern_investing",
+    "finansy_prosto", "privet_russian",
+}
 
 
 def test_only_tst_and_mab_enable_youtube():
-    """YouTube Data API quota is 10,000 units/day, 1,600 per upload.
-    The @NerraNetwork channel can only ship ~6 uploads/day; with 8
-    English shows × 2 videos that's 16 — far over quota. Until quota
-    is increased, only TST and MAB ship to YouTube."""
+    """Pin the exact YouTube-enabled show set (quota is finite; landmine
+    #20). Any change must be deliberate: rerun the quota math in
+    scripts/youtube_quota_preflight.py (per-channel since June 2026) and
+    update YOUTUBE_ENABLED_SHOWS together with the show YAMLs."""
     enabled: set[str] = set()
     for cfg_path in SHOWS_DIR.glob("*.yaml"):
         if cfg_path.name.startswith("_"):
@@ -333,3 +342,33 @@ class TestWeeklyRecapHelper:
         assert "numbers" in low
         assert "watch for next week" in low
         assert "open question" in low
+
+
+def test_youtube_expansion_quota_shape():
+    """June 2026 expansion shape: while the @NerraNetwork quota-increase
+    request is pending, Tesla + MAB are capped at 1 Short each and
+    FF + MIT are Shorts-only (no long-form). A partial revert (e.g.
+    bumping Tesla back to 2 Shorts without re-disabling something else)
+    overruns the EN channel — fail loudly here instead."""
+    import yaml as _yaml
+
+    def yt(slug):
+        cfg = _yaml.safe_load((SHOWS_DIR / f"{slug}.yaml").read_text(
+            encoding="utf-8")) or {}
+        return cfg.get("youtube") or {}
+
+    for slug in ("tesla", "models_agents_beginners"):
+        assert int(yt(slug).get("shorts_per_episode", 1)) == 1, (
+            f"{slug} must stay at 1 Short/episode until the quota "
+            f"increase is granted"
+        )
+    for slug in ("fascinating_frontiers", "modern_investing"):
+        assert yt(slug).get("publish_long_form") is False, (
+            f"{slug} launched Shorts-only; long-form flips on only after "
+            f"the quota increase"
+        )
+    for slug in ("finansy_prosto", "privet_russian"):
+        assert yt(slug).get("channel") == "ru", (
+            f"{slug} must upload to @NerraRU (its own quota), never the "
+            f"EN channel"
+        )

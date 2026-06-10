@@ -285,11 +285,16 @@ content_freshness:
 
 youtube:
   podcast_playlist_id: PLRHMnzNNXPYDC7-f8Dary-bTZyvwxR-dR
-  enabled: false                # Disabled May 2026 — moved to daily cadence,
-                                # YouTube quota only fits 2 daily shows
-                                # (10K/day ÷ 1.6K/upload ≈ 6 uploads;
-                                # network shipped 16+/day pre-disable). Only
-                                # TST and MAB stay on YouTube for now.
+  enabled: true                 # June 2026 four-show expansion: Shorts-only
+                                # launch while the quota-increase request is
+                                # pending (Tesla + MAB dropped to 1 Short each
+                                # to make room). Flip publish_long_form to
+                                # true once the increase is granted.
+  publish_long_form: false      # Shorts-only until quota increase lands.
+  # Smart Shorts segment selection (same as Tesla/MAB) — starts the
+  # clip at the most engaging transcript beat instead of the intro.
+  shorts_start_mode: smart
+  short_duration_seconds: 40
   channel: en
   category_id: 28               # Science & Tech
   default_language: en
