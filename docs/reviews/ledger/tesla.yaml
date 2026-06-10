@@ -1,0 +1,35 @@
+# Review ledger for tesla — see docs/reviews/ledger/README.md for schema.
+# Seeded from the June 2026 manual passes so the agent's first Tesla review
+# has predictions to score.
+reviews:
+  - date: 2026-06-10
+    pr: 576
+    doc: docs/tesla_review_2026_06_10.md
+    summary: Second June pass — chapters, closing rotation, expansion retry
+      with full digest, unified length target, live performance loop.
+    shipped:
+      - chapter positional constraints + once-per-title matching
+      - closing rotates 4 variants, omits price sentence when quote invalid
+      - expansion retry carries the full digest
+      - single unified length target (2200-2400 words, min 2000)
+      - performance loop live (OP3 -> strong_topics_last_30d)
+      - theme mining filters narrative echo; word-boundary program detection
+      - content-tracker junk/slur title filter + one-time scrub
+    deferred:
+      - digest-driven chapter titles (fuzzy-match Top-12 story headlines)
+    predictions:
+      - metric: episodes with trailing duplicate "Introduction" chapter
+        baseline: "10 of 10 (Ep496-505)"
+        expected: "0 of 10 on next review"
+        verdict: pending
+        evidence: null
+      - metric: median _tts.txt words, last 10 eps
+        baseline: "~15-35% under the old 1600 target"
+        expected: ">= 2000 words consistently"
+        verdict: pending
+        evidence: null
+
+do_not_retry:
+  - idea: phonetic respellings or programmatic speech-tag injection
+    evidence: 100% regression rate on custom voice kdif6sqjcyiq (May 2026,
+      landmine 17); only revisit with 3-context A/B listen evidence.
