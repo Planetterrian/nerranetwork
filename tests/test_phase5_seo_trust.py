@@ -141,3 +141,36 @@ class TestSitemapSpecialPages:
     def test_404_not_listed(self):
         src = self._extras_source()
         assert '"404.html"' not in src
+
+
+class TestGa4EmptyEnvFallback:
+    """June 2026: CI passes GA4_MEASUREMENT_ID from a secret; an UNSET
+    secret arrives as an empty-but-present env var, which must NOT
+    defeat the committed in-repo GA4 default (it silently stripped
+    gtag from every CI-regenerated page)."""
+
+    def test_empty_env_falls_back_to_default(self, monkeypatch):
+        import importlib
+
+        monkeypatch.setenv("GA4_MEASUREMENT_ID", "")
+        import generate_html
+        importlib.reload(generate_html)
+        try:
+            assert generate_html.MARKETING_CONFIG["ga4_measurement_id"] == \
+                generate_html._GA4_DEFAULT
+        finally:
+            monkeypatch.delenv("GA4_MEASUREMENT_ID", raising=False)
+            importlib.reload(generate_html)
+
+    def test_set_env_overrides_default(self, monkeypatch):
+        import importlib
+
+        monkeypatch.setenv("GA4_MEASUREMENT_ID", "G-OVERRIDE123")
+        import generate_html
+        importlib.reload(generate_html)
+        try:
+            assert generate_html.MARKETING_CONFIG["ga4_measurement_id"] == \
+                "G-OVERRIDE123"
+        finally:
+            monkeypatch.delenv("GA4_MEASUREMENT_ID", raising=False)
+            importlib.reload(generate_html)

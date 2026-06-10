@@ -123,7 +123,15 @@ def _read_show_image_provider(slug: str) -> str:
 _GA4_DEFAULT = "G-6PWJCVQQ7B"  # Nerra Network GA4 property (533581233)
 
 MARKETING_CONFIG = {
-    "ga4_measurement_id": os.environ.get("GA4_MEASUREMENT_ID", _GA4_DEFAULT).strip(),
+    # NOTE: `or _GA4_DEFAULT`, not a .get() default — CI passes
+    # `GA4_MEASUREMENT_ID: ${{ secrets.GA4_MEASUREMENT_ID }}`, and an UNSET
+    # secret arrives as an empty-but-present env var, which defeats a
+    # .get() default. That stripped gtag from every CI-regenerated page
+    # (homepage/blog indexes had no GA on main while nightly-regenerated
+    # tesla.html, built without the env var, kept it) — caught June 2026.
+    "ga4_measurement_id": (
+        os.environ.get("GA4_MEASUREMENT_ID") or _GA4_DEFAULT
+    ).strip(),
     "google_ads_id": os.environ.get("GOOGLE_ADS_ID", "").strip(),
     "google_ads_signup_label": os.environ.get("GOOGLE_ADS_SIGNUP_LABEL", "").strip(),
     "plausible_domain": os.environ.get("PLAUSIBLE_DOMAIN", "").strip(),
