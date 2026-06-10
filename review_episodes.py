@@ -432,6 +432,22 @@ def check_digest_length(ep: EpisodeReview, info: dict) -> None:
         ))
 
 
+def _config_min_words(show_slug: str) -> int:
+    """The show YAML's enforced word floor (llm.min_podcast_words), or 0.
+
+    June 2026: the registry's hardcoded ``min_tts_words`` desynced from
+    the YAMLs every time a quality pass retargeted a show — the audit
+    was flagging against stale numbers. The YAML is the single source
+    of truth for length; the registry value is only a fallback.
+    """
+    try:
+        from engine.config import load_config
+        cfg = load_config(PROJECT_ROOT / "shows" / f"{show_slug}.yaml")
+        return int(getattr(cfg.llm, "min_podcast_words", 0) or 0)
+    except Exception:
+        return 0
+
+
 def check_tts_script(ep: EpisodeReview, info: dict) -> None:
     """Check podcast script quality."""
     if not ep.tts_text:
@@ -439,7 +455,7 @@ def check_tts_script(ep: EpisodeReview, info: dict) -> None:
         return
 
     words = len(ep.tts_text.split())
-    min_words = info["min_tts_words"]
+    min_words = _config_min_words(ep.show_slug) or info["min_tts_words"]
 
     if words < min_words * 0.5:
         ep.issues.append(Issue(

@@ -214,7 +214,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0
+          # Shallow clone (June 2026): nothing in the pipeline reads git
+          # history, and the repo carries 2.2 GB of legacy MP3 history
+          # (landmine #1) — a full clone cost minutes + GBs on every one
+          # of the ~13 daily jobs. The push step's `git pull --rebase`
+          # works fine from a depth-1 clone (it fetches what it needs).
+          fetch-depth: 1
 
       - uses: ./.github/actions/setup-python
         with:
@@ -222,6 +227,16 @@ jobs:
           requirements-file: 'requirements.txt'
           system-packages: 'ffmpeg'
           skip-checkout: 'true'
+
+      - name: Cache Whisper transcription model
+        # faster-whisper downloads ~150 MB from Hugging Face on every
+        # episode (unauthenticated, rate-limited, occasionally flaky —
+        # an HF hiccup degrades transcripts → captions → Shorts).
+        # The model is pinned ("base"), so a static cache key is safe.
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: whisper-faster-base-v1
 
       - name: Install show-specific Python requirements
         run: |
@@ -242,27 +257,10 @@ jobs:
             tests/test_episode_validity.py tests/test_pipeline_safety.py \
             tests/test_phase2_growth.py tests/test_phase3_memory.py \
             tests/test_phase4_repositioning.py tests/test_social_distribution.py \
+            tests/test_chapters.py tests/test_tesla_quality_pass.py \
+            tests/test_four_show_quality_pass.py \
+            tests/test_russian_shows_quality_pass.py \
             -q --tb=short
-
-      - name: Create .env
-        run: |
-          cat > .env <<'ENVEOF'
-          GROK_API_KEY=${{ secrets.GROK_API_KEY }}
-          ELEVENLABS_API_KEY=${{ secrets.ELEVENLABS_API_KEY }}
-          X_CONSUMER_KEY=${{ secrets.X_CONSUMER_KEY }}
-          X_CONSUMER_SECRET=${{ secrets.X_CONSUMER_SECRET }}
-          X_ACCESS_TOKEN=${{ secrets.X_ACCESS_TOKEN }}
-          X_ACCESS_TOKEN_SECRET=${{ secrets.X_ACCESS_TOKEN_SECRET }}
-          X_BEARER_TOKEN=${{ secrets.X_BEARER_TOKEN }}
-          PLANETTERRIAN_X_CONSUMER_KEY=${{ secrets.PLANETTERRIAN_X_CONSUMER_KEY }}
-          PLANETTERRIAN_X_CONSUMER_SECRET=${{ secrets.PLANETTERRIAN_X_CONSUMER_SECRET }}
-          PLANETTERRIAN_X_ACCESS_TOKEN=${{ secrets.PLANETTERRIAN_X_ACCESS_TOKEN }}
-          PLANETTERRIAN_X_ACCESS_TOKEN_SECRET=${{ secrets.PLANETTERRIAN_X_ACCESS_TOKEN_SECRET }}
-          PLANETTERRIAN_X_BEARER_TOKEN=${{ secrets.PLANETTERRIAN_X_BEARER_TOKEN }}
-          BUTTONDOWN_API_KEY=${{ secrets.BUTTONDOWN_API_KEY }}
-          ENVEOF
-          # Strip leading whitespace from heredoc lines (YAML indentation artifact)
-          sed -i 's/^[[:space:]]*//' .env
 
       - name: Validate config before run
         run: |
@@ -325,6 +323,23 @@ jobs:
           exit $EXIT_CODE
         timeout-minutes: 45
         env:
+          # June 2026: secrets are passed directly as env vars instead of
+          # being written to a .env file via a heredoc + sed strip — same
+          # effect (load_dotenv never overrides existing env), no secrets
+          # on disk, no indentation-sensitive shell hack.
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          X_CONSUMER_KEY: ${{ secrets.X_CONSUMER_KEY }}
+          X_CONSUMER_SECRET: ${{ secrets.X_CONSUMER_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+          PLANETTERRIAN_X_CONSUMER_KEY: ${{ secrets.PLANETTERRIAN_X_CONSUMER_KEY }}
+          PLANETTERRIAN_X_CONSUMER_SECRET: ${{ secrets.PLANETTERRIAN_X_CONSUMER_SECRET }}
+          PLANETTERRIAN_X_ACCESS_TOKEN: ${{ secrets.PLANETTERRIAN_X_ACCESS_TOKEN }}
+          PLANETTERRIAN_X_ACCESS_TOKEN_SECRET: ${{ secrets.PLANETTERRIAN_X_ACCESS_TOKEN_SECRET }}
+          PLANETTERRIAN_X_BEARER_TOKEN: ${{ secrets.PLANETTERRIAN_X_BEARER_TOKEN }}
+          BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
           R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
@@ -569,7 +584,9 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: main
-          fetch-depth: 0
+          # Shallow — finalize only regenerates pages from working-tree
+          # state and pushes one commit.
+          fetch-depth: 1
 
       - uses: ./.github/actions/setup-python
         with:
@@ -586,6 +603,13 @@ jobs:
           GOOGLE_ADS_ID: ${{ secrets.GOOGLE_ADS_ID }}
           GOOGLE_ADS_SIGNUP_LABEL: ${{ secrets.GOOGLE_ADS_SIGNUP_LABEL }}
           PLAUSIBLE_DOMAIN: ${{ secrets.PLAUSIBLE_DOMAIN }}
+          # R2 read creds for the gallery-manifest rebuild (clean no-op
+          # when unset — the builder writes an empty manifest).
+          R2_GALLERY_BUCKET: ${{ secrets.R2_GALLERY_BUCKET }}
+          R2_GALLERY_PUBLIC_BASE_URL: ${{ secrets.R2_GALLERY_PUBLIC_BASE_URL }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
         run: |
           # Network homepage (latest episodes + blog posts from all shows)
           # Network-wide blog index (aggregates all shows' posts)
@@ -596,6 +620,12 @@ jobs:
           # Rebuild the global search index so new episodes are immediately searchable.
           # This (combined with the backfill in nightly) makes search reliable and up-to-date.
           python scripts/build_search_index.py --out site/data/search-index.json
+
+          # Gallery manifest (June 2026): previously a standalone workflow
+          # spun up a fresh runner after EVERY Run Podcast Show completion
+          # (~13/day) just to run this one script. Building it here reuses
+          # this runner; the nightly job remains the safety rebuild.
+          python scripts/build_gallery_manifest.py --out site/data/gallery-manifest.json
 
       - name: Commit and push shared pages
         run: |
@@ -609,6 +639,7 @@ jobs:
           git add api/*.json || true
           git add blog*.rss || true
           git add site/data/search-index.json || true
+          git add site/data/gallery-manifest.json || true
 
           if git diff --cached --quiet; then
             echo "Shared pages are already up to date."

@@ -18,11 +18,13 @@ name: Build Gallery Manifest + Search Index
 # Note: nightly-maintenance.yml also runs the gallery + search builders as
 # part of its artifact refresh (for immediate post-show consistency).
 
+# June 2026 consolidation: the `workflow_run` trigger (a fresh runner after
+# EVERY Run Podcast Show completion, ~13/day) was removed — the run-show
+# finalize job now rebuilds the gallery manifest on the runner it already
+# has, and nightly-maintenance remains the daily safety rebuild. This
+# workflow stays for manual runs and builder-code changes.
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Run Podcast Show"]
-    types: [completed]
   push:
     branches: [main]
     paths:
@@ -44,9 +46,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # Skip workflow_run firings where the upstream Run Podcast Show failed.
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v6
