@@ -128,6 +128,27 @@ nerranetwork/
 - **MIT** (Modern Investing Techniques) runs via `run_show.py` +
   `shows/modern_investing.yaml`; daily investing podcast focused on Canadian
   and US markets. Weekdays only. X posting disabled.
+  **June 2026 quality pass** (drift guards: `tests/test_mit_quality_pass.py`):
+  the recursive-learning loop had been DEAD on every episode —
+  `_analyze_strategy_patterns` was called but never defined, the NameError
+  was swallowed by pre_fetch's try/except, and all three learning blocks
+  shipped as "temporarily unavailable" (now implemented: FAVOR/AVOID sector
+  guidance). Two trades closed with NaN exit prices (yfinance returns NaN
+  floats that pass `is None`) had poisoned `cumulative_pnl` into NaN —
+  "Running Total: $nan" on air; all aggregations now route through
+  `_finite()` and `_close_trade` rejects non-finite prices. The summary
+  gained `cumulative_alpha_vs_nasdaq` (the headline metric previously read
+  from a key that never existed — actual record: +20.6% across 26
+  benchmarked trades, finally stated on air via the portfolio block).
+  Lesson cooldowns now ESCALATE with teach-count (flat 21d let
+  bid_ask_spread reteach 13×; every 3 repeats adds a full period, cap
+  180d). Trade extraction logs loudly on formatting drift vs quiet on
+  deliberate no-trade days. MIT opts into `podcast_expand_below_target`,
+  gets a hook-led X teaser linking the episode blog + performance page,
+  and the deep-dive queue carries a 6-entry evergreen Canadian bench
+  (operator schedules via `when: next`). Prompt edits (no-trade platitude
+  ban, Market Pulse macro frame) change output — A/B-listen per landmine
+  #17.
 
 **Tesla Shorts Time Recursive Memory System (May 2026+)**  
 TST received a full recursive improvement architecture (analogous to MIT):

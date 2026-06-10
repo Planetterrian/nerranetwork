@@ -4501,6 +4501,24 @@ def _build_teaser(config, episode_num: int, today_str: str, extra_context: dict)
             f"Episode {episode_num}: Science, longevity & health.\n"
             f"🎧 Read & listen: https://nerranetwork.com/planetterrian-summaries.html"
         )
+    elif slug == "modern_investing":
+        # June 2026 quality pass: MIT previously fell to the generic
+        # fallback — every daily post read identically except the
+        # episode number. Lead with the hook, link the episode blog
+        # post, and plug the live performance page (the show's most
+        # differentiating asset, previously invisible on X).
+        hook_text = (extra_context.get("hook") or "").strip()
+        if len(hook_text) > 180:
+            hook_text = hook_text[:179].rstrip() + "…"
+        hook_line = f"{hook_text}\n\n" if hook_text else ""
+        teaser = (
+            f"📈💰 Modern Investing Techniques Ep {episode_num}\n\n"
+            f"{hook_line}"
+            f"🎧 Listen + notes: "
+            f"https://nerranetwork.com/blog/modern_investing/ep{episode_num:03d}.html\n"
+            f"📊 Live portfolio vs NASDAQ: "
+            f"https://nerranetwork.com/modern-investing-performance.html"
+        )
     else:
         teaser = f"{config.name} Episode {episode_num} — {today_str}"
     return _append_youtube_line(teaser, extra_context)
