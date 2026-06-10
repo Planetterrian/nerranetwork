@@ -84,8 +84,24 @@ the operator's run-log review. Drift guards: `tests/test_workflow_efficiency.py`
 
 ## Future candidates (not done; revisit when they hurt)
 
-- **R2-migrate the legacy in-git MP3 history** (landmine #1) — would shrink
-  even shallow clones and is the real fix behind item 1.
+- **History rewrite to drop the 2.2 GB of legacy MP3 blobs** (landmine #1).
+  Follow-up measurement (June 10 2026): HEAD is already clean — zero episode
+  MP3s tracked, all enclosures serve from R2, and a shallow CI clone is
+  ~115 MB packed — so the rewrite buys GitHub-storage headroom and faster
+  *full* clones only, not faster CI. Playbook when scheduled:
+  1. Pick a quiet window and disable the 12 run-show crons + nightly/audit
+     (a concurrent matrix-job push during the force-push can resurrect the
+     old history).
+  2. Fresh mirror clone; `git filter-repo --path-glob 'digests/**/*.mp3'
+     --path-glob 'digests/*.mp3' --invert-paths` (NEVER touch
+     `assets/music/` — the pipeline mixes those at runtime).
+  3. Force-push; re-enable crons; everyone re-clones (or
+     `git fetch && git reset --hard origin/main` on clean clones).
+  4. Accept that commit SHAs referenced in docs/ and old PRs dangle;
+     GitHub Support can run a server-side gc to reclaim space sooner.
+  Not urgent: with MP3s out of HEAD, growth is text-only
+  (~50 MB/month), leaving years of headroom under the 10 GB limit.
+  Interim for humans: `git clone --filter=blob:none`.
 - **safe-commit-push recovery escape hatch** for nightly + the 8 other
   callers (landmine #23 notes only run-show has the recovery-PR path; the
   other callers' outputs are regenerable, so risk is low).
