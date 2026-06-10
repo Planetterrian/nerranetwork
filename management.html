@@ -195,6 +195,11 @@
   </section>
 
   <section class="mgmt-section">
+    <h2>Audience <span id="audience-status-pill" style="font-size:12px;font-weight:normal;color:#94a3b8;margin-left:8px;"></span></h2>
+    <div id="audience-section"></div>
+  </section>
+
+  <section class="mgmt-section">
     <h2>30-day cost per show</h2>
     <div id="cost-sparklines"></div>
   </section>
@@ -412,6 +417,57 @@
       "</svg>"
     );
   };
+
+  // -------- Audience (OP3 downloads + newsletter subscribers) --------
+  const audRoot = $("#audience-section");
+  const audience = data.audience || {};
+  const op3 = audience.op3 || {};
+  const bd = audience.newsletter || {};
+  const audPill = $("#audience-status-pill");
+  if (!op3.configured && !bd.configured) {
+    audPill.textContent = "(not configured — set OP3_API_TOKEN / BUTTONDOWN_API_KEY secrets)";
+  } else {
+    const bits = [];
+    if (op3.configured && !op3.error) {
+      bits.push((op3.network_downloads_30d || 0).toLocaleString() + " downloads · 30d");
+      bits.push((op3.network_downloads_7d || 0).toLocaleString() + " · 7d");
+    } else if (op3.error) {
+      bits.push("OP3 error");
+    }
+    if (bd.configured && bd.subscriber_count != null) {
+      bits.push(bd.subscriber_count.toLocaleString() + " newsletter subscribers");
+    }
+    if (op3.fetched_at) bits.push("fetched " + ageText(op3.fetched_at));
+    audPill.textContent = "· " + bits.join(" · ");
+
+    const perShow = op3.per_show || {};
+    Object.keys(perShow)
+      .sort((a, b) => (perShow[b].downloads_30d || 0) - (perShow[a].downloads_30d || 0))
+      .forEach((slug) => {
+        const v = perShow[slug] || {};
+        const row = h("div", { class: "sparkline-row" });
+        row.appendChild(h("div", { class: "label", text: slug }));
+        const bar = h("div", { style: "flex:1;height:8px;background:#1e293b;border-radius:4px;overflow:hidden;" });
+        const maxDl = Math.max.apply(null,
+          Object.values(perShow).map((p) => p.downloads_30d || 0)) || 1;
+        bar.appendChild(h("div", {
+          style: "height:100%;background:#6B47FF;width:" +
+            (100 * (v.downloads_30d || 0) / maxDl).toFixed(0) + "%;",
+        }));
+        row.appendChild(bar);
+        row.appendChild(h("div", { class: "value",
+          text: (v.downloads_30d || 0).toLocaleString() + " · 30d  (" +
+                (v.downloads_7d || 0).toLocaleString() + " · 7d)" }));
+        audRoot.appendChild(row);
+      });
+
+    (op3.top_episodes_7d || []).forEach((ep, i) => {
+      const row = h("div", { style: "font-size:12px;color:#94a3b8;padding:2px 0;" });
+      row.textContent = "#" + (i + 1) + " [" + ep.show_slug + "] " +
+        ep.title.slice(0, 90) + " — " + ep.downloads_7d + " · 7d";
+      audRoot.appendChild(row);
+    });
+  }
 
   const costSparks = $("#cost-sparklines");
   const costPerShow = (data.cost_rollup && data.cost_rollup.per_show) || {};

@@ -1522,11 +1522,80 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
         "pipeline_health": metrics,
         "rss_audit": rss,
         "mit_performance": aggregate_mit_performance(root),
+        "audience": build_audience_section(root),
         "content_lake": {
             "stats": _get_content_lake_stats_safe(),
             "compaction_note": "Run scripts/compact_lake.py or engine.content_lake.compact_lake() to prune old full text.",
         },
     }
+
+
+def build_audience_section(root: Path) -> Dict[str, Any]:
+    """Summarise OP3 download + Buttondown subscriber stats (June 2026).
+
+    Reads ``api/op3_stats.json`` and ``api/buttondown_stats.json`` written
+    by the nightly audience-stats step. Both files are optional — when
+    absent (secrets not configured yet) the section reports
+    ``configured: false`` so the dashboard card can render a setup hint
+    instead of zeros.
+    """
+    section: Dict[str, Any] = {
+        "op3": {"configured": False},
+        "newsletter": {"configured": False},
+    }
+
+    op3_path = root / "api" / "op3_stats.json"
+    if op3_path.exists():
+        try:
+            data = json.loads(op3_path.read_text(encoding="utf-8"))
+            shows = data.get("shows") or {}
+            per_show = {
+                slug: {
+                    "downloads_7d": s.get("downloads_7d") or 0,
+                    "downloads_30d": s.get("downloads_30d") or 0,
+                    "weekly_avg": s.get("weekly_avg") or 0,
+                }
+                for slug, s in shows.items()
+            }
+            top_episodes = sorted(
+                (
+                    {
+                        "show_slug": slug,
+                        "title": ep.get("title") or "",
+                        "downloads_7d": ep.get("downloads_7d") or 0,
+                    }
+                    for slug, s in shows.items()
+                    for ep in (s.get("episodes") or [])
+                ),
+                key=lambda e: e["downloads_7d"],
+                reverse=True,
+            )[:5]
+            section["op3"] = {
+                "configured": True,
+                "fetched_at": data.get("fetched_at"),
+                "network_downloads_30d": sum(
+                    v["downloads_30d"] for v in per_show.values()),
+                "network_downloads_7d": sum(
+                    v["downloads_7d"] for v in per_show.values()),
+                "per_show": per_show,
+                "top_episodes_7d": top_episodes,
+            }
+        except Exception as exc:  # noqa: BLE001 — never break the dashboard
+            section["op3"] = {"configured": True, "error": str(exc)}
+
+    bd_path = root / "api" / "buttondown_stats.json"
+    if bd_path.exists():
+        try:
+            data = json.loads(bd_path.read_text(encoding="utf-8"))
+            section["newsletter"] = {
+                "configured": True,
+                "fetched_at": data.get("fetched_at"),
+                "subscriber_count": data.get("subscriber_count"),
+            }
+        except Exception as exc:  # noqa: BLE001
+            section["newsletter"] = {"configured": True, "error": str(exc)}
+
+    return section
 
 
 def _get_content_lake_stats_safe() -> dict:

@@ -234,6 +234,30 @@
         {% endif %}
     </section>
 
+    {% if popular_episodes %}
+    <!-- Most Played This Week (OP3 download data, refreshed nightly) -->
+    <section id="popular" class="nn-section">
+        <div class="container">
+            <div class="nn-section-header">
+                <div class="section-label">Listener Favorites</div>
+                <h2>Most Played This Week</h2>
+                <p>The episodes our listeners played most over the last seven days.</p>
+            </div>
+        </div>
+        <div class="latest-scroll-row">
+            {% for ep in popular_episodes %}
+            <div class="latest-scroll-card glass-card">
+                <div class="episode-card-show" style="background:{{ ep.brand_color }};">#{{ ep.rank }} · {{ ep.show_name }}</div>
+                <div class="episode-card-title">{{ ep.title }}</div>
+                {% if ep.audio_url %}
+                <audio controls preload="none" src="{{ ep.audio_url }}" aria-label="{{ ep.show_name }} episode audio" style="width:100%;height:36px;border-radius:8px;margin-top:var(--sp-2);"></audio>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
     <!-- Latest from the Blog -->
     {% if latest_blog_posts %}
     <section class="nn-section">
@@ -440,6 +464,9 @@
                 <div class="section-label">Weekly digest</div>
                 <h2>Get the best of the network in your inbox</h2>
                 <p>One email per week. Top episodes from every show you follow. Unsubscribe anytime.</p>
+                {% if newsletter_subscriber_count %}
+                <p style="font-family:var(--font-ui);font-size:0.85rem;color:var(--nn-text-muted);margin-top:var(--sp-2);">Join {{ "{:,}".format(newsletter_subscriber_count) }}+ readers already subscribed.</p>
+                {% endif %}
             </div>
             <form action="https://buttondown.com/api/emails/embed-subscribe/patricknovak1" method="post" target="popupwindow"
                   class="nn-subscribe-form" style="max-width:none;"
