@@ -119,3 +119,25 @@ class TestSitemapPerFileLastmod:
         # the function exists at module scope.
         from generate_html import generate_sitemap
         assert callable(generate_sitemap)
+
+
+class TestSitemapSpecialPages:
+    """June 2026 growth pass: player.html + the MIT performance page are
+    indexable destinations and must be in the sitemap; 404.html is an
+    error page and must NOT be (Search Console flags it)."""
+
+    def _extras_source(self):
+        import inspect
+
+        from generate_html import generate_sitemap
+
+        return inspect.getsource(generate_sitemap)
+
+    def test_player_and_mit_performance_listed(self):
+        src = self._extras_source()
+        assert '"player.html"' in src
+        assert '"modern-investing-performance.html"' in src
+
+    def test_404_not_listed(self):
+        src = self._extras_source()
+        assert '"404.html"' not in src

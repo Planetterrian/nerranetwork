@@ -2546,12 +2546,13 @@ def generate_sitemap(*, dry_run=False):
         if (ROOT / legal).exists():
             urls.append((f"{base}/{legal}", "0.4", _file_lastmod(ROOT / legal)))
 
-    # Special pages
+    # Special pages. 404.html is deliberately NOT listed — error pages
+    # don't belong in sitemaps (Search Console flags them).
     for extra in ["modern-investing-resources.html", "start-here.html",
                   "about.html", "how-to-listen.html", "faq.html",
                   "press.html", "contact.html", "editorial.html",
-                  "gallery.html",
-                  "404.html"]:
+                  "gallery.html", "player.html",
+                  "modern-investing-performance.html"]:
         if (ROOT / extra).exists():
             urls.append((f"{base}/{extra}", "0.5", _file_lastmod(ROOT / extra)))
 

@@ -173,9 +173,21 @@ When any GA4/Ads ID is set:
 - Newsletter form submits and Apple/Spotify clicks fire conversion events
 - All outbound subscription links carry UTM parameters for source attribution
 
+**Plausible one-step enable:** create the site at plausible.io, then set the
+repo secret `PLAUSIBLE_DOMAIN=nerranetwork.com` — the next site regeneration
+(daily run-show finalize or nightly maintenance, both pass the secret) emits
+the Plausible script on every page. Cookie-free, so no consent banner is
+required for Plausible alone.
+
 Podcast download analytics (OP3) are enabled by default for all shows in
 `shows/_defaults.yaml` — listener stats appear at https://op3.dev once
-deployed.
+deployed. The nightly maintenance job additionally pulls the numbers back
+into the repo via `scripts/fetch_op3_stats.py` (set the `OP3_API_TOKEN`
+secret, free at op3.dev/api/keys): `api/op3_stats.json` feeds the
+management dashboard's Audience card, and `site/data/popular_episodes.json`
+feeds the homepage "Most Played This Week" rail. The newsletter subscriber
+count flows the same way via `scripts/fetch_buttondown_stats.py`
+(`BUTTONDOWN_API_KEY`, already set for sends).
 
 ## Documentation
 
