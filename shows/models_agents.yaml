@@ -175,6 +175,11 @@ llm:
   # grok-4.3 reasoning consumed the budget.
   max_tokens: 5000
   podcast_max_tokens: 10000
+  # June 2026 network quality pass: 8 of 8 recent episodes shipped below
+  # the (previously implicit) 1500-word target. Target made explicit and
+  # the expand-retry now fires on ANY below-target script.
+  min_podcast_words: 1500
+  podcast_expand_below_target: true
 
 tts:
   # Inherits provider=grok, voice_id=sal, language_code=en, max_chars=10000
@@ -201,7 +206,9 @@ audio:
 publishing:
   rss_file: models_agents_podcast.rss
   rss_title: "Models & Agents"
-  rss_description: "Daily AI briefing covering new model releases, agent frameworks, and the latest developments in AI. Not the models and agents you are thinking about! Stay on top of the most exciting developments of our generation."
+  # June 2026: value-prop description for Apple/Spotify listing pages
+  # (the old one led with a confusing negation).
+  rss_description: "Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners."
   rss_link: https://nerranetwork.com/models-agents.html
   rss_author: Patrick
   rss_email: patrick@planetterrian.com

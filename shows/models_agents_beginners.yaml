@@ -154,6 +154,9 @@ llm:
   max_tokens: 5000
   podcast_max_tokens: 6000
   min_podcast_words: 900
+  # June 2026 network quality pass: chronic below-target episodes —
+  # the expand-retry now fires on ANY below-target script.
+  podcast_expand_below_target: true
 
 tts:
   # Inherits provider=grok, voice_id=sal, language_code=en, max_chars=10000
@@ -180,7 +183,8 @@ audio:
 publishing:
   rss_file: models_agents_beginners_podcast.rss
   rss_title: "Models & Agents for Beginners"
-  rss_description: "A daily AI podcast for beginners and teens. Learn about AI models, agents, and the tools shaping our future — explained simply, with hands-on experiments you can try today. Every expert started as a beginner."
+  # June 2026: add the sister-show contrast so listeners self-select.
+  rss_description: "AI for beginners and teens — daily episodes that explain how models and agents actually work, with free hands-on experiments you can try in minutes, no coding needed. Our sister show Models & Agents covers the expert builder view; this is the same AI universe explained for everyone. Every expert started exactly here."
   rss_link: https://nerranetwork.com/models-agents-beginners.html
   rss_author: Patrick
   rss_email: patrick@planetterrian.com

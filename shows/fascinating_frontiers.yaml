@@ -181,6 +181,10 @@ llm:
   # Podcast target bumped 1050 → 1350 to match the new "12-14 stories
   # × 5-7 sentences" structure (was "9-11 × 4-6").
   min_podcast_words: 1350
+  # June 2026 network quality pass: 8 of 8 recent episodes below target
+  # (avg listener_value 3.6, lowest of the memory trio). Expand-retry
+  # now fires on ANY below-target script.
+  podcast_expand_below_target: true
   podcast_chain: true
 
 tts:
@@ -218,7 +222,8 @@ audio:
 publishing:
   rss_file: fascinating_frontiers_podcast.rss
   rss_title: Fascinating Frontiers
-  rss_description: "Daily space and astronomy news digest. Bringing the wonders of space exploration and astronomy discoveries to everyone."
+  # June 2026: value-prop description for Apple/Spotify listing pages.
+  rss_description: "Daily space and astronomy news: NASA and SpaceX missions, ESA operations, exoplanet and James Webb discoveries, and the engineering behind humanity's push into the cosmos — with ongoing story tracking across Starship, Artemis, and deep-space science. For space enthusiasts, engineers, and the curious."
   rss_summary: "Daily space and astronomy news. Curiosity, exploration, scientific accuracy, and inspiration."
   rss_link: https://nerranetwork.com/fascinating_frontiers.html
   rss_author: Patrick

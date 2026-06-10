@@ -518,6 +518,56 @@ site-wide within a day without committing hundreds of HTML files):
   like the gallery. Live Buttondown subscriber count / referral need a runtime
   API dependency and were left out. Drift guards: `tests/test_phase2_growth.py`.
 
+### Network-wide show quality pass (June 2026)
+
+After the Tesla (#573) and Modern Investing (#574) flagship passes, the
+same review ran across the other ten shows. Drift guards:
+`tests/test_network_quality_pass.py`.
+
+- **`engine/show_memory.py` inherited both Tesla memory bugs** (it was
+  generalized from `tesla_memory` *before* the fixes). Theme mining read
+  the narrative TEMPLATE every episode — "open questions" hit count 96 on
+  Models & Agents, Fascinating Frontiers, AND Planetterrian — now
+  digest-only with the shared `_THEME_STOPWORDS`; the three live histories
+  were scrubbed. Narrative trackers were seeded May 29 with no program
+  ever updated; `auto_update_narrative_from_digest` (ported from Tesla)
+  now advances per-program "last covered on air" freshness each episode
+  via `memory_post_generate`, and the status block gained the
+  make-continuity-audible callback wording.
+- **`podcast_expand_below_target: true`** added to the eight chronically-
+  short shows (M&A, FF, PT, MAB, Env Intel, Финансы Просто, Unintended
+  Consequences, First Principles — all were ≥50% below target, several
+  100%). Models & Agents also got an explicit `min_podcast_words: 1500`
+  (was relying on the implicit default).
+- **Hook-led X teasers network-wide**: Omni View / FF / Planetterrian's
+  hardcoded teasers and the generic fallback (used by Unintended
+  Consequences) now lead with the episode hook + link the episode blog
+  post, matching Tesla/MIT. Models & Agents/MAB/Env Intel/Russian shows
+  don't post to X (unchanged).
+- **Boilerplate-tic bans** (prompt edits — A/B-listen per landmine #17):
+  M&A "This development sits within the ongoing…"; FF "you know what's
+  fascinating / blew my mind" deep-dive openers; PT "this development
+  fits the tracked program on X" (ran 6×/episode); Omni View's
+  every-story "the strongest case for X / for Y" template (now rotates
+  three framings, "strongest case" ≤1×/episode); UC "That wraps today's
+  case" closer. Plus: MAB requires ≥2 concrete "try this" experiments;
+  Env Intel Compliance Brief required even on thin-news days; Финансы
+  Просто requires 3-4 practical tips (was 2 → chronic shortfall).
+- **RSS channel descriptions rewritten** as value props for the listing
+  pages: M&A, FF, MAB, Omni View (Steel Man), Env Intel (odd-weekday
+  cadence + Compliance Brief), Unintended Consequences. PT and the two
+  Russian shows already had strong descriptions (kept).
+- **Topic-queue restock** (the narrative shows' critical operational
+  risk): Unintended Consequences +14 → 38 unproduced (~7.6 wk runway, was
+  ~4.8); First Principles +12 → 27 unproduced (~3.9 wk, was ~1.3 and
+  about to dry up), preserving the concrete/opportunity alternation.
+- **Финансы Просто YouTube category** fixed 25 (News) → 27 (Education).
+- **Operator items (not code):** localize the Russian shows' spoken AI
+  disclosure (still English on the Olya voice — A/B per #17); decide
+  First Principles distribution-on after the queue/length fixes settle
+  (review recommends waiting to ~Ep15); confirm X handles for the
+  X-enabled shows so the follow CTA can be set.
+
 ### Recursive narrative memory generalized (Phase 3, May 2026)
 
 The content moat: Tesla's narrative-memory pattern generalized so other shows
