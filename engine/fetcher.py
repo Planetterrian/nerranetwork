@@ -572,6 +572,10 @@ def fetch_x_posts(
             f"- Up to {max_posts} posts maximum\n"
             f"- Only posts from the last 24 hours\n"
             f"- Skip retweets — only original posts and quote tweets\n"
+            f"- SUBSTANTIVE posts only: skip posts that are just emoji, a "
+            f"single reaction word, a bare link/photo/video with no text, "
+            f"or insults — a post must carry a concrete fact, claim, "
+            f"announcement, or observation worth quoting in a news digest\n"
             f"- If no recent posts, return exactly: NO_RECENT_POSTS\n"
             f"- No commentary — just the structured list\n"
         )

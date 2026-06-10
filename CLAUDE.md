@@ -207,10 +207,55 @@ TST received a full recursive improvement architecture (analogous to MIT):
   (`_is_dedupe_worthy_title`); blog posts link the Story Tracker page.
   Length/brand prompt changes alter shipped audio — A/B-listen per
   landmine #17.
+- **June 10 2026 four-show pass** (MIT, M&A, MAB, FF; full review:
+  [`docs/four_show_review_2026_06_10.md`](docs/four_show_review_2026_06_10.md);
+  drift guards: `tests/test_four_show_quality_pass.py`): every show's
+  Closing chapter pattern now matches every closing-pool variant (MAB had
+  shipped 50% of episodes with NO Closing chapter; M&A's bare `agent`
+  pattern opened a spurious chapter ~30s into every episode) with
+  `where: start|end` positional anchors; ONE unified length target per
+  prompt (MIT 2,000-2,200w/floor 1800; M&A 1,600-2,200w; FF
+  1,900-2,200w/floor 1700; MAB floor 1200) replacing contradictory
+  anchors; `engine/show_memory.py` gained all four Tesla memory fixes
+  (narrative-prose echo filter, per-episode idempotency, URL stripping,
+  word-boundary program detection) + `update_performance_from_op3`; the
+  nightly performance step generalized to
+  `scripts/update_performance_trackers.py` (Tesla + M&A + FF + PT); the
+  three memory shows' theme histories were re-scrubbed; MAB's "So
+  imagine" opener tic (49 of 60 episodes — the prompt's own example was
+  the template) now requires rotating opener shapes. Length/opener
+  prompt edits change output — A/B-listen per landmine #17.
 - **PR** (Привет, Русский!) runs via `run_show.py` +
   `shows/privet_russian.yaml`; bilingual Russian language learning podcast
   for English speakers. Even days only. Uses **ElevenLabs TTS**
   (`eleven_flash_v2_5` with `language_code: ru`). X posting disabled.
+- **June 10 2026 Planetterrian pass** (review:
+  [`docs/planetterrian_review_2026_06_10.md`](docs/planetterrian_review_2026_06_10.md);
+  drift guards: `tests/test_planetterrian_quality_pass.py`): NEW
+  network-wide missing-closing guard in `engine/pipeline.py` (PT Ep081/084
+  shipped without the supplied closing block — Ep084 ended mid-teaser; the
+  pipeline now appends the resolved `closing_block` verbatim when absent,
+  before chapter parsing); ONE unified length target (1,800–2,100 words ≈
+  12–13 min, floor 1250→1600 — the prompt had demanded three conflicting
+  lengths and all 15 recent episodes ran under target, avg ~970); chapter
+  `where` anchors + "see you next" closing coverage. Watch the first week
+  for `podcast_script_too_thin` skip markers; fall back to floor 1400 if
+  PT skips more than once. A/B-listen per landmine #17.
+- **June 10 2026 Russian-shows pass** (FP + PR; review:
+  [`docs/russian_shows_review_2026_06_10.md`](docs/russian_shows_review_2026_06_10.md);
+  drift guards: `tests/test_russian_shows_quality_pass.py`): the spoken +
+  RSS AI disclosures are now LOCALIZED (`_AI_DISCLOSURE_RU` /
+  `_AI_DISCLOSURE_RSS_RU` in `run_show.py`, gated on `_RUSSIAN_SHOWS`) —
+  closing the "English disclosure on the Olya voice" wart from two prior
+  reviews; Russian feeds title episodes "Выпуск N: …"; closing-pool
+  coverage + `where` anchors fixed (FP's "Вот и всё" variant matched no
+  pattern; PR had ONE closing ever — now 3 rotating); floors FP 900→1000,
+  PR 650→800 (PR keeps `min_podcast_word_floor: 550`); NEW
+  `engine/vocab_tracker.py` + `shows/hooks/privet_russian.py` give PR
+  vocabulary memory — spaced-repetition review callbacks + a
+  no-reteach/theme-rotation list via `{vocab_review_section}` (Animals had
+  run 3 consecutive episodes; words never reappeared). Audio-affecting
+  changes → A/B-listen per landmine #17.
 - **FPD** (First Principles Daily) runs via `run_show.py` +
   `shows/first_principles.yaml`; a **daily narrative** show
   (`narrative_mode: true`, topic-queue-driven like UC — no news fetch).
@@ -543,6 +588,26 @@ site-wide within a day without committing hundreds of HTML files):
   like the gallery. Live Buttondown subscriber count / referral need a runtime
   API dependency and were left out. Drift guards: `tests/test_phase2_growth.py`.
 
+### Grok prompt + voice review (June 10, 2026)
+
+All 49 show prompts + in-code prompts (outline/retry, weekly synthesizer,
+episode reviewer, X fetch) reviewed against prompt-engineering practice —
+canonical writeup: [`docs/prompt_review_2026_06_10.md`](docs/prompt_review_2026_06_10.md);
+drift guards: `tests/test_prompt_quality_pass.py`. Voice/TTS config verified
+consistent and deliberately untouched (landmine #17). Shipped:
+`engine/utils.fix_phonetic_garbles` repair layer on every digest + script
+("nassa" had shipped verbatim in a published transcript — bans alone don't
+stop a known finite failure set); the X-post fetch prompt now requires
+SUBSTANTIVE posts (emoji spam + a slur one-liner had flowed into prompts);
+stale "ElevenLabs engine" claims removed from the 9 remaining podcast
+prompts; MIT's residual "at least 2500 words" contradiction fixed; Tesla
+digest selection rules unified (count-tier table vs judgment rule) and the
+template's 🎙️ emoji removed; reviewer QUALITY_SCORE got calibration
+buckets; the weekly synthesizer must ground cross-domain threads in actual
+coverage; Tesla's system prompt now explicitly forbids filling gaps from
+training-data knowledge. Deferred behind A/B (in the doc): few-shot
+exemplars for prompts lacking one, converting ban-lists to rotation menus.
+
 ### Network-wide show quality pass (June 2026)
 
 After the Tesla (#573) and Modern Investing (#574) flagship passes, the
@@ -592,6 +657,22 @@ same review ran across the other ten shows. Drift guards:
   First Principles distribution-on after the queue/length fixes settle
   (review recommends waiting to ~Ep15); confirm X handles for the
   X-enabled shows so the follow CTA can be set.
+
+### Website review (June 10, 2026)
+
+Full public-site review — canonical writeup:
+[`docs/website_review_2026_06_10.md`](docs/website_review_2026_06_10.md);
+drift guards: `tests/test_website_quality_pass.py`. Implemented (source-only,
+propagates via nightly regen): absolute `og:image` default in
+`templates/base.html.j2` (the relative default broke share previews on every
+page without an explicit `og_image`); `noindex` on the 404 template; footer
+Gallery link (287 CC-licensed images were reachable from nowhere);
+`MIN_SOCIAL_PROOF_SUBSCRIBERS` 100→50. Deferred with rationale in the doc:
+blog-index pagination, hero inline-CSS extraction, homepage gallery rail,
+Russian brand-page translations, inline-style cleanup, contrast audit.
+Rejected after verification: nav-cover empty alts (correct WCAG — visible
+text adjacent), search loading state (already exists), blog next-episode nav
+(already exists).
 
 ### Scheduled Show Review Agent (June 2026)
 
@@ -804,8 +885,23 @@ decision); everything else has a live status card.
 
 ### Active Issues
 
-1. **2.2 GB of MP3s in git** — repo will hit GitHub's 10 GB limit within ~6
-   months at current growth. Cloudflare R2 migration recommended.
+1. **2.2 GB of MP3s in git HISTORY (HEAD is clean)** — measured June 10
+   2026: zero episode MP3s are tracked at HEAD (guards in `.gitignore` +
+   the commit step's `git reset -- '*.mp3'`; only the 43 MB of
+   `assets/music` themes + two voice-reference WAVs remain, which the
+   pipeline needs). All enclosure URLs serve from R2. CI clones are
+   shallow since the June 2026 workflow pass (~115 MB packed vs ~2.5 GB
+   full), so the day-to-day clone cost is FIXED and growth is now
+   text-only (~50 MB/month → years of headroom under GitHub's 10 GB
+   limit). The history weight itself can only be removed by a
+   `git filter-repo` rewrite + force-push of main — DESTRUCTIVE:
+   requires a paused-cron window (12 daily workflows push to main and
+   could race the force-push and resurrect old history), invalidates
+   every existing clone, and dangles the commit SHAs referenced across
+   docs/. Playbook in
+   [`docs/workflow_review_2026_06_10.md`](docs/workflow_review_2026_06_10.md);
+   operator-scheduled, not urgent. For full local clones meanwhile:
+   `git clone --filter=blob:none` skips historical blobs.
 2. **Git LFS breaks RSS** — `raw.githubusercontent.com` returns pointer files
    for LFS-tracked content. Do NOT use LFS for MP3s.
 3. **Historical TST/OV flat files in `digests/`** — ~220 legacy output files
@@ -828,6 +924,19 @@ decision); everything else has a live status card.
     The `safe-commit-push` composite used by nightly + 8 other workflows does not
     yet have the recovery escape hatch (lower risk callers). Drift guard:
     the recovery script + the warning annotation in the Actions log.
+
+24. **Schedule punctuality: exact-time dispatcher + duplicate guard (June
+    2026)** — GitHub delivers cron `schedule` events 1-6 h late (Tesla's
+    11:00 slot observed starting 13:54). Fix: run-show crons moved to
+    off-peak :07/:37; `workers/scheduler/` (Cloudflare Cron Trigger,
+    fires to the minute) dispatches each show via `workflow_dispatch` at
+    its intended slot once the operator deploys it (fine-grained PAT →
+    `wrangler secret put GITHUB_DISPATCH_TOKEN`, `wrangler deploy` — see
+    its README); the gate's same-day duplicate guard (checks today's
+    "Auto-generated: <show> <date>" commit) lets the delayed GitHub cron
+    coexist as fallback without double-publishing. The Worker's SLOTS
+    table must stay in sync with the gate's CRON_MAP —
+    `tests/test_scheduling_punctuality.py` fails CI on drift.
 
 ### Resolved Issues (Feb 2026)
 

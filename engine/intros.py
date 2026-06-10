@@ -433,12 +433,27 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
             "I'm Olya, and we've got some great Russian words to learn today. Poyekhali — let's go!",
             "I'm Olya. Today's lesson is going to be a fun one. Poyekhali!",
         ],
+        # June 10 2026: rotation added — every episode had ended with the
+        # identical single closing (the daily-show tic the network bans
+        # everywhere else). Each variant must match the YAML Closing
+        # chapter pattern (molodets|well done|poka|see you) — guarded in
+        # tests/test_russian_shows_quality_pass.py.
         "closings": [
             (
                 "Molodets! That means, well done! Remember, every expert started as a "
                 "beginner. Practice saying today's words out loud, even just once, and "
                 "you'll be amazed how fast you learn. See you next time! Poka! "
                 "That's Russian for, bye!"
+            ),
+            (
+                "And that's our lesson for today — molodets for sticking with it! "
+                "Try using today's words in one real sentence before the next episode. "
+                "Little steps, big progress. Poka, friends — that's, bye!"
+            ),
+            (
+                "You did great today — say today's words out loud one more time and "
+                "they're yours. Share the show with a friend who wants to learn "
+                "Russian, and I'll see you next time. Poka!"
             ),
         ],
     },

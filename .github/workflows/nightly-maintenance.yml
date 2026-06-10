@@ -46,7 +46,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 0
+          # Shallow clone — nothing here reads git history, and the repo
+          # carries 2.2 GB of legacy MP3 history (landmine #1).
+          fetch-depth: 1
 
       - uses: ./.github/actions/setup-python
         with:
@@ -64,13 +66,14 @@ jobs:
           python scripts/fetch_op3_stats.py --out api/op3_stats.json --popular-out site/data/popular_episodes.json
           python scripts/fetch_buttondown_stats.py --out api/buttondown_stats.json
 
-      - name: Refresh Tesla performance tracker from OP3 data
-        # Closes the Tesla memory system's performance-feedback loop
-        # (June 2026 review): derives strong_topics_last_30d from the
+      - name: Refresh show performance trackers from OP3 data
+        # Closes the memory systems' performance-feedback loop (June
+        # 2026 reviews): derives strong_topics_last_30d from the
         # most-downloaded episodes so the prompts' performance-signals
-        # block runs on real audience data. Clean no-op when
-        # api/op3_stats.json is missing or has no Tesla entry.
-        run: python scripts/update_tesla_performance.py
+        # blocks run on real audience data. Covers Tesla + all
+        # show_memory shows (M&A, FF, Planetterrian). Clean no-op when
+        # api/op3_stats.json is missing or has no entry for a show.
+        run: python scripts/update_performance_trackers.py
 
       - name: Generate Management Dashboard
         run: python scripts/generate_dashboard.py --out api/dashboard.json
@@ -119,6 +122,9 @@ jobs:
             api/op3_stats.json
             api/buttondown_stats.json
             digests/tesla_shorts_time/tesla_performance_tracker.json
+            digests/models_agents/models_agents_performance_tracker.json
+            digests/fascinating_frontiers/fascinating_frontiers_performance_tracker.json
+            digests/planetterrian/planetterrian_performance_tracker.json
             site/data/popular_episodes.json
             site/data/gallery-manifest.json
             site/data/search-index.json

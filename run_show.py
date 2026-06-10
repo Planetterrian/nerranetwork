@@ -67,6 +67,23 @@ _AI_DISCLOSURE_RSS = (
     "voice synthesis for audio production."
 )
 
+# Russian shows (Финансы Просто / Привет, Русский!) used to speak the
+# ENGLISH disclosure line at the end of every episode on the Russian
+# Olya voice — flagged as a known wart in two network reviews. The
+# localized lines below close it (June 10 2026 Russian-shows pass;
+# changes shipped audio → A/B-listen per landmine #17).
+_RUSSIAN_SHOWS = ("finansy_prosto", "privet_russian")
+
+_AI_DISCLOSURE_RU = (
+    "Этот выпуск озвучен с помощью ИИ-синтеза голоса — "
+    "подбор тем и анализ остаются за человеком."
+)
+
+_AI_DISCLOSURE_RSS_RU = (
+    "Дисклеймер об ИИ: подкаст курирует Патрик, а озвучка создаётся "
+    "с помощью ИИ-синтеза голоса."
+)
+
 # ---------------------------------------------------------------------------
 # Bootstrap
 # ---------------------------------------------------------------------------
@@ -1147,6 +1164,10 @@ def run(args: argparse.Namespace) -> None:
         # pre_fetch hook. Default it to empty so a hook-load failure (or a show
         # without memory) can never KeyError in prompt substitution.
         template_vars.setdefault("narrative_memory_section", "")
+        # Привет, Русский! vocabulary memory (June 2026): the prompts
+        # reference {vocab_review_section}, supplied by the show's hook.
+        # Same defaulting contract as above.
+        template_vars.setdefault("vocab_review_section", "")
 
         # 7. Generate digest
         #
@@ -1711,8 +1732,10 @@ def run(args: argparse.Namespace) -> None:
         # passes are idempotent.
         from engine.newsletter_body import transform_daily_body
         from engine.newsletter_sanitizer import scrub_scaffold
+        from engine.utils import fix_phonetic_garbles
         x_thread = scrub_scaffold(x_thread)
         x_thread = transform_daily_body(x_thread, slug=getattr(config, "slug", ""))
+        x_thread = fix_phonetic_garbles(x_thread)
         if args.show == "tesla":
             from shows.hooks.tesla import scrub_unavailable_tsla_from_digest
             x_thread = scrub_unavailable_tsla_from_digest(x_thread)
@@ -1886,6 +1909,10 @@ def run(args: argparse.Namespace) -> None:
             }
             # Merge extra context for podcast prompt (e.g. tone_hint, intro_line)
             pod_vars.update(extra_context)
+            # Привет, Русский! vocabulary memory — same hook-failure-safe
+            # defaulting as the digest stage (str.format_map raises
+            # KeyError on missing placeholders).
+            pod_vars.setdefault("vocab_review_section", "")
 
             # Provide default intro_line/closing_block if hook didn't supply them.
             # Uses engine.intros for day-varying, show-specific intros so
@@ -2194,6 +2221,12 @@ def run(args: argparse.Namespace) -> None:
             # number-to-words conversion made it invisible to earlier regex passes)
             podcast_script = _strip_post_pronunciation_artifacts(podcast_script)
 
+            # Repair known phonetic garbles the LLM occasionally writes
+            # despite the prompt ban ("nassa" shipped in FF Ep096's blog
+            # transcript) — runs before TTS/blog/RSS see the script.
+            from engine.utils import fix_phonetic_garbles
+            podcast_script = fix_phonetic_garbles(podcast_script)
+
             # Russian-show date Russification — operator caught (Финансы
             # Просто Ep32, May 6 2026) the LLM emitting English-form dates
             # like "May sixth, twenty twenty-six" inside otherwise-Russian
@@ -2204,8 +2237,13 @@ def run(args: argparse.Namespace) -> None:
                 from engine.russian_text import russify_english_dates
                 podcast_script = russify_english_dates(podcast_script)
 
-            # Append AI disclosure at the end of the episode
-            podcast_script = podcast_script.rstrip() + "\n\n" + _AI_DISCLOSURE
+            # Append AI disclosure at the end of the episode (localized for
+            # the Russian shows — an English sentence on the Russian voice
+            # was the worst audio moment of every FP/PR episode).
+            _disclosure = (
+                _AI_DISCLOSURE_RU if args.show in _RUSSIAN_SHOWS else _AI_DISCLOSURE
+            )
+            podcast_script = podcast_script.rstrip() + "\n\n" + _disclosure
 
             # Parse chapter markers from the cleaned script (before TTS)
             from engine.chapters import parse_chapters
@@ -2699,9 +2737,14 @@ def run(args: argparse.Namespace) -> None:
         from engine.audio import format_duration
 
         if hook:
-            episode_title = f"Ep {episode_num}: {hook}"
+            # Russian shows get a Russian episode-number prefix — the
+            # listing is read by Russian speakers ("Episode 49" looked
+            # foreign in an otherwise-Russian feed).
+            _ep_prefix = "Выпуск" if args.show in _RUSSIAN_SHOWS else "Ep"
+            episode_title = f"{_ep_prefix} {episode_num}: {hook}"
         else:
-            episode_title = f"{config.name} - Episode {episode_num} - {today_str}"
+            _ep_word = "Выпуск" if args.show in _RUSSIAN_SHOWS else "Episode"
+            episode_title = f"{config.name} - {_ep_word} {episode_num} - {today_str}"
         # Use a short summary for the RSS description (first ~500 chars at sentence boundary)
         # to avoid overwhelming podcast app UIs with the full digest.
         _desc_limit = 500
@@ -2710,7 +2753,11 @@ def run(args: argparse.Namespace) -> None:
             episode_desc = x_thread[:_cut + 1] + " ..." if _cut > 100 else x_thread[:_desc_limit] + "..."
         else:
             episode_desc = x_thread
-        episode_desc = episode_desc.rstrip() + "\n\n" + _AI_DISCLOSURE_RSS
+        _rss_disclosure = (
+            _AI_DISCLOSURE_RSS_RU if args.show in _RUSSIAN_SHOWS
+            else _AI_DISCLOSURE_RSS
+        )
+        episode_desc = episode_desc.rstrip() + "\n\n" + _rss_disclosure
         # If the episode landed on YouTube, surface the watch link in
         # the RSS description so listeners on every podcast app can
         # click through to the video version.
@@ -2776,7 +2823,8 @@ def run(args: argparse.Namespace) -> None:
         channel_desc_with_disclosure = (
             config.publishing.rss_description.rstrip()
             + "\n\n"
-            + _AI_DISCLOSURE_RSS
+            + (_AI_DISCLOSURE_RSS_RU if args.show in _RUSSIAN_SHOWS
+               else _AI_DISCLOSURE_RSS)
         )
 
         logger.info("Updating RSS feed: %s", config.publishing.rss_file)

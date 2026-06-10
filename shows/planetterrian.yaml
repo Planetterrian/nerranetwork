@@ -203,7 +203,13 @@ llm:
   podcast_max_tokens: 10000
   # May 2026 substance-boost: target bumped 950 → 1250 to match the new
   # "12-14 stories × 5-7 sentences" podcast structure (was "9-11 × 4-6").
-  min_podcast_words: 1250
+  # June 10 2026 review: 1250 -> 1600. The prompt simultaneously said
+  # "10-13 minute", "12-15 minute", and "at least 2400 words" while
+  # this floor enforced 1250 (15 of 15 recent episodes under it, avg
+  # ~970). One target now: 1,800-2,100 words ~ 12-13 min. The 60% skip
+  # line lands at 960 — the digest-carrying expand-retry must lift a
+  # weak ~800-word draft past it, mirroring the FF twin's tuning.
+  min_podcast_words: 1600
   # June 2026 network quality pass: 8 of 8 recent episodes below target.
   # Expand-retry now fires on ANY below-target script.
   podcast_expand_below_target: true
@@ -261,16 +267,22 @@ episode:
 chapters:
   enabled: true
   section_markers:
+    # June 10 2026: positional `where` anchors (the Tesla chapter-bug
+    # class) + "see you next" closing coverage (Ep081 ended "See you
+    # next time." which matched no pattern -> no Closing chapter).
     - pattern: "Welcome.*Planet|Planet-terry-an.*episode"
       title: "Introduction"
+      where: start
     - pattern: "Planetterrian Spotlight|Planet-terry-an Spotlight|Spotlight"
       title: "Planetterrian Spotlight"
     - pattern: "science deep dive|deep dive|under the microscope"
       title: "Science Deep Dive"
     - pattern: "Before we go|Next time|before we wrap"
       title: "Tomorrow Teaser"
-    - pattern: "That's Planet|that.?s.*for today|until next time"
+      where: end
+    - pattern: "That's Planet|that.?s.*for today|until next time|see you next"
       title: "Closing"
+      where: end
 
 newsletter:
   enabled: true

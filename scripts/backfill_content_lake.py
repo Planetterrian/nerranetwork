@@ -121,7 +121,13 @@ def main(argv=None):
 
     total_imported = 0
 
+    # Meta/config YAMLs that are not shows — loading them logs a noisy
+    # "Loaded config for ''" line and scans the digests root pointlessly.
+    _NON_SHOW_YAMLS = {"network_meta", "pronunciation_map", "scaffold_pending"}
+
     for config_path in sorted(SHOWS_DIR.glob("*.yaml")):
+        if config_path.stem.startswith("_") or config_path.stem in _NON_SHOW_YAMLS:
+            continue
         try:
             from engine.config import load_config
             cfg = load_config(str(config_path))

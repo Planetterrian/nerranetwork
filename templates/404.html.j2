@@ -1,6 +1,9 @@
 {% extends "base.html.j2" %}
 
 {% block head_extra %}
+    {# Error pages must never be indexed — without this the 404 page is a
+       crawlable "content" page (June 2026 website review). #}
+    <meta name="robots" content="noindex">
     <style>
         .error-page {
             display: flex;

@@ -33,9 +33,9 @@ on:
     # old 12:15 slot ran *before* the tail and produced false "missed episode"
     # alarms + spurious auto-retries (e.g. 2026-06-02: audit at 12:15 flagged
     # MIT/Tesla/UC missed; they actually published at 14:21/14:59/15:51).
-    # Per-episode quality review still runs immediately via the workflow_run
-    # trigger below, so this later slot only delays the missed-sweep, not the
-    # quality checks. Tune later if GitHub delays worsen.
+    # (Stale-comment fix June 2026: the per-episode workflow_run trigger was
+    # removed earlier — this once-daily sweep reviews ALL of the day's
+    # committed episodes. Tune later if GitHub delays worsen.)
     - cron: '15 16 * * *'
 
   workflow_dispatch:

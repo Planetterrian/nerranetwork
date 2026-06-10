@@ -432,6 +432,22 @@ def check_digest_length(ep: EpisodeReview, info: dict) -> None:
         ))
 
 
+def _config_min_words(show_slug: str) -> int:
+    """The show YAML's enforced word floor (llm.min_podcast_words), or 0.
+
+    June 2026: the registry's hardcoded ``min_tts_words`` desynced from
+    the YAMLs every time a quality pass retargeted a show — the audit
+    was flagging against stale numbers. The YAML is the single source
+    of truth for length; the registry value is only a fallback.
+    """
+    try:
+        from engine.config import load_config
+        cfg = load_config(PROJECT_ROOT / "shows" / f"{show_slug}.yaml")
+        return int(getattr(cfg.llm, "min_podcast_words", 0) or 0)
+    except Exception:
+        return 0
+
+
 def check_tts_script(ep: EpisodeReview, info: dict) -> None:
     """Check podcast script quality."""
     if not ep.tts_text:
@@ -439,7 +455,7 @@ def check_tts_script(ep: EpisodeReview, info: dict) -> None:
         return
 
     words = len(ep.tts_text.split())
-    min_words = info["min_tts_words"]
+    min_words = _config_min_words(ep.show_slug) or info["min_tts_words"]
 
     if words < min_words * 0.5:
         ep.issues.append(Issue(
@@ -1260,7 +1276,11 @@ def ai_review_episode(ep: EpisodeReview) -> None:
         f"4. OFF_TOPIC: Is significant content unrelated to the show's topic?\n"
         f"5. TONE_BREAK: Are there abrupt tone shifts or inappropriate language?\n"
         f"6. INCOMPLETE: Does the episode feel like it ends abruptly or is missing sections?\n"
-        f"7. QUALITY_SCORE: Rate overall quality 1-10 (1=terrible, 10=perfect)\n\n"
+        f"7. QUALITY_SCORE: Rate overall quality 1-10. Calibration: 1-3 = "
+        f"critical problems a listener would notice (broken audio script, "
+        f"major factual errors); 4-5 = significant quality gaps (thin "
+        f"coverage, heavy repetition); 6-7 = publishable with minor "
+        f"caveats; 8-9 = strong episode; 10 = exemplary, no caveats.\n\n"
         f"Format your response EXACTLY like this (one per line):\n"
         f"FACTUAL_ERRORS: YES/NO — [brief explanation if YES]\n"
         f"INCOHERENT: YES/NO — [brief explanation if YES]\n"
