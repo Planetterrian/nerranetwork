@@ -1238,3 +1238,72 @@ class TestBuildShowNotesFooter:
         assert f'<a href="{self.BASE}">' in rendered
         # No leftover markdown link brackets.
         assert "](" not in rendered
+
+
+# ===================================================================
+# TEST: channel-level <podcast:funding> + <podcast:person> (June 2026)
+# ===================================================================
+
+class TestFundingPersonTags:
+    """update_rss_feed must inject channel-level podcast:funding +
+    podcast:person when the kwargs are set, survive rebuilds
+    idempotently, and stay absent when the kwargs are empty (legacy
+    callers byte-for-byte unaffected)."""
+
+    PODCAST_NS = "https://podcastindex.org/namespace/1.0"
+
+    _KW = dict(
+        funding_url="https://nerranetwork.com/#newsletter",
+        funding_label="Free newsletter",
+        person_name="Patrick",
+        person_url="https://nerranetwork.com/about.html",
+    )
+
+    def _channel(self, rss_path):
+        import xml.etree.ElementTree as ET
+        return ET.parse(str(rss_path)).getroot().find("channel")
+
+    def test_tags_injected(self, tmp_path):
+        rss = _make_rss(tmp_path, **self._KW)
+        channel = self._channel(rss)
+        funding = channel.find(f"{{{self.PODCAST_NS}}}funding")
+        person = channel.find(f"{{{self.PODCAST_NS}}}person")
+        assert funding is not None
+        assert funding.get("url") == "https://nerranetwork.com/#newsletter"
+        assert funding.text == "Free newsletter"
+        assert person is not None
+        assert person.get("role") == "host"
+        assert person.get("href") == "https://nerranetwork.com/about.html"
+        assert person.text == "Patrick"
+
+    def test_idempotent_across_rebuilds(self, tmp_path):
+        _make_rss(tmp_path, **self._KW)
+        # Second episode rebuilds the whole feed from the existing file.
+        mp3 = _make_mp3(tmp_path, "ep002.mp3")
+        rss = update_rss_feed(
+            tmp_path / "podcast.rss", 2, "Ep 2", "Desc",
+            datetime.date(2026, 1, 2), "ep002.mp3", 300.0, mp3,
+            format_duration_func=_fmt_dur,
+            **self._KW,
+        )
+        channel = self._channel(rss)
+        assert len(channel.findall(f"{{{self.PODCAST_NS}}}funding")) == 1
+        assert len(channel.findall(f"{{{self.PODCAST_NS}}}person")) == 1
+
+    def test_absent_when_args_empty(self, tmp_path):
+        rss = _make_rss(tmp_path)
+        channel = self._channel(rss)
+        assert channel.find(f"{{{self.PODCAST_NS}}}funding") is None
+        assert channel.find(f"{{{self.PODCAST_NS}}}person") is None
+
+    def test_feed_stays_well_formed(self, tmp_path):
+        import xml.etree.ElementTree as ET
+        rss = _make_rss(tmp_path, **self._KW)
+        ET.parse(str(rss))  # raises on malformed XML
+
+    def test_run_show_passes_funding_and_person(self):
+        """The production call site must pass the new kwargs."""
+        src = (Path(__file__).resolve().parent.parent / "run_show.py").read_text(
+            encoding="utf-8")
+        assert "funding_url=" in src
+        assert "person_name=" in src

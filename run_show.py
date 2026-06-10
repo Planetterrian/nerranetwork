@@ -2800,6 +2800,14 @@ def run(args: argparse.Namespace) -> None:
             audio_url=feed_audio_url,  # Use R2/OP3-prefixed URL if available
             chapters_url=chapters_url,
             transcript_url=transcript_url,
+            # Podcasting 2.0 channel tags (June 2026 growth pass): funding
+            # points at the newsletter signup (the network's support ask is
+            # "subscribe", not money), person credits the host for
+            # host-based discovery in 2.0 apps.
+            funding_url=f"{config.publishing.base_url}/#newsletter",
+            funding_label="Free newsletter — best of the network weekly",
+            person_name=config.publishing.host_name or "Patrick",
+            person_url=f"{config.publishing.base_url}/about.html",
         )
 
         metrics.record("rss_update_duration_s", round(time.monotonic() - _t_rss, 2))
@@ -2967,6 +2975,28 @@ def run(args: argparse.Namespace) -> None:
             if tweet_url:
                 record_x_post(tracker)
                 logger.info("Posted to X: %s", tweet_url)
+
+                # Cross-promo follow-up reply (June 2026 growth pass):
+                # "Follow @handle" + one sibling-show plug, threaded under
+                # the teaser so the teaser itself stays clean. Flag-gated
+                # (publishing.x_cross_promo); failure never blocks.
+                if getattr(config.publishing, "x_cross_promo", False):
+                    try:
+                        reply_text = _build_cross_promo_reply(config, today)
+                        if reply_text:
+                            reply_url = post_to_x(
+                                reply_text,
+                                consumer_key=consumer_key,
+                                consumer_secret=consumer_secret,
+                                access_token=access_token,
+                                access_token_secret=access_token_secret,
+                                in_reply_to_tweet_id=tweet_url.rsplit("/", 1)[-1],
+                            )
+                            if reply_url:
+                                record_x_post(tracker)
+                                logger.info("Posted cross-promo reply: %s", reply_url)
+                    except Exception as exc:
+                        logger.warning("Cross-promo reply failed (non-fatal): %s", exc)
         else:
             logger.warning("X credentials missing (prefix=%s). Skipping X post.", prefix)
 
@@ -4454,6 +4484,62 @@ def _build_teaser(config, episode_num: int, today_str: str, extra_context: dict)
     else:
         teaser = f"{config.name} Episode {episode_num} — {today_str}"
     return _append_youtube_line(teaser, extra_context)
+
+
+def _build_cross_promo_reply(config, today) -> str:
+    """Build the cross-promo reply posted under the daily teaser tweet.
+
+    Shape: optional "Follow @handle" line (omitted when the show's YAML
+    doesn't set ``publishing.x_handle``) + one sibling-show plug picked
+    by :func:`engine.network_promo.pick_featured_show` (deterministic
+    daily rotation, English shows only — same rotation the spoken outro
+    promo uses) + a UTM-tagged link to the sibling's show page.
+
+    Returns "" when there's nothing worth posting (no handle AND no
+    eligible sibling). X counts any URL as 23 chars, so the 280 budget
+    is enforced on that basis by trimming the tagline first.
+    """
+    from engine.network_promo import ENGLISH_SHOWS, pick_featured_show
+
+    handle = (getattr(config.publishing, "x_handle", "") or "").strip()
+    follow_line = f"Follow {handle} for daily episodes." if handle else ""
+
+    promo_line = ""
+    url = ""
+    featured = pick_featured_show(config.slug, today)
+    if featured:
+        try:
+            from generate_html import NETWORK_SHOWS
+            show_page = (NETWORK_SHOWS.get(featured) or {}).get("show_page", "")
+        except Exception:
+            show_page = ""
+        name = ENGLISH_SHOWS[featured]["spoken_name"]
+        tagline = ENGLISH_SHOWS[featured]["tagline"]
+        if show_page:
+            url = (
+                f"https://nerranetwork.com/{show_page}"
+                "?utm_source=x&utm_medium=social&utm_campaign=cross_promo"
+            )
+        # Budget: 280 minus follow line, minus the t.co URL (23) + spacing.
+        X_URL_LEN = 23
+        fixed = len(follow_line) + (2 if follow_line else 0)  # + blank line
+        fixed += len(f"More from the Nerra Network: {name} — ")
+        fixed += (1 + X_URL_LEN) if url else 0  # newline + t.co URL
+        room = 280 - fixed
+        if len(tagline) > room:
+            tagline = tagline[: max(room - 1, 0)].rstrip() + "…" if room > 10 else ""
+        promo_line = f"More from the Nerra Network: {name}"
+        if tagline:
+            promo_line += f" — {tagline}"
+
+    if not follow_line and not promo_line:
+        return ""
+
+    parts = [p for p in (follow_line, promo_line) if p]
+    text = "\n\n".join(parts)
+    if url:
+        text += f"\n{url}"
+    return text
 
 
 

@@ -1388,6 +1388,37 @@ def _build_reply_share_html(
         + '</p>'
     )
 
+    # Forwarded-copy conversion line (June 2026 growth pass): email
+    # forwarding is the network's only viral loop, so a forwarded copy
+    # must carry its own subscribe path. UTM-tagged so analytics can
+    # attribute signups to forwards; the query string goes BEFORE the
+    # #newsletter fragment.
+    subscribe_url = (
+        "https://nerranetwork.com/"
+        "?utm_source=newsletter&utm_medium=email&utm_campaign=forward_subscribe"
+        "#newsletter"
+    )
+    if is_russian:
+        forward_html = (
+            f'Вам переслали это письмо? '
+            f'<a href="{subscribe_url}" '
+            f'style="color:#475569;font-weight:600;">Подпишитесь здесь</a>'
+            f' — это бесплатно.'
+        )
+    else:
+        forward_html = (
+            f'Forwarded this email? '
+            f'<a href="{subscribe_url}" '
+            f'style="color:#475569;font-weight:600;">Subscribe here</a>'
+            f" — it's free."
+        )
+    forward_line = (
+        '<p class="text-muted" '
+        'style="font-size:12px;color:#64748b;margin:6px 0 0;line-height:1.5;">'
+        f'{forward_html}'
+        '</p>'
+    )
+
     return (
         '<table role="presentation" width="100%" cellpadding="0" '
         'cellspacing="0" border="0" '
@@ -1401,6 +1432,7 @@ def _build_reply_share_html(
         f'{reply_html}'
         '</p>'
         f'{share_line}'
+        f'{forward_line}'
         '</td></tr></table>'
     )
 

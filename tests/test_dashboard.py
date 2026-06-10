@@ -296,3 +296,66 @@ def test_item_4_output_dirs_no_violations_on_real_shows(tmp_path, monkeypatch):
         f"item_4_output_dirs still FAIL: {result.get('details')} "
         f"violations={result.get('evidence', {}).get('violations')}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Audience section (June 2026 growth pass) — OP3 + Buttondown read-back
+# ---------------------------------------------------------------------------
+
+
+def test_audience_section_graceful_when_stats_missing(tmp_path):
+    """A repo without api/op3_stats.json / api/buttondown_stats.json must
+    still build a dashboard, with the audience section reporting
+    configured: false (the management card renders a setup hint)."""
+    section = gd.build_audience_section(tmp_path)
+    assert section["op3"] == {"configured": False}
+    assert section["newsletter"] == {"configured": False}
+
+
+def test_audience_section_summarises_stats(tmp_path):
+    import json as _json
+
+    api_dir = tmp_path / "api"
+    api_dir.mkdir()
+    (api_dir / "op3_stats.json").write_text(_json.dumps({
+        "fetched_at": "2026-06-10T00:00:00+00:00",
+        "shows": {
+            "tesla": {
+                "downloads_7d": 149, "downloads_30d": 616, "weekly_avg": 150,
+                "episodes": [
+                    {"title": "Big ep", "downloads_7d": 12},
+                    {"title": "Small ep", "downloads_7d": 1},
+                ],
+            },
+            "env_intel": {
+                "downloads_7d": 11, "downloads_30d": 24, "weekly_avg": 11,
+                "episodes": [],
+            },
+        },
+    }), encoding="utf-8")
+    (api_dir / "buttondown_stats.json").write_text(_json.dumps({
+        "fetched_at": "2026-06-10T00:00:00+00:00",
+        "subscriber_count": 257,
+    }), encoding="utf-8")
+
+    section = gd.build_audience_section(tmp_path)
+
+    assert section["op3"]["configured"] is True
+    assert section["op3"]["network_downloads_30d"] == 640
+    assert section["op3"]["network_downloads_7d"] == 160
+    assert section["op3"]["per_show"]["tesla"]["downloads_30d"] == 616
+    assert section["op3"]["top_episodes_7d"][0]["title"] == "Big ep"
+    assert section["newsletter"]["subscriber_count"] == 257
+
+
+def test_audience_section_in_dashboard_payload():
+    data = gd.build_dashboard(ROOT, offline=True)
+    assert "audience" in data, (
+        "build_dashboard must always emit the audience section"
+    )
+
+
+def test_management_html_renders_audience_card():
+    html = (ROOT / "management.html").read_text(encoding="utf-8")
+    assert 'id="audience-section"' in html
+    assert "data.audience" in html

@@ -54,6 +54,16 @@ jobs:
           requirements-file: 'requirements.txt'
           skip-checkout: 'true'
 
+      - name: Fetch audience stats (OP3 downloads + Buttondown subscribers)
+        # Clean no-ops when the secrets are unset. Must run BEFORE the
+        # dashboard build so the Audience section can consume the JSONs.
+        env:
+          OP3_API_TOKEN: ${{ secrets.OP3_API_TOKEN }}
+          BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
+        run: |
+          python scripts/fetch_op3_stats.py --out api/op3_stats.json --popular-out site/data/popular_episodes.json
+          python scripts/fetch_buttondown_stats.py --out api/buttondown_stats.json
+
       - name: Generate Management Dashboard
         run: python scripts/generate_dashboard.py --out api/dashboard.json
 
@@ -77,9 +87,20 @@ jobs:
       - name: Generate MIT Performance Page + Tesla Narrative Page + Main Site
         # Ensures dedicated transparency pages (MIT performance + TST narrative tracker)
         # and other pages that depend on fresh data stay up to date.
+        # Marketing env vars must be present on EVERY html-regen step —
+        # otherwise a nightly rebuild strips analytics tags from pages the
+        # daily run-show regen (which passes them) had added.
+        env:
+          GA4_MEASUREMENT_ID: ${{ secrets.GA4_MEASUREMENT_ID }}
+          GOOGLE_ADS_ID: ${{ secrets.GOOGLE_ADS_ID }}
+          GOOGLE_ADS_SIGNUP_LABEL: ${{ secrets.GOOGLE_ADS_SIGNUP_LABEL }}
+          PLAUSIBLE_DOMAIN: ${{ secrets.PLAUSIBLE_DOMAIN }}
         run: |
           python generate_html.py --show modern_investing
           python generate_html.py --show tesla
+          # Homepage rebuild picks up the fresh popular-episodes rail +
+          # newsletter subscriber social proof from the audience-stats step.
+          python generate_html.py --network
           # Optionally regenerate full site if needed:
           # python generate_html.py --all
 
@@ -87,8 +108,12 @@ jobs:
         with:
           add-paths: |
             api/dashboard.json
+            api/op3_stats.json
+            api/buttondown_stats.json
+            site/data/popular_episodes.json
             site/data/gallery-manifest.json
             site/data/search-index.json
+            index.html
             modern-investing-performance.html
             modern-investing.html
             tesla-narrative.html

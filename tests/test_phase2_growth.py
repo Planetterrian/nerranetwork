@@ -199,3 +199,36 @@ class TestAiBadge:
         src = (PROJECT_ROOT / "templates" / "blog_post.html.j2").read_text(encoding="utf-8")
         assert 'import ai_badge' in src
         assert "ai_badge(" in src
+
+
+class TestHomepageAudienceSurfaces:
+    """June 2026 growth pass: the homepage's 'Most Played This Week' rail
+    (OP3 data) and the newsletter social-proof line must stay wired."""
+
+    TEMPLATE = PROJECT_ROOT / "templates" / "network_page.html.j2"
+
+    def test_template_references_popular_episodes(self):
+        src = self.TEMPLATE.read_text(encoding="utf-8")
+        assert "popular_episodes" in src
+        assert "Most Played This Week" in src
+
+    def test_template_references_subscriber_social_proof(self):
+        src = self.TEMPLATE.read_text(encoding="utf-8")
+        assert "newsletter_subscriber_count" in src
+
+    def test_generate_network_page_supplies_both_context_keys(self):
+        import inspect
+
+        import generate_html
+
+        src = inspect.getsource(generate_html.generate_network_page)
+        assert '"popular_episodes"' in src
+        assert '"newsletter_subscriber_count"' in src
+
+    def test_social_proof_threshold_constant(self):
+        import generate_html
+
+        assert generate_html.MIN_SOCIAL_PROOF_SUBSCRIBERS >= 100, (
+            "social proof below ~100 subscribers reads as anti-proof; "
+            "keep the floor"
+        )

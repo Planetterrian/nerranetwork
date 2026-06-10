@@ -27,6 +27,13 @@ Passed as step `env:` to the pipeline step (not in `.env` file):
 
 HTML generation / finalize also use: `GA4_MEASUREMENT_ID`, `GOOGLE_ADS_*`, `PLAUSIBLE_DOMAIN`, `GSC_VERIFICATION`.
 
+Nightly audience stats (June 2026; both optional — scripts no-op when unset):
+
+| Secret | Purpose |
+|--------|---------|
+| `OP3_API_TOKEN` | `scripts/fetch_op3_stats.py` — per-show/episode download counts → dashboard Audience card + homepage "Most Played" rail (free token at op3.dev/api/keys) |
+| `BUTTONDOWN_API_KEY` | also reused by `scripts/fetch_buttondown_stats.py` for the subscriber count → homepage social proof |
+
 ---
 
 ## Required for a full episode (typical English show)

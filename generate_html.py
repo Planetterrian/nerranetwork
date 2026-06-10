@@ -14,6 +14,7 @@ Usage:
 """
 
 import argparse
+import json
 import os
 import sys
 from pathlib import Path
@@ -31,6 +32,10 @@ ROOT = Path(__file__).resolve().parent
 TEMPLATES_DIR = ROOT / "templates"
 SHOWS_DIR = ROOT / "shows"
 GITHUB_RAW = "https://nerranetwork.com"
+
+# Newsletter social proof is hidden until the subscriber count clears this
+# floor — "Join 23 readers" is anti-proof, "Join 250 readers" converts.
+MIN_SOCIAL_PROOF_SUBSCRIBERS = 100
 
 # Channel handles for the YouTube CTA on show pages. The handle is
 # determined per-show by youtube.channel in the YAML (en → @NerraNetwork,
@@ -118,7 +123,15 @@ def _read_show_image_provider(slug: str) -> str:
 _GA4_DEFAULT = "G-6PWJCVQQ7B"  # Nerra Network GA4 property (533581233)
 
 MARKETING_CONFIG = {
-    "ga4_measurement_id": os.environ.get("GA4_MEASUREMENT_ID", _GA4_DEFAULT).strip(),
+    # NOTE: `or _GA4_DEFAULT`, not a .get() default — CI passes
+    # `GA4_MEASUREMENT_ID: ${{ secrets.GA4_MEASUREMENT_ID }}`, and an UNSET
+    # secret arrives as an empty-but-present env var, which defeats a
+    # .get() default. That stripped gtag from every CI-regenerated page
+    # (homepage/blog indexes had no GA on main while nightly-regenerated
+    # tesla.html, built without the env var, kept it) — caught June 2026.
+    "ga4_measurement_id": (
+        os.environ.get("GA4_MEASUREMENT_ID") or _GA4_DEFAULT
+    ).strip(),
     "google_ads_id": os.environ.get("GOOGLE_ADS_ID", "").strip(),
     "google_ads_signup_label": os.environ.get("GOOGLE_ADS_SIGNUP_LABEL", "").strip(),
     "plausible_domain": os.environ.get("PLAUSIBLE_DOMAIN", "").strip(),
@@ -2125,6 +2138,36 @@ def generate_network_page(*, dry_run=False):
     except Exception as e:
         print(f"Warning: could not collect latest episodes from RSS: {e}")
 
+    # "Most played this week" rail — fed by the nightly OP3 stats fetch
+    # (scripts/fetch_op3_stats.py). Renders nothing when the file is
+    # missing/empty (OP3_API_TOKEN not configured yet).
+    popular_episodes = []
+    try:
+        _popular_path = ROOT / "site" / "data" / "popular_episodes.json"
+        if _popular_path.exists():
+            popular_episodes = json.loads(
+                _popular_path.read_text(encoding="utf-8")) or []
+            popular_episodes = [
+                ep for ep in popular_episodes if ep.get("audio_url")
+            ][:6]
+    except Exception as e:
+        print(f"Warning: could not load popular episodes: {e}")
+
+    # Newsletter social proof — fed by the nightly Buttondown stats fetch
+    # (scripts/fetch_buttondown_stats.py). Hidden below the threshold so a
+    # small number never reads as anti-proof; rounded down to the nearest
+    # 10 so it doesn't read as fake-precise.
+    newsletter_subscriber_count = None
+    try:
+        _bd_path = ROOT / "api" / "buttondown_stats.json"
+        if _bd_path.exists():
+            _count = (json.loads(_bd_path.read_text(encoding="utf-8"))
+                      or {}).get("subscriber_count")
+            if isinstance(_count, int) and _count >= MIN_SOCIAL_PROOF_SUBSCRIBERS:
+                newsletter_subscriber_count = (_count // 10) * 10
+    except Exception as e:
+        print(f"Warning: could not load newsletter stats: {e}")
+
     context = {
         "path_prefix": "",
         "page_title": "Nerra Network | 11 Daily Shows",
@@ -2137,6 +2180,8 @@ def generate_network_page(*, dry_run=False):
         "all_shows": _build_all_shows_list(),
         "latest_blog_posts": latest_blog_posts,
         "latest_episodes": latest_episodes,
+        "popular_episodes": popular_episodes,
+        "newsletter_subscriber_count": newsletter_subscriber_count,
         "emit_bilingual_hreflang": True,
         "total_episodes": _count_total_episodes(),
     }
@@ -2175,6 +2220,35 @@ _SHOW_DIRS = {
     "privet_russian": "privet_russian",
     "unintended_consequences": "unintended_consequences",
 }
+
+
+def _pick_cross_show_related(slug, cross_show_posts, *, want=3):
+    """Pick up to *want* cross-show posts for a blog post's rec section.
+
+    The show's curated sibling (``NETWORK_SHOWS[slug]["related_show"]``)
+    always takes the first slot when it has a recent post, so the
+    on-brand recommendation is deterministic; remaining slots are
+    sampled from the latest cross-show pool.
+    """
+    if not cross_show_posts:
+        return []
+    import random
+    related = []
+    candidates = [p for p in cross_show_posts if p.get("show_slug") != slug]
+    curated_slug = (NETWORK_SHOWS.get(slug) or {}).get("related_show")
+    curated = next(
+        (p for p in candidates if p.get("show_slug") == curated_slug),
+        None,
+    )
+    if curated is not None:
+        related.append(curated)
+        candidates = [p for p in candidates if p is not curated]
+    remaining = want - len(related)
+    if len(candidates) <= remaining:
+        related.extend(candidates[:remaining])
+    else:
+        related.extend(random.sample(candidates[:12], remaining))
+    return related
 
 
 def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None):
@@ -2240,11 +2314,7 @@ def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None):
         md_text = meta["_md_path"].read_text(encoding="utf-8")
 
         # Pick up to 3 recent posts from other shows for cross-show recs
-        _related = []
-        if cross_show_posts:
-            import random
-            _candidates = [p for p in cross_show_posts if p.get("show_slug") != slug]
-            _related = _candidates[:3] if len(_candidates) <= 3 else random.sample(_candidates[:12], 3)
+        _related = _pick_cross_show_related(slug, cross_show_posts)
 
         html = generate_blog_post_html(
             md_text, meta, cfg, env,
@@ -2484,12 +2554,13 @@ def generate_sitemap(*, dry_run=False):
         if (ROOT / legal).exists():
             urls.append((f"{base}/{legal}", "0.4", _file_lastmod(ROOT / legal)))
 
-    # Special pages
+    # Special pages. 404.html is deliberately NOT listed — error pages
+    # don't belong in sitemaps (Search Console flags them).
     for extra in ["modern-investing-resources.html", "start-here.html",
                   "about.html", "how-to-listen.html", "faq.html",
                   "press.html", "contact.html", "editorial.html",
-                  "gallery.html",
-                  "404.html"]:
+                  "gallery.html", "player.html",
+                  "modern-investing-performance.html"]:
         if (ROOT / extra).exists():
             urls.append((f"{base}/{extra}", "0.5", _file_lastmod(ROOT / extra)))
 

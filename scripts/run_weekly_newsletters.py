@@ -133,6 +133,18 @@ def main():
             # disclaimer callout, body, P.S. block, and footer.
             # Buttondown passes inline HTML through its markdown
             # renderer untouched.
+            # Deterministic Buttondown slug so the view-in-browser link
+            # can point at the issue's archive page before the send
+            # (June 2026 growth pass).
+            from engine.newsletter import BUTTONDOWN_USERNAME
+            bd_slug = (
+                f"{show_slug.replace('_', '-')}-weekly-issue-{issue_number:03d}"
+            )
+            archive_url = (
+                f"https://buttondown.com/{BUTTONDOWN_USERNAME}"
+                f"/archive/{bd_slug}/"
+            )
+
             branded_body = wrap_with_branding(
                 show_slug, newsletter_md,
                 week_ending=week_ending,
@@ -142,6 +154,7 @@ def main():
                 p_s=envelope.get("p_s", ""),
                 adjacent_shows=envelope.get("cross_network") or [],
                 requires_financial_disclaimer=requires_disclaimer,
+                archive_url=archive_url,
             )
 
             email_id = send_newsletter(
@@ -150,6 +163,7 @@ def main():
                 api_key=api_key,
                 status=getattr(newsletter_cfg, "status", "draft"),
                 tags=tags_list,
+                slug=bd_slug,
             )
             results[show_slug] = f"sent ({email_id})" if email_id else "send failed"
         except Exception as e:

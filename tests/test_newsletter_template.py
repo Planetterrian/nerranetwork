@@ -1104,3 +1104,35 @@ class TestDailyReadabilityCleanup:
     def test_body_uses_readable_type(self):
         html = self._render()
         assert "font-size:16px;line-height:1.7" in html
+
+
+# ---------------------------------------------------------------------------
+# Forward-to-a-friend conversion line (June 2026 growth pass)
+# ---------------------------------------------------------------------------
+
+def test_reply_share_includes_forward_subscribe_line():
+    show = nt._load_show_branding("tesla")
+    out = nt._build_reply_share_html(show, slug="tesla")
+    assert "Forwarded this email?" in out
+    assert "Subscribe here" in out
+    # UTM attribution, with the query string BEFORE the #newsletter fragment.
+    assert "utm_campaign=forward_subscribe" in out
+    assert "forward_subscribe#newsletter" in out
+
+
+def test_reply_share_forward_line_localized_for_russian():
+    show = nt._load_show_branding("privet_russian")
+    out = nt._build_reply_share_html(show, slug="privet_russian")
+    assert "Вам переслали это письмо?" in out
+    assert "Подпишитесь здесь" in out
+    assert "utm_campaign=forward_subscribe" in out
+
+
+def test_view_in_browser_renders_when_archive_url_passed():
+    out = nt.wrap_with_branding(
+        "tesla", "## Body",
+        daily_label="Ep 503",
+        daily_date=datetime.date(2026, 6, 10),
+        archive_url="https://buttondown.com/patricknovak1/archive/tesla-ep503/",
+    )
+    assert "buttondown.com/patricknovak1/archive/tesla-ep503/" in out

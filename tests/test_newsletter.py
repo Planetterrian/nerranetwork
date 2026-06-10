@@ -729,3 +729,68 @@ def test_contrast_failure_blocks_send_and_logs_error(monkeypatch, caplog):
         and rec.levelno >= logging.ERROR
         for rec in caplog.records
     ), "Expected a logger.error for the blocking contrast failure"
+
+
+# ---------------------------------------------------------------------------
+# Drift guard: the cross-network adjacency map must live under ``newsletter:``
+# in shows/_defaults.yaml. It was originally shipped mis-indented under
+# ``cost_circuit_breakers:`` (June 2026 review), which made
+# engine.newsletter._adjacent_shows_for and
+# engine.synthesizer._load_network_adjacencies silently read an empty map —
+# degrading the cross-network module on every daily + weekly send.
+# ---------------------------------------------------------------------------
+
+_NON_SHOW_YAML_STEMS = {
+    "_defaults", "_blocked_sources", "pronunciation_map",
+    "network_meta", "scaffold_pending",
+}
+
+
+def _all_show_slugs():
+    from pathlib import Path
+    return sorted(
+        p.stem for p in Path("shows").glob("*.yaml")
+        if p.stem not in _NON_SHOW_YAML_STEMS
+        and not p.stem.endswith("_template")
+        and not p.stem.startswith("_")
+    )
+
+
+def test_defaults_yaml_network_adjacencies_under_newsletter():
+    import yaml
+    from pathlib import Path
+
+    data = yaml.safe_load(
+        Path("shows/_defaults.yaml").read_text(encoding="utf-8")
+    ) or {}
+    nl = data.get("newsletter") or {}
+    adj = nl.get("network_adjacencies")
+    assert isinstance(adj, dict) and adj, (
+        "newsletter.network_adjacencies missing/empty in shows/_defaults.yaml "
+        "— the cross-network email module reads it from exactly this path"
+    )
+    slugs = set(_all_show_slugs())
+    assert slugs <= set(adj.keys()), (
+        f"network_adjacencies missing shows: {sorted(slugs - set(adj.keys()))}"
+    )
+    # Every referenced sibling must itself be a real show slug.
+    for slug, sisters in adj.items():
+        for sister in sisters:
+            assert sister in slugs, (
+                f"network_adjacencies[{slug}] references unknown show {sister!r}"
+            )
+    # And the newsletter-composition keys moved in the same fix must be
+    # readable from the same block.
+    for key in ("requires_financial_disclaimer", "short_label", "emoji",
+                "newsletter_start_date", "adjacent_shows"):
+        assert key in nl, f"newsletter.{key} missing from shows/_defaults.yaml"
+
+
+def test_synthesizer_reads_nonempty_adjacencies():
+    from engine.synthesizer import _load_network_adjacencies
+
+    adj = _load_network_adjacencies()
+    assert adj.get("tesla"), (
+        "engine.synthesizer._load_network_adjacencies returned an empty map "
+        "for tesla — adjacency block likely mis-indented again"
+    )
