@@ -197,6 +197,9 @@ llm:
   # rather than fill space with editorial padding"; this aligns the
   # pipeline gate with that instruction.
   min_podcast_words: 900
+  # June 2026 network quality pass: chronic below-target episodes —
+  # the expand-retry now fires on ANY below-target script.
+  podcast_expand_below_target: true
   min_podcast_word_floor: 450
 
 tts:
@@ -224,7 +227,9 @@ audio:
 publishing:
   rss_file: env_intel_podcast.rss
   rss_title: "Environmental Intelligence"
-  rss_description: "Daily environmental regulatory, science, and compliance briefing for Canadian environmental professionals. Covering contaminated sites, remediation, environmental law, and climate policy across all provinces, territories, and federal jurisdictions."
+  # June 2026: say the real cadence (odd weekdays, not daily) and lead
+  # with the scannable Compliance Brief — the B2B differentiator.
+  rss_description: "The environmental compliance briefing for Canadian practitioners, published every other weekday. Each episode opens with a scannable Compliance Brief you can forward to your team, then regulatory updates across provincial and federal jurisdictions, contaminated sites and remediation news, and a practitioner field lesson with the most common mistake and its fix."
   rss_link: https://nerranetwork.com/env-intel.html
   rss_author: Environmental Intelligence
   rss_email: patrick@planetterrian.com
