@@ -70,11 +70,11 @@ jobs:
           fi
           # A target with an open review PR (branch agent/review-<slug>-<date>)
           # is skipped so the operator never gets two PRs for the same show.
-          EXCLUDES=$(gh pr list --state open --json headRefName \
+          mapfile -t EXCLUDES < <(gh pr list --state open --json headRefName \
             --jq '.[].headRefName' \
-            | sed -n 's#^agent/review-\(.*\)-[0-9]\{8\}$#\1#p' | sort -u | tr '\n' ' ')
-          echo "In-flight review targets excluded: ${EXCLUDES:-none}"
-          if SLUG=$(python scripts/pick_review_target.py --exclude $EXCLUDES); then
+            | sed -n 's#^agent/review-\(.*\)-[0-9]\{8\}$#\1#p' | sort -u)
+          echo "In-flight review targets excluded: ${EXCLUDES[*]:-none}"
+          if SLUG=$(python scripts/pick_review_target.py --exclude "${EXCLUDES[@]}"); then
             echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
             echo "Picked target: $SLUG"
           else
