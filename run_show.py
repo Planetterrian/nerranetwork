@@ -1732,8 +1732,13 @@ def run(args: argparse.Namespace) -> None:
                 from engine import tesla_memory
                 output_dir = Path(config.episode.output_dir)
                 tesla_memory.update_theme_history_from_digest(output_dir, x_thread, episode_num)
-                # Note: narrative + performance updates are currently manual/light
-                # or driven by future YouTube data ingestion. The framework is ready.
+                # Auto-advance per-program last-mention freshness (June
+                # 2026): keeps the narrative block's continuity anchors
+                # current without touching the operator-curated status
+                # text (which stays on scripts/update_tesla_narrative.py).
+                tesla_memory.auto_update_narrative_from_digest(
+                    output_dir, x_thread, episode_num, today.isoformat(),
+                )
             except Exception as exc:
                 logger.warning("Tesla memory update failed (non-fatal): %s", exc)
 
@@ -2151,7 +2156,8 @@ def run(args: argparse.Namespace) -> None:
                 score_result = listener_value_scorer.score_script(
                     podcast_script,
                     show_slug=args.show,
-                    memory_blocks=template_vars  # passes the injected memory context
+                    memory_blocks=template_vars,  # passes the injected memory context
+                    target_words=getattr(config.llm, "min_podcast_words", 0) or 0,
                 )
                 logger.info(
                     "Listener Value Score for %s Ep%d: %.1f/10 (narrative: %.1f, value: %.1f, engagement: %.1f)",
@@ -2964,6 +2970,11 @@ def run(args: argparse.Namespace) -> None:
         access_token_secret = os.getenv(f"{prefix}ACCESS_TOKEN_SECRET", "")
 
         if all([consumer_key, consumer_secret, access_token, access_token_secret]):
+            # Surface the episode hook to the teaser builder (June 2026):
+            # the hardcoded teasers carried no episode-specific content,
+            # so every day's post read identically except the date.
+            if "hook" not in extra_context and locals().get("hook"):
+                extra_context["hook"] = hook
             teaser = _build_teaser(config, episode_num, today_str, extra_context)
             tweet_url = post_to_x(
                 teaser,
@@ -4458,10 +4469,19 @@ def _build_teaser(config, episode_num: int, today_str: str, extra_context: dict)
         price_str = ""
         if "price" in extra_context:
             price_str = f" | TSLA ${extra_context['price']}"
+        # June 2026: lead with the episode hook (the daily teasers were
+        # identical except the date — zero scroll-stopping content) and
+        # link straight to the episode's blog post (inline player +
+        # show notes) instead of the generic summaries page.
+        hook_text = (extra_context.get("hook") or "").strip()
+        if len(hook_text) > 200:
+            hook_text = hook_text[:199].rstrip() + "…"
+        hook_line = f"{hook_text}\n\n" if hook_text else ""
         teaser = (
-            f"🚀⚡ Tesla Shorts Time Daily — {today_str}{price_str}\n\n"
-            f"Episode {episode_num} is live!\n"
-            f"🎧 Listen & read: https://nerranetwork.com/tesla-summaries.html"
+            f"🚀⚡ Tesla Shorts Time Ep {episode_num}{price_str}\n\n"
+            f"{hook_line}"
+            f"🎧 Listen + show notes: "
+            f"https://nerranetwork.com/blog/tesla/ep{episode_num:03d}.html"
         )
     elif slug == "omni_view":
         teaser = (

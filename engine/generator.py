@@ -839,7 +839,9 @@ def _retry_word_count_ok(orig_words: int, retry_words: int,
     return retry_words >= threshold
 
 
-def _podcast_expansion_retry_threshold(min_words: int) -> int:
+def _podcast_expansion_retry_threshold(
+    min_words: int, *, expand_below_target: bool = False,
+) -> int:
     """Word count below which ``generate_podcast_script`` triggers a
     one-shot expansion retry.
 
@@ -853,7 +855,18 @@ def _podcast_expansion_retry_threshold(min_words: int) -> int:
     dedup pass that runs between generation and the skip check and trims a
     few percent off the count (Ep493 went 874 → 818). ``600`` is the
     network-wide absolute floor.
+
+    *expand_below_target* (June 2026, per-show opt-in via
+    ``llm.podcast_expand_below_target``): retry whenever the script is
+    under the FULL target, not just near the skip floor. Added for
+    Tesla after 9 of 10 episodes shipped 15-35% under the 1600-word
+    target (avg 1238 words) with listener-value scores pinned at
+    3.2-3.9 — the 66%-of-target threshold meant a 1100-word script
+    sailed through unexpanded. Costs one extra LLM call (~$0.03) on
+    days the first pass lands short; flagship-worthy.
     """
+    if expand_below_target:
+        return max(600, int(min_words))
     soft_floor = int(min_words * 0.6)
     return max(600, int(soft_floor * 1.1))
 
@@ -1750,7 +1763,12 @@ def generate_podcast_script(
     # soft floor). Expanding here gives the episode a real chance to clear
     # the floor instead of being thrown away.
     word_count = len(text.split())
-    _retry_threshold = _podcast_expansion_retry_threshold(min_words)
+    _retry_threshold = _podcast_expansion_retry_threshold(
+        min_words,
+        expand_below_target=bool(
+            getattr(config.llm, "podcast_expand_below_target", False)
+        ),
+    )
     if word_count < _retry_threshold:
         logger.warning(
             "Podcast script for '%s' is very short (%d words, retry threshold %d). "

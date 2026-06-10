@@ -57,6 +57,11 @@ class LLMConfig:
     # output being "broken" — set their floor lower so a thin-but-
     # legitimate episode ships instead of being skipped.
     min_podcast_word_floor: int = 600
+    # June 2026 (Tesla quality pass): when true, the one-shot expansion
+    # retry in generate_podcast_script fires whenever the script lands
+    # under the FULL min_podcast_words target instead of only near the
+    # 60%-of-target skip floor. Costs one extra LLM call on short days.
+    podcast_expand_below_target: bool = False
     podcast_chain: bool = False  # Two-stage generation: outline then expand
     # Model used when the primary refuses after educational retry. A
     # different model (or different variant of the same family) often
