@@ -18,6 +18,12 @@ logger = logging.getLogger(__name__)
 
 BUTTONDOWN_API_BASE = "https://api.buttondown.com/v1"
 
+# Buttondown account username — used to build public archive URLs
+# (https://buttondown.com/<username>/archive/<slug>/). Matches the
+# subscribe-form embed on the homepage; override via env if the
+# account ever moves.
+BUTTONDOWN_USERNAME = os.getenv("BUTTONDOWN_USERNAME", "patricknovak1")
+
 
 def convert_digest_to_email_html(markdown_text: str) -> str:
     """Convert a markdown digest to clean, mobile-friendly email HTML.
@@ -502,6 +508,18 @@ def send_show_newsletter(
         getattr(newsletter, "requires_financial_disclaimer", False)
     )
 
+    # Buttondown slug — explicit transliterated form for Russian
+    # shows so the archive URL doesn't end up as
+    # `archive/u041f-u0440-...`. Computed BEFORE the wrap so the
+    # view-in-browser link can point at the issue's archive page
+    # (wrap_with_branding always accepted archive_url; it was never
+    # passed — June 2026 growth pass).
+    bd_slug = _buttondown_slug_for(slug, episode_num, hook)
+    archive_url = (
+        f"https://buttondown.com/{BUTTONDOWN_USERNAME}/archive/{bd_slug}/"
+        if bd_slug else ""
+    )
+
     branded_body = wrap_with_branding(
         slug,
         body_clean,
@@ -516,6 +534,7 @@ def send_show_newsletter(
         # episodes have shipped (Tesla Ep 458 read "Issue #1" on
         # the May 2 daily — bug). Pass the episode number explicitly.
         issue_number=episode_num,
+        archive_url=archive_url,
     )
 
     # Pre-send contrast tripwire (§7.3). Light-mode-only check — the
@@ -536,11 +555,6 @@ def send_show_newsletter(
     except ContrastError as exc:
         logger.error("Newsletter contrast issues (blocking send): %s", exc)
         return None
-
-    # Buttondown slug — explicit transliterated form for Russian
-    # shows so the archive URL doesn't end up as
-    # `archive/u041f-u0440-...`.
-    bd_slug = _buttondown_slug_for(slug, episode_num, hook)
 
     email_id = send_newsletter(
         subject=subject,
@@ -623,11 +637,12 @@ def _buttondown_slug_for(
     """Return an ASCII slug suitable for Buttondown's archive URL.
 
     Russian-language shows must transliterate hook + show name so the
-    archive URL doesn't end up percent-escaped. English shows can let
-    Buttondown auto-derive (return None).
+    archive URL doesn't end up percent-escaped. English shows get the
+    same deterministic ``<show>-ep<num>-<hook>`` shape (June 2026
+    growth pass) so the view-in-browser link can be built BEFORE the
+    send — previously they returned None (Buttondown auto-derived the
+    slug, unpredictable pre-send, so no archive link was ever passed).
     """
-    if slug not in ("finansy_prosto", "privet_russian"):
-        return None
     base_map = {
         "finansy_prosto": "finansy-prosto",
         "privet_russian": "privet-russian",

@@ -16,9 +16,14 @@ import pytest
 
 class TestButtondownSlug:
 
-    def test_english_show_returns_none(self):
+    def test_english_show_gets_deterministic_slug(self):
+        # June 2026 growth pass: English shows used to return None
+        # (Buttondown auto-derived → archive URL unknown pre-send, so
+        # the view-in-browser link was never built). Now every show
+        # gets the same deterministic <show>-ep<num>-<hook> shape.
         from engine.newsletter import _buttondown_slug_for
-        assert _buttondown_slug_for("tesla", 42, "Cybertruck production begins") is None
+        slug = _buttondown_slug_for("tesla", 42, "Cybertruck production begins")
+        assert slug == "tesla-ep042-cybertruck-production-begins"
 
     def test_russian_show_transliterates(self):
         from engine.newsletter import _buttondown_slug_for
@@ -144,3 +149,59 @@ class TestDailySubjectBuilder:
             "tesla", "", send_date=send_date, is_daily=True,
         )
         assert "May 2 update" in subject
+
+
+class TestArchiveUrlPassedToWrap:
+    """June 2026 growth pass: send_show_newsletter must compute the
+    Buttondown slug BEFORE wrapping so the view-in-browser link points
+    at the issue's archive page, and pass the same slug to the send."""
+
+    def test_wrap_receives_archive_url_and_send_receives_slug(self, monkeypatch):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        from engine import newsletter
+
+        monkeypatch.setenv("TEST_BUTTONDOWN_KEY", "key")
+        captured = {}
+
+        def fake_wrap(slug, body, **kwargs):
+            captured["archive_url"] = kwargs.get("archive_url")
+            return body
+
+        def fake_send(**kwargs):
+            captured["slug"] = kwargs.get("slug")
+            return "email-id"
+
+        config = SimpleNamespace(
+            newsletter=SimpleNamespace(
+                enabled=True,
+                api_key_env="TEST_BUTTONDOWN_KEY",
+                tag="Tesla",
+                status="about_to_send",
+                requires_financial_disclaimer=False,
+            ),
+            name="Tesla Shorts Time",
+            slug="tesla",
+        )
+
+        with patch("engine.newsletter_template.wrap_with_branding",
+                   side_effect=fake_wrap), \
+             patch("engine.newsletter.send_newsletter",
+                   side_effect=fake_send), \
+             patch("engine.newsletter.validate_api_key", return_value=True), \
+             patch("engine.newsletter._can_send_now", return_value=True), \
+             patch("engine.newsletter._record_send"), \
+             patch("engine.newsletter._adjacent_shows_for", return_value=None):
+            result = newsletter.send_show_newsletter(
+                "## Digest body\n\nStory.", config, 503, "2026-06-10",
+                hook="Cybercab production begins",
+            )
+
+        assert result == "email-id"
+        expected_slug = "tesla-ep503-cybercab-production-begins"
+        assert captured["slug"] == expected_slug
+        assert captured["archive_url"] == (
+            f"https://buttondown.com/{newsletter.BUTTONDOWN_USERNAME}"
+            f"/archive/{expected_slug}/"
+        )
