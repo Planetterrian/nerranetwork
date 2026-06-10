@@ -50,8 +50,8 @@ _ROOT = _SCRIPT_DIR.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-import requests
-from tenacity import (
+import requests  # noqa: E402  (after sys.path fix)
+from tenacity import (  # noqa: E402  (after sys.path fix)
     retry,
     retry_if_exception_type,
     stop_after_attempt,

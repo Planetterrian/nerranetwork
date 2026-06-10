@@ -35,7 +35,7 @@ _ROOT = _SCRIPT_DIR.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-import requests
+import requests  # noqa: E402  (after sys.path fix)
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout,
                     format="%(levelname)s %(message)s")
