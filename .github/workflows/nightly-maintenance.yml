@@ -46,7 +46,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 0
+          # Shallow clone — nothing here reads git history, and the repo
+          # carries 2.2 GB of legacy MP3 history (landmine #1).
+          fetch-depth: 1
 
       - uses: ./.github/actions/setup-python
         with:
