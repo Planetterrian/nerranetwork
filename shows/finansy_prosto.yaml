@@ -170,7 +170,12 @@ llm:
   podcast_temperature: 0.75
   max_tokens: 5000
   podcast_max_tokens: 6000
-  min_podcast_words: 900
+  # June 10 2026 review: 900 -> 1200. The prompt targets 1,300-1,700
+  # слов but the floor sat at 900, so short episodes never tripped the
+  # expand-retry. 1000 (not the prompt's 1300 low end) keeps the 60%
+  # skip floor at 600 — below the worst recent raw output (645 words,
+  # Ep45) so an episode still ships even if the expand-retry fails.
+  min_podcast_words: 1000
   # June 2026 network quality pass: chronic below-target episodes —
   # the expand-retry now fires on ANY below-target script.
   podcast_expand_below_target: true
@@ -235,18 +240,23 @@ episode:
 chapters:
   enabled: true
   section_markers:
+    # June 10 2026: positional `where` anchors (the Tesla chapter-bug
+    # class) + the second closing-pool variant ("Вот и всё на сегодня!")
+    # previously matched no pattern.
     - pattern: "Финансы Просто|добро пожаловать"
       title: "Приветствие"
-    - pattern: "главная тема|главная новость|самое важное"
+      where: start
+    - pattern: "главная тема|главная новость|самое важное|сегодня разберёмся|сегодня мы разберём|тема сегодня"
       title: "Главная тема"
-    - pattern: "как это работает|разбираемся|давайте разберёмся|объясни как подруге"
+    - pattern: "как это работает|как это устроено|разбираемся|давайте разберёмся|почему это работает|объясни как подруге"
       title: "Как это работает"
-    - pattern: "попробуйте сами|практический совет|на практике"
+    - pattern: "попробуйте сами|практическ\\w+ совет|первый совет|несколько советов|на практике"
       title: "Практические советы"
     - pattern: "коротко и ясно|быстрые новости"
       title: "Коротко и ясно"
-    - pattern: "на сегодня всё|до завтра"
+    - pattern: "на сегодня всё|вот и всё|до завтра"
       title: "Завершение"
+      where: end
 
 newsletter:
   enabled: true

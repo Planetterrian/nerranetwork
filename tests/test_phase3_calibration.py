@@ -75,8 +75,8 @@ class TestRecalibratedMinPodcastWords:
         "modern_investing":        1800,  # June 10 2026 review: single 2,000-2,200-word target
         "omni_view":               900,
         "unintended_consequences": 1300,
-        "finansy_prosto":          900,
-        "privet_russian":          650,
+        "finansy_prosto":          1000,  # June 10 2026 Russian-shows pass
+        "privet_russian":          800,  # June 10 2026 Russian-shows pass
     }
 
     @pytest.mark.parametrize("slug,expected", list(EXPECTED.items()))
