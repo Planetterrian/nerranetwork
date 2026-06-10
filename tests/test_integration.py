@@ -1052,7 +1052,13 @@ class TestRunShowPipeline:
                                    today_str="February 27, 2026",
                                    extra_context={})
             assert teaser, f"_build_teaser returned empty for {show}"
-            assert "Episode 1" in teaser or "episode 1" in teaser.lower()
+            # Tesla's teaser switched to "Ep N" + hook + blog link (June
+            # 2026 quality pass); other shows still say "Episode N".
+            assert (
+                "Episode 1" in teaser
+                or "episode 1" in teaser.lower()
+                or "Ep 1" in teaser
+            )
 
 
 # ---------------------------------------------------------------------------

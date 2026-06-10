@@ -143,6 +143,24 @@ TST received a full recursive improvement architecture (analogous to MIT):
 - Operator tooling: `scripts/update_tesla_narrative.py` for easy updates without hand-editing JSON.
 - Goal: TST becomes the best long-term public chronicle of Tesla's major programs while
   continuously optimizing for real audience engagement.
+- **June 2026 quality pass** (drift guards: `tests/test_tesla_quality_pass.py`):
+  theme mining now reads the DIGEST only (the old code mined the narrative
+  TEMPLATE text every episode — "open questions" hit count 112 and drowned
+  real topics; `_THEME_STOPWORDS` + a one-time scrub fixed existing
+  histories). `auto_update_narrative_from_digest` auto-advances per-program
+  `last_mentioned_episode/date` on every episode (the tracker had sat 13
+  days stale on a daily show) — operator-curated `status` text still only
+  changes via `scripts/update_tesla_narrative.py`. The listener-value score
+  gained a 15%-weight length component (`target_words` kwarg). Tesla opts
+  into `llm.podcast_expand_below_target: true` — the one-shot expansion
+  retry fires on ANY below-target script, not only near the 60% skip floor
+  (9 of 10 episodes had shipped 15-35% under the 1600-word target). The X
+  teaser leads with the episode hook + links the episode blog post. The
+  prompts ban the "Taking a step back from today's headlines" opener,
+  rotate three First Principles frameworks, cap the vertical-integration
+  conclusion, enforce the Takeover/Top-12 zero-overlap check, and add
+  3-tier attribution discipline. Prompt changes alter generated output —
+  A/B-listen per landmine #17 and revert via git if quality dips.
 - **PR** (Привет, Русский!) runs via `run_show.py` +
   `shows/privet_russian.yaml`; bilingual Russian language learning podcast
   for English speakers. Even days only. Uses **ElevenLabs TTS**

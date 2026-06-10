@@ -131,6 +131,11 @@ llm:
   # structure (was "all 12 + 2-3 × 4-6"). Tesla digest also has the
   # First Principles + Counterpoint blocks layered on top.
   min_podcast_words: 1600
+  # June 2026 quality pass: 9 of 10 recent episodes shipped 15-35%
+  # under target (avg 1238 words; listener_value pinned at 3.2-3.9 vs
+  # 4.5 on the one on-target episode). Expand-retry now fires on ANY
+  # below-target script, not just near the skip floor. ~$0.03/day.
+  podcast_expand_below_target: true
   podcast_chain: true
 
 tts:
@@ -166,8 +171,23 @@ publishing:
   # surface. The mismatched ``Daily`` suffix risked Apple's duplicate-
   # feed detector marking the show as a re-upload.
   rss_title: Tesla Shorts Time
-  rss_description: A daily podcast covering the latest Tesla news, stock prices, and industry insights.
-  rss_summary: Daily Tesla news digest and podcast covering the latest developments, stock updates, and market analysis.
+  # June 2026: value-prop description for Apple/Spotify listing pages —
+  # the previous generic one-liner ("covering the latest Tesla news")
+  # sold nothing. This is what a prospective subscriber reads before
+  # their first play.
+  rss_description: >-
+    Every Tesla story that matters, every single day — in 10 minutes.
+    The day's top developments with sources, the real-time TSLA picture,
+    what the Tesla community is buzzing about on X, one honest bearish
+    counterpoint, and a daily first-principles analysis that follows
+    the long arcs: Optimus, Cybercab and robotaxi, FSD, next-gen
+    vehicles, and 4680 cells. Seven days a week, with a Sunday recap
+    that ties the week's threads together.
+  rss_summary: >-
+    Every Tesla story that matters, every day, in 10 minutes — news with
+    sources, the TSLA picture, community buzz, one honest counterpoint,
+    and first-principles analysis tracking Optimus, Cybercab, FSD and
+    more. Daily, plus a Sunday weekly recap.
   rss_link: https://nerranetwork.com/tesla.html
   rss_author: Patrick
   rss_email: patrick@planetterrian.com
