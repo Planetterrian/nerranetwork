@@ -35,7 +35,9 @@ GITHUB_RAW = "https://nerranetwork.com"
 
 # Newsletter social proof is hidden until the subscriber count clears this
 # floor — "Join 23 readers" is anti-proof, "Join 250 readers" converts.
-MIN_SOCIAL_PROOF_SUBSCRIBERS = 100
+# June 2026 website review: 100 -> 50; fifty real readers is credible
+# proof and the badge was invisible through the entire early-growth phase.
+MIN_SOCIAL_PROOF_SUBSCRIBERS = 50
 
 # Channel handles for the YouTube CTA on show pages. The handle is
 # determined per-show by youtube.channel in the YAML (en → @NerraNetwork,
