@@ -1732,8 +1732,10 @@ def run(args: argparse.Namespace) -> None:
         # passes are idempotent.
         from engine.newsletter_body import transform_daily_body
         from engine.newsletter_sanitizer import scrub_scaffold
+        from engine.utils import fix_phonetic_garbles
         x_thread = scrub_scaffold(x_thread)
         x_thread = transform_daily_body(x_thread, slug=getattr(config, "slug", ""))
+        x_thread = fix_phonetic_garbles(x_thread)
         if args.show == "tesla":
             from shows.hooks.tesla import scrub_unavailable_tsla_from_digest
             x_thread = scrub_unavailable_tsla_from_digest(x_thread)
@@ -2218,6 +2220,12 @@ def run(args: argparse.Namespace) -> None:
             # (e.g. "(Word count: two thousand four hundred seventy-eight)" after
             # number-to-words conversion made it invisible to earlier regex passes)
             podcast_script = _strip_post_pronunciation_artifacts(podcast_script)
+
+            # Repair known phonetic garbles the LLM occasionally writes
+            # despite the prompt ban ("nassa" shipped in FF Ep096's blog
+            # transcript) — runs before TTS/blog/RSS see the script.
+            from engine.utils import fix_phonetic_garbles
+            podcast_script = fix_phonetic_garbles(podcast_script)
 
             # Russian-show date Russification — operator caught (Финансы
             # Просто Ep32, May 6 2026) the LLM emitting English-form dates
