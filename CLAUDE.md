@@ -610,11 +610,30 @@ under "⚠️ A/B-listen required" — the operator's merge is the ship gate,
 so landmine #17 is preserved. New review docs go to `docs/reviews/`;
 merging a review PR advances the rotation. Run `/review-show <slug>` in
 any Claude Code session for a manual pass with identical methodology.
-Setup + tuning: [`docs/REVIEW_AGENT.md`](docs/REVIEW_AGENT.md). Drift
-guards: `tests/test_review_agent.py` (rotation covers every show —
+The loop is **recursive, not just scheduled**: every review appends to a
+per-target ledger ([`docs/reviews/ledger/`](docs/reviews/ledger/)) with
+measurable `predictions:` the NEXT review must score (`hit`/`partial`/
+`miss` — a miss reopens the problem) and a `do_not_retry` list built from
+operator verdicts (closed-unmerged review PRs = rejections; git reverts
+of review commits = failed A/B listens — never re-proposed). Reviews
+start from `scripts/review_snapshot.py <slug>` (deterministic
+length/tic/chapter/cost/OP3 numbers — the cross-episode repeated-phrase
+detector finds boilerplate tics mechanically). When the agent edits a
+prompt and `GROK_API_KEY` is present it regenerates a digest via
+`run_show.py <slug> --test` and pastes before/after OUTPUT excerpts into
+the PR. `network` runs additionally meta-review the ledgers and may
+propose edits to the playbook itself (drift guards pin the safety
+language). The Daily Audit also dispatches an out-of-rotation review via
+`scripts/dispatch_quality_reviews.py` when a show ships editorial-
+critical issues (max 1/day, skips shows with an open review PR;
+`daily-audit.yml` gained `actions: write` + `pull-requests: read` for
+this). A review PR opening pings `NOTIFICATION_WEBHOOK_URL` (no-op when
+unset). Setup + tuning: [`docs/REVIEW_AGENT.md`](docs/REVIEW_AGENT.md).
+Drift guards: `tests/test_review_agent.py` (rotation covers every show —
 scaffolded new shows must be added to the state file; playbook keeps its
-safety language). Requires the `ANTHROPIC_API_KEY` secret + Claude
-GitHub App (one-time operator setup).
+safety language; ledger schema; snapshot + dispatcher logic). Requires
+the `ANTHROPIC_API_KEY` secret + Claude GitHub App (one-time operator
+setup).
 
 ### Recursive narrative memory generalized (Phase 3, May 2026)
 

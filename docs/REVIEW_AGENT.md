@@ -15,7 +15,34 @@ anything that changes shipped audio (landmine #17).
 | [`docs/reviews/review_state.yaml`](reviews/review_state.yaml) | Rotation state: target → last-reviewed date. 13 targets = 12 shows + `network` (cross-cutting review). |
 | [`scripts/pick_review_target.py`](../scripts/pick_review_target.py) | Deterministic picker: least-recently-reviewed target, alphabetical tie-break, `--exclude` for in-flight reviews. |
 | [`.github/workflows/show-review.yml`](../.github/workflows/show-review.yml) | The scheduler: Tue + Fri 07:00 UTC, runs Claude Code via `anthropics/claude-code-action@v1`. |
-| [`tests/test_review_agent.py`](../tests/test_review_agent.py) | Drift guards: rotation covers every show, picker semantics, playbook keeps its safety language, workflow wiring. |
+| [`docs/reviews/ledger/`](reviews/ledger/) | The agent's memory: per-target ledgers with shipped fixes, deferred backlog, measurable predictions, and operator-rejected `do_not_retry` ideas. Schema in the [README](reviews/ledger/README.md). |
+| [`scripts/review_snapshot.py`](../scripts/review_snapshot.py) | Deterministic per-show quality snapshot (script length vs target, cross-episode boilerplate-tic detector, chapter-shape problems, cost/episode, OP3 trend). Run it yourself: `python scripts/review_snapshot.py tesla`. |
+| [`scripts/dispatch_quality_reviews.py`](../scripts/dispatch_quality_reviews.py) | Event-driven trigger: the Daily Audit dispatches an out-of-rotation review when a show ships editorial-critical issues (max 1/day; skips shows with an open review PR). |
+| [`tests/test_review_agent.py`](../tests/test_review_agent.py) | Drift guards: rotation covers every show, picker semantics, playbook keeps its safety language, ledger schema, snapshot + dispatcher logic, workflow wiring. |
+
+## The recursive loop
+
+What makes this *iterative development* rather than isolated reviews:
+
+1. **Predictions are scored.** Every shipped fix that claims a measurable
+   effect gets a ledger `predictions:` entry (metric, baseline, expected).
+   The next review of that show starts by scoring them `hit`/`partial`/
+   `miss` — a `miss` reopens the problem with a different approach.
+2. **Your verdicts are learned.** Before reviewing a show, the agent reads
+   closed-unmerged `agent/review-<slug>-*` PRs (rejections) and checks git
+   for reverts of prior review commits (failed A/B listens). Both land in
+   the ledger's `do_not_retry` list and are never re-proposed without an
+   explicit argument that the evidence no longer applies.
+3. **Deferred items are a structured backlog**, carried in the ledger and
+   re-evaluated every pass instead of being lost in prose.
+4. **The playbook improves itself** — on `network` runs the agent
+   meta-reviews the ledgers (which finding categories ship vs. get
+   rejected) and proposes playbook edits in the same draft PR. The drift
+   guards pin the safety language, so it can sharpen its method but cannot
+   loosen its leash; your merge gates playbook changes like everything else.
+5. **Reviews are event-driven too.** The Daily Audit dispatches an
+   out-of-rotation review when a show ships editorial-critical issues —
+   review when something breaks, not only when the calendar says so.
 
 ## One-time setup (operator)
 
@@ -29,6 +56,15 @@ anything that changes shipped audio (landmine #17).
    run `claude setup-token` locally, store the result as
    `CLAUDE_CODE_OAUTH_TOKEN`, and swap the workflow's `anthropic_api_key:`
    input for `claude_code_oauth_token:`.
+
+Optional secrets (clean no-ops when unset):
+
+- **`GROK_API_KEY`** (already set for the shows): lets the agent regenerate
+  a digest in `--test` mode when it edits a prompt, so the PR shows
+  before/after *output* excerpts — you read the changed output before
+  deciding to merge-and-listen. No TTS, no publish; pennies per use.
+- **`NOTIFICATION_WEBHOOK_URL`** (already used by `post_run_summary.py`):
+  pings you when a review PR opens.
 
 That's it — everything else is committed to the repo.
 
@@ -63,7 +99,9 @@ That's it — everything else is committed to the repo.
 ## Forcing / tuning
 
 - **Review a specific show now:** Actions → "Show Review Agent" →
-  Run workflow → enter the slug (or `network`).
+  Run workflow → enter the slug (or `network`). Note: a forced target is
+  skipped (with a warning) if it already has an open review PR — close
+  that PR first to force a fresh pass.
 - **Run it yourself interactively:** open a Claude Code session in the repo
   and type `/review-show tesla` — the same playbook drives both paths, so
   manual and scheduled reviews stay methodologically identical.

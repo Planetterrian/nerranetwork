@@ -63,17 +63,27 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FORCED: ${{ inputs.show }}
         run: |
-          if [ -n "$FORCED" ]; then
-            echo "slug=$FORCED" >> "$GITHUB_OUTPUT"
-            echo "Forced target: $FORCED"
-            exit 0
-          fi
           # A target with an open review PR (branch agent/review-<slug>-<date>)
           # is skipped so the operator never gets two PRs for the same show.
+          # This applies to forced targets too (manual dispatch + the daily
+          # audit's dispatch_quality_reviews.py): close the existing review
+          # PR first if you really want a fresh pass.
           mapfile -t EXCLUDES < <(gh pr list --state open --json headRefName \
             --jq '.[].headRefName' \
             | sed -n 's#^agent/review-\(.*\)-[0-9]\{8\}$#\1#p' | sort -u)
           echo "In-flight review targets excluded: ${EXCLUDES[*]:-none}"
+          if [ -n "$FORCED" ]; then
+            for inflight in "${EXCLUDES[@]}"; do
+              if [ "$inflight" = "$FORCED" ]; then
+                echo "slug=" >> "$GITHUB_OUTPUT"
+                echo "::warning::'$FORCED' already has an open review PR — skipping. Close it first to force a fresh pass."
+                exit 0
+              fi
+            done
+            echo "slug=$FORCED" >> "$GITHUB_OUTPUT"
+            echo "Forced target: $FORCED"
+            exit 0
+          fi
           if SLUG=$(python scripts/pick_review_target.py --exclude "${EXCLUDES[@]}"); then
             echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
             echo "Picked target: $SLUG"
@@ -85,9 +95,39 @@ jobs:
       - name: Run review agent
         if: steps.pick.outputs.slug != ''
         uses: anthropics/claude-code-action@v1
+        env:
+          # Optional: lets the agent regenerate a digest in --test mode
+          # (fetch + LLM only, no TTS/publish) when it edits a prompt, so
+          # the PR shows before/after OUTPUT excerpts, not just the prompt
+          # diff. The playbook skips this silently when unset.
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: "/review-show ${{ steps.pick.outputs.slug }}"
           claude_args: |
             --model claude-opus-4-8
             --allowedTools "Bash,Read,Write,Edit,MultiEdit,Glob,Grep,WebFetch,WebSearch"
+
+      - name: Notify operator of new review PR
+        # Positive heartbeat in the spirit of post_run_summary.py — clean
+        # no-op when NOTIFICATION_WEBHOOK_URL is unset.
+        if: steps.pick.outputs.slug != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WEBHOOK: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+          SLUG: ${{ steps.pick.outputs.slug }}
+        run: |
+          if [ -z "$WEBHOOK" ]; then
+            echo "(NOTIFICATION_WEBHOOK_URL unset — notification not posted)"
+            exit 0
+          fi
+          URL=$(gh pr list --state open --json headRefName,url \
+            --jq ".[] | select(.headRefName | startswith(\"agent/review-${SLUG}-\")) | .url" \
+            | head -n 1)
+          if [ -n "$URL" ]; then
+            curl -fsS -X POST -H 'Content-Type: application/json' \
+              -d "{\"text\":\"📋 Show Review Agent opened a draft PR for ${SLUG}: ${URL}\"}" \
+              "$WEBHOOK" || echo "::warning::Webhook POST failed (non-fatal)"
+          else
+            echo "No open review PR found for ${SLUG} — nothing to announce"
+          fi

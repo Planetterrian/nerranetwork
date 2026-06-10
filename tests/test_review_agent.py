@@ -133,3 +133,129 @@ class TestWorkflowWiring:
         triggers = data.get("on") or data.get(True)  # yaml parses bare `on:` as True
         assert "schedule" in triggers
         assert "workflow_dispatch" in triggers
+
+    def test_workflow_supports_prompt_validation_and_notify(self):
+        text = WORKFLOW_PATH.read_text(encoding="utf-8")
+        # GROK_API_KEY enables the show-the-output prompt validation path.
+        assert "GROK_API_KEY" in text
+        # Operator heartbeat when a review PR opens (no-op when unset).
+        assert "NOTIFICATION_WEBHOOK_URL" in text
+
+    def test_forced_target_respects_in_flight_reviews(self):
+        # A forced dispatch (operator or daily-audit) must not double up on
+        # a show that already has an open review PR.
+        text = WORKFLOW_PATH.read_text(encoding="utf-8")
+        assert "already has an open review PR" in text
+
+
+def _load_script(name):
+    spec = importlib.util.spec_from_file_location(name, ROOT / "scripts" / f"{name}.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+class TestReviewSnapshot:
+    """The deterministic quality-snapshot script the playbook runs first."""
+
+    def test_tic_detector_finds_and_stitches_cross_episode_phrase(self):
+        snap = _load_script("review_snapshot")
+        boiler = "that truly wraps today's case file for the network everyone stay curious"
+        texts = [f"Story about topic{chr(97 + i)} today. {boiler}." for i in range(10)]
+        phrases = [p for p, _ in snap.find_repeated_ngrams(texts)]
+        # Stitching must reassemble the >8-word phrase into ONE entry, not
+        # report each overlapping 8-gram window separately.
+        assert any(
+            "wraps today's case file for the network everyone stay" in p for p in phrases
+        )
+        assert len([p for p in phrases if "case file" in p]) == 1
+
+    def test_tic_detector_ignores_unique_text(self):
+        snap = _load_script("review_snapshot")
+        letters = "abcdefghijklmnopqrstuvwxyz"
+        texts = [
+            " ".join(f"q{letters[i]}{letters[j]}word" for j in range(20))
+            for i in range(10)
+        ]  # tokens are unique per text — no shared n-grams at all
+        assert snap.find_repeated_ngrams(texts) == []
+
+    def test_chapter_issue_detection(self):
+        snap = _load_script("review_snapshot")
+        chapters = [
+            {"title": "Introduction"},
+            {"title": "Story one"},
+            {"title": "Introduction"},
+        ]
+        issues = " ".join(snap.chapter_issues(chapters))
+        assert "Introduction" in issues
+
+    def test_snapshot_runs_on_a_real_show(self):
+        snap = _load_script("review_snapshot")
+        report = snap.build_snapshot("tesla", episodes=3)
+        assert "Review snapshot: tesla" in report
+        assert "Script length" in report
+
+
+class TestQualityReviewDispatch:
+    """daily-audit's event-driven review trigger (scripts/dispatch_quality_reviews.py)."""
+
+    def test_picks_show_with_most_editorial_criticals(self):
+        mod = _load_script("dispatch_quality_reviews")
+        data = {
+            "remediation": {"auto_retry_shows": []},
+            "episodes": [
+                {"show": "tesla", "critical": 1},
+                {"show": "omni_view", "critical": 3},
+                {"show": "env_intel", "critical": 0},
+            ],
+        }
+        assert mod.pick_review_candidate(data) == "omni_view"
+
+    def test_missed_shows_are_retried_not_reviewed(self):
+        mod = _load_script("dispatch_quality_reviews")
+        data = {
+            "remediation": {"auto_retry_shows": ["tesla"]},
+            "episodes": [{"show": "tesla", "critical": 2}],
+        }
+        assert mod.pick_review_candidate(data) is None
+
+    def test_no_criticals_means_no_dispatch(self):
+        mod = _load_script("dispatch_quality_reviews")
+        data = {"episodes": [{"show": "tesla", "critical": 0, "warnings": 4}]}
+        assert mod.pick_review_candidate(data) is None
+
+    def test_daily_audit_wires_the_dispatcher(self):
+        audit = (ROOT / ".github" / "workflows" / "daily-audit.yml").read_text(encoding="utf-8")
+        assert "dispatch_quality_reviews.py" in audit
+        assert "actions: write" in audit
+
+
+class TestLedger:
+    """The review ledger is the recursive-memory mechanism."""
+
+    def test_schema_doc_exists(self):
+        readme = (ROOT / "docs" / "reviews" / "ledger" / "README.md").read_text(encoding="utf-8")
+        for key in ("predictions", "verdict", "do_not_retry", "deferred"):
+            assert key in readme
+
+    def test_seed_ledger_parses_with_expected_shape(self):
+        data = yaml.safe_load(
+            (ROOT / "docs" / "reviews" / "ledger" / "tesla.yaml").read_text(encoding="utf-8")
+        )
+        assert data["reviews"], "seed ledger must contain at least one review"
+        review = data["reviews"][0]
+        for key in ("date", "shipped", "deferred", "predictions"):
+            assert key in review
+        assert all("metric" in p and "verdict" in p for p in review["predictions"])
+        assert data["do_not_retry"], "seed must carry the landmine-17 do_not_retry entry"
+
+    def test_playbook_closes_the_loop(self):
+        text = PLAYBOOK_PATH.read_text(encoding="utf-8")
+        for needle in (
+            "docs/reviews/ledger/",
+            "do_not_retry",
+            "review_snapshot.py",
+            "predictions",
+            "meta-review",
+        ):
+            assert needle in text, f"playbook lost its recursive-loop step: {needle}"

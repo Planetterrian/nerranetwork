@@ -24,6 +24,31 @@ Target: **$ARGUMENTS** (a show slug matching `shows/<slug>.yaml`, or
 3. Read the live health data: `api/dashboard.json` (success rates, costs,
    landmine statuses), `api/op3_stats.json` (downloads), and
    `api/buttondown_stats.json` if present.
+4. **Read the review ledger** `docs/reviews/ledger/<slug>.yaml` (schema:
+   `docs/reviews/ledger/README.md`). Two obligations:
+   - **Score the previous review's predictions** against today's data:
+     update each `verdict:` to `hit` / `partial` / `miss` with one line of
+     evidence. A `miss` means the underlying problem is still open — it
+     goes back on today's findings list, attacked with a *different*
+     approach than last time.
+   - **Honor `do_not_retry`.** These are operator-rejected or reverted
+     ideas. Never re-propose one unless you explicitly argue, in the review
+     doc, why its recorded evidence no longer applies.
+5. **Learn from operator verdicts since the last review:**
+   - `gh pr list --state closed --json number,headRefName,title,url --limit 50`
+     filtered to branches starting `agent/review-<slug>-`. A closed-UNMERGED
+     review PR is a rejection: read its comments
+     (`gh pr view <number> --comments`) and record the rejected ideas under
+     `do_not_retry` in the ledger.
+   - Check `git log --oneline -30 -i --grep=revert` (plus the files touched
+     by the last review's commits). A reverted prompt/audio change is a
+     failed A/B listen — record it under `do_not_retry` with the revert
+     hash as evidence.
+6. **Run `python scripts/review_snapshot.py <slug>`** and start from its
+   numbers: script length vs target, cross-episode repeated phrases (the
+   boilerplate-tic detector), chapter-shape problems, cost/episode, OP3
+   trend. Verify anything surprising against the raw files before treating
+   it as a finding.
 
 ## Phase 1 — Evidence gathering (show review)
 
@@ -52,7 +77,16 @@ dead rotation pools, and template echo.
 For a `network` review, instead sweep cross-cutting surfaces: workflows in
 `.github/workflows/`, shared `engine/` modules, the website/newsletter/X/
 YouTube funnels, cost data, landmine statuses, and per-show download trends —
-in the style of `docs/network_review_2026_06.md`.
+in the style of `docs/network_review_2026_06.md`. A `network` review ALSO
+runs the **meta-review** of the review process itself: aggregate every
+ledger in `docs/reviews/ledger/` — prediction verdict rates by finding
+category, what the operator rejected or reverted, which fix classes keep
+missing. If a category of finding consistently misses or gets rejected,
+propose edits to THIS playbook (`.claude/commands/review-show.md`) in the
+same draft PR so future reviews stop wasting effort on it (and weight up
+the categories that consistently ship). `tests/test_review_agent.py` pins
+the safety-critical language — never weaken the hard guardrails, the
+draft-PR-only contract, or the A/B-listen callout.
 
 ## Phase 2 — Findings
 
@@ -77,6 +111,16 @@ citations. A claim you did not verify does not go in the review.
   required (landmine #17)" section of the PR body so the operator listens
   before trusting it. Never claim a prompt change is verified — only that
   it renders (`tests/test_prompt_fidelity.py`).
+- **Show the operator the output, not just the prompt diff.** If you
+  changed a digest prompt and `GROK_API_KEY` is set in the environment,
+  exercise it: `python run_show.py <slug> --test` regenerates a digest
+  (fetch + LLM only — no TTS, no X, no RSS, costs pennies). For
+  podcast-prompt changes, drive `engine.generator.generate_podcast_script`
+  directly against the latest committed digest. Paste short before/after
+  excerpts into the PR's "A/B-listen required" section so the operator can
+  READ the changed output before deciding to merge-and-listen. Skip
+  silently when the key is unset. Never run the full pipeline or any
+  publish/post step.
 - **Defer** large refactors and anything irreversible: document them in the
   review doc as recommendations instead.
 - **Every behavioral fix gets a drift-guard test**, following the existing
@@ -109,9 +153,18 @@ citations. A claim you did not verify does not go in the review.
 2. The fixes + drift-guard tests.
 3. Update the target's entry in `docs/reviews/review_state.yaml` to today's
    date (this advances the rotation when the PR merges).
-4. Update the show's quality-pass notes in `CLAUDE.md` (concise — follow the
+4. **Append this review to `docs/reviews/ledger/<slug>.yaml`** (schema in
+   `docs/reviews/ledger/README.md`): shipped fixes, deferred items (carried
+   forward and re-evaluated each pass — this is the structured backlog),
+   updated verdicts on the previous entry's predictions, any new
+   `do_not_retry` entries learned from operator verdicts, and — for every
+   shipped fix that claims a measurable effect — a `predictions:` entry
+   with the metric, today's baseline, and the expected value. The next
+   review scores it; a fix whose prediction can't be stated probably isn't
+   a fix. Record `agent_cost_usd` if you know it, else leave null.
+5. Update the show's quality-pass notes in `CLAUDE.md` (concise — follow the
    existing June 2026 entries' style) if behavior changed.
-5. Branch named `agent/review-<slug>-<YYYYMMDD>` (this exact prefix is how
+6. Branch named `agent/review-<slug>-<YYYYMMDD>` (this exact prefix is how
    the scheduler detects an in-flight review and skips the slug). Commit,
    push with `git push -u origin <branch>`, then open a **draft** PR via
    `gh pr create --draft` titled `[show-review] <Show name> quality pass
