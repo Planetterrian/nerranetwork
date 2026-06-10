@@ -286,21 +286,30 @@ def _build_hero_html(show: Dict[str, str], pill_text: str) -> str:
 
 _DARK_MODE_STYLE = """\
 <style>
-  /* Newsletter v2 (May 2026): expanded dark-mode stylesheet that
-   * targets each brand color individually so contrast hits WCAG AA on
-   * the dark surface, plus class hooks for ``preheader``,
-   * ``card``, ``surface-*`` so inline-color overrides don't lose the
-   * specificity war in Outlook iOS / mobile Gmail.
+  /* Newsletter v3 (June 2026): SCOPED dark-mode stylesheet.
    *
-   * Spec references: §1.3 light-mode contrast swaps, §1.4 dark-mode
-   * brand tokens + ``.preheader`` hide.
+   * History of the iPhone dark-mode bug (several failed attempts):
+   * the v2 block used GLOBAL selectors (``h1 { color:#fff }``, a
+   * universal ``p/td/div/span → #e2e8f0`` flip, and td-style-attribute
+   * background matches). Those rules don't stop at our content — they
+   * also recolor BUTTONDOWN'S OWN WRAPPER (the subject-as-title
+   * heading, the "NERRA NETWORK · date" byline, the forward line,
+   * the unsubscribe footer). Our
+   * backgrounds flipped dark but Buttondown's wrapper backgrounds
+   * stayed light → white-on-white headings on iOS Mail (operator
+   * screenshots, Jun 9 2026).
+   *
+   * v3 rule: every selector that changes a COLOR must be scoped to
+   * ``.nn`` — the marker class ``wrap_with_branding`` stamps on every
+   * table/div we emit. Buttondown's chrome keeps its native colors
+   * (dark-on-light in both modes — always readable); our cards adapt.
+   * Drift guard: tests/test_newsletter_template.py::TestDarkModeScoping
+   * fails on any unscoped color rule inside the @media block.
    */
   /* Opt INTO native dark-mode handling. Without this, Apple Mail (iOS)
    * runs its OWN automatic colour transform on the email and ignores the
    * @media rules below — and its transform renders our near-black
-   * (#0f172a) section headings DIMMER than the body text, so the main
-   * headings looked washed-out/unreadable on the operator's phone while
-   * our Chromium previews (which honour @media) looked fine. Declaring
+   * (#0f172a) section headings DIMMER than the body text. Declaring
    * color-scheme tells Apple Mail "this email ships its own dark styles,
    * use them" so the @media block actually applies. */
   :root { color-scheme: light dark; }
@@ -312,49 +321,49 @@ _DARK_MODE_STYLE = """\
   }
 
   @media (prefers-color-scheme: dark) {
-    /* Page + table containers — flip the white shells. */
-    body, .email-bg, .surface-white, .surface-fafafa, .surface-f8fafc,
-    table[role=presentation] td[style*='background:#ffffff'],
-    table[role=presentation] td[style*='background:#fafafa'],
-    table[role=presentation] td[style*='background:#f8fafc'] {
+    /* Our white/gray shells — class-targeted only. The v2 td-style-
+     * attribute background selectors are deliberately GONE: they could
+     * match Buttondown wrapper tables whose text we no longer recolor,
+     * producing dark-on-dark in their chrome. */
+    .surface-white, .surface-fafafa, .surface-f8fafc {
       background:#0f172a !important;
       background-color:#0f172a !important;
     }
 
     /* Cards (slightly lifted "panel" surfaces). A subtle border helps
      * them read as distinct panels against the near-black page. */
-    .card {
+    .nn .card, .card {
       background:#1e293b !important;
       background-color:#1e293b !important;
       border-color:#334155 !important;
     }
 
     /* Stock-watch delta direction colours — lighter variants so the
-     * up/down signal survives dark mode (class beats the universal
+     * up/down signal survives dark mode (class beats the scoped
      * ``span`` text override). */
-    .delta-up   { color:#34d399 !important; }   /* emerald-400 */
-    .delta-down { color:#fb7185 !important; }   /* rose-400 */
-    .delta-flat { color:#94a3b8 !important; }   /* slate-400 */
+    .nn .delta-up   { color:#34d399 !important; }   /* emerald-400 */
+    .nn .delta-down { color:#fb7185 !important; }   /* rose-400 */
+    .nn .delta-flat { color:#94a3b8 !important; }   /* slate-400 */
 
-    /* Primary text on every dark-mode surface. ``strong``/``b``/``em``/
-     * ``i``/``code`` are listed explicitly: we now set an inline colour
-     * on bold text (so Buttondown's theme accent can't recolour it), and
-     * that inline colour has to be flipped here for dark mode. */
-    body, p, h1, h2, h3, h4, td, span, div, li,
-    strong, b, em, i, code {
+    /* Primary text on OUR dark-mode surfaces only. ``strong``/``b``/
+     * ``em``/``i``/``code`` are listed explicitly: bold text carries an
+     * inline colour (so Buttondown's theme accent can't recolour it),
+     * and that inline colour has to be flipped here for dark mode. */
+    .nn, .nn p, .nn td, .nn span, .nn div, .nn li,
+    .nn strong, .nn b, .nn em, .nn i, .nn code {
       color:#e2e8f0 !important;
     }
     /* Section headings are the BRIGHTEST text so they read as headings,
-     * not as dimmer-than-body labels (the exact regression on the
-     * operator's phone). Dedicated, simple selector + pure white, placed
-     * AFTER the universal rule so it wins for h1-h4. */
-    h1, h2, h3, h4 { color:#ffffff !important; }
+     * not as dimmer-than-body labels. Placed AFTER the universal rule
+     * so it wins for h1-h4 — and scoped so Buttondown's subject-title
+     * heading is never touched. */
+    .nn h1, .nn h2, .nn h3, .nn h4 { color:#ffffff !important; }
     /* Secondary / muted text — class-targeted so it doesn't override
      * other usages. */
-    .text-muted { color:#94a3b8 !important; }
+    .nn .text-muted { color:#94a3b8 !important; }
 
     /* Links. */
-    a, a span { color:#93c5fd !important; }
+    .nn a, .nn a span { color:#93c5fd !important; }
 
     /* Brand-color tokens — lighter dark-mode variants for AA contrast
      * on `#1e293b` cards. The original brand colors are preserved in
@@ -387,11 +396,42 @@ _DARK_MODE_STYLE = """\
      * is active; the !important class hook fixes it. */
     .preheader { display:none !important; }
 
-    /* `<hr>` separators flip from light slate to dark slate. */
-    hr { border-top-color:#334155 !important; }
+    /* `<hr>` separators flip from light slate to dark slate — ours
+     * only (Buttondown's chrome may use its own hr). */
+    .nn hr, hr.nn { border-top-color:#334155 !important; }
   }
 </style>
 """
+
+
+# Matches the opening tags wrap_with_branding stamps with the ``nn``
+# scope-marker class. Tables/divs are the roots of every block we emit;
+# marking nested ones too is harmless (descendant selectors are
+# unaffected) and removes any dependence on block-internal structure.
+_NN_TAG_RE = re.compile(r"<(table|div|p|hr)\b([^>]*)>", re.IGNORECASE)
+
+
+def _scope_nn(html: str) -> str:
+    """Stamp the ``nn`` marker class on every table/div/p/hr in *html*.
+
+    The dark-mode stylesheet (v3, June 2026) only recolors elements
+    under ``.nn`` so Buttondown's own wrapper (subject title, byline,
+    forward line, unsubscribe footer) keeps its native colors — the
+    iPhone dark-mode white-on-white bug was our global selectors
+    leaking onto chrome we don't control.
+    """
+    if not html:
+        return html
+
+    def _add(match: "re.Match[str]") -> str:
+        tag, attrs = match.group(1), match.group(2)
+        if re.search(r'\bclass="', attrs):
+            attrs = attrs.replace('class="', 'class="nn ', 1)
+        else:
+            attrs = f'{attrs} class="nn"'
+        return f"<{tag}{attrs}>"
+
+    return _NN_TAG_RE.sub(_add, html)
 
 
 # ---------------------------------------------------------------------------
@@ -559,6 +599,7 @@ def _build_p_s_html(p_s: str, brand: str, slug: str = "") -> str:
     return (
         '<table role="presentation" width="100%" cellpadding="0" '
         'cellspacing="0" border="0" '
+        'class="surface-white" '
         'style="background:#ffffff;">'
         '<tr><td style="padding:12px 24px 24px;">'
         f'<table role="presentation" width="100%" cellpadding="0" '
@@ -1875,19 +1916,25 @@ def wrap_with_branding(
     # them as separate sections. Empty blocks contribute nothing. The
     # dark-mode <style> block goes at the very top so any client that
     # respects @media queries picks it up before parsing the body.
+    # Every content block is stamped with the ``nn`` scope-marker class
+    # (_scope_nn) so the dark-mode stylesheet recolors OUR content only
+    # — never Buttondown's wrapper (June 2026 iPhone dark-mode fix).
     parts = [
         _DARK_MODE_STYLE,
-        preheader_div,
-        view_in_browser,
-        hero,
-        stats_block,
-        featured_block,
-        disclaimer,
-        body_wrapped,
-        p_s_block,
-        cross_network,
-        reply_share,
-        footer,
-        issue_counter,
+    ] + [
+        _scope_nn(p) for p in (
+            preheader_div,
+            view_in_browser,
+            hero,
+            stats_block,
+            featured_block,
+            disclaimer,
+            body_wrapped,
+            p_s_block,
+            cross_network,
+            reply_share,
+            footer,
+            issue_counter,
+        )
     ]
     return "\n\n".join(p for p in parts if p) + "\n"
