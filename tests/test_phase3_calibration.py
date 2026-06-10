@@ -71,7 +71,7 @@ class TestRecalibratedMinPodcastWords:
     EXPECTED = {
         "tesla":                   2000,  # June 10 2026 review: single 2,200-2,400-word target
         "fascinating_frontiers":   1700,  # June 10 2026 review: single 1,900-2,200-word target
-        "planetterrian":           1250,
+        "planetterrian":           1600,  # June 10 2026 PT pass: single 1,800-2,100-word target
         "modern_investing":        1800,  # June 10 2026 review: single 2,000-2,200-word target
         "omni_view":               900,
         "unintended_consequences": 1300,
