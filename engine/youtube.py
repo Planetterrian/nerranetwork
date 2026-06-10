@@ -110,10 +110,21 @@ def get_channel_credentials_from_env(channel: str = "en"):
     refresh_token = os.getenv(f"YOUTUBE_REFRESH_TOKEN_{suffix}", "").strip()
 
     if not all([client_id, client_secret, refresh_token]):
-        logger.info(
-            "YouTube credentials not fully set for channel=%s — skipping",
-            channel,
-        )
+        if suffix == "RU" and client_id and client_secret:
+            # The EN pipeline works but the RU channel token specifically
+            # is missing — the show YAML *asked* for @NerraRU uploads and
+            # they are silently no-oping (June 2026 review: FP/PR shipped
+            # for days with youtube_enabled flipping on no upload).
+            logger.warning(
+                "YouTube channel=ru is configured for this show but "
+                "YOUTUBE_REFRESH_TOKEN_RU is not set — uploads will no-op "
+                "until the secret is added.",
+            )
+        else:
+            logger.info(
+                "YouTube credentials not fully set for channel=%s — skipping",
+                channel,
+            )
         return None
 
     return build_oauth_credentials(

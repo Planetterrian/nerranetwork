@@ -4277,7 +4277,16 @@ def _publish_youtube(
                             )
                             if has_word_cues:
                                 this_srt_path = ass_candidate
+                                result["shorts_captions_path"] = "ass"
+                                logger.info(
+                                    "Shorts captions: per-word ASS path",
+                                )
                             else:
+                                result["shorts_captions_path"] = "srt_fallback"
+                                logger.info(
+                                    "Shorts captions: SRT fallback (no "
+                                    "word-level cues in transcript)",
+                                )
                                 srt_candidate = (
                                     work_dir / f"{base_name}_short{suffix}.srt"
                                 )
