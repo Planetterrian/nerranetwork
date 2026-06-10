@@ -73,7 +73,7 @@ class TestRecalibratedMinPodcastWords:
         "fascinating_frontiers":   1700,  # June 10 2026 review: single 1,900-2,200-word target
         "planetterrian":           1600,  # June 10 2026 PT pass: single 1,800-2,100-word target
         "modern_investing":        1800,  # June 10 2026 review: single 2,000-2,200-word target
-        "omni_view":               900,
+        "omni_view":               1400,  # June 10 2026 OV pass: single 1,700-2,000-word target + expand opt-in
         "unintended_consequences": 1300,
         "finansy_prosto":          1000,  # June 10 2026 Russian-shows pass
         "privet_russian":          800,  # June 10 2026 Russian-shows pass

@@ -1,0 +1,50 @@
+# Omni View review ledger. Schema: docs/reviews/ledger/README.md
+reviews:
+  - date: 2026-06-10
+    pr: 589
+    doc: docs/reviews/omni_view_review_2026_06_10.md
+    summary: >
+      First dedicated quality pass. Fixed the orphan-Closing-chapter +
+      garbage-deep-dive-title bugs (show was missed by every chapter
+      hardening round), re-attacked the steel-man scaffolding tic at its
+      digest-prompt root after the June "strongest case <=1x" instruction
+      failed (12-20x/episode, or mutated to anonymous "one side frames"),
+      and unified three contradictory length targets + added the
+      podcast_expand_below_target opt-in the June network pass missed.
+    shipped:
+      - chapter where-anchors + closing/deep-dive/teaser pattern coverage (metadata-only)
+      - digest steel-man prompt rewrite (drop canned "strongest case for X" lead-in; require named advocates; ban anonymous "one side/the other side")
+      - podcast steel-man anonymity ban ("one side frames / advocates on each side")
+      - unified podcast length target (1,700-2,000w) + podcast_expand_below_target + min_podcast_words 900->1400
+    deferred:
+      - milder "Both sides agree X; they differ on whether Y" frame still recurs (3x in test digest) — watch whether it becomes the next tic
+      - low OP3 downloads (28/7d) — network-funnel question, editorial levers already pulled
+    predictions:
+      - metric: episodes (last 10) with a Closing chapter in chapters_ep*.json
+        baseline: "3 of 10"
+        expected: "10 of 10 within 2 weeks"
+        verdict: pending
+        evidence: null
+      - metric: chapters with sentence-fragment / ellipsis titles (last 10 eps)
+        baseline: ">=2 (ep061, ep068)"
+        expected: "0"
+        verdict: pending
+        evidence: null
+      - metric: max "the strongest case" count in any single episode (last 10)
+        baseline: 20
+        expected: "<= 1"
+        verdict: pending
+        evidence: null
+      - metric: episodes opening stories with anonymous "one side frames / the other side frames" (last 10)
+        baseline: ">=1 (ep077, 6x)"
+        expected: "0"
+        verdict: pending
+        evidence: null
+      - metric: median _tts.txt words (last 10 eps)
+        baseline: 1150
+        expected: ">= 1600 within 2 weeks"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
+do_not_retry: []
