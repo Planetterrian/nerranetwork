@@ -229,6 +229,18 @@ TST received a full recursive improvement architecture (analogous to MIT):
   `shows/privet_russian.yaml`; bilingual Russian language learning podcast
   for English speakers. Even days only. Uses **ElevenLabs TTS**
   (`eleven_flash_v2_5` with `language_code: ru`). X posting disabled.
+- **June 10 2026 Planetterrian pass** (review:
+  [`docs/planetterrian_review_2026_06_10.md`](docs/planetterrian_review_2026_06_10.md);
+  drift guards: `tests/test_planetterrian_quality_pass.py`): NEW
+  network-wide missing-closing guard in `engine/pipeline.py` (PT Ep081/084
+  shipped without the supplied closing block — Ep084 ended mid-teaser; the
+  pipeline now appends the resolved `closing_block` verbatim when absent,
+  before chapter parsing); ONE unified length target (1,800–2,100 words ≈
+  12–13 min, floor 1250→1600 — the prompt had demanded three conflicting
+  lengths and all 15 recent episodes ran under target, avg ~970); chapter
+  `where` anchors + "see you next" closing coverage. Watch the first week
+  for `podcast_script_too_thin` skip markers; fall back to floor 1400 if
+  PT skips more than once. A/B-listen per landmine #17.
 - **June 10 2026 Russian-shows pass** (FP + PR; review:
   [`docs/russian_shows_review_2026_06_10.md`](docs/russian_shows_review_2026_06_10.md);
   drift guards: `tests/test_russian_shows_quality_pass.py`): the spoken +

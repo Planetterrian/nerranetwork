@@ -328,6 +328,28 @@ def run_generation_phase(
         template_vars_for_script, config, tracker=tracker
     )
 
+    # Missing-closing guard (June 10 2026, Planetterrian review): PT
+    # Ep081/Ep084 shipped without the supplied closing block — Ep084
+    # ended mid-teaser with no sign-off, no CTA, and no Closing chapter.
+    # The prompts say "use this exact closing (do not rewrite it)" but
+    # the LLM occasionally omits it. If the resolved closing's opening
+    # signature isn't in the script's tail, append the block verbatim so
+    # every episode ends properly (and the Closing chapter always parses).
+    _closing = str(pod_vars.get("closing_block", "")).strip()
+    if _closing and podcast_script:
+        import re as _re_close
+        _sig = " ".join(
+            _re_close.sub(r"^\s*\w+:\s*", "", _closing).split()[:5]
+        ).lower()
+        _tail = podcast_script[-max(len(podcast_script) // 4, 600):].lower()
+        if _sig and _sig not in _tail:
+            logger.warning(
+                "Podcast script is missing the supplied closing block — "
+                "appending it verbatim (script ended: %r)",
+                podcast_script.rstrip()[-80:],
+            )
+            podcast_script = podcast_script.rstrip() + "\n\n" + _closing
+
     # Chapter parsing (if enabled for the show)
     episode_chapters: list = []
     if (getattr(config, "chapters", None)
