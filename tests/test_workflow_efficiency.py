@@ -84,3 +84,23 @@ class TestBackfillSkipsMetaYamls:
         src = (_ROOT / "scripts" / "backfill_content_lake.py").read_text(encoding="utf-8")
         assert "_NON_SHOW_YAMLS" in src
         assert 'startswith("_")' in src
+
+
+class TestNoEpisodeMediaAtHead:
+    """The clone-cost fix holds only while HEAD stays free of episode
+    media (landmine #1: 2.2 GB of MP3s live in history; a shallow clone
+    still downloads every blob at HEAD)."""
+
+    def test_no_episode_mp3s_tracked(self):
+        import subprocess
+        out = subprocess.run(
+            ["git", "ls-files", "digests/*.mp3", "digests/**/*.mp3",
+             "digests/**/*.mp4", "digests/**/*.wav"],
+            capture_output=True, text=True, cwd=_ROOT,
+        ).stdout.strip()
+        assert out == "", f"episode media tracked at HEAD: {out[:200]}"
+
+    def test_gitignore_guards_present(self):
+        gi = (_ROOT / ".gitignore").read_text(encoding="utf-8")
+        assert "digests/**/*.mp3" in gi
+        assert "!assets/music/*.mp3" in gi
