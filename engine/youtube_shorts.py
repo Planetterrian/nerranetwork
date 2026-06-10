@@ -105,12 +105,21 @@ def resolve_shorts_start_offset(
             short_dur = float(
                 getattr(yt, "short_duration_seconds", 55.0) or 55.0
             )
+            # June 10 2026: pass the per-show noise floor. Tesla's 3.5
+            # override (May retune) never reached this path — the YAML
+            # field wasn't declared on YouTubeConfig AND this call left
+            # the selector at its 5.0 default, so measured/narrative
+            # shows fell back to the legacy voice start almost daily.
+            threshold = float(
+                getattr(yt, "shorts_min_score_threshold", 5.0) or 5.0
+            )
             best = pick_engaging_window(
                 transcript_path,
                 audio_offset=voice_offset,
                 audio_duration=audio_duration,
                 window_duration=short_dur,
                 min_start_final=voice_offset,
+                min_score_threshold=threshold,
             )
             if best is not None:
                 logger.info(

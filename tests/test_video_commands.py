@@ -765,9 +765,13 @@ def test_build_long_form_video_renders_slideshow_for_multi_scene(tmp_path,
 
     # Two ffmpeg invocations: stage-1 slideshow, stage-2 composite.
     assert len(captured_cmds) == 2
-    # Stage 1 has 3 inputs (one per scene), no audio output.
+    # Stage 1 has one input per scene SLOT, no audio output. June 2026:
+    # scenes cycle so no image holds >25 s — 360 s / 3 scenes would have
+    # been 120 s/image, so the list repeats (360/25 → 15 slots), each
+    # slot still drawn from the 3 source scenes.
     assert "-an" in captured_cmds[0]
-    assert captured_cmds[0].count("-i") == 3
+    assert captured_cmds[0].count("-i") >= 3
+    assert captured_cmds[0].count("-i") % 3 == 0  # whole cycles of the 3 scenes
     # Stage 2 uses -stream_loop on the slideshow MP4.
     assert "-stream_loop" in captured_cmds[1]
 

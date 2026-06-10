@@ -266,6 +266,20 @@ class NewsletterConfig:
     api_key_env: str = "BUTTONDOWN_API_KEY"
     status: str = "about_to_send"  # "about_to_send", "draft", or "scheduled"
     tag: str = ""  # Buttondown tag for per-show subscriber filtering
+    # June 10 2026: these fields were set in show YAMLs and read via
+    # getattr() on this dataclass — but never DECLARED here, so
+    # _build_nested silently dropped them and the getattr defaults always
+    # won. Most damaging: requires_financial_disclaimer was always False,
+    # so the financial-show newsletters shipped without the disclaimer
+    # their YAML requested. (Template paths that read the RAW yaml dict
+    # were unaffected — the two access styles had silently diverged.)
+    short_label: str = ""
+    emoji: str = ""
+    newsletter_start_date: str = ""
+    requires_financial_disclaimer: bool = False
+    length_target_words: int = 0
+    adjacent_shows: list = field(default_factory=list)
+    network_adjacencies: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -381,6 +395,13 @@ class YouTubeConfig:
     shorts_start_offset: Optional[float] = None
     # ``voice`` | ``first_chapter`` — see engine.youtube_shorts.
     shorts_start_mode: str = "voice"
+    # Smart-selector noise floor: candidate Shorts windows scoring below
+    # this fall back to the legacy voice start. June 10 2026 fix: this
+    # field was MISSING from the dataclass, so Tesla's 3.5 YAML override
+    # (May 2026 retune) was silently dropped by _build_nested and every
+    # episode ran at the 5.0 default — Ep505's "best score 3.0 below
+    # threshold 5.0" fallback was this bug, not a quiet news day.
+    shorts_min_score_threshold: float = 5.0
     # ``always`` | ``alternate_episodes`` — skip Shorts on odd episode
     # numbers to halve upload quota during phased rollout.
     shorts_upload_schedule: str = "always"
@@ -613,10 +634,23 @@ def _build_chapters(raw: dict) -> ChaptersConfig:
 
 
 def _build_nested(cls, raw: dict):
-    """Instantiate a dataclass from a dict, ignoring unknown keys."""
+    """Instantiate a dataclass from a dict, ignoring unknown keys.
+
+    Unknown keys are dropped for forward/backward compat, but LOUDLY —
+    a silently-ignored knob cost the Tesla smart-Shorts selector a month
+    of running at the wrong threshold (the YAML set a field the
+    dataclass didn't declare; see YouTubeConfig.shorts_min_score_threshold).
+    """
     if not raw or not isinstance(raw, dict):
         return cls()
     known = {f.name for f in cls.__dataclass_fields__.values()}
+    unknown = set(raw) - known
+    if unknown:
+        logger.warning(
+            "%s: ignoring unknown config key(s) %s — add the field to the "
+            "dataclass in engine/config.py if it's meant to do something",
+            cls.__name__, sorted(unknown),
+        )
     return cls(**{k: v for k, v in raw.items() if k in known})
 
 

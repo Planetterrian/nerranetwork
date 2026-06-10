@@ -95,8 +95,14 @@ tts:
   # When true, any leak aborts the episode before mixing/publishing.
   tag_leak_hard_block: false
 
+# Network-wide minimum final-audio length guard (skip the episode if
+# shorter). June 10 2026 fix: this lived INSIDE the audio: block, but
+# it's a top-level ShowConfig field — AudioConfig silently dropped it,
+# so the 180 s guard was dead for every show that didn't also set it
+# top-level (only Tesla did, at 300).
+min_audio_duration: 180
+
 audio:
-  min_audio_duration: 180
   transition_sting: assets/music/transition_sting.mp3
   # Music timing — retuned May 13 2026 after operator listened to
   # TST Ep471 audio and asked for the outro to "let music run by

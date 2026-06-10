@@ -1115,13 +1115,32 @@ def build_long_form_video(
             audio_duration_s = _get_duration(str(audio_path)) or 0.0
         except Exception:
             audio_duration_s = 0.0
+        slideshow_scenes = list(scene_paths)
         if audio_duration_s > 0:
-            scene_duration_s = max(8.0, audio_duration_s / len(scene_paths))
+            scene_duration_s = max(8.0, audio_duration_s / len(slideshow_scenes))
+            # June 10 2026: cycle the scene list so no single image holds
+            # longer than ~25 s. The May 12 retune deliberately halved the
+            # Grok Imagine spend to 4 images/aspect, which left each scene
+            # on screen ~2-3 minutes on a full-length episode (Ep505: 4
+            # scenes over 673 s = 168 s/image) — visually static. Reusing
+            # the SAME images in rotation restores visual rhythm at zero
+            # additional image cost.
+            _MAX_SCENE_HOLD_S = 25.0
+            if scene_duration_s > _MAX_SCENE_HOLD_S and len(slideshow_scenes) > 1:
+                import math
+                target = math.ceil(audio_duration_s / _MAX_SCENE_HOLD_S)
+                slideshow_scenes = [
+                    slideshow_scenes[i % len(slideshow_scenes)]
+                    for i in range(target)
+                ]
+                scene_duration_s = max(
+                    8.0, audio_duration_s / len(slideshow_scenes),
+                )
         else:
             scene_duration_s = _SCENE_DURATION_SECONDS  # legacy 12 s
         try:
             _render_slideshow(
-                scene_paths, slideshow_path,
+                slideshow_scenes, slideshow_path,
                 scene_duration=scene_duration_s, fps=fps,
             )
             bg_path = slideshow_path

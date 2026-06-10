@@ -83,18 +83,19 @@ def _capture_scene_duration(stub_paths, audio_duration_s, num_scenes=8):
 
 class TestSceneCadenceMatchesAudio:
 
-    def test_six_minute_episode_eight_scenes_44s_each(self, stub_paths):
-        """Typical Tesla / MAB episode: 360 s audio, 8 scenes →
-        45 s/scene (one cycle, no loops)."""
+    def test_six_minute_episode_cycles_to_25s_cap(self, stub_paths):
+        """June 10 2026: scenes CYCLE so no image holds longer than ~25 s
+        (360 s/8 = 45 s/scene used to ship — visually static; the scene
+        list now repeats in rotation at zero added image cost)."""
         dur = _capture_scene_duration(stub_paths, audio_duration_s=360.0)
-        assert dur == pytest.approx(45.0, rel=0.01), (
-            f"Expected ~45 s/scene for 360 s/8, got {dur}"
+        assert dur is not None and 8.0 <= dur <= 25.0, (
+            f"Expected ≤25 s/scene after cycling for 360 s/8, got {dur}"
         )
 
-    def test_ten_minute_episode_eight_scenes_75s_each(self, stub_paths):
-        """Long-form episode: 600 s audio, 8 scenes → 75 s/scene."""
+    def test_ten_minute_episode_cycles_to_25s_cap(self, stub_paths):
+        """600 s/8 = 75 s/scene pre-fix; cycling caps the hold at ≤25 s."""
         dur = _capture_scene_duration(stub_paths, audio_duration_s=600.0)
-        assert dur == pytest.approx(75.0, rel=0.01)
+        assert dur is not None and 8.0 <= dur <= 25.0
 
     def test_thirty_second_teaser_clamps_to_floor(self, stub_paths):
         """Very short audio gets clamped to the 8 s floor so scenes
