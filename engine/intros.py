@@ -253,12 +253,16 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
         "openers": [
             "episode {ep}, for {date}.",
             "episode {ep}. It's {date}.",
-            "episode {ep}, for {date}. Your daily environmental intelligence briefing.",
+            "episode {ep}, for {date}. Your environmental intelligence briefing.",
         ],
+        # env_intel publishes on odd weekdays, NOT daily — keep the framing
+        # and closing cadence-neutral so the spoken copy isn't factually
+        # wrong (it previously said "Your daily briefing" / "We're back
+        # tomorrow" on a show with a two-day-plus gap between episodes).
         "framings": [
-            "Your daily briefing on environmental regulatory, science, and compliance developments that matter for Canadian professionals.",
-            "Here's what changed overnight in the environmental regulatory landscape.",
-            "Let's get into today's environmental developments across Canadian jurisdictions.",
+            "Your briefing on environmental regulatory, science, and compliance developments that matter for Canadian professionals.",
+            "Here's what's changed recently in the environmental regulatory landscape.",
+            "Let's get into the latest environmental developments across Canadian jurisdictions.",
         ],
         "day_colors": {
             0: {
@@ -278,12 +282,12 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
             (
                 "That's Environmental Intelligence for today. If this briefing is useful to "
                 "your practice, share it with a colleague and subscribe wherever you get your "
-                "podcasts. We're back tomorrow. Have a productive day."
+                "podcasts. We'll be back with the next briefing. Have a productive day."
             ),
             (
                 "That covers today's environmental intelligence. If you found this useful, "
                 "share it with a colleague who needs to stay current. "
-                "We're back tomorrow morning."
+                "We'll be back with the next briefing."
             ),
         ],
     },

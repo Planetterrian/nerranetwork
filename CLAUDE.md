@@ -115,7 +115,23 @@ nerranetwork/
   emoji formatting via `engine.publisher.format_tst_digest_for_x()`
 - **OV** is structurally different — different TTS approach (no streaming, uses
   env vars for voice settings), simpler functions
-- **EI** runs exclusively via `run_show.py` + `shows/env_intel.yaml`; no legacy script
+- **EI** runs exclusively via `run_show.py` + `shows/env_intel.yaml`; no legacy script.
+  **June 10 2026 quality pass** (review:
+  [`docs/reviews/env_intel_review_2026_06_10.md`](docs/reviews/env_intel_review_2026_06_10.md);
+  drift guards: `tests/test_env_intel_quality_pass.py`): EI was missed by
+  the Tesla/PT/four-show chapter fixes — it had no positional `where`
+  anchors, so the "Closing" chapter could land mid-script (Ep040, position
+  7 of 10) and the "That covers today's environmental intelligence"
+  closing-pool variant matched no Closing pattern (MAB orphan-closing bug).
+  Added `where: start` (Introduction) / `where: end` (Tomorrow Teaser,
+  Closing), widened the Closing pattern to both variants, and excluded the
+  closing's "your practice" from the `industry|practice` marker via
+  lookbehind. Cadence fix: EI runs odd weekdays but the spoken intro/closing
+  claimed "daily" and "back tomorrow" (7/10 transcripts) — now cadence-
+  neutral ("We'll be back with the next briefing"). The podcast prompt's
+  contradictory length target (demanded 1500–2200w while the YAML pins 900
+  and episodes ship ~750) unified to 900–1300w. Intro/closing + length
+  prompt edits change shipped audio — A/B-listen per landmine #17.
 - **M&A** (Models & Agents) runs exclusively via `run_show.py` +
   `shows/models_agents.yaml`; no legacy script. X posting disabled.
 - **MAB** (Models & Agents for Beginners) runs via `run_show.py` +
