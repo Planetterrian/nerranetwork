@@ -221,6 +221,12 @@ class PublishingConfig:
     x_env_prefix: str = "X_"
     x_teaser_template: str = ""
     x_hashtags: str = ""
+    # Cross-promo reply tweet under the daily teaser (June 2026 growth
+    # pass). x_handle is the @handle the show posts as (used for the
+    # "Follow @…" line; leave empty to omit the line). x_cross_promo
+    # gates the whole reply — false is a byte-for-byte no-op.
+    x_handle: str = ""
+    x_cross_promo: bool = False
     host_name: str = "Patrick"
 
 
