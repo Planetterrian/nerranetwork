@@ -115,10 +115,13 @@ def parse_chapters(
     for marker in section_markers:
         pattern = marker.pattern if hasattr(marker, "pattern") else marker.get("pattern", "")
         title = marker.title if hasattr(marker, "title") else marker.get("title", "")
+        where = marker.where if hasattr(marker, "where") else (
+            marker.get("where", "") if isinstance(marker, dict) else ""
+        )
         if not pattern or not title:
             continue
         try:
-            compiled_markers.append((re.compile(pattern, re.IGNORECASE), title))
+            compiled_markers.append((re.compile(pattern, re.IGNORECASE), title, where or ""))
         except re.error as exc:
             logger.warning("Invalid chapter marker regex %r: %s", pattern, exc)
 
@@ -137,17 +140,34 @@ def parse_chapters(
     word_idx = 0
     char_offset = 0
     matches: list[tuple[int, int, str]] = []  # (word_index, char_offset, title)
+    matched_titles: set[str] = set()
+
+    # Positional windows for ``where``-constrained markers. The opening
+    # window is generous (10%, min 60 words) so a long cold-open hook
+    # can't push the intro line out of range; the closing window (last
+    # 15%) comfortably covers teaser + sign-off on a 1500+-word script.
+    start_window_end = max(int(total_words * 0.10), 60)
+    end_window_start = min(int(total_words * 0.85), max(total_words - 60, 0))
 
     for line in lines:
         line_words = line.split()
         line_word_count = len(line_words)
         line_stripped = line.rstrip("\n\r")
 
-        for regex, title in compiled_markers:
+        for regex, title, where in compiled_markers:
+            # Each semantic section appears once per episode. Without
+            # this, brand mentions late in the script re-trigger early
+            # markers (the Tesla closing was titled "Introduction" on
+            # every episode through Ep505).
+            if title in matched_titles:
+                continue
+            if where == "start" and word_idx > start_window_end:
+                continue
+            if where == "end" and word_idx < end_window_start:
+                continue
             if regex.search(line_stripped):
-                # Avoid duplicate consecutive matches for the same title
-                if not matches or matches[-1][2] != title:
-                    matches.append((word_idx, char_offset, title))
+                matches.append((word_idx, char_offset, title))
+                matched_titles.add(title)
                 break  # Only match first marker per line
 
         word_idx += line_word_count

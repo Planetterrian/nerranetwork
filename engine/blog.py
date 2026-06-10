@@ -727,6 +727,16 @@ def generate_blog_post_html(
         "blog_rss_url": f"https://nerranetwork.com/blog_{show_slug}.rss",
         "show_page": show_config.get("show_page", ""),
         "summaries_page": show_config.get("summaries_page", ""),
+        # Public story-tracker page for narrative-memory shows (June 2026
+        # review: the tracker page was only linked from the show page —
+        # linking it from every episode post turns each post into an
+        # entry point to the binge surface).
+        "narrative_page": (
+            show_config.get("show_page", "").replace(".html", "-narrative.html")
+            if show_slug in ("tesla", "models_agents", "fascinating_frontiers", "planetterrian")
+            and show_config.get("show_page")
+            else ""
+        ),
         "blog_index_url": f"../../blog/{show_slug}/index.html",
         "tagline": show_config.get("tagline", ""),
         "transcript": transcript_text,

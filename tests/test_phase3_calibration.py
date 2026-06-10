@@ -61,7 +61,7 @@ class TestRecalibratedMinPodcastWords:
     max_tokens raised so grok-4.3 reasoning has room to write the
     fuller output):
 
-      tesla            : 1200 → 1600  (12 + 3-4 X × 5-7 = ~75-112 sent)
+      tesla            : 1200 → 1600 → 2000 (June 10 2026: one unified 2,200-2,400-word target)
       planetterrian    :  950 → 1250  (12-14 × 5-7 = ~60-98 sent)
       fascinating_fron : 1050 → 1350  (12-14 × 5-7 = ~60-98 sent)
 
@@ -69,7 +69,7 @@ class TestRecalibratedMinPodcastWords:
     weren't changed in this pass."""
 
     EXPECTED = {
-        "tesla":                   1600,
+        "tesla":                   2000,  # June 10 2026 review: single 2,200-2,400-word target
         "fascinating_frontiers":   1350,
         "planetterrian":           1250,
         "modern_investing":        1300,

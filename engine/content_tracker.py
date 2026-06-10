@@ -345,6 +345,32 @@ SHOW_SECTION_PATTERNS: Dict[str, Dict[str, str]] = {
 }
 
 
+# Slur/profanity fragments that must never enter the tracker: recorded
+# headlines are committed to git, publicly fetchable via GitHub Pages,
+# and re-injected into every digest prompt as "recently covered stories".
+_TITLE_BLOCKLIST = ("retard", "nigger", "faggot", "tranny", "kike", "spic")
+
+
+def _is_dedupe_worthy_title(title: str) -> bool:
+    """Filter junk out of titles recorded for cross-episode dedup.
+
+    June 2026: raw fetched X/Reddit post titles like "Laughing Emojis
+    🤣🤣", "Video post", and worse ("NY is full of liberal retards 🤣")
+    were being merged into the tracker via ``source_titles`` — polluting
+    a public JSON and the daily prompt. A title needs at least three
+    alphabetic words to carry any dedup signal, and slurs are dropped
+    unconditionally.
+    """
+    if not title:
+        return False
+    if len(re.findall(r"[A-Za-z]{2,}", title)) < 3:
+        return False
+    lowered = title.lower()
+    if any(p in lowered for p in _TITLE_BLOCKLIST):
+        return False
+    return True
+
+
 def _extract_bold_headlines(text: str, max_items: int = 20) -> List[str]:
     """Extract headlines from a digest section.
 
@@ -888,7 +914,9 @@ class ContentTracker:
                 for h in episode_record["headlines"] if h
             }
             for t in source_titles:
-                if t and norm_headline_for_similarity(t) not in existing_norm:
+                if not _is_dedupe_worthy_title(t):
+                    continue
+                if norm_headline_for_similarity(t) not in existing_norm:
                     episode_record["headlines"].append(t)
                     existing_norm.add(norm_headline_for_similarity(t))
 

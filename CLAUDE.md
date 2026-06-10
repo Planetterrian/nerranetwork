@@ -182,6 +182,31 @@ TST received a full recursive improvement architecture (analogous to MIT):
   conclusion, enforce the Takeover/Top-12 zero-overlap check, and add
   3-tier attribution discipline. Prompt changes alter generated output —
   A/B-listen per landmine #17 and revert via git if quality dips.
+- **June 10 2026 follow-up pass** (full review:
+  [`docs/tesla_review_2026_06_10.md`](docs/tesla_review_2026_06_10.md);
+  drift guards in `tests/test_tesla_quality_pass.py`,
+  `tests/test_chapters.py::TestPositionalConstraints`,
+  `tests/test_tesla_hook.py::TestClosingBlock`):
+  chapter markers gained positional `where: start|end` constraints +
+  once-per-title matching (the closing's "tesla shorts time" mention had
+  titled the closing "Introduction" on every episode); the spoken closing
+  now rotates 4 variants, phrases by market state, and OMITS the price
+  sentence when the quote failed validation (previously spoke "closed at
+  zero dollars, price unavailable"); the expansion retry now carries the
+  full digest (it previously saw only its own short script — it could not
+  add facts, the root cause of chronic under-length); ONE unified length
+  target (2,200–2,400 words ≈ 14–16 min, `min_podcast_words: 2000` — the
+  prompt had demanded four contradictory lengths); the performance loop is
+  LIVE (`scripts/update_tesla_performance.py` nightly derives
+  `strong_topics_last_30d` from OP3 download data — `record_performance_signal`
+  previously had zero callers); theme mining filters narrative-prose echo +
+  URLs and is idempotent per episode; program detection uses word-boundary
+  regexes (bare "unsupervised" no longer advances FSD); the spoken show
+  name dropped "Daily" to match the listing brand "Tesla Shorts Time";
+  content-tracker headlines filter junk/slur titles
+  (`_is_dedupe_worthy_title`); blog posts link the Story Tracker page.
+  Length/brand prompt changes alter shipped audio — A/B-listen per
+  landmine #17.
 - **PR** (Привет, Русский!) runs via `run_show.py` +
   `shows/privet_russian.yaml`; bilingual Russian language learning podcast
   for English speakers. Even days only. Uses **ElevenLabs TTS**

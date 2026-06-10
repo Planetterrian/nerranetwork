@@ -58,10 +58,12 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     else:
         context["market_movers_section"] = ""
 
-    # Podcast-specific vars
+    # Podcast-specific vars.
+    # The intro comes from engine.intros (day-varying pool; run_show.py
+    # setdefaults it). The closing is supplied HERE because it carries the
+    # stock price — but it rotates daily and gates the price sentence on
+    # quote validity (see _pick_closing).
     context["tone_hint"] = _tone_from_change(change_str)
-    # Intro/closing are now handled by engine.intros (day-varying, dynamic).
-    # Tesla hook only provides stock-specific closing with price data.
     context["closing_block"] = _pick_closing(context)
 
     # === Tesla Recursive Memory System (Narrative + Performance + Theme loops) ===
@@ -71,7 +73,14 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
         memory_ctx = tesla_memory.get_tesla_memory_context(output_dir)
         context.update(memory_ctx)
     except Exception as exc:
-        logger.warning("Tesla memory context injection failed (non-fatal): %s", exc)
+        # A corrupt/unreadable tracker silently degrades every prompt the
+        # show generates — make it loud enough to notice the day it
+        # happens (ERROR + an Actions annotation), while staying non-fatal.
+        logger.error("Tesla memory context injection failed (non-fatal): %s", exc)
+        import os
+        if os.environ.get("GITHUB_ACTIONS"):
+            print(f"::warning::Tesla memory context injection failed — "
+                  f"episode will generate WITHOUT narrative memory: {exc}")
 
     return context
 
@@ -574,43 +583,75 @@ def _tone_from_change(change_str: str) -> str:
     return "steady day — natural and conversational"
 
 
-def _pick_intro(
-    context: dict,
-    *,
-    episode_num: int | None = None,
-    today_str: str | None = None,
-) -> str:
-    """Return a standard intro line for the podcast script.
-
-    Includes episode number and date so listeners know exactly which
-    episode they're hearing.  Stock price is reserved for the closing.
-    """
-    ep_part = f", episode {episode_num}" if episode_num else ""
-    date_part = f" Today is {today_str}." if today_str else ""
-    return (
-        f"Patrick: Hey, welcome to Tesla Shorts Time Daily{ep_part}. "
-        f"I'm Patrick in Vancouver.{date_part} "
-        f"Here's what's happening with Tesla today."
-    )
-
-
-def _pick_closing(context: dict) -> str:
-    """Return a standard closing block with stock price and long-term perspective.
-
-    Stock price is mentioned only at the end of the episode, paired with
-    a reminder to focus on the long term over short-term fluctuations.
-    """
-    price = context.get("price", "0.00")
-    change = context.get("change_str", "")
-
-    price_spoken = _format_price_for_speech(price)
-    change_spoken = _format_change_for_speech(change)
-
-    return (
-        "Patrick: That's your Tesla news for today. "
-        "T S L A closed at {price}, {change}. "
+# Closing variants, rotated deterministically by date so the daily
+# sign-off doesn't fossilize into a single sentence (through Ep505 every
+# episode ended with the identical words — the exact daily-show tic the
+# network bans everywhere else). ``{price_sentence}`` is empty when the
+# quote failed validation, so a bad price day simply skips the stock
+# mention instead of speaking "closed at zero dollars, price unavailable".
+_CLOSING_VARIANTS = (
+    (
+        "Patrick: That's your Tesla news for today. {price_sentence}"
         "If you found this useful, a rating or review on Apple Podcasts or Spotify "
         "really helps new listeners find the show. "
         "You can also find us on X at tesla shorts time. "
         "I'm Patrick in Vancouver. Thanks for listening, and I'll see you tomorrow."
-    ).format(price=price_spoken, change=change_spoken)
+    ),
+    (
+        "Patrick: And that's a wrap on today's Tesla news. {price_sentence}"
+        "If you enjoyed this episode, please leave a rating or review — "
+        "it genuinely helps other Tesla fans find us. "
+        "I'm Patrick in Vancouver. See you tomorrow."
+    ),
+    (
+        "Patrick: That covers it for today's Tesla developments. {price_sentence}"
+        "Share this episode with a fellow Tesla enthusiast if you found it useful, "
+        "and subscribe so you don't miss tomorrow's episode. "
+        "I'm Patrick in Vancouver. Thanks for being here."
+    ),
+    (
+        "Patrick: And that's everything worth knowing about Tesla today. {price_sentence}"
+        "If the show saves you time, a quick rating on Apple Podcasts or Spotify "
+        "goes a long way. You can also find us on X at tesla shorts time. "
+        "I'm Patrick in Vancouver. I'll see you tomorrow."
+    ),
+)
+
+
+def _price_sentence(price_str: str, change_str: str) -> str:
+    """Build the spoken stock sentence, or '' when the quote isn't trustworthy.
+
+    Phrasing follows the market state embedded in ``change_str`` — the
+    pipeline runs ~12:00 UTC (~8 AM ET), so a ``fast_info`` quote can be a
+    live pre-market price that must not be presented as a close.
+    """
+    try:
+        price_val = float(price_str)
+    except (TypeError, ValueError):
+        return ""
+    if not is_price_publishable(price_val, change_str):
+        return ""
+
+    price_spoken = _format_price_for_speech(price_str)
+    change_spoken = _format_change_for_speech(change_str)
+    if "Pre-market" in change_str:
+        return f"T S L A is trading at {price_spoken} in the pre-market, {change_spoken}. "
+    if "After-hours" in change_str:
+        return f"T S L A is at {price_spoken} in after-hours trading, {change_spoken}. "
+    return f"T S L A closed at {price_spoken}, {change_spoken}. "
+
+
+def _pick_closing(context: dict, *, date: datetime.date | None = None) -> str:
+    """Return the day's closing block.
+
+    Rotates through ``_CLOSING_VARIANTS`` by calendar date and injects the
+    stock sentence only when the quote passed validation (see
+    ``_price_sentence``). Stock price is mentioned only at the end of the
+    episode, keeping the focus on the news over the ticker.
+    """
+    d = date or datetime.date.today()
+    template = _CLOSING_VARIANTS[d.toordinal() % len(_CLOSING_VARIANTS)]
+    sentence = _price_sentence(
+        context.get("price", "0.00"), context.get("change_str", ""),
+    )
+    return template.format(price_sentence=sentence)

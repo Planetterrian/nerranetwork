@@ -93,25 +93,27 @@ entirely when unavailable); phrase by market state ("TSLA is trading at …
 in pre-market" / "closed at …"); rotate 3–4 closing variants with the price
 sentence injected, reusing the `engine/intros` pool pattern.
 
-### 3. The "(price unavailable)" scrub protects only the X teaser
+### 3. ~~The "(price unavailable)" scrub protects only the X teaser~~ (CORRECTED)
 
-`scrub_unavailable_tsla_from_digest` is applied solely to the X thread
-(`run_show.py:1716-1718`). The digest saved to disk, fed to the podcast
-prompt, rendered into RSS show notes, blog, and newsletter still carries the
-broken `**REAL-TIME TSLA price:** $0.00 (price unavailable)` line on a
-full-chain failure day. Move the scrub to digest-save time (before podcast
-generation), keep the X-path call as defense in depth, and pair with the
-closing gate from finding 2 so audio and text degrade together.
+**Correction during implementation:** the scrub at `run_show.py:1716-1718`
+runs on the canonical digest text *before* it is saved and before podcast
+generation, so the digest/RSS/blog/newsletter path was already protected.
+The real remaining gaps were the spoken `closing_block` (finding 2) and the
+LLM seeing "$0.00 (price unavailable)" in the digest-prompt header — both
+addressed by gating the closing's price sentence on `is_price_publishable`.
 
-### 4. Committed summaries JSON ships profanity to the public site
+### 4. Committed content tracker ships profanity to the public repo and the daily prompt
 
-`digests/tesla_shorts_time/summaries_tesla.json` (served via GitHub Pages
-and consumed by the summaries page) contains raw community reactions among
-the structured headlines, including emoji spam and an outright slur-adjacent
-line ("NY is full of liberal retards 🤣"). Whatever ingests X/Reddit
-reactions into the summaries should filter non-editorial content: drop
-items that are emoji-only / under ~25 chars / fail a basic profanity check,
-and keep community quotes out of the headline arrays entirely.
+`digests/tesla_shorts_time/tesla_content_tracker.json` (committed to git,
+publicly fetchable via GitHub Pages) contains raw fetched X/Reddit post
+titles among the recorded headlines — emoji spam ("Laughing Emojis 🤣🤣",
+"Video post") and an outright slur-bearing line ("NY is full of liberal
+retards 🤣"). Worse than cosmetic: these headlines are re-injected into
+every digest prompt as the "RECENTLY COVERED STORIES" block. The
+`source_titles` merge in `engine/content_tracker.py:885-893` should filter
+non-editorial titles: fewer than three alphabetic words carries no dedup
+signal, and slurs are dropped unconditionally; plus a one-time scrub of the
+committed file.
 
 ---
 
@@ -294,6 +296,57 @@ fine; one that *mis*-sells cadence/format invites churny first plays.
 Items 1–7 and 9 are code-only and safe to ship without changing generated
 editorial content. Items 8 and 11 change what listeners hear — per landmine
 #17, A/B-listen before trusting them and revert via git if quality dips.
+
+## Implementation status (June 10, 2026 — same PR)
+
+All items above were implemented on this branch the same day (operator
+request: "fix all identified issues"):
+
+- **Chapters (1):** `SectionMarker` gained a `where: start|end` positional
+  constraint (`engine/config.py`, `engine/chapters.py`), markers match
+  once-per-title, and `shows/tesla.yaml` anchors Introduction to the
+  opening window and Teaser/Closing to the closing window, drops bare
+  `tomorrow` and `the kicker`. Drift guards:
+  `tests/test_chapters.py::TestPositionalConstraints`.
+- **Closing (2):** `_pick_closing` rotates 4 date-keyed variants, gates the
+  price sentence on `is_price_publishable`, and phrases by market state
+  (pre-market / after-hours / closed). Every variant is pinned to match
+  the YAML Closing chapter pattern.
+  Drift guards: `tests/test_tesla_hook.py::TestClosingBlock`.
+- **Content tracker profanity (4):** `_is_dedupe_worthy_title` filter on
+  the `source_titles` merge + one-time scrub of the committed JSON.
+  Drift guard: `tests/test_content_tracker.py::TestSourceTitleJunkFilter`.
+- **Expansion retry (5):** the retry prompt now carries the full digest
+  with a fact-coverage instruction ("cover skipped/compressed stories at
+  5–7 fact-bearing sentences"), replacing the pad-inviting wording.
+  Drift guard: `test_tesla_quality_pass.py::TestExpansionRetryCarriesDigest`.
+- **Length unification (6):** the podcast prompt now states ONE target
+  (2,200–2,400 words ≈ 14–16 min); `min_podcast_words: 2000`; stale
+  ElevenLabs reference removed; RSS description updated to "15 focused
+  minutes". **A/B-listen the next episodes per landmine #17.**
+- **Performance loop (7):** `tesla_memory.update_performance_from_op3`
+  derives `strong_topics_last_30d` from real OP3 download data, run
+  nightly via `scripts/update_tesla_performance.py` (wired into
+  `nightly-maintenance.yml`, tracker committed by the nightly push).
+  Drift guards: `test_tesla_quality_pass.py::TestPerformanceLoopFromOp3`.
+- **Theme mining (8):** narrative-prose echo filter
+  (`_narrative_prose_bigrams`), per-episode idempotency, URL stripping,
+  expanded stopwords, hardened one-time scrub; the committed history was
+  re-scrubbed (left only genuine themes: "giga texas", "optimus",
+  "service center", "rivian drive").
+  Drift guards: `test_tesla_quality_pass.py::TestThemeMiningHardening`.
+- **Program matching (9):** word-boundary regexes; bare "unsupervised"
+  no longer advances FSD. Drift guards:
+  `test_tesla_quality_pass.py::TestProgramMentionWordBoundaries`.
+- **Recap robustness (10):** narrative-injection failures now log loudly
+  instead of `except: pass`.
+- **Brand (11, operator-approved via "fix all"):** spoken name is now
+  "Tesla Shorts Time" (engine/intros.py + prompt brand rules) matching
+  the listing. **A/B-listen per landmine #17.**
+- **Narrative page promotion (12):** blog posts for narrative-memory
+  shows now link the Story Tracker page (UTM-tagged).
+- **Hygiene (P3):** dead `_pick_intro` deleted; memory-injection failure
+  raised to ERROR + GitHub Actions `::warning::` annotation.
 
 ## Claims checked and rejected during this review
 

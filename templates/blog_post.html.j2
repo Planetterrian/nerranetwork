@@ -723,6 +723,15 @@
             </section>
             {% endif %}
 
+            <!-- Story Tracker (narrative-memory shows only) -->
+            {% if narrative_page %}
+            <section class="blog-story-tracker" style="margin:var(--sp-4) 0;padding:var(--sp-3);border:1px solid var(--border-color, #2a2a2a);border-radius:8px;">
+                <strong>Following the long arcs?</strong>
+                The <a href="{{ path_prefix }}{{ narrative_page | with_utm(source='blog', medium='web', campaign='story_tracker') }}">{{ show_name }} Story Tracker</a>
+                is the show's living memory of every major ongoing storyline — where each program stands today and the open questions each episode chips away at.
+            </section>
+            {% endif %}
+
             <!-- Share Buttons -->
             {#- Each shared URL carries a per-network UTM tag (utm_medium=share)
                 so shared traffic is attributable in analytics. URLs are

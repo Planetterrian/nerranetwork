@@ -1775,15 +1775,27 @@ def generate_podcast_script(
             "Retrying with expansion instructions ...",
             config.name, word_count, _retry_threshold,
         )
+        # June 2026 fix: the retry used to send the model ONLY its own
+        # short script — with no digest, the model couldn't add a single
+        # fact, so its only lengthening move was the generic "why this
+        # matters" padding the main prompt bans (and the listener-value
+        # heuristic penalizes). Include the full digest and flip the
+        # instruction to FACT-COVERAGE: expand by covering skipped or
+        # compressed stories, not by commenting on covered ones.
+        _digest_for_retry = template_vars.get("digest", "")
         retry_prompt = (
-            f"The script you just wrote is only {word_count} words. "
-            f"Please rewrite it with significantly more substance and natural flow while "
-            f"staying strictly faithful to the provided stories:\n"
-            f"- For each story, add 1-2 listener takeaways, implications, a smooth transition, "
-            f"or a concrete 'why this matters' sentence drawn from the details already present\n"
-            f"- Expand the narrative voice with conversational bridges between stories\n"
-            f"- Do NOT invent new facts, new stories, or repeat any sentence verbatim\n"
-            f"- Aim for at least {min_words} words of real spoken content\n\n"
+            f"The script you just wrote is only {word_count} words — it under-covers "
+            f"the day's news. Rewrite it to at least {min_words} words by COVERING "
+            f"MORE STORIES AT FULL DEPTH, using the complete digest below:\n"
+            f"- Find every story in the digest that your script skipped or compressed "
+            f"into one or two sentences, and cover it at 5-7 fact-bearing sentences "
+            f"(numbers, names, quotes, sources) drawn from the digest\n"
+            f"- Keep the stories you already covered well as they are — do NOT pad "
+            f"them with extra commentary, implications, or rephrased points\n"
+            f"- Do NOT invent facts that are not in the digest, and do not repeat "
+            f"any sentence verbatim\n"
+            f"- Keep the same intro, closing, and overall structure\n\n"
+            f"FULL DIGEST (the source of truth for facts):\n\n{_digest_for_retry}\n\n"
             f"Here is your short script to expand:\n\n{text}"
         )
         text2, meta2 = _call_grok(

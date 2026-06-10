@@ -419,3 +419,31 @@ class TestSectionPatterns:
         import re
         m = re.search(TST_SECTION_PATTERNS["takeover_headlines"], SAMPLE_TST_DIGEST, re.DOTALL | re.IGNORECASE)
         assert m is not None
+
+
+class TestSourceTitleJunkFilter:
+    """June 2026: raw fetched X/Reddit titles ("Laughing Emojis 🤣🤣",
+    "Video post", slur-bearing posts) were merged into recorded headlines
+    via ``source_titles`` — polluting a public JSON and the daily
+    "recently covered" prompt block. Junk must be filtered at record time."""
+
+    def test_junk_source_titles_filtered(self, tmp_path):
+        tracker = ContentTracker("tesla_shorts_time", tmp_path)
+        tracker.load()
+        tracker.record_episode(
+            SAMPLE_TST_DIGEST, TST_SECTION_PATTERNS,
+            source_titles=[
+                "Laughing Emojis 🤣🤣",
+                "Video post",
+                "NY is full of liberal retards 🤣",
+                "Same",
+                "Tesla opens new Supercharger corridor across British Columbia",
+            ],
+        )
+        headlines = tracker.data["episodes"][0]["headlines"]
+        joined = " ".join(headlines)
+        assert "Laughing Emojis" not in joined
+        assert "Video post" not in joined
+        assert "retards" not in joined
+        assert "Same" not in headlines
+        assert any("Supercharger corridor" in h for h in headlines)

@@ -228,3 +228,167 @@ class TestPromptBoilerplateBans:
         text = (_ROOT / "shows/prompts/tesla_digest.txt").read_text(
             encoding="utf-8")
         assert "ATTRIBUTION DISCIPLINE" in text
+
+
+# ---------------------------------------------------------------------------
+# June 10 2026 review additions
+# ---------------------------------------------------------------------------
+
+
+class TestProgramMentionWordBoundaries:
+    """Program detection switched from substring tuples to word-boundary
+    regexes: bare "unsupervised" (e.g. a Waymo story) must no longer
+    advance FSD freshness, and plural/hyphen variants must match."""
+
+    def test_bare_unsupervised_does_not_advance_fsd(self, tmp_path):
+        mentioned = tesla_memory.auto_update_narrative_from_digest(
+            tmp_path, "Waymo expands unsupervised robot deliveries.", 506,
+            "2026-06-10")
+        assert "fsd_unsupervised" not in mentioned
+
+    def test_plural_and_hyphen_variants_match(self, tmp_path):
+        mentioned = tesla_memory.auto_update_narrative_from_digest(
+            tmp_path, "Robotaxis and Cybercabs appeared in Georgia.", 506,
+            "2026-06-10")
+        assert "cybercab_robotaxi" in mentioned
+
+    def test_fsd_word_boundary(self, tmp_path):
+        # "fsd" inside another token must not match
+        mentioned = tesla_memory.auto_update_narrative_from_digest(
+            tmp_path, "The dfsdx report mentioned nothing relevant.", 506,
+            "2026-06-10")
+        assert mentioned == []
+
+
+class TestThemeMiningHardening:
+    DIGEST = (
+        "Tesla expanded robotaxi testing today. The wireless bms patent "
+        "surfaced alongside shanghai exports data. "
+        "Source: https://news.google.com/rss/articles/CBMi123"
+    )
+
+    def test_idempotent_per_episode(self, tmp_path):
+        tesla_memory.update_theme_history_from_digest(tmp_path, self.DIGEST, 505)
+        tesla_memory.update_theme_history_from_digest(tmp_path, self.DIGEST, 505)
+        history = json.loads(
+            (tmp_path / tesla_memory.THEME_HISTORY_FILENAME).read_text())
+        episodes = [e["episode"] for e in history["theme_evolution"]]
+        assert episodes.count(505) == 1, "Ep505 was double-mined"
+        assert history["recurring_themes"].get("robotaxi") == 1
+
+    def test_narrative_prose_echo_filtered(self, tmp_path):
+        # Default tracker prose contains "factory construction advancing"
+        # (Optimus status); a digest echoing that wording must not mint
+        # "factory construction" as a recurring theme.
+        digest = (
+            "Optimus update: Giga Texas factory construction advancing "
+            "according to drone footage, with robotaxi news as well."
+        )
+        tesla_memory.update_theme_history_from_digest(tmp_path, digest, 506)
+        themes = json.loads(
+            (tmp_path / tesla_memory.THEME_HISTORY_FILENAME).read_text()
+        )["recurring_themes"]
+        assert "factory construction" not in themes
+        assert "construction advancing" not in themes
+        # Curated keywords still counted
+        assert themes.get("robotaxi") == 1
+
+    def test_urls_not_mined_as_bigrams(self, tmp_path):
+        tesla_memory.update_theme_history_from_digest(tmp_path, self.DIGEST, 507)
+        themes = json.loads(
+            (tmp_path / tesla_memory.THEME_HISTORY_FILENAME).read_text()
+        )["recurring_themes"]
+        joined = " ".join(themes)
+        assert "https" not in joined
+        assert "google" not in joined
+
+
+class TestPerformanceLoopFromOp3:
+    """The performance-feedback loop is no longer dead code: the nightly
+    job derives strong topics from real OP3 download data."""
+
+    OP3_SHOW = {
+        "episodes": [
+            {"title": "Ep 501: Tesla ending free Supercharging for new "
+                      "Model 3s as Cybercab fleet grows", "downloads_30d": 13},
+            {"title": "Ep 497: FSD approval in China jumps 39%",
+             "downloads_30d": 11},
+            {"title": "Ep 480: A quiet day", "downloads_30d": 0},
+        ]
+    }
+
+    def test_strong_topics_derived_and_replaced(self, tmp_path):
+        # Seed a stale hand-edited entry that must be replaced wholesale.
+        tesla_memory.save_performance_tracker({
+            "version": 1,
+            "recent_signals": {
+                "strong_topics_last_30d": ["stale manual topic"],
+            },
+        }, tmp_path)
+        count = tesla_memory.update_performance_from_op3(tmp_path, self.OP3_SHOW)
+        assert count >= 2
+        perf = tesla_memory.load_performance_tracker(tmp_path)
+        topics = perf["recent_signals"]["strong_topics_last_30d"]
+        assert "stale manual topic" not in topics
+        assert "Cybercab / Robotaxi" in topics
+        assert "FSD Unsupervised" in topics
+        assert perf["recent_signals"]["notes"].startswith("Auto-derived")
+
+    def test_no_data_is_clean_noop(self, tmp_path):
+        count = tesla_memory.update_performance_from_op3(tmp_path, {})
+        assert count == 0
+        assert not (tmp_path / tesla_memory.PERFORMANCE_TRACKER_FILENAME).exists()
+
+    def test_signals_block_renders_derived_topics(self, tmp_path):
+        tesla_memory.update_performance_from_op3(tmp_path, self.OP3_SHOW)
+        perf = tesla_memory.load_performance_tracker(tmp_path)
+        block = tesla_memory.build_performance_signals_block(perf)
+        assert "Cybercab / Robotaxi" in block
+
+    def test_nightly_workflow_wires_the_update(self):
+        wf = (Path(__file__).resolve().parent.parent / ".github" / "workflows"
+              / "nightly-maintenance.yml").read_text(encoding="utf-8")
+        assert "update_tesla_performance.py" in wf
+        assert "tesla_performance_tracker.json" in wf
+
+
+class TestExpansionRetryCarriesDigest:
+    """The expansion retry must include the digest — without it the model
+    cannot add facts and its only lengthening move is the padding the
+    main prompt bans (the root cause of 9-of-10 under-length episodes)."""
+
+    def test_retry_prompt_includes_digest(self, monkeypatch):
+        from engine import generator as gen
+
+        calls = []
+
+        def fake_call_grok(prompt, **kwargs):
+            calls.append(prompt)
+            if len(calls) == 1:
+                return "Patrick: short script. " * 30, {"finish_reason": "stop"}
+            return "Patrick: expanded script. " * 400, {"finish_reason": "stop"}
+
+        monkeypatch.setattr(gen, "_call_grok", fake_call_grok)
+        monkeypatch.setattr(gen, "load_prompt", lambda *a, **k: "PROMPT")
+
+        config = SimpleNamespace(
+            name="Tesla Shorts Time",
+            llm=SimpleNamespace(
+                model="grok-4.3", podcast_prompt_file="x",
+                system_prompt_file="", podcast_temperature=0.7,
+                max_tokens=5000, podcast_max_tokens=10000,
+                min_podcast_words=2000, podcast_expand_below_target=True,
+                podcast_chain=False,
+            ),
+        )
+        digest_marker = "UNIQUE-DIGEST-FACT-cybercab-atlanta-sixteen-states"
+        gen.generate_podcast_script(
+            {"digest": f"Top stories... {digest_marker}", "episode_num": 506},
+            config,
+        )
+        assert len(calls) >= 2, "expansion retry did not fire"
+        retry_prompt = calls[1]
+        assert digest_marker in retry_prompt, (
+            "retry prompt does not carry the digest — model cannot add facts"
+        )
+        assert "skipped or compressed" in retry_prompt

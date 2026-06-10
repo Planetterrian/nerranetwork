@@ -88,7 +88,10 @@ class TestBuildIntroLine:
             today_str="March 15, 2026",
             date=datetime.date(2026, 3, 15),
         )
-        assert "Tesla Shorts Time Daily" in intro
+        # June 2026: "Daily" dropped from the spoken name so the audio
+        # brand matches the Apple/Spotify listing ("Tesla Shorts Time").
+        assert "Tesla Shorts Time" in intro
+        assert "Tesla Shorts Time Daily" not in intro
         assert "Patrick:" in intro
 
     def test_env_intel_contains_show_name(self):
@@ -139,7 +142,7 @@ class TestBuildIntroLine:
             date=monday,
         )
         # Should still contain show name regardless of day
-        assert "Tesla Shorts Time Daily" in intro
+        assert "Tesla Shorts Time" in intro
 
     def test_intro_varies_across_days(self):
         """Different days should produce different intros (not identical)."""
