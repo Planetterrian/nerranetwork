@@ -281,3 +281,44 @@ class TestCitationHoverCards:
         assert "news.google.com/rss/articles/CBMiabc123?oc=5" in out
         # The literal "Source/Post:" prefix stays before the pill.
         assert "Source/Post:" in out
+
+
+class TestCrossShowRelatedCuratedFirst:
+    """The curated sibling (NETWORK_SHOWS[slug]['related_show']) must take
+    the first cross-show rec slot when it has a recent post (June 2026
+    growth pass)."""
+
+    def _posts(self, *slugs):
+        return [
+            {"show_slug": s, "title": f"{s} post", "url": f"/blog/{s}/ep1.html"}
+            for s in slugs
+        ]
+
+    def test_curated_sibling_takes_first_slot(self):
+        from generate_html import NETWORK_SHOWS, _pick_cross_show_related
+
+        curated = NETWORK_SHOWS["tesla"]["related_show"]
+        pool = self._posts(
+            "planetterrian", "models_agents", curated, "env_intel",
+        )
+        picked = _pick_cross_show_related("tesla", pool)
+        assert picked, "expected non-empty recommendations"
+        assert picked[0]["show_slug"] == curated
+        assert len(picked) == 3
+
+    def test_own_show_excluded_and_empty_pool_ok(self):
+        from generate_html import _pick_cross_show_related
+
+        assert _pick_cross_show_related("tesla", []) == []
+        picked = _pick_cross_show_related("tesla", self._posts("tesla"))
+        assert picked == []
+
+    def test_every_curated_sibling_is_a_known_show(self):
+        from generate_html import NETWORK_SHOWS
+
+        for slug, meta in NETWORK_SHOWS.items():
+            related = meta.get("related_show")
+            if related:
+                assert related in NETWORK_SHOWS, (
+                    f"NETWORK_SHOWS[{slug}].related_show={related!r} unknown"
+                )

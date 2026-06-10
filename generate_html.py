@@ -2177,6 +2177,35 @@ _SHOW_DIRS = {
 }
 
 
+def _pick_cross_show_related(slug, cross_show_posts, *, want=3):
+    """Pick up to *want* cross-show posts for a blog post's rec section.
+
+    The show's curated sibling (``NETWORK_SHOWS[slug]["related_show"]``)
+    always takes the first slot when it has a recent post, so the
+    on-brand recommendation is deterministic; remaining slots are
+    sampled from the latest cross-show pool.
+    """
+    if not cross_show_posts:
+        return []
+    import random
+    related = []
+    candidates = [p for p in cross_show_posts if p.get("show_slug") != slug]
+    curated_slug = (NETWORK_SHOWS.get(slug) or {}).get("related_show")
+    curated = next(
+        (p for p in candidates if p.get("show_slug") == curated_slug),
+        None,
+    )
+    if curated is not None:
+        related.append(curated)
+        candidates = [p for p in candidates if p is not curated]
+    remaining = want - len(related)
+    if len(candidates) <= remaining:
+        related.extend(candidates[:remaining])
+    else:
+        related.extend(random.sample(candidates[:12], remaining))
+    return related
+
+
 def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None):
     """Generate blog post HTML pages for all episodes of a show.
 
@@ -2240,11 +2269,7 @@ def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None):
         md_text = meta["_md_path"].read_text(encoding="utf-8")
 
         # Pick up to 3 recent posts from other shows for cross-show recs
-        _related = []
-        if cross_show_posts:
-            import random
-            _candidates = [p for p in cross_show_posts if p.get("show_slug") != slug]
-            _related = _candidates[:3] if len(_candidates) <= 3 else random.sample(_candidates[:12], 3)
+        _related = _pick_cross_show_related(slug, cross_show_posts)
 
         html = generate_blog_post_html(
             md_text, meta, cfg, env,
