@@ -871,6 +871,66 @@ def _podcast_expansion_retry_threshold(
     return max(600, int(soft_floor * 1.1))
 
 
+def _build_expansion_retry_prompt(
+    word_count: int,
+    min_words: int,
+    digest: str,
+    script: str,
+    *,
+    narrative: bool = False,
+) -> str:
+    """Build the one-shot expansion-retry prompt for a too-short podcast
+    script.
+
+    Two flavors. The default (news) retry expands by COVERING MORE
+    STORIES from the day's digest — the right move for a daily news show
+    that compressed several stories. ``narrative=True`` shows (First
+    Principles, Unintended Consequences) have NO news and exactly ONE
+    topic per episode, so "cover more stories" is a dead instruction:
+    the model has no second story to add and keeps the same length
+    (every below-target FP episode stayed thin despite
+    ``podcast_expand_below_target``). For those shows the retry instead
+    DEEPENS the single topic's reasoning from the full brief — walk the
+    arithmetic out, name specifics, address objections — which is also
+    exactly what the narrative prompts already ask for on the first pass.
+    """
+    if narrative:
+        return (
+            f"The script you just wrote is only {word_count} words — too short for "
+            f"a long-form episode. Rewrite it to at least {min_words} words by "
+            f"DEEPENING the reasoning already in the brief below — this episode "
+            f"covers ONE subject, so go deeper, do NOT invent a second topic:\n"
+            f"- For each step in the brief, walk the reasoning out loud: spell the "
+            f"arithmetic out number by number, name the specific parts, materials, "
+            f"and processes, and address the obvious 'but what about...' objection\n"
+            f"- Turn each compressed sentence of the brief into two or three full "
+            f"spoken sentences; every worked example should become several minutes "
+            f"of audio\n"
+            f"- Preserve the brief's hedging — keep every approximate figure "
+            f"approximate ('roughly', 'on the order of', 'a rough estimate')\n"
+            f"- Do NOT invent facts, numbers, names, or quotes that are not in the "
+            f"brief, and do not repeat any sentence verbatim\n"
+            f"- Keep the same intro, closing, and overall structure\n\n"
+            f"FULL BRIEF (the source of truth for facts):\n\n{digest}\n\n"
+            f"Here is your short script to expand:\n\n{script}"
+        )
+    return (
+        f"The script you just wrote is only {word_count} words — it under-covers "
+        f"the day's news. Rewrite it to at least {min_words} words by COVERING "
+        f"MORE STORIES AT FULL DEPTH, using the complete digest below:\n"
+        f"- Find every story in the digest that your script skipped or compressed "
+        f"into one or two sentences, and cover it at 5-7 fact-bearing sentences "
+        f"(numbers, names, quotes, sources) drawn from the digest\n"
+        f"- Keep the stories you already covered well as they are — do NOT pad "
+        f"them with extra commentary, implications, or rephrased points\n"
+        f"- Do NOT invent facts that are not in the digest, and do not repeat "
+        f"any sentence verbatim\n"
+        f"- Keep the same intro, closing, and overall structure\n\n"
+        f"FULL DIGEST (the source of truth for facts):\n\n{digest}\n\n"
+        f"Here is your short script to expand:\n\n{script}"
+    )
+
+
 def _sanitize_podcast_script(text: str) -> str:
     """Strip known LLM artifacts that break TTS quality.
 
@@ -1783,20 +1843,16 @@ def generate_podcast_script(
         # instruction to FACT-COVERAGE: expand by covering skipped or
         # compressed stories, not by commenting on covered ones.
         _digest_for_retry = template_vars.get("digest", "")
-        retry_prompt = (
-            f"The script you just wrote is only {word_count} words — it under-covers "
-            f"the day's news. Rewrite it to at least {min_words} words by COVERING "
-            f"MORE STORIES AT FULL DEPTH, using the complete digest below:\n"
-            f"- Find every story in the digest that your script skipped or compressed "
-            f"into one or two sentences, and cover it at 5-7 fact-bearing sentences "
-            f"(numbers, names, quotes, sources) drawn from the digest\n"
-            f"- Keep the stories you already covered well as they are — do NOT pad "
-            f"them with extra commentary, implications, or rephrased points\n"
-            f"- Do NOT invent facts that are not in the digest, and do not repeat "
-            f"any sentence verbatim\n"
-            f"- Keep the same intro, closing, and overall structure\n\n"
-            f"FULL DIGEST (the source of truth for facts):\n\n{_digest_for_retry}\n\n"
-            f"Here is your short script to expand:\n\n{text}"
+        # June 10 2026 (First Principles review): narrative shows (FP, UC)
+        # have NO "day's news" and exactly ONE topic per episode — the
+        # news-framed "cover more stories" retry was a dead path for them
+        # (every below-target FP script kept its length, so the
+        # ``podcast_expand_below_target`` flag did nothing — Ep002 953w,
+        # Ep004 935w both stayed thin). For narrative shows the retry
+        # instead DEEPENS the single topic's reasoning from the full brief.
+        retry_prompt = _build_expansion_retry_prompt(
+            word_count, min_words, _digest_for_retry, text,
+            narrative=bool(getattr(config, "narrative_mode", False)),
         )
         text2, meta2 = _call_grok(
             retry_prompt,
