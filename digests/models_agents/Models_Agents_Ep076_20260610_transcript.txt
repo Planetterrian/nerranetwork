@@ -1,0 +1,86 @@
+Hey, welcome to Models and Agents, episode 76 for June 10th, 2026.
+Let's see what happened in the AI world today, and trust me, it's been busy.
+Cloud Fable 5 delivers a qualitative jump for long horizon agentic work,
+letting builders hand off ambitious multi-step projects with less oversight.
+Anthropic released Cloud Fable 5, the same base model as Mythos, but with added safeguards.
+Early testers reported handles ambitious, long-running problem solving sessions far better than
+prior versions, executing complex tasks across code bases without constant guidance.
+The model posts leading benchmark numbers and feels like a step change comparable to the Cloud 4.5
+jump last November. Builders can now attempt larger single-use apps, custom dashboards or research
+projects that previously required heavy scaffolding. The main caveats noted are occasional over-triggering
+safeguards and the usual slow, expensive profile of frontier models. This update continues the
+frontier model's arc we tracked yesterday, where closed systems trade capability and price leads,
+while the next release cadence remains the key open question. Coher open-sourced North Mini-code,
+a 30 billion parameter model with 3 billion active parameters under Apache 2.0. It scores 33.4 on the
+artificial analysis coding index, competitive with similar-sized models for agentic coding tasks.
+The release includes hugging face weights for immediate local or fine-tuned use.
+Builders working on coding agents should test it this week against closed models on multi-file
+edit and tool-use benchmarks to see where the efficiency trade-off lands. This release fits the
+open-weight models program we covered yesterday, where families like Lama, Mistrel, and Quenn
+continue narrowing the gap with closed frontier systems, and licensing terms stay the central open
+question. Next end to Mini is a new 35 billion model explicitly optimized for autonomous agent
+workloads. The release positions it as a dedicated agent backbone rather than a general
+purpose model. Early positioning suggests stronger, long horizon planning and tool orchestration
+that dense models of similar size. Developers building production agents should compare it against
+Quenn and Lama variants on agent-specific harnesses. Users are running Quenn 3.6 MTP 27 billion
+quantized a 4-bit on a Tesla V100 via Lama dot CPP. The run reaches 44 to 55 tokens per second.
+Flag such as spec-type draft MTP plus large context are active during the test.
+The configuration supports 262,000 tokens of context. Parallel batching stays enabled with no quality
+loss recorded in non-thinking mode. Local developers now have a concrete performance baseline for
+27 billion class models on older enterprise GPUs. Microsoft updated Co-Pilot Studio with improved
+agent orchestration and workflow tooling. The changes target more reliable, multi-step automation
+inside Microsoft 365 environments. Teams already using Co-Pilot can now build agents that
+handle longer task chains with better state management. The upgrade lowers the barrier for enterprises
+wanting governed agent deployments without custom frameworks. This development advances the agents
+and tool use program we followed yesterday where autonomous agents, tool use and interoperability layers
+are maturing and long horizon reliability remains the key open question. TabClaw is an open-source agent
+that ingests CSV or Excel files, clarifies intent, exposes editable plans and runs parallel
+specialist agents across multiple tables. It records workflows, extracts user memory and distills
+reusable skills from repeated patterns. The system improves task completion on spreadsheet benchmarks
+while keeping the full execution trace inspectable. Teams doing data analysis should try the react
+style loop on their own multi-table data sets. A global financial watchdog issued new guidance on
+controlling autonomous AI agents in finance. The guidance addresses prevention of data leakage during
+live operations. Unauthorized actions in trading or customer systems form another core focus.
+Institutions running agentic workflows receive a direct recommendation to review guard rails.
+The proposed standards serve as the reference point for that review. Deployment decisions should
+incorporate the new expectations before any production rollout. This item tracks the safety
+and policy program we covered yesterday where US and EU regulatory trajectories and evaluation
+standardization remain the open questions. Hugging face relaunched papers with code.co with automatic
+parsing of archive and hugging face papers into leaderboards including closed models like GPT 5.5 and
+mythos 5. Users can toggle closed model results and browse scatter plots plus tables for each benchmark.
+The site now treats blog posts as valid sources for closed models.
+Researchers tracking state-of-the-art across domains should added to their weekly review workflow.
+A new tutorial shows how to stream NVIDIA Nemotron code pre-training metadata,
+reconstruct GitHub URL's s, fetch source files, and estimate token counts without full data set downloads.
+Schema inspection forms the first step in the described process. Language distribution across
+the metadata receives explicit coverage. Token scale estimation relies on pandas combined with Tiktokin.
+Developers building custom code pre-training pipelines can follow the exact steps for manageable sampling.
+Okay, let's pop the hood on bi-temporal memory engines for LLM agents.
+Everyone talks about giving agents full history as the safety fault for long running tasks,
+yet replaying every prior turn quickly turns context into noise that hurts accuracy while
+exploding cost and latency. Ingram splits the problem into a fast, lossless right path that
+simply appends episodes and an asynchronous path that extracts atomic facts into a bi-temporal
+knowledge graph. The graph tracks provenance and supersession chains, so contradictions are
+invalidated rather than deleted. At read time, a hybrid retriever fuses dense, lexical, graph,
+and recency signals then applies a point-in-time filter to return a compact 9,600 token slice.
+On long mem eval underscore s, this lean slice scores 83.6% versus 73.2% for the full 79,000 token
+history while using roughly one eighth the tokens. The practical takeaway is to default to retrieved
+time-aware facts for any agent that spans more than a handful of turns and only fall back to full
+replay when the task explicitly requires verbatim earlier dialogue. Test Cloud Fable 5 on a
+multi-file refactoring task you previously split across several prompts and note where it maintains
+context without extra scaffolding. Download Coal here in North Mini Code from Hugging Face and run
+it through your existing agentic coding harness to measure tool-called reliability versus closed
+models. Try tabclaw on a three-table financial reconciliation spreadsheet to see how the parallel
+specialist agents and editable plan surface compare to manual pandas work. Add papers with code.co
+to your weekly state of the art check and toggle closed models off to focus on open weight progress.
+Further tuning of Cloud Fable 5 safeguard sensitivity is expected in the coming weeks.
+Additional open agentic coding models from other labs are likely to follow Cohears release.
+Expanded regulatory guidance on agentic systems in finance and data handling domains is on the way.
+New long context memory benchmarks that stress bi-temporal retrieval over full history baselines are
+coming soon. Tomorrow keep an eye on the first production integrations of these new open agentic
+coding models into existing harnesses. That wraps up today's AI briefing. Share this with a developer
+or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow and before you go,
+this show is part of the NARA network, a family of daily podcasts covering tech, science, markets,
+and more. If you enjoyed today's episode, give modern investing techniques a listen.
+Modern strategies for Canadian and US investors. You can explore the whole lineup at nearandnetwork.com.
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.

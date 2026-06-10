@@ -1,0 +1,133 @@
+Hey, welcome to Models and Agents, episode seventy-six, for June tenth, twenty twenty-six. Let's see what happened in the A I world today. And trust me, it's been busy.
+
+Claude Fable 5 delivers a qualitative jump for long-horizon agentic work, letting builders hand off ambitious multi-step projects with less oversight.
+
+An-thropic released Claude Fable 5, the same base model as Mythos but with added safeguards.
+
+Early testers report it handles ambitious, long-running problem-solving sessions far better than prior versions, executing complex tasks across codebases without constant guidance.
+
+The model posts leading benchmark numbers and feels like a step-change comparable to the Claude 4.5 jump last November.
+
+Builders can now attempt larger single-use apps, custom dashboards, or research projects that previously required heavy scaffolding.
+
+The main caveats noted are occasional over-triggering safeguards and the usual slow, expensive profile of frontier models.
+
+This update continues the frontier models arc we tracked yesterday, where closed systems trade capability and price leads while the next release cadence remains the key open question.
+
+Cohere open-sourced North Mini Code, a thirty billion parameter model with three billion active parameters under Apache 2.0.
+
+It scores thirty three point four on the Artificial Analysis Coding Index, competitive with similar-sized models for agentic coding tasks.
+
+The release includes Hugging Face weights for immediate local or fine-tuned use.
+
+Builders working on coding agents should test it this week against closed models on multi-file edit and tool-use benchmarks to see where the efficiency trade-off lands.
+
+This release fits the open-weight models program we covered yesterday, where families like Lah-mah, Mee-stral, and Qwen continue narrowing the gap with closed frontier systems and licensing terms stay the central open question.
+
+Nex-N2-mini is a new thirty five billion model explicitly optimized for autonomous agent workloads.
+
+The release positions it as a dedicated agent backbone rather than a general-purpose model.
+
+Early positioning suggests stronger long-horizon planning and tool orchestration than dense models of similar size.
+
+Developers building production agents should compare it against Qwen and Lah-mah variants on agent-specific harnesses.
+
+Users are running Qwen three point six M T P twenty seven billion quantized to four bit on a Tesla V one hundred via Lah-mah dot c p p.
+
+The run reaches forty four to fifty five tokens per second.
+
+Flags such as spec type draft mtp plus large context are active during the test.
+
+The configuration supports two hundred sixty two thousand tokens of context.
+
+Parallel batching stays enabled with no quality loss recorded in non-thinking mode.
+
+Local developers now have a concrete performance baseline for twenty seven billion class models on older enterprise G P U's.
+
+Microsoft updated Copilot Studio with improved agent orchestration and workflow tooling.
+
+The changes target more reliable multi-step automation inside Microsoft three hundred sixty five environments.
+
+Teams already using Copilot can now build agents that handle longer task chains with better state management.
+
+The upgrade lowers the barrier for enterprises wanting governed agent deployments without custom frameworks.
+
+This development advances the agents and tool use program we followed yesterday, where autonomous agents, tool use, and interoperability layers are maturing and long-horizon reliability remains the key open question.
+
+TabClaw is an open-source agent that ingests C S V or Excel files, clarifies intent, exposes editable plans, and runs parallel specialist agents across multiple tables.
+
+It records workflows, extracts user memory, and distills reusable skills from repeated patterns.
+
+The system improves task completion on spreadsheet benchmarks while keeping the full execution trace inspectable.
+
+Teams doing data analysis should try the ReAct-style loop on their own multi-table datasets.
+
+A global financial watchdog issued new guidance on controlling autonomous A I agents in finance.
+
+The guidance addresses prevention of data leakage during live operations.
+
+Unauthorized actions in trading or customer systems form another core focus.
+
+Institutions running agentic workflows receive a direct recommendation to review guardrails.
+
+The proposed standards serve as the reference point for that review.
+
+Deployment decisions should incorporate the new expectations before any production rollout.
+
+This item tracks the safety and policy program we covered yesterday, where U S and E U regulatory trajectories and evaluation standardization remain the open questions.
+
+Hugging Face relaunched paperswithcode dot co with automatic parsing of arXiv and Hugging Face papers into leaderboards, including closed models like G P T five point five and Mythos five.
+
+Users can toggle closed-model results and browse scatter plots plus tables for each benchmark.
+
+The site now treats blog posts as valid sources for closed models.
+
+Researchers tracking state of the art across domains should add it to their weekly review workflow.
+
+A new tutorial shows how to stream N V I D I A Nemotron code pretraining metadata, reconstruct GitHub U R L s, fetch source files, and estimate token counts without full dataset downloads.
+
+Schema inspection forms the first step in the described process.
+
+Language distribution across the metadata receives explicit coverage.
+
+Token-scale estimation relies on pandas combined with tiktoken.
+
+Developers building custom code pretraining pipelines can follow the exact steps for manageable sampling.
+
+OK, let's pop the hood on bi-temporal memory engines for L L M agents.
+
+Everyone talks about giving agents full history as the safe default for long-running tasks, yet replaying every prior turn quickly turns context into noise that hurts accuracy while exploding cost and latency.
+
+Engram splits the problem into a fast lossless write path that simply appends episodes and an asynchronous path that extracts atomic facts into a bi-temporal knowledge graph.
+
+The graph tracks provenance and supersession chains so contradictions are invalidated rather than deleted.
+
+At read time a hybrid retriever fuses dense, lexical, graph, and recency signals, then applies a point-in-time filter to return a compact nine thousand six hundred token slice.
+
+On LongMemEval underscore S this lean slice scores eighty three point six percent versus seventy three point two percent for the full seventy nine thousand token history while using roughly one eighth the tokens.
+
+The practical takeaway is to default to retrieved, time-aware facts for any agent that spans more than a handful of turns and only fall back to full replay when the task explicitly requires verbatim earlier dialogue.
+
+Test Claude Fable 5 on a multi-file refactoring task you previously split across several prompts and note where it maintains context without extra scaffolding.
+
+Download Cohere North Mini Code from Hugging Face and run it through your existing agentic coding harness to measure tool-call reliability versus closed models.
+
+Try TabClaw on a three-table financial reconciliation spreadsheet to see how the parallel specialist agents and editable plan surface compare to manual pandas work.
+
+Add paperswithcode dot co to your weekly state of the art check and toggle closed models off to focus on open-weight progress.
+
+Further tuning of Claude Fable 5 safeguard sensitivity is expected in the coming weeks.
+
+Additional open agentic coding models from other labs are likely to follow Cohere's release.
+
+Expanded regulatory guidance on agentic systems in finance and data-handling domains is on the way.
+
+New long-context memory benchmarks that stress bi-temporal retrieval over full-history baselines are coming soon.
+
+Tomorrow, keep an eye on the first production integrations of these new open agentic coding models into existing harnesses.
+
+That wraps up today's A I briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow. And before you go — this show is part of the Nerra Network, a family of daily podcasts covering tech, science, markets, and more.
+
+If you enjoyed today's episode, give Modern Investing Techniques a listen: modern strategies for Canadian and U.S. investors. You can explore the whole lineup at nerranetwork dot com.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
