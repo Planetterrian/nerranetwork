@@ -256,8 +256,18 @@ episode:
 chapters:
   enabled: true
   section_markers:
+    # June 10 2026 quality pass: positional `where` anchors (the Tesla
+    # chapter-bug class — env_intel was missed in the four-show pass) so
+    # the Introduction can't be re-titled by a late brand mention and the
+    # Closing/Teaser can't be matched mid-script (Ep040 shipped a
+    # "Closing" chapter at word-position 7 of 10). The Closing pattern
+    # also gained the "That covers today's environmental intelligence"
+    # closing-pool variant, which previously matched no pattern (same
+    # MAB orphan-closing bug — half those episodes shipped with no
+    # Closing chapter).
     - pattern: "This is Environmental Intelligence"
       title: "Introduction"
+      where: start
     - pattern: "executive summary|here's what matters"
       title: "Executive Summary"
     - pattern: "lead story|centrepiece|most significant"
@@ -266,7 +276,10 @@ chapters:
       title: "Regulatory & Policy Watch"
     - pattern: "science|technical"
       title: "Science & Technical"
-    - pattern: "industry|practice"
+    # "industry" never appears in practice; bare "practice" was matching
+    # the closing's "useful to your practice" and stealing the final
+    # segment's title (Ep040). Exclude that phrase with a lookbehind.
+    - pattern: "industry|(?<!your )practice"
       title: "Industry & Practice"
     - pattern: "practitioner deep dive|deep dive|under the hood"
       title: "Practitioner Deep Dive"
@@ -276,8 +289,10 @@ chapters:
       title: "Week Ahead"
     - pattern: "Before we wrap|Tomorrow"
       title: "Tomorrow Teaser"
-    - pattern: "That's Environmental Intelligence"
+      where: end
+    - pattern: "That's Environmental Intelligence|That covers today.?s environmental intelligence"
       title: "Closing"
+      where: end
 
 slow_news:
   enabled: true

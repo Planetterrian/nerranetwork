@@ -1,0 +1,43 @@
+# Review ledger for env_intel. Schema: docs/reviews/ledger/README.md
+reviews:
+  - date: 2026-06-10
+    pr: null
+    doc: docs/reviews/env_intel_review_2026_06_10.md
+    summary: >
+      First dedicated env_intel pass. Show was missed by the Tesla/PT/
+      four-show chapter fixes and carried two bug classes those passes
+      eliminated (mis-positioned chapters + orphan closing variant) plus
+      an odd-weekday cadence-accuracy bug in the spoken intro/closing.
+    shipped:
+      - chapter positional `where` anchors (Introduction=start, Tomorrow Teaser/Closing=end)
+      - Closing pattern now matches both closing-pool variants
+      - Industry pattern excludes the closing's "your practice" (lookbehind)
+      - cadence-neutral spoken copy (dropped "daily" / "back tomorrow")
+      - unified prompt length target 1500-2200 -> 900-1300 words
+    deferred:
+      - digest-driven / position-aware mid-section chapter titles (medium effort, shared)
+      - thin-news-day handling (slow_news library not backfilling; Ep043 aired "no news")
+    predictions:
+      - metric: episodes with duplicate/misordered chapter titles, last 10
+        baseline: "5/10 (snapshot 2026-06-10)"
+        expected: "0/10 within 2 weeks of episodes generated post-merge"
+        verdict: pending
+        evidence: null
+      - metric: transcripts saying "daily" or "back tomorrow"
+        baseline: "7/10 ('back tomorrow') + 'daily' in every intro"
+        expected: "0/10 post-merge"
+        verdict: pending
+        evidence: null
+      - metric: episodes shipping with no Closing chapter (variant-2 closings)
+        baseline: ">0 (closing variant 2 matched no pattern)"
+        expected: "0 post-merge"
+        verdict: pending
+        evidence: null
+      - metric: median _tts.txt words, last 10 eps
+        baseline: "~750 (avg); target was contradictory 1500"
+        expected: ">= 900 median; stable, not lower than baseline"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
+do_not_retry: []
