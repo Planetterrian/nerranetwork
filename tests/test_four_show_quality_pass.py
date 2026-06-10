@@ -113,6 +113,7 @@ class TestUnifiedLengthTargets:
     def test_contradictory_targets_removed(self):
         mit = (_ROOT / self.PROMPTS["modern_investing"]).read_text(encoding="utf-8")
         assert "2500–3500" not in mit
+        assert "at least 2500" not in mit  # residual contradiction caught June 10 review
         ff = (_ROOT / self.PROMPTS["fascinating_frontiers"]).read_text(encoding="utf-8")
         assert "at least 2400 words" not in ff
         assert "12-15 minute" not in ff
