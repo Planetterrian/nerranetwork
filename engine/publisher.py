@@ -285,6 +285,11 @@ def update_rss_feed(
     format_duration_func=None,
     chapters_url: Optional[str] = None,
     transcript_url: Optional[str] = None,
+    funding_url: str = "",
+    funding_label: str = "Support the show — free newsletter",
+    person_name: str = "",
+    person_url: str = "",
+    person_img: str = "",
 ) -> Path:
     """Create or update an RSS feed with a new episode.
 
@@ -578,6 +583,19 @@ def update_rss_feed(
             channel_email or "patrick@planetterrian.com",
         )
 
+        # Add channel-level <podcast:funding> + <podcast:person>
+        # (Podcasting 2.0 discovery/support surface; June 2026 growth
+        # pass). No-ops when the args are empty so legacy callers are
+        # byte-for-byte unaffected.
+        _inject_channel_funding_person_tags(
+            Path(tmp_path),
+            funding_url=funding_url,
+            funding_label=funding_label,
+            person_name=person_name,
+            person_url=person_url,
+            person_img=person_img,
+        )
+
         os.replace(tmp_path, str(rss_path))
     except Exception:
         # Clean up temp file on failure
@@ -596,6 +614,8 @@ def update_rss_feed(
         chapters_url=chapters_url,
         transcript_url=transcript_url,
         expect_locked=True,
+        expect_funding=bool(funding_url),
+        expect_person=bool(person_name),
     )
 
     logger.info("RSS feed updated: %s", rss_path)
@@ -609,6 +629,8 @@ def _validate_injected_tags(
     chapters_url: str,
     transcript_url: str,
     expect_locked: bool,
+    expect_funding: bool = False,
+    expect_person: bool = False,
 ) -> None:
     """Parse the final RSS and log ERROR if expected Podcasting 2.0 tags are missing."""
     PODCAST_NS = "https://podcastindex.org/namespace/1.0"
@@ -624,6 +646,17 @@ def _validate_injected_tags(
             logger.error(
                 "RSS validation: <podcast:locked> missing after injection "
                 "(%s). Feed imports are not protected.", rss_path,
+            )
+
+        if expect_funding and channel.find(f"{{{PODCAST_NS}}}funding") is None:
+            logger.error(
+                "RSS validation: <podcast:funding> missing after injection "
+                "(%s).", rss_path,
+            )
+        if expect_person and channel.find(f"{{{PODCAST_NS}}}person") is None:
+            logger.error(
+                "RSS validation: <podcast:person> missing after injection "
+                "(%s).", rss_path,
             )
 
         if chapters_url or transcript_url:
@@ -699,6 +732,75 @@ def _inject_podcast_locked_tag(rss_path: Path, owner_email: str) -> None:
 
     except Exception as exc:
         logger.error("Failed to inject <podcast:locked> tag: %s", exc)
+
+
+def _inject_channel_funding_person_tags(
+    rss_path: Path,
+    *,
+    funding_url: str = "",
+    funding_label: str = "Support the show — free newsletter",
+    person_name: str = "",
+    person_url: str = "",
+    person_img: str = "",
+) -> None:
+    """Add channel-level ``<podcast:funding>`` + ``<podcast:person>`` tags.
+
+    Podcasting 2.0 surfaces these in supporting apps (Podcast Addict,
+    Fountain, Podverse, …): funding renders as a support/subscribe button,
+    person feeds host-based discovery and credits. Like the other
+    ``podcast:`` tags, feedgen can't emit them, so this post-processes the
+    XML on every rebuild (the feed is fully rewritten each episode).
+
+    Idempotent — skips tags that already exist. Empty args are a no-op so
+    legacy callers are byte-for-byte unaffected.
+    """
+    if not funding_url and not person_name:
+        return
+
+    PODCAST_NS = "https://podcastindex.org/namespace/1.0"
+
+    try:
+        ET.register_namespace("podcast", PODCAST_NS)
+        ET.register_namespace("itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd")
+        ET.register_namespace("atom", "http://www.w3.org/2005/Atom")
+
+        tree = ET.parse(str(rss_path))
+        root = tree.getroot()
+
+        for attr in list(root.attrib):
+            if attr == "xmlns:podcast" or (
+                attr.startswith("xmlns:") and root.attrib[attr] == PODCAST_NS
+            ):
+                del root.attrib[attr]
+
+        channel = root.find("channel")
+        if channel is None:
+            return
+
+        changed = False
+
+        if funding_url and channel.find(f"{{{PODCAST_NS}}}funding") is None:
+            funding_el = ET.SubElement(channel, f"{{{PODCAST_NS}}}funding")
+            funding_el.set("url", funding_url)
+            funding_el.text = funding_label or "Support the show"
+            changed = True
+
+        if person_name and channel.find(f"{{{PODCAST_NS}}}person") is None:
+            person_el = ET.SubElement(channel, f"{{{PODCAST_NS}}}person")
+            person_el.set("role", "host")
+            if person_url:
+                person_el.set("href", person_url)
+            if person_img:
+                person_el.set("img", person_img)
+            person_el.text = person_name
+            changed = True
+
+        if changed:
+            tree.write(str(rss_path), xml_declaration=True, encoding="UTF-8")
+            logger.info("Injected <podcast:funding>/<podcast:person> tags")
+
+    except Exception as exc:
+        logger.error("Failed to inject funding/person tags: %s", exc)
 
 
 def _inject_chapters_tag(rss_path: Path, guid: str, chapters_url: str) -> None:

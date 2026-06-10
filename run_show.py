@@ -2800,6 +2800,14 @@ def run(args: argparse.Namespace) -> None:
             audio_url=feed_audio_url,  # Use R2/OP3-prefixed URL if available
             chapters_url=chapters_url,
             transcript_url=transcript_url,
+            # Podcasting 2.0 channel tags (June 2026 growth pass): funding
+            # points at the newsletter signup (the network's support ask is
+            # "subscribe", not money), person credits the host for
+            # host-based discovery in 2.0 apps.
+            funding_url=f"{config.publishing.base_url}/#newsletter",
+            funding_label="Free newsletter — best of the network weekly",
+            person_name=config.publishing.host_name or "Patrick",
+            person_url=f"{config.publishing.base_url}/about.html",
         )
 
         metrics.record("rss_update_duration_s", round(time.monotonic() - _t_rss, 2))
