@@ -801,7 +801,10 @@ Write a "Nerra Network Weekly Intelligence" briefing in markdown:
 ## The Big Connections
 2-3 paragraphs identifying the most interesting cross-domain threads this \
 week. Where do AI developments intersect with energy? How do space \
-discoveries relate to biotech? What regulatory moves affect multiple domains?
+discoveries relate to biotech? What regulatory moves affect multiple domains? \
+Ground every thread in the actual coverage listed above — never invent a \
+connection the episodes don't support; if a hypothetical pairing has no \
+supporting stories this week, leave it out.
 
 ## Domain Roundup
 A brief (3-4 sentence) summary of each show's week, focusing on the single \

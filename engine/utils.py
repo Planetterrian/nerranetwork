@@ -636,3 +636,39 @@ def strip_lone_surrogates(text: str) -> str:
     code point in Python strings, not two separate surrogates.
     """
     return _LONE_SURROGATE_RE.sub("", text)
+
+
+# Known phonetic garbles the LLM occasionally writes into scripts despite
+# the prompts' pronunciation-guide ban ("nassa" shipped in FF Ep096's
+# published transcript; "chwen"/"en-vidia" flagged by the daily audit).
+# The TTS mostly pronounces these acceptably, but blog readers and the
+# RSS transcript see the garble verbatim. Deterministic restoration is
+# safe: these tokens have no legitimate English use (deliberately NO
+# space-separated variants like "star mer" — "star merger" collides).
+_PHONETIC_GARBLES = {
+    "nassa": "NASA",
+    "nay-toe": "NATO",
+    "chwen": "Qwen",
+    "en-vidia": "Nvidia",
+    "open-ay-eye": "OpenAI",
+    "star-mer": "Starmer",
+}
+
+_PHONETIC_GARBLE_RE = re.compile(
+    r"\b(" + "|".join(re.escape(k) for k in _PHONETIC_GARBLES) + r")\b",
+    re.IGNORECASE,
+)
+
+
+def fix_phonetic_garbles(text: str) -> str:
+    """Restore canonical spellings for known LLM phonetic garbles.
+
+    Applied to digests and podcast scripts before they reach TTS, the
+    blog transcript, and RSS. Detection (loud audit flag) stays in
+    review_episodes.py; this is the repair layer.
+    """
+    if not text:
+        return text
+    return _PHONETIC_GARBLE_RE.sub(
+        lambda m: _PHONETIC_GARBLES[m.group(1).lower()], text,
+    )
