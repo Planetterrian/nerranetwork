@@ -147,6 +147,13 @@ class TestWorkflowWiring:
         text = WORKFLOW_PATH.read_text(encoding="utf-8")
         assert "already has an open review PR" in text
 
+    def test_bot_dispatch_is_allowed(self):
+        # The daily audit dispatches this workflow as the github-actions
+        # bot; claude-code-action refuses bot-initiated runs unless the
+        # actor is allowlisted (broke the event-driven path 2026-06-10).
+        text = WORKFLOW_PATH.read_text(encoding="utf-8")
+        assert 'allowed_bots: "github-actions"' in text
+
 
 def _load_script(name):
     spec = importlib.util.spec_from_file_location(name, ROOT / "scripts" / f"{name}.py")
