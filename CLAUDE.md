@@ -114,7 +114,31 @@ nerranetwork/
   fixes, content tracking, chunked TTS, x_search stock data, TST-specific
   emoji formatting via `engine.publisher.format_tst_digest_for_x()`
 - **OV** is structurally different — different TTS approach (no streaming, uses
-  env vars for voice settings), simpler functions
+  env vars for voice settings), simpler functions.
+  **June 10 2026 quality pass** (review:
+  [`docs/reviews/omni_view_review_2026_06_10.md`](docs/reviews/omni_view_review_2026_06_10.md);
+  drift guards: `tests/test_omni_view_quality_pass.py`): OV was missed by
+  every chapter/length hardening round. Two shipped chapter bugs fixed
+  (metadata-only): 7 of the last 10 episodes had NO Closing chapter (the
+  dominant "That wraps up today's Omni View…" closing-pool variant matched
+  no pattern — MAB orphan-closing class), and the dead "Understanding the
+  Issue" pattern let the auto-segment fallback title chapters from raw
+  deep-dive sentences (Ep061 "Knowing this, when you hear claims…", Ep068
+  "How are casualty figures verified…"); added `where` anchors + a Closing
+  pattern covering both variants + a deep-dive pattern matching the real
+  spoken opener. The June "strongest case ≤1×/episode" steel-man fix had
+  FAILED (12-20×/episode in Ep070/071/075, or mutated to the anonymous
+  "One side frames / The other side frames / Advocates on each side" frame
+  in Ep077 — which also violates the prompt's own attribution rule); root
+  cause was the DIGEST prompt seeding the literal "The strongest case for X
+  rests on…" lead-in, so the fix dropped that seed, requires NAMED
+  advocates, and bans the anonymous frame in both prompts (verified via
+  `--test`: 0 uses, advocates now named). Unified three contradictory
+  length targets (8-12 min / 2000 words / "40+ sentences") to one
+  (1,700-2,000w ≈ 11-13 min) + added `podcast_expand_below_target` and
+  raised `min_podcast_words` 900→1400 (the expand opt-in the June network
+  pass missed). Prompt/length edits change shipped audio — A/B-listen per
+  landmine #17; the chapter fix does not.
 - **EI** runs exclusively via `run_show.py` + `shows/env_intel.yaml`; no legacy script.
   **June 10 2026 quality pass** (review:
   [`docs/reviews/env_intel_review_2026_06_10.md`](docs/reviews/env_intel_review_2026_06_10.md);

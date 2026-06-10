@@ -158,7 +158,20 @@ llm:
   # the 30k-char "too long" guard.
   max_tokens: 10000
   podcast_max_tokens: 8000
-  min_podcast_words: 900
+  # June 10 2026 quality pass: Omni View was MISSED by the June network
+  # pass that added podcast_expand_below_target to the eight chronically
+  # short shows. Its episodes ran ~1,150 words (range 900-1,566) against a
+  # podcast prompt that simultaneously demanded "8-12 minutes", "at least
+  # 2000 words", and "40+ sentences" (40 sentences is ~700 words, not
+  # 2000 — the prompt's own arithmetic contradicted itself). The prompt is
+  # now unified to one target (1,700-2,000 words / 11-13 min); this floor
+  # + the expand flag fire the one-shot "cover more stories" retry whenever
+  # a first pass lands short (the digest carries ~12 stories; episodes were
+  # covering only 6-7). Soft skip floor = 1400*0.6 = 840, below the lowest
+  # recent output, so nothing newly skips. Watch the first week for
+  # podcast_script_too_thin markers; fall back to 1200 if it skips.
+  min_podcast_words: 1400
+  podcast_expand_below_target: true
 
 tts:
   # Inherits provider=grok, voice_id=sal, language_code=en, max_chars=10000
@@ -211,17 +224,41 @@ episode:
 
 chapters:
   enabled: true
+  # June 10 2026 quality pass: Omni View was MISSED by the Tesla/four-show/
+  # env_intel chapter-hardening passes. Two shipped bugs:
+  #   1. 7 of the last 10 episodes shipped with NO Closing chapter — the
+  #      dominant closing-pool variant ("That wraps up today's Omni View.
+  #      Remember — the best-informed people…") matched no pattern (the
+  #      MAB orphan-closing class). The Closing pattern now covers both
+  #      closing-pool variants in engine/intros.py.
+  #   2. The "Understanding the Issue" pattern ("understanding the issue|
+  #      deeper look|let's understand") never matched the actual spoken
+  #      deep-dive opener ("Now, to really understand this story, there is
+  #      something most coverage leaves out…" / "To understand the X more
+  #      fully…"). With only 2 markers matching, the auto-segment fallback
+  #      fired and titled a chapter from a raw deep-dive sentence — Ep061
+  #      shipped a chapter literally titled "Knowing this, when you hear
+  #      claims that the system worked…" and Ep068 "How are casualty
+  #      figures verified when access to strike…". The pattern now matches
+  #      the real opener, restoring the deep-dive chapter and keeping the
+  #      matched count at/above min_chapters so the garbage-title fallback
+  #      stops firing.
+  # Positional `where` anchors (Tesla chapter-bug class) keep Introduction
+  # pinned to the open and Teaser/Closing pinned to the sign-off.
   section_markers:
     - pattern: "This is Omni View|Welcome.*Omni View|Omni View.*episode"
       title: "Introduction"
+      where: start
     - pattern: "Shifting now to|Meanwhile|first story|first up"
       title: "Main Stories"
-    - pattern: "understanding the issue|deeper look|let's understand"
+    - pattern: "to really understand|to understand .{1,80}? more fully|most coverage leaves out|here's the thing that changes"
       title: "Understanding the Issue"
-    - pattern: "Before we go|before we wrap"
+    - pattern: "Before we go|before we wrap|Tomorrow, watch for"
       title: "Tomorrow Teaser"
-    - pattern: "That's Omni View|that.?s.*for today|until next time"
+      where: end
+    - pattern: "That's Omni View|That wraps up today.?s Omni View|that wraps up today|until next time"
       title: "Closing"
+      where: end
 
 newsletter:
   enabled: true
