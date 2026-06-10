@@ -939,11 +939,15 @@ def test_dark_mode_opts_into_native_color_scheme():
 def test_dark_mode_headings_are_brightest_text():
     """Section headings must be the BRIGHTEST text in dark mode (pure
     white via a dedicated h1-h4 rule placed after the universal text
-    rule), so they read as headings rather than dimmer-than-body labels."""
+    rule) — and SCOPED to .nn (June 2026): the unscoped form recolored
+    Buttondown's subject-title heading white on its light wrapper →
+    invisible on iOS Mail dark mode."""
     out = nt.wrap_with_branding(
         "tesla", "## A Section\n\nBody.", week_ending=datetime.date(2026, 4, 30),
     )
-    assert "h1, h2, h3, h4 { color:#ffffff !important; }" in out
+    assert ".nn h1, .nn h2, .nn h3, .nn h4 { color:#ffffff !important; }" in out
+    # The buggy unscoped rule must never come back.
+    assert "\n    h1, h2, h3, h4 { color:#ffffff !important; }" not in out
     # The h2 text is a direct child (no inner <span> the universal span
     # rule would dim) so the white heading rule actually wins.
     assert "<h2" in out and "<span" not in out.split("<h2", 1)[1].split("</h2>", 1)[0]
@@ -1136,3 +1140,83 @@ def test_view_in_browser_renders_when_archive_url_passed():
         archive_url="https://buttondown.com/patricknovak1/archive/tesla-ep503/",
     )
     assert "buttondown.com/patricknovak1/archive/tesla-ep503/" in out
+
+
+# ---------------------------------------------------------------------------
+# Dark-mode scoping contract (v3, June 2026 iPhone fix)
+# ---------------------------------------------------------------------------
+
+class TestDarkModeScoping:
+    """The iPhone dark-mode white-on-white bug (operator screenshots,
+    Jun 9 2026) was our dark-mode CSS recoloring BUTTONDOWN'S wrapper
+    (subject title, byline, forward line, unsubscribe footer) via
+    global selectors, while only OUR surfaces got dark backgrounds.
+    Contract: every color rule inside the @media block is scoped to the
+    .nn marker class; every block we emit carries .nn; the attribute
+    selectors that could match Buttondown tables are gone."""
+
+    def _wrap(self):
+        return nt.wrap_with_branding(
+            "tesla",
+            "## Top Stories\n\nTesla **moved**. [link](https://x.com)",
+            daily_label="Ep 505", daily_date=datetime.date(2026, 6, 9),
+            preheader="preview", p_s="One more thing.",
+            adjacent_shows=[{"name": "MIT", "hook": "Oil",
+                             "url": "https://nerranetwork.com/x.html",
+                             "emoji": "📈"}],
+            archive_url="https://buttondown.com/p/archive/tesla-ep505/",
+            issue_number=505,
+        )
+
+    def test_no_unscoped_color_rules_in_media_block(self):
+        import re as _re
+
+        out = self._wrap()
+        media = out.split("@media (prefers-color-scheme: dark)", 1)[1]
+        media = media.split("</style>")[0]
+        offenders = []
+        for line in media.splitlines():
+            m = _re.match(r"\s*([^{/@}*]+)\{", line)
+            if not m:
+                continue
+            for sel in m.group(1).split(","):
+                sel = sel.strip()
+                # Allowed: class-/id-scoped selectors and .nn-scoped
+                # element selectors. Forbidden: bare element selectors
+                # (h1, p, body, a, td …) that leak onto Buttondown.
+                if sel and not sel.startswith((".", "#")) and "nn" not in sel:
+                    offenders.append(sel)
+        assert not offenders, (
+            f"Unscoped color selectors inside the dark @media block leak "
+            f"onto Buttondown's wrapper (iPhone white-on-white bug): "
+            f"{offenders}"
+        )
+
+    def test_no_attribute_background_selectors(self):
+        out = self._wrap()
+        assert "td[style*=" not in out, (
+            "v2 attribute selectors can match Buttondown wrapper tables "
+            "whose text we no longer recolor → dark-on-dark chrome"
+        )
+
+    def test_every_block_table_and_div_carries_nn(self):
+        import re as _re
+
+        out = self._wrap()
+        body = out.split("</style>", 1)[1]
+        tags = _re.findall(r"<(?:table|div)\b[^>]*>", body)
+        assert tags, "expected rendered blocks"
+        missing = [t for t in tags if 'class="nn' not in t]
+        assert not missing, f"blocks missing the .nn scope marker: {missing[:3]}"
+
+    def test_scope_nn_adds_class_idempotently_shaped(self):
+        html = '<table role="presentation"><tr><td><div class="card">x</div></td></tr></table>'
+        scoped = nt._scope_nn(html)
+        assert '<table role="presentation" class="nn">' in scoped
+        assert '<div class="nn card">' in scoped
+
+    def test_color_scheme_optin_still_present(self):
+        # Removing the opt-in regresses to Apple Mail's auto-transform
+        # (washed-out headings — the ORIGINAL May 2026 bug).
+        out = self._wrap()
+        assert ":root { color-scheme: light dark; }" in out
