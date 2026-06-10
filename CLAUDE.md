@@ -593,6 +593,29 @@ same review ran across the other ten shows. Drift guards:
   (review recommends waiting to ~Ep15); confirm X handles for the
   X-enabled shows so the follow CTA can be set.
 
+### Scheduled Show Review Agent (June 2026)
+
+The manual quality-pass workflow (Tesla #573/#576, MIT #574, network #575)
+is now automated and reproducible. A scheduled Claude Code agent
+([`.github/workflows/show-review.yml`](.github/workflows/show-review.yml),
+Tue + Fri 07:00 UTC) reviews ONE target per run — the least-recently-
+reviewed of the 12 shows + a cross-cutting `network` target, per
+[`docs/reviews/review_state.yaml`](docs/reviews/review_state.yaml) /
+`scripts/pick_review_target.py` — following the codified playbook in
+[`.claude/commands/review-show.md`](.claude/commands/review-show.md)
+(same P0/P1/P2 method as the manual passes; transcripts as ears; hard
+guardrails baked in). Output is always a **draft PR** on branch
+`agent/review-<slug>-<YYYYMMDD>` with prompt/audio changes called out
+under "⚠️ A/B-listen required" — the operator's merge is the ship gate,
+so landmine #17 is preserved. New review docs go to `docs/reviews/`;
+merging a review PR advances the rotation. Run `/review-show <slug>` in
+any Claude Code session for a manual pass with identical methodology.
+Setup + tuning: [`docs/REVIEW_AGENT.md`](docs/REVIEW_AGENT.md). Drift
+guards: `tests/test_review_agent.py` (rotation covers every show —
+scaffolded new shows must be added to the state file; playbook keeps its
+safety language). Requires the `ANTHROPIC_API_KEY` secret + Claude
+GitHub App (one-time operator setup).
+
 ### Recursive narrative memory generalized (Phase 3, May 2026)
 
 The content moat: Tesla's narrative-memory pattern generalized so other shows

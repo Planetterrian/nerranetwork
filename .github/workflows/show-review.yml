@@ -1,0 +1,93 @@
+name: Show Review Agent
+
+# Scheduled quality-review agent: continues the iterative show-improvement
+# work previously done manually (the June 2026 Tesla / MIT / network-wide
+# quality passes). Each run reviews ONE target — the least-recently-reviewed
+# show (or the cross-cutting `network` target) per
+# docs/reviews/review_state.yaml — and opens its findings + verified fixes
+# as a DRAFT pull request. Nothing ships without the operator merging, which
+# is what preserves the A/B-listen guardrail for prompt/audio changes
+# (CLAUDE.md landmine #17).
+#
+# The full playbook the agent follows lives in
+# .claude/commands/review-show.md; operator setup + tuning docs in
+# docs/REVIEW_AGENT.md.
+#
+# Requires ONE secret: ANTHROPIC_API_KEY (or swap the auth input for
+# claude_code_oauth_token — see docs/REVIEW_AGENT.md).
+
+on:
+  schedule:
+    # Tue + Fri, 07:00 UTC — after the previous evening's nightly
+    # maintenance has refreshed api/dashboard.json + api/op3_stats.json,
+    # and well before the day's show slate starts (~07:30+ UTC crons).
+    # Two runs/week ≈ each of the 13 targets reviewed every ~6-7 weeks.
+    - cron: '0 7 * * 2,5'
+  workflow_dispatch:
+    inputs:
+      show:
+        description: 'Target to review (show slug or "network"). Leave empty for automatic rotation.'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+concurrency:
+  group: show-review-agent
+  cancel-in-progress: false
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # The agent runs the repo's pytest drift guards before pushing.
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'requirements.txt'
+          skip-checkout: 'true'
+
+      - name: Pick review target
+        id: pick
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FORCED: ${{ inputs.show }}
+        run: |
+          if [ -n "$FORCED" ]; then
+            echo "slug=$FORCED" >> "$GITHUB_OUTPUT"
+            echo "Forced target: $FORCED"
+            exit 0
+          fi
+          # A target with an open review PR (branch agent/review-<slug>-<date>)
+          # is skipped so the operator never gets two PRs for the same show.
+          EXCLUDES=$(gh pr list --state open --json headRefName \
+            --jq '.[].headRefName' \
+            | sed -n 's#^agent/review-\(.*\)-[0-9]\{8\}$#\1#p' | sort -u | tr '\n' ' ')
+          echo "In-flight review targets excluded: ${EXCLUDES:-none}"
+          if SLUG=$(python scripts/pick_review_target.py --exclude $EXCLUDES); then
+            echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
+            echo "Picked target: $SLUG"
+          else
+            echo "slug=" >> "$GITHUB_OUTPUT"
+            echo "::warning::No eligible review target (all candidates have open review PRs); skipping this run."
+          fi
+
+      - name: Run review agent
+        if: steps.pick.outputs.slug != ''
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: "/review-show ${{ steps.pick.outputs.slug }}"
+          claude_args: |
+            --model claude-opus-4-8
+            --allowedTools "Bash,Read,Write,Edit,MultiEdit,Glob,Grep,WebFetch,WebSearch"
