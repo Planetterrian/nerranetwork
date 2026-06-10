@@ -218,6 +218,20 @@ SHOW_REGISTRY = {
         "required_sections": [],
         "schedule": "even",
     },
+    "first_principles": {
+        "name": "First Principles Daily",
+        "output_dir": "digests/first_principles",
+        "prefix": "First_Principles",
+        "min_digest_chars": 2000,
+        "max_digest_chars": 18000,
+        # Narrative show, 1,500-word floor in the YAML (the audit reads
+        # the live llm.min_podcast_words first; this is the fallback).
+        "min_tts_words": 1500,
+        "min_audio_s": 240,
+        "max_audio_s": 1500,
+        "required_sections": [],
+        "schedule": "daily",
+    },
     "unintended_consequences": {
         "name": "Unintended Consequences",
         "output_dir": "digests/unintended_consequences",
