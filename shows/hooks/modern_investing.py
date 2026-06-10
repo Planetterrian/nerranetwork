@@ -12,9 +12,25 @@ from __future__ import annotations
 import datetime
 import json
 import logging
+import math
 import re
 from pathlib import Path
-from typing import Any
+
+
+def _finite(value, default=0.0):
+    """Return *value* if it's a finite number, else *default*.
+
+    yfinance occasionally returns ``float('nan')`` instead of ``None``
+    (a NaN close on a halted/delisted bar). NaN is truthy, passes
+    ``is None`` checks, and poisons every downstream sum — two trades
+    closed with NaN exits (DELL, HIMS) turned the tracker's
+    ``cumulative_pnl`` into NaN for weeks and put "Running Total: $nan"
+    on air (June 2026 review). Every aggregation in this module now
+    routes numbers through this guard.
+    """
+    if isinstance(value, (int, float)) and math.isfinite(value):
+        return value
+    return default
 
 logger = logging.getLogger(__name__)
 
@@ -566,6 +582,14 @@ def _close_trade(trade: dict, tracker: dict) -> None:
         # Weekly hold: entry = Monday open, exit = Friday close
         entry_price, exit_price = _fetch_weekly_prices(symbol)
 
+    # NaN guard: yfinance returns NaN floats (not None) for halted /
+    # missing bars — they pass an ``is None`` check and poison every
+    # downstream sum (the DELL/HIMS NaN trades, June 2026 review).
+    if entry_price is not None and not math.isfinite(entry_price):
+        entry_price = None
+    if exit_price is not None and not math.isfinite(exit_price):
+        exit_price = None
+
     if entry_price is None or exit_price is None:
         logger.warning("Could not fetch prices for %s — marking as data_unavailable", symbol)
         trade["status"] = "closed"
@@ -702,12 +726,22 @@ def _recompute_summary(tracker: dict) -> None:
     if not closed:
         return
 
-    wins = sum(1 for t in closed if (t.get("pnl_pct") or 0) > 0)
-    losses = sum(1 for t in closed if (t.get("pnl_pct") or 0) < 0)
+    wins = sum(1 for t in closed if _finite(t.get("pnl_pct")) > 0)
+    losses = sum(1 for t in closed if _finite(t.get("pnl_pct")) < 0)
     breakeven = len(closed) - wins - losses
     total = len(closed)
-    cum_pnl = sum(t.get("pnl_dollars") or 0 for t in closed)
-    pnl_pcts = [t.get("pnl_pct") or 0 for t in closed]
+    cum_pnl = sum(_finite(t.get("pnl_dollars")) for t in closed)
+    pnl_pcts = [_finite(t.get("pnl_pct")) for t in closed]
+    # Cumulative alpha vs NASDAQ across trades that have it — THE show
+    # metric (the intro promises NASDAQ outperformance) yet it was never
+    # summarized; get_mit_recursive_learning_context read a key that
+    # didn't exist and reported 0.0 forever (June 2026 review).
+    alphas = [
+        t["alpha_pct"] for t in closed
+        if isinstance(t.get("alpha_pct"), (int, float))
+        and math.isfinite(t["alpha_pct"])
+    ]
+    cum_alpha = sum(alphas)
 
     # Streak calculation
     current_streak = 0
@@ -736,6 +770,8 @@ def _recompute_summary(tracker: dict) -> None:
         "best_trade_pct": round(max(pnl_pcts), 2) if pnl_pcts else 0.0,
         "worst_trade_pct": round(min(pnl_pcts), 2) if pnl_pcts else 0.0,
         "average_return_pct": round(sum(pnl_pcts) / len(pnl_pcts), 2) if pnl_pcts else 0.0,
+        "cumulative_alpha_vs_nasdaq": round(cum_alpha, 2),
+        "trades_with_alpha": len(alphas),
         "current_streak": current_streak,
         "longest_win_streak": longest_win,
         "longest_loss_streak": longest_loss,
@@ -827,7 +863,7 @@ def _portfolio_return_pct(tracker: dict) -> float:
     if not closed:
         return 0.0
     position = tracker.get("metadata", {}).get("position_size", 1000) or 1000
-    total_pnl = sum((t.get("pnl_dollars") or 0) for t in closed)
+    total_pnl = sum(_finite(t.get("pnl_dollars")) for t in closed)
     capital = len(closed) * position
     return round((total_pnl / capital) * 100, 2) if capital else 0.0
 
@@ -844,7 +880,7 @@ def _portfolio_return_ytd_pct(tracker: dict) -> float:
     if not closed:
         return 0.0
     position = tracker.get("metadata", {}).get("position_size", 1000) or 1000
-    total_pnl = sum((t.get("pnl_dollars") or 0) for t in closed)
+    total_pnl = sum(_finite(t.get("pnl_dollars")) for t in closed)
     capital = len(closed) * position
     return round((total_pnl / capital) * 100, 2) if capital else 0.0
 
@@ -1032,7 +1068,7 @@ def _build_trade_review(tracker: dict, episode_num: int | None = None) -> str:
     entry = last.get("entry_price")
     exit_ = last.get("exit_price")
     pnl_pct = last.get("pnl_pct", 0)
-    pnl_dollars = last.get("pnl_dollars", 0)
+    pnl_dollars = _finite(last.get("pnl_dollars"))
     summary = tracker.get("summary", {})
 
     type_label = "Flash Trade" if trade_type == "flash" else "Weekly Hold"
@@ -1166,6 +1202,14 @@ def _stale_lesson_tags(data: dict) -> list[tuple[str, int]]:
         except ValueError:
             continue
         cooldown = int(entry.get("cooldown_days", data.get("cooldown_days_default", 21)))
+        # Escalating cooldown (June 2026): a flat 21-day window let the
+        # bid-ask-spread lesson get retaught 13 times in 71 episodes —
+        # each repeat was "legal" because 3+ weeks had passed, but the
+        # show's own audit (LL-001) flagged listeners tuning out. Every
+        # 3 repeats now adds another full cooldown period, capped at
+        # ~6 months, so a lesson taught 13 times effectively retires.
+        count = int(entry.get("count", 1) or 1)
+        cooldown = min(cooldown * (1 + count // 3), 180)
         days_since = (today - last).days
         if days_since < cooldown:
             stale.append((tag, days_since))
@@ -1314,7 +1358,7 @@ def _compute_sector_exposure(tracker: dict) -> dict:
             t.get("symbol", ""), t.get("strategy", ""), t.get("market", ""),
         )
         counts[sector] = counts.get(sector, 0) + 1
-        pnl[sector] = pnl.get(sector, 0.0) + float(t.get("pnl_dollars") or 0)
+        pnl[sector] = pnl.get(sector, 0.0) + _finite(t.get("pnl_dollars"))
     total = sum(counts.values())
     return {
         sector: {
@@ -1459,14 +1503,25 @@ def _build_portfolio_summary(tracker: dict) -> str:
     if total == 0:
         return "No simulated trades completed yet — this is the first episode."
 
+    alpha_line = ""
+    trades_with_alpha = summary.get("trades_with_alpha", 0)
+    if trades_with_alpha:
+        alpha_line = (
+            f"- Cumulative alpha vs NASDAQ: "
+            f"{_finite(summary.get('cumulative_alpha_vs_nasdaq')):+.1f}% "
+            f"(across {trades_with_alpha} benchmarked trades) — THE headline "
+            f"number; state it on air every episode\n"
+        )
+
     return (
         f"Portfolio Performance (simulated, $1,000 per trade):\n"
         f"- Total trades: {total}\n"
         f"- Win rate: {summary.get('win_rate_pct', 0):.0f}% "
         f"({summary.get('wins', 0)}W / {summary.get('losses', 0)}L / "
         f"{summary.get('breakeven', 0)}BE)\n"
-        f"- Cumulative P&L: ${summary.get('cumulative_pnl', 0):+.2f}\n"
-        f"- Average return per trade: {summary.get('average_return_pct', 0):+.2f}%\n"
+        f"- Cumulative P&L: ${_finite(summary.get('cumulative_pnl')):+.2f}\n"
+        f"{alpha_line}"
+        f"- Average return per trade: {_finite(summary.get('average_return_pct')):+.2f}%\n"
         f"- Best trade: {summary.get('best_trade_pct', 0):+.2f}%\n"
         f"- Worst trade: {summary.get('worst_trade_pct', 0):+.2f}%\n"
         f"- Current streak: {_format_streak(summary.get('current_streak', 0))}\n"
@@ -1506,6 +1561,22 @@ def _extract_trade_from_digest(digest_text: str, episode_num: int | None = None)
             digest_text,
         )
     if not ticker_match:
+        # Distinguish "deliberately no trade today" (a legitimate,
+        # common outcome — e.g. "**Today's Pick:** No trade") from a
+        # formatting drift that would silently lose a real pick (June
+        # 2026 review: silent extraction failures were indistinguishable
+        # from no-trade days in the tracker).
+        if re.search(r"Today's Pick", digest_text):
+            if re.search(r"Today's Pick[:*\s]+No\b", digest_text, re.IGNORECASE):
+                logger.info("Digest declared no trade today — tracker unchanged.")
+            else:
+                logger.warning(
+                    "Digest contains a Today's Pick section but no ticker "
+                    "matched the extraction patterns — possible LLM "
+                    "formatting drift; a real pick may have been lost. "
+                    "First 120 chars after marker: %r",
+                    digest_text.split("Today's Pick", 1)[1][:120],
+                )
         return None
 
     symbol = ticker_match.group(1).strip()
@@ -1573,6 +1644,53 @@ def _extract_trade_from_digest(digest_text: str, episode_num: int | None = None)
     }
 
 
+def _analyze_strategy_patterns(tracker: dict) -> str:
+    """FAVOR/AVOID sector guidance from the closed-trade track record.
+
+    June 2026: this function was CALLED by
+    ``get_mit_recursive_learning_context`` but never defined — the
+    resulting NameError was swallowed by the caller's try/except in
+    ``pre_fetch``, so every episode shipped with "Learning context
+    temporarily unavailable" instead of the recursive learning loop
+    (and the operating-principles + confidence-calibration blocks died
+    with it). This implements the FAVOR/AVOID contract the call site
+    expects: sectors with >= 3 closed trades and a clearly positive /
+    negative average alpha.
+    """
+    closed = [
+        t for t in tracker.get("trades", [])
+        if t.get("status") == "closed"
+        and isinstance(t.get("alpha_pct"), (int, float))
+        and math.isfinite(t["alpha_pct"])
+    ]
+    if len(closed) < 5:
+        return ""
+
+    sector_alpha: dict = {}
+    for t in closed:
+        sec = t.get("sector") or "other"
+        sector_alpha.setdefault(sec, []).append(t["alpha_pct"])
+
+    favor, avoid = [], []
+    for sec, alphas in sector_alpha.items():
+        if len(alphas) < 3:
+            continue
+        avg = sum(alphas) / len(alphas)
+        if avg >= 1.0:
+            favor.append((sec, avg, len(alphas)))
+        elif avg <= -1.0:
+            avoid.append((sec, avg, len(alphas)))
+
+    if not favor and not avoid:
+        return ""
+    lines = ["SECTOR GUIDANCE FROM TRACK RECORD:"]
+    for sec, avg, n in sorted(favor, key=lambda x: -x[1]):
+        lines.append(f"  FAVOR {sec}: avg alpha {avg:+.1f}% across {n} closed trades")
+    for sec, avg, n in sorted(avoid, key=lambda x: x[1]):
+        lines.append(f"  AVOID {sec}: avg alpha {avg:+.1f}% across {n} closed trades")
+    return "\n".join(lines)
+
+
 def get_mit_recursive_learning_context() -> str:
     """
     Returns a rich, structured block of learning context for the LLM.
@@ -1592,9 +1710,11 @@ def get_mit_recursive_learning_context() -> str:
     tracker = _load_tracker(output_dir / TRACKER_FILENAME)
 
     summary = tracker.get("summary", {})
-    cum_alpha = summary.get("cumulative_alpha_vs_nasdaq", 0.0)
+    cum_alpha = _finite(summary.get("cumulative_alpha_vs_nasdaq"))
     total_trades = summary.get("total_trades", 0)
-    win_rate = summary.get("win_rate", 0.0)
+    # Summary stores ``win_rate_pct`` (e.g. 57.6) — the old read of a
+    # nonexistent ``win_rate`` key reported 0% forever (June 2026 review).
+    win_rate_pct = _finite(summary.get("win_rate_pct"))
 
     closed = [t for t in tracker.get("trades", []) if t.get("status") == "closed" and t.get("alpha_pct") is not None]
 
@@ -1607,7 +1727,7 @@ def get_mit_recursive_learning_context() -> str:
 
     lines = [
         "RECURSIVE LEARNING CONTEXT — USE THIS TO IMPROVE FUTURE PRACTICE INVESTMENTS:",
-        f"Current track record: {total_trades} closed trades | Win rate {win_rate:.0%} | Cumulative alpha vs NASDAQ: {cum_alpha:+.1f}%",
+        f"Current track record: {total_trades} closed trades | Win rate {win_rate_pct:.0f}% | Cumulative alpha vs NASDAQ: {cum_alpha:+.1f}%",
     ]
 
     if winning:

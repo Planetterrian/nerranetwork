@@ -147,6 +147,10 @@ llm:
   max_tokens: 4000
   podcast_max_tokens: 8000
   min_podcast_words: 1300
+  # June 2026 quality pass (mirrors Tesla): 4 of 10 recent episodes
+  # shipped under the 1300-word target with listener_value averaging
+  # 3.4/10. The expand-retry now fires on ANY below-target script.
+  podcast_expand_below_target: true
   podcast_chain: true
 
 tts:
@@ -156,8 +160,8 @@ tts:
   {}
 
 audio:
-  # TODO: Generate dedicated music file — see assets/music/README.md for prompt.
-  # Falling back to TST theme until modern_investing.mp3 is created.
+  # Dedicated MIT theme (the old "TODO: falling back to TST theme"
+  # comment was stale — the file exists and is in use).
   music_file: assets/music/ModernInvesting.mp3
   # May 12 2026 retune (see shows/_defaults.yaml).
   voice_intro_delay: 10.0

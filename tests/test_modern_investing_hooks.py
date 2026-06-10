@@ -339,7 +339,10 @@ class TestTaughtLessons:
 
     def test_stale_tags_drops_expired(self):
         # Hand-craft an entry whose last_date is well outside the cooldown.
-        old_date = (datetime.date.today() - datetime.timedelta(days=100)).isoformat()
+        # June 2026: cooldowns ESCALATE with teach-count (count=6 →
+        # 45 * (1 + 6//3) = 135d window), so the expiry horizon here is
+        # 140 days, not the flat 45 the original fixture assumed.
+        old_date = (datetime.date.today() - datetime.timedelta(days=140)).isoformat()
         data = {
             "metadata": {"last_updated": "2026-01-01"},
             "cooldown_days_default": 21,
@@ -348,6 +351,19 @@ class TestTaughtLessons:
             }},
         }
         assert m._stale_lesson_tags(data) == []
+
+    def test_overtaught_lesson_blocked_inside_escalated_window(self):
+        # The same count=6 entry at 100 days IS still blocked — the flat
+        # window let bid_ask_spread reteach 13 times in 71 episodes.
+        old_date = (datetime.date.today() - datetime.timedelta(days=100)).isoformat()
+        data = {
+            "metadata": {"last_updated": "2026-01-01"},
+            "cooldown_days_default": 21,
+            "lessons": {"bid_ask_spread": {
+                "count": 6, "last_episode": 1, "last_date": old_date, "cooldown_days": 45,
+            }},
+        }
+        assert [t for t, _ in m._stale_lesson_tags(data)] == ["bid_ask_spread"]
 
     def test_build_block_mentions_stale_tags(self, tmp_path: Path):
         data = m._load_taught_lessons(tmp_path / "nope.json")
