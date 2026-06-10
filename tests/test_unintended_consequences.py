@@ -348,11 +348,12 @@ class TestUCPodcastPromptRules:
 def test_cron_entry_exists_for_unintended_consequences():
     workflow = (REPO_ROOT / ".github" / "workflows" / "run-show.yml"
                 ).read_text(encoding="utf-8")
-    assert "30 11 * * 1-5" in workflow, (
-        "Cron line for Unintended Consequences (11:30 UTC weekdays) "
+    # June 2026 punctuality pass: crons moved off-peak to :37.
+    assert "37 11 * * 1-5" in workflow, (
+        "Cron line for Unintended Consequences (11:37 UTC weekdays) "
         "missing from run-show.yml"
     )
-    assert '"30 11 * * 1-5":' in workflow, (
+    assert '"37 11 * * 1-5":' in workflow, (
         "CRON_MAP entry for Unintended Consequences missing — show "
         "would fire but never run"
     )

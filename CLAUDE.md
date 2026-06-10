@@ -883,6 +883,19 @@ decision); everything else has a live status card.
     yet have the recovery escape hatch (lower risk callers). Drift guard:
     the recovery script + the warning annotation in the Actions log.
 
+24. **Schedule punctuality: exact-time dispatcher + duplicate guard (June
+    2026)** — GitHub delivers cron `schedule` events 1-6 h late (Tesla's
+    11:00 slot observed starting 13:54). Fix: run-show crons moved to
+    off-peak :07/:37; `workers/scheduler/` (Cloudflare Cron Trigger,
+    fires to the minute) dispatches each show via `workflow_dispatch` at
+    its intended slot once the operator deploys it (fine-grained PAT →
+    `wrangler secret put GITHUB_DISPATCH_TOKEN`, `wrangler deploy` — see
+    its README); the gate's same-day duplicate guard (checks today's
+    "Auto-generated: <show> <date>" commit) lets the delayed GitHub cron
+    coexist as fallback without double-publishing. The Worker's SLOTS
+    table must stay in sync with the gate's CRON_MAP —
+    `tests/test_scheduling_punctuality.py` fails CI on drift.
+
 ### Resolved Issues (Feb 2026)
 
 4. **TST/OV output dirs fixed** — `shows/tesla.yaml` and `shows/omni_view.yaml`

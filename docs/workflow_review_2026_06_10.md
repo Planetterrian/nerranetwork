@@ -107,3 +107,32 @@ the operator's run-log review. Drift guards: `tests/test_workflow_efficiency.py`
   other callers' outputs are regenerable, so risk is low).
 - **HF_TOKEN secret** for authenticated Hugging Face pulls — moot while the
   cache holds, useful if more Whisper models are ever used.
+
+## Addendum — scheduling punctuality (June 10, 2026)
+
+Shows were publishing hours later than planned: GitHub delivers `schedule`
+events best-effort, observed **1–6 h late** (Tesla's `0 11 * * *` cron
+started at 13:54 on June 9; daily-audit had already been moved to 16:15 to
+cope). Three-layer fix, drift guards in
+`tests/test_scheduling_punctuality.py`:
+
+1. **Off-peak cron minutes** — all twelve crons moved from :00/:30 (the
+   most contended slots in GitHub's scheduler) to :07/:37. Helps the
+   fallback path; does not fix systemic delay by itself.
+2. **Exact-time dispatcher** — `workers/scheduler/` (Cloudflare Worker;
+   Cron Triggers fire to the minute) dispatches each show via
+   `workflow_dispatch` at its intended slot. One trigger
+   (`7,37 6-11 * * *`) maps firing time → show, mirroring the gate's
+   CRON_MAP (CI fails on drift). **Operator setup required once**: create
+   a fine-grained PAT (Actions: write on this repo), `wrangler secret put
+   GITHUB_DISPATCH_TOKEN`, `wrangler deploy` — see
+   `workers/scheduler/README.md`. Until deployed, behaviour is unchanged.
+3. **Same-day duplicate guard** — the gate drops a *scheduled* show when
+   today's `Auto-generated: <show> <date>` commit already exists (the
+   Worker published on time; the delayed GitHub cron arrives later and
+   must no-op). Best-effort: if the API check fails, the show runs — a
+   duplicate is annoying, a missing episode is worse. Manual
+   `workflow_dispatch` reruns are never blocked.
+
+GitHub crons stay enabled as the fallback: if the Worker is down,
+episodes ship late exactly as today — never not at all.

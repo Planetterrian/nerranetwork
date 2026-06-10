@@ -6,6 +6,18 @@ on:
     # 8 AM Eastern (~12 UTC EDT / 13 UTC EST). Pipeline takes up to 45 min,
     # so triggers must be staggered by at least that much.
     #
+    # June 2026 punctuality pass: GitHub delivers `schedule` events
+    # best-effort and 1-6 h late in practice (Tesla's 11:00 cron observed
+    # starting 13:54). Three mitigations:
+    #   1. Cron minutes shifted off the contended :00/:30 marks (:07/:37).
+    #   2. An exact-time external dispatcher (workers/scheduler — Cloudflare
+    #      Cron Triggers fire to the minute) calls workflow_dispatch per
+    #      slot once the operator deploys it; these GitHub crons then act
+    #      as the delayed fallback.
+    #   3. The gate skips a scheduled run when today's episode already
+    #      landed (see the duplicate guard below), so dispatcher + late
+    #      fallback cron can never double-publish.
+    #
     # May 2026 schedule overhaul: 7 shows went daily (OV, PT, FF, M&A, MAB,
     # MIT, TST) with Sunday's slot becoming a "weekly recap" episode that
     # synthesises the past 7 days from the content lake. MIT also runs
@@ -13,35 +25,35 @@ on:
     # lessons learned). Cron times shifted +1h from the prior schedule.
     #
     # Привет, Русский!: Even days at 6:00 UTC
-    - cron: '0 6 2-31/2 * *'
+    - cron: '7 6 2-31/2 * *'
     # Omni View: Daily at 6:30 UTC (Sunday = weekly recap)
-    - cron: '30 6 * * *'
+    - cron: '37 6 * * *'
     # Planetterrian Daily: Daily at 7:00 UTC (Sunday = weekly recap)
-    - cron: '0 7 * * *'
+    - cron: '7 7 * * *'
     # Fascinating Frontiers: Daily at 7:30 UTC (Sunday = weekly recap)
-    - cron: '30 7 * * *'
+    - cron: '37 7 * * *'
     # Environmental Intelligence: Odd weekdays at 8:00 UTC
-    - cron: '0 8 1-31/2 * 1-5'
+    - cron: '7 8 1-31/2 * 1-5'
     # Models & Agents: Daily at 8:30 UTC (Sunday = weekly recap)
-    - cron: '30 8 * * *'
+    - cron: '37 8 * * *'
     # Models & Agents for Beginners: Daily at 9:00 UTC (Sunday = weekly recap)
-    - cron: '0 9 * * *'
+    - cron: '7 9 * * *'
     # Финансы Просто: Even days at 9:30 UTC
-    - cron: '30 9 2-31/2 * *'
+    - cron: '37 9 2-31/2 * *'
     # Modern Investing Techniques: Daily at 10:00 UTC.
     # Mon-Fri = US market preview; Sat = weekend angle (international
     # markets, crypto, lessons learned, what to prepare for, long-term
     # insights); Sun = weekly recap.
-    - cron: '0 10 * * *'
+    - cron: '7 10 * * *'
     # First Principles Daily: Daily at 10:30 UTC. Narrative show —
     # topic-queue-driven, no daily news fetch. Alternates concrete
     # example / opportunity area per episode. Runs all 7 days.
-    - cron: '30 10 * * *'
+    - cron: '37 10 * * *'
     # Tesla Shorts Time: Daily at 11:00 UTC (Sunday = weekly recap)
-    - cron: '0 11 * * *'
+    - cron: '7 11 * * *'
     # Unintended Consequences: Weekdays at 11:30 UTC. Narrative show —
     # topic-queue-driven, no daily news fetch. Mon-Fri only (5x/week).
-    - cron: '30 11 * * 1-5'
+    - cron: '37 11 * * 1-5'
 
   workflow_dispatch:
     inputs:
@@ -85,6 +97,8 @@ jobs:
       - name: Determine shows to run
         id: resolve
         shell: python3 {0}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           import json, os, datetime
 
@@ -117,18 +131,18 @@ jobs:
               # so some crons fire more often than intended.  The day_filter
               # applies the intended restriction.
               CRON_MAP = {
-                  "0 6 2-31/2 * *":   ("privet_russian",          "even"),
-                  "30 6 * * *":       ("omni_view",                None),
-                  "0 7 * * *":        ("planetterrian",            None),
-                  "30 7 * * *":       ("fascinating_frontiers",    None),
-                  "0 8 1-31/2 * 1-5": ("env_intel",               "odd_weekday"),
-                  "30 8 * * *":       ("models_agents",            None),
-                  "0 9 * * *":        ("models_agents_beginners",  None),
-                  "30 9 2-31/2 * *":  ("finansy_prosto",          "even"),
-                  "0 10 * * *":       ("modern_investing",         None),
-                  "30 10 * * *":      ("first_principles",         None),
-                  "0 11 * * *":       ("tesla",                    None),
-                  "30 11 * * 1-5":    ("unintended_consequences", "weekday"),
+                  "7 6 2-31/2 * *":   ("privet_russian",          "even"),
+                  "37 6 * * *":       ("omni_view",                None),
+                  "7 7 * * *":        ("planetterrian",            None),
+                  "37 7 * * *":       ("fascinating_frontiers",    None),
+                  "7 8 1-31/2 * 1-5": ("env_intel",               "odd_weekday"),
+                  "37 8 * * *":       ("models_agents",            None),
+                  "7 9 * * *":        ("models_agents_beginners",  None),
+                  "37 9 2-31/2 * *":  ("finansy_prosto",          "even"),
+                  "7 10 * * *":       ("modern_investing",         None),
+                  "37 10 * * *":      ("first_principles",         None),
+                  "7 11 * * *":       ("tesla",                    None),
+                  "37 11 * * 1-5":    ("unintended_consequences", "weekday"),
               }
 
               shows = []
@@ -166,6 +180,43 @@ jobs:
                   msg = f"WARNING: Unknown cron expression '{event_schedule}' — no show matched"
                   print(msg)
                   print(f"::warning::{msg}")
+
+              # Same-day duplicate guard (June 2026): with the external
+              # exact-time dispatcher (workers/scheduler) publishing on
+              # time and GitHub's delayed cron arriving hours later, the
+              # late cron must NOT produce a second episode. Each show
+              # job commits "Auto-generated: <show> <YYYY-MM-DD>"; if
+              # that commit already exists today, drop the show from
+              # this scheduled run. Applies to `schedule` events only —
+              # manual workflow_dispatch reruns stay possible.
+              if shows:
+                  import urllib.request
+                  token = os.environ.get("GITHUB_TOKEN", "")
+                  since = now_utc.strftime("%Y-%m-%dT00:00:00Z")
+                  today_str = now_utc.strftime("%Y-%m-%d")
+                  try:
+                      req = urllib.request.Request(
+                          f"https://api.github.com/repos/${{ github.repository }}/commits?since={since}&per_page=100",
+                          headers={"Authorization": f"Bearer {token}",
+                                   "Accept": "application/vnd.github+json"},
+                      )
+                      with urllib.request.urlopen(req, timeout=15) as resp:
+                          commits = json.load(resp)
+                      messages = [c.get("commit", {}).get("message", "") for c in commits]
+                      remaining = []
+                      for slug in shows:
+                          marker = f"Auto-generated: {slug} {today_str}"
+                          if any(m.startswith(marker) for m in messages):
+                              known_noop = True
+                              print(f"Duplicate guard: {slug} already published today "
+                                    f"(found '{marker}' commit) — skipping scheduled rerun.")
+                          else:
+                              remaining.append(slug)
+                      shows = remaining
+                  except Exception as exc:
+                      # Guard is best-effort: on API failure, run the show
+                      # (a duplicate is annoying; a missing episode is worse).
+                      print(f"Duplicate guard check failed ({exc}) — proceeding without it.")
 
           matrix = json.dumps(shows)
           print(f"Shows to run: {matrix}")

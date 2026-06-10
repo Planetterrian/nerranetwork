@@ -1,0 +1,22 @@
+# Exact-time show dispatcher (June 2026 punctuality pass).
+#
+# GitHub Actions delivers `schedule` events best-effort — observed 1-6 h
+# late (Tesla's 11:00 UTC cron started at 13:54 on June 9 2026). Cloudflare
+# Cron Triggers fire to the minute, so this Worker dispatches each show's
+# run via the GitHub workflow_dispatch API at its intended time; the
+# GitHub crons in run-show.yml remain as delayed fallbacks, and the
+# gate's same-day duplicate guard prevents double-publishing.
+#
+# Deploy (one-time):
+#   cd workers/scheduler
+#   wrangler secret put GITHUB_DISPATCH_TOKEN   # fine-grained PAT, see README
+#   wrangler deploy
+name = "nerra-scheduler"
+main = "src/index.ts"
+compatibility_date = "2026-05-01"
+
+[triggers]
+# One trigger covering every slot (:07/:37 from 06:00-11:59 UTC); the
+# Worker maps the firing time to the show, mirroring run-show.yml's
+# CRON_MAP (drift guard: tests/test_scheduling_punctuality.py).
+crons = ["7,37 6-11 * * *"]
