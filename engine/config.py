@@ -272,6 +272,12 @@ class NewsletterConfig:
 class SectionMarker:
     pattern: str = ""
     title: str = ""
+    # Optional positional constraint: "start" = only match in the opening
+    # ~10% of the script, "end" = only in the closing ~15%, "" = anywhere.
+    # Added June 2026 after the Tesla closing ("find us on X at tesla
+    # shorts time") re-matched the case-insensitive Introduction marker on
+    # every episode, titling the closing "Introduction" in podcast apps.
+    where: str = ""
 
 
 @dataclass
@@ -592,6 +598,7 @@ def _build_section_markers(raw: list) -> List[SectionMarker]:
             markers.append(SectionMarker(
                 pattern=item.get("pattern", ""),
                 title=item.get("title", ""),
+                where=item.get("where", ""),
             ))
     return markers
 

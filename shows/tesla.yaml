@@ -130,7 +130,14 @@ llm:
   # new "ALL 12 Top + 3-4 X Takeover × 5-7 sentences" podcast
   # structure (was "all 12 + 2-3 × 4-6"). Tesla digest also has the
   # First Principles + Counterpoint blocks layered on top.
-  min_podcast_words: 1600
+  # June 10 2026 review: 1600 → 2000. The prompt previously demanded
+  # four contradictory lengths at once (12–15 min, 13–17 min, ≥2800
+  # words, "under 950 unacceptable") while this field enforced 1600 —
+  # conflicting anchors let the model satisfy the smallest. The prompt
+  # now states ONE target (2,200–2,400 words ≈ 14–16 min); this floor
+  # sits just under it so the expand-retry fires on anything short of
+  # a real full-length episode.
+  min_podcast_words: 2000
   # June 2026 quality pass: 9 of 10 recent episodes shipped 15-35%
   # under target (avg 1238 words; listener_value pinned at 3.2-3.9 vs
   # 4.5 on the one on-target episode). Expand-retry now fires on ANY
@@ -175,19 +182,22 @@ publishing:
   # the previous generic one-liner ("covering the latest Tesla news")
   # sold nothing. This is what a prospective subscriber reads before
   # their first play.
+  # June 10 2026: "in 10 minutes" → "in 15 focused minutes" to match the
+  # unified 2,200–2,400-word (~14–16 min) episode target. A listing that
+  # promises 10 and delivers 15 invites churny first plays.
   rss_description: >-
-    Every Tesla story that matters, every single day — in 10 minutes.
-    The day's top developments with sources, the real-time TSLA picture,
-    what the Tesla community is buzzing about on X, one honest bearish
-    counterpoint, and a daily first-principles analysis that follows
-    the long arcs: Optimus, Cybercab and robotaxi, FSD, next-gen
+    Every Tesla story that matters, every single day — in 15 focused
+    minutes. The day's top developments with sources, the real-time TSLA
+    picture, what the Tesla community is buzzing about on X, one honest
+    bearish counterpoint, and a daily first-principles analysis that
+    follows the long arcs: Optimus, Cybercab and robotaxi, FSD, next-gen
     vehicles, and 4680 cells. Seven days a week, with a Sunday recap
     that ties the week's threads together.
   rss_summary: >-
-    Every Tesla story that matters, every day, in 10 minutes — news with
-    sources, the TSLA picture, community buzz, one honest counterpoint,
-    and first-principles analysis tracking Optimus, Cybercab, FSD and
-    more. Daily, plus a Sunday weekly recap.
+    Every Tesla story that matters, every day, in 15 focused minutes —
+    news with sources, the TSLA picture, community buzz, one honest
+    counterpoint, and first-principles analysis tracking Optimus,
+    Cybercab, FSD and more. Daily, plus a Sunday weekly recap.
   rss_link: https://nerranetwork.com/tesla.html
   rss_author: Patrick
   rss_email: patrick@planetterrian.com
@@ -214,20 +224,30 @@ chapters:
   section_markers:
     # Made more flexible after vibrancy / natural-flow prompt changes (May 2026)
     # started producing less rigid opening lines (e.g. "Pulling up to another day...")
+    # June 2026 chapter fix: positional `where` constraints + tightened
+    # patterns. The closing's "find us on X at tesla shorts time" used to
+    # re-match the Introduction marker (markers are tried in order, first
+    # match wins per line), titling the closing "Introduction" on every
+    # episode; bare "tomorrow" spawned mid-episode Tomorrow Teaser
+    # chapters from any story sentence mentioning tomorrow; "the kicker"
+    # matched the smart-Shorts hook phrasing inside stories.
     - pattern: "Tesla Shorts Time|coming to you from Vancouver|Pulling up to another day"
       title: "Introduction"
+      where: start
     - pattern: "Top \\d+|biggest.*stories|let.?s.*get into|here's what happened"
       title: "Top Stories"
     - pattern: "X Takeover|takeover"
       title: "Tesla X Takeover"
-    - pattern: "one thing worth watching|challenge worth discussing|Short Spot|short.?seller|the kicker"
+    - pattern: "one thing worth watching|challenge worth discussing|Short Spot|short.?seller"
       title: "The Counterpoint"
     - pattern: "First Principles"
       title: "First Principles"
-    - pattern: "Before we go|before we wrap|before I go|tomorrow|next time"
+    - pattern: "Before we go|before we wrap|before I go|keep an eye on|we.?ll be watching"
       title: "Tomorrow Teaser"
-    - pattern: "That's Tesla Shorts Time|that.?s.*for today|until next time|have a great"
+      where: end
+    - pattern: "That's Tesla Shorts Time|that.?s.*for today|that.?s a wrap|that covers it|everything worth knowing|until next time|have a great"
       title: "Closing"
+      where: end
 
 slow_news:
   enabled: true

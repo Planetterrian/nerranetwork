@@ -210,8 +210,13 @@ def build_weekly_recap_digest(
                     "\n\nUse the narrative status above to highlight meaningful "
                     "progress or open questions across the week."
                 )
-        except Exception:
-            pass
+        except Exception as exc:
+            # Still best-effort, but never silent: a corrupt tracker means
+            # the Sunday recap ships without its narrative framing.
+            logger.warning(
+                "Tesla narrative injection into weekly recap failed "
+                "(recap ships without it): %s", exc,
+            )
 
     # Phase 3: same narrative framing for the generalized memory shows
     # (Models & Agents, Fascinating Frontiers, Planetterrian). Best-effort.
@@ -231,7 +236,10 @@ def build_weekly_recap_digest(
                         "\n\nUse the narrative status above to highlight meaningful "
                         "progress or open questions across the week."
                     )
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning(
+                "Narrative injection into weekly recap failed for %s "
+                "(recap ships without it): %s", show_slug, exc,
+            )
 
     return recap

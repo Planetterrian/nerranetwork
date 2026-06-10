@@ -223,6 +223,115 @@ class TestParseChapters:
 
 
 # =========================================================================
+# 1b. June 2026 chapter fixes — positional `where` constraints +
+#     once-per-title matching. Through Ep505 every Tesla episode shipped
+#     a trailing "Introduction" chapter because the spoken closing
+#     ("find us on X at tesla shorts time") re-matched the
+#     case-insensitive brand pattern, and bare "tomorrow" in the teaser
+#     pattern opened spurious mid-episode chapters.
+# =========================================================================
+
+def _long_filler(paragraphs: int = 12, sentences: int = 5) -> str:
+    """Generate a realistically sized news body so percentage-based
+    positional windows are meaningful."""
+    para = " ".join(
+        "Tesla delivered another batch of vehicles to customers across "
+        "several regions according to the latest figures." for _ in range(sentences)
+    )
+    return "\n\n".join(para for _ in range(paragraphs))
+
+
+class TestPositionalConstraints:
+    def _tesla_yaml_markers(self):
+        cfg = load_config(str(SHOWS_DIR / "tesla.yaml"))
+        return cfg.chapters.section_markers
+
+    def _realistic_script(self, *, mid_line: str = "") -> str:
+        return (
+            "Hey, welcome to Tesla Shorts Time, episode five hundred six. "
+            "I'm Patrick in Vancouver. Here's what's happening with Tesla today.\n\n"
+            + _long_filler(6)
+            + ("\n\n" + mid_line if mid_line else "")
+            + "\n\n" + _long_filler(6) + "\n\n"
+            "Now, one thing worth watching is the ongoing pricing pressure in China.\n\n"
+            "First Principles thinking helps here: the cost of a battery pack is "
+            "ultimately anchored to its raw materials.\n\n"
+            "Before we go — keep an eye on the quarterly delivery numbers tomorrow.\n\n"
+            "That's your Tesla news for today. If you found this useful, a rating "
+            "or review really helps. You can also find us on X at tesla shorts time. "
+            "I'm Patrick in Vancouver. Thanks for listening, and I'll see you tomorrow.\n"
+        )
+
+    def test_yaml_markers_carry_where_constraints(self):
+        markers = self._tesla_yaml_markers()
+        by_title = {m.title: m for m in markers}
+        assert by_title["Introduction"].where == "start"
+        assert by_title["Tomorrow Teaser"].where == "end"
+        assert by_title["Closing"].where == "end"
+        # Bare "tomorrow" must never re-enter the teaser pattern — any
+        # story sentence mentioning tomorrow would open a chapter.
+        assert "tomorrow" not in by_title["Tomorrow Teaser"].pattern.lower()
+
+    def test_closing_brand_mention_not_titled_introduction(self):
+        """The closing's 'find us on X at tesla shorts time' line must be
+        titled Closing, never Introduction (the Ep496-505 failure mode)."""
+        chapters = parse_chapters(
+            self._realistic_script(), self._tesla_yaml_markers(), show_name="Tesla",
+        )
+        titles = [c.title for c in chapters]
+        assert titles.count("Introduction") == 1
+        assert titles[0] == "Introduction"
+        assert "Closing" in titles
+        # The closing chapter is the LAST configured-marker chapter.
+        assert titles[-1] == "Closing"
+
+    def test_mid_script_tomorrow_does_not_open_teaser(self):
+        script = self._realistic_script(
+            mid_line=(
+                "Patrick: The company said the announcement is expected "
+                "tomorrow morning at the shareholder meeting."
+            ),
+        )
+        chapters = parse_chapters(script, self._tesla_yaml_markers(), show_name="Tesla")
+        teasers = [c for c in chapters if c.title == "Tomorrow Teaser"]
+        assert len(teasers) == 1
+        total_words = len(script.split())
+        assert teasers[0].word_start >= int(total_words * 0.85) - 60
+
+    def test_where_start_blocks_late_match(self):
+        script = "Opening line here\n\n" + _long_filler(10) + "\n\nWelcome again at the end\n"
+        markers = [
+            SectionMarker(pattern="Opening line", title="Intro", where="start"),
+            SectionMarker(pattern="Welcome again", title="Intro2", where="start"),
+        ]
+        chapters = parse_chapters(script, markers)
+        titles = [c.title for c in chapters]
+        assert "Intro" in titles
+        assert "Intro2" not in titles
+
+    def test_where_end_blocks_early_match(self):
+        script = "Goodbye too early\n\n" + _long_filler(10) + "\n\nGoodbye for real now\n"
+        markers = [
+            SectionMarker(pattern="start of it all|Goodbye too early", title="Head"),
+            SectionMarker(pattern="Goodbye", title="Closing", where="end"),
+        ]
+        chapters = parse_chapters(script, markers)
+        closings = [c for c in chapters if c.title == "Closing"]
+        assert len(closings) == 1
+        total_words = len(script.split())
+        assert closings[0].word_start >= int(total_words * 0.85) - 60
+
+    def test_each_title_matches_at_most_once(self):
+        script = (
+            "Welcome to the show\n\n" + _long_filler(4)
+            + "\n\nWelcome to the second half\n\n" + _long_filler(4)
+        )
+        markers = [SectionMarker(pattern="Welcome to", title="Intro")]
+        chapters = parse_chapters(script, markers)
+        assert sum(1 for c in chapters if c.title == "Intro") == 1
+
+
+# =========================================================================
 # 2. TestCalculateTimestamps
 # =========================================================================
 class TestCalculateTimestamps:

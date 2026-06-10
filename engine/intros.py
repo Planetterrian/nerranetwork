@@ -36,7 +36,11 @@ logger = logging.getLogger(__name__)
 _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
     "tesla": {
         "host": "Patrick",
-        "show_name": "Tesla Shorts Time Daily",
+        # June 2026: "Daily" dropped from the spoken name so the audio
+        # brand matches the Apple/Spotify listing + website title
+        # ("Tesla Shorts Time", aligned May 2026). Listeners who hear
+        # the name and search it now get an exact match.
+        "show_name": "Tesla Shorts Time",
         "greetings": [
             "Hey, welcome to",
             "Welcome back to",

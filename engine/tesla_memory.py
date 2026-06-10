@@ -319,6 +319,77 @@ def record_performance_signal(output_dir: Path, signal_type: str, value: Any) ->
     save_performance_tracker(perf, output_dir)
 
 
+def update_performance_from_op3(output_dir: Path, op3_show_stats: Dict[str, Any]) -> int:
+    """Refresh the performance tracker from real OP3 download data.
+
+    June 10 2026: the performance loop had been DEAD since the memory
+    system shipped — ``record_performance_signal`` had zero production
+    callers, so the tracker was a hand-edited file that went stale in
+    days and ``{tesla_performance_signals_block}`` injected static text
+    into every prompt. This closes the loop with the audience data the
+    nightly maintenance job already fetches (``api/op3_stats.json``).
+
+    Derives ``strong_topics_last_30d`` from the tracked-program mentions
+    in the titles of the most-downloaded recent episodes (titles are
+    hook-first, so program detection on them is meaningful), REPLACING
+    the previous list wholesale so the signal can't accumulate stale
+    entries. Called nightly from ``scripts/update_tesla_performance.py``.
+
+    Returns the number of strong topics recorded.
+    """
+    episodes = (op3_show_stats or {}).get("episodes") or []
+    scored = [
+        e for e in episodes
+        if isinstance(e, dict) and e.get("title")
+    ]
+    if not scored:
+        logger.info("No OP3 episode data — performance tracker left unchanged")
+        return 0
+
+    def _downloads(e: Dict[str, Any]) -> int:
+        for key in ("downloads_30d", "downloads_7d", "downloads_all_time"):
+            v = e.get(key)
+            if isinstance(v, (int, float)) and v > 0:
+                return int(v)
+        return 0
+
+    scored.sort(key=_downloads, reverse=True)
+    top = [e for e in scored[:5] if _downloads(e) > 0]
+
+    narrative = load_narrative_tracker(output_dir)
+    display_names = {
+        key: prog.get("display_name", key.title())
+        for key, prog in narrative.get("programs", {}).items()
+    }
+
+    strong_topics: list = []
+    top_titles: list = []
+    for e in top:
+        title = str(e.get("title", ""))
+        top_titles.append(f"{title[:80]} ({_downloads(e)} dl)")
+        lowered = title.lower()
+        for key, pattern in _PROGRAM_MENTION_PATTERNS.items():
+            name = display_names.get(key, key)
+            if pattern.search(lowered) and name not in strong_topics:
+                strong_topics.append(name)
+
+    perf = load_performance_tracker(output_dir)
+    signals = perf.setdefault("recent_signals", {})
+    signals["strong_topics_last_30d"] = strong_topics[:5]
+    signals["top_episodes"] = top_titles
+    signals["notes"] = (
+        "Auto-derived nightly from OP3 download data "
+        "(scripts/update_tesla_performance.py). Topics = tracked programs "
+        "mentioned in the hooks of the most-downloaded recent episodes."
+    )
+    save_performance_tracker(perf, output_dir)
+    logger.info(
+        "Performance tracker refreshed from OP3: %d strong topics (%s)",
+        len(strong_topics), ", ".join(strong_topics) or "none",
+    )
+    return len(strong_topics)
+
+
 # Words that carry no Tesla-story signal — generic news-digest vocabulary
 # plus the narrative-template vocabulary that polluted the theme history
 # before June 2026 (the old code mined bigrams from the TEMPLATE text of
@@ -335,7 +406,56 @@ _THEME_STOPWORDS = {
     "from", "have", "been", "will", "would", "could", "should", "about",
     "after", "before", "more", "than", "their", "they", "what", "when",
     "where", "which", "while", "into", "over", "under", "between",
+    # Generic coverage vocabulary + URL tokens (June 10 2026: "google
+    # https" / "announced discussed" bigrams were polluting the history).
+    "announced", "discussed", "covered", "https", "http",
 }
+
+
+# Core Tesla program keywords (keep in sync with narrative tracker).
+# Counted once per episode when present — these are the curated themes.
+_THEME_KEYWORDS = [
+    "optimus", "cybercab", "robotaxi", "fsd", "unsupervised",
+    "hw5", "ai5", "4680", "structural pack", "giga texas",
+    "next gen", "redwood", "megapack", "energy storage", "dojo",
+]
+
+
+def _extract_bigrams(text_lower: str) -> list:
+    """Stopword-filtered lowercase bigrams (the theme-mining unit)."""
+    words = [
+        w for w in re.findall(r"\b[a-z]{4,}\b", text_lower)
+        if w not in _THEME_STOPWORDS
+    ]
+    return [
+        f"{words[i]} {words[i + 1]}"
+        for i in range(len(words) - 1)
+        if len(words[i]) + len(words[i + 1]) + 1 > 8
+    ]
+
+
+def _narrative_prose_bigrams(output_dir: Path) -> set:
+    """Bigrams occurring in the narrative tracker's own prose.
+
+    June 10 2026 fix: the digest-only mining fix (June 2026) wasn't
+    enough — the narrative status block is injected into every digest
+    prompt and the LLM echoes its wording into continuity sentences, so
+    tracker prose ("Giga Texas dedicated factory construction
+    underway...") was re-mined as a "theme" daily. The signature in the
+    history: chains of overlapping bigrams with identical counts
+    ("texas dedicated" / "dedicated factory" / "factory construction",
+    all 17). Filtering bigrams that appear verbatim in the tracker's
+    status/questions/claims text breaks the echo loop; genuinely fresh
+    news phrasing never matches tracker prose verbatim.
+    """
+    tracker = load_narrative_tracker(output_dir)
+    texts = []
+    for prog in tracker.get("programs", {}).values():
+        texts.append(str(prog.get("display_name", "")))
+        texts.append(str(prog.get("status", "")))
+        texts.extend(str(q) for q in prog.get("key_open_questions", []) or [])
+        texts.extend(str(c) for c in prog.get("notable_claims", []) or [])
+    return set(_extract_bigrams(" ".join(texts).lower()))
 
 
 def update_theme_history_from_digest(output_dir: Path, digest_text: str, episode_num: int) -> None:
@@ -345,48 +465,64 @@ def update_theme_history_from_digest(output_dir: Path, digest_text: str, episode
     narrative status block — i.e. from our own prompt TEMPLATE — so the
     same template phrases were re-counted every episode and drowned out
     real topics. Themes now come exclusively from the digest text, with
-    a stopword filter for template/news-boilerplate vocabulary. The
+    a stopword filter for template/news-boilerplate vocabulary AND a
+    narrative-prose echo filter (see ``_narrative_prose_bigrams``). The
     polluted entries are scrubbed from existing histories on load.
+
+    Idempotent per episode: re-running on an episode already recorded in
+    ``theme_evolution`` is a no-op (Ep505 was double-counted on June 10
+    when the pipeline re-ran across a deploy).
     """
     history = load_theme_history(output_dir)
     themes = history.setdefault("recurring_themes", {})
+    evolution = history.setdefault("theme_evolution", [])
 
-    # One-time scrub of pre-fix template-noise entries so the polluted
-    # counts don't keep outranking real topics forever.
+    if any(e.get("episode") == episode_num for e in evolution):
+        logger.info(
+            "Theme history already has Ep%s — skipping duplicate mining run",
+            episode_num,
+        )
+        return
+
+    echo_bigrams = _narrative_prose_bigrams(output_dir)
+
+    # One-time scrub of pre-fix noise entries so the polluted counts
+    # don't keep outranking real topics forever. Three classes (all
+    # exempt curated keywords, whose counts are legitimately
+    # keyword-driven):
+    #   - keys containing ANY stopword — the current miner filters
+    #     stopwords before pairing, so such keys can only be legacy;
+    #   - narrative-prose echo bigrams (see _narrative_prose_bigrams);
+    #   - leftovers are kept as genuine themes.
     for noise_key in list(themes.keys()):
+        if noise_key in _THEME_KEYWORDS:
+            continue
         words_in_key = noise_key.split()
-        if words_in_key and all(w in _THEME_STOPWORDS for w in words_in_key):
+        if words_in_key and any(w in _THEME_STOPWORDS for w in words_in_key):
+            del themes[noise_key]
+        elif noise_key in echo_bigrams:
             del themes[noise_key]
 
-    # Core Tesla program keywords (keep in sync with narrative tracker)
-    keywords = [
-        "optimus", "cybercab", "robotaxi", "fsd", "unsupervised",
-        "hw5", "ai5", "4680", "structural pack", "giga texas",
-        "next gen", "redwood", "megapack", "energy storage", "dojo"
-    ]
-
-    text_lower = digest_text.lower()
-    for kw in keywords:
+    # Strip URLs before mining — digests carry "Source: https://..."
+    # lines whose tokens otherwise become junk bigrams ("google https").
+    text_lower = re.sub(r"https?://\S+", " ", digest_text.lower())
+    for kw in _THEME_KEYWORDS:
         if kw in text_lower:
             themes[kw] = themes.get(kw, 0) + 1
 
-    # Bigram themes from the DIGEST content (never the template), so
-    # emerging story phrases ("wireless bms", "shanghai exports") get
-    # surfaced before they're promoted to tracked keywords.
-    words = [
-        w for w in re.findall(r"\b[a-z]{4,}\b", text_lower)
-        if w not in _THEME_STOPWORDS
-    ]
-    for i in range(len(words) - 1):
-        w1, w2 = words[i], words[i + 1]
-        bigram = f"{w1} {w2}"
-        if len(bigram) > 8:
-            themes[bigram] = themes.get(bigram, 0) + 1
+    # Bigram themes from the DIGEST content (never the template, never
+    # tracker-prose echo), so emerging story phrases ("wireless bms",
+    # "shanghai exports") get surfaced before they're promoted to
+    # tracked keywords.
+    for bigram in _extract_bigrams(text_lower):
+        if bigram in echo_bigrams or bigram in _THEME_KEYWORDS:
+            continue
+        themes[bigram] = themes.get(bigram, 0) + 1
 
     # Keep only top 30 themes to avoid bloat
     sorted_themes = dict(sorted(themes.items(), key=lambda x: x[1], reverse=True)[:30])
     history["recurring_themes"] = sorted_themes
-    history.setdefault("theme_evolution", []).append({
+    evolution.append({
         "episode": episode_num,
         "top_themes": list(sorted_themes.keys())[:8]
     })
@@ -394,15 +530,25 @@ def update_theme_history_from_digest(output_dir: Path, digest_text: str, episode
     save_theme_history(history, output_dir)
 
 
-# Per-program detection keywords for automatic last-mention tracking.
+# Per-program detection patterns for automatic last-mention tracking.
 # Keep in sync with DEFAULT_NARRATIVE_TRACKER program keys.
-_PROGRAM_MENTION_KEYWORDS: Dict[str, tuple] = {
-    "optimus": ("optimus",),
-    "cybercab_robotaxi": ("cybercab", "robotaxi", "robo-taxi"),
-    "fsd_unsupervised": ("fsd", "full self-driving", "unsupervised"),
-    "hw5_ai5": ("hw5", "ai5", "hardware 5"),
-    "next_gen_vehicle": ("next-gen", "next gen", "redwood", "affordable model"),
-    "4680_structural_pack": ("4680", "structural pack", "structural battery"),
+#
+# June 2026: switched from substring tuples to word-boundary regexes.
+# The old substring matching advanced FSD freshness on ANY digest
+# containing the word "unsupervised" (e.g. a Waymo story), missed
+# plural/hyphen variants ("robotaxis", "robo-taxi"), and let several
+# programs claim the same sentence. These matches now drive on-air
+# continuity callbacks ("last covered on air: ..."), so false positives
+# produce wrong spoken lines — precision matters more than recall here.
+_PROGRAM_MENTION_PATTERNS: Dict[str, "re.Pattern[str]"] = {
+    "optimus": re.compile(r"\boptimus\b"),
+    "cybercab_robotaxi": re.compile(r"\bcybercabs?\b|\brobo[-\s]?tax(?:is|i|ies)\b"),
+    "fsd_unsupervised": re.compile(r"\bfsd\b|\bfull self[-\s]driving\b"),
+    "hw5_ai5": re.compile(r"\bhw5\b|\bai5\b|\bhardware 5\b"),
+    "next_gen_vehicle": re.compile(
+        r"\bnext[-\s]gen(?:eration)?\b|\bredwood\b|\baffordable (?:model|vehicle|ev)\b"
+    ),
+    "4680_structural_pack": re.compile(r"\b4680\b|\bstructural (?:battery )?pack\b"),
 }
 
 
@@ -427,11 +573,11 @@ def auto_update_narrative_from_digest(
     tracker = load_narrative_tracker(output_dir)
     programs = tracker.get("programs", {})
     mentioned = []
-    for key, kws in _PROGRAM_MENTION_KEYWORDS.items():
+    for key, pattern in _PROGRAM_MENTION_PATTERNS.items():
         prog = programs.get(key)
         if prog is None:
             continue
-        if any(kw in text_lower for kw in kws):
+        if pattern.search(text_lower):
             prog["last_mentioned_episode"] = episode_num
             prog["last_mentioned_date"] = date_str
             mentioned.append(key)

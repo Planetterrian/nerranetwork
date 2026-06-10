@@ -64,6 +64,14 @@ jobs:
           python scripts/fetch_op3_stats.py --out api/op3_stats.json --popular-out site/data/popular_episodes.json
           python scripts/fetch_buttondown_stats.py --out api/buttondown_stats.json
 
+      - name: Refresh Tesla performance tracker from OP3 data
+        # Closes the Tesla memory system's performance-feedback loop
+        # (June 2026 review): derives strong_topics_last_30d from the
+        # most-downloaded episodes so the prompts' performance-signals
+        # block runs on real audience data. Clean no-op when
+        # api/op3_stats.json is missing or has no Tesla entry.
+        run: python scripts/update_tesla_performance.py
+
       - name: Generate Management Dashboard
         run: python scripts/generate_dashboard.py --out api/dashboard.json
 
@@ -110,6 +118,7 @@ jobs:
             api/dashboard.json
             api/op3_stats.json
             api/buttondown_stats.json
+            digests/tesla_shorts_time/tesla_performance_tracker.json
             site/data/popular_episodes.json
             site/data/gallery-manifest.json
             site/data/search-index.json

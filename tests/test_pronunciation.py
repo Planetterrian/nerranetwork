@@ -1065,38 +1065,58 @@ class TestRunShowPronunciationPipeline:
 
 
 class TestTeslaIntroFormatting:
-    """Verify the Tesla intro line is pre-formatted for natural TTS."""
+    """Verify the Tesla intro/closing lines are pre-formatted for natural TTS.
+
+    June 2026: the dead ``_pick_intro`` hook helper was deleted — the live
+    intro path is ``engine.intros.build_intro_line`` (day-varying pool) and
+    the closing rotates through ``_CLOSING_VARIANTS`` in the hook. These
+    tests pin the same contracts against the live paths.
+    """
 
     def test_intro_has_no_stock_price(self):
         """Intro should NOT contain stock price — it's reserved for the closing only."""
-        from shows.hooks.tesla import _pick_intro
-        context = {"price": "411.82", "change_str": "▲ $0.57 (0.1%)"}
-        intro = _pick_intro(context)
-        assert "$" not in intro
-        assert "▲" not in intro
-        assert "dollars" not in intro
-        assert "trading" not in intro.lower()
+        import datetime
+        from engine.intros import build_intro_line
+        for day in range(1, 8):  # every weekday variant in the pool
+            intro = build_intro_line(
+                "tesla", episode_num=506, today_str="June 10, 2026",
+                date=datetime.date(2026, 6, day),
+            )
+            assert "$" not in intro
+            assert "▲" not in intro
+            assert "dollars" not in intro
+            assert "trading" not in intro.lower()
 
-    def test_intro_has_welcome(self):
-        from shows.hooks.tesla import _pick_intro
-        context = {"price": "411.82", "change_str": "▲ $0.57 (0.1%)"}
-        intro = _pick_intro(context)
-        assert "welcome" in intro.lower()
-        assert "Tesla" in intro
+    def test_intro_has_show_name_and_speaker(self):
+        import datetime
+        from engine.intros import build_intro_line
+        intro = build_intro_line(
+            "tesla", episode_num=506, today_str="June 10, 2026",
+            date=datetime.date(2026, 6, 10),
+        )
+        assert "Tesla Shorts Time" in intro
+        assert intro.startswith("Patrick:")
 
-    def test_closing_has_no_at_handle(self):
-        from shows.hooks.tesla import _pick_closing
-        context = {"price": "350.00", "change_str": "▲ $2.50 (0.7%)"}
-        closing = _pick_closing(context)
-        assert "@teslashortstime" not in closing
-        assert "tesla shorts time" in closing.lower()
+    def test_no_closing_variant_has_at_handle(self):
+        from shows.hooks.tesla import _CLOSING_VARIANTS
+        for variant in _CLOSING_VARIANTS:
+            rendered = variant.format(price_sentence="")
+            assert "@teslashortstime" not in rendered
+        # The spoken X mention stays in TTS-friendly form in at least one variant.
+        assert any(
+            "tesla shorts time" in v.lower() for v in _CLOSING_VARIANTS
+        )
 
     def test_closing_has_stock_price(self):
-        from shows.hooks.tesla import _pick_closing
+        import datetime
+        from shows.hooks.tesla import _pick_closing, _CLOSING_VARIANTS
         context = {"price": "350.00", "change_str": "▲ $2.50 (0.7%)"}
-        closing = _pick_closing(context)
-        assert "three hundred fifty dollars" in closing
-        assert "up" in closing
+        for i in range(len(_CLOSING_VARIANTS)):
+            closing = _pick_closing(
+                context, date=datetime.date(2026, 6, 10 + i),
+            )
+            assert "three hundred fifty dollars" in closing
+            assert "up" in closing
 
     def test_closing_has_sign_off(self):
         from shows.hooks.tesla import _pick_closing

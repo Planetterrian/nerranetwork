@@ -739,3 +739,86 @@ class TestTslaJsonCache:
         price, change_str = _tesla._fetch_tsla_price()
         assert price == 400.00
         assert change_str.startswith("▲")
+
+
+# ---------------------------------------------------------------------------
+# June 2026 review: the spoken closing block
+# ---------------------------------------------------------------------------
+
+
+class TestClosingBlock:
+    """Pins the closing-block fixes from the June 10 2026 review.
+
+    Through Ep505 the closing was a single hardcoded sentence that (a)
+    never varied between episodes, (b) said "closed at" even for live
+    pre-market quotes, and (c) on a full price-chain failure spoke
+    "T S L A closed at zero dollars, price unavailable" on air —
+    ``is_price_publishable`` existed but was never applied to the
+    spoken closing.
+    """
+
+    def _date(self, day: int = 10):
+        import datetime
+        return datetime.date(2026, 6, day)
+
+    def test_unavailable_price_omits_stock_sentence(self):
+        ctx = {"price": "0.00", "change_str": "(price unavailable)"}
+        closing = tesla_hook._pick_closing(ctx, date=self._date())
+        lowered = closing.lower()
+        assert "unavailable" not in lowered
+        assert "zero dollars" not in lowered
+        assert "closed at" not in lowered
+        assert closing.startswith("Patrick:")
+
+    def test_out_of_band_price_omitted(self):
+        ctx = {"price": "5000.00", "change_str": "▲ $1.00 (0.1%)"}
+        closing = tesla_hook._pick_closing(ctx, date=self._date())
+        assert "dollars" not in closing.lower()
+
+    def test_regular_session_says_closed_at(self):
+        ctx = {"price": "415.50", "change_str": "▲ $7.27 (1.8%)"}
+        closing = tesla_hook._pick_closing(ctx, date=self._date())
+        assert "closed at" in closing.lower()
+        assert "four hundred fifteen" in closing.lower() or "four hundred and fifteen" in closing.lower()
+
+    def test_pre_market_quote_not_presented_as_close(self):
+        ctx = {"price": "415.50", "change_str": "▲ $7.27 (1.8%) (Pre-market)"}
+        closing = tesla_hook._pick_closing(ctx, date=self._date())
+        assert "closed at" not in closing.lower()
+        assert "pre-market" in closing.lower()
+
+    def test_after_hours_quote_phrasing(self):
+        ctx = {"price": "415.50", "change_str": "▼ $2.10 (0.5%) (After-hours)"}
+        closing = tesla_hook._pick_closing(ctx, date=self._date())
+        assert "closed at" not in closing.lower()
+        assert "after-hours" in closing.lower()
+
+    def test_closing_rotates_across_dates(self):
+        ctx = {"price": "415.50", "change_str": "▲ $7.27 (1.8%)"}
+        distinct = {
+            tesla_hook._pick_closing(ctx, date=self._date(10 + i))
+            for i in range(len(tesla_hook._CLOSING_VARIANTS))
+        }
+        assert len(distinct) == len(tesla_hook._CLOSING_VARIANTS)
+
+    def test_every_variant_matches_yaml_closing_chapter_pattern(self):
+        """Every rotated closing must still be titled "Closing" by the
+        chapter parser — a new variant that no marker matches would
+        resurrect the malformed-chapters bug."""
+        import re as _re
+        import yaml as _yaml
+        cfg = _yaml.safe_load(
+            (Path(__file__).resolve().parent.parent / "shows" / "tesla.yaml")
+            .read_text(encoding="utf-8")
+        )
+        markers = cfg["chapters"]["section_markers"]
+        closing_pattern = next(
+            m["pattern"] for m in markers if m["title"] == "Closing"
+        )
+        regex = _re.compile(closing_pattern, _re.IGNORECASE)
+        for variant in tesla_hook._CLOSING_VARIANTS:
+            rendered = variant.format(price_sentence="")
+            assert regex.search(rendered), (
+                f"Closing variant not matched by the Closing chapter "
+                f"pattern: {rendered[:80]!r}"
+            )
