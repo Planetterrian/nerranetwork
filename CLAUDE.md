@@ -283,6 +283,25 @@ TST received a full recursive improvement architecture (analogous to MIT):
   (`category: opportunity_area`); Ep1 is a combined debut. Patrick voice
   (inherits Grok `kdif6sqjcyiq`). Distribution OFF at launch (no newsletter,
   no X, no YouTube). Queue: `shows/topic_queues/first_principles.yaml`.
+  **June 10 2026 quality pass** (review:
+  [`docs/reviews/first_principles_review_2026_06_10.md`](docs/reviews/first_principles_review_2026_06_10.md);
+  drift guards: `tests/test_first_principles_quality_pass.py`): FP was
+  missed by the Tesla/four-show chapter hardening — no positional `where`
+  anchors, so the brand-heavy closing ("That's *First Principles Daily*…")
+  re-opened an `Introduction` chapter on the sign-off and Ep001-004 shipped
+  with no `Closing` chapter; added `where: start` (Introduction) /
+  `where: end` (Closing). The bigger fix: `podcast_expand_below_target` was
+  a DEAD path for narrative shows — the expansion retry was news-framed
+  ("cover more stories"), useless for a one-topic show, so every thin FP
+  episode (Ep002 953w, Ep004 935w) fired the retry and kept its length. The
+  retry is now narrative-aware (`_build_expansion_retry_prompt(...,
+  narrative=)` in `engine/generator.py`): narrative shows (FP + UC) expand
+  by DEEPENING the single topic from the brief. Deferred: the digest stage
+  is itself under-length (briefs 870-1498w vs the 1600 prompt floor; no
+  digest expansion retry) — the next lever. The ~10-12 min length ceiling
+  is accepted (operator confirmed grok-4.3 plateaus, resists escalation),
+  not re-litigated. Retry edit changes shipped audio when it fires —
+  A/B-listen per landmine #17.
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:

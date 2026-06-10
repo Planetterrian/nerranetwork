@@ -1,0 +1,60 @@
+# Review ledger — First Principles Daily
+# Schema: docs/reviews/ledger/README.md
+reviews:
+  - date: 2026-06-10
+    pr: 587
+    doc: docs/reviews/first_principles_review_2026_06_10.md
+    summary: >-
+      First FP quality pass. Chapter `where` anchors (FP missed by the
+      Tesla/four-show hardening) + narrative-aware podcast expansion retry
+      (the news-framed retry was a dead path for FP/UC, so
+      podcast_expand_below_target did nothing on thin episodes).
+    shipped:
+      - chapter positional anchors (Introduction=start, Closing=end)
+      - narrative-mode expansion retry (deepen-from-brief, not cover-more-stories)
+    deferred:
+      - >-
+        Digest-stage under-length: briefs ship 870-1498w vs the prompt's
+        1600/2000 floor; generate_digest has no length-expansion retry, only
+        a refusal retry. A digest expansion retry would raise the substrate
+        the podcast expands from. Medium effort; deferred to keep this pass
+        to the verified podcast-stage fix.
+    predictions:
+      - metric: >-
+          FP _tts.txt word count on episodes whose FIRST podcast pass lands
+          below ~1100 words (the genuinely-thin band; Ep002 953w, Ep004 935w
+          were the recent cases)
+        baseline: "935-953 words (retry fired but did not lengthen)"
+        expected: ">= 1100 words after the narrative-aware retry, within 2 weeks"
+        verdict: pending
+        evidence: null
+      - metric: >-
+          duplicate "Introduction" chapters and missing "Closing" chapters in
+          chapters_ep*.json (committed Ep001-003 each had a 2nd Introduction;
+          Ep001-004 had no Closing)
+        baseline: "4/5 recent episodes had broken chapter shape"
+        expected: "0 duplicate Introduction + Closing present on every new episode"
+        verdict: pending
+        evidence: null
+
+do_not_retry:
+  - idea: >-
+      Push the podcast length target above ~1500 words via prompt escalation
+      (e.g. demanding 1800-2400 spoken words harder).
+    evidence: >-
+      shows/first_principles.yaml records the operator already regenerated 3x
+      (8 -> 10.6 -> 10.1 min) and found grok-4.3 plateaus at ~1200-1500 words
+      network-wide and "resists prompt escalation past that ceiling." The
+      floor (1500) is intentionally a thin-pass trigger, not a real target.
+      Do not re-litigate the length ceiling; only rescue genuinely-thin passes.
+  - idea: Phonetic respellings or programmatic speech-tag injection.
+    evidence: >-
+      Landmine #17 — 100% regression rate on the custom voice kdif6sqjcyiq
+      across every prior attempt (Planetterrian, tissue, neurodegenerative,
+      <fast>/<build-intensity> wraps). FP inherits the blessed TTS chain
+      verbatim and must keep it.
+  - idea: Enable FP distribution (newsletter / X / YouTube) now.
+    evidence: >-
+      Operator decision (CLAUDE.md): distribution OFF at launch; the network
+      review recommends waiting to ~Ep15 after queue/length settle. We are at
+      Ep5. Premature.

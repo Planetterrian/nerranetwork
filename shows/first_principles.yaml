@@ -102,9 +102,19 @@ chapters:
   # Markers match the section phrasing the podcast prompt produces (the
   # prompt and these markers are authored together so chapters land
   # correctly in Apple/Spotify).
+  # June 10 2026 quality pass: FP was missed by the Tesla/four-show
+  # chapter hardening — it had no positional `where` anchors, so the
+  # closing's "First Principles Daily" / "first principle" mentions
+  # re-opened body chapters at the END (Ep001-003 each shipped a second
+  # "Introduction" chapter on the sign-off; Ep001-004 had NO Closing
+  # chapter). `where: start` pins Introduction to the opening window,
+  # `where: end` pins Closing to the final window. Both FP closing-pool
+  # variants + the Ep1 special closing match the Closing pattern via
+  # "see you tomorrow". Drift guard: tests/test_first_principles_quality_pass.py.
   section_markers:
     - pattern: "Welcome.*First Principles|First Principles Daily|first episode"
       title: "Introduction"
+      where: start
     - pattern: "first principle|magic wand|raw material|atoms"
       title: "The First Principle"
     - pattern: "idiot index|finished part|cost of the materials|times more"
@@ -117,6 +127,7 @@ chapters:
       title: "The Lesson"
     - pattern: "that.?s.*for today|until next time|see you tomorrow|one example or one opportunity"
       title: "Closing"
+      where: end
 
 newsletter:
   # Off at launch (operator decision). Flip ``enabled: true`` + add a
