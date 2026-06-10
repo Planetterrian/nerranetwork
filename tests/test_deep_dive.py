@@ -130,10 +130,13 @@ class TestDeepDiveConfig:
         assert c.deep_dive.podcast_prompt_file.endswith(
             "modern_investing_deep_dive_podcast.txt"
         )
-        # Deep dives push a fuller word target than the daily show so the
-        # expansion retry fires — but tuned so a ~1300-word deep dive still
-        # SHIPS (a 2400 target skipped the strong Ep060 at its 1440 soft floor).
-        assert c.deep_dive.min_podcast_words > c.llm.min_podcast_words
+        # Deep-dive target tuned so a ~1300-word deep dive still SHIPS
+        # (a 2400 target skipped the strong Ep060 at its 1440 soft floor;
+        # single-pass generation caps this content at ~1300-1400 words).
+        # June 10 2026: the daily show's floor was raised to 1800 (one
+        # unified 2,000-2,200-word target), so the old "deep dive exceeds
+        # the daily floor" relationship no longer holds — the deep-dive
+        # band is pinned on its own merits instead.
         assert 1500 <= c.deep_dive.min_podcast_words <= 2000
         # Soft floor (0.6 x target) must sit below the ~1300 words this content
         # reliably produces, so a good-content episode ships rather than skips.

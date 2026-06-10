@@ -180,7 +180,11 @@ llm:
   podcast_max_tokens: 10000
   # Podcast target bumped 1050 → 1350 to match the new "12-14 stories
   # × 5-7 sentences" structure (was "9-11 × 4-6").
-  min_podcast_words: 1350
+  # June 10 2026 review: 1350 -> 1700. The prompt simultaneously said
+  # "10-13 minute", "12-15 minute", and "at least 2400 words" while this
+  # floor enforced 1350 (recent episodes averaged ~1100). The prompt now
+  # states ONE target (1,900-2,200 words ~ 12-14 min).
+  min_podcast_words: 1700
   # June 2026 network quality pass: 8 of 8 recent episodes below target
   # (avg listener_value 3.6, lowest of the memory trio). Expand-retry
   # now fires on ANY below-target script.
@@ -250,16 +254,22 @@ episode:
 chapters:
   enabled: true
   section_markers:
+    # June 10 2026: positional `where` anchors (the Tesla chapter-bug
+    # class) + the "That covers today's space and science news" closing
+    # variant previously matched no pattern.
     - pattern: "Welcome.*Fascinating Frontiers|Fascinating Frontiers.*episode"
       title: "Introduction"
+      where: start
     - pattern: "Cosmic Spotlight"
       title: "Cosmic Spotlight"
     - pattern: "cosmic deep dive|deep dive|under the hood"
       title: "Cosmic Deep Dive"
     - pattern: "Before we go|Next time"
       title: "Tomorrow Teaser"
-    - pattern: "That's Fascinating Frontiers|that.?s.*for today|until next time"
+      where: end
+    - pattern: "That's Fascinating Frontiers|that covers today|that.?s.*for today|until next time"
       title: "Closing"
+      where: end
 
 newsletter:
   enabled: true

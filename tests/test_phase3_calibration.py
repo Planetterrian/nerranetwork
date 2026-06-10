@@ -63,16 +63,16 @@ class TestRecalibratedMinPodcastWords:
 
       tesla            : 1200 → 1600 → 2000 (June 10 2026: one unified 2,200-2,400-word target)
       planetterrian    :  950 → 1250  (12-14 × 5-7 = ~60-98 sent)
-      fascinating_fron : 1050 → 1350  (12-14 × 5-7 = ~60-98 sent)
+      fascinating_fron : 1050 → 1350 → 1700 (June 10 2026: one unified 1,900-2,200-word target)
 
     Other shows retain their May 9 calibration — their prompts
     weren't changed in this pass."""
 
     EXPECTED = {
         "tesla":                   2000,  # June 10 2026 review: single 2,200-2,400-word target
-        "fascinating_frontiers":   1350,
+        "fascinating_frontiers":   1700,  # June 10 2026 review: single 1,900-2,200-word target
         "planetterrian":           1250,
-        "modern_investing":        1300,
+        "modern_investing":        1800,  # June 10 2026 review: single 2,000-2,200-word target
         "omni_view":               900,
         "unintended_consequences": 1300,
         "finansy_prosto":          900,

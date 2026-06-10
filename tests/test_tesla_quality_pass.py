@@ -348,7 +348,7 @@ class TestPerformanceLoopFromOp3:
     def test_nightly_workflow_wires_the_update(self):
         wf = (Path(__file__).resolve().parent.parent / ".github" / "workflows"
               / "nightly-maintenance.yml").read_text(encoding="utf-8")
-        assert "update_tesla_performance.py" in wf
+        assert "update_performance_trackers.py" in wf
         assert "tesla_performance_tracker.json" in wf
 
 

@@ -207,6 +207,24 @@ TST received a full recursive improvement architecture (analogous to MIT):
   (`_is_dedupe_worthy_title`); blog posts link the Story Tracker page.
   Length/brand prompt changes alter shipped audio — A/B-listen per
   landmine #17.
+- **June 10 2026 four-show pass** (MIT, M&A, MAB, FF; full review:
+  [`docs/four_show_review_2026_06_10.md`](docs/four_show_review_2026_06_10.md);
+  drift guards: `tests/test_four_show_quality_pass.py`): every show's
+  Closing chapter pattern now matches every closing-pool variant (MAB had
+  shipped 50% of episodes with NO Closing chapter; M&A's bare `agent`
+  pattern opened a spurious chapter ~30s into every episode) with
+  `where: start|end` positional anchors; ONE unified length target per
+  prompt (MIT 2,000-2,200w/floor 1800; M&A 1,600-2,200w; FF
+  1,900-2,200w/floor 1700; MAB floor 1200) replacing contradictory
+  anchors; `engine/show_memory.py` gained all four Tesla memory fixes
+  (narrative-prose echo filter, per-episode idempotency, URL stripping,
+  word-boundary program detection) + `update_performance_from_op3`; the
+  nightly performance step generalized to
+  `scripts/update_performance_trackers.py` (Tesla + M&A + FF + PT); the
+  three memory shows' theme histories were re-scrubbed; MAB's "So
+  imagine" opener tic (49 of 60 episodes — the prompt's own example was
+  the template) now requires rotating opener shapes. Length/opener
+  prompt edits change output — A/B-listen per landmine #17.
 - **PR** (Привет, Русский!) runs via `run_show.py` +
   `shows/privet_russian.yaml`; bilingual Russian language learning podcast
   for English speakers. Even days only. Uses **ElevenLabs TTS**

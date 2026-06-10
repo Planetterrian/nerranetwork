@@ -240,17 +240,23 @@ episode:
 chapters:
   enabled: true
   section_markers:
+    # June 10 2026: positional `where` anchors + tightened patterns. The
+    # bare "agent" pattern opened a spurious "Agent & Tool Developments"
+    # chapter ~30s into every episode (first mention of "agents"), and
+    # the "That wraps up today's AI briefing" closing variant matched no
+    # pattern at all.
     - pattern: "welcome.*Models and Agents|Models and Agents.*episode"
       title: "Introduction"
+      where: start
     - pattern: "what you need to know|key summary"
       title: "What You Need to Know"
     - pattern: "top story|main event"
       title: "Top Story"
     - pattern: "model updates|model news"
       title: "Model Updates"
-    - pattern: "agent|tool developments|agentic"
+    - pattern: "agent and tool developments|tool developments|agentic systems|agent news"
       title: "Agent & Tool Developments"
-    - pattern: "practical|community|open.source"
+    - pattern: "practical and community|community corner|open.source"
       title: "Practical & Community"
     - pattern: "under the hood|deep dive|technical deep dive"
       title: "Under the Hood"
@@ -260,8 +266,10 @@ chapters:
       title: "On the Horizon"
     - pattern: "Before we go|before we wrap"
       title: "Tomorrow Teaser"
-    - pattern: "That's Models and Agents|that.?s.*for today|until next time"
+      where: end
+    - pattern: "That's Models and Agents|that wraps up|that.?s.*for today|until next time"
       title: "Closing"
+      where: end
 
 slow_news:
   enabled: true
