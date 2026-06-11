@@ -87,7 +87,7 @@
               <strong>Notable claims surfaced on the show:</strong>
               {% for claim in prog.notable_claims %}
                 <div style="margin-top:4px; padding-left:8px; border-left:2px solid var(--nn-border);">
-                  Ep {{ claim.episode }} ({{ claim.date }}): "{{ claim.claim }}" — <em>Status: {{ claim.status }}</em>
+                  Ep {{ claim.episode }} ({{ claim.date }}): "{{ claim.claim }}" — <em>Status: {{ claim.status | replace('_', ' ') }}</em>
                 </div>
               {% endfor %}
             </div>
