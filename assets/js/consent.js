@@ -63,6 +63,13 @@
         'analytics_storage': 'denied',
         'wait_for_update': 500,
     });
+    // Consent Mode v2 cookieless measurement (June 2026 marketing-
+    // readiness review): with denied defaults, these two flags let
+    // Google Ads attribute conversions via URL passthrough + send
+    // redacted cookieless pings instead of losing every non-consenting
+    // visitor's conversion entirely.
+    gtag('set', 'url_passthrough', true);
+    gtag('set', 'ads_data_redaction', true);
     if (stored && stored.state === 'accepted') {
         applyConsent('accepted');
     }
