@@ -156,6 +156,23 @@ nerranetwork/
   contradictory length target (demanded 1500–2200w while the YAML pins 900
   and episodes ship ~750) unified to 900–1300w. Intro/closing + length
   prompt edits change shipped audio — A/B-listen per landmine #17.
+  **June 11 2026 follow-up pass** (review:
+  [`docs/reviews/env_intel_review_2026_06_11.md`](docs/reviews/env_intel_review_2026_06_11.md)):
+  scoring the June 10 predictions against Ep044 (first post-fix episode)
+  caught the orphan-Closing prediction MISSING — Ep044 shipped with no
+  Closing chapter because the LLM merged the Tomorrow Teaser sentence and
+  the `{closing_block}` into one paragraph and the parser's first-marker-
+  per-line rule titled it "Tomorrow Teaser". Fixed by reordering the two
+  `where: end` markers so **Closing precedes Tomorrow Teaser** (Closing wins
+  a merged final line; separate lines still yield both) — config-only, no
+  audio change. Also took the deferred thin-news issue at a new lever (not
+  the `min_articles_skip` floor): Ep044's HOOK was literally "No major
+  Canadian regulatory announcements … appeared in today's feed", which
+  became the blog title/h1, the chapter title, and the spoken opener; the
+  digest prompt now forbids an absence-of-news hook and steers thin days to
+  lead with a forward-looking item (A/B render: "CCME soil vapour … comment
+  period closes in 19 days …" replaced the absence hook). Digest-prompt edit
+  changes output — A/B-listen per landmine #17.
 - **M&A** (Models & Agents) runs exclusively via `run_show.py` +
   `shows/models_agents.yaml`; no legacy script. X posting disabled.
 - **MAB** (Models & Agents for Beginners) runs via `run_show.py` +
