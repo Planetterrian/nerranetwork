@@ -657,7 +657,11 @@ button { font-family: var(--font-ui); cursor: pointer; }
 .show-hero-tagline {
   font-family: var(--font-ui);
   font-size: 1.15rem; font-weight: 500;
+  /* Raw brand colors (Tesla red, deep blues) land near 3:1 on the dark
+     background — visibly murky (June 2026 look-and-feel pass). Tint
+     55/45 toward white: keeps the hue, clears AA contrast. */
   color: var(--show-color, var(--nn-purple));
+  color: color-mix(in srgb, var(--show-color, var(--nn-purple)) 55%, #fff);
   margin-bottom: var(--sp-4);
 }
 .show-hero-desc {
@@ -1332,7 +1336,12 @@ button { font-family: var(--font-ui); cursor: pointer; }
   .nn-global-search {
     max-width: 140px !important;
     margin-right: 0.25rem !important;
+    min-width: 90px !important;
   }
+  /* The full wordmark + search field + hamburger don't fit at phone
+     widths — the search box overlapped "Network" (June 2026 look-and-
+     feel pass). Keep the icon + "Nerra"; drop the second word. */
+  .nn-nav-logo .nn-wordmark-rest { display: none; }
   .nn-global-search input {
     font-size: 0.8rem !important;
     padding: 5px 6px !important;
@@ -1986,6 +1995,11 @@ body.menu-open {
 #nn-consent-banner .nn-consent-accept:hover { background: #6841ff; }
 @media (max-width: 480px) {
   #nn-consent-banner { flex-direction: column; align-items: stretch; }
+  /* In the column layout the text's flex-basis (320px, tuned for the
+     ROW layout's width) becomes HEIGHT — the banner ballooned to ~60%
+     of a phone viewport with a giant void (June 2026 look-and-feel
+     pass). Let it hug its content instead. */
+  #nn-consent-banner .nn-consent-text { flex: 0 0 auto; }
   #nn-consent-banner .nn-consent-actions { justify-content: stretch; }
   #nn-consent-banner .nn-consent-btn { flex: 1; }
 }
