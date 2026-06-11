@@ -58,7 +58,12 @@ runs:
       if: inputs.system-packages != ''
       shell: bash
       run: |
-        sudo apt-get update -qq
+        # apt update is best-effort: third-party mirrors on the runner
+        # image (e.g. dl.google.com chrome-stable) intermittently serve
+        # Hash Sum mismatches and exit 100, which killed an entire
+        # episode run (FF, June 11 2026) even though our packages come
+        # from the Ubuntu archives and install fine from cached indexes.
+        sudo apt-get update -qq || sudo apt-get update -qq ||           echo "::warning::apt-get update failed twice — installing from cached indexes"
         sudo apt-get install -y -qq ${{ inputs.system-packages }}
 
     - name: Install dependencies
