@@ -2172,8 +2172,8 @@ def generate_network_page(*, dry_run=False):
 
     context = {
         "path_prefix": "",
-        "page_title": "Nerra Network | 11 Daily Shows",
-        "meta_description": "Nerra Network — Eleven daily podcasts keeping you informed. Tesla, world news, space, science, environment, AI, modern investing, narrative case studies, Russian finance, and language learning. Independent, daily, free.",
+        "page_title": f"Nerra Network | {len(NETWORK_SHOWS)} Daily Shows",
+        "meta_description": f"Nerra Network — {len(NETWORK_SHOWS)} daily podcasts keeping you informed. Tesla, world news, space, science, environment, AI, modern investing, first-principles thinking, narrative case studies, Russian finance, and language learning. Independent, daily, free.",
         "meta_keywords": "podcast network, daily podcasts, Nerra Network, Tesla, space, science, AI, environment, history, unintended consequences",
         "theme_color": "#6B47FF",
         "og_image": f"{GITHUB_RAW}/assets/og-preview.png",
@@ -2756,7 +2756,7 @@ def generate_about_page(*, dry_run=False):
         "path_prefix": "",
         "page_title": "About — Nerra Network",
         "page_description": "Meet the independent podcast network producing 11 ad-free daily shows on AI, Tesla, investing, space, science, and environmental policy. Based in Vancouver, Canada.",
-        "meta_description": "About Nerra Network — an independent, ad-free podcast network producing 11 daily shows in Vancouver, Canada. Founded by Patrick Novak.",
+        "meta_description": f"About Nerra Network — an independent, ad-free podcast network producing {len(NETWORK_SHOWS)} daily shows in Vancouver, Canada. Founded by Patrick Novak.",
         "meta_keywords": "about Nerra Network, Patrick Novak, independent podcast network, Vancouver podcasts, ad-free podcasts",
         "theme_color": "#6B47FF",
         "og_image": "",
@@ -2964,7 +2964,7 @@ def generate_player_page(*, dry_run=False):
     context = {
         "path_prefix": "",
         "page_title": "Player | Nerra Network",
-        "meta_description": "Listen to all Nerra Network shows in one player. Build your queue, reorder episodes, and discover new content across 11 daily podcasts.",
+        "meta_description": f"Listen to all Nerra Network shows in one player. Build your queue, reorder episodes, and discover new content across {len(NETWORK_SHOWS)} daily podcasts.",
         "meta_keywords": "podcast player, Nerra Network, queue, playlist",
         "theme_color": "#6B47FF",
         "og_image": None,

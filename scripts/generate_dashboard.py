@@ -389,7 +389,7 @@ def item_8_feature_flags(shows: List[Dict[str, Any]]) -> Dict[str, Any]:
 def item_11_tts_provider(shows: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Network-wide TTS provider invariant.
 
-    All 11 shows migrated to Grok TTS in the May 2026 full-network
+    All 12 shows run Grok TTS since the May 2026 full-network
     flip (CLAUDE.md landmine #17). ElevenLabs is the rollback path,
     not the live provider — accidental drift back to it would be a
     cost regression (Grok is ~36× cheaper per character) and a voice-
@@ -1153,7 +1153,7 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
     # - Surface for future live YT quota remaining (engine.youtube_quota already exists).
     episodes_7 = max(network_7.get("episodes", 0), 1)
     avg_per_episode = round(network_7["total"] / episodes_7, 4)
-    # Conservative: network ships ~60-70 episodes/week across 11 shows
+    # Conservative: network ships ~70-80 episodes/week across 12 shows
     projected_weekly = round(avg_per_episode * 65, 2)
 
     return {
@@ -1168,7 +1168,7 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
         "youtube_quota": {
             "enabled_shows_count": 2,  # TST + MAB only (per landmine #20 quota cap)
             "daily_insert_cost_units": 1600,  # long + short typical (see engine/youtube_quota.py)
-            "note": "Hard cap ~10k units/day per channel. Preflight + youtube_quota.py have the estimators. Only 2 shows currently enabled.",
+            "note": "Hard cap ~10k units/day per channel. Preflight + youtube_quota.py have the estimators. 6 shows enabled across 2 channels (EN: Tesla+MAB full, FF+MIT Shorts-only; RU: FP+PR) — see landmine #20.",
         },
     }
 

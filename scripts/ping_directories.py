@@ -2,7 +2,7 @@
 """Ping all podcast directories for all Nerra Network shows.
 
 Usage:
-    python scripts/ping_directories.py              # ping all 9 shows
+    python scripts/ping_directories.py              # ping every show feed
     python scripts/ping_directories.py tesla        # ping only Tesla Shorts Time
 """
 import sys

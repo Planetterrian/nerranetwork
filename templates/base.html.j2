@@ -149,7 +149,7 @@
         'footer_listen': 'Слушать' if _is_ru else 'Listen',
         'footer_connect': 'Контакты' if _is_ru else 'Connect',
         'footer_about': 'О сети' if _is_ru else 'About',
-        'footer_brand_desc': 'Одиннадцать подкастов. Без рекламы. Независимая сеть из Ванкувера, Канада.' if _is_ru else 'Eleven shows. Zero fluff. Independent podcast network produced in Vancouver, Canada.',
+        'footer_brand_desc': ('Подкастов: ' ~ (all_shows|length) ~ '. Без рекламы. Независимая сеть из Ванкувера, Канада.') if _is_ru else ((all_shows|length) ~ ' shows. Zero fluff. Independent podcast network produced in Vancouver, Canada.'),
         'footer_network_player': 'Плеер сети' if _is_ru else 'Network Player',
         'footer_network_rss': 'RSS сети' if _is_ru else 'Network RSS',
         'footer_about_network': 'О Nerra Network' if _is_ru else 'About Nerra Network',
@@ -337,7 +337,7 @@
                     <h4>{{ t.subscribe_h4 }}</h4>
                     <p>{{ t.subscribe_subtitle }}</p>
                     <div class="nn-subscribe-tags">
-                        {#- All 11 shows. Tag values must match each show's
+                        {#- Every show (count tracked dynamically). Tag values must match each show's
                             YAML ``newsletter.tag`` exactly so the same
                             tag is used by both the daily-send pipeline
                             AND footer signups (operator caught a 7-of-11
