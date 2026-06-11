@@ -55,17 +55,11 @@ tts:
   {}
 
 audio:
-  # Voice-only at launch (like Unintended Consequences) — no music_file,
-  # so the runner's ``if config.audio.music_file:`` guard cleanly skips
-  # the mix step. Documentary pacing comes from the prompt, not music.
-  #
-  # THEME MUSIC (operator, June 2026): when the song is finished, save it
-  # as assets/music/first_principles.mp3 and uncomment the line below —
-  # the timing/volume params beneath are already tuned to the network's
+  # Theme music enabled June 11 2026 (operator-produced track, 4:20 @
+  # 190 kbps/48 kHz). Timing/volume params below follow the network's
   # May 13 shape (10 s music-only intro, 45 s under voice, 20 s outro).
-  # The track should run ≥60 s so the intro+overlap+fade window never
-  # exhausts it; see assets/music/README.md for the generation guide.
-  # music_file: assets/music/first_principles.mp3
+  # A/B-listen the first mixed episode per landmine #17.
+  music_file: assets/music/first_principles.mp3
   transition_sting: assets/music/transition_sting.mp3
   voice_intro_delay: 10.0
   intro_duration: 10.0
