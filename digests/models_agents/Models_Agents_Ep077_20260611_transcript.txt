@@ -1,0 +1,88 @@
+Hey everyone, welcome to Models and Agents, episode 77 on June 11th, 2026.
+Let's see what shipped.
+The AI world never sleeps.
+Here's what you need to know today.
+And Thropic is asking governments to block unsafe frontier models and fund job transition
+programs while committing $350 million of its own money.
+The company published an essay titled The AI Exponential, along with three separate programs.
+One sets up mandatory third-party testing for cyber, bio, and autonomy risks on frontier models.
+Another seeds a $200 million fund to study labor impacts.
+The third launches a $150 million national fellowship program tomorrow for early career workers.
+Builders should watch how these proposals turn into licensing or deployment roles.
+The moves line up with new agent payment connections from VISA, Ripple, and JD.com
+that let agents finish purchases without people in the loop.
+Cohear released North Mini Code, a 30 billion parameter extra of experts model.
+Only 3 billion parameters stay active at any time, and the model supports 256,000 tokens of context.
+It runs on a single H100 and marks Cohear's first open-weight coding model,
+aimed at agentic workflows. Builders can compare it this week against
+current 7 billion to 13 billion parameter coding models to check where the extra capacity helps
+multi-step planning. Mini Max plans to release open weights for its M3 model on Friday.
+No parameter count or license details have been shared yet.
+The announcement has already sparked discussion in local inference communities about expected
+VRAM requirements. Watch the Friday drop for direct comparisons against current open 30 billion to
+70 billion models. Community members are preparing test setups to evaluate how the new weights perform
+in standard local environments once the files appear.
+News research shipped the Hermes agent profile builder. The dashboard creates full agent profiles
+including identity, model choice, skills, and MCP servers in one flow. It removes the old
+multi-step command line process and targets users who want repeatable setups without editing the
+ammo files by hand. Early testers say they switch between base models and tool sets faster than
+before. TIDB launched the agent state stack at the Super AI Summit in Singapore.
+The stack adds persistent queryable memory that survives across sessions and tool calls.
+It aims at teams moving agents from prototypes into long running production work.
+The release supplies production grades state handling that keeps facts available after
+restarts. Developers can now maintain indexed records of prior tool outputs without rebuilding
+context from scratch each time an agent resumes. The system separates temporary working data from
+durable facts that must remain accessible over multiple days. Visa connected its payment rails
+straight to chat GPT. Agents can now browse merchant catalogs and finish checkout using existing visa
+infrastructure without any human step. Merchants on the rails become reachable by autonomous agents right
+away. The integration routes recommendations directly into completed transactions inside the chat
+GPT agent environment. Existing visa merchant accounts require no additional setup to accept these
+agent driven purchases. The connection removes the final confirmation step that previously required
+a person to approve every order. Ripple released an XRPL AI starter kit. The kit gives templates
+for on-chain agent wallets and transaction signing so agents can settle payments without approval.
+It targets developers building autonomous financial agents on the XRPL ledger.
+The templates include ready-made wallet creation flows and signed transaction examples.
+Builders receive starter code that connects directly to the XRPL network for agent-initiated
+transfers. The kit focuses on removing human approval gates from routine settlement steps.
+A developer posted an open source ASR biasing implementation for local voice apps. The code
+injects custom vocabulary into prompts or parameters for grok, whisper.cpp and deepgram. The full
+project sits on GitHub under freestyle dash voice slash freestyle. The approach mirrors dictionary
+features from commercial tools like whisper flow. Users can supply domain terms that improve recognition
+accuracy during local dictation sessions. The implementation works across multiple transcription
+back ends without requiring changes to the core model files. Local users are comparing a single
+radion 7 with 32 gigabytes against dual P100s with 48 gigabytes total. The test focus on running
+mixture of experts models at Q8 quantization and whether the extra memory outweighs slower inference
+speeds. Several builders are measuring actual utilization on Quinn and Gemma variants.
+The conversation centers on real world trade-offs between single card simplicity and multi-card
+capacity for larger MoE workloads. Participants are logging VRAM usage patterns during extended
+agentic coding or retrieval sessions. Results are being shared to help others decide on hardware
+upgrades for similar open-weight experiments. Remember, the show covered safety and policy developments
+yesterday. Today's anthropic essay and funding moves extend that thread by turning earlier calls
+for evaluation standards into concrete proposals with revocation power and dedicated money.
+The open questions around US and EU regulatory paths and standardized testing now have specific
+timelines attached through the new fellowship and evaluation projects. Okay, let's pop the hood
+on agent state persistence. Most people picture agent memory as a simple append-only log. In practice,
+the design choices around durability, query speed, and consistency turn expensive fast.
+Long-running agents need both short-term scratch base and durable cross-session facts.
+Mixing the two either drops context or drives storage costs through the roof. A production stack
+therefore keeps an in-memory working set for the current run and a separate index store that mixes
+vector and relational data for facts that survive restarts. Adding the second layer adds 30 to 80
+milliseconds per tool call for serialization and indexing. It also avoids replaying every prior
+step on every restart. The trade-off shows up once agents pass roughly 200 tool calls in one session.
+After that point, the cost of keeping everything in context exceeds the cost of selective persistence.
+Teams should start with a simple key value layer and add vector search only after they see repeated
+lookups of the same facts across sessions. Most early agent workloads never hit that threshold.
+Test cohere North Mini Code on a multi-step coding agent task this week. Try the visa and chat GPT
+integration on a retail recommendation workflow if you have access to the chat GPT agent builder.
+Add ASR biasing to a local voice app using the freestyle voice repo to check accuracy gains on
+domain terms. Spin up the TIDB agent state stack demo if you are moving an agent toward multi-day
+operation. Keep an eye on the Mini Max M3 open weights drop expected Friday. The Anthropic 150
+million dollar national fellowship program launches tomorrow. Agent payment protocols from Visa,
+Ripple and JD.com continue rolling out tomorrow. Keep an eye on the first government responses to the
+Anthropic testing framework and any early funded evaluation projects that get announced.
+That wraps up today's AI briefing. Share this with a developer or builder who wants to stay current.
+Subscribe wherever you listen. See you tomorrow. And before you go, this show is part of the NARA
+Network, a family of daily podcasts covering tech, science, markets and more. If you enjoyed today's
+episode, give unintended consequences a listen. True stories of good intentions that backfired.
+You can explore the whole lineup at NARAnetwork.com. This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.
