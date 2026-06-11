@@ -346,7 +346,7 @@ Use `python scripts/scaffold_show.py` to generate YAML, prompts, output dirs, an
 - `GROK_API_KEY` — primary xAI key (all shows)
 - `ELEVENLABS_API_KEY` — ElevenLabs TTS (all shows)
 - `X_*` / `PLANETTERRIAN_X_*` — two separate X accounts
-- Voice IDs: **All 11 shows are on Grok TTS** as of the May 2026 full-network migration. The 8 English shows (including Tesla Shorts Time) share the operator's custom-trained voice `kdif6sqjcyiq`. Russian shows (FP/PR) use the custom Olya voice `0b875ae2`. ElevenLabs is no longer used in production but the API key + legacy settings stay in `_defaults.yaml` for emergency rollback. See landmine #17.
+- Voice IDs: **All 12 shows are on Grok TTS** as of the May 2026 full-network migration. The 10 English shows (including Tesla Shorts Time) share the operator's custom-trained voice `kdif6sqjcyiq`. Russian shows (FP/PR) use the custom Olya voice `0b875ae2`. ElevenLabs is no longer used in production but the API key + legacy settings stay in `_defaults.yaml` for emergency rollback. See landmine #17.
 - See `docs/env_var_inventory.md` for the complete inventory
 
 ### RSS Feeds

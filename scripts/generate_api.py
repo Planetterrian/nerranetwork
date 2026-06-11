@@ -4,7 +4,7 @@ Nerra Network API Generator
 Generates static JSON API files for the Nerra Network mobile app.
 
 This script produces:
-- api/shows.json: Metadata for all 11 shows
+- api/shows.json: Metadata for all 12 shows
 - api/episodes.json: Aggregated feed of recent episodes (last 100)
 - api/articles.json: All blog articles for news reader (last 100)
 - api/shows/{show_id}.json: Detailed show info with full episode list
