@@ -40,14 +40,23 @@
                 form.querySelectorAll('input[name="tag"]:checked').forEach(function (cb) {
                     tags.push(cb.value);
                 });
+                // transport_type beacon: the form navigates to
+                // Buttondown immediately after submit, and non-beacon
+                // gtag hits fired during unload are frequently lost —
+                // fatal for an Ads campaign optimizing on this
+                // conversion (June 2026 marketing-readiness review).
                 track('newsletter_signup', {
                     tags: tags.join(','),
                     tag_count: tags.length,
                     location: window.location.pathname,
+                    transport_type: 'beacon',
                 });
                 // Fire Google Ads conversion if configured
                 if (window._GOOGLE_ADS_SIGNUP_TARGET) {
-                    track('conversion', { send_to: window._GOOGLE_ADS_SIGNUP_TARGET });
+                    track('conversion', {
+                        send_to: window._GOOGLE_ADS_SIGNUP_TARGET,
+                        transport_type: 'beacon',
+                    });
                 }
             });
         });
@@ -67,7 +76,9 @@
             else if (lower.indexOf('open.spotify.com') !== -1) directory = 'spotify';
             else if (lower.endsWith('.rss') || lower.indexOf('/podcast.rss') !== -1) directory = 'rss';
             if (!directory) return;
+            // Outbound click — beacon survives the navigation.
             track('subscribe_click', {
+                transport_type: 'beacon',
                 directory: directory,
                 show: link.getAttribute('data-show') || 'unknown',
                 location: window.location.pathname,
