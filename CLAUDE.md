@@ -265,6 +265,26 @@ TST received a full recursive improvement architecture (analogous to MIT):
   imagine" opener tic (49 of 60 episodes — the prompt's own example was
   the template) now requires rotating opener shapes. Length/opener
   prompt edits change output — A/B-listen per landmine #17.
+- **FF June 12 2026 quality pass** (review:
+  [`docs/reviews/fascinating_frontiers_review_2026_06_12.md`](docs/reviews/fascinating_frontiers_review_2026_06_12.md);
+  drift guards: `tests/test_fascinating_frontiers_quality_pass.py`): the
+  June-10 four-show length fix MISSED — Ep097/098/099 (post-pass) shipped
+  1634/1390/1637w, all under the 1700 floor. Verified root cause is the
+  **digest ceiling**, not the target: FF's RSS feeds return snippets
+  (not full text) → digests run 1027-1597w → the podcast can't exceed
+  them without the padding/invention both prompts ban (Ep099 script 1664w
+  > its digest 1572w). The expand-retry fires every episode and plateaus;
+  on the thinnest day it padded 6 stories with title-case headline
+  restatements. Deferred the only non-padding lever (expand the Cosmic
+  Deep Dive, which is licensed to use the model's own astrophysics
+  knowledge) until the operator's four-show length A/B settles. Shipped
+  two deterministic, no-A/B fixes: (1) `fix_phonetic_garbles` extended for
+  the space names the model spelled phonetically despite the ban —
+  "En-sell-uh-dus"→Enceladus (Ep048/088/094), "Tee-en-wen"→Tianwen
+  (Ep090); (2) a theme-mining self-reference filter — the show's own name
+  ("fascinating frontiers") had been mined as a top "recurring theme"
+  every episode (Ep97/98/99 led their top_themes with it); only the full
+  show-name bigram is filtered, never component tokens.
 - **PR** (Привет, Русский!) runs via `run_show.py` +
   `shows/privet_russian.yaml`; bilingual Russian language learning podcast
   for English speakers. Even days only. Uses **ElevenLabs TTS**

@@ -652,6 +652,13 @@ _PHONETIC_GARBLES = {
     "en-vidia": "Nvidia",
     "open-ay-eye": "OpenAI",
     "star-mer": "Starmer",
+    # Fascinating Frontiers (June 12 2026 review): the podcast-gen step
+    # spelled hard space names phonetically despite the prompt ban — these
+    # shipped to TTS as written. "En-sell-uh-dus" → Enceladus (FF Ep048/088/094),
+    # "Tee-en-wen" → Tianwen (FF Ep090, e.g. "Tee-en-wen-2"; the regex's
+    # trailing \b leaves the "-2" suffix intact → "Tianwen-2").
+    "en-sell-uh-dus": "Enceladus",
+    "tee-en-wen": "Tianwen",
 }
 
 _PHONETIC_GARBLE_RE = re.compile(

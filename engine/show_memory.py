@@ -395,6 +395,25 @@ def _narrative_prose_bigrams(output_dir: Path, cfg: MemoryConfig) -> set:
     return set(_extract_bigrams(" ".join(texts).lower()))
 
 
+def _self_reference_bigrams(cfg: MemoryConfig) -> set:
+    """Bigrams formed from the show's OWN name/slug — never useful themes.
+
+    June 12 2026 fix (Fascinating Frontiers review): the four-show prose
+    filter (June 10) caught tracker-prose echo but missed the show-name
+    echo. The digest template header repeats the show name ("# Fascinating
+    Frontiers", "Fascinating Frontiers - Space & Astronomy News"), so
+    "fascinating frontiers" was mined as a top theme every episode — FF
+    Ep97/98/99 all led their top_themes with it. A show's own name is never
+    a "recurring theme deserving extra depth". Only the full multi-word name
+    is filtered, NOT its component tokens: "models"/"agents" are legitimate
+    themes for Models & Agents.
+    """
+    terms: set = set()
+    terms |= set(_extract_bigrams((cfg.label or "").lower()))
+    terms |= set(_extract_bigrams((cfg.slug or "").replace("_", " ")))
+    return terms
+
+
 def update_theme_history_from_digest(output_dir: Path, cfg: MemoryConfig,
                                      digest_text: str, episode_num: int) -> None:
     """Theme extraction from the just-generated digest CONTENT only.
@@ -418,18 +437,19 @@ def update_theme_history_from_digest(output_dir: Path, cfg: MemoryConfig,
         return
 
     echo_bigrams = _narrative_prose_bigrams(output_dir, cfg)
+    self_ref_bigrams = _self_reference_bigrams(cfg)
 
     # One-time scrub of pre-fix noise entries (exempting curated
     # keywords): keys containing ANY stopword can only be legacy (the
-    # miner filters stopwords before pairing), and echo bigrams came
-    # from our own tracker prose.
+    # miner filters stopwords before pairing), echo bigrams came from our
+    # own tracker prose, and self-reference bigrams are the show's own name.
     for noise_key in list(themes.keys()):
         if noise_key in cfg.theme_keywords:
             continue
         words_in_key = noise_key.split()
         if words_in_key and any(w in _THEME_STOPWORDS for w in words_in_key):
             del themes[noise_key]
-        elif noise_key in echo_bigrams:
+        elif noise_key in echo_bigrams or noise_key in self_ref_bigrams:
             del themes[noise_key]
 
     # Strip URLs before mining — digests carry "Source: https://..."
@@ -442,7 +462,8 @@ def update_theme_history_from_digest(output_dir: Path, cfg: MemoryConfig,
     # Bigram themes from the DIGEST content (never the template, never
     # tracker-prose echo).
     for bigram in _extract_bigrams(text_lower):
-        if bigram in echo_bigrams or bigram in cfg.theme_keywords:
+        if (bigram in echo_bigrams or bigram in cfg.theme_keywords
+                or bigram in self_ref_bigrams):
             continue
         themes[bigram] = themes.get(bigram, 0) + 1
 
