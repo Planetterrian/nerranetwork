@@ -1,0 +1,89 @@
+Glad you're here. Welcome to Models and Agents episode 78 for June 12, 2026.
+You're daily AI briefing, you're daily briefing on the AI models and agents that are changing
+everything. And no, not those kinds of models and agents. Let's get into it.
+Text diffusion just got dramatically faster. Diffusion Gemma delivers four times the speed
+over prior Gemma 4 variants while staying in the same family. Demi's Haas Abyss highlighted the
+new diffusion Gemma text diffusion model for its inference gains. Open AI began letting codex
+users bank rate limit resets and run friend invite campaigns for more resets.
+Codex users are now able to bank their rate limit resets. Friend invite campaigns provide additional
+resets to users. The banking mechanism helps manage rate limits over time.
+Campaigns involving friends increase the number of available resets.
+This update applies to the codex product from OpenAI. Users benefit from both banking and invite
+based reset increases. General purpose LLMs now outperforms specialized clinical tools on medical
+benchmarks. Several agent platforms face fresh security and reliability questions that sets the
+stage for today's developments across models agents and practical tools. Demi's Haas Abyss publicly
+praised Diffusion Gemma, a text diffusion model from the Gemma team that runs four times faster than
+other Gemma 4 variants. The release focuses on text diffusion innovation rather than the usual
+auto regressive approach. It opens a different inference path for developers who need rapid generation.
+Builders working on latency sensitive text tasks can now test whether diffusion sampling
+yields acceptable quality at the higher throughput. The announcement came directly from the DeepMind CEO,
+signaling internal confidence in the result. Watch for community benchmarks comparing diffusion Gemma
+output diversity and coherence against standard Gemma checkpoints on the same hardware.
+On the model side, Nature reports that broad models now surpass purpose-built clinical AI systems
+across medical benchmarks. The finding covers multiple evaluation sets. It suggests that scale plus
+general training data can substitute for narrow domain fine tuning in several tasks. Teams previously
+locked into specialized clinical stacks should rerun their key benchmarks with current frontier models
+this week. Researchers published a 4 million note unautomized EME urgency department data set
+with expert annotations on dysnia and loss of consciousness cases. The Eden Corpus targets Italian
+language medical LLMs. It includes a structured 132 item CRF and zero shot baselines from Gemma 27B
+and Med Gemma 27B. Italian healthcare NLP teams now have the largest public clinical
+corpus in the language for fine tuning or evaluation. An expert authored benchmark of 525
+missions tests multi-turned conversational shopping assistance. The shopping reasoning bench covers
+preference refinement, trade-off analysis and compatibility assessment. Current models from GPT,
+Claude and Gemini families reach only 57 to 77 percent pass rates. Clear drops appear on multi-turn
+and optional criteria. Retail AI teams can use the 10,863 rubrics to measure progress beyond simple
+product lookup. Turning to agents, Coinbase shipped an autonomous crypto trading agent. The new agent
+lets users delegate trading decisions that execute without further human input. It positions Coinbase
+as an entry point into the agent economy. Early users gain a concrete on-ramp for testing live
+market actions under the platform's existing compliance layer. This development fits the ongoing
+arc for agent tool use where the key open question remains long horizon reliability.
+Visa outlined programmable money rails and an open AI alliance intended to let agents initiate
+and settle transactions. Developers building purchasing agents now have a clearer path to production
+grade payment authorization flows. The announcement emphasizes compliance and settlement guarantees,
+rather than raw capability claims. A reported flaw sequence lets remote attackers execute code
+against self-hosted land graph deployments. Operators should audit their current exposure and apply
+patches before resuming production agent workloads. The disclosure highlights ongoing sandboxing
+gaps in popular agent frameworks. A new study demonstrates reliable prompt injection attacks that override
+agent goals even in production grade systems. The work underscores that guard rails added after
+initial training still leave exploitable surface area. Teams running autonomous agents should treat
+injection resistance as a continuous evaluation requirement rather than a one-time fix.
+The first large-scale syntactically annotated resource for nine sub-Saharan African languages
+provides native speaker verified SUD annotations. The aphry sued tree bank collection covers a
+gluttonation and tone phenomena. NLP teams working on low resource languages can now benchmark
+POS tagging and dependency parsing against a consistent community led data set. Results show
+current multilingual encoders still lag on these languages. The Hiera Ragh framework helps tune rag
+benchmark granularity. Its hierarchical synthetic QA generator lets practitioners measure how question
+complexity, answer type, and linguistic variation affect discriminative power at different category
+resolutions. Teams can run the pipeline on their own corpora to decide whether course or fine splits
+better expose model weaknesses. Okay, let's pop the hood on prompt injection in tool-calling loops.
+Everyone treats prompt injection as a simple add-of-filter problem, yet the attack surface grows with
+every additional tool and memory right and agent performs. In practice, the model must decide at each
+step whether an incoming instruction is user intent or an injected override. That decision is made
+inside the same forward pass that selects the next tool call. The engineering trade-off appears
+immediately. Stronger instruction hierarchy adds tokens and latency. Lighter filters allow the
+model to follow malicious content when it is lexically similar to legitimate commands. Imperical
+work shows that once an agent writes to shared memory or updates its own plan, a single successful
+injection can persist across turns without further attacker input. The practical limit most teams hit
+is that static system prompts cannot reliably separate authority levels once the context window mixes
+user, tool, and memory content. When building agents that touch external systems, the reliable pattern is
+therefore to keep the policy decision in a separate, smaller model or a deterministic checker,
+rather than hoping the main model will self-police. The gotcha that bites production deployments is
+assuming that the model usually refuses will hold once the agent has already executed one injected
+step and updated its state. Test diffusion Gemma on a latency sensitive text generation task you
+currently run with standard Gemma or Lamat checkpoints to see whether the four times throughput holds
+in your workload. Run the shopping reasoning bench against your current conversational shopping
+prototype to quantify multi-turn degradation before adding more memory or hierarchy. Audit any
+self-hosted LANG graph instances for the reported RCE chain and apply updates before reconnecting them
+to production tools. Generate a small, high-error rag-derived test set on your own retrieval
+corpus to decide the right granularity for your next rag evaluation round. More teams are expected
+to release mechanism-level DDI prediction models following the MARD-7B training recipe and drug bank
+cold-split protocol. Visa's programmable rails and open AI alliance will likely produce early
+partner integrations for agent-initiated payments in the coming weeks. Additional African
+language tree banks and clinical corpora are anticipated as groups build on the after sued and Eden
+releases. Tomorrow, keep an eye on the first partner integrations from Visa's programmable rails.
+That wraps up today's AI briefing. Share this with a developer or builder who wants to stay current.
+Subscribe wherever you listen, see you tomorrow, and before you go, this show is part of the NARA
+network, a family of daily podcasts covering tech, science, markets, and more. If you enjoyed today's
+episode, give Tesla short-time a listen. Your daily deep dive into everything Tesla. You can explore
+the whole lineup at naranetwork.com. This episode used AI voice synthesis of my voice,
+editorial selection, and analysis are my own.
