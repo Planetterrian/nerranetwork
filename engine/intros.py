@@ -584,6 +584,16 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
                 ],
             },
         },
+        # June 12 2026 quality pass: pool grown 2 → 4 and the
+        # "That wraps today's case" variant removed. With only two
+        # entries, the day-of-year seed shipped the same closing 3
+        # episodes in a row (Ep026-028) and "That wraps today's case"
+        # rode out on 5 of 10 recent episodes — the very phrase the
+        # podcast prompt's WHAT TO AVOID block flags as "started
+        # recurring." Variety belongs in the pool, not the prompt (the
+        # closing block is supplied verbatim, so the LLM can't vary it).
+        # Every variant ends on a tomorrow signal so the Closing chapter
+        # marker matches. Audio-affecting — A/B-listen (landmine #17).
         "closings": [
             (
                 "That's Unintended Consequences for today. If this episode gave you something "
@@ -591,8 +601,19 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
                 "Subscribe wherever you listen, and we'll be back tomorrow with another case."
             ),
             (
-                "That wraps today's case. The lessons travel further when you share them — "
-                "send this episode to someone who'd find it useful. We'll see you tomorrow."
+                "And that's where today's story leaves us. If it changed how you see one "
+                "everyday decision, that's the whole point — pass it along to someone who'd "
+                "appreciate it, and we'll be back tomorrow with another case."
+            ),
+            (
+                "That's the case for today. The lessons tend to travel further when you share "
+                "them, so send this one to someone who'd find it useful, and subscribe "
+                "wherever you're listening. See you tomorrow."
+            ),
+            (
+                "We'll leave it there for today. Thanks for thinking through this one with me — "
+                "if you know someone who loves a good cautionary tale, send it their way, and "
+                "I'll see you tomorrow with another."
             ),
         ],
     },

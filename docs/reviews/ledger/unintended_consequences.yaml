@@ -1,0 +1,44 @@
+# Review ledger — Unintended Consequences. See README.md for schema.
+reviews:
+  - date: 2026-06-12
+    pr: null
+    doc: docs/reviews/unintended_consequences_review_2026_06_12.md
+    summary: >-
+      First dedicated UC review. Fixed broken chapters (0/10 → 10/10 via
+      where-anchors + dropping unreliable middle markers), grew the
+      closing pool 2→4 and removed the prompt-banned "That wraps today's
+      case" sign-off. Documented chronic under-length (digest is the
+      lever — deferred, same as First Principles) and the ~30% dropped
+      intro line.
+    shipped:
+      - chapters anchored (Introduction=start, Closing=end) + middle markers dropped
+      - closing pool 2->4, "That wraps today's case" removed
+      - prompt closing bullet re-pointed at the lesson close
+    deferred:
+      - digest word-floor + expansion retry (under-length lever; network-scope, audio)
+      - missing-intro guard (brand dropped from open ~30% of episodes; risks double-greeting)
+      - lower the 2200-2800w podcast target toward the real ~8-12min plateau (only after the digest lever lands)
+    predictions:
+      - metric: "fraction of last-10 episodes with Introduction-first + Closing-last chapter shape"
+        baseline: "0/10 (committed chapters_ep019-028)"
+        expected: ">= 9/10 within 2 weeks"
+        verdict: pending
+        evidence: null
+      - metric: "fraction of last-10 episodes shipping 'That wraps today's case' as the sign-off"
+        baseline: "5/10"
+        expected: "0/10 (phrase removed from pool)"
+        verdict: pending
+        evidence: null
+      - metric: "distinct closing variants across the last 10 episodes"
+        baseline: "2"
+        expected: ">= 3"
+        verdict: pending
+        evidence: null
+      - metric: "median _tts.txt words, last 10 episodes (under-length; NOT fixed this pass)"
+        baseline: "~903"
+        expected: "still < 1300 — re-confirms the digest lever is the open problem"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
+do_not_retry: []
