@@ -68,3 +68,11 @@ def test_gate_has_duplicate_guard():
     assert "Auto-generated: {slug} {today_str}" in _WF
     # The guard must be best-effort: API failure → run the show anyway.
     assert "proceeding without it" in _WF
+
+
+def test_run_job_has_post_concurrency_duplicate_recheck():
+    """The gate's guard runs at queue time and can be stale by the time
+    the per-show concurrency lock releases (FF double-published June 12
+    2026). The run job must re-check after the lock + fresh checkout."""
+    assert "Post-concurrency duplicate re-check" in _WF
+    assert "Duplicate re-check" in _WF
