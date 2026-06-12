@@ -102,16 +102,18 @@ class TestCronConsistency:
             f"these don't: {missing}"
         )
 
-    def test_no_show_runs_before_06_utc_or_after_11_utc(self):
-        """Schedule window must be contained in 06:00–11:00 UTC so the
-        whole network finishes well before the Eastern morning. Also
-        catches accidental DST drift."""
+    def test_no_show_runs_before_06_utc_or_after_12_utc(self):
+        """Schedule window must be contained in 06:00–12:59 UTC so the
+        whole network finishes by the Eastern morning. Widened from 11
+        to 12 when SpaceX Daily took the 12:07 slot (June 2026). Also
+        catches accidental DST drift. Must stay in sync with the
+        scheduler Worker's cron window in workers/scheduler/wrangler.toml."""
         cron_lines = _extract_cron_lines()
         for cron in cron_lines:
             minute, hour = cron.split()[:2]
             hour_int = int(hour)
-            assert 6 <= hour_int <= 11, (
-                f"Cron {cron!r} hour {hour_int} outside 06:00–11:00 UTC "
+            assert 6 <= hour_int <= 12, (
+                f"Cron {cron!r} hour {hour_int} outside 06:00–12:59 UTC "
                 f"window."
             )
 
