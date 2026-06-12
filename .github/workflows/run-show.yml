@@ -359,6 +359,25 @@ jobs:
         id: pipeline
         run: |
           set +e
+          # Post-concurrency duplicate re-check (June 12 2026): the gate's
+          # duplicate guard runs at QUEUE time — FF's hours-late fallback
+          # cron passed it while a dispatched run was still mid-pipeline,
+          # waited on the per-show concurrency lock, then shipped a second
+          # episode 11 minutes after the first. This re-check runs AFTER
+          # the lock + checkout, so it always sees the first run's commit.
+          # Scheduled triggers only — manual dispatch reruns stay possible.
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            OUTPUT_DIR="digests/${{ matrix.show }}"
+            [ "${{ matrix.show }}" = "tesla" ] && OUTPUT_DIR="digests/tesla_shorts_time"
+            git fetch origin main --depth=1 -q 2>/dev/null || true
+            git checkout origin/main -- "$OUTPUT_DIR" 2>/dev/null || true
+            TODAY=$(date -u +%Y%m%d)
+            if find "$OUTPUT_DIR" -name "*_${TODAY}.md" -o -name "*${TODAY}*.md" 2>/dev/null | grep -q .; then
+              echo "::notice::Duplicate re-check: ${{ matrix.show }} already published today — skipping scheduled rerun."
+              echo "skipped=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
           EXTRA_FLAGS=""
           if [ "${{ github.event.inputs.test_mode }}" = "true" ]; then
             EXTRA_FLAGS="--test"
