@@ -120,6 +120,50 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
             ),
         ],
     },
+    "spacex": {
+        "host": "Patrick",
+        "show_name": "SpaceX Daily",
+        "greetings": [
+            "Hey, welcome to",
+            "Welcome back to",
+            "Good to have you on",
+            "It's a new day on",
+            "Thanks for tuning in to",
+        ],
+        "openers": [
+            "episode {ep}. I'm Patrick in Vancouver. Today is {date}.",
+            "episode {ep}, coming to you from Vancouver. It's {date}.",
+            "episode {ep}. It's {date} and I'm Patrick in Vancouver.",
+        ],
+        "framings": [
+            "Here's what's happening at SpaceX today.",
+            "Let's get into today's SpaceX developments.",
+            "From Starbase to orbit — here's your SpaceX rundown.",
+            "Plenty moving across Starship, Falcon, and Starlink today.",
+            "From the launch pad to the trading floor — here's everything that moved today.",
+        ],
+        # Every variant MUST match the Closing chapter pattern in
+        # shows/spacex.yaml (drift guard in tests/test_spacex_show.py).
+        "closings": [
+            (
+                "That's your SpaceX news for today. "
+                "If the show saves you time, a rating or review on Apple Podcasts or "
+                "Spotify genuinely helps new listeners find it. "
+                "I'm Patrick in Vancouver. Thanks for listening — see you tomorrow."
+            ),
+            (
+                "And that's a wrap on today's SpaceX developments. "
+                "Share this with a fellow spaceflight fan if you found it useful, "
+                "and subscribe so you don't miss tomorrow's episode. "
+                "I'm Patrick in Vancouver. See you next time."
+            ),
+            (
+                "That covers everything worth knowing about SpaceX today. "
+                "A quick rating on Apple Podcasts or Spotify goes a long way. "
+                "I'm Patrick in Vancouver. See you tomorrow."
+            ),
+        ],
+    },
     "omni_view": {
         "host": "Host",
         "show_name": "Omni View",

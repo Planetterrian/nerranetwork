@@ -752,7 +752,7 @@ def generate_blog_post_html(
         # entry point to the binge surface).
         "narrative_page": (
             show_config.get("show_page", "").replace(".html", "-narrative.html")
-            if show_slug in ("tesla", "models_agents", "fascinating_frontiers", "planetterrian")
+            if show_slug in ("tesla", "models_agents", "fascinating_frontiers", "planetterrian", "spacex")
             and show_config.get("show_page")
             else ""
         ),

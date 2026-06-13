@@ -218,6 +218,18 @@ SHOW_REGISTRY = {
         "required_sections": [],
         "schedule": "even",
     },
+    "spacex": {
+        "name": "SpaceX Daily",
+        "output_dir": "digests/spacex",
+        "prefix": "SpaceX_Daily",
+        "min_digest_chars": 2500,
+        "max_digest_chars": 18000,
+        "min_tts_words": 1700,
+        "min_audio_s": 240,
+        "max_audio_s": 1500,
+        "required_sections": ["Top News", "Engineering Deep Dive"],
+        "schedule": "daily",
+    },
     "first_principles": {
         "name": "First Principles Daily",
         "output_dir": "digests/first_principles",
