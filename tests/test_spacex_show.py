@@ -378,3 +378,42 @@ class TestComprehensiveCoverageAndAISection:
         chapters = parse_chapters(script, _spacex_markers(), show_name="SpaceX Daily")
         titles = [c.title for c in chapters]
         assert "AI & Compute" in titles, titles
+
+
+class TestResourcesAndDashboardStatsExpansion:
+    """June 13 2026: xAI/Cursor/partnership resources + dashboard fleet stats."""
+
+    def test_resources_include_xai_cursor_partnerships(self):
+        import generate_html as g
+        cats = {c["title"]: c for c in g.NETWORK_SHOWS["spacex"]["resource_categories"]}
+        ai = next((c for t, c in cats.items() if "AI" in t and "Compute" in t), None)
+        assert ai, list(cats)
+        names = {r["name"] for r in ai["resources"]}
+        assert "Cursor" in names and any("xAI" in n for n in names)
+        assert "Partnerships & Customers" in cats
+        part_names = {r["name"] for r in cats["Partnerships & Customers"]["resources"]}
+        assert any("NASA" in n for n in part_names)
+        for c in g.NETWORK_SHOWS["spacex"]["resource_categories"]:
+            for r in c["resources"]:
+                assert r["url"].startswith("https://"), r
+
+    def test_fleet_payload_computes(self):
+        import importlib.util, datetime as dt
+        spec = importlib.util.spec_from_file_location(
+            "fetch_spacex_launches", _ROOT / "scripts" / "fetch_spacex_launches.py")
+        mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+        now = dt.datetime(2026, 6, 13, tzinfo=dt.timezone.utc)
+        prev = [
+            {"net": "2026-06-01T00:00:00Z", "rocket": "Falcon 9", "name": "Starlink Group 1-1", "status": "Success"},
+            {"net": "2026-05-20T00:00:00Z", "rocket": "Falcon 9", "name": "NROL-1", "status": "Success"},
+            {"net": "2026-04-10T00:00:00Z", "rocket": "Falcon Heavy", "name": "USSF-1", "status": "Success"},
+            {"net": "2026-03-01T00:00:00Z", "rocket": "Starship", "name": "Flight 12", "status": "Failure"},
+        ]
+        f = mod._fleet_payload(prev, now)
+        assert f["by_vehicle"]["Falcon 9"] == 2
+        assert f["starlink_launches"] == 1
+        assert f["est_satellites_deployed"] == 23  # 1 starlink x 23
+        # mass: F9 starlink 17 + F9 other 9 + FH 26 + starship 0 = 52
+        assert f["est_mass_to_orbit_tonnes"] == 52
+        assert f["success_rate_pct"] == 75.0  # 3/4
+        assert f["estimated"] is True
