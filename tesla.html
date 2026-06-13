@@ -218,6 +218,11 @@
                             First Principles Daily
                         </a>
                         
+                        <a href="spacex.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/spacex-400.webp"><img src="assets/covers/spacex.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            SpaceX Daily
+                        </a>
+                        
                     </div>
                 </li>
                 <li class="nn-nav-dropdown">
@@ -288,6 +293,11 @@
                         <a href="blog/first_principles/index.html">
                             <picture><source type="image/webp" srcset="assets/covers/first-principles-daily-400.webp"><img src="assets/covers/first-principles-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                             First Principles Daily Blog
+                        </a>
+                        
+                        <a href="blog/spacex/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/spacex-400.webp"><img src="assets/covers/spacex.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            SpaceX Daily Blog
                         </a>
                         
                     </div>
@@ -386,6 +396,11 @@
                 First Principles Daily
             </a>
             
+            <a href="spacex.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/spacex-400.webp"><img src="assets/covers/spacex.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                SpaceX Daily
+            </a>
+            
         </div>
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">Blogs</div>
@@ -451,6 +466,11 @@
             <a href="blog/first_principles/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
                 <picture><source type="image/webp" srcset="assets/covers/first-principles-daily-400.webp"><img src="assets/covers/first-principles-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
                 First Principles Daily Blog
+            </a>
+            
+            <a href="blog/spacex/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/spacex-400.webp"><img src="assets/covers/spacex.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                SpaceX Daily Blog
             </a>
             
         </div>
@@ -1171,7 +1191,7 @@
         <div class="container">
             <div class="nn-section-header">
                 <h2>More from Nerra Network</h2>
-                <p>10 shows keeping you informed.</p>
+                <p>11 shows keeping you informed.</p>
             </div>
             <div class="cross-network-grid">
                 
@@ -1321,6 +1341,22 @@
                 </div>
                 
                 
+                
+                <div class="cross-network-card" style="display:flex;flex-direction:column;">
+                    <a href="spacex.html" style="display:flex;align-items:center;gap:var(--sp-3);text-decoration:none;flex:1;">
+                        <picture>
+                            <source type="image/webp" srcset="assets/covers/spacex-400.webp">
+                            <img src="assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy">
+                        </picture>
+                        <div class="cross-network-card-info">
+                            <div class="cross-network-card-name">SpaceX Daily</div>
+                            <div class="cross-network-card-tagline">Follow SpaceX as a public company — launches, Starlink, Starship, and the SPCX market picture, every day.</div>
+                        </div>
+                    </a>
+                    <a href="blog/spacex/index.html" style="font-family:var(--font-ui);font-size:0.75rem;color:var(--nn-text-muted);text-decoration:none;margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--nn-border);">Read blog &rarr;</a>
+                </div>
+                
+                
             </div>
         </div>
     </section>
@@ -1333,7 +1369,7 @@
             <div class="nn-footer-grid">
                 <div>
                     <div class="nn-footer-brand"><span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span></div>
-                    <p class="nn-footer-desc">12 shows. Zero fluff. Independent podcast network produced in Vancouver, Canada.</p>
+                    <p class="nn-footer-desc">13 shows. Zero fluff. Independent podcast network produced in Vancouver, Canada.</p>
                 </div>
                 <div class="nn-footer-col">
                     <h4>Shows</h4>
@@ -1361,6 +1397,8 @@
                     <a href="unintended-consequences.html">Unintended Consequences</a>
                     
                     <a href="first-principles.html">First Principles Daily</a>
+                    
+                    <a href="spacex.html">SpaceX Daily</a>
                     
                 </div>
                 <div class="nn-footer-col">
@@ -1390,6 +1428,8 @@
                     <a href="blog/unintended_consequences/index.html">Unintended Consequences</a>
                     
                     <a href="blog/first_principles/index.html">First Principles Daily</a>
+                    
+                    <a href="blog/spacex/index.html">SpaceX Daily</a>
                     
                     <a href="blog.rss">Blog RSS (All Shows)</a>
                 </div>
@@ -1423,6 +1463,8 @@
                     <a href="unintended_consequences_podcast.rss">Unintended Consequences RSS</a>
                     
                     <a href="first_principles_podcast.rss">First Principles Daily RSS</a>
+                    
+                    <a href="spacex_podcast.rss">SpaceX Daily RSS</a>
                     
                 </div>
                 <div class="nn-footer-col">
@@ -1655,13 +1697,22 @@
         }
 
         
-        // --- Stock widget (Tesla only) ---
+        // --- Stock widget (Tesla + SpaceX) ---
+        const STOCK_TICKER = "TSLA";
+        const STOCK_JSON = "/api/tsla.json";
+        const STOCK_YAHOO = "TSLA";
         async function loadStock() {
+            // Tracks whether the same-origin snapshot already populated a
+            // valid price. If so, a later Yahoo-fallback failure must NOT
+            // overwrite it with "Market data unavailable" (the off-hours
+            // bug: proxies fail on weekends, but the pipeline snapshot is
+            // good). Yahoo only ever UPGRADES a shown price during the day.
+            let havePrimary = false;
             function displayPrice(price, prev, marketState = null) {
                 const p = parseFloat(price), pc = parseFloat(prev);
-                // Validate: TSLA price should be in a reasonable range
+                // Validate: price should be in a reasonable range
                 if (isNaN(p) || isNaN(pc) || p <= 0 || pc <= 0 || p > 99999 || pc > 99999) {
-                    showStockError('Invalid price data');
+                    if (!havePrimary) showStockError('Invalid price data');
                     return;
                 }
                 const ch = (p - pc).toFixed(2);
@@ -1688,15 +1739,16 @@
                 if (updatedEl) updatedEl.textContent = '';
             }
 
-            // PRIMARY source: same-origin api/tsla.json written by the
-            // Tesla pipeline (shows/hooks/tesla.py) every run via Grok's
-            // x_search.  No CORS proxy, no Yahoo-Finance flakiness.
-            // Operator caught (May 14 2026) the previous Yahoo-only path
-            // showing "Market data unavailable" on the website because
+            // PRIMARY source: same-origin JSON written by the show's
+            // pipeline hook every run.  No CORS proxy, no Yahoo-Finance
+            // flakiness.  Operator caught (May 14 2026) the previous
+            // Yahoo-only path showing "Market data unavailable" because
             // every CORS proxy was failing — yet the pipeline knew the
-            // live price the whole time.
+            // live price the whole time.  Tolerates both the Tesla schema
+            // (market_state/fetched_at) and the SpaceX schema
+            // (change_str/updated_at) — only price + prev_close are required.
             try {
-                const resp = await fetch('/api/tsla.json', {
+                const resp = await fetch(STOCK_JSON, {
                     cache: 'no-cache',
                     signal: AbortSignal.timeout(4000),
                 });
@@ -1706,10 +1758,12 @@
                     const prev = parseFloat(cached.prev_close);
                     if (price > 0 && prev > 0) {
                         displayPrice(price, prev, cached.market_state || null);
+                        havePrimary = true;
                         const updatedEl = document.getElementById('stock-updated');
-                        if (updatedEl && cached.fetched_at) {
+                        const ts = cached.fetched_at || cached.updated_at;
+                        if (updatedEl && ts) {
                             try {
-                                const d = new Date(cached.fetched_at);
+                                const d = new Date(ts);
                                 updatedEl.textContent = `Updated ${d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} (snapshot)`;
                             } catch (_) {}
                         }
@@ -1721,9 +1775,9 @@
             } catch { /* fall through to Yahoo */ }
 
             // FALLBACK: Yahoo Finance v8 chart API via CORS proxies.
-            const yahooUrl = 'https://query2.finance.yahoo.com/v8/finance/chart/TSLA?interval=1d&range=5d';
+            const yahooUrl = 'https://query2.finance.yahoo.com/v8/finance/chart/' + STOCK_YAHOO + '?interval=1d&range=5d';
             // Yahoo Finance v6 quote API — alternative endpoint
-            const yahooQuoteUrl = 'https://query1.finance.yahoo.com/v6/finance/quote?symbols=TSLA';
+            const yahooQuoteUrl = 'https://query1.finance.yahoo.com/v6/finance/quote?symbols=' + STOCK_YAHOO;
             const proxies = [
                 url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
                 url => 'https://corsproxy.io/?' + encodeURIComponent(url),
@@ -1742,7 +1796,7 @@
                     const price = meta.regularMarketPrice;
                     const prev = meta.chartPreviousClose || meta.previousClose;
                     if (price && prev) {
-                        displayPrice(price, prev, marketState);
+                        displayPrice(price, prev, meta.marketState || null);
                         return;
                     }
                 } catch { /* try next proxy */ }
@@ -1762,7 +1816,9 @@
                 } catch { /* try next proxy */ }
             }
 
-            showStockError('Market data unavailable');
+            // All Yahoo fallbacks failed. Only show the error if the
+            // same-origin snapshot didn't already populate a good price.
+            if (!havePrimary) showStockError('Market data unavailable');
         }
         loadStock();
         // Refresh stock price every 5 minutes during page session

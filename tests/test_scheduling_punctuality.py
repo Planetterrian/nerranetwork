@@ -50,7 +50,7 @@ def test_cron_minutes_off_peak():
 def test_worker_slots_match_cron_map():
     cron_map = _cron_map()
     slots = _worker_slots()
-    assert len(cron_map) == 12, f"CRON_MAP parse drift: {sorted(cron_map)}"
+    assert len(cron_map) == 13, f"CRON_MAP parse drift: {sorted(cron_map)}"
     assert slots == cron_map, (
         "workers/scheduler SLOTS desynced from run-show.yml CRON_MAP:\n"
         f"  worker-only/changed: { {k: v for k, v in slots.items() if cron_map.get(k) != v} }\n"
@@ -60,7 +60,7 @@ def test_worker_slots_match_cron_map():
 
 def test_worker_trigger_covers_all_slots():
     toml = (_ROOT / "workers" / "scheduler" / "wrangler.toml").read_text(encoding="utf-8")
-    assert '"7,37 6-11 * * *"' in toml
+    assert '"7,37 6-12 * * *"' in toml
 
 
 def test_gate_has_duplicate_guard():

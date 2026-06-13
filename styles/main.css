@@ -539,9 +539,15 @@ button { font-family: var(--font-ui); cursor: pointer; }
   display: flex;
   gap: var(--sp-2);
   max-width: 480px;
+  /* Let the button drop below the field rather than overflow when its
+     label is long (e.g. the Russian "Подписаться") on narrow phones. */
+  flex-wrap: wrap;
 }
 .nn-subscribe-row input[type="email"] {
-  flex: 1;
+  flex: 1 1 180px;
+  /* Text inputs carry a UA default min-width (~170px) that ignores
+     flex:1; min-width:0 lets the field actually shrink on small screens. */
+  min-width: 0;
   padding: var(--sp-2) var(--sp-3);
   border-radius: 8px;
   border: 1px solid var(--nn-border);
@@ -735,13 +741,29 @@ button { font-family: var(--font-ui); cursor: pointer; }
   padding: var(--sp-4);
   border-radius: 12px;
   transition: background var(--duration) var(--ease);
+  /* Allow the grid item to shrink below the min-content of its
+     (nowrap, ellipsised) text so a 1fr track can't be forced wider
+     than its share of the container. */
+  min-width: 0;
 }
+/* The inner clickable row is a flex container nested in a flex-COLUMN
+   card. align-items:stretch yields to the anchor's intrinsic (max-content)
+   width, so it sized to the full tagline and overflowed the card on
+   mobile. An explicit width:100% pins it to the card width; its own
+   flex children (fixed image + flex:1 info) then truncate within it. */
+.cross-network-card > a { width: 100%; min-width: 0; box-sizing: border-box; }
 .cross-network-card:hover { background: var(--nn-card-hover); }
 .cross-network-card img {
   width: 64px; height: 64px; border-radius: 10px; object-fit: cover;
   flex-shrink: 0;
 }
-.cross-network-card-info { min-width: 0; }
+/* flex-basis:0 so the text column fills exactly the space left by the
+   fixed image and never sizes to its (nowrap) max-content — which had
+   let the longest tagline ("SpaceX Daily — Follow SpaceX…") blow the
+   card past the viewport on every other show's "More from" grid. */
+.cross-network-card-info { flex: 1 1 0; min-width: 0; overflow: hidden; }
+.cross-network-card > a > picture,
+.cross-network-card > a > img { flex-shrink: 0; }
 .cross-network-card-name {
   font-family: var(--font-heading);
   font-size: 0.9rem; font-weight: 600;
@@ -1376,7 +1398,12 @@ button { font-family: var(--font-ui); cursor: pointer; }
   }
 
   .show-hero-inner {
-    grid-template-columns: 1fr;
+    /* minmax(0,1fr) — NOT 1fr — so the single column can't grow to a
+       child's min-content (the SPCX stock pill / launch teaser are wide
+       nowrap rows). With plain 1fr the column resolved to ~469px on a
+       390px screen and `.show-hero{overflow:hidden}` clipped the hero
+       text instead of scrolling. */
+    grid-template-columns: minmax(0, 1fr);
     text-align: center;
     gap: var(--sp-6);
   }
@@ -1438,7 +1465,13 @@ button { font-family: var(--font-ui); cursor: pointer; }
 
   .nn-footer-bottom { flex-direction: column; gap: var(--sp-2); text-align: center; }
 
-  .cross-network-grid { grid-template-columns: 1fr 1fr; }
+  /* One column on mobile. The previous `1fr 1fr` forced two columns,
+     and `1fr` (= minmax(auto,1fr)) lets each track grow to the
+     min-content of the longest show name — so cards like "Models &
+     Agents for Beginners" blew the grid past the viewport, taking the
+     whole document wider than the screen and clipping the hero, buttons,
+     and resources too. A single full-width column never overflows. */
+  .cross-network-grid { grid-template-columns: minmax(0, 1fr); }
 
   .latest-scroll-card { flex: 0 0 280px; }
 }
@@ -1468,7 +1501,7 @@ button { font-family: var(--font-ui); cursor: pointer; }
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .cross-network-grid { grid-template-columns: repeat(3, 1fr); }
+  .cross-network-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 /* Desktop: 1024px+ */
@@ -1542,6 +1575,14 @@ button:focus-visible {
   padding: var(--sp-5);
   display: flex; flex-direction: column; gap: var(--sp-2);
   text-decoration: none;
+  /* Grid item must shrink below the min-content of a long URL token. */
+  min-width: 0;
+}
+/* Long unbreakable strings (e.g. SEC EDGAR query URLs) must wrap, or
+   they floor the card's min-content and push the grid past the viewport
+   on mobile. */
+.resource-card-name, .resource-card-desc, .resource-card-url {
+  overflow-wrap: anywhere; word-break: break-word;
 }
 .resource-card:hover {
   border-color: var(--show-color, var(--nn-purple));
@@ -1878,7 +1919,11 @@ body.menu-open {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-3);
-  max-width: 400px;
+  /* Wrap + cap at the container so the "Updated …" line drops below the
+     quote instead of forcing the hero column wider than the phone. */
+  flex-wrap: wrap;
+  max-width: 100%;
+  min-width: 0;
   margin: 2rem auto 0;
   padding: 12px 20px;
   background: rgba(255,255,255,0.04);

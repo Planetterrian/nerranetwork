@@ -54,6 +54,8 @@ on:
     # Unintended Consequences: Weekdays at 11:30 UTC. Narrative show —
     # topic-queue-driven, no daily news fetch. Mon-Fri only (5x/week).
     - cron: '37 11 * * 1-5'
+    # SpaceX Daily: Daily at 12:07 UTC (Sunday = weekly recap)
+    - cron: '7 12 * * *'
 
   workflow_dispatch:
     inputs:
@@ -74,6 +76,7 @@ on:
           - modern_investing
           - unintended_consequences
           - first_principles
+          - spacex
           - all
       test_mode:
         description: 'Dry run: fetch + digest only (no TTS, no R2 upload, no RSS, no X, no commit)'
@@ -108,7 +111,7 @@ jobs:
 
           if event_name == "workflow_dispatch":
               if dispatch_show == "all":
-                  shows = ["tesla", "omni_view", "fascinating_frontiers", "planetterrian", "env_intel", "models_agents", "models_agents_beginners", "finansy_prosto", "privet_russian", "modern_investing", "unintended_consequences", "first_principles"]
+                  shows = ["tesla", "omni_view", "fascinating_frontiers", "planetterrian", "env_intel", "models_agents", "models_agents_beginners", "finansy_prosto", "privet_russian", "modern_investing", "unintended_consequences", "first_principles", "spacex"]
               else:
                   shows = [dispatch_show]
           else:
@@ -143,6 +146,7 @@ jobs:
                   "37 10 * * *":      ("first_principles",         None),
                   "7 11 * * *":       ("tesla",                    None),
                   "37 11 * * 1-5":    ("unintended_consequences", "weekday"),
+                  "7 12 * * *":       ("spacex",                   None),
               }
 
               shows = []
@@ -534,6 +538,14 @@ jobs:
           # website shows "Market data unavailable" between runs
           # (operator caught this May 15 2026, TST Ep473).
           git add api/tsla.json || true
+          # SpaceX cached SPCX price — same contract as api/tsla.json
+          # above. Written by ``shows/hooks/spacex.py`` every SpaceX run,
+          # consumed by ``spacex.html`` JS so the SPCX pill has a
+          # reliable same-origin source between runs.
+          git add api/spcx.json || true
+          # SpaceX launch-dashboard data (next/previous launch, cadence,
+          # stats) for spacex-dashboard.html. Same reliability contract.
+          git add api/spacex_launches.json || true
           # Topic queues — narrative-mode shows mark topics as produced
           # after each successful run. Without committing this, every
           # narrative-show run re-picks the same first-unproduced topic
