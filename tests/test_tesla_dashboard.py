@@ -116,3 +116,39 @@ class TestWatchLinksAndRangeBar:
         t = (_ROOT / "templates/tesla_dashboard.html.j2").read_text(encoding="utf-8")
         assert "tslRangeWrap" in t and "52-week range" in t
         assert "tslRangeMarker" in t
+
+
+class TestBoosterReuseStats:
+    def _mod(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "fetch_spacex_launches", _ROOT / "scripts" / "fetch_spacex_launches.py")
+        m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+        return m
+
+    def test_booster_stats_from_detailed_records(self):
+        m = self._mod()
+        raw = [
+            {"rocket": {"launcher_stage": [{"launcher": {"serial_number": "B1067", "flights": 35},
+                                            "launcher_flight_number": 35, "landing": {"success": True}}]}},
+            {"rocket": {"launcher_stage": [{"launcher": {"serial_number": "B1071", "flights": 34},
+                                            "launcher_flight_number": 34, "landing": {"success": True}}]}},
+            {"rocket": {"launcher_stage": [{"launcher": {"serial_number": "B1067", "flights": 33},
+                                            "launcher_flight_number": 33, "landing": {"success": False}}]}},
+        ]
+        b = m._booster_stats(raw)
+        assert b["most_flown"] == {"serial": "B1067", "flights": 35}
+        assert b["fleet_leaders"][0]["serial"] == "B1067"
+        assert b["active_boosters_window"] == 2
+        assert b["landing_success_pct"] == 66.7  # 2 of 3
+
+    def test_slim_launch_extracts_booster(self):
+        m = self._mod()
+        s = m._slim_launch({"name": "X", "rocket": {"launcher_stage": [
+            {"launcher": {"serial_number": "B1093"}, "launcher_flight_number": 14}]}})
+        assert s["booster"] == {"serial": "B1093", "flight_number": 14}
+
+    def test_dashboard_has_booster_panel(self):
+        t = (_ROOT / "templates/spacex_dashboard.html.j2").read_text(encoding="utf-8")
+        assert "record watch" in t and "brRecordN" in t and "brLeaders" in t
+        assert "spxBooster" in t  # per-launch booster line on the hero
