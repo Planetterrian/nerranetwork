@@ -196,6 +196,10 @@
   .spx-upcoming-item { display:flex; justify-content:space-between; gap:10px; padding:0.55rem 0; border-bottom:1px solid rgba(120,160,255,0.12); font-size:0.9rem; }
   .spx-upcoming-item:last-child{ border-bottom:none; }
   .spx-upcoming-item .when { color:#8ea3d6; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .spx-watch { display:inline-flex; align-items:center; gap:4px; margin-left:8px; font-size:0.72rem; font-weight:700; color:#031018; background:linear-gradient(135deg,var(--spx-cyan),#5ad0ff); padding:2px 9px; border-radius:999px; text-decoration:none; white-space:nowrap; vertical-align:middle; }
+  .spx-watch:hover { filter:brightness(1.08); }
+  .spx-watch.replay { color:var(--spx-cyan); background:transparent; border:1px solid rgba(120,160,255,0.35); }
+  .spx-upcoming-item .nmw { min-width:0; overflow:hidden; }
 
   .spx-spcx { display:flex; align-items:baseline; gap:12px; }
   .spx-spcx .px { font-size:2rem; font-weight:800; color:#fff; }
@@ -660,6 +664,10 @@
     <div class="spx-panel">
       <h2>Upcoming manifest</h2>
       <div id="spxUpcoming"><p class="spx-muted">Loading…</p></div>
+      <p class="spx-muted" style="margin-top:0.8rem; font-size:0.78rem;">Watch live on
+        <a href="https://www.spacex.com/launches/" target="_blank" rel="noopener" style="color:var(--spx-cyan);">spacex.com/launches</a> ·
+        <a href="https://x.com/SpaceX" target="_blank" rel="noopener" style="color:var(--spx-cyan);">@SpaceX on X</a> ·
+        <a href="https://www.youtube.com/@SpaceX/streams" target="_blank" rel="noopener" style="color:var(--spx-cyan);">YouTube</a>. Webcasts usually go live ~15 minutes before liftoff.</p>
     </div>
   </div>
 
@@ -960,7 +968,12 @@
     set('spxLoc', n.location);
     set('spxLocal', n.net ? fmtLocal(n.net) : 'TBD');
     document.getElementById('spxDesc').textContent = n.mission_description || '';
-    if(n.webcast){ const w=document.getElementById('spxWebcast'); w.href=n.webcast; w.style.display='inline-flex'; }
+    // Always give a watch destination: the launch webcast once posted,
+    // else SpaceX's official launches hub (which carries the live stream).
+    const w=document.getElementById('spxWebcast');
+    if(w){ w.href=n.webcast || 'https://www.spacex.com/launches/';
+      w.textContent = n.webcast ? '▶ Watch the webcast' : '▶ Where to watch';
+      w.style.display='inline-flex'; }
     const more = n.info_url || 'https://www.spacex.com/launches/';
     const mEl=document.getElementById('spxMore'); mEl.href=more; mEl.style.display='inline-flex';
   }
@@ -1037,8 +1050,9 @@
     const cls=a=>{ a=(a||'').toLowerCase(); if(a==='success') return 'ok'; if(a.includes('fail')) return 'bad'; return 'tbd'; };
     wrap.innerHTML = list.map(x=>{
       const st=x.status||'—';
+      const replay = x.webcast ? '<a class="spx-watch replay" href="'+x.webcast+'" target="_blank" rel="noopener">▶ Replay</a>' : '';
       return '<div class="spx-rl"><span class="badge '+cls(st)+'">'+st+'</span>'+
-             '<span class="nm">'+(x.name||'Launch')+'</span>'+
+             '<span class="nm">'+(x.name||'Launch')+'</span>'+replay+
              '<span class="dt">'+(x.net?fmtLocal(x.net):'')+'</span></div>';
     }).join('');
   }
@@ -1047,7 +1061,15 @@
     const wrap=document.getElementById('spxUpcoming');
     if(!wrap) return;
     if(!list || !list.length){ wrap.innerHTML='<p class="spx-muted">No upcoming launches listed.</p>'; return; }
-    wrap.innerHTML = list.map(x=>'<div class="spx-upcoming-item"><span>'+(x.name||'Launch')+'</span><span class="when">'+(x.net?fmtLocal(x.net):'TBD')+'</span></div>').join('');
+    // Webcasts post ~24h out; until then link to SpaceX's official launches
+    // hub so every upcoming launch has a working "watch" destination.
+    const watchUrl=x=> x.webcast || x.info_url || 'https://www.spacex.com/launches/';
+    wrap.innerHTML = list.map(x=>{
+      const live = !!x.webcast;
+      return '<div class="spx-upcoming-item"><span class="nmw">'+(x.name||'Launch')+
+        '<a class="spx-watch'+(live?'':' replay')+'" href="'+watchUrl(x)+'" target="_blank" rel="noopener">'+(live?'▶ Watch live':'▶ Watch')+'</a></span>'+
+        '<span class="when">'+(x.net?fmtLocal(x.net):'TBD')+'</span></div>';
+    }).join('');
   }
 
   var VEHICLE_COLORS = {'Falcon 9':'#1A5CFF','Starship':'#00D4FF','Falcon Heavy':'#8ab4ff'};

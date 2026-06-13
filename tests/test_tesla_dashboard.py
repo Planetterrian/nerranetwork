@@ -102,3 +102,17 @@ class TestMitPerformanceCharts:
         for needle in ('id="mitEquity"', 'id="mitSectors"', 'id="mitWL"', "mit-chart-data",
                        "Cumulative return", "Simulated P&amp;L"):
             assert needle in t, needle
+
+
+class TestWatchLinksAndRangeBar:
+    def test_spacex_dashboard_has_watch_links(self):
+        t = (_ROOT / "templates/spacex_dashboard.html.j2").read_text(encoding="utf-8")
+        # per-upcoming watch link + official-stream how-to-watch note
+        assert "spx-watch" in t
+        assert "Watch live on" in t and "x.com/SpaceX" in t and "youtube.com/@SpaceX" in t
+        assert "Where to watch" in t  # hero fallback when no webcast yet
+
+    def test_tesla_dashboard_has_range_bar(self):
+        t = (_ROOT / "templates/tesla_dashboard.html.j2").read_text(encoding="utf-8")
+        assert "tslRangeWrap" in t and "52-week range" in t
+        assert "tslRangeMarker" in t
