@@ -1174,6 +1174,9 @@ def run(args: argparse.Namespace) -> None:
         # episode without the quote/debut framing, never a KeyError.
         template_vars.setdefault("spcx_market_block", "")
         template_vars.setdefault("ipo_debut_section", "")
+        # Tone hint (Tesla + SpaceX prompts reference it; supplied by their
+        # hooks from the day's stock tape). Neutral default on hook failure.
+        template_vars.setdefault("tone_hint", "steady day — natural and conversational")
 
         # 7. Generate digest
         #

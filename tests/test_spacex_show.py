@@ -199,3 +199,50 @@ class TestIpoPositioning:
         cfg = yaml.safe_load((_ROOT / "shows/spacex.yaml").read_text(encoding="utf-8"))
         assert "SPCX" in cfg["description"]
         assert "SPCX" in cfg["publishing"]["rss_description"]
+
+
+class TestStockClosing:
+    """TST-parity spoken closing: date-rotated variants carrying the SPCX
+    price, with the price sentence OMITTED when the quote failed
+    validation — never 'price unavailable' (Tesla Ep4xx failure mode)."""
+
+    def test_every_hook_closing_variant_matches_closing_pattern(self):
+        from shows.hooks.spacex import _CLOSING_VARIANTS
+        regex = re.compile(_closing_pattern(), re.IGNORECASE)
+        for variant in _CLOSING_VARIANTS:
+            rendered = variant.format(price_sentence="")
+            assert regex.search(rendered), rendered[:90]
+
+    def test_price_sentence_omitted_on_invalid_quote(self):
+        from shows.hooks.spacex import _pick_closing
+        import datetime
+        closing = _pick_closing(0.0, "", "", date=datetime.date(2026, 6, 13))
+        assert "S P C X" not in closing
+        assert "unavailable" not in closing.lower()
+
+    def test_price_sentence_phrasing_by_source(self):
+        from shows.hooks.spacex import _price_sentence
+        closed = _price_sentence(161.0, "+19.2%", "yfinance_history")
+        assert closed.startswith("S P C X closed at")
+        assert "percent" in closed
+        live = _price_sentence(161.0, "+19.2%", "yfinance_fast_info")
+        assert "is trading at" in live and "closed" not in live
+
+    def test_closing_rotates_by_date(self):
+        from shows.hooks.spacex import _pick_closing
+        import datetime
+        days = [datetime.date(2026, 6, 13) + datetime.timedelta(days=i) for i in range(4)]
+        closings = {_pick_closing(161.0, "+1.0%", "yfinance_history", date=d) for d in days}
+        assert len(closings) == 4, "closing must rotate daily, not fossilize"
+
+    def test_tone_hint_mapping(self):
+        from shows.hooks.spacex import _tone_from_change
+        assert "upbeat" in _tone_from_change(161.0, "+19.2%")
+        assert "thoughtful" in _tone_from_change(150.0, "-3.1%")
+        assert "natural" in _tone_from_change(0.0, "")
+
+    def test_spcx_ticker_letter_spelled_for_tts(self):
+        pron = yaml.safe_load(
+            (_ROOT / "shows/pronunciation_map.yaml").read_text(encoding="utf-8")
+        )
+        assert pron["corrections"].get("SPCX") == "S P C X"
