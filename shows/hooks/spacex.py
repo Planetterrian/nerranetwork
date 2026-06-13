@@ -195,14 +195,16 @@ def _build_market_block(price: float, change_str: str) -> str:
 # ---------------------------------------------------------------------------
 
 def _tone_from_change(price: float, change_str: str) -> str:
-    """Delivery hint from the day's tape (mirrors the TST pattern)."""
-    if not price or not change_str:
-        return "steady day — natural and conversational"
+    """Delivery hint for the script. Engineering-forward and lively by
+    DEFAULT (operator wants more energy, less stock focus), with only a
+    mild flavor from the day's tape so the energy never hinges on the
+    ticker."""
+    base = "bring genuine energy — let the engineering and the day's advances excite you, lively and engaged"
     if change_str.startswith("+") and change_str not in ("+0.0%",):
-        return "positive day — upbeat and energetic"
+        return base + ", and it's an up day for the stock so a touch more upbeat"
     if change_str.startswith("-"):
-        return "quieter day — thoughtful but still engaged"
-    return "steady day — natural and conversational"
+        return base + " (stay energetic on the engineering even on a down market day)"
+    return base
 
 
 def _spoken_number(value: float) -> str:

@@ -227,7 +227,7 @@ SHOW_REGISTRY = {
         "min_tts_words": 1700,
         "min_audio_s": 240,
         "max_audio_s": 1500,
-        "required_sections": ["Top News", "Engineering Angle"],
+        "required_sections": ["Top News", "Engineering Deep Dive"],
         "schedule": "daily",
     },
     "first_principles": {

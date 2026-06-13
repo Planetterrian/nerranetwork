@@ -335,17 +335,20 @@ SPACEX_SECTION_PATTERNS: Dict[str, str] = {
     "headlines": (
         r"(?:### Top News)"
         r"(.*?)"
-        r"(?=━━|### Market Watch|## Community Buzz|$)"
+        r"(?=━━|### Market Watch|### Engineering Deep Dive|## Community Buzz|$)"
     ),
     "counterpoint": (
         r"(?:## The Counterpoint)"
         r"(.*?)"
-        r"(?=━━|### The Engineering Angle|$)"
+        # June 2026 engineering rebalance renamed the flagship essay
+        # "Engineering Deep Dive"; keep the old name as a fallback so
+        # historical digests still parse.
+        r"(?=━━|### Engineering Deep Dive|### The Engineering Angle|$)"
     ),
     "deep_dive": (
-        r"(?:### The Engineering Angle)"
+        r"(?:### Engineering Deep Dive|### The Engineering Angle)"
         r"(.*?)"
-        r"(?=━━|$)"
+        r"(?=━━|### Market Watch|$)"
     ),
 }
 
