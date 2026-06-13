@@ -2854,7 +2854,7 @@ def generate_sitemap(*, dry_run=False):
     for extra in ["modern-investing-resources.html", "start-here.html",
                   "about.html", "how-to-listen.html", "faq.html",
                   "press.html", "contact.html", "editorial.html",
-                  "gallery.html", "player.html",
+                  "gallery.html", "player.html", "data.html",
                   "modern-investing-performance.html",
                   "spacex-dashboard.html", "tesla-dashboard.html"]:
         if (ROOT / extra).exists():
@@ -2983,6 +2983,38 @@ def _count_languages() -> int:
         else:
             langs.add("en")
     return len(langs)
+
+
+def generate_data_hub_page(*, dry_run=False):
+    """Render the /data.html hub linking every public data dashboard
+    (SpaceX, Tesla, Modern Investing performance, gallery) so the audience
+    can discover them from one place. Static — no runtime data; the linked
+    dashboards read their own same-origin caches client-side."""
+    env = _get_jinja_env()
+    template = env.get_template("data_hub.html.j2")
+    context = {
+        "path_prefix": "",
+        "page_lang": "en",
+        "page_title": "Data & Dashboards | Nerra Network",
+        "meta_description": (
+            "Live data dashboards from Nerra Network — SpaceX launch countdown "
+            "and fleet records, Tesla TSLA price and deliveries, and the Modern "
+            "Investing simulated-portfolio performance page."
+        ),
+        "theme_color": "#6B47FF",
+        "og_image": f"{GITHUB_RAW}/assets/og-default.png",
+        "canonical_url": f"{GITHUB_RAW}/data.html",
+        "t": _NAV_T,
+        "all_shows": _build_all_shows_list(),
+    }
+    html = template.render(**context)
+    out_path = ROOT / "data.html"
+    if dry_run:
+        print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
+        return out_path
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path} ({len(html):,} bytes)")
+    return out_path
 
 
 def generate_gallery_page(*, dry_run=False):
@@ -3379,6 +3411,7 @@ def main():
         generate_gallery_page(dry_run=args.dry_run)
         generate_spacex_dashboard(dry_run=args.dry_run)
         generate_tesla_dashboard(dry_run=args.dry_run)
+        generate_data_hub_page(dry_run=args.dry_run)
         generate_how_to_listen_page(dry_run=args.dry_run)
         generate_press_page(dry_run=args.dry_run)
         generate_contact_page(dry_run=args.dry_run)
@@ -3411,6 +3444,7 @@ def main():
         # runtime) so they're cheap to regenerate on every network rebuild.
         generate_spacex_dashboard(dry_run=args.dry_run)
         generate_tesla_dashboard(dry_run=args.dry_run)
+        generate_data_hub_page(dry_run=args.dry_run)
         # --network --blogs: regenerate network blog index only (not all posts)
         if args.blogs:
             generate_network_blog_index(dry_run=args.dry_run)

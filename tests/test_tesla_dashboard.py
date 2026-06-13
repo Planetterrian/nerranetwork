@@ -138,6 +138,24 @@ class TestMitPerformanceCharts:
             assert needle in t, needle
 
 
+class TestDataHubPage:
+    def test_generator_and_links(self):
+        import generate_html as g
+        g.generate_data_hub_page(dry_run=True)  # smoke, no exception
+        t = (_ROOT / "templates/data_hub.html.j2").read_text(encoding="utf-8")
+        for href in ("spacex-dashboard.html", "tesla-dashboard.html",
+                     "modern-investing-performance.html", "gallery.html"):
+            assert href in t, href
+
+    def test_wired_into_build_and_sitemap_and_footer(self):
+        gh = (_ROOT / "generate_html.py").read_text(encoding="utf-8")
+        # rendered in both --all and --network, and listed in the sitemap
+        assert gh.count("generate_data_hub_page(dry_run=args.dry_run)") >= 2
+        assert '"data.html"' in gh
+        base = (_ROOT / "templates/base.html.j2").read_text(encoding="utf-8")
+        assert "data.html" in base  # footer discovery link on every page
+
+
 class TestWatchLinksAndRangeBar:
     def test_spacex_dashboard_has_watch_links(self):
         t = (_ROOT / "templates/spacex_dashboard.html.j2").read_text(encoding="utf-8")
