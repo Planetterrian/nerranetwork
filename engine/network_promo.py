@@ -68,6 +68,10 @@ ENGLISH_SHOWS: dict[str, dict[str, str]] = {
         "spoken_name": "Unintended Consequences",
         "tagline": "true stories of good intentions that backfired",
     },
+    "spacex": {
+        "spoken_name": "SpaceX Daily",
+        "tagline": "the daily companion for following SpaceX as a public company, from Starship to the stock ticker",
+    },
 }
 
 # Fixed rotation order (insertion order of the dict above).

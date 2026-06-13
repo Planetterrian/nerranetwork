@@ -327,6 +327,29 @@ UC_SECTION_PATTERNS: Dict[str, str] = {
 }
 
 
+# SpaceX Daily digest sections (June 2026 launch). "deep_dive" keys feed
+# the cross-episode deep-dive topic tracker, which backs the digest
+# prompt's "Engineering Angle topic differs from recent essays" rule;
+# "counterpoint" backs the matching no-repeat rule for The Counterpoint.
+SPACEX_SECTION_PATTERNS: Dict[str, str] = {
+    "headlines": (
+        r"(?:### Top News)"
+        r"(.*?)"
+        r"(?=━━|### Market Watch|## Community Buzz|$)"
+    ),
+    "counterpoint": (
+        r"(?:## The Counterpoint)"
+        r"(.*?)"
+        r"(?=━━|### The Engineering Angle|$)"
+    ),
+    "deep_dive": (
+        r"(?:### The Engineering Angle)"
+        r"(.*?)"
+        r"(?=━━|$)"
+    ),
+}
+
+
 # Registry mapping show slugs to their section patterns.
 # New shows should be added here to enable cross-episode content tracking.
 SHOW_SECTION_PATTERNS: Dict[str, Dict[str, str]] = {
@@ -342,6 +365,7 @@ SHOW_SECTION_PATTERNS: Dict[str, Dict[str, str]] = {
     "privet_russian": PR_SECTION_PATTERNS,
     "modern_investing": MI_SECTION_PATTERNS,
     "unintended_consequences": UC_SECTION_PATTERNS,
+    "spacex": SPACEX_SECTION_PATTERNS,
 }
 
 
@@ -730,6 +754,7 @@ class ContentTracker:
             "science_technical": "SCIENCE & TECHNICAL TOPICS",
             "industry_practice": "INDUSTRY & PRACTICE TOPICS",
             "explain_like_14": "EXPLAIN LIKE I'M 14 TOPICS",
+            "counterpoint": "COUNTERPOINT TOPICS",
         }
         for key, label in section_labels.items():
             items = self.get_recent_section_content(key, max_items=limits.get(key, 7))

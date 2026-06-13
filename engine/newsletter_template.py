@@ -379,6 +379,8 @@ _DARK_MODE_STYLE = """\
     .brand-text-finansy   { color:#f9a8d4 !important; }   /* was #BE185D */
     .brand-text-planet    { color:#67e8f9 !important; }   /* was #017A99 */
     .brand-text-uc        { color:#fbbf24 !important; }   /* was #B45309 */
+    .brand-text-fp        { color:#5eead4 !important; }   /* was #0F766E */
+    .brand-text-spacex    { color:#8ab4ff !important; }   /* was #1A5CFF */
 
     /* Financial-disclaimer callout background (was cream-amber) and
      * the dark-amber text — flip both for legibility. */
@@ -450,6 +452,8 @@ _SLUG_TO_BRAND_CLASS: Dict[str, str] = {
     "finansy_prosto": "brand-text-finansy",
     "planetterrian": "brand-text-planet",
     "unintended_consequences": "brand-text-uc",
+    "first_principles": "brand-text-fp",
+    "spacex": "brand-text-spacex",
 }
 
 

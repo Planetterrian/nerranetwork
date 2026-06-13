@@ -1316,9 +1316,6 @@ def _merge_scaffolded_network_registry() -> None:
             _SHOW_PICKER_TAGS[slug] = picker
 
 
-_merge_scaffolded_network_registry()
-
-
 # Per-show interest tags used by the "Find Your Show" picker on the
 # network landing page. Intentionally small and curated — every tag is a
 # button on the picker UI, and every show must claim at least one tag
@@ -1387,6 +1384,12 @@ _SHOW_PICKER_TAGS = {
         "language": ["english"],
     },
 }
+
+
+# Must run AFTER _SHOW_PICKER_TAGS is defined — the merge writes scaffolded
+# shows' picker tags into it (NameError at import time otherwise, which only
+# fires once network_meta.yaml has its first entry).
+_merge_scaffolded_network_registry()
 
 
 def _newsletter_tag_for_slug(slug: str, fallback_name: str) -> str:

@@ -28,6 +28,7 @@ const SLOTS: Array<[number, number, string, string | null]> = [
   [10, 37, "first_principles",        null],
   [11, 7, "tesla",                    null],
   [11, 37, "unintended_consequences", "weekday"],
+  [12, 7, "spacex",                   null],
 ];
 
 function dayFilterPasses(filter: string | null, now: Date): boolean {

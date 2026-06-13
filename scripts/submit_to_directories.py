@@ -36,6 +36,7 @@ SHOWS = [
     ("privet_russian", "Привет, Русский!", "privet_russian_podcast.rss"),
     ("unintended_consequences", "Unintended Consequences", "unintended_consequences_podcast.rss"),
     ("first_principles", "First Principles Daily", "first_principles_podcast.rss"),
+    ("spacex", "SpaceX Daily", "spacex_podcast.rss"),
 ]
 
 
