@@ -1930,6 +1930,59 @@ def generate_spacex_dashboard(*, dry_run=False):
     return out_path
 
 
+def generate_tesla_dashboard(*, dry_run=False):
+    """Render the Tesla data dashboard (tesla-dashboard.html).
+
+    Live TSLA market data + a 1-year price chart are read client-side from
+    ``api/tesla_dashboard.json``; the curated operating metrics
+    (deliveries, energy storage, milestones) are baked in from
+    ``site/data/tesla_metrics.json`` at generation time, so the page is
+    cheap to regenerate and grows as the operator appends new years.
+    """
+    cfg = NETWORK_SHOWS.get("tesla")
+    if cfg is None:
+        return None
+    metrics = {}
+    try:
+        import json as _json
+        mp = ROOT / "site" / "data" / "tesla_metrics.json"
+        if mp.exists():
+            metrics = _json.loads(mp.read_text(encoding="utf-8"))
+    except Exception as exc:
+        print(f"Warning: could not load tesla_metrics.json: {exc}")
+    env = _get_jinja_env()
+    template = env.get_template("tesla_dashboard.html.j2")
+    context = {
+        "path_prefix": "",
+        "page_lang": "en",
+        "show_name": "Tesla Shorts Time",
+        "page_title": "Tesla Dashboard — TSLA, Deliveries & Energy | Nerra Network",
+        "meta_description": (
+            "Live Tesla dashboard — TSLA price and 1-year chart, market cap and "
+            "52-week range, plus annual vehicle deliveries and energy-storage "
+            "deployments. The data companion to the Tesla Shorts Time podcast."
+        ),
+        "theme_color": cfg.get("brand_color", "#E31937"),
+        "brand_color": cfg.get("brand_color", "#E31937"),
+        "canonical_url": f"{GITHUB_RAW}/tesla-dashboard.html",
+        "og_image": f"{GITHUB_RAW}/{_url_encode_image(cfg['podcast_image'])}",
+        "rss_url": f"{cfg['rss_file']}",
+        "deliveries_annual": metrics.get("deliveries_annual", []),
+        "energy_storage_annual_gwh": metrics.get("energy_storage_annual_gwh", []),
+        "highlights": metrics.get("highlights", []),
+        "t": _NAV_T,
+        "all_shows": _build_all_shows_list(),
+    }
+    html = template.render(**context)
+    out_path = ROOT / "tesla-dashboard.html"
+    if dry_run:
+        print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
+        return out_path
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path} ({len(html):,} bytes)")
+    return out_path
+
+
 def generate_all_narrative_pages(*, dry_run=False):
     """Generate narrative pages for every memory-configured show (except Tesla,
     which has its own dedicated generator)."""
@@ -2737,7 +2790,7 @@ def generate_sitemap(*, dry_run=False):
                   "press.html", "contact.html", "editorial.html",
                   "gallery.html", "player.html",
                   "modern-investing-performance.html",
-                  "spacex-dashboard.html"]:
+                  "spacex-dashboard.html", "tesla-dashboard.html"]:
         if (ROOT / extra).exists():
             urls.append((f"{base}/{extra}", "0.5", _file_lastmod(ROOT / extra)))
 
@@ -3232,9 +3285,10 @@ def main():
         # Dedicated MIT performance page
         if args.show == "modern_investing":
             generate_mit_performance_page(dry_run=args.dry_run)
-        # Tesla Narrative page
+        # Tesla Narrative page + Tesla data dashboard
         if args.show == "tesla":
             generate_tesla_narrative_page(dry_run=args.dry_run)
+            generate_tesla_dashboard(dry_run=args.dry_run)
         # SpaceX Launch Dashboard
         if args.show == "spacex":
             generate_spacex_dashboard(dry_run=args.dry_run)
@@ -3258,6 +3312,7 @@ def main():
         generate_about_page(dry_run=args.dry_run)
         generate_gallery_page(dry_run=args.dry_run)
         generate_spacex_dashboard(dry_run=args.dry_run)
+        generate_tesla_dashboard(dry_run=args.dry_run)
         generate_how_to_listen_page(dry_run=args.dry_run)
         generate_press_page(dry_run=args.dry_run)
         generate_contact_page(dry_run=args.dry_run)
@@ -3286,9 +3341,10 @@ def main():
         generate_all_summaries(dry_run=args.dry_run)
     if args.network:
         generate_network_page(dry_run=args.dry_run)
-        # The SpaceX dashboard is data-light (reads same-origin caches at
-        # runtime) so it's cheap to regenerate on every network rebuild.
+        # The data dashboards are data-light (read same-origin caches at
+        # runtime) so they're cheap to regenerate on every network rebuild.
         generate_spacex_dashboard(dry_run=args.dry_run)
+        generate_tesla_dashboard(dry_run=args.dry_run)
         # --network --blogs: regenerate network blog index only (not all posts)
         if args.blogs:
             generate_network_blog_index(dry_run=args.dry_run)

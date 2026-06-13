@@ -41,6 +41,18 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     context["price"] = f"{price:.2f}"
     context["change_str"] = change_str
 
+    # Refresh the public Tesla data dashboard (best-effort, non-fatal):
+    # live TSLA market data + 1y price history for tesla-dashboard.html.
+    try:
+        import subprocess, sys as _sys
+        subprocess.run(
+            [_sys.executable, str(Path(__file__).resolve().parent.parent.parent
+                                  / "scripts" / "fetch_tesla_dashboard.py")],
+            timeout=120, check=False,
+        )
+    except Exception as exc:
+        logger.warning("Tesla dashboard data refresh failed (non-fatal): %s", exc)
+
     # X posts section (disabled — placeholder)
     context["x_posts_section"] = ""
 

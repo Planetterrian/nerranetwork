@@ -1,0 +1,196 @@
+{% extends "base.html.j2" %}
+
+{% block title %}Tesla Dashboard — TSLA Price, Deliveries & Energy | Nerra Network{% endblock %}
+{% block og_type %}website{% endblock %}
+
+{% block head_extra %}
+<style>
+  .tsl-dash { --tsl-red:#E31937; --tsl-glow:#ff5a73; position:relative; color:#f3eef0; }
+  .tsl-hero-wrap { position:relative; overflow:hidden;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(227,25,55,0.26), transparent 60%),
+      linear-gradient(180deg,#0c0608 0%,#160a0d 60%,#0e0709 100%);
+    border-bottom:1px solid rgba(255,120,140,0.16); }
+  .tsl-stars { position:absolute; inset:0; z-index:0; pointer-events:none; }
+  .tsl-container { position:relative; z-index:1; max-width:1120px; margin:0 auto; padding:calc(var(--nav-height) + 2.5rem) 1.25rem 2rem; }
+  .tsl-kicker { display:inline-flex; align-items:center; gap:8px; font-size:0.78rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--tsl-glow); font-weight:700; margin-bottom:0.6rem; }
+  .tsl-kicker .dot { width:8px; height:8px; border-radius:50%; background:var(--tsl-glow); box-shadow:0 0 10px var(--tsl-glow); animation:tsl-pulse 1.8s infinite; }
+  @keyframes tsl-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+  .tsl-h1 { font-size:clamp(1.8rem,4vw,2.8rem); line-height:1.05; margin:0 0 0.4rem; font-weight:800; letter-spacing:-0.02em; }
+  .tsl-sub { color:#e2b9c1; font-size:1.02rem; max-width:62ch; margin:0 0 1.4rem; }
+  .tsl-price-row { display:flex; align-items:baseline; gap:16px; flex-wrap:wrap; margin:0.4rem 0 0.6rem; }
+  .tsl-price { font-size:clamp(2.4rem,6vw,3.6rem); font-weight:800; color:#fff; font-variant-numeric:tabular-nums; }
+  .tsl-chg { font-size:1.2rem; font-weight:700; font-variant-numeric:tabular-nums; }
+  .tsl-chg.up { color:#5ef0a0; } .tsl-chg.down { color:#ff8a8a; }
+  .tsl-disc { color:#b88; font-size:0.74rem; margin-top:0.3rem; }
+
+  .tsl-grid { max-width:1120px; margin:1.5rem auto; padding:0 1.25rem; display:grid; gap:1.1rem; grid-template-columns:1fr 1fr; }
+  @media (max-width:760px){ .tsl-grid{ grid-template-columns:1fr; } }
+  .tsl-panel { background:var(--nn-surface,#160d10); border:1px solid rgba(255,120,140,0.16); border-radius:16px; padding:1.1rem 1.2rem; }
+  .tsl-panel h2 { font-size:1.05rem; margin:0 0 0.9rem; letter-spacing:-0.01em; }
+  .tsl-muted { color:#c79aa3; font-size:0.82rem; }
+  .tsl-disclaimer { color:#a8838c; font-size:0.74rem; margin-top:0.4rem; }
+
+  .tsl-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:0.8rem; }
+  .tsl-stat { text-align:center; padding:0.6rem; border-radius:12px; background:rgba(227,25,55,0.08); border:1px solid rgba(255,120,140,0.14); }
+  .tsl-stat .n { font-size:1.6rem; font-weight:800; color:#fff; font-variant-numeric:tabular-nums; }
+  .tsl-stat .l { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:#c79aa3; margin-top:2px; }
+
+  .tsl-bars { display:flex; align-items:flex-end; gap:8px; height:170px; padding-top:8px; overflow:hidden; }
+  .tsl-bw { flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
+  .tsl-bar { width:100%; border-radius:6px 6px 2px 2px; min-height:3px; background:linear-gradient(180deg,var(--tsl-glow),var(--tsl-red)); transition:height .6s cubic-bezier(.2,.7,.2,1); position:relative; }
+  .tsl-bar .cnt { position:absolute; top:-18px; left:0; right:0; text-align:center; font-size:0.68rem; color:#ffd6dd; font-weight:700; }
+  .tsl-blab { font-size:0.62rem; color:#a8838c; white-space:nowrap; }
+
+  .tsl-area-svg { width:100%; height:210px; display:block; overflow:visible; }
+  .tsl-area-svg .grid { stroke:rgba(255,120,140,0.12); stroke-width:1; }
+  .tsl-area-svg .gl { fill:#a8838c; font-size:10px; }
+  .tsl-area-svg .xl { fill:#a8838c; font-size:10px; text-anchor:middle; }
+  .tsl-area-svg .ln { fill:none; stroke:var(--tsl-glow); stroke-width:2.5; stroke-linejoin:round; stroke-linecap:round; filter:drop-shadow(0 2px 8px rgba(255,90,115,0.4)); }
+  .tsl-area-svg .dot { fill:#fff; stroke:var(--tsl-red); stroke-width:2; }
+
+  .tsl-hl { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:0.6rem 0; border-bottom:1px solid rgba(255,120,140,0.12); }
+  .tsl-hl:last-child{ border-bottom:none; }
+  .tsl-hl .v { font-size:1.2rem; font-weight:800; color:#fff; }
+  .tsl-foot-note { max-width:1120px; margin:0 auto 2rem; padding:0 1.25rem; color:#a8838c; font-size:0.78rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tsl-dash">
+  <div class="tsl-hero-wrap">
+    <canvas class="tsl-stars" id="tslStars"></canvas>
+    <div class="tsl-container">
+      <div class="tsl-kicker"><span class="dot"></span> Tesla Dashboard · Live</div>
+      <h1 class="tsl-h1">TSLA &amp; Tesla, by the numbers</h1>
+      <p class="tsl-sub">The live TSLA market picture plus the operating metrics that move it — deliveries, energy storage, and the long-run growth story. The companion data page to <a href="{{ path_prefix }}tesla.html" style="color:var(--tsl-glow);">Tesla Shorts Time</a>.</p>
+      <div class="tsl-price-row">
+        <span class="tsl-price" id="tslPrice">—</span>
+        <span class="tsl-chg" id="tslChg"></span>
+        <span class="tsl-muted" id="tslMcap"></span>
+      </div>
+      <p class="tsl-disc" id="tslUpdated">Not financial advice.</p>
+    </div>
+  </div>
+
+  <div class="tsl-grid" style="grid-template-columns:1fr;">
+    <div class="tsl-panel">
+      <h2>TSLA — last 12 months</h2>
+      <div class="tsl-area-wrap"><svg class="tsl-area-svg" id="tslArea" preserveAspectRatio="none" role="img" aria-label="TSLA price, last 12 months"></svg></div>
+      <div class="tsl-stats" style="margin-top:1rem;">
+        <div class="tsl-stat"><div class="n" id="tslHigh">—</div><div class="l">52-week high</div></div>
+        <div class="tsl-stat"><div class="n" id="tslLow">—</div><div class="l">52-week low</div></div>
+        <div class="tsl-stat"><div class="n" id="tslMcap2">—</div><div class="l">Market cap</div></div>
+        <div class="tsl-stat"><div class="n" id="tslVol">—</div><div class="l">Avg volume (10d)</div></div>
+      </div>
+      <p class="tsl-disclaimer">Live market data via Yahoo Finance, refreshed each pipeline run. Not financial advice.</p>
+    </div>
+  </div>
+
+  <div class="tsl-grid">
+    <div class="tsl-panel">
+      <h2>Annual vehicle deliveries</h2>
+      <div class="tsl-bars" id="tslDeliveries">
+        {% for d in deliveries_annual %}
+        <div class="tsl-bw"><div class="tsl-bar" data-v="{{ d.vehicles }}" style="height:0"><span class="cnt">{{ (d.vehicles/1000)|round|int }}k</span></div><div class="tsl-blab">{{ d.year }}</div></div>
+        {% endfor %}
+      </div>
+      <p class="tsl-disclaimer">From Tesla's published annual figures. Operator-maintained — newest year appended each January.</p>
+    </div>
+    <div class="tsl-panel">
+      <h2>Energy storage deployed (GWh / yr)</h2>
+      <div class="tsl-bars" id="tslEnergy">
+        {% for e in energy_storage_annual_gwh %}
+        <div class="tsl-bw"><div class="tsl-bar" data-v="{{ e.gwh }}" style="height:0"><span class="cnt">{{ e.gwh }}</span></div><div class="tsl-blab">{{ e.year }}</div></div>
+        {% endfor %}
+      </div>
+      <p class="tsl-disclaimer">Powerwall + Megapack, from Tesla's energy deployments. Operator-maintained.</p>
+    </div>
+  </div>
+
+  {% if highlights %}
+  <div class="tsl-grid" style="grid-template-columns:1fr;">
+    <div class="tsl-panel">
+      <h2>Milestones</h2>
+      {% for h in highlights %}
+      <div class="tsl-hl"><span>{{ h.label }} <span class="tsl-muted">{{ h.note }}</span></span><span class="v">{{ h.value }}</span></div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <p class="tsl-foot-note">
+    Live TSLA data via Yahoo Finance (refreshed each run). Operating metrics are from Tesla's published reports and operator-maintained. This is the data companion to <a href="{{ path_prefix }}tesla.html" style="color:var(--tsl-glow);">Tesla Shorts Time</a> — full resources on the <a href="{{ path_prefix }}tesla.html#resources" style="color:var(--tsl-glow);">show page</a>. Nothing here is financial advice.
+  </p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  const cv=document.getElementById('tslStars');
+  if(cv){ const ctx=cv.getContext('2d'); let stars=[];
+    function resize(){ cv.width=cv.offsetWidth; cv.height=cv.offsetHeight;
+      stars=Array.from({length:Math.min(140,Math.floor(cv.width/9))},()=>({x:Math.random()*cv.width,y:Math.random()*cv.height,r:Math.random()*1.3+0.2,a:Math.random()*0.6+0.2,tw:Math.random()*0.02+0.005})); }
+    function draw(){ if(!ctx) return; ctx.clearRect(0,0,cv.width,cv.height);
+      for(const s of stars){ s.a+=s.tw; const al=0.25+Math.abs(Math.sin(s.a))*0.6; ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,7); ctx.fillStyle='rgba(255,190,200,'+al+')'; ctx.fill(); }
+      requestAnimationFrame(draw); }
+    resize(); draw(); window.addEventListener('resize',resize); }
+
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function countUp(id,target,fmt){ const el=document.getElementById(id); if(!el||target==null) return;
+    fmt=fmt||(v=>Math.round(v).toLocaleString());
+    if(reduce){ el.textContent=fmt(target); return; }
+    const dur=900,t0=performance.now();
+    function step(t){ const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3); el.textContent=fmt(target*e); if(k<1) requestAnimationFrame(step); }
+    requestAnimationFrame(step); }
+  const money=v=>'$'+Number(v).toFixed(2);
+  const big=v=>{ v=Number(v); if(v>=1e12) return '$'+(v/1e12).toFixed(2)+'T'; if(v>=1e9) return '$'+(v/1e9).toFixed(1)+'B'; return '$'+Math.round(v).toLocaleString(); };
+  const vol=v=>{ v=Number(v); if(v>=1e6) return (v/1e6).toFixed(1)+'M'; if(v>=1e3) return (v/1e3).toFixed(0)+'K'; return Math.round(v).toLocaleString(); };
+
+  // animate the server-rendered bars
+  function animateBars(id){ const w=document.getElementById(id); if(!w) return;
+    const bars=[...w.querySelectorAll('.tsl-bar')]; const max=Math.max(1,...bars.map(b=>parseFloat(b.dataset.v)||0));
+    bars.forEach(b=>{ const h=Math.round((parseFloat(b.dataset.v)/max)*140)+3; requestAnimationFrame(()=>{ b.style.height=h+'px'; }); });
+  }
+  animateBars('tslDeliveries'); animateBars('tslEnergy');
+
+  function renderArea(series){ const svg=document.getElementById('tslArea'); if(!svg||!series||series.length<2) return;
+    const W=1000,H=210,padL=46,padR=10,padT=12,padB=22, xs=W-padL-padR, ys=H-padT-padB;
+    const vals=series.map(p=>p.close), max=Math.max(...vals), min=Math.min(...vals)*0.97, n=series.length;
+    const X=i=>padL+(i/(n-1))*xs, Y=v=>padT+ys-((v-min)/((max-min)||1))*ys;
+    let line='',area='M'+X(0)+','+(padT+ys);
+    series.forEach((p,i)=>{const x=X(i),y=Y(p.close); line+=(i?'L':'M')+x+','+y+' '; area+='L'+x+','+y+' ';});
+    area+='L'+X(n-1)+','+(padT+ys)+'Z';
+    let grid=''; [0,0.5,1].forEach(f=>{const v=min+(max-min)*f,y=Y(v); grid+='<line class="grid" x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'"/><text class="gl" x="0" y="'+(y+3)+'">$'+Math.round(v)+'</text>';});
+    let xl=''; const step=Math.max(1,Math.floor(n/5));
+    for(let i=0;i<n;i+=step){ xl+='<text class="xl" x="'+X(i)+'" y="'+(H-6)+'">'+series[i].date.slice(2,7)+'</text>'; }
+    const last=series[n-1];
+    svg.setAttribute('viewBox','0 0 '+W+' '+H);
+    svg.innerHTML='<defs><linearGradient id="tslGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(255,90,115,0.42)"/><stop offset="100%" stop-color="rgba(227,25,55,0.02)"/></linearGradient></defs>'+grid+
+      '<path d="'+area+'" fill="url(#tslGrad)"/><path class="ln" d="'+line+'"/>'+
+      '<circle class="dot" cx="'+X(n-1)+'" cy="'+Y(last.close)+'" r="4"/>'+
+      '<text x="'+X(n-1)+'" y="'+(Y(last.close)-10)+'" text-anchor="end" fill="#fff" font-size="12" font-weight="700">$'+last.close.toFixed(0)+'</text>'+xl;
+  }
+
+  function apply(d){
+    if(!d || !(d.price>0)) return;
+    countUp('tslPrice', d.price, money);
+    if(d.change_pct!=null){ const up=d.change_pct>=0; const el=document.getElementById('tslChg');
+      el.textContent=(up?'+':'')+d.change_pct.toFixed(2)+'%'; el.className='tsl-chg '+(up?'up':'down'); }
+    if(d.market_cap){ document.getElementById('tslMcap').textContent='Market cap '+big(d.market_cap);
+      const m2=document.getElementById('tslMcap2'); if(m2) m2.textContent=big(d.market_cap); }
+    if(d.updated_at){ try{ document.getElementById('tslUpdated').textContent='Updated '+new Date(d.updated_at).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})+' · not financial advice'; }catch(_){} }
+    const set=(id,v,f)=>{const e=document.getElementById(id); if(e&&v!=null) e.textContent=f?f(v):v;};
+    set('tslHigh', d.year_high, money); set('tslLow', d.year_low, money);
+    set('tslVol', d.avg_volume_10d||d.day_volume, vol);
+    renderArea(d.price_history);
+  }
+
+  fetch('/api/tesla_dashboard.json',{cache:'no-cache'})
+    .then(r=>r.ok?r.json():Promise.reject()).then(apply)
+    .catch(()=>{ document.getElementById('tslPrice').textContent='—';
+      document.getElementById('tslUpdated').textContent='Live market data temporarily unavailable.'; });
+})();
+</script>
+{% endblock %}

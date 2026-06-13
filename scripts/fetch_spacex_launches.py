@@ -47,6 +47,27 @@ def _get(url: str) -> Optional[Dict[str, Any]]:
         return None
 
 
+_CELESTRAK_STARLINK = (
+    "https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=json"
+)
+
+
+def _starlink_active_count() -> Optional[int]:
+    """Real count of active Starlink satellites on orbit, from CelesTrak's
+    free catalogue (one download / 2h update). Best-effort: returns None on
+    any failure so the dashboard falls back to the estimate."""
+    try:
+        req = urllib.request.Request(_CELESTRAK_STARLINK, headers=_UA)
+        with urllib.request.urlopen(req, timeout=_TIMEOUT) as resp:
+            data = json.load(resp)
+        n = len(data) if isinstance(data, list) else 0
+        # Sanity band — the constellation is ~6k-30k this era; reject junk.
+        return n if 1000 <= n <= 60000 else None
+    except Exception as exc:
+        logger.info("CelesTrak Starlink count failed (non-fatal): %s", exc)
+        return None
+
+
 def _slim_launch(r: Dict[str, Any]) -> Dict[str, Any]:
     """Reduce a Launch Library record to the fields the dashboard needs."""
     pad = r.get("pad") or {}
@@ -380,6 +401,7 @@ def build_payload() -> Optional[Dict[str, Any]]:
     cumulative_sats, cumulative_series = _update_metrics_timeseries(monthly, now)
     fleet = _fleet_payload(slim_prev, now)
     fleet["cumulative_satellites_est"] = cumulative_sats
+    fleet["starlink_active"] = _starlink_active_count()  # real count, or None
     return {
         "next": next_launch,
         "previous": previous_launch,
