@@ -152,3 +152,64 @@ class TestBoosterReuseStats:
         t = (_ROOT / "templates/spacex_dashboard.html.j2").read_text(encoding="utf-8")
         assert "record watch" in t and "brRecordN" in t and "brLeaders" in t
         assert "spxBooster" in t  # per-launch booster line on the hero
+
+
+class TestStarshipTracker:
+    def _mod(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "fetch_spacex_launches", _ROOT / "scripts" / "fetch_spacex_launches.py")
+        m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+        return m
+
+    def test_metrics_has_curated_starship_record(self):
+        data = json.loads((_ROOT / "site/data/spacex_metrics.json").read_text(encoding="utf-8"))
+        sf = data.get("starship_flights") or {}
+        flights = sf.get("flights") or []
+        assert len(flights) >= 9, "Starship IFT record should be seeded"
+        # Schema + value sanity on every curated entry.
+        valid_outcomes = {"success", "partial", "failure"}
+        seen = set()
+        for f in flights:
+            assert f.get("flight") and f.get("date") and f.get("milestone")
+            assert f["outcome"] in valid_outcomes, f["outcome"]
+            assert f["flight"] not in seen, f"duplicate {f['flight']}"
+            seen.add(f["flight"])
+        # The three confirmed tower catches carry the explicit, non-prose flag.
+        caught = {f["flight"] for f in flights if f.get("booster_caught") is True}
+        assert {"IFT-5", "IFT-7", "IFT-8"}.issubset(caught), caught
+
+    def test_fetcher_reads_and_preserves_starship(self):
+        m = self._mod()
+        sf = m._starship_flights()
+        assert isinstance(sf, dict) and len(sf.get("flights", [])) >= 9
+        # The fetcher must carry it into the launches payload (so the dashboard
+        # — which only fetches api/spacex_launches.json — can read it).
+        import inspect
+        src = inspect.getsource(m.build_payload)
+        assert '"starship": _starship_flights()' in src
+        # And the metrics-rewrite must preserve it across runs (not wipe it).
+        rewrite = inspect.getsource(m._update_metrics_timeseries)
+        assert 'existing.get("starship_flights"' in rewrite
+
+    def test_main_keeps_last_good_starlink_count(self):
+        # A transient CelesTrak rate-limit (None) must not wipe a real count.
+        m = self._mod()
+        import inspect
+        src = inspect.getsource(m.main)
+        assert 'starlink_active") is None' in src
+        assert "Kept last-good Starlink count" in src
+
+    def test_dashboard_has_starship_panel(self):
+        t = (_ROOT / "templates/spacex_dashboard.html.j2").read_text(encoding="utf-8")
+        assert "Starship flight-test tracker" in t
+        assert "ssTimeline" in t and "renderStarship" in t
+        assert "data.starship" in t  # wired into applyLaunches
+        # Catch count must be the deterministic flag, not prose-matching.
+        assert "f.booster_caught===true" in t
+
+    def test_grid_uses_minmax_zero_for_mobile_safety(self):
+        # minmax(0,1fr) prevents grid items overflowing on narrow viewports.
+        t = (_ROOT / "templates/spacex_dashboard.html.j2").read_text(encoding="utf-8")
+        assert "minmax(0,1fr)" in t
+        assert "grid-template-columns: 1fr 1fr;" not in t  # legacy overflow shape

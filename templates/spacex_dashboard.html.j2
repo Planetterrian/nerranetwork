@@ -79,8 +79,8 @@
   }
   .spx-btn.ghost { background: transparent; border:1px solid rgba(120,160,255,0.4); box-shadow:none; }
 
-  .spx-grid { max-width:1120px; margin: 1.5rem auto; padding: 0 1.25rem; display:grid; gap:1.1rem; grid-template-columns: 1fr 1fr; }
-  @media (max-width: 760px){ .spx-grid{ grid-template-columns:1fr; } }
+  .spx-grid { max-width:1120px; margin: 1.5rem auto; padding: 0 1.25rem; display:grid; gap:1.1rem; grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+  @media (max-width: 760px){ .spx-grid{ grid-template-columns:minmax(0,1fr); } }
   .spx-panel {
     background: var(--nn-surface, #0f1830); border:1px solid rgba(120,160,255,0.16);
     border-radius:16px; padding:1.1rem 1.2rem;
@@ -201,7 +201,7 @@
     </div>
   </div>
 
-  <div class="spx-grid" style="grid-template-columns:1fr;">
+  <div class="spx-grid" style="grid-template-columns:minmax(0,1fr);">
     <div class="spx-panel">
       <h2>Launch cadence — last 12 months</h2>
       <div class="spx-cadence" id="spxCadence"></div>
@@ -215,7 +215,7 @@
     </div>
   </div>
 
-  <div class="spx-grid" style="grid-template-columns:1fr;">
+  <div class="spx-grid" style="grid-template-columns:minmax(0,1fr);">
     <div class="spx-panel">
       <h2>Mass to orbit — last 12 months <span class="spx-muted" style="font-size:0.7rem;font-weight:400;">(estimated, tonnes)</span></h2>
       <div class="spx-cadence" id="spxMass"></div>
@@ -231,11 +231,24 @@
     </div>
   </div>
 
-  <div class="spx-grid" style="grid-template-columns:1fr;">
+  <div class="spx-grid" style="grid-template-columns:minmax(0,1fr);">
     <div class="spx-panel">
       <h2>Constellation growth — est. satellites to orbit <span class="spx-muted" style="font-size:0.7rem;font-weight:400;">(cumulative, tracked window)</span></h2>
       <div class="spx-area-wrap"><svg class="spx-area-svg" id="spxArea" preserveAspectRatio="none" role="img" aria-label="Cumulative estimated satellites to orbit"></svg></div>
       <p class="spx-disclaimer">Cumulative estimate over the months this dashboard has tracked — it extends to the left automatically as the dataset grows month over month.</p>
+    </div>
+  </div>
+
+  <div class="spx-grid" style="grid-template-columns:minmax(0,1fr);">
+    <div class="spx-panel">
+      <h2>Starship flight-test tracker 🚀 <span class="spx-muted" style="font-size:0.7rem;font-weight:400;">(integrated flight tests)</span></h2>
+      <div style="display:flex; gap:1.4rem; flex-wrap:wrap; margin-bottom:0.9rem;">
+        <div class="spx-stat"><div class="n" id="ssTotal">—</div><div class="l">Integrated flights</div></div>
+        <div class="spx-stat"><div class="n" id="ssCatches">—</div><div class="l">Booster tower catches</div></div>
+        <div class="spx-stat"><div class="n" id="ssLatest">—</div><div class="l">Latest flight</div></div>
+      </div>
+      <div id="ssTimeline"><p class="spx-muted">Loading…</p></div>
+      <p class="spx-disclaimer">Curated record of Starship's integrated flight tests (Super Heavy + Ship). Outcome reflects the primary test objectives; "partial" means key milestones were hit even where a stage was lost. The path to a fully reusable, rapidly-flown super-heavy-lift vehicle.</p>
     </div>
   </div>
 
@@ -540,9 +553,38 @@
     countUp('brFleet', b.active_boosters_window);
   }
 
+  function renderStarship(s){
+    var flights = ((s||{}).flights)||[];
+    if(!flights.length) return;
+    var ch = {success:'#5ef0a0', partial:'var(--spx-cyan)', failure:'#ff7a7a'};
+    var lbl = {success:'Success', partial:'Partial', failure:'Failure'};
+    countUp('ssTotal', flights.length);
+    var catches = flights.filter(function(f){ return f.booster_caught===true; }).length;
+    countUp('ssCatches', catches);
+    var last = flights[flights.length-1];
+    var el = document.getElementById('ssLatest'); if(el) el.textContent = last.flight||'—';
+    var wrap = document.getElementById('ssTimeline'); if(!wrap) return;
+    // Newest first for the timeline.
+    var rows = flights.slice().reverse();
+    wrap.innerHTML = rows.map(function(f){
+      var c = ch[f.outcome]||'#cfe0ff';
+      return '<div style="display:flex; gap:12px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06);">'+
+        '<span style="flex:0 0 8px; width:8px; border-radius:4px; background:'+c+'; align-self:stretch;"></span>'+
+        '<div style="flex:1; min-width:0;">'+
+          '<div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;">'+
+            '<span style="font-weight:800; color:#fff;">'+(f.flight||'')+'</span>'+
+            '<span class="spx-muted" style="font-size:0.8rem;">'+(f.date||'')+'</span>'+
+            '<span style="font-size:0.72rem; font-weight:700; color:'+c+'; border:1px solid '+c+'; border-radius:999px; padding:1px 8px;">'+(lbl[f.outcome]||f.outcome||'')+'</span>'+
+          '</div>'+
+          '<div style="color:#cfe0ff; font-size:0.9rem; margin-top:3px;">'+(f.milestone||'')+'</div>'+
+        '</div></div>';
+    }).join('');
+  }
+
   function applyLaunches(data){
     if(!data) return;
     renderNext(data.next);
+    if(data.starship) renderStarship(data.starship);
     if(data.fleet) renderBoosters(data.fleet);
     renderPrev(data.previous);
     renderStats(data.stats, data.total_launches);
