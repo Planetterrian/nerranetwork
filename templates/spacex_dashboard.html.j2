@@ -105,6 +105,36 @@
   .spx-bar-label { font-size:0.58rem; color:#7f93c4; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:clip; }
   @media (max-width: 520px){ .spx-bar-label { font-size:0.5rem; letter-spacing:-0.03em; } .spx-cadence{ gap:4px; } }
 
+  /* cumulative growth area chart */
+  .spx-area-wrap { position:relative; }
+  .spx-area-svg { width:100%; height:200px; display:block; overflow:visible; }
+  .spx-area-svg .grid { stroke:rgba(120,160,255,0.12); stroke-width:1; }
+  .spx-area-svg .gridlabel { fill:#7f93c4; font-size:10px; }
+  .spx-area-svg .xlabel { fill:#7f93c4; font-size:10px; text-anchor:middle; }
+  .spx-area-svg .areapath { transition: opacity .8s ease; }
+  .spx-area-svg .linepath { fill:none; stroke:var(--spx-cyan); stroke-width:2.5;
+    stroke-linejoin:round; stroke-linecap:round;
+    filter: drop-shadow(0 2px 8px rgba(0,212,255,0.4)); }
+  .spx-area-svg .dot { fill:#fff; stroke:var(--spx-blue); stroke-width:2; }
+
+  /* vehicle-mix segmented bar */
+  .spx-mixbar { display:flex; height:26px; border-radius:8px; overflow:hidden; margin:4px 0 10px; }
+  .spx-mixseg { height:100%; min-width:2px; }
+  .spx-mixlegend { display:flex; flex-wrap:wrap; gap:10px 18px; font-size:0.8rem; }
+  .spx-mixlegend .it { display:flex; align-items:center; gap:6px; color:#cfe0ff; }
+  .spx-mixlegend .sw { width:11px; height:11px; border-radius:3px; flex:0 0 auto; }
+  .spx-mixlegend .ct { color:#8ea3d6; font-variant-numeric:tabular-nums; }
+
+  /* recently flown */
+  .spx-rl { display:flex; align-items:center; gap:10px; padding:0.5rem 0; border-bottom:1px solid rgba(120,160,255,0.12); font-size:0.88rem; }
+  .spx-rl:last-child{ border-bottom:none; }
+  .spx-rl .nm { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .spx-rl .badge { font-size:0.64rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding:2px 7px; border-radius:999px; white-space:nowrap; }
+  .spx-rl .badge.ok { color:#7efbb0; background:rgba(40,200,120,0.14); }
+  .spx-rl .badge.bad { color:#ff9a9a; background:rgba(255,80,80,0.14); }
+  .spx-rl .badge.tbd { color:#ffd27a; background:rgba(255,180,40,0.14); }
+  .spx-rl .dt { color:#8ea3d6; white-space:nowrap; font-variant-numeric:tabular-nums; font-size:0.78rem; }
+
   .spx-since { font-size: clamp(1.4rem,3.5vw,2rem); font-weight:800; font-variant-numeric:tabular-nums; color:#fff; }
   .spx-upcoming-item { display:flex; justify-content:space-between; gap:10px; padding:0.55rem 0; border-bottom:1px solid rgba(120,160,255,0.12); font-size:0.9rem; }
   .spx-upcoming-item:last-child{ border-bottom:none; }
@@ -197,6 +227,18 @@
   </div>
 
   <div class="spx-grid" style="grid-template-columns:1fr;">
+    <div class="spx-panel">
+      <h2>Constellation growth — est. satellites to orbit <span class="spx-muted" style="font-size:0.7rem;font-weight:400;">(cumulative, tracked window)</span></h2>
+      <div class="spx-area-wrap"><svg class="spx-area-svg" id="spxArea" preserveAspectRatio="none" role="img" aria-label="Cumulative estimated satellites to orbit"></svg></div>
+      <p class="spx-disclaimer">Cumulative estimate over the months this dashboard has tracked — it extends to the left automatically as the dataset grows month over month.</p>
+    </div>
+  </div>
+
+  <div class="spx-grid">
+    <div class="spx-panel">
+      <h2>Recently flown</h2>
+      <div id="spxRecent"><p class="spx-muted">Loading…</p></div>
+    </div>
     <div class="spx-panel">
       <h2>Upcoming manifest</h2>
       <div id="spxUpcoming"><p class="spx-muted">Loading…</p></div>
@@ -321,10 +363,75 @@
     if(el) el.textContent = (p.name||'Last launch') + (p.net ? ' · '+fmtLocal(p.net) : '');
   }
 
+  // Animated count-up for a stat number. Respects reduced-motion.
+  function countUp(id, target, suffix){
+    const el=document.getElementById(id); if(!el || target==null) return;
+    suffix = suffix||'';
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isFloat = !Number.isInteger(target);
+    if(reduce){ el.textContent=(isFloat?target.toFixed(1):Math.round(target).toLocaleString())+suffix; return; }
+    const dur=900, t0=performance.now();
+    function step(t){
+      const k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,3), v=target*e;
+      el.textContent=(isFloat?v.toFixed(1):Math.round(v).toLocaleString())+suffix;
+      if(k<1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
   function renderStats(s, total){
     const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=(v==null?'—':v);};
-    if(s){ set('stYtd',s.launches_ytd); set('st30',s.launches_last_30d); set('stAvg',s.avg_days_between_last_365d); set('stStar',s.starlink_launches_ytd); }
-    set('stTotal', total!=null ? total.toLocaleString() : '—');
+    if(s){ countUp('stYtd', s.launches_ytd); countUp('st30', s.launches_last_30d);
+           set('stAvg', s.avg_days_between_last_365d); countUp('stStar', s.starlink_launches_ytd); }
+    if(total!=null) countUp('stTotal', total); else set('stTotal','—');
+  }
+
+  // SVG area+line chart of a cumulative series [{month,total}].
+  function renderArea(series){
+    const svg=document.getElementById('spxArea');
+    if(!svg || !series || series.length<2) return;
+    const W=1000, H=200, padL=44, padR=8, padT=12, padB=22;
+    const xs=W-padL-padR, ys=H-padT-padB;
+    const vals=series.map(p=>p.total);
+    const max=Math.max(...vals), min=Math.min(0, ...vals);
+    const n=series.length;
+    const X=i=> padL + (n===1?0:(i/(n-1))*xs);
+    const Y=v=> padT + ys - ((v-min)/((max-min)||1))*ys;
+    let line='', area='M'+X(0)+','+(padT+ys);
+    series.forEach((p,i)=>{ const x=X(i),y=Y(p.total); line+=(i?'L':'M')+x+','+y+' '; area+='L'+x+','+y+' '; });
+    area+='L'+X(n-1)+','+(padT+ys)+'Z';
+    // y gridlines (0, mid, max)
+    let grid='';
+    [0,0.5,1].forEach(f=>{ const v=min+(max-min)*f, y=Y(v);
+      grid+='<line class="grid" x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'"/>'+
+            '<text class="gridlabel" x="0" y="'+(y+3)+'">'+Math.round(v).toLocaleString()+'</text>'; });
+    // a few x labels
+    let xl=''; const step=Math.max(1,Math.floor(n/4));
+    for(let i=0;i<n;i+=step){ xl+='<text class="xlabel" x="'+X(i)+'" y="'+(H-6)+'">'+series[i].month.slice(2).replace('-','/')+'</text>'; }
+    const last=series[n-1];
+    svg.setAttribute('viewBox','0 0 '+W+' '+H);
+    svg.innerHTML =
+      '<defs><linearGradient id="spxAreaGrad" x1="0" y1="0" x2="0" y2="1">'+
+      '<stop offset="0%" stop-color="rgba(0,212,255,0.45)"/><stop offset="100%" stop-color="rgba(26,92,255,0.02)"/>'+
+      '</linearGradient></defs>'+grid+
+      '<path class="areapath" d="'+area+'" fill="url(#spxAreaGrad)"/>'+
+      '<path class="linepath" d="'+line+'"/>'+
+      '<circle class="dot" cx="'+X(n-1)+'" cy="'+Y(last.total)+'" r="4"/>'+
+      '<text x="'+X(n-1)+'" y="'+(Y(last.total)-10)+'" text-anchor="end" fill="#fff" font-size="12" font-weight="700">'+last.total.toLocaleString()+'</text>'+
+      xl;
+  }
+
+  function renderRecent(list){
+    const wrap=document.getElementById('spxRecent');
+    if(!wrap) return;
+    if(!list || !list.length){ wrap.innerHTML='<p class="spx-muted">No recent launches.</p>'; return; }
+    const cls=a=>{ a=(a||'').toLowerCase(); if(a==='success') return 'ok'; if(a.includes('fail')) return 'bad'; return 'tbd'; };
+    wrap.innerHTML = list.map(x=>{
+      const st=x.status||'—';
+      return '<div class="spx-rl"><span class="badge '+cls(st)+'">'+st+'</span>'+
+             '<span class="nm">'+(x.name||'Launch')+'</span>'+
+             '<span class="dt">'+(x.net?fmtLocal(x.net):'')+'</span></div>';
+    }).join('');
   }
 
   function renderUpcoming(list){
@@ -334,21 +441,28 @@
     wrap.innerHTML = list.map(x=>'<div class="spx-upcoming-item"><span>'+(x.name||'Launch')+'</span><span class="when">'+(x.net?fmtLocal(x.net):'TBD')+'</span></div>').join('');
   }
 
+  var VEHICLE_COLORS = {'Falcon 9':'#1A5CFF','Starship':'#00D4FF','Falcon Heavy':'#8ab4ff'};
+  var VEHICLE_FALLBACK = ['#a78bfa','#7efbb0','#ffd27a','#ff9a9a'];
+
   function renderFleet(f){
     if(!f) return;
     const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=(v==null?'—':v);};
-    set('flMass', f.est_mass_to_orbit_tonnes!=null ? Number(f.est_mass_to_orbit_tonnes).toLocaleString() : '—');
-    set('flSats', f.est_satellites_deployed!=null ? Number(f.est_satellites_deployed).toLocaleString() : '—');
-    set('flCumSats', f.cumulative_satellites_est!=null ? Number(f.cumulative_satellites_est).toLocaleString() : '—');
+    countUp('flMass', f.est_mass_to_orbit_tonnes);
+    countUp('flSats', f.est_satellites_deployed);
+    countUp('flCumSats', f.cumulative_satellites_est);
     set('flStarShare', f.starlink_share_pct!=null ? f.starlink_share_pct+'%' : '—');
     set('flSuccess', f.success_rate_pct!=null ? f.success_rate_pct+'%' : '—');
     const bv = f.by_vehicle || {};
     const wrap = document.getElementById('flVehicles');
     if(wrap){
       const entries = Object.entries(bv).sort((a,b)=>b[1]-a[1]);
+      const total = entries.reduce((s,[,v])=>s+v,0) || 1;
       if(entries.length){
+        const color=(k,i)=>VEHICLE_COLORS[k]||VEHICLE_FALLBACK[i%VEHICLE_FALLBACK.length];
+        const segs = entries.map(([k,v],i)=>'<div class="spx-mixseg" style="width:'+(100*v/total)+'%;background:'+color(k,i)+';" title="'+k+': '+v+'"></div>').join('');
+        const legend = entries.map(([k,v],i)=>'<span class="it"><span class="sw" style="background:'+color(k,i)+'"></span>'+k+' <span class="ct">'+v+'</span></span>').join('');
         wrap.innerHTML = '<div class="spx-muted" style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Launches by vehicle</div>' +
-          entries.map(([k,v])=>'<div class="spx-upcoming-item"><span>'+k+'</span><span class="when">'+v+'</span></div>').join('');
+          '<div class="spx-mixbar">'+segs+'</div><div class="spx-mixlegend">'+legend+'</div>';
       }
     }
   }
@@ -360,7 +474,9 @@
     renderStats(data.stats, data.total_launches);
     renderCadence(data.cadence_monthly);
     renderBars('spxMass', data.mass_monthly, 'tonnes');
+    renderArea(data.sats_cumulative_monthly);
     renderFleet(data.fleet);
+    renderRecent(data.recent);
     renderUpcoming(data.upcoming);
   }
 

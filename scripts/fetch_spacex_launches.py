@@ -242,7 +242,10 @@ def _update_metrics_timeseries(monthly: List[Dict[str, Any]], now: _dt.datetime,
         logger.info("Updated metrics time-series %s (%d months)", path, len(months))
     except Exception as exc:
         logger.warning("Could not write metrics time-series (non-fatal): %s", exc)
-    return cum  # latest cumulative estimated-satellites total
+    # Return the latest cumulative total + the ordered cumulative series
+    # (so the dashboard can chart growth-over-time from one file).
+    cumulative_series = [{"month": k, "total": cumulative[k]} for k, _ in ordered]
+    return cum, cumulative_series
 
 
 def _fleet_payload(previous: List[Dict[str, Any]], now: _dt.datetime) -> Dict[str, Any]:
@@ -367,19 +370,24 @@ def build_payload() -> Optional[Dict[str, Any]]:
 
     previous_launch = _slim_launch(prev_results[0]) if prev_results else None
     upcoming_list = [_slim_launch(r) for r in up_results][:5]
+    # Most-recent launched missions (with outcome) for the "recently flown"
+    # panel. prev_results is newest-first.
+    recent_list = [_slim_launch(r) for r in prev_results][:6]
 
     slim_prev = [_slim_launch(r) for r in prev_results]
     monthly = _monthly_breakdown(slim_prev)
     # Merge the fresh 12-month window into the growing committed dataset.
-    cumulative_sats = _update_metrics_timeseries(monthly, now)
+    cumulative_sats, cumulative_series = _update_metrics_timeseries(monthly, now)
     fleet = _fleet_payload(slim_prev, now)
     fleet["cumulative_satellites_est"] = cumulative_sats
     return {
         "next": next_launch,
         "previous": previous_launch,
         "upcoming": upcoming_list,
+        "recent": recent_list,
         "cadence_monthly": [{"month": b["month"], "count": b["launches"]} for b in monthly],
         "mass_monthly": [{"month": b["month"], "tonnes": b["mass_t"]} for b in monthly],
+        "sats_cumulative_monthly": cumulative_series,
         "stats": _stats(slim_prev, now),
         "fleet": fleet,
         "total_launches": prev_total,
