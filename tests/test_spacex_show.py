@@ -236,10 +236,13 @@ class TestStockClosing:
         assert len(closings) == 4, "closing must rotate daily, not fossilize"
 
     def test_tone_hint_mapping(self):
+        # June 2026 rebalance: lively/engineering-forward by DEFAULT, with
+        # only a mild stock flavor — energy never hinges on the ticker.
         from shows.hooks.spacex import _tone_from_change
+        for args in [(161.0, "+19.2%"), (150.0, "-3.1%"), (0.0, "")]:
+            assert "energy" in _tone_from_change(*args).lower()
         assert "upbeat" in _tone_from_change(161.0, "+19.2%")
-        assert "thoughtful" in _tone_from_change(150.0, "-3.1%")
-        assert "natural" in _tone_from_change(0.0, "")
+        assert "down market day" in _tone_from_change(150.0, "-3.1%")
 
     def test_spcx_ticker_letter_spelled_for_tts(self):
         pron = yaml.safe_load(
