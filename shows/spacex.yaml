@@ -149,11 +149,14 @@ chapters:
   # (the Tesla chapter-bug class) and a Closing pattern that covers
   # EVERY closing-pool variant in engine/intros.py (guarded by
   # tests/test_spacex_show.py).
+  # NOTE: chapters parse the POST-pronunciation script (Ep001 lesson):
+  # assets/pronunciation.py maps "SpaceX" -> "Space X" and "SPCX" ->
+  # "S P C X" for TTS, so every pattern must tolerate both forms.
   section_markers:
-    - pattern: "SpaceX Daily|welcome to SpaceX"
+    - pattern: "Space ?X Daily|welcome to Space ?X"
       title: "Introduction"
       where: start
-    - pattern: "on the market side|market watch|SPCX (closed|is at|opened)"
+    - pattern: "on the market side|market watch|S ?P ?C ?X (closed|is at|is trading|opened)"
       title: "Market Watch"
     - pattern: "one thing worth watching|worth keeping an eye on|the counterpoint"
       title: "The Counterpoint"
