@@ -298,6 +298,9 @@ def _update_metrics_timeseries(monthly: List[Dict[str, Any]], now: _dt.datetime,
         # (e.g. xAI Colossus GPU counts, datacenter buildouts). Preserved
         # across runs so it accrues without being overwritten by the fetch.
         "infrastructure": existing.get("infrastructure", []),
+        # Curated Starship integrated flight-test record (operator-maintained;
+        # outside the Falcon launch window). Preserved across runs.
+        "starship_flights": existing.get("starship_flights", {}),
     }
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -309,6 +312,19 @@ def _update_metrics_timeseries(monthly: List[Dict[str, Any]], now: _dt.datetime,
     # (so the dashboard can chart growth-over-time from one file).
     cumulative_series = [{"month": k, "total": cumulative[k]} for k, _ in ordered]
     return cum, cumulative_series
+
+
+def _starship_flights(path: Path = _METRICS_PATH) -> Dict[str, Any]:
+    """Read the curated Starship flight-test record from the committed metrics
+    file (operator-maintained; not derivable from the Falcon launch window)."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+        sf = data.get("starship_flights") if isinstance(data, dict) else None
+        if isinstance(sf, dict) and isinstance(sf.get("flights"), list):
+            return sf
+    except Exception as exc:
+        logger.warning("Could not read starship_flights (non-fatal): %s", exc)
+    return {"flights": []}
 
 
 def _fleet_payload(previous: List[Dict[str, Any]], now: _dt.datetime) -> Dict[str, Any]:
@@ -455,6 +471,7 @@ def build_payload() -> Optional[Dict[str, Any]]:
         "sats_cumulative_monthly": cumulative_series,
         "stats": _stats(slim_prev, now),
         "fleet": fleet,
+        "starship": _starship_flights(),
         "total_launches": prev_total,
         "source": "thespacedevs_ll2",
         "updated_at": now.isoformat(),
@@ -477,6 +494,18 @@ def main() -> int:
             return 0
         logger.error("Launch fetch empty and no existing cache to keep.")
         return 0  # non-fatal: dashboard shows a friendly empty state
+
+    # Keep last-good for the live Starlink count: CelesTrak rate-limits (1 dl /
+    # 2h), so a transient None must not wipe a previously-fetched real number.
+    if (payload.get("fleet") or {}).get("starlink_active") is None and out_path.exists():
+        try:
+            prev = json.loads(out_path.read_text(encoding="utf-8"))
+            last = (prev.get("fleet") or {}).get("starlink_active")
+            if last:
+                payload["fleet"]["starlink_active"] = last
+                logger.info("Kept last-good Starlink count: %s", last)
+        except Exception:
+            pass
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
