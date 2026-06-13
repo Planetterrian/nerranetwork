@@ -81,11 +81,24 @@ llm:
 tts: {}
 
 audio:
-  # Launch placeholder: reuses the TST theme (same pattern EI/M&A used at
-  # launch). Swap to assets/music/spacex.mp3 when the operator produces a
-  # dedicated track — A/B-listen the first mixed episode per landmine #17.
-  music_file: assets/music/tesla_shorts_time.mp3
+  # Theme music "Launch Window" (operator-produced track, 4:26 @
+  # 187 kbps/48 kHz, added June 13 2026 — IPO-day launch). Timing/volume
+  # params follow the network's May 13 shape (10 s music-only intro,
+  # 45 s under voice, 20-30 s outro), same as First Principles.
+  # A/B-listen the first mixed episode per landmine #17.
+  music_file: assets/music/spacex.mp3
   transition_sting: assets/music/transition_sting.mp3
+  voice_intro_delay: 10.0
+  intro_duration: 10.0
+  overlap_duration: 15.0
+  fade_duration: 30.0
+  outro_duration: 30.0
+  outro_crossfade: 0.0
+  outro_fade_out_duration: 10.0
+  intro_volume: 0.5
+  overlap_volume: 0.4
+  fade_volume: 0.3
+  outro_volume: 0.5
 
 publishing:
   rss_file: spacex_podcast.rss
@@ -145,7 +158,9 @@ newsletter:
   short_label: "SpaceX Daily"
   emoji: "🚀"
   newsletter_start_date: "2026-06-12"
-  requires_financial_disclaimer: false
+  # SpaceX is a public company (SPCX) and the show carries a daily
+  # Market Watch — newsletters get the standard financial disclaimer.
+  requires_financial_disclaimer: true
   length_target_words: 1200
 
 slow_news:
