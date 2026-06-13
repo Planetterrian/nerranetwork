@@ -51,7 +51,10 @@ class TestConfigLoads:
 
     def test_one_length_target_with_expand_retry(self):
         cfg = load_config(_ROOT / "shows/spacex.yaml")
-        assert cfg.llm.min_podcast_words == 1700
+        # Recalibrated 1700 -> 1300 after Ep2 skipped on a thin day (grok-4.3
+        # plateau + digest ceiling); the Engineering Deep Dive length lever
+        # is the quality-preserving fix in the podcast prompt.
+        assert cfg.llm.min_podcast_words == 1300
         assert cfg.llm.podcast_expand_below_target is True
 
     def test_memory_enabled_and_registered(self):
@@ -144,12 +147,12 @@ class TestPromptContracts:
         )
 
     def test_system_prompt_length_agrees_with_podcast_prompt(self):
-        # The scaffolded system prompt said 10-12 min while the podcast
-        # prompt demanded 12-14 — the contradictory-length class every
-        # June 2026 review fixed. Both must state the same window.
+        # The system + podcast prompts must state the SAME length window
+        # (the contradictory-length class every June 2026 review fixed).
+        # Recalibrated to 11-14 min after the Ep2 thin-day skip.
         system = (_ROOT / "shows/prompts/spacex_system.txt").read_text(encoding="utf-8")
-        assert "12–14 minutes" in system
-        assert "10-12" not in system and "10–12" not in system
+        assert "11–14 minutes" in system
+        assert "10-12" not in system and "10–12" not in system and "12–14" not in system
 
 
 class TestIpoPositioning:

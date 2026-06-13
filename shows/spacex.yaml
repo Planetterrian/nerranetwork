@@ -87,11 +87,21 @@ llm:
   podcast_temperature: 0.7
   max_tokens: 4000
   podcast_max_tokens: 8000
-  # ONE unified length target (June 2026 lesson): the prompt states
-  # 1,900-2,200 words ~ 12-14 min exactly once; this floor sits just
+  # ONE unified length target (June 2026): the prompt states
+  # 1,500-1,900 words ~ 11-14 min exactly once; this floor sits just
   # under it so the digest-carrying expand-retry fires on anything
   # short of a full episode.
-  min_podcast_words: 1700
+  #
+  # Recalibrated 1700 -> 1300 after Ep2 SKIPPED (912w): grok-4.3 plateaus
+  # and a news show's podcast is capped by its digest, so a thin Saturday
+  # (worsened by Ep1's one-time double-run polluting the 7-day URL dedup)
+  # fell under the old soft skip floor (0.6 x 1700 = 1020). The same
+  # digest-ceiling/plateau the FF/UC/FP reviews documented. The fix that
+  # preserves quality is the Engineering Deep Dive length lever (licensed
+  # to use the model's own physics/economics knowledge) in the podcast
+  # prompt; this floor change just stops a quality-adequate ~10-min
+  # episode from skipping (soft skip floor now 0.6 x 1300 = 780 ~ 5 min).
+  min_podcast_words: 1300
   podcast_expand_below_target: true
   podcast_chain: true
 
