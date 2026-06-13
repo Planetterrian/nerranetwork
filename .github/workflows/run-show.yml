@@ -538,6 +538,11 @@ jobs:
           # website shows "Market data unavailable" between runs
           # (operator caught this May 15 2026, TST Ep473).
           git add api/tsla.json || true
+          # SpaceX cached SPCX price — same contract as api/tsla.json
+          # above. Written by ``shows/hooks/spacex.py`` every SpaceX run,
+          # consumed by ``spacex.html`` JS so the SPCX pill has a
+          # reliable same-origin source between runs.
+          git add api/spcx.json || true
           # Topic queues — narrative-mode shows mark topics as produced
           # after each successful run. Without committing this, every
           # narrative-show run re-picks the same first-unproduced topic

@@ -138,9 +138,9 @@
                 <div style="margin-top:var(--sp-3);">
                     {{ ai_badge(path_prefix=path_prefix, is_ru=_is_ru) }}
                 </div>
-                {% if show_slug == 'tesla' %}
+                {% if stock_widget %}
                 <div class="stock-widget" id="stock-widget">
-                    <span class="ticker">TSLA</span>
+                    <span class="ticker">{{ stock_widget.ticker }}</span>
                     <span class="price" id="stock-price">--</span>
                     <span class="change" id="stock-change">--</span>
                     <div id="stock-updated" style="font-size:0.7rem;opacity:0.6;margin-top:2px;"></div>
@@ -908,14 +908,23 @@
             document.getElementById('episodes-grid').innerHTML = '<p style="color:var(--nn-text-muted);grid-column:1/-1;text-align:center;padding:2rem 0;">Episodes will appear here once available.</p>';
         }
 
-        {% if show_slug == 'tesla' %}
-        // --- Stock widget (Tesla only) ---
+        {% if stock_widget %}
+        // --- Stock widget (Tesla + SpaceX) ---
+        const STOCK_TICKER = {{ stock_widget.ticker | tojson }};
+        const STOCK_JSON = {{ stock_widget.json_path | tojson }};
+        const STOCK_YAHOO = {{ stock_widget.yahoo_symbol | tojson }};
         async function loadStock() {
+            // Tracks whether the same-origin snapshot already populated a
+            // valid price. If so, a later Yahoo-fallback failure must NOT
+            // overwrite it with "Market data unavailable" (the off-hours
+            // bug: proxies fail on weekends, but the pipeline snapshot is
+            // good). Yahoo only ever UPGRADES a shown price during the day.
+            let havePrimary = false;
             function displayPrice(price, prev, marketState = null) {
                 const p = parseFloat(price), pc = parseFloat(prev);
-                // Validate: TSLA price should be in a reasonable range
+                // Validate: price should be in a reasonable range
                 if (isNaN(p) || isNaN(pc) || p <= 0 || pc <= 0 || p > 99999 || pc > 99999) {
-                    showStockError('Invalid price data');
+                    if (!havePrimary) showStockError('Invalid price data');
                     return;
                 }
                 const ch = (p - pc).toFixed(2);
@@ -942,15 +951,16 @@
                 if (updatedEl) updatedEl.textContent = '';
             }
 
-            // PRIMARY source: same-origin api/tsla.json written by the
-            // Tesla pipeline (shows/hooks/tesla.py) every run via Grok's
-            // x_search.  No CORS proxy, no Yahoo-Finance flakiness.
-            // Operator caught (May 14 2026) the previous Yahoo-only path
-            // showing "Market data unavailable" on the website because
+            // PRIMARY source: same-origin JSON written by the show's
+            // pipeline hook every run.  No CORS proxy, no Yahoo-Finance
+            // flakiness.  Operator caught (May 14 2026) the previous
+            // Yahoo-only path showing "Market data unavailable" because
             // every CORS proxy was failing — yet the pipeline knew the
-            // live price the whole time.
+            // live price the whole time.  Tolerates both the Tesla schema
+            // (market_state/fetched_at) and the SpaceX schema
+            // (change_str/updated_at) — only price + prev_close are required.
             try {
-                const resp = await fetch('/api/tsla.json', {
+                const resp = await fetch(STOCK_JSON, {
                     cache: 'no-cache',
                     signal: AbortSignal.timeout(4000),
                 });
@@ -960,10 +970,12 @@
                     const prev = parseFloat(cached.prev_close);
                     if (price > 0 && prev > 0) {
                         displayPrice(price, prev, cached.market_state || null);
+                        havePrimary = true;
                         const updatedEl = document.getElementById('stock-updated');
-                        if (updatedEl && cached.fetched_at) {
+                        const ts = cached.fetched_at || cached.updated_at;
+                        if (updatedEl && ts) {
                             try {
-                                const d = new Date(cached.fetched_at);
+                                const d = new Date(ts);
                                 updatedEl.textContent = `Updated ${d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} (snapshot)`;
                             } catch (_) {}
                         }
@@ -975,9 +987,9 @@
             } catch { /* fall through to Yahoo */ }
 
             // FALLBACK: Yahoo Finance v8 chart API via CORS proxies.
-            const yahooUrl = 'https://query2.finance.yahoo.com/v8/finance/chart/TSLA?interval=1d&range=5d';
+            const yahooUrl = 'https://query2.finance.yahoo.com/v8/finance/chart/' + STOCK_YAHOO + '?interval=1d&range=5d';
             // Yahoo Finance v6 quote API — alternative endpoint
-            const yahooQuoteUrl = 'https://query1.finance.yahoo.com/v6/finance/quote?symbols=TSLA';
+            const yahooQuoteUrl = 'https://query1.finance.yahoo.com/v6/finance/quote?symbols=' + STOCK_YAHOO;
             const proxies = [
                 url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
                 url => 'https://corsproxy.io/?' + encodeURIComponent(url),
@@ -996,7 +1008,7 @@
                     const price = meta.regularMarketPrice;
                     const prev = meta.chartPreviousClose || meta.previousClose;
                     if (price && prev) {
-                        displayPrice(price, prev, marketState);
+                        displayPrice(price, prev, meta.marketState || null);
                         return;
                     }
                 } catch { /* try next proxy */ }
@@ -1016,7 +1028,9 @@
                 } catch { /* try next proxy */ }
             }
 
-            showStockError('Market data unavailable');
+            // All Yahoo fallbacks failed. Only show the error if the
+            // same-origin snapshot didn't already populate a good price.
+            if (!havePrimary) showStockError('Market data unavailable');
         }
         loadStock();
         // Refresh stock price every 5 minutes during page session
