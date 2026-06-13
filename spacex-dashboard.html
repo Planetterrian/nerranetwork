@@ -598,6 +598,30 @@
     </div>
   </div>
 
+  <div class="spx-grid">
+    <div class="spx-panel">
+      <h2>Fleet &amp; payload — last 12 months</h2>
+      <div class="spx-stats">
+        <div class="spx-stat"><div class="n" id="flMass">—</div><div class="l">Est. mass to orbit (t)</div></div>
+        <div class="spx-stat"><div class="n" id="flSats">—</div><div class="l">Est. satellites deployed</div></div>
+        <div class="spx-stat"><div class="n" id="flStarShare">—</div><div class="l">Starlink share</div></div>
+        <div class="spx-stat"><div class="n" id="flSuccess">—</div><div class="l">Success rate</div></div>
+      </div>
+      <div id="flVehicles" style="margin-top:1rem;"></div>
+      <p class="spx-disclaimer">Mass and satellite figures are estimates from public per-vehicle averages (SpaceX doesn't publish per-flight mass). Launch counts and vehicle mix are from the launch record.</p>
+    </div>
+    <div class="spx-panel">
+      <h2>AI &amp; Compute — the Musk stack</h2>
+      <p class="spx-muted" style="margin:0 0 0.8rem;">SpaceX's orbital-compute push (AI satellites, data centers, Starlink backhaul) runs into the same ecosystem as xAI, Grok, and X. Live xAI metrics aren't published as a feed, so here are the primary sources the show tracks:</p>
+      <div style="display:flex;flex-direction:column;gap:0.5rem;">
+        <a class="spx-btn ghost" href="https://x.ai/news" target="_blank" rel="noopener" style="justify-content:flex-start;">xAI News — Grok models, Colossus compute ↗</a>
+        <a class="spx-btn ghost" href="https://grok.com" target="_blank" rel="noopener" style="justify-content:flex-start;">Grok ↗</a>
+        <a class="spx-btn ghost" href="https://cursor.com/changelog" target="_blank" rel="noopener" style="justify-content:flex-start;">Cursor changelog — Grok in the editor ↗</a>
+        <a class="spx-btn ghost" href="spacex.html#resources" style="justify-content:flex-start;">All AI &amp; partnership resources →</a>
+      </div>
+    </div>
+  </div>
+
   <div class="spx-grid" style="grid-template-columns:1fr;">
     <div class="spx-panel">
       <h2>Upcoming manifest</h2>
@@ -914,12 +938,31 @@
     wrap.innerHTML = list.map(x=>'<div class="spx-upcoming-item"><span>'+(x.name||'Launch')+'</span><span class="when">'+(x.net?fmtLocal(x.net):'TBD')+'</span></div>').join('');
   }
 
+  function renderFleet(f){
+    if(!f) return;
+    const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=(v==null?'—':v);};
+    set('flMass', f.est_mass_to_orbit_tonnes!=null ? Number(f.est_mass_to_orbit_tonnes).toLocaleString() : '—');
+    set('flSats', f.est_satellites_deployed!=null ? Number(f.est_satellites_deployed).toLocaleString() : '—');
+    set('flStarShare', f.starlink_share_pct!=null ? f.starlink_share_pct+'%' : '—');
+    set('flSuccess', f.success_rate_pct!=null ? f.success_rate_pct+'%' : '—');
+    const bv = f.by_vehicle || {};
+    const wrap = document.getElementById('flVehicles');
+    if(wrap){
+      const entries = Object.entries(bv).sort((a,b)=>b[1]-a[1]);
+      if(entries.length){
+        wrap.innerHTML = '<div class="spx-muted" style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Launches by vehicle</div>' +
+          entries.map(([k,v])=>'<div class="spx-upcoming-item"><span>'+k+'</span><span class="when">'+v+'</span></div>').join('');
+      }
+    }
+  }
+
   function applyLaunches(data){
     if(!data) return;
     renderNext(data.next);
     renderPrev(data.previous);
     renderStats(data.stats, data.total_launches);
     renderCadence(data.cadence_monthly);
+    renderFleet(data.fleet);
     renderUpcoming(data.upcoming);
   }
 

@@ -25,12 +25,20 @@ sources:
     label: "Google News — SpaceX Starship"
   - url: "https://news.google.com/rss/search?q=SpaceX+Starlink+launch&hl=en-US&gl=US&ceid=US:en"
     label: "Google News — SpaceX Starlink launch"
+  - url: "https://news.google.com/rss/search?q=SpaceX+Raptor+OR+Starbase+OR+%22launch+pad%22&hl=en-US&gl=US&ceid=US:en"
+    label: "Google News — SpaceX hardware & infrastructure"
+  - url: "https://news.google.com/rss/search?q=SpaceX+%22AI+satellite%22+OR+%22orbital+data+center%22+OR+Starshield&hl=en-US&gl=US&ceid=US:en"
+    label: "Google News — SpaceX AI satellites & Starshield"
+  - url: "https://news.google.com/rss/search?q=xAI+OR+Grok+datacenter+OR+Colossus+OR+%22direct+to+cell%22&hl=en-US&gl=US&ceid=US:en"
+    label: "Google News — xAI / Grok / compute"
 
 web_search_queries:
   - SpaceX news today
   - Starship launch update
   - SPCX stock market news
-  - commercial space industry news today
+  - SpaceX Raptor Starship launch infrastructure news
+  - SpaceX orbital data center AI satellites Starshield
+  - xAI Grok datacenter Colossus news
 
 keywords:
   - spacex
@@ -51,6 +59,21 @@ keywords:
   - mechazilla
   - spcx
   - nasdaq
+  # Launch infrastructure & hardware breadth
+  - gigabay
+  - tower catch
+  - orbital refueling
+  - launch pad
+  - starshield
+  - direct to cell
+  - ai satellite
+  - orbital data center
+  # Musk-ecosystem AI thread (the dedicated AI section)
+  - xai
+  - grok
+  - colossus
+  - data center
+  - datacenter
 
 # Curated like TST's commentator roster (landmine: the X fetch prompt
 # requires SUBSTANTIVE posts — emoji-spam accounts were removed from the
@@ -74,6 +97,13 @@ x_accounts:
   - handle: StarshipGazer
     label: StarshipGazer
     max_posts: 3
+  # Musk-ecosystem AI thread (the dedicated AI section)
+  - handle: xai
+    label: xAI
+    max_posts: 3
+  - handle: grok
+    label: Grok
+    max_posts: 2
 
 min_articles: 8
 min_articles_skip: 5
@@ -87,11 +117,21 @@ llm:
   podcast_temperature: 0.7
   max_tokens: 4000
   podcast_max_tokens: 8000
-  # ONE unified length target (June 2026 lesson): the prompt states
-  # 1,900-2,200 words ~ 12-14 min exactly once; this floor sits just
+  # ONE unified length target (June 2026): the prompt states
+  # 1,500-1,900 words ~ 11-14 min exactly once; this floor sits just
   # under it so the digest-carrying expand-retry fires on anything
   # short of a full episode.
-  min_podcast_words: 1700
+  #
+  # Recalibrated 1700 -> 1300 after Ep2 SKIPPED (912w): grok-4.3 plateaus
+  # and a news show's podcast is capped by its digest, so a thin Saturday
+  # (worsened by Ep1's one-time double-run polluting the 7-day URL dedup)
+  # fell under the old soft skip floor (0.6 x 1700 = 1020). The same
+  # digest-ceiling/plateau the FF/UC/FP reviews documented. The fix that
+  # preserves quality is the Engineering Deep Dive length lever (licensed
+  # to use the model's own physics/economics knowledge) in the podcast
+  # prompt; this floor change just stops a quality-adequate ~10-min
+  # episode from skipping (soft skip floor now 0.6 x 1300 = 780 ~ 5 min).
+  min_podcast_words: 1300
   podcast_expand_below_target: true
   podcast_chain: true
 
@@ -162,6 +202,8 @@ chapters:
       title: "The Counterpoint"
     - pattern: "engineering deep dive|engineering angle|from an engineering standpoint|the engineering reality"
       title: "The Engineering Angle"
+    - pattern: "on the ai front|the ai and compute|ai and compute side|over in the ai"
+      title: "AI & Compute"
     - pattern: "Before we go|before we wrap"
       title: "Tomorrow Teaser"
       where: end

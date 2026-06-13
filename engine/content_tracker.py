@@ -342,7 +342,13 @@ SPACEX_SECTION_PATTERNS: Dict[str, str] = {
         r"(.*?)"
         # June 2026 engineering rebalance renamed the flagship essay
         # "Engineering Deep Dive"; keep the old name as a fallback so
-        # historical digests still parse.
+        # historical digests still parse. The AI & Compute section was
+        # inserted between Counterpoint and the deep dive.
+        r"(?=━━|### AI & Compute|### Engineering Deep Dive|### The Engineering Angle|$)"
+    ),
+    "ai_compute": (
+        r"(?:### AI & Compute)"
+        r"(.*?)"
         r"(?=━━|### Engineering Deep Dive|### The Engineering Angle|$)"
     ),
     "deep_dive": (
@@ -758,6 +764,7 @@ class ContentTracker:
             "industry_practice": "INDUSTRY & PRACTICE TOPICS",
             "explain_like_14": "EXPLAIN LIKE I'M 14 TOPICS",
             "counterpoint": "COUNTERPOINT TOPICS",
+            "ai_compute": "AI & COMPUTE TOPICS",
         }
         for key, label in section_labels.items():
             items = self.get_recent_section_content(key, max_items=limits.get(key, 7))

@@ -1193,7 +1193,22 @@ button { font-family: var(--font-ui); cursor: pointer; }
 
 @media (min-width: 1024px) {
   .orbit-card { width: 120px; height: 120px; }
-  .hero-show-orbit { gap: 22px; flex-wrap: nowrap; }
+  /* Wrap on desktop too (was nowrap). With 13 shows a single row
+     overflowed the 920px container and the end cards were clipped off
+     both edges; wrapping matches the mobile layout. The strip breaks out
+     wider than the 780px hero text column so 7 cards fit per row
+     (7×120 + 6×22 = 972px) → two balanced rows (7+6). Width is clamped
+     to the viewport (minus gutters) and re-centred with the
+     margin-left:50% + translateX(-50%) trick since it's wider than its
+     parent. */
+  .hero-show-orbit {
+    gap: 22px;
+    flex-wrap: wrap;
+    width: min(980px, calc(100vw - 48px));
+    max-width: none;
+    margin-left: 50%;
+    transform: translateX(-50%);
+  }
 }
 
 /* CTA pulse animation */

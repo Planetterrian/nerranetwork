@@ -137,6 +137,80 @@ def _stats(previous: List[Dict[str, Any]], now: _dt.datetime) -> Dict[str, Any]:
     }
 
 
+# Representative payload-to-orbit per vehicle/mission, in tonnes. Used ONLY
+# for the clearly-labelled "estimated mass to orbit" headline — SpaceX
+# doesn't publish per-flight mass, so these are conservative public
+# averages, not measured values.
+_MASS_T = {
+    "falcon9_starlink": 17.0,   # v2-mini Starlink batch to LEO
+    "falcon9_other": 9.0,       # mixed F9 manifest (rideshare/GTO/crew/cargo)
+    "falcon_heavy": 26.0,       # representative FH payload
+    "starship": 0.0,            # test flights — no payload to orbit yet
+}
+# Representative Starlink satellites per Falcon 9 launch (v2-mini batches
+# run ~21-28; 23 is a conservative public average). Estimate only.
+_SATS_PER_STARLINK_LAUNCH = 23
+
+
+def _fleet_payload(previous: List[Dict[str, Any]], now: _dt.datetime) -> Dict[str, Any]:
+    """Accurate fleet stats + clearly-estimated mass/satellite headlines for
+    the dashboard, computed over the last 365 days of fetched launches."""
+    def _parse(net):
+        try:
+            return _dt.datetime.fromisoformat((net or "").replace("Z", "+00:00"))
+        except (ValueError, AttributeError):
+            return None
+
+    recent = [r for r in previous if (_parse(r.get("net")) and (now - _parse(r.get("net"))).days <= 365)]
+    by_vehicle: Dict[str, int] = {}
+    starlink = 0
+    est_mass = 0.0
+    est_sats = 0
+    decided = 0
+    successes = 0
+    last_failure = None
+    for r in recent:
+        rocket = (r.get("rocket") or "Other").strip()
+        by_vehicle[rocket] = by_vehicle.get(rocket, 0) + 1
+        name = (r.get("name") or "").lower()
+        is_starlink = "starlink" in name
+        if is_starlink:
+            starlink += 1
+            est_sats += _SATS_PER_STARLINK_LAUNCH
+        # mass estimate
+        rl = rocket.lower()
+        if "heavy" in rl:
+            est_mass += _MASS_T["falcon_heavy"]
+        elif "starship" in rl:
+            est_mass += _MASS_T["starship"]
+        elif "falcon" in rl:
+            est_mass += _MASS_T["falcon9_starlink"] if is_starlink else _MASS_T["falcon9_other"]
+        else:
+            est_mass += _MASS_T["falcon9_other"]
+        # success rate (only count launches with a decided status)
+        abbr = (r.get("status") or "").lower()
+        if abbr in ("success", "failure", "partial failure"):
+            decided += 1
+            if abbr == "success":
+                successes += 1
+            else:
+                d = _parse(r.get("net"))
+                if d and (last_failure is None or d > last_failure):
+                    last_failure = d
+    total_recent = len(recent)
+    return {
+        "window_days": 365,
+        "by_vehicle": by_vehicle,
+        "starlink_launches": starlink,
+        "starlink_share_pct": round(100 * starlink / total_recent) if total_recent else None,
+        "est_mass_to_orbit_tonnes": round(est_mass),
+        "est_satellites_deployed": est_sats,
+        "success_rate_pct": round(100 * successes / decided, 1) if decided else None,
+        "days_since_last_failure": (now - last_failure).days if last_failure else None,
+        "estimated": True,  # mass + satellite figures are estimates
+    }
+
+
 def _fetch_previous_paginated(now: _dt.datetime, max_pages: int = 4) -> tuple[List[Dict[str, Any]], Optional[int]]:
     """Walk the previous-launches feed until ~13 months of history is
     covered (SpaceX flies ~12-15/month, so a true 12-month cadence chart
@@ -208,6 +282,7 @@ def build_payload() -> Optional[Dict[str, Any]]:
         "upcoming": upcoming_list,
         "cadence_monthly": _monthly_cadence(slim_prev),
         "stats": _stats(slim_prev, now),
+        "fleet": _fleet_payload(slim_prev, now),
         "total_launches": prev_total,
         "source": "thespacedevs_ll2",
         "updated_at": now.isoformat(),

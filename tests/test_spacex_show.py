@@ -51,7 +51,10 @@ class TestConfigLoads:
 
     def test_one_length_target_with_expand_retry(self):
         cfg = load_config(_ROOT / "shows/spacex.yaml")
-        assert cfg.llm.min_podcast_words == 1700
+        # Recalibrated 1700 -> 1300 after Ep2 skipped on a thin day (grok-4.3
+        # plateau + digest ceiling); the Engineering Deep Dive length lever
+        # is the quality-preserving fix in the podcast prompt.
+        assert cfg.llm.min_podcast_words == 1300
         assert cfg.llm.podcast_expand_below_target is True
 
     def test_memory_enabled_and_registered(self):
@@ -144,12 +147,12 @@ class TestPromptContracts:
         )
 
     def test_system_prompt_length_agrees_with_podcast_prompt(self):
-        # The scaffolded system prompt said 10-12 min while the podcast
-        # prompt demanded 12-14 — the contradictory-length class every
-        # June 2026 review fixed. Both must state the same window.
+        # The system + podcast prompts must state the SAME length window
+        # (the contradictory-length class every June 2026 review fixed).
+        # Recalibrated to 11-14 min after the Ep2 thin-day skip.
         system = (_ROOT / "shows/prompts/spacex_system.txt").read_text(encoding="utf-8")
-        assert "12–14 minutes" in system
-        assert "10-12" not in system and "10–12" not in system
+        assert "11–14 minutes" in system
+        assert "10-12" not in system and "10–12" not in system and "12–14" not in system
 
 
 class TestIpoPositioning:
@@ -327,3 +330,90 @@ class TestLaunchDashboard:
         html = (_ROOT / "spacex.html").read_text(encoding="utf-8") if (_ROOT / "spacex.html").exists() else ""
         if html:
             assert "spacex-dashboard.html" in html
+
+
+class TestComprehensiveCoverageAndAISection:
+    """June 13 2026: broaden coverage to the whole SpaceX business + a
+    dedicated AI section (SpaceX↔xAI/Grok/X), per operator direction."""
+
+    def test_keywords_cover_business_breadth_and_ai(self):
+        cfg = yaml.safe_load((_ROOT / "shows/spacex.yaml").read_text(encoding="utf-8"))
+        kw = {k.lower() for k in cfg["keywords"]}
+        for needed in ("xai", "grok", "raptor", "starship", "starlink",
+                       "gigabay", "ai satellite", "orbital data center"):
+            assert needed in kw, needed
+
+    def test_ai_x_accounts_present(self):
+        cfg = yaml.safe_load((_ROOT / "shows/spacex.yaml").read_text(encoding="utf-8"))
+        handles = {a["handle"].lower() for a in cfg["x_accounts"]}
+        assert "xai" in handles and "grok" in handles
+
+    def test_digest_and_podcast_have_ai_section(self):
+        digest = (_ROOT / "shows/prompts/spacex_digest.txt").read_text(encoding="utf-8")
+        podcast = (_ROOT / "shows/prompts/spacex_podcast.txt").read_text(encoding="utf-8")
+        assert "### AI & Compute" in digest
+        assert "AI & Compute" in podcast and "On the AI front" in podcast
+        # business-breadth instruction present
+        assert "COVER THE WHOLE BUSINESS" in digest
+
+    def test_ai_chapter_marker_and_tracker(self):
+        cfg = yaml.safe_load((_ROOT / "shows/spacex.yaml").read_text(encoding="utf-8"))
+        titles = {m["title"] for m in cfg["chapters"]["section_markers"]}
+        assert "AI & Compute" in titles
+        from engine.content_tracker import SPACEX_SECTION_PATTERNS
+        assert "ai_compute" in SPACEX_SECTION_PATTERNS
+
+    def test_ai_section_chapter_parses(self):
+        # A script with the AI entry phrase yields an "AI & Compute" chapter.
+        script = "\n".join([
+            "Hey, welcome to SpaceX Daily, episode five. I'm Patrick in Vancouver.",
+            "Here's what's happening at SpaceX today.",
+            *[f"Body sentence {i} with launch detail." for i in range(20)],
+            "One thing worth watching is the FAA timeline.",
+            "On the AI front, SpaceX's orbital data center plan ties into xAI's Colossus compute.",
+            "From an engineering standpoint, reuse drives the cost curve.",
+            "Before we go, watch the static fire window.",
+            "That's a wrap on today's SpaceX developments. See you tomorrow.",
+        ])
+        chapters = parse_chapters(script, _spacex_markers(), show_name="SpaceX Daily")
+        titles = [c.title for c in chapters]
+        assert "AI & Compute" in titles, titles
+
+
+class TestResourcesAndDashboardStatsExpansion:
+    """June 13 2026: xAI/Cursor/partnership resources + dashboard fleet stats."""
+
+    def test_resources_include_xai_cursor_partnerships(self):
+        import generate_html as g
+        cats = {c["title"]: c for c in g.NETWORK_SHOWS["spacex"]["resource_categories"]}
+        ai = next((c for t, c in cats.items() if "AI" in t and "Compute" in t), None)
+        assert ai, list(cats)
+        names = {r["name"] for r in ai["resources"]}
+        assert "Cursor" in names and any("xAI" in n for n in names)
+        assert "Partnerships & Customers" in cats
+        part_names = {r["name"] for r in cats["Partnerships & Customers"]["resources"]}
+        assert any("NASA" in n for n in part_names)
+        for c in g.NETWORK_SHOWS["spacex"]["resource_categories"]:
+            for r in c["resources"]:
+                assert r["url"].startswith("https://"), r
+
+    def test_fleet_payload_computes(self):
+        import importlib.util, datetime as dt
+        spec = importlib.util.spec_from_file_location(
+            "fetch_spacex_launches", _ROOT / "scripts" / "fetch_spacex_launches.py")
+        mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+        now = dt.datetime(2026, 6, 13, tzinfo=dt.timezone.utc)
+        prev = [
+            {"net": "2026-06-01T00:00:00Z", "rocket": "Falcon 9", "name": "Starlink Group 1-1", "status": "Success"},
+            {"net": "2026-05-20T00:00:00Z", "rocket": "Falcon 9", "name": "NROL-1", "status": "Success"},
+            {"net": "2026-04-10T00:00:00Z", "rocket": "Falcon Heavy", "name": "USSF-1", "status": "Success"},
+            {"net": "2026-03-01T00:00:00Z", "rocket": "Starship", "name": "Flight 12", "status": "Failure"},
+        ]
+        f = mod._fleet_payload(prev, now)
+        assert f["by_vehicle"]["Falcon 9"] == 2
+        assert f["starlink_launches"] == 1
+        assert f["est_satellites_deployed"] == 23  # 1 starlink x 23
+        # mass: F9 starlink 17 + F9 other 9 + FH 26 + starship 0 = 52
+        assert f["est_mass_to_orbit_tonnes"] == 52
+        assert f["success_rate_pct"] == 75.0  # 3/4
+        assert f["estimated"] is True
