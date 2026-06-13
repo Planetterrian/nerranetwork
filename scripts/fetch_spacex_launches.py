@@ -301,6 +301,9 @@ def _update_metrics_timeseries(monthly: List[Dict[str, Any]], now: _dt.datetime,
         # Curated Starship integrated flight-test record (operator-maintained;
         # outside the Falcon launch window). Preserved across runs.
         "starship_flights": existing.get("starship_flights", {}),
+        # Curated annual launch totals (the long-arc growth story, predating the
+        # 13-month detailed window). Preserved across runs.
+        "annual_launches": existing.get("annual_launches", {}),
     }
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -325,6 +328,19 @@ def _starship_flights(path: Path = _METRICS_PATH) -> Dict[str, Any]:
     except Exception as exc:
         logger.warning("Could not read starship_flights (non-fatal): %s", exc)
     return {"flights": []}
+
+
+def _annual_launches(path: Path = _METRICS_PATH) -> Dict[str, Any]:
+    """Read the curated annual launch totals (long-arc growth story) from the
+    committed metrics file. Predates the 13-month detailed window."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+        al = data.get("annual_launches") if isinstance(data, dict) else None
+        if isinstance(al, dict) and isinstance(al.get("years"), list):
+            return al
+    except Exception as exc:
+        logger.warning("Could not read annual_launches (non-fatal): %s", exc)
+    return {"years": []}
 
 
 def _fleet_payload(previous: List[Dict[str, Any]], now: _dt.datetime) -> Dict[str, Any]:
@@ -472,6 +488,7 @@ def build_payload() -> Optional[Dict[str, Any]]:
         "stats": _stats(slim_prev, now),
         "fleet": fleet,
         "starship": _starship_flights(),
+        "annual_launches": _annual_launches(),
         "total_launches": prev_total,
         "source": "thespacedevs_ll2",
         "updated_at": now.isoformat(),

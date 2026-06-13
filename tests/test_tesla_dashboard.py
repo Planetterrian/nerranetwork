@@ -238,6 +238,23 @@ class TestStarshipTracker:
         # Catch count must be the deterministic flag, not prose-matching.
         assert "f.booster_caught===true" in t
 
+    def test_annual_launches_growth_series(self):
+        data = json.loads((_ROOT / "site/data/spacex_metrics.json").read_text(encoding="utf-8"))
+        al = data.get("annual_launches") or {}
+        years = al.get("years") or []
+        assert len(years) >= 5
+        for y in years:
+            assert y.get("year") and isinstance(y["launches"], int)
+        # Fetcher reads it + carries it into the payload + preserves across runs.
+        m = self._mod()
+        assert len(m._annual_launches().get("years", [])) >= 5
+        import inspect
+        assert '"annual_launches": _annual_launches()' in inspect.getsource(m.build_payload)
+        assert 'existing.get("annual_launches"' in inspect.getsource(m._update_metrics_timeseries)
+        # Dashboard renders it.
+        t = (_ROOT / "templates/spacex_dashboard.html.j2").read_text(encoding="utf-8")
+        assert "spxAnnual" in t and "renderAnnual" in t and "data.annual_launches" in t
+
     def test_grid_uses_minmax_zero_for_mobile_safety(self):
         # minmax(0,1fr) prevents grid items overflowing on narrow viewports.
         t = (_ROOT / "templates/spacex_dashboard.html.j2").read_text(encoding="utf-8")
