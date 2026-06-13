@@ -1,0 +1,97 @@
+What's up? Welcome to Models and Agents. Episode 79 is June 13th, 2026. Another day,
+another round of AI developments. Let's break it down. US export controls just forced and
+thropic to pull its newest frontier models offline for every user worldwide. The US government
+issued an export control directive requiring anthropic to suspend all access to Fable 5 and Mythos 5
+by any foreign national, including its own employees. The company responded by disabling the two
+newest models for every customer to maintain compliance, while all other clawed models remain
+available. The directive cites national security authorities and applies both inside and outside
+the United States. Anthropic called the order a misunderstanding and stated it is working to restore
+access. Builders relying on the latest clawed releases for agentic coding or research tasks must
+immediately re-root workloads to unaffected models or alternative providers. This continues the safety
+and policy developments from recent episodes, where regulatory actions are directly altering which
+frontier models stay accessible. Moonshot AI open-sourced Kimi K2.7 code, a coding model that reduces
+thinking token usage by roughly 30% while claiming double-digit gains on internal benchmarks.
+That brings us to the model updates. Moonshot AI released Kimi K2.7 code under a modified
+MIT license as an open source update to its K2.6 coding model. The new model uses the same
+trillion parameter M-extra of experts architecture, adds a 256,000 token context window,
+and reduces reasoning token usage by approximately 30%. It reports gains of 21.8% on Kimi code
+bench V2, 11% on program bench, and 31.5% on MLS bench light, all proprietary benchmarks.
+The model runs exclusively in thinking mode with temperature fixed at 1.0 and is available
+through the Kimi API and Kimi code. This moves the open-weight models conversation forward by showing
+concrete token efficiency gains on coding benchmarks. Open AI began rolling out the ability for go,
+plus pro, and business users to bank codex rate limit resets for later use, starting each with
+one free reset. Plus, and pro users can also invite up to three friends to try codex for two weeks.
+Both parties receive an extra banked reset when the friend sends their first message.
+The changes address user requests for more flexible usage timing. Developers running
+sustained codex workloads can now plan around saved resets rather than daily explorations.
+Now for agent and tool developments, GitHub updated co-pilot CLI with better orchestration logic
+that reduces unnecessary hand-offs between agents. The change improves progress speed on multi-step
+tasks without requiring users to adjust any new settings. It builds on existing delegation patterns
+while tightening when the CLI decides to pass work to another component. Teams using co-pilot CLI
+for terminal-based coding can test the update immediately for fewer context switches.
+This fits the ongoing agents and tool use arc, where small refinements to orchestration
+are improving reliability on multi-step workflows. NanoClaw agents now root all package, CLI
+tool, and MCP server requests exclusively through jfrog registries, blocking installation of
+unvetted or malicious dependencies. When a request is rejected, the agent receives a 403 policy error
+and is guided to an approved alternative. The integration is free for open source users via jfrog's
+public-vetted registry and plugs directly into enterprise jfrog environments for compliance tracking.
+Operators gain a system of record for every package and agent consumes without manual approval steps.
+UC Berkeley, Princeton, EP, FL, and Databricks researchers released PixelRag,
+which renders web pages as screenshots, indexes image tiles with Quinn 3VL embedding 2B
+and feeds them to vision language models. On simple QA, it reaches 78.8% accuracy versus 71.6%
+for the strongest text parser, with similar gains on table and multi-modal tasks.
+An agent using PixelRag consumed 3.6 million prompt tokens versus 37.5 million for text retrieval
+on the same workload. The system requires Quinn 3VL 4B class models or larger.
+Smaller models lose the accuracy advantage. In the practical and community section,
+a community developer has made available a fresh C++ port of paddle OCR versions 3-6 that
+leverages the NCNN inference engine. This implementation eliminates reliance on the resource
+intensive official paddle C++ runtime components. As a result, setup for OCR functionality
+becomes more straightforward and execution times improve. The full source code along with usage
+examples resides in a GitHub repository maintained by the original contributor. Anyone working on
+device local or minimal dependency OCR applications can integrate this solution directly.
+It bypasses the need to handle the complete paddle software environment during deployment.
+The release was shared via a post in the machine learning subreddit.
+Allen AI has introduced Olmo EVAL as a dedicated evaluation workbench.
+The tool is structured to integrate directly into cycles of model development and refinement.
+It provides standardized metrics along with logging capabilities for consistent tracking.
+Open models benefit from this setup during rapid experimentation phases.
+Teams engaged in training or fine-tuning processes can utilize it to maintain uniform
+evaluation standards. No requirement exists to construct bespoke evaluation harnesses when
+using this workbench. Details on initial configuration appear in the Allen AI portion of the
+hugging face blog. Okay, let's pop the hood on this faithful uncertainty technique from the
+Google researchers. Everyone talks about reducing hallucinations as if the only options are
+answer everything or refuse when uncertain. In practice, faithful uncertainty separates a model's
+internal statistical confidence from the linguistic signals it uses to express doubt.
+The core mechanism trains the model to output hedging phrases such as
+my best guess is only when it's own token probabilities for the factual claim fall below a
+learned threshold. This alignment avoids the utility tax that occurs when strict
+abstention discards large numbers of correct answers the model actually knows. Adding the technique
+requires supervised fine-tuning on uncertainty labeled data which creates a bootstrapping problem
+because the correct label depends on what that specific model knows at training time.
+In agentic systems, the payoff appears in tool use decisions. The model can decide whether to
+invoke search or trusted parameters without external classifiers. The practical limit is that
+prompting alone cannot fully close the gap. Reinforcement learning on uncertainty aware trajectories
+is still required for production reliability. Teams should adopt faithful uncertainty prompting
+today for low stakes chat while planning RL stages for any long horizon agent. This reasoning
+models development points toward future stages that bake metacognition deeper into frontier models.
+Here are the things to try this week. Swap kimi key 2.7 code into any open AI compatible gateway
+you already run for coding agents and measure thinking, hang token, reduction on your own workloads.
+Wrote nano-cloth agents through a jfrog registry, free for open source if you need an immediate
+block on unvetted package installs. Test pixel rag on a Wikipedia scale factual QA task.
+If your current text rag pipeline loses structured content, start with QN3VL4B or larger.
+Update your codex usage pattern to bank rate limit resets now that the feature is rolling out to
+paid tiers. Add hedging prompts that mirror faithful uncertainty phrasing to any agent that
+currently oscillates between overconfident answers and full refusals. On the horizon,
+Anthropic continues working with regulators to restore fable 5 and mythos 5 access. Watch for
+an update on affected customer workloads. Moonshot AI has not yet submitted kimi key 2.7 code
+to independent benchmarks such as dbestwe. Expect community runs in the coming weeks.
+More visual retrieval systems are likely to appear as teams replicate the pixel rag screenshot
+tiling approach on domain specific corpora. Before we go, tomorrow keep an eye on any anthropic
+update about restoring access to the suspended models. That's models and agents for today.
+If you found this useful, share it with someone who's trying to keep up with all these changes
+and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep
+up. See you tomorrow. And before you go, this show is part of the NARA network, a family of daily
+podcasts covering tech, science, markets, and more. If you enjoyed today's episode, give Planetarian
+Daily a listen. Daily breakthroughs in science, health, and longevity. You can explore the whole
+lineup at NARAnetwork.com. This episode used AI voice synthesis of my voice. Editorial selection
+and analysis are my own.
