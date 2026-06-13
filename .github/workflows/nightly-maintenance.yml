@@ -75,6 +75,13 @@ jobs:
         # api/op3_stats.json is missing or has no entry for a show.
         run: python scripts/update_performance_trackers.py
 
+      - name: Refresh SpaceX launch dashboard data
+        # Next/previous launch, 12-month cadence, and stats for
+        # spacex-dashboard.html (The Space Devs Launch Library 2). Keeps
+        # last-good cache on failure; refreshes even on days SpaceX's own
+        # run is skipped.
+        run: python scripts/fetch_spacex_launches.py --out api/spacex_launches.json || true
+
       - name: Generate Management Dashboard
         run: python scripts/generate_dashboard.py --out api/dashboard.json
 
@@ -111,6 +118,7 @@ jobs:
           python generate_html.py --show tesla
           # Homepage rebuild picks up the fresh popular-episodes rail +
           # newsletter subscriber social proof from the audience-stats step.
+          # --network also regenerates spacex-dashboard.html (data-light).
           python generate_html.py --network
           # Optionally regenerate full site if needed:
           # python generate_html.py --all
@@ -126,6 +134,7 @@ jobs:
             digests/fascinating_frontiers/fascinating_frontiers_performance_tracker.json
             digests/planetterrian/planetterrian_performance_tracker.json
             digests/spacex/spacex_performance_tracker.json
+            api/spacex_launches.json
             site/data/popular_episodes.json
             site/data/gallery-manifest.json
             site/data/search-index.json
@@ -134,7 +143,8 @@ jobs:
             modern-investing.html
             tesla-narrative.html
             tesla.html
-          commit-message: "Nightly maintenance: update dashboard + gallery + search index + MIT + Tesla narrative pages"
+            spacex-dashboard.html
+          commit-message: "Nightly maintenance: update dashboard + gallery + search index + MIT + Tesla narrative + SpaceX launch pages"
 
       - name: Notify on failure (webhook)
         if: failure() && env.NOTIFICATION_WEBHOOK_URL != ''

@@ -1293,6 +1293,20 @@ NETWORK_SHOWS = {
 }
 
 
+# Complete English nav/footer translation map for standalone pages that
+# extend base.html.j2 (dashboard, etc.). Mirrors the inline dicts the
+# narrative pages use, with the mobile-nav keys filled in so no label
+# renders empty.
+_NAV_T = {
+    "nav_shows": "Shows", "nav_blog": "Blog", "all_blog_posts": "All Blog Posts",
+    "show_blog_suffix": "Blog", "nav_start_here": "Start Here",
+    "nav_listen": "How to Listen", "nav_how_to_listen": "How to Listen",
+    "nav_about": "About", "nav_player": "Player", "nav_home": "Home",
+    "toggle_menu": "Toggle menu", "mobile_all_shows": "All Shows",
+    "mobile_blogs": "Blogs", "footer_network_status": "Network Status",
+}
+
+
 # Shows that render a live stock-price pill in the hero. Each show's
 # pipeline hook writes the same-origin JSON; the page JS reads it first
 # and falls back to Yahoo Finance via CORS proxies. yahoo_symbol is the
@@ -1854,6 +1868,49 @@ def generate_narrative_page(slug, *, dry_run=False):
         return out_path
     out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
     print(f"Wrote narrative page: {out_path}")
+    return out_path
+
+
+def generate_spacex_dashboard(*, dry_run=False):
+    """Render the SpaceX Launch Dashboard (spacex-dashboard.html).
+
+    A standalone themed page with a live next-launch countdown, time
+    since last launch, launch-cadence chart, SPCX price, and the upcoming
+    manifest. All data is read client-side from same-origin caches
+    (``api/spacex_launches.json`` + ``api/spcx.json``) with a live
+    Launch Library 2 fallback, so the page itself carries no data and
+    regenerates cheaply on every site build.
+    """
+    cfg = NETWORK_SHOWS.get("spacex")
+    if cfg is None:
+        return None
+    env = _get_jinja_env()
+    template = env.get_template("spacex_dashboard.html.j2")
+    context = {
+        "path_prefix": "",
+        "page_lang": "en",
+        "show_name": "SpaceX Daily",
+        "page_title": "SpaceX Launch Dashboard | Nerra Network",
+        "meta_description": (
+            "Live SpaceX launch dashboard — countdown to the next launch, time "
+            "since the last one, launch cadence, the upcoming manifest, and the "
+            "SPCX market picture. The companion to the SpaceX Daily podcast."
+        ),
+        "theme_color": cfg.get("brand_color", "#1A5CFF"),
+        "brand_color": cfg.get("brand_color", "#1A5CFF"),
+        "canonical_url": f"{GITHUB_RAW}/spacex-dashboard.html",
+        "og_image": f"{GITHUB_RAW}/{_url_encode_image(cfg['podcast_image'])}",
+        "rss_url": f"{cfg['rss_file']}",
+        "t": _NAV_T,
+        "all_shows": _build_all_shows_list(),
+    }
+    html = template.render(**context)
+    out_path = ROOT / "spacex-dashboard.html"
+    if dry_run:
+        print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
+        return out_path
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path} ({len(html):,} bytes)")
     return out_path
 
 
@@ -2663,7 +2720,8 @@ def generate_sitemap(*, dry_run=False):
                   "about.html", "how-to-listen.html", "faq.html",
                   "press.html", "contact.html", "editorial.html",
                   "gallery.html", "player.html",
-                  "modern-investing-performance.html"]:
+                  "modern-investing-performance.html",
+                  "spacex-dashboard.html"]:
         if (ROOT / extra).exists():
             urls.append((f"{base}/{extra}", "0.5", _file_lastmod(ROOT / extra)))
 
@@ -3161,6 +3219,9 @@ def main():
         # Tesla Narrative page
         if args.show == "tesla":
             generate_tesla_narrative_page(dry_run=args.dry_run)
+        # SpaceX Launch Dashboard
+        if args.show == "spacex":
+            generate_spacex_dashboard(dry_run=args.dry_run)
         # Phase 3 narrative page for other memory-enabled shows (no-op otherwise)
         generate_narrative_page(args.show, dry_run=args.dry_run)
         if args.blogs:
@@ -3180,6 +3241,7 @@ def main():
         generate_start_here_page(dry_run=args.dry_run)
         generate_about_page(dry_run=args.dry_run)
         generate_gallery_page(dry_run=args.dry_run)
+        generate_spacex_dashboard(dry_run=args.dry_run)
         generate_how_to_listen_page(dry_run=args.dry_run)
         generate_press_page(dry_run=args.dry_run)
         generate_contact_page(dry_run=args.dry_run)
@@ -3208,6 +3270,9 @@ def main():
         generate_all_summaries(dry_run=args.dry_run)
     if args.network:
         generate_network_page(dry_run=args.dry_run)
+        # The SpaceX dashboard is data-light (reads same-origin caches at
+        # runtime) so it's cheap to regenerate on every network rebuild.
+        generate_spacex_dashboard(dry_run=args.dry_run)
         # --network --blogs: regenerate network blog index only (not all posts)
         if args.blogs:
             generate_network_blog_index(dry_run=args.dry_run)

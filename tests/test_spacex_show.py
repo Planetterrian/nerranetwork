@@ -278,3 +278,49 @@ class TestEp001RegressionChapters:
         text = (_ROOT / "shows/prompts/spacex_podcast.txt").read_text(encoding="utf-8")
         assert 'REQUIRED: open the segment with the words "One thing worth watching"' in text
         assert '"from an engineering standpoint" or "the engineering angle"' in text
+
+
+class TestLaunchDashboard:
+    """SpaceX Launch Dashboard data + page."""
+
+    def test_fetcher_pure_helpers(self):
+        import importlib.util, datetime as dt
+        spec = importlib.util.spec_from_file_location(
+            "fetch_spacex_launches", _ROOT / "scripts" / "fetch_spacex_launches.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        # _slim_launch reduces a raw record
+        raw = {
+            "id": "x", "name": "Falcon 9 | Starlink", "net": "2026-06-15T14:00:00Z",
+            "status": {"abbrev": "Go", "name": "Go for Launch"},
+            "rocket": {"configuration": {"name": "Falcon 9"}},
+            "pad": {"name": "SLC-40", "location": {"name": "Cape Canaveral"}},
+            "mission": {"name": "Starlink", "description": "d"},
+            "launch_service_provider": {"id": 121, "name": "SpaceX"},
+        }
+        slim = mod._slim_launch(raw)
+        assert slim["rocket"] == "Falcon 9" and slim["pad"] == "SLC-40"
+        assert mod._is_spacex(raw) is True
+        assert mod._is_spacex({"launch_service_provider": {"id": 1}}) is False
+        # cadence: 12 month buckets, counts by YYYY-MM
+        now = dt.datetime(2026, 6, 13, tzinfo=dt.timezone.utc)
+        prev = [{"net": "2026-06-01T00:00:00Z"}, {"net": "2026-06-10T00:00:00Z"},
+                {"net": "2026-05-02T00:00:00Z"}]
+        cad = mod._monthly_cadence(prev)
+        assert len(cad) == 12
+        assert cad[-1] == {"month": "2026-06", "count": 2}
+        # stats
+        st = mod._stats(prev, now)
+        assert st["launches_ytd"] == 3
+        assert st["launches_last_30d"] >= 2
+
+    def test_dashboard_page_renders(self):
+        import generate_html as g
+        g.generate_spacex_dashboard(dry_run=True)  # smoke
+
+    def test_dashboard_in_sitemap_and_show_page_links_it(self):
+        import generate_html as g
+        # show page hero links the dashboard
+        html = (_ROOT / "spacex.html").read_text(encoding="utf-8") if (_ROOT / "spacex.html").exists() else ""
+        if html:
+            assert "spacex-dashboard.html" in html

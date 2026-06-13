@@ -56,6 +56,20 @@ def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
     context["closing_block"] = _pick_closing(price, change_str, source)
 
     context["ipo_debut_section"] = _ipo_debut_section(episode_num)
+
+    # Refresh the public launch-dashboard data (best-effort, non-fatal).
+    # Writes api/spacex_launches.json for spacex-dashboard.html; a failure
+    # keeps the last-good cache and never blocks the episode.
+    try:
+        import subprocess
+        subprocess.run(
+            [__import__("sys").executable,
+             str(_ROOT / "scripts" / "fetch_spacex_launches.py")],
+            timeout=120, cwd=str(_ROOT), check=False,
+        )
+    except Exception as exc:
+        logger.warning("Launch-dashboard data refresh failed (non-fatal): %s", exc)
+
     return context
 
 
