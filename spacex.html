@@ -507,6 +507,9 @@
                     <a href="spacex-narrative.html" class="nn-btn">Story Tracker</a>
                     
                     
+                    <a href="spacex-dashboard.html" class="nn-btn">🚀 Launch Dashboard</a>
+                    
+                    
                     
                     <a href="spacex_podcast.rss" class="nn-btn" data-show="spacex">RSS Feed</a>
                     
@@ -522,6 +525,24 @@
   Made with AI — transparently
 </a>
                 </div>
+                
+                <div class="stock-widget" id="stock-widget">
+                    <span class="ticker">SPCX</span>
+                    <span class="price" id="stock-price">--</span>
+                    <span class="change" id="stock-change">--</span>
+                    <div id="stock-updated" style="font-size:0.7rem;opacity:0.6;margin-top:2px;"></div>
+                </div>
+                
+                
+                <a href="spacex-dashboard.html" id="launch-teaser" style="display:none;margin-top:var(--sp-3);align-items:center;gap:12px;padding:10px 16px;border:1px solid rgba(120,160,255,0.3);border-radius:14px;background:linear-gradient(135deg,rgba(26,92,255,0.14),rgba(0,212,255,0.06));text-decoration:none;color:inherit;max-width:520px;">
+                    <span aria-hidden="true" style="font-size:1.4rem;line-height:1;">🚀</span>
+                    <span style="flex:1;min-width:0;">
+                        <span style="display:block;font-size:0.66rem;letter-spacing:0.12em;text-transform:uppercase;color:#7fb0ff;font-weight:700;">Next SpaceX launch</span>
+                        <span id="lt-mission" style="display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Loading…</span>
+                    </span>
+                    <span id="lt-countdown" style="font-variant-numeric:tabular-nums;font-weight:800;font-size:1.05rem;color:#fff;white-space:nowrap;">—</span>
+                    <span aria-hidden="true" style="color:#7fb0ff;font-weight:700;">→</span>
+                </a>
                 
             </div>
         </div>
@@ -615,14 +636,271 @@
 
     <!-- Resources (categorized) -->
     
+    <section id="resources" class="nn-section" style="padding-top:0;">
+        <div class="container">
+            <div class="nn-section-header" style="text-align:left;">
+                <h2>Resources &amp; Further Reading</h2>
+            </div>
+            
+            <div class="resource-category">
+                <h3 class="resource-category-title">SpaceX — Official</h3>
+                <div class="resources-grid">
+                    
+                    <a href="https://www.spacex.com" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">SpaceX.com</div>
+                        <div class="resource-card-desc">The company's official site — vehicles, missions, and capabilities</div>
+                        <div class="resource-card-url">www.spacex.com</div>
+                    </a>
+                    
+                    <a href="https://www.spacex.com/launches/" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">SpaceX Launches</div>
+                        <div class="resource-card-desc">Upcoming and past launches with mission details and webcasts</div>
+                        <div class="resource-card-url">www.spacex.com/launches/</div>
+                    </a>
+                    
+                    <a href="https://www.spacex.com/vehicles/starship/" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">Starship</div>
+                        <div class="resource-card-desc">The fully reusable launch system built for the Moon and Mars</div>
+                        <div class="resource-card-url">www.spacex.com/vehicles/starship/</div>
+                    </a>
+                    
+                    <a href="https://www.starlink.com" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">Starlink</div>
+                        <div class="resource-card-desc">SpaceX's satellite-internet constellation — the company's cash engine</div>
+                        <div class="resource-card-url">www.starlink.com</div>
+                    </a>
+                    
+                    <a href="https://x.com/SpaceX" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">SpaceX on X</div>
+                        <div class="resource-card-desc">Official launch announcements, webcasts, and mission updates</div>
+                        <div class="resource-card-url">x.com/SpaceX</div>
+                    </a>
+                    
+                    <a href="https://www.youtube.com/@SpaceX" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">SpaceX on YouTube</div>
+                        <div class="resource-card-desc">Live launch webcasts and mission replays in full</div>
+                        <div class="resource-card-url">www.youtube.com/@SpaceX</div>
+                    </a>
+                    
+                </div>
+            </div>
+            
+            <div class="resource-category">
+                <h3 class="resource-category-title">SPCX — Stock, Filings & the IPO</h3>
+                <div class="resources-grid">
+                    
+                    <a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=space+exploration+technologies&type=S-1&dateb=&owner=include&count=40" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">SpaceX S-1 / Prospectus (SEC EDGAR)</div>
+                        <div class="resource-card-desc">The registration statement behind the June 2026 IPO — the numbers, straight from the source</div>
+                        <div class="resource-card-url">www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=space+exploration+technologies&type=S-1&dateb=&owner=include&count=40</div>
+                    </a>
+                    
+                    <a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=space+exploration+technologies&type=&dateb=&owner=include&count=40" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">SEC EDGAR — all SpaceX filings</div>
+                        <div class="resource-card-desc">Every public filing as it lands — 10-Ks, 10-Qs, 8-Ks, insider forms</div>
+                        <div class="resource-card-url">www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=space+exploration+technologies&type=&dateb=&owner=include&count=40</div>
+                    </a>
+                    
+                    <a href="https://finance.yahoo.com/quote/SPCX" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">SPCX on Yahoo Finance</div>
+                        <div class="resource-card-desc">Real-time quote, charts, financials, and analyst coverage</div>
+                        <div class="resource-card-url">finance.yahoo.com/quote/SPCX</div>
+                    </a>
+                    
+                    <a href="https://www.tradingview.com/symbols/NASDAQ-SPCX/" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">SPCX on TradingView</div>
+                        <div class="resource-card-desc">Advanced charting, technicals, and community trade ideas</div>
+                        <div class="resource-card-url">www.tradingview.com/symbols/NASDAQ-SPCX/</div>
+                    </a>
+                    
+                    <a href="https://www.nasdaq.com/market-activity/stocks/spcx" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">SPCX on Nasdaq</div>
+                        <div class="resource-card-desc">Exchange-of-record quote page, volume, and corporate data</div>
+                        <div class="resource-card-url">www.nasdaq.com/market-activity/stocks/spcx</div>
+                    </a>
+                    
+                </div>
+            </div>
+            
+            <div class="resource-category">
+                <h3 class="resource-category-title">Spaceflight News & Analysis</h3>
+                <div class="resources-grid">
+                    
+                    <a href="https://www.nasaspaceflight.com" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">NASASpaceflight</div>
+                        <div class="resource-card-desc">The deepest independent launch reporting and Starbase coverage</div>
+                        <div class="resource-card-url">www.nasaspaceflight.com</div>
+                    </a>
+                    
+                    <a href="https://spacenews.com" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">SpaceNews</div>
+                        <div class="resource-card-desc">Industry, policy, and business of the space sector</div>
+                        <div class="resource-card-url">spacenews.com</div>
+                    </a>
+                    
+                    <a href="https://arstechnica.com/space/" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">Ars Technica — Space</div>
+                        <div class="resource-card-desc">Eric Berger's authoritative, skeptical spaceflight analysis</div>
+                        <div class="resource-card-url">arstechnica.com/space/</div>
+                    </a>
+                    
+                    <a href="https://spaceflightnow.com" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">Spaceflight Now</div>
+                        <div class="resource-card-desc">Launch schedules and live mission coverage</div>
+                        <div class="resource-card-url">spaceflightnow.com</div>
+                    </a>
+                    
+                    <a href="https://x.com/SciGuySpace" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">Eric Berger on X</div>
+                        <div class="resource-card-desc">Breaking SpaceX news and reporting from Ars Technica's senior space editor</div>
+                        <div class="resource-card-url">x.com/SciGuySpace</div>
+                    </a>
+                    
+                    <a href="https://x.com/thesheetztweetz" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">Michael Sheetz on X</div>
+                        <div class="resource-card-desc">CNBC's space-business reporter — the SPCX investor angle</div>
+                        <div class="resource-card-url">x.com/thesheetztweetz</div>
+                    </a>
+                    
+                </div>
+            </div>
+            
+            <div class="resource-category">
+                <h3 class="resource-category-title">Launch Tracking & Data</h3>
+                <div class="resources-grid">
+                    
+                    <a href="https://nextspaceflight.com" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">Next Spaceflight</div>
+                        <div class="resource-card-desc">Every upcoming launch with countdowns, rockets, and pads</div>
+                        <div class="resource-card-url">nextspaceflight.com</div>
+                    </a>
+                    
+                    <a href="https://flightclub.io" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">Flight Club</div>
+                        <div class="resource-card-desc">Live trajectory simulations and telemetry for orbital launches</div>
+                        <div class="resource-card-url">flightclub.io</div>
+                    </a>
+                    
+                    <a href="https://planet4589.org/space/jsr/jsr.html" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">Jonathan's Space Report</div>
+                        <div class="resource-card-desc">Jonathan McDowell's authoritative catalogue of launches and satellites</div>
+                        <div class="resource-card-url">planet4589.org/space/jsr/jsr.html</div>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/spacex/" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">r/SpaceX</div>
+                        <div class="resource-card-desc">The largest SpaceX community — launch threads and technical discussion</div>
+                        <div class="resource-card-url">www.reddit.com/r/spacex/</div>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/SpaceXLounge/" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">r/SpaceXLounge</div>
+                        <div class="resource-card-desc">Looser SpaceX discussion, speculation, and community analysis</div>
+                        <div class="resource-card-url">www.reddit.com/r/SpaceXLounge/</div>
+                    </a>
+                    
+                </div>
+            </div>
+            
+            <div class="resource-category">
+                <h3 class="resource-category-title">Musk & the xAI Ecosystem</h3>
+                <div class="resources-grid">
+                    
+                    <a href="https://x.com/elonmusk" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">Elon Musk on X</div>
+                        <div class="resource-card-desc">First-hand program updates and milestones, straight from the CEO</div>
+                        <div class="resource-card-url">x.com/elonmusk</div>
+                    </a>
+                    
+                    <a href="https://x.ai" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">xAI</div>
+                        <div class="resource-card-desc">Musk's AI company — the AI-compute thread that runs through the SpaceX story</div>
+                        <div class="resource-card-url">x.ai</div>
+                    </a>
+                    
+                    <a href="https://grok.com" class="resource-card glass-card" target="_blank" rel="noopener">
+                        <div class="resource-card-name">Grok</div>
+                        <div class="resource-card-desc">xAI's assistant — the AI that powers this show's research and voice</div>
+                        <div class="resource-card-url">grok.com</div>
+                    </a>
+                    
+                </div>
+            </div>
+            
+        </div>
+    </section>
+    
 
     <!-- Recommended Tools -->
+    
+    <section class="nn-section" style="padding-top:0;">
+        <div class="container">
+            <div class="nn-section-header" style="text-align:left;">
+                <h2>Recommended Tools</h2>
+            </div>
+            <div class="tools-grid">
+                
+                <a href="https://www.tradingview.com/symbols/NASDAQ-SPCX/" class="tool-card glass-card" target="_blank" rel="noopener">
+                    <span class="tool-badge">Free tier</span>
+                    <div class="tool-card-name">SPCX on TradingView</div>
+                    <div class="tool-card-desc">Chart SPCX with technicals and alerts</div>
+                </a>
+                
+                <a href="https://efts.sec.gov/LATEST/search-index?q=%22space+exploration+technologies%22" class="tool-card glass-card" target="_blank" rel="noopener">
+                    <span class="tool-badge">Free</span>
+                    <div class="tool-card-name">SEC EDGAR Full-Text Search</div>
+                    <div class="tool-card-desc">Search every word of every SpaceX filing</div>
+                </a>
+                
+                <a href="https://nextspaceflight.com" class="tool-card glass-card" target="_blank" rel="noopener">
+                    <span class="tool-badge">Free</span>
+                    <div class="tool-card-name">Next Spaceflight</div>
+                    <div class="tool-card-desc">Never miss a launch — schedules and countdowns</div>
+                </a>
+                
+            </div>
+        </div>
+    </section>
     
 
     <!-- Referral -->
     
 
     <!-- Key Concepts / FAQ -->
+    
+    <section id="faq" class="nn-section" style="padding-top:0;">
+        <div class="container" style="max-width:800px;">
+            <div class="nn-section-header" style="text-align:left;">
+                <h2>Key Concepts</h2>
+            </div>
+            
+            <details class="faq-item glass-card">
+                <summary class="faq-question">What is SpaceX Daily?</summary>
+                <div class="faq-answer">A daily podcast and blog that tracks SpaceX now that it's a public company (Nasdaq: SPCX). Every weekday: the day's developments with sources, what the spaceflight community is talking about, one honest counterpoint, the engineering and economics behind the headlines, and the SPCX market picture. Hosted by Patrick in Vancouver.</div>
+            </details>
+            
+            <details class="faq-item glass-card">
+                <summary class="faq-question">What is SPCX?</summary>
+                <div class="faq-answer">SPCX is SpaceX's stock ticker on the Nasdaq. SpaceX held the largest IPO in history in June 2026, pricing at $135 per share and raising about $75 billion at a valuation near $1.8 trillion. A dual-class share structure leaves Elon Musk with a controlling majority of the voting power. Nothing on this show is financial advice.</div>
+            </details>
+            
+            <details class="faq-item glass-card">
+                <summary class="faq-question">Where do the numbers come from?</summary>
+                <div class="faq-answer">Official sources wherever possible — SpaceX announcements, the SEC S-1/prospectus and later filings, and credible reporting from NASASpaceflight, SpaceNews, Ars Technica, and CNBC. Community and social posts are clearly flagged as unverified. The live SPCX price on this page is refreshed every run from market data.</div>
+            </details>
+            
+            <details class="faq-item glass-card">
+                <summary class="faq-question">How long are episodes?</summary>
+                <div class="faq-answer">About 12 to 14 minutes — enough to walk through the day's launches, programs, and market picture, short enough for a commute.</div>
+            </details>
+            
+            <details class="faq-item glass-card">
+                <summary class="faq-question">Is this just Elon Musk fan content?</summary>
+                <div class="faq-answer">No. The show is genuinely balanced: every episode carries an honest counterpoint, and the premiere named the real risks — stretched valuation, Musk's concentrated voting control, and a launch business that still loses money while Starlink carries the profit. Enthusiasm grounded in numbers is the brand.</div>
+            </details>
+            
+        </div>
+    </section>
     
 
     
@@ -1203,6 +1481,169 @@
             document.getElementById('episodes-grid').innerHTML = '<p style="color:var(--nn-text-muted);grid-column:1/-1;text-align:center;padding:2rem 0;">Episodes will appear here once available.</p>';
         }
 
+        
+        // --- Stock widget (Tesla + SpaceX) ---
+        const STOCK_TICKER = "SPCX";
+        const STOCK_JSON = "/api/spcx.json";
+        const STOCK_YAHOO = "SPCX";
+        async function loadStock() {
+            // Tracks whether the same-origin snapshot already populated a
+            // valid price. If so, a later Yahoo-fallback failure must NOT
+            // overwrite it with "Market data unavailable" (the off-hours
+            // bug: proxies fail on weekends, but the pipeline snapshot is
+            // good). Yahoo only ever UPGRADES a shown price during the day.
+            let havePrimary = false;
+            function displayPrice(price, prev, marketState = null) {
+                const p = parseFloat(price), pc = parseFloat(prev);
+                // Validate: price should be in a reasonable range
+                if (isNaN(p) || isNaN(pc) || p <= 0 || pc <= 0 || p > 99999 || pc > 99999) {
+                    if (!havePrimary) showStockError('Invalid price data');
+                    return;
+                }
+                const ch = (p - pc).toFixed(2);
+                const pct = ((p - pc) / pc * 100).toFixed(2);
+                const isUp = parseFloat(ch) >= 0;
+                document.getElementById('stock-price').textContent = '$' + p.toFixed(2);
+                const changeEl = document.getElementById('stock-change');
+                let label = '';
+                if (marketState) {
+                    const ms = String(marketState).toUpperCase();
+                    if (ms === 'PRE') label = 'Pre-Market';
+                    else if (ms.includes('POST')) label = 'After Hours';
+                    else if (ms === 'REGULAR') label = '';
+                }
+                changeEl.textContent = (isUp ? '+' : '') + ch + ' (' + (isUp ? '+' : '') + pct + '%)' + (label ? ` · ${label}` : '');
+                changeEl.className = 'change ' + (isUp ? 'up' : 'down');
+            }
+            function showStockError(msg) {
+                const priceEl = document.getElementById('stock-price');
+                const changeEl = document.getElementById('stock-change');
+                const updatedEl = document.getElementById('stock-updated');
+                if (priceEl) priceEl.textContent = '\u2014';  // ticker label already says TSLA
+                if (changeEl) changeEl.textContent = msg || 'Market data unavailable';
+                if (updatedEl) updatedEl.textContent = '';
+            }
+
+            // PRIMARY source: same-origin JSON written by the show's
+            // pipeline hook every run.  No CORS proxy, no Yahoo-Finance
+            // flakiness.  Operator caught (May 14 2026) the previous
+            // Yahoo-only path showing "Market data unavailable" because
+            // every CORS proxy was failing — yet the pipeline knew the
+            // live price the whole time.  Tolerates both the Tesla schema
+            // (market_state/fetched_at) and the SpaceX schema
+            // (change_str/updated_at) — only price + prev_close are required.
+            try {
+                const resp = await fetch(STOCK_JSON, {
+                    cache: 'no-cache',
+                    signal: AbortSignal.timeout(4000),
+                });
+                if (resp.ok) {
+                    const cached = await resp.json();
+                    const price = parseFloat(cached.price);
+                    const prev = parseFloat(cached.prev_close);
+                    if (price > 0 && prev > 0) {
+                        displayPrice(price, prev, cached.market_state || null);
+                        havePrimary = true;
+                        const updatedEl = document.getElementById('stock-updated');
+                        const ts = cached.fetched_at || cached.updated_at;
+                        if (updatedEl && ts) {
+                            try {
+                                const d = new Date(ts);
+                                updatedEl.textContent = `Updated ${d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} (snapshot)`;
+                            } catch (_) {}
+                        }
+                        // Do NOT return — fall through to Yahoo attempts.
+                        // This lets a live trading-hours quote from Yahoo upgrade
+                        // the displayed price + timestamp for visitors during the day.
+                    }
+                }
+            } catch { /* fall through to Yahoo */ }
+
+            // FALLBACK: Yahoo Finance v8 chart API via CORS proxies.
+            const yahooUrl = 'https://query2.finance.yahoo.com/v8/finance/chart/' + STOCK_YAHOO + '?interval=1d&range=5d';
+            // Yahoo Finance v6 quote API — alternative endpoint
+            const yahooQuoteUrl = 'https://query1.finance.yahoo.com/v6/finance/quote?symbols=' + STOCK_YAHOO;
+            const proxies = [
+                url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+                url => 'https://corsproxy.io/?' + encodeURIComponent(url),
+                url => url
+            ];
+
+            // Try chart API first (most reliable for price + previous close)
+            for (const makeUrl of proxies) {
+                try {
+                    const resp = await fetch(makeUrl(yahooUrl), { signal: AbortSignal.timeout(8000) });
+                    if (!resp.ok) continue;
+                    const data = await resp.json();
+                    const result = data?.chart?.result?.[0];
+                    if (!result?.meta) continue;
+                    const meta = result.meta;
+                    const price = meta.regularMarketPrice;
+                    const prev = meta.chartPreviousClose || meta.previousClose;
+                    if (price && prev) {
+                        displayPrice(price, prev, meta.marketState || null);
+                        return;
+                    }
+                } catch { /* try next proxy */ }
+            }
+
+            // Fallback: try quote API
+            for (const makeUrl of proxies) {
+                try {
+                    const resp = await fetch(makeUrl(yahooQuoteUrl), { signal: AbortSignal.timeout(8000) });
+                    if (!resp.ok) continue;
+                    const data = await resp.json();
+                    const quote = data?.quoteResponse?.result?.[0];
+                    if (quote?.regularMarketPrice && quote?.regularMarketPreviousClose) {
+                        displayPrice(quote.regularMarketPrice, quote.regularMarketPreviousClose, quote.marketState);
+                        return;
+                    }
+                } catch { /* try next proxy */ }
+            }
+
+            // All Yahoo fallbacks failed. Only show the error if the
+            // same-origin snapshot didn't already populate a good price.
+            if (!havePrimary) showStockError('Market data unavailable');
+        }
+        loadStock();
+        // Refresh stock price every 5 minutes during page session
+        setInterval(loadStock, 300000);
+        
+
+        
+        // --- Next-launch teaser strip (links to the full dashboard) ---
+        (function(){
+            const teaser = document.getElementById('launch-teaser');
+            if (!teaser) return;
+            let netMs = null;
+            function pad(n){ return String(n).padStart(2,'0'); }
+            function tick(){
+                if (netMs == null) return;
+                let diff = Math.max(0, netMs - Date.now());
+                const d = Math.floor(diff/86400000); diff -= d*86400000;
+                const h = Math.floor(diff/3600000); diff -= h*3600000;
+                const m = Math.floor(diff/60000); diff -= m*60000;
+                const s = Math.floor(diff/1000);
+                const el = document.getElementById('lt-countdown');
+                if (el) el.textContent = (d>0 ? d+'d ' : '') + pad(h)+':'+pad(m)+':'+pad(s);
+            }
+            function render(n){
+                if (!n || !n.name) return;
+                netMs = n.net ? new Date(n.net).getTime() : null;
+                const mEl = document.getElementById('lt-mission');
+                if (mEl) mEl.textContent = n.name;
+                teaser.style.display = 'flex';
+                tick(); setInterval(tick, 1000);
+            }
+            fetch('/api/spacex_launches.json', {cache:'no-cache'})
+                .then(r => r.ok ? r.json() : Promise.reject())
+                .then(d => render(d.next))
+                .catch(() => {
+                    fetch('https://ll.thespacedevs.com/2.3.0/launches/upcoming/?lsp__id=121&limit=1&ordering=net&mode=list')
+                        .then(r=>r.json()).then(d=>{ const r=(d.results||[])[0]; if(r) render({name:r.name, net:r.net}); })
+                        .catch(()=>{});
+                });
+        })();
         
 
         loadEpisodes();

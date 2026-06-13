@@ -115,6 +115,9 @@
                     {% if narrative_page_url %}
                     <a href="{{ path_prefix }}{{ narrative_page_url }}" class="nn-btn">{% if _is_ru %}Хронология{% else %}Story Tracker{% endif %}</a>
                     {% endif %}
+                    {% if show_slug == 'spacex' %}
+                    <a href="{{ path_prefix }}spacex-dashboard.html" class="nn-btn">🚀 Launch Dashboard</a>
+                    {% endif %}
                     {% if apple_podcasts_url %}
                     <a href="{{ apple_podcasts_url | with_utm(campaign=show_slug) }}" class="nn-btn" target="_blank" rel="noopener" data-show="{{ show_slug }}">Apple Podcasts</a>
                     {% endif %}
@@ -138,13 +141,24 @@
                 <div style="margin-top:var(--sp-3);">
                     {{ ai_badge(path_prefix=path_prefix, is_ru=_is_ru) }}
                 </div>
-                {% if show_slug == 'tesla' %}
+                {% if stock_widget %}
                 <div class="stock-widget" id="stock-widget">
-                    <span class="ticker">TSLA</span>
+                    <span class="ticker">{{ stock_widget.ticker }}</span>
                     <span class="price" id="stock-price">--</span>
                     <span class="change" id="stock-change">--</span>
                     <div id="stock-updated" style="font-size:0.7rem;opacity:0.6;margin-top:2px;"></div>
                 </div>
+                {% endif %}
+                {% if show_slug == 'spacex' %}
+                <a href="{{ path_prefix }}spacex-dashboard.html" id="launch-teaser" style="display:none;margin-top:var(--sp-3);align-items:center;gap:12px;padding:10px 16px;border:1px solid rgba(120,160,255,0.3);border-radius:14px;background:linear-gradient(135deg,rgba(26,92,255,0.14),rgba(0,212,255,0.06));text-decoration:none;color:inherit;max-width:520px;">
+                    <span aria-hidden="true" style="font-size:1.4rem;line-height:1;">🚀</span>
+                    <span style="flex:1;min-width:0;">
+                        <span style="display:block;font-size:0.66rem;letter-spacing:0.12em;text-transform:uppercase;color:#7fb0ff;font-weight:700;">Next SpaceX launch</span>
+                        <span id="lt-mission" style="display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Loading…</span>
+                    </span>
+                    <span id="lt-countdown" style="font-variant-numeric:tabular-nums;font-weight:800;font-size:1.05rem;color:#fff;white-space:nowrap;">—</span>
+                    <span aria-hidden="true" style="color:#7fb0ff;font-weight:700;">→</span>
+                </a>
                 {% endif %}
             </div>
         </div>
@@ -908,14 +922,23 @@
             document.getElementById('episodes-grid').innerHTML = '<p style="color:var(--nn-text-muted);grid-column:1/-1;text-align:center;padding:2rem 0;">Episodes will appear here once available.</p>';
         }
 
-        {% if show_slug == 'tesla' %}
-        // --- Stock widget (Tesla only) ---
+        {% if stock_widget %}
+        // --- Stock widget (Tesla + SpaceX) ---
+        const STOCK_TICKER = {{ stock_widget.ticker | tojson }};
+        const STOCK_JSON = {{ stock_widget.json_path | tojson }};
+        const STOCK_YAHOO = {{ stock_widget.yahoo_symbol | tojson }};
         async function loadStock() {
+            // Tracks whether the same-origin snapshot already populated a
+            // valid price. If so, a later Yahoo-fallback failure must NOT
+            // overwrite it with "Market data unavailable" (the off-hours
+            // bug: proxies fail on weekends, but the pipeline snapshot is
+            // good). Yahoo only ever UPGRADES a shown price during the day.
+            let havePrimary = false;
             function displayPrice(price, prev, marketState = null) {
                 const p = parseFloat(price), pc = parseFloat(prev);
-                // Validate: TSLA price should be in a reasonable range
+                // Validate: price should be in a reasonable range
                 if (isNaN(p) || isNaN(pc) || p <= 0 || pc <= 0 || p > 99999 || pc > 99999) {
-                    showStockError('Invalid price data');
+                    if (!havePrimary) showStockError('Invalid price data');
                     return;
                 }
                 const ch = (p - pc).toFixed(2);
@@ -942,15 +965,16 @@
                 if (updatedEl) updatedEl.textContent = '';
             }
 
-            // PRIMARY source: same-origin api/tsla.json written by the
-            // Tesla pipeline (shows/hooks/tesla.py) every run via Grok's
-            // x_search.  No CORS proxy, no Yahoo-Finance flakiness.
-            // Operator caught (May 14 2026) the previous Yahoo-only path
-            // showing "Market data unavailable" on the website because
+            // PRIMARY source: same-origin JSON written by the show's
+            // pipeline hook every run.  No CORS proxy, no Yahoo-Finance
+            // flakiness.  Operator caught (May 14 2026) the previous
+            // Yahoo-only path showing "Market data unavailable" because
             // every CORS proxy was failing — yet the pipeline knew the
-            // live price the whole time.
+            // live price the whole time.  Tolerates both the Tesla schema
+            // (market_state/fetched_at) and the SpaceX schema
+            // (change_str/updated_at) — only price + prev_close are required.
             try {
-                const resp = await fetch('/api/tsla.json', {
+                const resp = await fetch(STOCK_JSON, {
                     cache: 'no-cache',
                     signal: AbortSignal.timeout(4000),
                 });
@@ -960,10 +984,12 @@
                     const prev = parseFloat(cached.prev_close);
                     if (price > 0 && prev > 0) {
                         displayPrice(price, prev, cached.market_state || null);
+                        havePrimary = true;
                         const updatedEl = document.getElementById('stock-updated');
-                        if (updatedEl && cached.fetched_at) {
+                        const ts = cached.fetched_at || cached.updated_at;
+                        if (updatedEl && ts) {
                             try {
-                                const d = new Date(cached.fetched_at);
+                                const d = new Date(ts);
                                 updatedEl.textContent = `Updated ${d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} (snapshot)`;
                             } catch (_) {}
                         }
@@ -975,9 +1001,9 @@
             } catch { /* fall through to Yahoo */ }
 
             // FALLBACK: Yahoo Finance v8 chart API via CORS proxies.
-            const yahooUrl = 'https://query2.finance.yahoo.com/v8/finance/chart/TSLA?interval=1d&range=5d';
+            const yahooUrl = 'https://query2.finance.yahoo.com/v8/finance/chart/' + STOCK_YAHOO + '?interval=1d&range=5d';
             // Yahoo Finance v6 quote API — alternative endpoint
-            const yahooQuoteUrl = 'https://query1.finance.yahoo.com/v6/finance/quote?symbols=TSLA';
+            const yahooQuoteUrl = 'https://query1.finance.yahoo.com/v6/finance/quote?symbols=' + STOCK_YAHOO;
             const proxies = [
                 url => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
                 url => 'https://corsproxy.io/?' + encodeURIComponent(url),
@@ -996,7 +1022,7 @@
                     const price = meta.regularMarketPrice;
                     const prev = meta.chartPreviousClose || meta.previousClose;
                     if (price && prev) {
-                        displayPrice(price, prev, marketState);
+                        displayPrice(price, prev, meta.marketState || null);
                         return;
                     }
                 } catch { /* try next proxy */ }
@@ -1016,11 +1042,49 @@
                 } catch { /* try next proxy */ }
             }
 
-            showStockError('Market data unavailable');
+            // All Yahoo fallbacks failed. Only show the error if the
+            // same-origin snapshot didn't already populate a good price.
+            if (!havePrimary) showStockError('Market data unavailable');
         }
         loadStock();
         // Refresh stock price every 5 minutes during page session
         setInterval(loadStock, 300000);
+        {% endif %}
+
+        {% if show_slug == 'spacex' %}
+        // --- Next-launch teaser strip (links to the full dashboard) ---
+        (function(){
+            const teaser = document.getElementById('launch-teaser');
+            if (!teaser) return;
+            let netMs = null;
+            function pad(n){ return String(n).padStart(2,'0'); }
+            function tick(){
+                if (netMs == null) return;
+                let diff = Math.max(0, netMs - Date.now());
+                const d = Math.floor(diff/86400000); diff -= d*86400000;
+                const h = Math.floor(diff/3600000); diff -= h*3600000;
+                const m = Math.floor(diff/60000); diff -= m*60000;
+                const s = Math.floor(diff/1000);
+                const el = document.getElementById('lt-countdown');
+                if (el) el.textContent = (d>0 ? d+'d ' : '') + pad(h)+':'+pad(m)+':'+pad(s);
+            }
+            function render(n){
+                if (!n || !n.name) return;
+                netMs = n.net ? new Date(n.net).getTime() : null;
+                const mEl = document.getElementById('lt-mission');
+                if (mEl) mEl.textContent = n.name;
+                teaser.style.display = 'flex';
+                tick(); setInterval(tick, 1000);
+            }
+            fetch('/api/spacex_launches.json', {cache:'no-cache'})
+                .then(r => r.ok ? r.json() : Promise.reject())
+                .then(d => render(d.next))
+                .catch(() => {
+                    fetch('https://ll.thespacedevs.com/2.3.0/launches/upcoming/?lsp__id=121&limit=1&ordering=net&mode=list')
+                        .then(r=>r.json()).then(d=>{ const r=(d.results||[])[0]; if(r) render({name:r.name, net:r.net}); })
+                        .catch(()=>{});
+                });
+        })();
         {% endif %}
 
         loadEpisodes();

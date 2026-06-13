@@ -3,29 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Daily Tesla Shorts Time podcast — Tesla news, TSLA stock, FSD updates, and sustainable energy progress.">
+    <meta name="description" content="Live SpaceX launch dashboard — countdown to the next launch, time since the last one, launch cadence, the upcoming manifest, and the SPCX market picture. The companion to the SpaceX Daily podcast.">
     
-    <meta name="keywords" content="Tesla podcast, TSLA news, Tesla stock, EV analysis, Tesla Shorts Time, daily digests">
-    <title>Tesla Shorts Time | Summaries</title>
-    <meta name="theme-color" content="#E31937">
+    
+    <title>SpaceX Launch Dashboard | Nerra Network</title>
+    <meta name="theme-color" content="#1A5CFF">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Tesla Shorts Time | Summaries">
-    <meta property="og:description" content="Daily Tesla Shorts Time podcast — Tesla news, TSLA stock, FSD updates, and sustainable energy progress.">
+    <meta property="og:title" content="SpaceX Launch Dashboard | Nerra Network">
+    <meta property="og:description" content="Live SpaceX launch dashboard — countdown to the next launch, time since the last one, launch cadence, the upcoming manifest, and the SPCX market picture. The companion to the SpaceX Daily podcast.">
     <meta property="og:type" content="website">
-    <meta property="og:image" content="https://nerranetwork.com/assets/covers/tesla-shorts-time.jpg">
-    <meta property="og:url" content="https://nerranetwork.com/tesla-summaries.html">
+    <meta property="og:image" content="https://nerranetwork.com/assets/covers/spacex.jpg">
+    <meta property="og:url" content="https://nerranetwork.com/spacex-dashboard.html">
     <meta property="og:site_name" content="Nerra Network">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Tesla Shorts Time | Summaries">
-    <meta name="twitter:description" content="Daily Tesla Shorts Time podcast — Tesla news, TSLA stock, FSD updates, and sustainable energy progress.">
-    <meta name="twitter:image" content="https://nerranetwork.com/assets/covers/tesla-shorts-time.jpg">
+    <meta name="twitter:title" content="SpaceX Launch Dashboard | Nerra Network">
+    <meta name="twitter:description" content="Live SpaceX launch dashboard — countdown to the next launch, time since the last one, launch cadence, the upcoming manifest, and the SPCX market picture. The companion to the SpaceX Daily podcast.">
+    <meta name="twitter:image" content="https://nerranetwork.com/assets/covers/spacex.jpg">
 
-    <link rel="canonical" href="https://nerranetwork.com/tesla-summaries.html">
+    <link rel="canonical" href="https://nerranetwork.com/spacex-dashboard.html">
     
-    <link rel="alternate" type="application/rss+xml" title="Tesla Shorts Time RSS" href="podcast.rss">
+    <link rel="alternate" type="application/rss+xml" title="SpaceX Daily RSS" href="spacex_podcast.rss">
     
     
     
@@ -62,14 +62,119 @@
     <link rel="stylesheet" href="styles/main.css">
 
     
+<style>
+  /* ---- SpaceX Launch Dashboard (scoped under .spx-dash) ---- */
+  .spx-dash {
+    --spx-blue: #1A5CFF;
+    --spx-cyan: #00D4FF;
+    --spx-ink: #0a1020;
+    position: relative;
+    color: #eaf0ff;
+  }
+  .spx-hero-wrap {
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(26,92,255,0.28), transparent 60%),
+      linear-gradient(180deg, #05080f 0%, #0a1124 60%, #0a0f1e 100%);
+    border-bottom: 1px solid rgba(120,160,255,0.15);
+  }
+  .spx-stars {
+    position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  }
+  .spx-container {
+    position: relative; z-index: 1;
+    max-width: 1120px; margin: 0 auto;
+    padding: calc(var(--nav-height) + 2.5rem) 1.25rem 2rem;
+  }
+  .spx-kicker {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--spx-cyan); font-weight: 700; margin-bottom: 0.6rem;
+  }
+  .spx-kicker .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--spx-cyan);
+    box-shadow: 0 0 10px var(--spx-cyan); animation: spx-pulse 1.8s infinite; }
+  @keyframes spx-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+  .spx-h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); line-height: 1.05; margin: 0 0 0.4rem; font-weight: 800; letter-spacing: -0.02em; }
+  .spx-sub { color: #aebbe0; font-size: 1.02rem; max-width: 62ch; margin: 0 0 1.6rem; }
 
-    
-    
-    <style>:root {
-      --show-color: #E31937;
-      --show-color-dark: #C4122E;
-      --show-color-text: color-mix(in srgb, #E31937, white 35%);
-    }</style>
+  .spx-countdown {
+    display: flex; gap: 0.6rem; flex-wrap: wrap; margin: 0.4rem 0 1.2rem;
+  }
+  .spx-cd-unit {
+    min-width: 78px; text-align: center;
+    background: rgba(13,22,46,0.7); border: 1px solid rgba(120,160,255,0.22);
+    border-radius: 14px; padding: 0.7rem 0.5rem;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 30px rgba(0,0,0,0.35);
+    backdrop-filter: blur(6px);
+  }
+  .spx-cd-num { font-size: clamp(1.6rem, 4.5vw, 2.6rem); font-weight: 800; font-variant-numeric: tabular-nums;
+    background: linear-gradient(180deg, #fff, #9fc0ff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .spx-cd-label { font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: #8ea3d6; margin-top: 2px; }
+
+  .spx-status {
+    display:inline-flex; align-items:center; gap:7px; font-weight:700; font-size:0.82rem;
+    padding: 4px 12px; border-radius: 999px; border:1px solid transparent;
+  }
+  .spx-status.go   { color:#7efbb0; background:rgba(40,200,120,0.12); border-color:rgba(40,200,120,0.35); }
+  .spx-status.tbd  { color:#ffd27a; background:rgba(255,180,40,0.12); border-color:rgba(255,180,40,0.32); }
+  .spx-status.hold { color:#ff9a9a; background:rgba(255,80,80,0.12); border-color:rgba(255,80,80,0.32); }
+
+  .spx-launchcard {
+    background: rgba(11,18,38,0.66); border: 1px solid rgba(120,160,255,0.2);
+    border-radius: 18px; padding: 1.1rem 1.2rem; backdrop-filter: blur(8px);
+  }
+  .spx-launchcard h3 { margin: 0.2rem 0 0.5rem; font-size: 1.25rem; }
+  .spx-meta { display:grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 0.6rem 1rem; margin-top: 0.6rem; }
+  .spx-meta .k { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.1em; color:#8ea3d6; }
+  .spx-meta .v { font-size:0.95rem; color:#eaf0ff; font-weight:600; }
+  .spx-btn {
+    display:inline-flex; align-items:center; gap:8px; margin-top: 0.9rem;
+    background: linear-gradient(135deg, var(--spx-blue), #3f7bff); color:#fff; font-weight:700;
+    padding: 0.6rem 1.1rem; border-radius: 12px; text-decoration:none; font-size:0.92rem;
+    box-shadow: 0 8px 24px rgba(26,92,255,0.4);
+  }
+  .spx-btn.ghost { background: transparent; border:1px solid rgba(120,160,255,0.4); box-shadow:none; }
+
+  .spx-grid { max-width:1120px; margin: 1.5rem auto; padding: 0 1.25rem; display:grid; gap:1.1rem; grid-template-columns: 1fr 1fr; }
+  @media (max-width: 760px){ .spx-grid{ grid-template-columns:1fr; } }
+  .spx-panel {
+    background: var(--nn-surface, #0f1830); border:1px solid rgba(120,160,255,0.16);
+    border-radius:16px; padding:1.1rem 1.2rem;
+  }
+  .spx-panel h2 { font-size:1.05rem; margin:0 0 0.9rem; letter-spacing:-0.01em; }
+
+  .spx-stats { display:grid; grid-template-columns: repeat(auto-fit,minmax(120px,1fr)); gap:0.8rem; }
+  .spx-stat { text-align:center; padding:0.6rem; border-radius:12px; background:rgba(26,92,255,0.08); border:1px solid rgba(120,160,255,0.14); }
+  .spx-stat .n { font-size:1.7rem; font-weight:800; color:#fff; font-variant-numeric:tabular-nums; }
+  .spx-stat .l { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:#8ea3d6; margin-top:2px; }
+
+  /* cadence chart */
+  .spx-cadence { display:flex; align-items:flex-end; gap:6px; height:160px; padding-top:8px; }
+  .spx-bar-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
+  .spx-bar {
+    width:100%; border-radius:6px 6px 2px 2px; min-height:3px;
+    background: linear-gradient(180deg, var(--spx-cyan), var(--spx-blue));
+    transition: height .6s cubic-bezier(.2,.7,.2,1);
+    position:relative;
+  }
+  .spx-bar .cnt { position:absolute; top:-18px; left:0; right:0; text-align:center; font-size:0.7rem; color:#cfe0ff; font-weight:700; }
+  .spx-bar-label { font-size:0.6rem; color:#7f93c4; white-space:nowrap; }
+
+  .spx-since { font-size: clamp(1.4rem,3.5vw,2rem); font-weight:800; font-variant-numeric:tabular-nums; color:#fff; }
+  .spx-upcoming-item { display:flex; justify-content:space-between; gap:10px; padding:0.55rem 0; border-bottom:1px solid rgba(120,160,255,0.12); font-size:0.9rem; }
+  .spx-upcoming-item:last-child{ border-bottom:none; }
+  .spx-upcoming-item .when { color:#8ea3d6; white-space:nowrap; font-variant-numeric:tabular-nums; }
+
+  .spx-spcx { display:flex; align-items:baseline; gap:12px; }
+  .spx-spcx .px { font-size:2rem; font-weight:800; color:#fff; }
+  .spx-spcx .ch.up { color:#5ef0a0; } .spx-spcx .ch.down{ color:#ff8a8a; }
+  .spx-muted { color:#8ea3d6; font-size:0.82rem; }
+  .spx-foot-note { max-width:1120px; margin:0 auto 2rem; padding:0 1.25rem; color:#7f93c4; font-size:0.78rem; }
+  .spx-disclaimer { color:#7f93c4; font-size:0.74rem; margin-top:0.4rem; }
+</style>
+
+
     
     <style>
         @media (max-width: 768px) {
@@ -266,16 +371,12 @@
                     </div>
                 </li>
                 
-<li><a href="start-here.html">Start Here</a></li>
-<li><a href="how-to-listen.html">Listen</a></li>
-<li><a href="about.html">About</a></li>
-<li><a href="player.html">Player</a></li>
-
-<li><a href="blog/tesla/index.html">Blog</a></li>
-<li><a href="tesla-summaries.html">Summaries</a></li>
-<li><a href="podcast.rss">RSS</a></li>
-<li><a href="https://x.com/teslashortstime" target="_blank" rel="noopener">@teslashortstime</a></li>
-
+                <li><a href="start-here.html">Start Here</a></li>
+                <li><a href="how-to-listen.html">Listen</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="player.html">Player</a></li>
+                <li><a href="index.html">Home</a></li>
+                
             </ul>
 
             <button class="nn-hamburger" aria-label="Toggle menu" aria-expanded="false" onclick="var m=document.getElementById('mobileMenu');m.classList.toggle('open');this.setAttribute('aria-expanded',m.classList.contains('open'));document.body.classList.toggle('menu-open')">&#9776;</button>
@@ -285,18 +386,12 @@
     <!-- Mobile Menu -->
     <div id="mobileMenu" class="nn-mobile-menu">
         
-<a href="start-here.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">Start Here</a>
-<a href="how-to-listen.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">Listen</a>
-<a href="about.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">About</a>
-<a href="player.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">Player</a>
-<a href="tesla.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">Tesla Shorts Time</a>
-<a href="blog/tesla/index.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">Blog</a>
-<a href="tesla-summaries.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">Summaries</a>
-<a href="podcast.rss" onclick="document.getElementById('mobileMenu').classList.remove('open')">RSS</a>
-
-<a href="https://x.com/teslashortstime" target="_blank" rel="noopener" onclick="document.getElementById('mobileMenu').classList.remove('open')">@teslashortstime</a>
-
-
+        <a href="start-here.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">Start Here</a>
+        <a href="how-to-listen.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">How to Listen</a>
+        <a href="about.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">About</a>
+        <a href="player.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">Player</a>
+        <a href="index.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">Home</a>
+        
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">All Shows</div>
             
@@ -442,284 +537,77 @@
 
     <main id="main-content">
     
-    <!-- Sticky Player -->
-    <div id="stickyPlayer" class="nn-sticky-player hidden" aria-live="polite">
-        <div class="nn-sticky-player-inner">
-            <div class="nn-sticky-meta">
-                <div id="stickyNow" class="nn-sticky-title">Now playing</div>
-                <div id="stickySub" class="nn-sticky-sub"></div>
-            </div>
-            <audio id="stickyAudio" class="nn-sticky-audio" controls preload="none" aria-label="Episode player"></audio>
-            <div class="nn-speed-control">
-                <button class="nn-speed-btn" data-speed="0.75">0.75x</button>
-                <button class="nn-speed-btn active" data-speed="1">1x</button>
-                <button class="nn-speed-btn" data-speed="1.25">1.25x</button>
-                <button class="nn-speed-btn" data-speed="1.5">1.5x</button>
-                <button class="nn-speed-btn" data-speed="2">2x</button>
-            </div>
-            <button id="stickyClose" class="nn-sticky-close" aria-label="Close player">&times;</button>
+<div class="spx-dash">
+  <div class="spx-hero-wrap">
+    <canvas class="spx-stars" id="spxStars"></canvas>
+    <div class="spx-container">
+      <div class="spx-kicker"><span class="dot"></span> SpaceX Launch Dashboard · Live</div>
+      <h1 class="spx-h1">Next SpaceX Launch</h1>
+      <p class="spx-sub">A live countdown to the next launch, time since the last one, cadence, and the SPCX market picture — the companion dashboard to <a href="spacex.html" style="color:var(--spx-cyan);">SpaceX Daily</a>.</p>
+
+      <div id="spxNext">
+        <div class="spx-countdown" id="spxCountdown">
+          <div class="spx-cd-unit"><div class="spx-cd-num" id="cd-d">--</div><div class="spx-cd-label">Days</div></div>
+          <div class="spx-cd-unit"><div class="spx-cd-num" id="cd-h">--</div><div class="spx-cd-label">Hours</div></div>
+          <div class="spx-cd-unit"><div class="spx-cd-num" id="cd-m">--</div><div class="spx-cd-label">Min</div></div>
+          <div class="spx-cd-unit"><div class="spx-cd-num" id="cd-s">--</div><div class="spx-cd-label">Sec</div></div>
         </div>
-    </div>
-
-    <!-- Hero -->
-    <section class="summaries-hero">
-        <div class="summaries-hero-bg"></div>
-        <div class="summaries-hero-inner container">
-            
-            
-            <picture style="display:inline-block;">
-                <source type="image/webp" srcset="https://nerranetwork.com/assets/covers/tesla-shorts-time-400.webp">
-                <img src="https://nerranetwork.com/assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="80" height="80"
-                     style="width:80px;height:80px;border-radius:14px;object-fit:cover;margin:0 auto var(--sp-4);box-shadow:0 8px 30px rgba(0,0,0,0.3);"
-                     onerror="this.style.display='none'">
-            </picture>
-            
-            <h1>Tesla Shorts Time</h1>
-            <p>Complete archive of Tesla Shorts Time episode summaries.</p>
-            <p id="heroEpisodeCount" style="color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.88rem;margin-top:var(--sp-2);opacity:0;transition:opacity 0.3s;"></p>
+        <div class="spx-launchcard">
+          <span class="spx-status tbd" id="spxStatus">Loading…</span>
+          <h3 id="spxMission">Fetching the latest launch manifest…</h3>
+          <div class="spx-meta">
+            <div><div class="k">Vehicle</div><div class="v" id="spxRocket">—</div></div>
+            <div><div class="k">Launch Pad</div><div class="v" id="spxPad">—</div></div>
+            <div><div class="k">Location</div><div class="v" id="spxLoc">—</div></div>
+            <div><div class="k">Target (your time)</div><div class="v" id="spxLocal">—</div></div>
+          </div>
+          <p class="spx-muted" id="spxDesc" style="margin:0.7rem 0 0;"></p>
+          <a class="spx-btn" id="spxWebcast" href="#" target="_blank" rel="noopener" style="display:none;">▶ Watch the webcast</a>
+          <a class="spx-btn ghost" id="spxMore" href="#" target="_blank" rel="noopener" style="display:none;">Mission details</a>
         </div>
-    </section>
-
-    <!-- Subscribe Buttons -->
-    <div class="nn-subscribe-bar">
-        
-        <a href="https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939?utm_source=nerranetwork&utm_medium=web&utm_campaign=tesla" target="_blank" rel="noopener" class="nn-subscribe-btn nn-subscribe-apple" aria-label="Subscribe on Apple Podcasts" data-show="tesla">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l7 4.5-7 4.5z"/></svg>
-            Apple Podcasts
-        </a>
-        
-        
-        <a href="https://open.spotify.com/show/7I1DIaUaSlVsYliigOe6sS?utm_source=nerranetwork&utm_medium=web&utm_campaign=tesla" target="_blank" rel="noopener" class="nn-subscribe-btn nn-subscribe-spotify" aria-label="Subscribe on Spotify" data-show="tesla">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l7 4.5-7 4.5z"/></svg>
-            Spotify
-        </a>
-        
-        <a href="podcast.rss" target="_blank" rel="noopener" class="nn-subscribe-btn nn-subscribe-rss" aria-label="Subscribe via RSS">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/></svg>
-            RSS Feed
-        </a>
-        
-        <a href="https://www.youtube.com/playlist?list=PLRHMnzNNXPYCRrcYpPwAzjaRXqzKRUl23" target="_blank" rel="noopener" class="nn-subscribe-btn nn-subscribe-youtube" aria-label="Watch on YouTube" data-show="tesla">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-            Watch on YouTube
-        </a>
-        
+      </div>
     </div>
+  </div>
 
-    
-    <div style="text-align:center;margin-bottom:var(--sp-6);">
-        <a href="blog/tesla/index.html" style="display:inline-flex;align-items:center;gap:var(--sp-2);font-family:var(--font-ui);font-size:0.88rem;font-weight:500;color:var(--show-color-text, var(--show-color));text-decoration:none;padding:var(--sp-2) var(--sp-5);border:1px solid color-mix(in srgb, var(--show-color) 30%, transparent);border-radius:100px;transition:all var(--duration) var(--ease);" onmouseover="this.style.background='color-mix(in srgb, var(--show-color) 12%, transparent)'" onmouseout="this.style.background='transparent'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-            Read in-depth articles on our blog
-        </a>
+  <div class="spx-grid">
+    <div class="spx-panel">
+      <h2>Time since last launch</h2>
+      <div class="spx-since" id="spxSince">—</div>
+      <p class="spx-muted" id="spxLast" style="margin:0.4rem 0 0;">—</p>
     </div>
-    
-
-    <!-- Search & Filter Controls -->
-    <div class="nn-controls">
-        <input type="text" class="nn-search" id="searchBox" placeholder="Search episodes..." aria-label="Search episodes">
-        <button class="nn-filter-btn active" data-filter="all">All</button>
-        <button class="nn-filter-btn" data-filter="week">This Week</button>
-        <button class="nn-filter-btn" data-filter="month">This Month</button>
-        <label class="nn-year-select-wrap" style="display:inline-flex;align-items:center;gap:var(--sp-2);">
-            <span class="visually-hidden" id="yearFilterLabel">Filter by year</span>
-            <select id="yearFilter" class="nn-filter-btn" aria-labelledby="yearFilterLabel" style="min-width:120px;background-image:none;appearance:none;-webkit-appearance:none;padding-right:var(--sp-4);">
-                <option value="">All years</option>
-            </select>
-        </label>
-        <span class="nn-episode-count" id="episodeCount"></span>
+    <div class="spx-panel">
+      <h2>SPCX</h2>
+      <div class="spx-spcx"><span class="px" id="spxPx">—</span><span class="ch" id="spxChg"></span></div>
+      <p class="spx-muted" id="spxPxNote" style="margin:0.4rem 0 0;">Nasdaq: SPCX</p>
+      <p class="spx-disclaimer">Not financial advice.</p>
     </div>
+  </div>
 
-    <!-- Summaries -->
-    <section style="padding:var(--sp-4) 0 var(--sp-12);">
-        <div class="container">
-            <div id="summaries-container">
-                <div style="text-align:center;color:var(--nn-text-muted);padding:3rem;font-style:italic;">Loading Tesla Shorts Time summaries...</div>
-            </div>
-        </div>
-    </section>
+  <div class="spx-grid" style="grid-template-columns:1fr;">
+    <div class="spx-panel">
+      <h2>Launch cadence — last 12 months</h2>
+      <div class="spx-cadence" id="spxCadence"></div>
+      <div class="spx-stats" style="margin-top:1.2rem;">
+        <div class="spx-stat"><div class="n" id="stYtd">—</div><div class="l">Launches YTD</div></div>
+        <div class="spx-stat"><div class="n" id="st30">—</div><div class="l">Last 30 days</div></div>
+        <div class="spx-stat"><div class="n" id="stAvg">—</div><div class="l">Avg days apart</div></div>
+        <div class="spx-stat"><div class="n" id="stStar">—</div><div class="l">Starlink YTD</div></div>
+        <div class="spx-stat"><div class="n" id="stTotal">—</div><div class="l">Total launches</div></div>
+      </div>
+    </div>
+  </div>
 
-    <!-- More from Nerra Network -->
-    <section class="cross-network nn-section">
-        <div class="container">
-            <div class="nn-section-header">
-                <h2>More from Nerra Network</h2>
-            </div>
-            <div class="cross-network-grid">
-                
-                
-                <a href="models-agents-summaries.html" class="cross-network-card">
-                    
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/models-agents-400.webp">
-                        <img src="assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy">
-                    </picture>
-                    <div class="cross-network-card-info">
-                        <div class="cross-network-card-name">Models & Agents</div>
-                        <div class="cross-network-card-tagline">Daily AI models, agents, and practical developments.</div>
-                    </div>
-                </a>
-                
-                
-                
-                <a href="planetterrian-summaries.html" class="cross-network-card">
-                    
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp">
-                        <img src="assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy">
-                    </picture>
-                    <div class="cross-network-card-info">
-                        <div class="cross-network-card-name">Planetterrian Daily</div>
-                        <div class="cross-network-card-tagline">Science, longevity, and the frontier of human health.</div>
-                    </div>
-                </a>
-                
-                
-                
-                <a href="omni-view-summaries.html" class="cross-network-card">
-                    
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/omni-view-400.webp">
-                        <img src="assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy">
-                    </picture>
-                    <div class="cross-network-card-info">
-                        <div class="cross-network-card-name">Omni View</div>
-                        <div class="cross-network-card-tagline">See every side. Decide for yourself.</div>
-                    </div>
-                </a>
-                
-                
-                
-                <a href="models-agents-beginners-summaries.html" class="cross-network-card">
-                    
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp">
-                        <img src="assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy">
-                    </picture>
-                    <div class="cross-network-card-info">
-                        <div class="cross-network-card-name">Models & Agents for Beginners</div>
-                        <div class="cross-network-card-tagline">AI explained simply — for beginners and teens.</div>
-                    </div>
-                </a>
-                
-                
-                
-                <a href="fascinating-frontiers-summaries.html" class="cross-network-card">
-                    
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp">
-                        <img src="assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy">
-                    </picture>
-                    <div class="cross-network-card-info">
-                        <div class="cross-network-card-name">Fascinating Frontiers</div>
-                        <div class="cross-network-card-tagline">Journey to the stars with today's discoveries.</div>
-                    </div>
-                </a>
-                
-                
-                
-                <a href="modern-investing-summaries.html" class="cross-network-card">
-                    
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/modern-investing-400.webp">
-                        <img src="assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy">
-                    </picture>
-                    <div class="cross-network-card-info">
-                        <div class="cross-network-card-name">Modern Investing Techniques</div>
-                        <div class="cross-network-card-tagline">AI-Powered Market Intelligence</div>
-                    </div>
-                </a>
-                
-                
-                
-                
-                
-                <a href="env-intel-summaries.html" class="cross-network-card">
-                    
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp">
-                        <img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy">
-                    </picture>
-                    <div class="cross-network-card-info">
-                        <div class="cross-network-card-name">Environmental Intelligence</div>
-                        <div class="cross-network-card-tagline">Environmental regulatory and compliance briefing.</div>
-                    </div>
-                </a>
-                
-                
-                
-                <a href="ru/finansy-prosto-summaries.html" class="cross-network-card">
-                    
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp">
-                        <img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy">
-                    </picture>
-                    <div class="cross-network-card-info">
-                        <div class="cross-network-card-name">Финансы Просто</div>
-                        <div class="cross-network-card-tagline">Finances Made Simple.</div>
-                    </div>
-                </a>
-                
-                
-                
-                <a href="ru/privet-russian-summaries.html" class="cross-network-card">
-                    
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/privet-russian-400.webp">
-                        <img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy">
-                    </picture>
-                    <div class="cross-network-card-info">
-                        <div class="cross-network-card-name">Привет, Русский!</div>
-                        <div class="cross-network-card-tagline">Learn Russian — Привет means hello!</div>
-                    </div>
-                </a>
-                
-                
-                
-                <a href="unintended-consequences-summaries.html" class="cross-network-card">
-                    
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp">
-                        <img src="assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy">
-                    </picture>
-                    <div class="cross-network-card-info">
-                        <div class="cross-network-card-name">Unintended Consequences</div>
-                        <div class="cross-network-card-tagline">Good intentions. Surprising results. Real lessons.</div>
-                    </div>
-                </a>
-                
-                
-                
-                <a href="first-principles-summaries.html" class="cross-network-card">
-                    
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/first-principles-daily-400.webp">
-                        <img src="assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy">
-                    </picture>
-                    <div class="cross-network-card-info">
-                        <div class="cross-network-card-name">First Principles Daily</div>
-                        <div class="cross-network-card-tagline">Reason from raw materials, not analogy.</div>
-                    </div>
-                </a>
-                
-                
-                
-                <a href="spacex-summaries.html" class="cross-network-card">
-                    
-                    <picture>
-                        <source type="image/webp" srcset="assets/covers/spacex-400.webp">
-                        <img src="assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy">
-                    </picture>
-                    <div class="cross-network-card-info">
-                        <div class="cross-network-card-name">SpaceX Daily</div>
-                        <div class="cross-network-card-tagline">Follow SpaceX as a public company — launches, Starlink, Starship, and the SPCX market picture, every day.</div>
-                    </div>
-                </a>
-                
-                
-            </div>
-        </div>
-    </section>
+  <div class="spx-grid" style="grid-template-columns:1fr;">
+    <div class="spx-panel">
+      <h2>Upcoming manifest</h2>
+      <div id="spxUpcoming"><p class="spx-muted">Loading…</p></div>
+    </div>
+  </div>
+
+  <p class="spx-foot-note">
+    Launch data from <a href="https://thespacedevs.com/" target="_blank" rel="noopener" style="color:var(--spx-cyan);">The Space Devs</a> Launch Library 2 (updated each pipeline run). Times are “no earlier than” and slip often — always confirm against the official <a href="https://www.spacex.com/launches/" target="_blank" rel="noopener" style="color:var(--spx-cyan);">SpaceX launch schedule</a> and webcast. Full source links live on the <a href="spacex.html#resources" style="color:var(--spx-cyan);">SpaceX Daily resources</a> page.
+  </p>
+</div>
 
     </main>
 
@@ -914,382 +802,157 @@
     }
     </script>
     
-    <script>
-        const JSON_URL = 'digests/tesla_shorts_time/summaries_tesla.json';
-        const JSON_FORMAT = 'wrapped';
-        const SHOW_NAME = "Tesla Shorts Time";
+<script>
+(function(){
+  // ---- Starfield ----
+  const cv = document.getElementById('spxStars');
+  if (cv) {
+    const ctx = cv.getContext('2d');
+    let stars = [];
+    function resize(){
+      cv.width = cv.offsetWidth; cv.height = cv.offsetHeight;
+      stars = Array.from({length: Math.min(180, Math.floor(cv.width/8))}, () => ({
+        x: Math.random()*cv.width, y: Math.random()*cv.height,
+        r: Math.random()*1.4+0.2, a: Math.random()*0.6+0.2, tw: Math.random()*0.02+0.005
+      }));
+    }
+    function draw(){
+      if(!ctx) return;
+      ctx.clearRect(0,0,cv.width,cv.height);
+      for(const s of stars){
+        s.a += s.tw; const al = 0.3+Math.abs(Math.sin(s.a))*0.7;
+        ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,7); ctx.fillStyle='rgba(180,205,255,'+al+')'; ctx.fill();
+      }
+      requestAnimationFrame(draw);
+    }
+    resize(); draw(); window.addEventListener('resize', resize);
+  }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Speed controls
-            document.querySelectorAll('.nn-speed-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const speed = parseFloat(btn.dataset.speed);
-                    const audio = document.getElementById('stickyAudio');
-                    if (audio) audio.playbackRate = speed;
-                    document.querySelectorAll('.nn-speed-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                });
-            });
+  const pad = n => String(n).padStart(2,'0');
+  function fmtLocal(iso){
+    try { return new Date(iso).toLocaleString([], {weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}); }
+    catch(_) { return iso || '—'; }
+  }
+  function statusClass(abbr){
+    const a = (abbr||'').toUpperCase();
+    if(a==='GO') return 'go';
+    if(a.includes('HOLD')||a.includes('FAIL')||a==='TBC') return 'hold';
+    return 'tbd';
+  }
 
-            // Search & filter
-            const searchBox = document.getElementById('searchBox');
-            const yearFilter = document.getElementById('yearFilter');
-            const filterBtns = document.querySelectorAll('.nn-filter-btn[data-filter]');
-            let currentFilter = 'all';
+  let nextNet = null, lastNet = null;
 
-            searchBox.addEventListener('input', applyFilters);
-            if (yearFilter) yearFilter.addEventListener('change', applyFilters);
-            filterBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    filterBtns.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    currentFilter = btn.dataset.filter;
-                    applyFilters();
-                });
-            });
+  function tick(){
+    const now = Date.now();
+    if(nextNet){
+      let diff = Math.max(0, nextNet - now);
+      const d = Math.floor(diff/86400000); diff -= d*86400000;
+      const h = Math.floor(diff/3600000); diff -= h*3600000;
+      const m = Math.floor(diff/60000); diff -= m*60000;
+      const s = Math.floor(diff/1000);
+      const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=v;};
+      set('cd-d', d); set('cd-h', pad(h)); set('cd-m', pad(m)); set('cd-s', pad(s));
+    }
+    if(lastNet){
+      let diff = Math.max(0, now - lastNet);
+      const d = Math.floor(diff/86400000); diff -= d*86400000;
+      const h = Math.floor(diff/3600000); diff -= h*3600000;
+      const m = Math.floor(diff/60000);
+      const el = document.getElementById('spxSince');
+      if(el) el.textContent = (d>0? d+'d ':'') + pad(h)+'h '+pad(m)+'m ago';
+    }
+  }
 
-            function applyFilters() {
-                const query = (searchBox.value || '').toLowerCase();
-                const yearValue = yearFilter ? yearFilter.value : '';
-                const items = document.querySelectorAll('.nn-summary-item');
-                const now = new Date();
-                let visible = 0;
+  function renderCadence(months){
+    const wrap = document.getElementById('spxCadence');
+    if(!wrap || !months || !months.length) return;
+    const max = Math.max(1, ...months.map(x=>x.count));
+    wrap.innerHTML = months.map(x=>{
+      const h = Math.round((x.count/max)*130)+3;
+      const lab = x.month.slice(2).replace('-','/'); // YY/MM
+      return '<div class="spx-bar-wrap"><div class="spx-bar" style="height:0" data-h="'+h+'"><span class="cnt">'+x.count+'</span></div><div class="spx-bar-label">'+lab+'</div></div>';
+    }).join('');
+    requestAnimationFrame(()=>{ wrap.querySelectorAll('.spx-bar').forEach(b=>{ b.style.height=b.dataset.h+'px'; }); });
+  }
 
-                items.forEach(item => {
-                    const text = (item.textContent || '').toLowerCase();
-                    const dateStr = item.dataset.date || '';
-                    let dateMatch = true;
+  function renderNext(n){
+    if(!n){ document.getElementById('spxMission').textContent='No upcoming launch on the manifest right now.'; return; }
+    nextNet = n.net ? new Date(n.net).getTime() : null;
+    const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=v||'—';};
+    const st = document.getElementById('spxStatus');
+    st.textContent = n.status_name || n.status || 'Scheduled';
+    st.className = 'spx-status '+statusClass(n.status);
+    set('spxMission', n.name || n.mission || 'Upcoming SpaceX launch');
+    set('spxRocket', n.rocket);
+    set('spxPad', n.pad);
+    set('spxLoc', n.location);
+    set('spxLocal', n.net ? fmtLocal(n.net) : 'TBD');
+    document.getElementById('spxDesc').textContent = n.mission_description || '';
+    if(n.webcast){ const w=document.getElementById('spxWebcast'); w.href=n.webcast; w.style.display='inline-flex'; }
+    const more = n.info_url || 'https://www.spacex.com/launches/';
+    const mEl=document.getElementById('spxMore'); mEl.href=more; mEl.style.display='inline-flex';
+  }
 
-                    if (currentFilter === 'week') {
-                        const d = new Date(dateStr);
-                        dateMatch = (now - d) <= 7 * 86400000;
-                    } else if (currentFilter === 'month') {
-                        const d = new Date(dateStr);
-                        dateMatch = (now - d) <= 31 * 86400000;
-                    }
+  function renderPrev(p){
+    if(!p) return;
+    lastNet = p.net ? new Date(p.net).getTime() : null;
+    const el=document.getElementById('spxLast');
+    if(el) el.textContent = (p.name||'Last launch') + (p.net ? ' · '+fmtLocal(p.net) : '');
+  }
 
-                    const yearMatch = !yearValue || dateStr.startsWith(yearValue);
+  function renderStats(s, total){
+    const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=(v==null?'—':v);};
+    if(s){ set('stYtd',s.launches_ytd); set('st30',s.launches_last_30d); set('stAvg',s.avg_days_between_last_365d); set('stStar',s.starlink_launches_ytd); }
+    set('stTotal', total!=null ? total.toLocaleString() : '—');
+  }
 
-                    const show = text.includes(query) && dateMatch && yearMatch;
-                    item.style.display = show ? '' : 'none';
-                    if (show) visible++;
-                });
+  function renderUpcoming(list){
+    const wrap=document.getElementById('spxUpcoming');
+    if(!wrap) return;
+    if(!list || !list.length){ wrap.innerHTML='<p class="spx-muted">No upcoming launches listed.</p>'; return; }
+    wrap.innerHTML = list.map(x=>'<div class="spx-upcoming-item"><span>'+(x.name||'Launch')+'</span><span class="when">'+(x.net?fmtLocal(x.net):'TBD')+'</span></div>').join('');
+  }
 
-                const countEl = document.getElementById('episodeCount');
-                if (countEl) countEl.textContent = `${visible} episode${visible !== 1 ? 's' : ''}`;
+  function applyLaunches(data){
+    if(!data) return;
+    renderNext(data.next);
+    renderPrev(data.previous);
+    renderStats(data.stats, data.total_launches);
+    renderCadence(data.cadence_monthly);
+    renderUpcoming(data.upcoming);
+  }
 
-                // Empty state when filters yield zero results
-                renderEmptyState(visible, items.length, query, currentFilter);
-            }
+  // SPCX price (same source as the show page pill)
+  function applyPrice(d){
+    if(!d || !(d.price>0)) return;
+    const px=document.getElementById('spxPx'); px.textContent='$'+Number(d.price).toFixed(2);
+    if(d.prev_close>0){
+      const ch=(d.price-d.prev_close), pct=(ch/d.prev_close*100);
+      const up=ch>=0; const el=document.getElementById('spxChg');
+      el.textContent=(up?'+':'')+ch.toFixed(2)+' ('+(up?'+':'')+pct.toFixed(2)+'%)';
+      el.className='ch '+(up?'up':'down');
+    }
+  }
 
-            function renderEmptyState(visible, total, query, filter) {
-                const container = document.getElementById('summaries-container');
-                let empty = document.getElementById('filter-empty-state');
-                if (visible === 0 && total > 0) {
-                    if (!empty) {
-                        empty = document.createElement('div');
-                        empty.id = 'filter-empty-state';
-                        empty.style.cssText = 'text-align:center;padding:3rem 1.5rem;color:var(--nn-text-muted);';
-                        container.prepend(empty);
-                    }
-                    const filterLabel = filter === 'week' ? 'this week' : (filter === 'month' ? 'this month' : '');
-                    const msg = query
-                        ? `<strong style="color:var(--nn-text);font-family:var(--font-heading);font-size:1.05rem;">No episodes match "${escapeHtml(query)}"${filterLabel ? ' in ' + filterLabel : ''}</strong>`
-                        : `<strong style="color:var(--nn-text);font-family:var(--font-heading);font-size:1.05rem;">No episodes ${filterLabel}</strong>`;
-                    empty.innerHTML = `
-                        ${msg}
-                        <p style="margin:0.5rem 0 1.5rem;">Try a different search term or filter.</p>
-                        <button type="button" id="clearFiltersBtn" class="nn-filter-btn active" style="border-color:var(--show-color);color:var(--show-color-text, var(--show-color));">Clear filters</button>
-                    `;
-                    const clearBtn = document.getElementById('clearFiltersBtn');
-                    if (clearBtn) {
-                        clearBtn.addEventListener('click', () => {
-                            searchBox.value = '';
-                            if (yearFilter) yearFilter.value = '';
-                            currentFilter = 'all';
-                            filterBtns.forEach(b => b.classList.toggle('active', b.dataset.filter === 'all'));
-                            applyFilters();
-                        });
-                    }
-                } else if (empty) {
-                    empty.remove();
-                }
-            }
+  // PRIMARY: same-origin cache written by the pipeline. Fallback: live API.
+  fetch('/api/spacex_launches.json',{cache:'no-cache'})
+    .then(r=>r.ok?r.json():Promise.reject())
+    .then(applyLaunches)
+    .catch(()=>{
+      // Client-side fallback straight to Launch Library 2 (CORS-enabled).
+      fetch('https://ll.thespacedevs.com/2.3.0/launches/upcoming/?lsp__id=121&limit=1&ordering=net&mode=detailed')
+        .then(r=>r.json()).then(d=>{ const r=(d.results||[])[0]; if(r) renderNext({
+          name:r.name, net:r.net, status:(r.status||{}).abbrev, status_name:(r.status||{}).name,
+          rocket:((r.rocket||{}).configuration||{}).name, pad:(r.pad||{}).name,
+          location:((r.pad||{}).location||{}).name, webcast:((r.vidURLs||[])[0]||{}).url
+        }); }).catch(()=>{ document.getElementById('spxMission').textContent='Launch data is temporarily unavailable — check spacex.com/launches.'; });
+    });
 
-            loadSummaries();
-        });
+  fetch('/api/spcx.json',{cache:'no-cache'}).then(r=>r.ok?r.json():Promise.reject()).then(applyPrice).catch(()=>{});
 
-        async function loadSummaries() {
-            try {
-                let response;
-                try {
-                    response = await fetch(JSON_URL);
-                    if (!response.ok) throw new Error(`Direct fetch failed: ${response.status}`);
-                } catch (directErr) {
-                    console.warn(`[Nerra] Direct fetch failed for ${SHOW_NAME}, trying CORS proxy...`, directErr);
-                    const proxyUrl = 'https://api.allorigins.win/raw?url=';
-                    const fullUrl = new URL(JSON_URL, window.location.href).href;
-                    response = await fetch(proxyUrl + encodeURIComponent(fullUrl));
-                    if (!response.ok) throw new Error(`Proxy fetch failed: ${response.status}`);
-                }
-
-                const data = await response.json();
-                const container = document.getElementById('summaries-container');
-
-                const summaries = (JSON_FORMAT === 'array') ? (Array.isArray(data) ? data : [])
-                    : (data.summaries || []);
-
-                if (!summaries.length) {
-                    container.innerHTML = '<div style="text-align:center;color:var(--nn-text-muted);padding:3rem;font-style:italic;">No summaries available yet. Check back after the next daily update!</div>';
-                    return;
-                }
-
-                summaries.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-                const PAGE_SIZE = 20;
-                let visibleCount = PAGE_SIZE;
-
-                function renderSummaryCard(s) {
-                    const audioUrl = s.audio_url || '';
-                    const content = s.content || s.summary || '';
-                    const title = s.episode_title || '';
-                    const date = s.date || '';
-
-                    const epNum = s.episode_num;
-                    const transcriptHtml = epNum ? `
-                        <a class="nn-summary-link" href="blog/tesla/ep${String(epNum).padStart(3, '0')}.html" aria-label="Read full transcript and article for episode ${epNum}">Read transcript</a>
-                    ` : '';
-
-                    const audioHtml = audioUrl ? `
-                        <div class="nn-summary-actions">
-                            <audio class="nn-summary-audio" controls preload="none" src="${escapeAttr(audioUrl)}" aria-label="${escapeAttr(title || 'Episode')} audio"
-                                   onerror="this.replaceWith(Object.assign(document.createElement('div'),{innerHTML:'<span style=&quot;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.85rem;&quot;>Audio unavailable. <a href=&quot;${escapeAttr(audioUrl)}&quot; style=&quot;color:var(--show-color-text, var(--show-color));&quot;>Try download</a>.</span>'}))"></audio>
-                            <a class="nn-summary-link" href="${escapeAttr(audioUrl)}" target="_blank" rel="noopener">Download</a>
-                            ${transcriptHtml}
-                            <button class="nn-summary-link" data-share-url="${escapeAttr(audioUrl)}" title="Copy link">Share</button>
-                        </div>
-                    ` : '';
-
-                    const titleHtml = title ? `<div style="font-weight:600;color:var(--show-color-text, var(--show-color));font-family:var(--font-ui);font-size:0.88rem;">${escapeHtml(title)}</div>` : '';
-
-                    return `
-                        <div class="nn-summary-item" data-date="${escapeAttr(date)}">
-                            <div class="nn-summary-header">
-                                <div>
-                                    <div class="nn-summary-date">${formatDate(date)}</div>
-                                    ${titleHtml}
-                                </div>
-                                ${audioHtml}
-                            </div>
-                            <div class="nn-summary-content">${renderMarkdown(content)}</div>
-                        </div>
-                    `;
-                }
-
-                function renderPage() {
-                    const visible = summaries.slice(0, visibleCount);
-                    const remaining = summaries.length - visibleCount;
-                    let html = visible.map(renderSummaryCard).join('');
-                    if (remaining > 0) {
-                        html += `<div style="text-align:center;padding:var(--sp-6) 0;">
-                            <button id="loadMoreBtn" class="nn-btn" style="--show-color:var(--show-color);">
-                                Load more (${remaining} remaining)
-                            </button>
-                        </div>`;
-                    }
-                    container.innerHTML = html;
-                    initAudioUX(container);
-                    initShareButtons(container);
-                    const loadMoreBtn = document.getElementById('loadMoreBtn');
-                    if (loadMoreBtn) {
-                        loadMoreBtn.addEventListener('click', () => {
-                            visibleCount += PAGE_SIZE;
-                            renderPage();
-                        });
-                    }
-                }
-
-                renderPage();
-
-                // Populate year filter from available summary dates (newest first)
-                if (yearFilter) {
-                    const years = Array.from(new Set(
-                        summaries.map(s => (s.date || '').slice(0, 4)).filter(Boolean)
-                    )).sort().reverse();
-                    // Keep the "All years" option, remove any prior dynamic entries
-                    yearFilter.querySelectorAll('option[data-dynamic]').forEach(o => o.remove());
-                    for (const y of years) {
-                        const opt = document.createElement('option');
-                        opt.value = y;
-                        opt.textContent = y;
-                        opt.dataset.dynamic = '1';
-                        yearFilter.appendChild(opt);
-                    }
-                }
-
-                // Update episode counts
-                const countEl = document.getElementById('episodeCount');
-                if (countEl) countEl.textContent = `${summaries.length} episode${summaries.length !== 1 ? 's' : ''}`;
-                const heroCount = document.getElementById('heroEpisodeCount');
-                if (heroCount) {
-                    heroCount.textContent = `${summaries.length} episode${summaries.length !== 1 ? 's' : ''} and counting`;
-                    heroCount.style.opacity = '1';
-                }
-
-            } catch (error) {
-                console.error('Error loading summaries:', error);
-                document.getElementById('summaries-container').innerHTML =
-                    '<div style="text-align:center;color:var(--nn-text-muted);padding:3rem;font-style:italic;">Unable to load summaries. Please check back later.</div>';
-            }
-        }
-
-        function formatDate(dateString) {
-            try {
-                const date = new Date(dateString);
-                return date.toLocaleDateString('en-US', {
-                    year: 'numeric', month: 'long', day: 'numeric',
-                    weekday: 'long', timeZone: 'UTC'
-                });
-            } catch { return dateString; }
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text ?? '';
-            return div.innerHTML;
-        }
-
-        function escapeAttr(text) {
-            return String(text ?? '')
-                .replace(/&/g, '&amp;')
-                .replace(/"/g, '&quot;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
-        }
-
-        function linkify(text) {
-            text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-                '<a href="$2" target="_blank" rel="noopener">$1</a>');
-            text = text.replace(/(https?:\/\/[^\s<]+)/g,
-                '<a href="$1" target="_blank" rel="noopener">$1</a>');
-            return text;
-        }
-
-        function renderMarkdown(md) {
-            const safe = escapeHtml(md).replace(/\r\n/g, '\n');
-            const lines = safe.split('\n');
-            let out = '';
-            let inList = false;
-
-            const flush = () => { if (inList) { out += '</ul>'; inList = false; } };
-
-            for (const rawLine of lines) {
-                const trimmed = rawLine.trim();
-
-                if (!trimmed) { flush(); out += '<p></p>'; continue; }
-
-                if (/^-{3,}$/.test(trimmed) || /^\u2014{3,}$/.test(trimmed) || /^\u2501{3,}$/.test(trimmed)) { flush(); out += '<hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;">'; continue; }
-                if (trimmed.startsWith('&gt; ')) { flush(); const hookText = trimmed.slice(5).replace(/\*\*([^*]+)\*\*/g, '$1'); out += `<p style="border-left:3px solid var(--show-color, var(--nn-purple));padding-left:0.75rem;font-weight:600;">${linkify(hookText)}</p>`; continue; }
-                if (trimmed.startsWith('### ')) { flush(); out += `<h3>${linkify(trimmed.slice(4))}</h3>`; continue; }
-                if (trimmed.startsWith('## '))  { flush(); out += `<h2>${linkify(trimmed.slice(3))}</h2>`; continue; }
-                if (trimmed.startsWith('# '))   { flush(); out += `<h1>${linkify(trimmed.slice(2))}</h1>`; continue; }
-
-                if (/^[-\u2022]\s+/.test(trimmed)) {
-                    if (!inList) { out += '<ul>'; inList = true; }
-                    out += `<li>${linkify(trimmed.replace(/^[-\u2022]\s+/, ''))}</li>`;
-                    continue;
-                }
-
-                flush();
-                let p = trimmed.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-                p = linkify(p);
-                out += `<p>${p}</p>`;
-            }
-
-            flush();
-            return out.replace(/<p><\/p>/g, '<div style="height:0.6rem"></div>');
-        }
-
-        // Sticky player + per-card audio UX
-        function initAudioUX(container) {
-            const stickyPlayer = document.getElementById('stickyPlayer');
-            const stickyAudio = document.getElementById('stickyAudio');
-            const stickyNow = document.getElementById('stickyNow');
-            const stickySub = document.getElementById('stickySub');
-            const stickyClose = document.getElementById('stickyClose');
-
-            let activeCardAudio = null;
-
-            const cardAudios = Array.from(container.querySelectorAll('audio.nn-summary-audio'));
-
-            function pauseAllCardAudios() {
-                for (const a of cardAudios) { try { a.pause(); } catch {} }
-            }
-
-            function setSticky(meta, audioEl) {
-                activeCardAudio = audioEl;
-                stickyNow.textContent = meta?.title || 'Now playing';
-                stickySub.textContent = meta?.date || '';
-                if (audioEl?.src && stickyAudio.src !== audioEl.src) {
-                    stickyAudio.src = audioEl.src;
-                }
-                stickyPlayer.classList.remove('hidden');
-            }
-
-            for (const audioEl of cardAudios) {
-                const card = audioEl.closest('.nn-summary-item');
-                const dateText = card?.querySelector('.nn-summary-date')?.textContent?.trim() || '';
-                const titleGuess =
-                    card?.querySelector('.nn-summary-content h1, .nn-summary-content h2, .nn-summary-content h3')?.textContent?.trim() ||
-                    'Episode';
-                const meta = { date: dateText, title: titleGuess };
-
-                audioEl.addEventListener('play', (e) => {
-                    e.preventDefault();
-                    pauseAllCardAudios();
-                    setSticky(meta, audioEl);
-                    try { audioEl.pause(); } catch {}
-                    try { stickyAudio.currentTime = audioEl.currentTime || 0; } catch {}
-                    stickyAudio.play().catch(() => {});
-                });
-            }
-
-            stickyAudio.addEventListener('timeupdate', () => {
-                if (activeCardAudio) {
-                    try { activeCardAudio.currentTime = stickyAudio.currentTime; } catch {}
-                }
-            });
-
-            stickyClose?.addEventListener('click', () => {
-                try { stickyAudio.pause(); } catch {}
-                stickyPlayer.classList.add('hidden');
-                activeCardAudio = null;
-            });
-        }
-
-        // Share buttons
-        function initShareButtons(container) {
-            container.querySelectorAll('[data-share-url]').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const url = btn.dataset.shareUrl;
-                    try {
-                        await navigator.clipboard.writeText(url);
-                        btn.textContent = 'Copied!';
-                        setTimeout(() => { btn.textContent = 'Share'; }, 2000);
-                    } catch {
-                        const input = document.createElement('input');
-                        input.value = url;
-                        document.body.appendChild(input);
-                        input.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(input);
-                        btn.textContent = 'Copied!';
-                        setTimeout(() => { btn.textContent = 'Share'; }, 2000);
-                    }
-                });
-            });
-        }
-    </script>
+  tick(); setInterval(tick, 1000);
+})();
+</script>
 
 
     <!-- Centralized, improved global search -->
