@@ -81,8 +81,18 @@ def _slim_launch(r: Dict[str, Any]) -> Dict[str, Any]:
         v.get("url") for v in (r.get("vidURLs") or [])
         if isinstance(v, dict) and v.get("url")
     ]
+    # First-stage booster (serial + which flight this is for it) — detailed
+    # mode only; powers the reuse "record watch" and per-launch booster line.
+    booster = None
+    stages = (r.get("rocket") or {}).get("launcher_stage") or []
+    if stages:
+        launcher = stages[0].get("launcher") or {}
+        fn = stages[0].get("launcher_flight_number") or launcher.get("flights")
+        if launcher.get("serial_number"):
+            booster = {"serial": launcher.get("serial_number"), "flight_number": fn}
     return {
         "id": r.get("id"),
+        "booster": booster,
         "name": r.get("name"),
         "net": r.get("net"),  # ISO 8601 UTC "no earlier than" time
         "window_start": r.get("window_start"),
@@ -104,6 +114,38 @@ def _slim_launch(r: Dict[str, Any]) -> Dict[str, Any]:
 
 def _is_spacex(r: Dict[str, Any]) -> bool:
     return (r.get("launch_service_provider") or {}).get("id") == _SPACEX_LSP_ID
+
+
+def _booster_stats(prev_raw: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Fleet reuse stats from detailed launch records: the most-flown
+    boosters (the reuse 'record watch'), recent landing-success rate, and
+    the active-fleet size seen in the window."""
+    flights: Dict[str, int] = {}
+    landings_ok = landings_total = 0
+    for r in prev_raw:
+        for s in ((r.get("rocket") or {}).get("launcher_stage") or []):
+            launcher = s.get("launcher") or {}
+            serial = launcher.get("serial_number")
+            fn = s.get("launcher_flight_number") or launcher.get("flights")
+            if serial and fn:
+                try:
+                    flights[serial] = max(flights.get(serial, 0), int(fn))
+                except (TypeError, ValueError):
+                    pass
+            landing = (s.get("landing") or {})
+            if landing.get("success") is not None:
+                landings_total += 1
+                if landing.get("success"):
+                    landings_ok += 1
+    leaders = sorted(flights.items(), key=lambda x: -x[1])[:5]
+    return {
+        "fleet_leaders": [{"serial": s, "flights": f} for s, f in leaders],
+        "most_flown": ({"serial": leaders[0][0], "flights": leaders[0][1]}
+                       if leaders else None),
+        "landing_success_pct": round(100 * landings_ok / landings_total, 1) if landings_total else None,
+        "landings_window": landings_total,
+        "active_boosters_window": len(flights),
+    }
 
 
 def _month_labels(months: int) -> List[str]:
@@ -402,6 +444,7 @@ def build_payload() -> Optional[Dict[str, Any]]:
     fleet = _fleet_payload(slim_prev, now)
     fleet["cumulative_satellites_est"] = cumulative_sats
     fleet["starlink_active"] = _starlink_active_count()  # real count, or None
+    fleet["boosters"] = _booster_stats(prev_results)  # reuse record watch
     return {
         "next": next_launch,
         "previous": previous_launch,
