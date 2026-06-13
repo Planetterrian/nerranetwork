@@ -126,11 +126,15 @@ class TestMitPerformanceCharts:
         # NaN trade dropped from the curve (2 finite trades remain)
         assert len(c["equity_curve"]) == 2
         assert c["headline"]["best"] is None  # NaN coerced to None
+        # Monthly P&L buckets the same finite trades; NaN excluded, no NaN leak.
+        mp = c["monthly_pnl"]
+        assert mp == [{"month": "2026-01", "pnl": 2.0}]  # 3.0 + (-1.0), NaN dropped
 
     def test_mit_template_has_charts(self):
         t = (_ROOT / "templates/mit_performance_page.html.j2").read_text(encoding="utf-8")
         for needle in ('id="mitEquity"', 'id="mitSectors"', 'id="mitWL"', "mit-chart-data",
-                       "Cumulative return", "Simulated P&amp;L"):
+                       "Cumulative return", "Simulated P&amp;L",
+                       'id="mitMonthly"', "Monthly P&amp;L", "D.monthly_pnl"):
             assert needle in t, needle
 
 
