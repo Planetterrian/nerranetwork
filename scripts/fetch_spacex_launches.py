@@ -85,29 +85,56 @@ def _is_spacex(r: Dict[str, Any]) -> bool:
     return (r.get("launch_service_provider") or {}).get("id") == _SPACEX_LSP_ID
 
 
-def _monthly_cadence(previous: List[Dict[str, Any]], months: int = 12) -> List[Dict[str, Any]]:
-    """Count SpaceX launches per calendar month for the last *months*."""
+def _month_labels(months: int) -> List[str]:
     today = _dt.datetime.now(_dt.timezone.utc).date().replace(day=1)
-    buckets: Dict[str, int] = {}
     labels: List[str] = []
     y, m = today.year, today.month
     for _ in range(months):
-        key = f"{y:04d}-{m:02d}"
-        buckets[key] = 0
-        labels.append(key)
+        labels.append(f"{y:04d}-{m:02d}")
         m -= 1
         if m == 0:
             m = 12
             y -= 1
     labels.reverse()
+    return labels
+
+
+def _monthly_breakdown(previous: List[Dict[str, Any]], months: int = 12) -> List[Dict[str, Any]]:
+    """Per-calendar-month metrics for the last *months*: launch count,
+    estimated mass to orbit (t), estimated satellites deployed, and the
+    vehicle mix. The single source the cadence chart, the mass-to-orbit
+    chart, and the growing metrics time-series are all derived from."""
+    labels = _month_labels(months)
+    buckets: Dict[str, Dict[str, Any]] = {
+        k: {"month": k, "launches": 0, "mass_t": 0.0, "satellites": 0, "vehicles": {}}
+        for k in labels
+    }
     for r in previous:
         net = r.get("net")
         if not net:
             continue
-        key = net[:7]  # YYYY-MM
-        if key in buckets:
-            buckets[key] += 1
-    return [{"month": k, "count": buckets[k]} for k in labels]
+        b = buckets.get(net[:7])  # YYYY-MM
+        if not b:
+            continue
+        rocket = (r.get("rocket") or "Other").strip()
+        is_sl = "starlink" in (r.get("name") or "").lower()
+        b["launches"] += 1
+        b["mass_t"] += _launch_mass_t(rocket, is_sl)
+        if is_sl:
+            b["satellites"] += _SATS_PER_STARLINK_LAUNCH
+        b["vehicles"][rocket] = b["vehicles"].get(rocket, 0) + 1
+    out = []
+    for k in labels:
+        b = buckets[k]
+        b["mass_t"] = round(b["mass_t"])
+        out.append(b)
+    return out
+
+
+def _monthly_cadence(previous: List[Dict[str, Any]], months: int = 12) -> List[Dict[str, Any]]:
+    """Launches per calendar month (cadence chart)."""
+    return [{"month": b["month"], "count": b["launches"]}
+            for b in _monthly_breakdown(previous, months)]
 
 
 def _stats(previous: List[Dict[str, Any]], now: _dt.datetime) -> Dict[str, Any]:
@@ -150,6 +177,72 @@ _MASS_T = {
 # Representative Starlink satellites per Falcon 9 launch (v2-mini batches
 # run ~21-28; 23 is a conservative public average). Estimate only.
 _SATS_PER_STARLINK_LAUNCH = 23
+
+
+def _launch_mass_t(rocket: str, is_starlink: bool) -> float:
+    rl = (rocket or "").lower()
+    if "heavy" in rl:
+        return _MASS_T["falcon_heavy"]
+    if "starship" in rl:
+        return _MASS_T["starship"]
+    if "falcon" in rl:
+        return _MASS_T["falcon9_starlink"] if is_starlink else _MASS_T["falcon9_other"]
+    return _MASS_T["falcon9_other"]
+
+
+# The growing, committed metrics dataset. Each run merges the freshest
+# 12-month window into this persistent time-series, so months lock in and
+# the history accumulates over time (the foundation for multi-year growth
+# charts). Schema is intentionally extensible — the `infrastructure` block
+# is reserved for operator-curated compute/GPU/datacenter milestones
+# (xAI Colossus etc.) that aren't available from a launch API.
+_METRICS_PATH = _ROOT / "site" / "data" / "spacex_metrics.json"
+
+
+def _update_metrics_timeseries(monthly: List[Dict[str, Any]], now: _dt.datetime,
+                               path: Path = _METRICS_PATH) -> int:
+    try:
+        existing = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    except Exception:
+        existing = {}
+    if not isinstance(existing, dict):
+        existing = {}
+    months: Dict[str, Any] = existing.get("months") or {}
+    for b in monthly:
+        # Refresh the last-12 window each run; older months stay locked.
+        months[b["month"]] = {
+            "launches": b["launches"],
+            "mass_t": b["mass_t"],
+            "satellites": b["satellites"],
+            "vehicles": b["vehicles"],
+        }
+    # Cumulative satellites-deployed (estimated) across the recorded series.
+    ordered = sorted(months.items())
+    cum = 0
+    cumulative = {}
+    for k, v in ordered:
+        cum += v.get("satellites", 0)
+        cumulative[k] = cum
+    payload = {
+        "version": 1,
+        "updated_at": now.isoformat(),
+        "note": ("Monthly SpaceX metrics (estimated mass/satellites from public "
+                 "per-vehicle averages; launch counts/vehicle mix from the launch "
+                 "record). Grows over time as new months lock in."),
+        "months": dict(ordered),
+        "cumulative_satellites_est": cumulative,
+        # Reserved for operator-curated compute/infrastructure milestones
+        # (e.g. xAI Colossus GPU counts, datacenter buildouts). Preserved
+        # across runs so it accrues without being overwritten by the fetch.
+        "infrastructure": existing.get("infrastructure", []),
+    }
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        logger.info("Updated metrics time-series %s (%d months)", path, len(months))
+    except Exception as exc:
+        logger.warning("Could not write metrics time-series (non-fatal): %s", exc)
+    return cum  # latest cumulative estimated-satellites total
 
 
 def _fleet_payload(previous: List[Dict[str, Any]], now: _dt.datetime) -> Dict[str, Any]:
@@ -276,13 +369,19 @@ def build_payload() -> Optional[Dict[str, Any]]:
     upcoming_list = [_slim_launch(r) for r in up_results][:5]
 
     slim_prev = [_slim_launch(r) for r in prev_results]
+    monthly = _monthly_breakdown(slim_prev)
+    # Merge the fresh 12-month window into the growing committed dataset.
+    cumulative_sats = _update_metrics_timeseries(monthly, now)
+    fleet = _fleet_payload(slim_prev, now)
+    fleet["cumulative_satellites_est"] = cumulative_sats
     return {
         "next": next_launch,
         "previous": previous_launch,
         "upcoming": upcoming_list,
-        "cadence_monthly": _monthly_cadence(slim_prev),
+        "cadence_monthly": [{"month": b["month"], "count": b["launches"]} for b in monthly],
+        "mass_monthly": [{"month": b["month"], "tonnes": b["mass_t"]} for b in monthly],
         "stats": _stats(slim_prev, now),
-        "fleet": _fleet_payload(slim_prev, now),
+        "fleet": fleet,
         "total_launches": prev_total,
         "source": "thespacedevs_ll2",
         "updated_at": now.isoformat(),

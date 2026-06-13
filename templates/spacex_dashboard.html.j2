@@ -180,27 +180,19 @@
     </div>
   </div>
 
-  <div class="spx-grid">
+  <div class="spx-grid" style="grid-template-columns:1fr;">
     <div class="spx-panel">
-      <h2>Fleet &amp; payload — last 12 months</h2>
-      <div class="spx-stats">
-        <div class="spx-stat"><div class="n" id="flMass">—</div><div class="l">Est. mass to orbit (t)</div></div>
-        <div class="spx-stat"><div class="n" id="flSats">—</div><div class="l">Est. satellites deployed</div></div>
+      <h2>Mass to orbit — last 12 months <span class="spx-muted" style="font-size:0.7rem;font-weight:400;">(estimated, tonnes)</span></h2>
+      <div class="spx-cadence" id="spxMass"></div>
+      <div class="spx-stats" style="margin-top:1.2rem;">
+        <div class="spx-stat"><div class="n" id="flMass">—</div><div class="l">Est. mass to orbit, 12 mo (t)</div></div>
+        <div class="spx-stat"><div class="n" id="flSats">—</div><div class="l">Est. satellites deployed, 12 mo</div></div>
+        <div class="spx-stat"><div class="n" id="flCumSats">—</div><div class="l">Est. satellites tracked (cumulative)</div></div>
         <div class="spx-stat"><div class="n" id="flStarShare">—</div><div class="l">Starlink share</div></div>
         <div class="spx-stat"><div class="n" id="flSuccess">—</div><div class="l">Success rate</div></div>
       </div>
       <div id="flVehicles" style="margin-top:1rem;"></div>
-      <p class="spx-disclaimer">Mass and satellite figures are estimates from public per-vehicle averages (SpaceX doesn't publish per-flight mass). Launch counts and vehicle mix are from the launch record.</p>
-    </div>
-    <div class="spx-panel">
-      <h2>AI &amp; Compute — the Musk stack</h2>
-      <p class="spx-muted" style="margin:0 0 0.8rem;">SpaceX's orbital-compute push (AI satellites, data centers, Starlink backhaul) runs into the same ecosystem as xAI, Grok, and X. Live xAI metrics aren't published as a feed, so here are the primary sources the show tracks:</p>
-      <div style="display:flex;flex-direction:column;gap:0.5rem;">
-        <a class="spx-btn ghost" href="https://x.ai/news" target="_blank" rel="noopener" style="justify-content:flex-start;">xAI News — Grok models, Colossus compute ↗</a>
-        <a class="spx-btn ghost" href="https://grok.com" target="_blank" rel="noopener" style="justify-content:flex-start;">Grok ↗</a>
-        <a class="spx-btn ghost" href="https://cursor.com/changelog" target="_blank" rel="noopener" style="justify-content:flex-start;">Cursor changelog — Grok in the editor ↗</a>
-        <a class="spx-btn ghost" href="{{ path_prefix }}spacex.html#resources" style="justify-content:flex-start;">All AI &amp; partnership resources →</a>
-      </div>
+      <p class="spx-disclaimer">Mass and satellite figures are estimates from public per-vehicle averages (SpaceX doesn't publish per-flight mass); launch counts and vehicle mix are from the launch record. These metrics are logged to a growing time-series so the trends lengthen over time.</p>
     </div>
   </div>
 
@@ -279,6 +271,19 @@
     }
   }
 
+  function renderBars(elId, months, key){
+    const wrap = document.getElementById(elId);
+    if(!wrap || !months || !months.length) return;
+    const max = Math.max(1, ...months.map(x=>x[key]||0));
+    wrap.innerHTML = months.map(x=>{
+      const v = x[key]||0;
+      const h = Math.round((v/max)*130)+3;
+      const lab = x.month.slice(2).replace('-','/'); // YY/MM
+      return '<div class="spx-bar-wrap"><div class="spx-bar" style="height:0" data-h="'+h+'"><span class="cnt">'+v.toLocaleString()+'</span></div><div class="spx-bar-label">'+lab+'</div></div>';
+    }).join('');
+    requestAnimationFrame(()=>{ wrap.querySelectorAll('.spx-bar').forEach(b=>{ b.style.height=b.dataset.h+'px'; }); });
+  }
+
   function renderCadence(months){
     const wrap = document.getElementById('spxCadence');
     if(!wrap || !months || !months.length) return;
@@ -334,6 +339,7 @@
     const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=(v==null?'—':v);};
     set('flMass', f.est_mass_to_orbit_tonnes!=null ? Number(f.est_mass_to_orbit_tonnes).toLocaleString() : '—');
     set('flSats', f.est_satellites_deployed!=null ? Number(f.est_satellites_deployed).toLocaleString() : '—');
+    set('flCumSats', f.cumulative_satellites_est!=null ? Number(f.cumulative_satellites_est).toLocaleString() : '—');
     set('flStarShare', f.starlink_share_pct!=null ? f.starlink_share_pct+'%' : '—');
     set('flSuccess', f.success_rate_pct!=null ? f.success_rate_pct+'%' : '—');
     const bv = f.by_vehicle || {};
@@ -353,6 +359,7 @@
     renderPrev(data.previous);
     renderStats(data.stats, data.total_launches);
     renderCadence(data.cadence_monthly);
+    renderBars('spxMass', data.mass_monthly, 'tonnes');
     renderFleet(data.fleet);
     renderUpcoming(data.upcoming);
   }

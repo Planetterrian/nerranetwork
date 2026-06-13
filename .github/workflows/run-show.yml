@@ -546,6 +546,10 @@ jobs:
           # SpaceX launch-dashboard data (next/previous launch, cadence,
           # stats) for spacex-dashboard.html. Same reliability contract.
           git add api/spacex_launches.json || true
+          # Growing SpaceX metrics time-series (monthly mass-to-orbit,
+          # satellites, vehicle mix) — accumulates over time to power the
+          # dashboard's long-run growth charts.
+          git add site/data/spacex_metrics.json || true
           # Topic queues — narrative-mode shows mark topics as produced
           # after each successful run. Without committing this, every
           # narrative-show run re-picks the same first-unproduced topic
