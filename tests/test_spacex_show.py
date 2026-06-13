@@ -330,3 +330,51 @@ class TestLaunchDashboard:
         html = (_ROOT / "spacex.html").read_text(encoding="utf-8") if (_ROOT / "spacex.html").exists() else ""
         if html:
             assert "spacex-dashboard.html" in html
+
+
+class TestComprehensiveCoverageAndAISection:
+    """June 13 2026: broaden coverage to the whole SpaceX business + a
+    dedicated AI section (SpaceX↔xAI/Grok/X), per operator direction."""
+
+    def test_keywords_cover_business_breadth_and_ai(self):
+        cfg = yaml.safe_load((_ROOT / "shows/spacex.yaml").read_text(encoding="utf-8"))
+        kw = {k.lower() for k in cfg["keywords"]}
+        for needed in ("xai", "grok", "raptor", "starship", "starlink",
+                       "gigabay", "ai satellite", "orbital data center"):
+            assert needed in kw, needed
+
+    def test_ai_x_accounts_present(self):
+        cfg = yaml.safe_load((_ROOT / "shows/spacex.yaml").read_text(encoding="utf-8"))
+        handles = {a["handle"].lower() for a in cfg["x_accounts"]}
+        assert "xai" in handles and "grok" in handles
+
+    def test_digest_and_podcast_have_ai_section(self):
+        digest = (_ROOT / "shows/prompts/spacex_digest.txt").read_text(encoding="utf-8")
+        podcast = (_ROOT / "shows/prompts/spacex_podcast.txt").read_text(encoding="utf-8")
+        assert "### AI & Compute" in digest
+        assert "AI & Compute" in podcast and "On the AI front" in podcast
+        # business-breadth instruction present
+        assert "COVER THE WHOLE BUSINESS" in digest
+
+    def test_ai_chapter_marker_and_tracker(self):
+        cfg = yaml.safe_load((_ROOT / "shows/spacex.yaml").read_text(encoding="utf-8"))
+        titles = {m["title"] for m in cfg["chapters"]["section_markers"]}
+        assert "AI & Compute" in titles
+        from engine.content_tracker import SPACEX_SECTION_PATTERNS
+        assert "ai_compute" in SPACEX_SECTION_PATTERNS
+
+    def test_ai_section_chapter_parses(self):
+        # A script with the AI entry phrase yields an "AI & Compute" chapter.
+        script = "\n".join([
+            "Hey, welcome to SpaceX Daily, episode five. I'm Patrick in Vancouver.",
+            "Here's what's happening at SpaceX today.",
+            *[f"Body sentence {i} with launch detail." for i in range(20)],
+            "One thing worth watching is the FAA timeline.",
+            "On the AI front, SpaceX's orbital data center plan ties into xAI's Colossus compute.",
+            "From an engineering standpoint, reuse drives the cost curve.",
+            "Before we go, watch the static fire window.",
+            "That's a wrap on today's SpaceX developments. See you tomorrow.",
+        ])
+        chapters = parse_chapters(script, _spacex_markers(), show_name="SpaceX Daily")
+        titles = [c.title for c in chapters]
+        assert "AI & Compute" in titles, titles

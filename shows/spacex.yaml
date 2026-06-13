@@ -25,12 +25,20 @@ sources:
     label: "Google News — SpaceX Starship"
   - url: "https://news.google.com/rss/search?q=SpaceX+Starlink+launch&hl=en-US&gl=US&ceid=US:en"
     label: "Google News — SpaceX Starlink launch"
+  - url: "https://news.google.com/rss/search?q=SpaceX+Raptor+OR+Starbase+OR+%22launch+pad%22&hl=en-US&gl=US&ceid=US:en"
+    label: "Google News — SpaceX hardware & infrastructure"
+  - url: "https://news.google.com/rss/search?q=SpaceX+%22AI+satellite%22+OR+%22orbital+data+center%22+OR+Starshield&hl=en-US&gl=US&ceid=US:en"
+    label: "Google News — SpaceX AI satellites & Starshield"
+  - url: "https://news.google.com/rss/search?q=xAI+OR+Grok+datacenter+OR+Colossus+OR+%22direct+to+cell%22&hl=en-US&gl=US&ceid=US:en"
+    label: "Google News — xAI / Grok / compute"
 
 web_search_queries:
   - SpaceX news today
   - Starship launch update
   - SPCX stock market news
-  - commercial space industry news today
+  - SpaceX Raptor Starship launch infrastructure news
+  - SpaceX orbital data center AI satellites Starshield
+  - xAI Grok datacenter Colossus news
 
 keywords:
   - spacex
@@ -51,6 +59,21 @@ keywords:
   - mechazilla
   - spcx
   - nasdaq
+  # Launch infrastructure & hardware breadth
+  - gigabay
+  - tower catch
+  - orbital refueling
+  - launch pad
+  - starshield
+  - direct to cell
+  - ai satellite
+  - orbital data center
+  # Musk-ecosystem AI thread (the dedicated AI section)
+  - xai
+  - grok
+  - colossus
+  - data center
+  - datacenter
 
 # Curated like TST's commentator roster (landmine: the X fetch prompt
 # requires SUBSTANTIVE posts — emoji-spam accounts were removed from the
@@ -74,6 +97,13 @@ x_accounts:
   - handle: StarshipGazer
     label: StarshipGazer
     max_posts: 3
+  # Musk-ecosystem AI thread (the dedicated AI section)
+  - handle: xai
+    label: xAI
+    max_posts: 3
+  - handle: grok
+    label: Grok
+    max_posts: 2
 
 min_articles: 8
 min_articles_skip: 5
@@ -172,6 +202,8 @@ chapters:
       title: "The Counterpoint"
     - pattern: "engineering deep dive|engineering angle|from an engineering standpoint|the engineering reality"
       title: "The Engineering Angle"
+    - pattern: "on the ai front|the ai and compute|ai and compute side|over in the ai"
+      title: "AI & Compute"
     - pattern: "Before we go|before we wrap"
       title: "Tomorrow Teaser"
       where: end
