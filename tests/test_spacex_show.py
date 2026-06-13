@@ -246,3 +246,35 @@ class TestStockClosing:
             (_ROOT / "shows/pronunciation_map.yaml").read_text(encoding="utf-8")
         )
         assert pron["corrections"].get("SPCX") == "S P C X"
+
+
+class TestEp001RegressionChapters:
+    """Ep001 lesson: chapters parse the POST-pronunciation script, where
+    assets/pronunciation.py renders 'SpaceX' as 'Space X' — Ep001 shipped
+    with NO Introduction chapter because the pattern only knew the written
+    form. The patterns must match the real shipped script."""
+
+    def test_real_ep001_script_parses_with_intro_and_closing(self):
+        script_path = (
+            _ROOT / "digests/spacex/SpaceX_Daily_Ep001_20260613_tts.txt"
+        )
+        if not script_path.exists():
+            import pytest
+            pytest.skip("Ep001 artifact not present")
+        chapters = parse_chapters(
+            script_path.read_text(encoding="utf-8"),
+            _spacex_markers(),
+            show_name="SpaceX Daily",
+        )
+        titles = [c.title for c in chapters]
+        assert titles[0] == "Introduction", titles
+        assert titles[-1] == "Closing", titles
+        assert "Market Watch" in titles
+
+    def test_podcast_prompt_requires_chapter_entry_phrases(self):
+        # Ep001 spoke the Counterpoint and Engineering Angle content but
+        # never used the entry phrases, so those chapters were lost. The
+        # prompt now REQUIRES them.
+        text = (_ROOT / "shows/prompts/spacex_podcast.txt").read_text(encoding="utf-8")
+        assert 'REQUIRED: open the segment with the words "One thing worth watching"' in text
+        assert '"from an engineering standpoint" or "the engineering angle"' in text

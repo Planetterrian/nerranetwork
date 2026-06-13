@@ -280,7 +280,7 @@ _IPO_DEBUT = """
 ### SERIES PREMIERE — IPO DAY (Episode 1 only; HIGHEST PRIORITY)
 This show launches TODAY — the day SpaceX became a public company. Episode 1 must do three jobs, in this order:
 
-1. INTRODUCE THE SHOW (first ~60 seconds): SpaceX Daily is the daily companion for following SpaceX now that anyone can own a piece of it — every weekday: the news with sources, what the community is buzzing about, one honest counterpoint, the engineering and economics behind the headlines, and the SPCX market picture. Make the daily promise concrete, then invite listeners once, warmly, to subscribe so they never miss a day. One subscribe ask in the intro and one in the closing — never more.
+1. INTRODUCE THE SHOW (first ~60 seconds, placed AFTER the supplied intro line — the script still begins with the exact supplied intro, never a rewrite of it): SpaceX Daily is the daily companion for following SpaceX now that anyone can own a piece of it — every weekday: the news with sources, what the community is buzzing about, one honest counterpoint, the engineering and economics behind the headlines, and the SPCX market picture. Make the daily promise concrete, then invite listeners once, warmly, to subscribe so they never miss a day ("subscribe" or "follow" must appear in this introduction). One subscribe ask in the intro and one in the closing — never more.
 
 2. TELL THE IPO STORY as the anchor segment. Verified facts to weave in (cross-check against today's fetched coverage; where today's sources give different or fresher numbers, the sources win; hedge anything not corroborated):
    - SpaceX listed on the Nasdaq under the ticker SPCX, priced at one hundred thirty-five dollars a share, and began trading June twelfth, twenty twenty-six.
