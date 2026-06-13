@@ -86,10 +86,10 @@ def _slim_launch(r: Dict[str, Any]) -> Dict[str, Any]:
     booster = None
     stages = (r.get("rocket") or {}).get("launcher_stage") or []
     if stages:
-        l = stages[0].get("launcher") or {}
-        fn = stages[0].get("launcher_flight_number") or l.get("flights")
-        if l.get("serial_number"):
-            booster = {"serial": l.get("serial_number"), "flight_number": fn}
+        launcher = stages[0].get("launcher") or {}
+        fn = stages[0].get("launcher_flight_number") or launcher.get("flights")
+        if launcher.get("serial_number"):
+            booster = {"serial": launcher.get("serial_number"), "flight_number": fn}
     return {
         "id": r.get("id"),
         "booster": booster,
@@ -124,9 +124,9 @@ def _booster_stats(prev_raw: List[Dict[str, Any]]) -> Dict[str, Any]:
     landings_ok = landings_total = 0
     for r in prev_raw:
         for s in ((r.get("rocket") or {}).get("launcher_stage") or []):
-            l = s.get("launcher") or {}
-            serial = l.get("serial_number")
-            fn = s.get("launcher_flight_number") or l.get("flights")
+            launcher = s.get("launcher") or {}
+            serial = launcher.get("serial_number")
+            fn = s.get("launcher_flight_number") or launcher.get("flights")
             if serial and fn:
                 try:
                     flights[serial] = max(flights.get(serial, 0), int(fn))
