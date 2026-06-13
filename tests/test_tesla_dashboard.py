@@ -71,3 +71,34 @@ class TestSpacexStarlinkCount:
         # dashboard shows the live active count
         dash = (_ROOT / "templates/spacex_dashboard.html.j2").read_text(encoding="utf-8")
         assert "flStarlinkActive" in dash and "Active Starlink" in dash
+
+
+class TestMitPerformanceCharts:
+    def test_chart_data_is_finite_safe(self):
+        import generate_html as g
+        # NaN P&L (the yfinance-NaN class) must never reach the baked JSON.
+        tracker = {
+            "summary": {"wins": 2, "losses": 1, "breakeven": 0, "cumulative_pnl": 50.0,
+                        "best_trade_pct": float("nan"), "win_rate_pct": 66.6,
+                        "longest_win_streak": 2, "worst_trade_pct": -5.0},
+            "sectors": {"tech": {"trade_count": 2, "cumulative_pnl": float("inf")},
+                        "consumer": {"trade_count": 1, "cumulative_pnl": 9.0}},
+            "trades": [
+                {"date": "2026-01-01", "symbol": "A", "pnl_pct": 3.0, "strategy": "x"},
+                {"date": "2026-01-02", "symbol": "B", "pnl_pct": float("nan"), "strategy": "y"},
+                {"date": "2026-01-03", "symbol": "C", "pnl_pct": -1.0, "strategy": "z"},
+            ],
+        }
+        c = g._mit_chart_data(tracker)
+        import json, math
+        blob = json.dumps(c)  # default allow_nan=True would still emit NaN; assert none
+        assert "NaN" not in blob and "Infinity" not in blob
+        # NaN trade dropped from the curve (2 finite trades remain)
+        assert len(c["equity_curve"]) == 2
+        assert c["headline"]["best"] is None  # NaN coerced to None
+
+    def test_mit_template_has_charts(self):
+        t = (_ROOT / "templates/mit_performance_page.html.j2").read_text(encoding="utf-8")
+        for needle in ('id="mitEquity"', 'id="mitSectors"', 'id="mitWL"', "mit-chart-data",
+                       "Cumulative return", "Simulated P&amp;L"):
+            assert needle in t, needle
