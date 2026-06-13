@@ -1650,8 +1650,18 @@ def _mit_chart_data(tracker):
     recent = [{"date": t.get("date", ""), "symbol": t.get("symbol", ""),
                "strategy": t.get("strategy", ""), "pnl": _fin(t.get("pnl_pct"))}
               for t in reversed(trades[-8:])]
+    # Monthly P&L (sum of closed-trade % points per calendar month) — same
+    # basis as the equity curve, just bucketed; powers a green/red bar chart.
+    from collections import OrderedDict
+    by_month = OrderedDict()
+    for t in trades:
+        ym = (t.get("date") or "")[:7]  # YYYY-MM
+        if len(ym) == 7:
+            by_month[ym] = by_month.get(ym, 0.0) + _fin(t["pnl_pct"])
+    monthly_pnl = [{"month": k, "pnl": round(v, 2)} for k, v in by_month.items()]
     return {
         "equity_curve": equity,
+        "monthly_pnl": monthly_pnl,
         "winloss": {"wins": s.get("wins", 0), "losses": s.get("losses", 0),
                     "breakeven": s.get("breakeven", 0)},
         "sector_pnl": sector_pnl,

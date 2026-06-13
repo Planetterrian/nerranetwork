@@ -22,6 +22,8 @@
     .mit-bar { width:100%; border-radius:6px 6px 2px 2px; min-height:2px; transition:height .6s cubic-bezier(.2,.7,.2,1); position:relative; }
     .mit-bar .cnt { position:absolute; top:-17px; left:0; right:0; text-align:center; font-size:0.66rem; font-weight:700; color:#cbd5e1; }
     .mit-blab { font-size:0.62rem; color:#8ea3d6; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; text-transform:capitalize; }
+    .mit-monthly { display:flex; align-items:flex-end; gap:5px; height:150px; padding-top:18px; overflow:hidden; }
+    @media (max-width:520px){ .mit-monthly{ gap:2px; } .mit-monthly .mit-blab{ font-size:0.5rem; } }
     .mit-wl { display:flex; height:26px; border-radius:8px; overflow:hidden; margin:6px 0 10px; }
     .mit-wl span { height:100%; }
     .mit-wl-legend { display:flex; gap:16px; font-size:0.82rem; flex-wrap:wrap; }
@@ -102,6 +104,14 @@
       </div>
     </div>
 
+    {% if mit_charts.monthly_pnl and mit_charts.monthly_pnl|length > 1 %}
+    <div class="glass-card" style="padding:var(--sp-6); margin-bottom:var(--sp-8);">
+      <h2 style="margin-top:0; font-size:1.2rem;">Monthly P&amp;L</h2>
+      <p style="color:var(--nn-text-muted); font-size:0.9rem; margin-top:0;">Sum of closed-trade results per calendar month (percentage points). Green = up month, red = down month. Education only.</p>
+      <div class="mit-monthly" id="mitMonthly"></div>
+    </div>
+    {% endif %}
+
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-6); margin-bottom:var(--sp-8);" class="mit-two">
       <div class="glass-card" style="padding:var(--sp-6);">
         <h2 style="margin-top:0; font-size:1.2rem;">Win / loss split</h2>
@@ -172,6 +182,15 @@
         var max=Math.max.apply(null,s.map(function(x){return Math.abs(x.pnl);}).concat([1]));
         wrap.innerHTML=s.map(function(x){ var hgt=Math.round(Math.abs(x.pnl)/max*120)+2; var col=x.pnl>=0?'linear-gradient(180deg,#34d399,#10b981)':'linear-gradient(180deg,#f87171,#ef4444)';
           return '<div class="mit-bw"><div class="mit-bar" style="height:0;background:'+col+'" data-h="'+hgt+'"><span class="cnt">'+(x.pnl>=0?'+':'')+x.pnl.toFixed(0)+'</span></div><div class="mit-blab">'+x.sector+'</div></div>'; }).join('');
+        requestAnimationFrame(function(){ wrap.querySelectorAll('.mit-bar').forEach(function(b){ b.style.height=b.dataset.h+'px'; }); });
+      })();
+
+      // monthly P&L (diverging colors, absolute height by magnitude)
+      (function(){ var s=D.monthly_pnl||[]; var wrap=document.getElementById('mitMonthly'); if(!wrap||!s.length) return;
+        var max=Math.max.apply(null,s.map(function(x){return Math.abs(x.pnl);}).concat([1]));
+        wrap.innerHTML=s.map(function(x){ var hgt=Math.round(Math.abs(x.pnl)/max*110)+2; var col=x.pnl>=0?'linear-gradient(180deg,#34d399,#10b981)':'linear-gradient(180deg,#f87171,#ef4444)';
+          var lab=(x.month||'').slice(2).replace('-','/');
+          return '<div class="mit-bw"><div class="mit-bar" style="height:0;background:'+col+'" data-h="'+hgt+'"><span class="cnt">'+(x.pnl>=0?'+':'')+x.pnl.toFixed(0)+'</span></div><div class="mit-blab">'+lab+'</div></div>'; }).join('');
         requestAnimationFrame(function(){ wrap.querySelectorAll('.mit-bar').forEach(function(b){ b.style.height=b.dataset.h+'px'; }); });
       })();
 

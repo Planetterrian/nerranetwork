@@ -635,6 +635,14 @@
 
   <div class="spx-grid" style="grid-template-columns:minmax(0,1fr);">
     <div class="spx-panel">
+      <h2>Launches per year <span class="spx-muted" style="font-size:0.7rem;font-weight:400;">(the growth story)</span></h2>
+      <div class="spx-cadence" id="spxAnnual"></div>
+      <p class="spx-disclaimer">SpaceX orbital launches by year — from 26 in 2020 to a record cadence today. The live monthly chart above covers the recent window; this is the long arc. Operator-maintained as the current year accrues.</p>
+    </div>
+  </div>
+
+  <div class="spx-grid" style="grid-template-columns:minmax(0,1fr);">
+    <div class="spx-panel">
       <h2>Mass to orbit — last 12 months <span class="spx-muted" style="font-size:0.7rem;font-weight:400;">(estimated, tonnes)</span></h2>
       <div class="spx-cadence" id="spxMass"></div>
       <div class="spx-stats" style="margin-top:1.2rem;">
@@ -982,6 +990,19 @@
     requestAnimationFrame(()=>{ wrap.querySelectorAll('.spx-bar').forEach(b=>{ b.style.height=b.dataset.h+'px'; }); });
   }
 
+  function renderAnnual(al){
+    var years = ((al||{}).years)||[];
+    var wrap = document.getElementById('spxAnnual');
+    if(!wrap || !years.length) return;
+    var max = Math.max(1, ...years.map(function(x){ return x.launches||0; }));
+    wrap.innerHTML = years.map(function(x){
+      var v = x.launches||0;
+      var h = Math.round((v/max)*130)+3;
+      return '<div class="spx-bar-wrap"><div class="spx-bar" style="height:0" data-h="'+h+'"><span class="cnt">'+v+'</span></div><div class="spx-bar-label">'+x.year+'</div></div>';
+    }).join('');
+    requestAnimationFrame(function(){ wrap.querySelectorAll('.spx-bar').forEach(function(b){ b.style.height=b.dataset.h+'px'; }); });
+  }
+
   function renderCadence(months){
     const wrap = document.getElementById('spxCadence');
     if(!wrap || !months || !months.length) return;
@@ -1198,6 +1219,7 @@
     renderPrev(data.previous);
     renderStats(data.stats, data.total_launches);
     renderCadence(data.cadence_monthly);
+    renderAnnual(data.annual_launches);
     renderBars('spxMass', data.mass_monthly, 'tonnes');
     renderArea(data.sats_cumulative_monthly);
     renderFleet(data.fleet);
