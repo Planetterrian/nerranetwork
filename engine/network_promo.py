@@ -70,7 +70,7 @@ ENGLISH_SHOWS: dict[str, dict[str, str]] = {
     },
     "spacex": {
         "spoken_name": "SpaceX Daily",
-        "tagline": "daily SpaceX news, from Starship to Starlink, with the engineering behind it",
+        "tagline": "the daily companion for following SpaceX as a public company, from Starship to the stock ticker",
     },
 }
 

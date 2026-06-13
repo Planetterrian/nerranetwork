@@ -142,3 +142,60 @@ class TestPromptContracts:
             "ONE unified length target: the prompt must state the word target "
             "exactly once"
         )
+
+    def test_system_prompt_length_agrees_with_podcast_prompt(self):
+        # The scaffolded system prompt said 10-12 min while the podcast
+        # prompt demanded 12-14 — the contradictory-length class every
+        # June 2026 review fixed. Both must state the same window.
+        system = (_ROOT / "shows/prompts/spacex_system.txt").read_text(encoding="utf-8")
+        assert "12–14 minutes" in system
+        assert "10-12" not in system and "10–12" not in system
+
+
+class TestIpoPositioning:
+    """June 13 2026 repositioning: the show launched on SpaceX's IPO day
+    (Nasdaq: SPCX, June 12 2026) and is the daily companion for following
+    the now-public company."""
+
+    def test_prompts_carry_hook_placeholders(self):
+        digest = (_ROOT / "shows/prompts/spacex_digest.txt").read_text(encoding="utf-8")
+        podcast = (_ROOT / "shows/prompts/spacex_podcast.txt").read_text(encoding="utf-8")
+        assert "{spcx_market_block}" in digest
+        assert "{ipo_debut_section}" in digest
+        assert "{ipo_debut_section}" in podcast
+
+    def test_debut_section_fires_on_episode_one_only(self):
+        from shows.hooks.spacex import _ipo_debut_section
+        ep1 = _ipo_debut_section(1)
+        assert "IPO" in ep1 and "subscribe" in ep1.lower()
+        assert _ipo_debut_section(2) == ""
+        assert _ipo_debut_section(None) == ""
+
+    def test_market_block_empty_on_invalid_quote(self):
+        # Failed/invalid quote must render an EMPTY block — the prompts
+        # then omit the price line entirely (never "price unavailable",
+        # the Tesla Ep4xx failure mode).
+        from shows.hooks.spacex import _build_market_block
+        assert _build_market_block(0.0, "") == ""
+        block = _build_market_block(161.0, "+19.3%")
+        assert "$161.00" in block and "verbatim" in block
+
+    def test_quote_validation_band_and_deviation_guard(self):
+        from shows.hooks import spacex as hook
+        assert not hook._validate(5.0)       # below band
+        assert not hook._validate(5000.0)    # above band
+        assert hook._validate(161.0)         # day-one close passes
+
+    def test_market_watch_chapter_marker(self):
+        by_title = {m["title"]: m for m in _spacex_markers()}
+        assert "Market Watch" in by_title
+
+    def test_public_markets_program_seeded(self):
+        prog = SHOW_MEMORY_CONFIGS["spacex"].default_programs["public_markets"]
+        assert "SPCX" in prog["status"]
+        assert any("earnings" in q.lower() for q in prog["key_open_questions"])
+
+    def test_descriptions_state_public_company(self):
+        cfg = yaml.safe_load((_ROOT / "shows/spacex.yaml").read_text(encoding="utf-8"))
+        assert "SPCX" in cfg["description"]
+        assert "SPCX" in cfg["publishing"]["rss_description"]

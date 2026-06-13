@@ -1168,6 +1168,12 @@ def run(args: argparse.Namespace) -> None:
         # reference {vocab_review_section}, supplied by the show's hook.
         # Same defaulting contract as above.
         template_vars.setdefault("vocab_review_section", "")
+        # SpaceX Daily (June 2026): prompts reference the SPCX market quote
+        # block and the Episode-1 IPO debut brief, supplied by the show's
+        # hook. Same defaulting contract — a hook failure degrades to an
+        # episode without the quote/debut framing, never a KeyError.
+        template_vars.setdefault("spcx_market_block", "")
+        template_vars.setdefault("ipo_debut_section", "")
 
         # 7. Generate digest
         #

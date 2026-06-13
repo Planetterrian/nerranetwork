@@ -756,6 +756,11 @@ SHOW_MEMORY_CONFIGS: Dict[str, MemoryConfig] = {
                 ["First uncrewed launch window attempt", "ISRU and landing-site progress"],
                 confidence="low",
             ),
+            "public_markets": _prog(
+                "SPCX & Public Markets",
+                "Listed on Nasdaq June 12, 2026 (SPCX) at $135/share — the largest IPO in history (~$75B raised, ~$1.8T valuation at pricing); closed day one around $161 (+19%). Dual-class structure leaves Musk a controlling majority of voting power; prospectus showed ~$18.7B 2025 revenue with Starlink ~2/3 of it and profitable, launch/Starship still loss-making.",
+                ["First earnings report as a public company", "Index inclusion timeline", "Lockup expiry and insider-sale dates"],
+            ),
         },
         theme_keywords=[
             "starship", "starbase", "starlink", "falcon", "dragon", "raptor",

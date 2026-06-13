@@ -140,6 +140,7 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
             "Let's get into today's SpaceX developments.",
             "From Starbase to orbit — here's your SpaceX rundown.",
             "Plenty moving across Starship, Falcon, and Starlink today.",
+            "From the launch pad to the trading floor — here's everything that moved today.",
         ],
         # Every variant MUST match the Closing chapter pattern in
         # shows/spacex.yaml (drift guard in tests/test_spacex_show.py).
