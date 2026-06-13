@@ -42,6 +42,18 @@
   .tsl-bar .cnt { position:absolute; top:-18px; left:0; right:0; text-align:center; font-size:0.68rem; color:#ffd6dd; font-weight:700; }
   .tsl-blab { font-size:0.62rem; color:#a8838c; white-space:nowrap; }
 
+  /* quarterly paired bars (produced vs delivered) */
+  .tsl-qbars { display:flex; align-items:flex-end; gap:7px; height:190px; padding-top:8px; overflow:hidden; }
+  .tsl-qg { flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:5px; height:100%; justify-content:flex-end; }
+  .tsl-qpair { display:flex; align-items:flex-end; justify-content:center; gap:3px; width:100%; height:100%; }
+  .tsl-qbar { width:46%; border-radius:4px 4px 1px 1px; min-height:3px; transition:height .7s cubic-bezier(.2,.7,.2,1); }
+  .tsl-qbar.prod { background:linear-gradient(180deg,#8a5560,#4a2a31); }
+  .tsl-qbar.del { background:linear-gradient(180deg,var(--tsl-glow),var(--tsl-red)); }
+  .tsl-qlab { font-size:0.54rem; color:#a8838c; white-space:nowrap; letter-spacing:-0.02em; }
+  .tsl-legend { display:flex; gap:18px; font-size:0.78rem; color:#cbb1b7; margin-bottom:8px; }
+  .tsl-legend .sw { display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:6px; vertical-align:middle; }
+  @media (max-width:520px){ .tsl-qbars{ gap:3px; } .tsl-qlab{ font-size:0.46rem; } }
+
   .tsl-area-svg { width:100%; height:210px; display:block; overflow:visible; }
   .tsl-area-svg .grid { stroke:rgba(255,120,140,0.12); stroke-width:1; }
   .tsl-area-svg .gl { fill:#a8838c; font-size:10px; }
@@ -98,6 +110,30 @@
     </div>
   </div>
 
+  {% if deliveries_quarterly %}
+  <div class="tsl-grid" style="grid-template-columns:1fr;">
+    <div class="tsl-panel">
+      <h2>Quarterly production &amp; deliveries</h2>
+      <div class="tsl-legend">
+        <span><span class="sw" style="background:linear-gradient(180deg,#8a5560,#4a2a31);"></span>Produced</span>
+        <span><span class="sw" style="background:linear-gradient(180deg,var(--tsl-glow),var(--tsl-red));"></span>Delivered</span>
+      </div>
+      <div class="tsl-qbars" id="tslQuarterly">
+        {% for q in deliveries_quarterly %}
+        <div class="tsl-qg">
+          <div class="tsl-qpair">
+            <div class="tsl-qbar prod" data-v="{{ q.produced }}" style="height:0" title="Produced: {{ '{:,}'.format(q.produced) }}"></div>
+            <div class="tsl-qbar del" data-v="{{ q.delivered }}" style="height:0" title="Delivered: {{ '{:,}'.format(q.delivered) }}"></div>
+          </div>
+          <div class="tsl-qlab">{{ q.quarter }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      <p class="tsl-disclaimer">Tesla's published Production &amp; Deliveries figures by quarter (the number watched most closely each quarter). Quarterly delivered totals reconcile to the annual deliveries below. Operator-maintained — append each new quarter after the P&amp;D release.</p>
+    </div>
+  </div>
+  {% endif %}
+
   <div class="tsl-grid">
     <div class="tsl-panel">
       <h2>Annual vehicle deliveries</h2>
@@ -119,16 +155,27 @@
     </div>
   </div>
 
-  {% if highlights %}
-  <div class="tsl-grid" style="grid-template-columns:1fr;">
+  <div class="tsl-grid">
+    {% if supercharger_connectors_annual %}
+    <div class="tsl-panel">
+      <h2>Supercharger network (connectors, year-end)</h2>
+      <div class="tsl-bars" id="tslSupercharger">
+        {% for s in supercharger_connectors_annual %}
+        <div class="tsl-bw"><div class="tsl-bar" data-v="{{ s.connectors }}" style="height:0"><span class="cnt">{{ (s.connectors/1000)|round|int }}k</span></div><div class="tsl-blab">{{ s.year }}</div></div>
+        {% endfor %}
+      </div>
+      <p class="tsl-disclaimer">Cumulative Supercharger connectors at year-end, from Tesla's published figures — the fast-charging network that's now opening to other automakers (NACS). Operator-maintained.</p>
+    </div>
+    {% endif %}
+    {% if highlights %}
     <div class="tsl-panel">
       <h2>Milestones</h2>
       {% for h in highlights %}
       <div class="tsl-hl"><span>{{ h.label }} <span class="tsl-muted">{{ h.note }}</span></span><span class="v">{{ h.value }}</span></div>
       {% endfor %}
     </div>
+    {% endif %}
   </div>
-  {% endif %}
 
   <p class="tsl-foot-note">
     Live TSLA data via Yahoo Finance (refreshed each run). Operating metrics are from Tesla's published reports and operator-maintained. This is the data companion to <a href="{{ path_prefix }}tesla.html" style="color:var(--tsl-glow);">Tesla Shorts Time</a> — full resources on the <a href="{{ path_prefix }}tesla.html#resources" style="color:var(--tsl-glow);">show page</a>. Nothing here is financial advice.
@@ -164,7 +211,13 @@
     const bars=[...w.querySelectorAll('.tsl-bar')]; const max=Math.max(1,...bars.map(b=>parseFloat(b.dataset.v)||0));
     bars.forEach(b=>{ const h=Math.round((parseFloat(b.dataset.v)/max)*140)+3; requestAnimationFrame(()=>{ b.style.height=h+'px'; }); });
   }
-  animateBars('tslDeliveries'); animateBars('tslEnergy');
+  animateBars('tslDeliveries'); animateBars('tslEnergy'); animateBars('tslSupercharger');
+
+  // quarterly paired bars share one scale across produced + delivered
+  (function(){ const w=document.getElementById('tslQuarterly'); if(!w) return;
+    const bars=[...w.querySelectorAll('.tsl-qbar')]; const max=Math.max(1,...bars.map(b=>parseFloat(b.dataset.v)||0));
+    bars.forEach(b=>{ const h=Math.round((parseFloat(b.dataset.v)/max)*160)+3; if(reduce){ b.style.height=h+'px'; } else { requestAnimationFrame(()=>{ b.style.height=h+'px'; }); } });
+  })();
 
   function renderArea(series){ const svg=document.getElementById('tslArea'); if(!svg||!series||series.length<2) return;
     const W=1000,H=210,padL=46,padR=10,padT=12,padB=22, xs=W-padL-padR, ys=H-padT-padB;

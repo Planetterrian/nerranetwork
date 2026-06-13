@@ -19,6 +19,34 @@ class TestTeslaMetricsDataset:
         for row in d["energy_storage_annual_gwh"]:
             assert "year" in row and isinstance(row["gwh"], (int, float))
 
+    def test_quarterly_deliveries_reconcile_to_annual(self):
+        d = json.loads((_ROOT / "site/data/tesla_metrics.json").read_text(encoding="utf-8"))
+        q = d.get("deliveries_quarterly") or []
+        assert len(q) >= 8, "quarterly P&D series should be seeded"
+        for row in q:
+            assert isinstance(row["produced"], int) and isinstance(row["delivered"], int)
+            assert "Q" in row["quarter"]
+        # The curated quarterly delivered totals must sum to the annual figures
+        # (the integrity check that keeps the dataset honest).
+        annual = {r["year"]: r["vehicles"] for r in d["deliveries_annual"]}
+        from collections import defaultdict
+        by_year = defaultdict(int)
+        for row in q:
+            by_year[row["quarter"].split()[0]] += row["delivered"]
+        for yr in ("2023", "2024"):
+            full = [k for k in by_year if k == yr]
+            if full and yr in annual:
+                assert by_year[yr] == annual[yr], f"{yr}: {by_year[yr]} != {annual[yr]}"
+
+    def test_supercharger_series_monotonic(self):
+        d = json.loads((_ROOT / "site/data/tesla_metrics.json").read_text(encoding="utf-8"))
+        sc = d.get("supercharger_connectors_annual") or []
+        assert len(sc) >= 5
+        vals = [r["connectors"] for r in sc]
+        assert all(isinstance(v, int) for v in vals)
+        # The network only grows — a decreasing year signals a data-entry error.
+        assert vals == sorted(vals), "connector counts should be non-decreasing"
+
 
 class TestTeslaFetcher:
     def _mod(self):
@@ -44,7 +72,9 @@ class TestTeslaDashboardPage:
         g.generate_tesla_dashboard(dry_run=True)  # smoke, no exception
         t = (_ROOT / "templates/tesla_dashboard.html.j2").read_text(encoding="utf-8")
         for needle in ('id="tslArea"', 'id="tslDeliveries"', 'id="tslEnergy"',
-                       'id="tslPrice"', "function renderArea", "function countUp"):
+                       'id="tslPrice"', "function renderArea", "function countUp",
+                       'id="tslQuarterly"', "tsl-qbar", "deliveries_quarterly",
+                       'id="tslSupercharger"', "supercharger_connectors_annual"):
             assert needle in t, needle
 
     def test_show_page_links_dashboard(self):
