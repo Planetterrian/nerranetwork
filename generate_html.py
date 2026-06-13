@@ -2022,6 +2022,7 @@ def generate_tesla_dashboard(*, dry_run=False):
         "og_image": f"{GITHUB_RAW}/{_url_encode_image(cfg['podcast_image'])}",
         "rss_url": f"{cfg['rss_file']}",
         "deliveries_annual": metrics.get("deliveries_annual", []),
+        "deliveries_quarterly": metrics.get("deliveries_quarterly", []),
         "energy_storage_annual_gwh": metrics.get("energy_storage_annual_gwh", []),
         "highlights": metrics.get("highlights", []),
         "t": _NAV_T,
