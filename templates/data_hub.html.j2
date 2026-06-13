@@ -1,0 +1,98 @@
+{% extends "base.html.j2" %}
+
+{% block title %}Data & Dashboards — Live SpaceX, Tesla & Investing Data | Nerra Network{% endblock %}
+
+{% block og_type %}website{% endblock %}
+
+{% block head_extra %}
+<style>
+  .dh-hero { position:relative; overflow:hidden;
+    background:
+      radial-gradient(1100px 520px at 50% -10%, rgba(107,71,255,0.22), transparent 60%),
+      linear-gradient(180deg, #060812 0%, #0c1020 60%, #0a0e1c 100%);
+    border-bottom:1px solid rgba(140,140,255,0.14); }
+  .dh-container { max-width:1120px; margin:0 auto; padding:calc(var(--nav-height) + 2.6rem) 1.25rem 2rem; position:relative; z-index:1; }
+  .dh-kicker { display:inline-flex; align-items:center; gap:8px; font-size:0.78rem; letter-spacing:0.14em; text-transform:uppercase; color:#9b8cff; font-weight:700; margin-bottom:0.5rem; }
+  .dh-h1 { font-size:clamp(1.9rem,4vw,2.9rem); line-height:1.05; margin:0 0 0.5rem; font-weight:800; letter-spacing:-0.02em; color:#fff; }
+  .dh-sub { color:#b9c0e0; font-size:1.04rem; max-width:64ch; margin:0 0 0.4rem; }
+
+  .dh-grid { max-width:1120px; margin:1.8rem auto; padding:0 1.25rem; display:grid; gap:1.2rem; grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+  @media (max-width:760px){ .dh-grid{ grid-template-columns:minmax(0,1fr); } }
+  .dh-card { display:block; text-decoration:none; color:inherit; border-radius:18px; padding:1.4rem 1.5rem;
+    border:1px solid rgba(140,140,255,0.16); background:var(--nn-surface,#0f1326);
+    transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease; position:relative; overflow:hidden; }
+  .dh-card:hover { transform:translateY(-3px); border-color:var(--accent,#6B47FF); box-shadow:0 14px 40px rgba(0,0,0,0.4); }
+  .dh-card::before { content:""; position:absolute; inset:0 auto 0 0; width:5px; background:var(--accent,#6B47FF); }
+  .dh-card h2 { margin:0 0 0.3rem; font-size:1.3rem; color:#fff; letter-spacing:-0.01em; }
+  .dh-card .dh-tag { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent,#9b8cff); font-weight:700; }
+  .dh-card p { color:#aeb6d8; font-size:0.94rem; margin:0.5rem 0 0.9rem; line-height:1.5; }
+  .dh-metrics { display:flex; flex-wrap:wrap; gap:8px; margin-top:0.4rem; }
+  .dh-chip { font-size:0.74rem; color:#cdd4f0; background:rgba(140,140,255,0.10); border:1px solid rgba(140,140,255,0.18); border-radius:999px; padding:3px 10px; }
+  .dh-go { display:inline-flex; align-items:center; gap:6px; margin-top:1rem; color:var(--accent,#9b8cff); font-weight:700; font-size:0.92rem; }
+  .dh-note { max-width:1120px; margin:0 auto 2.4rem; padding:0 1.25rem; color:#8b91b4; font-size:0.82rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dh-hero">
+  <div class="dh-container">
+    <div class="dh-kicker"><span>◆</span> Nerra Data</div>
+    <h1 class="dh-h1">Data &amp; Dashboards</h1>
+    <p class="dh-sub">Live, continuously-updated data behind the shows — launch countdowns, market prices, fleet records, and simulated-portfolio performance. Real numbers from public sources, refreshed every pipeline run; curated history is operator-maintained and clearly labelled.</p>
+  </div>
+</div>
+
+<div class="dh-grid">
+  <a class="dh-card" href="{{ path_prefix }}spacex-dashboard.html" style="--accent:#00D4FF;">
+    <span class="dh-tag">SpaceX Daily</span>
+    <h2>SpaceX Launch Dashboard</h2>
+    <p>Next-launch countdown, watch-live links, launch cadence, mass to orbit, the booster-reuse record watch, the Starship flight-test tracker, and live SPCX price.</p>
+    <div class="dh-metrics">
+      <span class="dh-chip">Live countdown</span>
+      <span class="dh-chip">Booster records</span>
+      <span class="dh-chip">Starship tracker</span>
+      <span class="dh-chip">SPCX price</span>
+    </div>
+    <span class="dh-go">Open dashboard →</span>
+  </a>
+
+  <a class="dh-card" href="{{ path_prefix }}tesla-dashboard.html" style="--accent:#E31937;">
+    <span class="dh-tag">Tesla Shorts Time</span>
+    <h2>Tesla Dashboard</h2>
+    <p>Live TSLA price with a 1-year chart and 52-week range, quarterly production &amp; deliveries, Supercharger network growth, energy-storage deployments, and milestones.</p>
+    <div class="dh-metrics">
+      <span class="dh-chip">Live TSLA</span>
+      <span class="dh-chip">Quarterly P&amp;D</span>
+      <span class="dh-chip">Supercharger growth</span>
+    </div>
+    <span class="dh-go">Open dashboard →</span>
+  </a>
+
+  <a class="dh-card" href="{{ path_prefix }}modern-investing-performance.html" style="--accent:#10b981;">
+    <span class="dh-tag">Modern Investing Techniques</span>
+    <h2>Performance &amp; Recursive Learning</h2>
+    <p>The simulated practice portfolio's cumulative return, monthly P&amp;L, win/loss split, sector breakdown, recent trades, and the operating principles the model derives from its own results. Education only.</p>
+    <div class="dh-metrics">
+      <span class="dh-chip">Equity curve</span>
+      <span class="dh-chip">Monthly P&amp;L</span>
+      <span class="dh-chip">Alpha vs NASDAQ</span>
+    </div>
+    <span class="dh-go">Open dashboard →</span>
+  </a>
+
+  <a class="dh-card" href="{{ path_prefix }}gallery.html" style="--accent:#6B47FF;">
+    <span class="dh-tag">Network</span>
+    <h2>Image Gallery</h2>
+    <p>Every AI-generated visual produced for the shows — filterable by show and date, free to download under CC BY-SA 4.0 with attribution.</p>
+    <div class="dh-metrics">
+      <span class="dh-chip">Filter by show</span>
+      <span class="dh-chip">CC BY-SA 4.0</span>
+    </div>
+    <span class="dh-go">Browse gallery →</span>
+  </a>
+</div>
+
+<p class="dh-note">
+  Sources: launch data from <a href="https://thespacedevs.com/" target="_blank" rel="noopener" style="color:#9b8cff;">The Space Devs</a> Launch Library 2, active-satellite counts from <a href="https://celestrak.org/" target="_blank" rel="noopener" style="color:#9b8cff;">CelesTrak</a>, and market quotes from Yahoo Finance — each refreshed on every pipeline run, with the last good value kept on a fetch hiccup. Estimated figures (mass to orbit, satellites deployed) use public per-vehicle averages and are labelled as estimates. Nothing here is financial advice.
+</p>
+{% endblock %}
