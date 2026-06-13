@@ -364,20 +364,23 @@ class TestComprehensiveCoverageAndAISection:
         assert "ai_compute" in SPACEX_SECTION_PATTERNS
 
     def test_ai_section_chapter_parses(self):
-        # A script with the AI entry phrase yields an "AI & Compute" chapter.
-        script = "\n".join([
-            "Hey, welcome to SpaceX Daily, episode five. I'm Patrick in Vancouver.",
-            "Here's what's happening at SpaceX today.",
-            *[f"Body sentence {i} with launch detail." for i in range(20)],
-            "One thing worth watching is the FAA timeline.",
-            "On the AI front, SpaceX's orbital data center plan ties into xAI's Colossus compute.",
-            "From an engineering standpoint, reuse drives the cost curve.",
-            "Before we go, watch the static fire window.",
-            "That's a wrap on today's SpaceX developments. See you tomorrow.",
-        ])
-        chapters = parse_chapters(script, _spacex_markers(), show_name="SpaceX Daily")
-        titles = [c.title for c in chapters]
-        assert "AI & Compute" in titles, titles
+        # The marker must match BOTH "AI" and the post-pronunciation "A I"
+        # form (the TTS layer spaces acronyms) — Ep2 shipped the AI segment
+        # with no chapter because the marker only knew "ai".
+        for ai in ("AI", "A I"):
+            script = "\n".join([
+                "Hey, welcome to SpaceX Daily, episode five. I'm Patrick in Vancouver.",
+                "Here's what's happening at SpaceX today.",
+                *[f"Body sentence {i} with launch detail." for i in range(20)],
+                "One thing worth watching is the FAA timeline.",
+                f"On the {ai} front, the orbital data center plan ties into the compute push.",
+                "From an engineering standpoint, reuse drives the cost curve.",
+                "Before we go, watch the static fire window.",
+                "That's a wrap on today's SpaceX developments. See you tomorrow.",
+            ])
+            chapters = parse_chapters(script, _spacex_markers(), show_name="SpaceX Daily")
+            titles = [c.title for c in chapters]
+            assert "AI & Compute" in titles, (ai, titles)
 
 
 class TestResourcesAndDashboardStatsExpansion:

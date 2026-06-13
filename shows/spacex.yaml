@@ -202,7 +202,11 @@ chapters:
       title: "The Counterpoint"
     - pattern: "engineering deep dive|engineering angle|from an engineering standpoint|the engineering reality"
       title: "The Engineering Angle"
-    - pattern: "on the ai front|the ai and compute|ai and compute side|over in the ai"
+    # NOTE: chapters parse the POST-pronunciation script where the TTS
+    # layer spaces acronyms ("AI" -> "A I"), so the pattern must tolerate
+    # "a i" as well as "ai" (Ep2 lesson — the segment shipped without a
+    # chapter because "on the ai front" didn't match "on the a i front").
+    - pattern: "on the a ?i front|the a ?i and compute|a ?i and compute side|over in the a ?i"
       title: "AI & Compute"
     - pattern: "Before we go|before we wrap"
       title: "Tomorrow Teaser"
