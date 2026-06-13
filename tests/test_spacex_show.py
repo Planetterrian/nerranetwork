@@ -417,3 +417,55 @@ class TestResourcesAndDashboardStatsExpansion:
         assert f["est_mass_to_orbit_tonnes"] == 52
         assert f["success_rate_pct"] == 75.0  # 3/4
         assert f["estimated"] is True
+
+
+class TestGrowingMetricsDataset:
+    """June 13 2026: mass-to-orbit chart + a growing metrics time-series;
+    the dashboard's AI 'Musk stack' card moved to the show page."""
+
+    def _mod(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "fetch_spacex_launches", _ROOT / "scripts" / "fetch_spacex_launches.py")
+        m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+        return m
+
+    def test_monthly_breakdown_has_mass_and_sats(self):
+        import datetime as dt
+        mod = self._mod()
+        now = dt.datetime.now(dt.timezone.utc)
+        ym = now.strftime("%Y-%m")
+        prev = [{"net": f"{ym}-01T00:00:00Z", "rocket": "Falcon 9", "name": "Starlink Group 1-1", "status": "Success"}]
+        mb = mod._monthly_breakdown(prev)
+        assert len(mb) == 12
+        last = mb[-1]
+        assert last["month"] == ym
+        assert last["launches"] == 1 and last["satellites"] == 23 and last["mass_t"] == 17
+
+    def test_timeseries_accumulates(self, tmp_path):
+        import datetime as dt
+        mod = self._mod()
+        now = dt.datetime.now(dt.timezone.utc)
+        path = tmp_path / "spacex_metrics.json"
+        # seed an old month that must survive a refresh of the recent window
+        path.write_text('{"months": {"2020-01": {"launches": 5, "mass_t": 80, "satellites": 100, "vehicles": {}}}}')
+        mb = mod._monthly_breakdown([{"net": now.strftime("%Y-%m") + "-01T00:00:00Z",
+                                      "rocket": "Falcon 9", "name": "Starlink", "status": "Success"}])
+        cum = mod._update_metrics_timeseries(mb, now, path=path)
+        import json
+        data = json.loads(path.read_text())
+        assert "2020-01" in data["months"], "old month must persist"
+        assert now.strftime("%Y-%m") in data["months"]
+        assert cum >= 100  # cumulative includes the seeded old month
+
+    def test_dashboard_has_mass_chart_no_ai_card(self):
+        tmpl = (_ROOT / "templates/spacex_dashboard.html.j2").read_text(encoding="utf-8")
+        assert 'id="spxMass"' in tmpl
+        assert "Mass to orbit" in tmpl
+        assert "the Musk stack" not in tmpl  # AI card removed from dashboard
+
+    def test_show_narrative_mentions_ai_compute(self):
+        import yaml as y
+        meta = y.safe_load((_ROOT / "shows/network_meta.yaml").read_text(encoding="utf-8"))
+        about = meta["spacex"]["about_text"].lower()
+        assert "ai" in about and ("xai" in about or "compute" in about)
