@@ -123,7 +123,11 @@ class TestPromptTicBans:
         ("fascinating_frontiers_podcast.txt", "blew my mind"),
         ("planetterrian_podcast.txt", "this development fits the tracked program"),
         ("omni_view_podcast.txt", "VARY HOW YOU INTRODUCE THE SIDES"),
-        ("unintended_consequences_podcast.txt", "That wraps today's case"),
+        # June 12 2026 UC pass: the "That wraps today's case" ban was
+        # superseded — that phrase is the supplied sign-off (LLM can't vary
+        # it), so it was removed from the closing pool instead. The prompt
+        # bullet now targets the LLM-controlled lesson close.
+        ("unintended_consequences_podcast.txt", "stale final beat in the Lesson"),
         ("mab_podcast.txt", "go do this right now"),
         ("env_intel_digest.txt", "REQUIRED EVERY EPISODE"),
     ]

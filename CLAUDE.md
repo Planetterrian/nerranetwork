@@ -347,6 +347,34 @@ TST received a full recursive improvement architecture (analogous to MIT):
   is accepted (operator confirmed grok-4.3 plateaus, resists escalation),
   not re-litigated. Retry edit changes shipped audio when it fires —
   A/B-listen per landmine #17.
+- **UC** (Unintended Consequences) runs via `run_show.py` +
+  `shows/unintended_consequences.yaml`; a weekday **narrative** show
+  (`narrative_mode: true`, topic-queue-driven — no news fetch). Patrick
+  voice. X posting on via the @planetterrian account.
+  **June 12 2026 quality pass** (review:
+  [`docs/reviews/unintended_consequences_review_2026_06_12.md`](docs/reviews/unintended_consequences_review_2026_06_12.md);
+  drift guards: `tests/test_unintended_consequences_quality_pass.py`): UC
+  was missed by the Tesla/four-show/FP chapter hardening — no `where`
+  anchors, and seven keyword markers that assume the spoken prose contains
+  literal section words the podcast prompt forbids; the brand name
+  *Unintended Consequences* (contains "consequence") collided with the
+  body marker on both the intro and the sign-off, so 0/10 recent episodes
+  had a correct chapter shape (ep024 opened on "The Lesson"; ep028 ended
+  on "The Unintended Consequences"). Fixed by anchoring Introduction
+  (`where: start`) + Closing (`where: end`), dropping the unreliable middle
+  markers, and letting auto-segmentation fill the middle with in-order
+  content titles (the Introduction pattern includes a generic opening-word
+  fallback because the LLM rewrites the supplied intro on ~30% of episodes,
+  dropping the brand + "episode N") — verified 10/10, metadata-only.
+  The closing pool grew 2→4 and dropped "That wraps today's case" (the
+  prompt's WHAT TO AVOID block had banned that phrase while `intros.py`
+  supplied it verbatim on 5/10 episodes; the 2-entry pool repeated 3× in a
+  row, Ep026-028). Chronic under-length (857-1211w vs 1300 floor / 2200-
+  2800 target) is DEFERRED with the same root cause + lever as First
+  Principles: the digest is thin (700-960w), so the podcast — told to use
+  only the brief — is capped; the digest-expansion retry is the deferred
+  network lever, and the grok-4.3 narrative plateau is accepted. Closing-
+  pool + prompt edits change shipped audio — A/B-listen per landmine #17.
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:
