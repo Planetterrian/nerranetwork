@@ -1,0 +1,82 @@
+# Review ledger — Fascinating Frontiers
+# Schema: docs/reviews/ledger/README.md
+reviews:
+  - date: 2026-06-12
+    pr: 606
+    doc: docs/reviews/fascinating_frontiers_review_2026_06_12.md
+    summary: >-
+      First scheduled-agent FF pass. Scored the June-10 four-show length
+      prediction (MISS — the digest is the ceiling, not the target). Shipped
+      two deterministic, no-A/B fixes: phonetic-garble repair for space names
+      (Enceladus/Tianwen) + a theme-mining self-reference filter (the show's
+      own name was a top "recurring theme" every episode).
+    # --- scoring the PRIOR pass (four-show, June 10; not in this ledger but
+    #     its length claim is the relevant prediction) ---
+    scored_prior:
+      - prior_pass: docs/four_show_review_2026_06_10.md (FF section)
+        claim: >-
+          "With the expansion retry now carrying the digest, these floors are
+          actually reachable by covering more stories" — FF floor 1700,
+          target 1,900-2,200w.
+        verdict: miss
+        evidence: >-
+          Ep097/098/099 (all generated AFTER the pass merged at 882aff94)
+          shipped 1634/1390/1637 words, all `script_below_target: true`. The
+          digest itself is 1027-1597w (RSS snippets, not full text); Ep099's
+          script (1664w) exceeded its digest (1572w). The retry fires every
+          episode but plateaus — no source facts left. Reopened as P1-1 with a
+          different approach (digest-side Cosmic Deep Dive lever), deferred to
+          avoid confounding the operator's in-flight four-show A/B.
+    shipped:
+      - phonetic-garble repair extended (en-sell-uh-dus->Enceladus, tee-en-wen->Tianwen)
+      - theme-mining self-reference filter (drops show-name bigram) + FF re-scrub
+    deferred:
+      - >-
+        Cosmic Deep Dive length lever: the one section licensed to use the
+        model's own astrophysics knowledge (digest line 56) rather than
+        snippet-bound news. Currently ~145-170w (digest) / 90-120s (podcast).
+        Expanding to ~12-16 sentences / ~150-180s adds ~200-300 non-padding,
+        on-brand words on thin days. Deferred until the four-show length A/B
+        settles; ship separately with a --test before/after. Audio-affecting.
+      - >-
+        Align min_podcast_words down to the real ceiling (~1500) to stop the
+        every-episode script_below_target flag + wasted ~$0.03 retry. Reverses
+        a floor set 2 days ago and is audio-affecting — operator's call.
+      - >-
+        Theme residual "science nasa" (count 18): generic cross-sentence
+        adjacency / bare science.nasa.gov domain not behind https://. Lower
+        harm than show-name echo; filtering risks removing real content.
+      - >-
+        Curated narrative-tracker status pass (all programs
+        last_major_update_episode: null). Operator task via
+        scripts/update_tesla_narrative.py --slug fascinating_frontiers.
+    predictions:
+      - metric: >-
+          "En-sell-uh-dus" / "Tee-en-wen" occurrences in new _tts.txt files
+        baseline: "Enceladus garble in Ep048/088/094, Tianwen in Ep090"
+        expected: "0 in every episode after this PR merges (deterministic repair)"
+        verdict: pending
+        evidence: null
+      - metric: >-
+          top theme of FF theme_evolution entries for new episodes
+        baseline: "Ep097/098/099 all led top_themes with 'fascinating frontiers'"
+        expected: "'fascinating frontiers' never appears in any new top_themes list"
+        verdict: pending
+        evidence: null
+
+do_not_retry:
+  - idea: Phonetic respellings or programmatic speech-tag injection.
+    evidence: >-
+      Landmine #17 — 100% regression rate on the custom voice kdif6sqjcyiq.
+      NOTE: this pass's garble repair is the OPPOSITE (it removes a phonetic
+      respelling the model emitted, restoring the standard spelling TTS handles)
+      and is allowed.
+  - idea: >-
+      Push FF podcast length above the digest ceiling via harder prompt
+      pressure (demanding more words/sentences from a snippet-bound digest).
+    evidence: >-
+      June 12 2026 review verified the ceiling is the digest (RSS snippets,
+      ~1,300-1,600w), not the target. Ep099 script (1664w) already exceeded its
+      digest (1572w). More prompt pressure produces padding (Ep099: 6 headline
+      restatements), not facts. The only legitimate lever is digest-side depth
+      (Cosmic Deep Dive own-knowledge), not podcast-side word demands.
