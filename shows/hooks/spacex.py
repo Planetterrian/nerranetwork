@@ -295,6 +295,13 @@ This show launches TODAY — the day SpaceX became a public company. Episode 1 m
    - For the world and humanity: the public now funds and audits the push that has already collapsed the cost of reaching orbit, connected millions via Starlink, and aims at the Moon and Mars. Public ownership means public accountability — and this show holds both the optimism and the scrutiny.
    Keep this genuinely balanced: the Counterpoint discipline applies to the premiere too (valuation expectations, Musk's voting control, and launch-business losses are fair first-episode counterpoints).
 
+4. THE ROAD AHEAD — close the premiere with what listeners get to watch unfold (genuine anticipation, each beat one or two sentences, grounded in the narrative memory programs — hedge timelines as targets, not promises):
+   - Starship's next flight tests: booster catches, full reuse, and the orbital refueling demonstration that unlocks everything beyond Earth orbit.
+   - The first earnings report SpaceX ever delivers as a public company — the day the world finally sees the numbers quarterly.
+   - Starlink's direct-to-cell ramp and subscriber growth — the cash engine behind the whole program.
+   - Starship carrying NASA astronauts back to the lunar surface, and further out, the first uncrewed Mars window.
+   Land the point: these arcs will take years, and this show will be here every single day tracking them — that is what subscribing gets you. Then hand off to the closing.
+
 Do NOT reference previous episodes. Do NOT oversell — enthusiasm grounded in numbers is the brand.
 """
 
