@@ -533,6 +533,17 @@
                     <div id="stock-updated" style="font-size:0.7rem;opacity:0.6;margin-top:2px;"></div>
                 </div>
                 
+                
+                <a href="spacex-dashboard.html" id="launch-teaser" style="display:none;margin-top:var(--sp-3);align-items:center;gap:12px;padding:10px 16px;border:1px solid rgba(120,160,255,0.3);border-radius:14px;background:linear-gradient(135deg,rgba(26,92,255,0.14),rgba(0,212,255,0.06));text-decoration:none;color:inherit;max-width:520px;">
+                    <span aria-hidden="true" style="font-size:1.4rem;line-height:1;">🚀</span>
+                    <span style="flex:1;min-width:0;">
+                        <span style="display:block;font-size:0.66rem;letter-spacing:0.12em;text-transform:uppercase;color:#7fb0ff;font-weight:700;">Next SpaceX launch</span>
+                        <span id="lt-mission" style="display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Loading…</span>
+                    </span>
+                    <span id="lt-countdown" style="font-variant-numeric:tabular-nums;font-weight:800;font-size:1.05rem;color:#fff;white-space:nowrap;">—</span>
+                    <span aria-hidden="true" style="color:#7fb0ff;font-weight:700;">→</span>
+                </a>
+                
             </div>
         </div>
     </section>
@@ -1597,6 +1608,42 @@
         loadStock();
         // Refresh stock price every 5 minutes during page session
         setInterval(loadStock, 300000);
+        
+
+        
+        // --- Next-launch teaser strip (links to the full dashboard) ---
+        (function(){
+            const teaser = document.getElementById('launch-teaser');
+            if (!teaser) return;
+            let netMs = null;
+            function pad(n){ return String(n).padStart(2,'0'); }
+            function tick(){
+                if (netMs == null) return;
+                let diff = Math.max(0, netMs - Date.now());
+                const d = Math.floor(diff/86400000); diff -= d*86400000;
+                const h = Math.floor(diff/3600000); diff -= h*3600000;
+                const m = Math.floor(diff/60000); diff -= m*60000;
+                const s = Math.floor(diff/1000);
+                const el = document.getElementById('lt-countdown');
+                if (el) el.textContent = (d>0 ? d+'d ' : '') + pad(h)+':'+pad(m)+':'+pad(s);
+            }
+            function render(n){
+                if (!n || !n.name) return;
+                netMs = n.net ? new Date(n.net).getTime() : null;
+                const mEl = document.getElementById('lt-mission');
+                if (mEl) mEl.textContent = n.name;
+                teaser.style.display = 'flex';
+                tick(); setInterval(tick, 1000);
+            }
+            fetch('/api/spacex_launches.json', {cache:'no-cache'})
+                .then(r => r.ok ? r.json() : Promise.reject())
+                .then(d => render(d.next))
+                .catch(() => {
+                    fetch('https://ll.thespacedevs.com/2.3.0/launches/upcoming/?lsp__id=121&limit=1&ordering=net&mode=list')
+                        .then(r=>r.json()).then(d=>{ const r=(d.results||[])[0]; if(r) render({name:r.name, net:r.net}); })
+                        .catch(()=>{});
+                });
+        })();
         
 
         loadEpisodes();
