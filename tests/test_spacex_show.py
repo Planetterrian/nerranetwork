@@ -454,7 +454,8 @@ class TestGrowingMetricsDataset:
         path.write_text('{"months": {"2020-01": {"launches": 5, "mass_t": 80, "satellites": 100, "vehicles": {}}}}')
         mb = mod._monthly_breakdown([{"net": now.strftime("%Y-%m") + "-01T00:00:00Z",
                                       "rocket": "Falcon 9", "name": "Starlink", "status": "Success"}])
-        cum = mod._update_metrics_timeseries(mb, now, path=path)
+        cum, series = mod._update_metrics_timeseries(mb, now, path=path)
+        assert isinstance(series, list) and series and "total" in series[-1]
         import json
         data = json.loads(path.read_text())
         assert "2020-01" in data["months"], "old month must persist"
@@ -472,3 +473,32 @@ class TestGrowingMetricsDataset:
         meta = y.safe_load((_ROOT / "shows/network_meta.yaml").read_text(encoding="utf-8"))
         about = meta["spacex"]["about_text"].lower()
         assert "ai" in about and ("xai" in about or "compute" in about)
+
+
+class TestDashboardV2Visuals:
+    """June 13 2026 dashboard build-out: cumulative growth area chart,
+    recently-flown panel, vehicle-mix segmented bar, animated count-ups."""
+
+    def test_dashboard_template_has_new_panels(self):
+        t = (_ROOT / "templates/spacex_dashboard.html.j2").read_text(encoding="utf-8")
+        for needle in ('id="spxArea"', 'id="spxRecent"', "Constellation growth",
+                       "Recently flown", "function renderArea", "function renderRecent",
+                       "function countUp", "spx-mixbar"):
+            assert needle in t, needle
+
+    def test_payload_exposes_growth_and_recent(self):
+        # _monthly_breakdown + timeseries feed the cumulative series the
+        # area chart reads; recent list feeds the recently-flown panel.
+        import importlib.util, datetime as dt
+        spec = importlib.util.spec_from_file_location(
+            "fetch_spacex_launches", _ROOT / "scripts" / "fetch_spacex_launches.py")
+        mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+        import tempfile, pathlib
+        now = dt.datetime.now(dt.timezone.utc)
+        mb = mod._monthly_breakdown([
+            {"net": now.strftime("%Y-%m") + "-01T00:00:00Z", "rocket": "Falcon 9",
+             "name": "Starlink", "status": "Success"}])
+        with tempfile.TemporaryDirectory() as d:
+            cum, series = mod._update_metrics_timeseries(
+                mb, now, path=pathlib.Path(d) / "m.json")
+        assert series and series[-1]["total"] == cum
