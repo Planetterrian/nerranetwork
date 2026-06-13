@@ -287,11 +287,21 @@ chapters:
       title: "Action Items"
     - pattern: "week ahead|mark your calendar"
       title: "Week Ahead"
-    - pattern: "Before we wrap|Tomorrow"
-      title: "Tomorrow Teaser"
-      where: end
+    # June 11 2026 follow-up: Closing is listed BEFORE Tomorrow Teaser so
+    # that when the LLM merges the teaser sentence and the {closing_block}
+    # into ONE paragraph (Ep044, 2026-06-11 — "Tomorrow, watch for… That's
+    # Environmental Intelligence for today…" on a single line), the
+    # line-level "first marker wins" rule titles that line "Closing" rather
+    # than "Tomorrow Teaser", so the episode still gets its standard final
+    # Closing chapter. When the two sentences land on SEPARATE lines (the
+    # normal case) both chapters are produced as before — the closing
+    # pattern doesn't match the teaser-only line. The June 10 anchors +
+    # once-per-title dedup keep the positions correct regardless of order.
     - pattern: "That's Environmental Intelligence|That covers today.?s environmental intelligence"
       title: "Closing"
+      where: end
+    - pattern: "Before we wrap|Tomorrow"
+      title: "Tomorrow Teaser"
       where: end
 
 slow_news:

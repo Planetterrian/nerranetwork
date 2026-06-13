@@ -36,14 +36,30 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from engine.intros import _SHOW_PERSONALITIES  # noqa: E402
+from engine.chapters import parse_chapters  # noqa: E402
 
 _YAML = _ROOT / "shows/env_intel.yaml"
 _PODCAST_PROMPT = _ROOT / "shows/prompts/env_intel_podcast.txt"
+_DIGEST_PROMPT = _ROOT / "shows/prompts/env_intel_digest.txt"
+
+
+def _marker_list():
+    cfg = yaml.safe_load(_YAML.read_text(encoding="utf-8"))
+    return cfg["chapters"]["section_markers"]
 
 
 def _markers():
-    cfg = yaml.safe_load(_YAML.read_text(encoding="utf-8"))
-    return {m["title"]: m for m in cfg["chapters"]["section_markers"]}
+    return {m["title"]: m for m in _marker_list()}
+
+
+class _Marker:
+    """Lightweight stand-in matching what parse_chapters reads off a
+    config object (``.pattern`` / ``.title`` / ``.where``)."""
+
+    def __init__(self, d):
+        self.pattern = d["pattern"]
+        self.title = d["title"]
+        self.where = d.get("where", "")
 
 
 class TestChapterPositionalAnchors:
@@ -71,6 +87,74 @@ class TestChapterPositionalAnchors:
         assert not regex.search("this briefing is useful to your practice")
         # but a real industry mention still matches
         assert regex.search("in practice this changes site closure criteria")
+
+
+class TestClosingWinsOverTeaserWhenMerged:
+    """June 11 2026 follow-up. Ep044 (2026-06-11) shipped with NO Closing
+    chapter: the LLM merged the Tomorrow Teaser sentence and the closing
+    block into ONE paragraph, and the parser's first-marker-wins rule
+    titled that line "Tomorrow Teaser". Listing Closing before Tomorrow
+    Teaser makes Closing win on a shared line so the standard final
+    chapter is preserved; separate lines still produce both chapters."""
+
+    def test_closing_marker_precedes_tomorrow_teaser(self):
+        titles = [m["title"] for m in _marker_list()]
+        assert titles.index("Closing") < titles.index("Tomorrow Teaser"), (
+            "Closing must be listed before Tomorrow Teaser so a merged "
+            "teaser+closing paragraph still yields a Closing chapter"
+        )
+
+    def test_merged_teaser_and_closing_yields_closing_chapter(self):
+        markers = [_Marker(m) for m in _marker_list()]
+        # One paragraph that fuses the teaser sentence and the closing,
+        # exactly the Ep044 shape. Padded with body so the closing lands
+        # in the `where: end` window.
+        body = "Host: " + ("Regulatory update for the day. " * 80) + "\n\n"
+        merged = (
+            "This is Environmental Intelligence, episode forty-four.\n\n"
+            + body
+            + "Tomorrow, watch for any late Canada Gazette postings. "
+            "That's Environmental Intelligence for today. Share it with a "
+            "colleague. We'll be back with the next briefing.\n"
+        )
+        titles = [c.title for c in parse_chapters(merged, markers, show_name="ei")]
+        assert "Closing" in titles, (
+            "merged teaser+closing paragraph must still produce a Closing "
+            f"chapter; got {titles}"
+        )
+        assert titles[-1] == "Closing"
+
+    def test_separate_teaser_and_closing_yield_both_chapters(self):
+        markers = [_Marker(m) for m in _marker_list()]
+        body = "Host: " + ("Regulatory update for the day. " * 80) + "\n\n"
+        separate = (
+            "This is Environmental Intelligence, episode forty-four.\n\n"
+            + body
+            + "Before we wrap, tomorrow watch for late Canada Gazette postings.\n\n"
+            "That's Environmental Intelligence for today. We'll be back with "
+            "the next briefing.\n"
+        )
+        titles = [c.title for c in parse_chapters(separate, markers, show_name="ei")]
+        assert "Tomorrow Teaser" in titles and "Closing" in titles, (
+            f"separate teaser/closing lines must yield both chapters; got {titles}"
+        )
+
+
+class TestThinDayHookNotAbsence:
+    """June 11 2026 follow-up. Ep044's digest hook was 'No major Canadian
+    regulatory announcements or enforcement actions appeared in today's
+    feed' — which became the blog <title>/<h1>, the chapter title, and the
+    spoken opener. The digest prompt now forbids an absence-of-news hook
+    and steers thin days to a forward-looking hook."""
+
+    def test_digest_prompt_forbids_absence_hook(self):
+        prompt = _DIGEST_PROMPT.read_text(encoding="utf-8").lower()
+        assert "never write a hook that states the absence" in prompt
+
+    def test_digest_prompt_steers_thin_day_hook_forward(self):
+        prompt = _DIGEST_PROMPT.read_text(encoding="utf-8").lower()
+        # the low-content strategy block must also reinforce it
+        assert "never a sentence announcing that nothing happened" in prompt
 
 
 class TestCadenceAccurateCopy:
