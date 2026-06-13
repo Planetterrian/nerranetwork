@@ -77,6 +77,17 @@
     <div class="tsl-panel">
       <h2>TSLA — last 12 months</h2>
       <div class="tsl-area-wrap"><svg class="tsl-area-svg" id="tslArea" preserveAspectRatio="none" role="img" aria-label="TSLA price, last 12 months"></svg></div>
+      <div id="tslRangeWrap" style="margin:1rem 0 0; display:none;">
+        <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:#c79aa3; margin-bottom:4px;">
+          <span>52-week range</span><span id="tslRangePos"></span>
+        </div>
+        <div style="position:relative; height:8px; border-radius:999px; background:linear-gradient(90deg,#7efbb0,#ffd27a,#ff8a8a);">
+          <div id="tslRangeMarker" style="position:absolute; top:-3px; width:3px; height:14px; border-radius:2px; background:#fff; box-shadow:0 0 6px rgba(255,255,255,0.7);"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:#a8838c; margin-top:3px;">
+          <span id="tslRangeLow"></span><span id="tslRangeHigh"></span>
+        </div>
+      </div>
       <div class="tsl-stats" style="margin-top:1rem;">
         <div class="tsl-stat"><div class="n" id="tslHigh">—</div><div class="l">52-week high</div></div>
         <div class="tsl-stat"><div class="n" id="tslLow">—</div><div class="l">52-week low</div></div>
@@ -177,13 +188,24 @@
     if(!d || !(d.price>0)) return;
     countUp('tslPrice', d.price, money);
     if(d.change_pct!=null){ const up=d.change_pct>=0; const el=document.getElementById('tslChg');
-      el.textContent=(up?'+':'')+d.change_pct.toFixed(2)+'%'; el.className='tsl-chg '+(up?'up':'down'); }
+      const dollar = d.prev_close ? (up?'+':'')+'$'+Math.abs(d.price-d.prev_close).toFixed(2)+' ' : '';
+      el.textContent=dollar+'('+(up?'+':'')+d.change_pct.toFixed(2)+'%)'; el.className='tsl-chg '+(up?'up':'down'); }
     if(d.market_cap){ document.getElementById('tslMcap').textContent='Market cap '+big(d.market_cap);
       const m2=document.getElementById('tslMcap2'); if(m2) m2.textContent=big(d.market_cap); }
     if(d.updated_at){ try{ document.getElementById('tslUpdated').textContent='Updated '+new Date(d.updated_at).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})+' · not financial advice'; }catch(_){} }
     const set=(id,v,f)=>{const e=document.getElementById(id); if(e&&v!=null) e.textContent=f?f(v):v;};
     set('tslHigh', d.year_high, money); set('tslLow', d.year_low, money);
     set('tslVol', d.avg_volume_10d||d.day_volume, vol);
+    // 52-week range position marker
+    if(d.year_high && d.year_low && d.year_high>d.year_low){
+      const pos=Math.max(0,Math.min(100,(d.price-d.year_low)/(d.year_high-d.year_low)*100));
+      const wrap=document.getElementById('tslRangeWrap');
+      if(wrap){ wrap.style.display='block';
+        document.getElementById('tslRangeMarker').style.left='calc('+pos+'% - 1px)';
+        document.getElementById('tslRangePos').textContent=Math.round(pos)+'% of range';
+        document.getElementById('tslRangeLow').textContent=money(d.year_low);
+        document.getElementById('tslRangeHigh').textContent=money(d.year_high); }
+    }
     renderArea(d.price_history);
   }
 
