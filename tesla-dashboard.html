@@ -3,29 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Live SpaceX launch dashboard — countdown to the next launch, time since the last one, launch cadence, the upcoming manifest, and the SPCX market picture. The companion to the SpaceX Daily podcast.">
+    <meta name="description" content="Live Tesla dashboard — TSLA price and 1-year chart, market cap and 52-week range, plus annual vehicle deliveries and energy-storage deployments. The data companion to the Tesla Shorts Time podcast.">
     
     
-    <title>SpaceX Launch Dashboard | Nerra Network</title>
-    <meta name="theme-color" content="#1A5CFF">
+    <title>Tesla Dashboard — TSLA, Deliveries & Energy | Nerra Network</title>
+    <meta name="theme-color" content="#E31937">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="SpaceX Launch Dashboard | Nerra Network">
-    <meta property="og:description" content="Live SpaceX launch dashboard — countdown to the next launch, time since the last one, launch cadence, the upcoming manifest, and the SPCX market picture. The companion to the SpaceX Daily podcast.">
+    <meta property="og:title" content="Tesla Dashboard — TSLA, Deliveries & Energy | Nerra Network">
+    <meta property="og:description" content="Live Tesla dashboard — TSLA price and 1-year chart, market cap and 52-week range, plus annual vehicle deliveries and energy-storage deployments. The data companion to the Tesla Shorts Time podcast.">
     <meta property="og:type" content="website">
-    <meta property="og:image" content="https://nerranetwork.com/assets/covers/spacex.jpg">
-    <meta property="og:url" content="https://nerranetwork.com/spacex-dashboard.html">
+    <meta property="og:image" content="https://nerranetwork.com/assets/covers/tesla-shorts-time.jpg">
+    <meta property="og:url" content="https://nerranetwork.com/tesla-dashboard.html">
     <meta property="og:site_name" content="Nerra Network">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="SpaceX Launch Dashboard | Nerra Network">
-    <meta name="twitter:description" content="Live SpaceX launch dashboard — countdown to the next launch, time since the last one, launch cadence, the upcoming manifest, and the SPCX market picture. The companion to the SpaceX Daily podcast.">
-    <meta name="twitter:image" content="https://nerranetwork.com/assets/covers/spacex.jpg">
+    <meta name="twitter:title" content="Tesla Dashboard — TSLA, Deliveries & Energy | Nerra Network">
+    <meta name="twitter:description" content="Live Tesla dashboard — TSLA price and 1-year chart, market cap and 52-week range, plus annual vehicle deliveries and energy-storage deployments. The data companion to the Tesla Shorts Time podcast.">
+    <meta name="twitter:image" content="https://nerranetwork.com/assets/covers/tesla-shorts-time.jpg">
 
-    <link rel="canonical" href="https://nerranetwork.com/spacex-dashboard.html">
+    <link rel="canonical" href="https://nerranetwork.com/tesla-dashboard.html">
     
-    <link rel="alternate" type="application/rss+xml" title="SpaceX Daily RSS" href="spacex_podcast.rss">
+    <link rel="alternate" type="application/rss+xml" title="Tesla Shorts Time RSS" href="podcast.rss">
     
     
     
@@ -63,146 +63,54 @@
 
     
 <style>
-  /* ---- SpaceX Launch Dashboard (scoped under .spx-dash) ---- */
-  .spx-dash {
-    --spx-blue: #1A5CFF;
-    --spx-cyan: #00D4FF;
-    --spx-ink: #0a1020;
-    position: relative;
-    color: #eaf0ff;
-  }
-  .spx-hero-wrap {
-    position: relative;
-    overflow: hidden;
+  .tsl-dash { --tsl-red:#E31937; --tsl-glow:#ff5a73; position:relative; color:#f3eef0; }
+  .tsl-hero-wrap { position:relative; overflow:hidden;
     background:
-      radial-gradient(1200px 600px at 50% -10%, rgba(26,92,255,0.28), transparent 60%),
-      linear-gradient(180deg, #05080f 0%, #0a1124 60%, #0a0f1e 100%);
-    border-bottom: 1px solid rgba(120,160,255,0.15);
-  }
-  .spx-stars {
-    position: absolute; inset: 0; z-index: 0; pointer-events: none;
-  }
-  .spx-container {
-    position: relative; z-index: 1;
-    max-width: 1120px; margin: 0 auto;
-    padding: calc(var(--nav-height) + 2.5rem) 1.25rem 2rem;
-  }
-  .spx-kicker {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase;
-    color: var(--spx-cyan); font-weight: 700; margin-bottom: 0.6rem;
-  }
-  .spx-kicker .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--spx-cyan);
-    box-shadow: 0 0 10px var(--spx-cyan); animation: spx-pulse 1.8s infinite; }
-  @keyframes spx-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
-  .spx-h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); line-height: 1.05; margin: 0 0 0.4rem; font-weight: 800; letter-spacing: -0.02em; }
-  .spx-sub { color: #aebbe0; font-size: 1.02rem; max-width: 62ch; margin: 0 0 1.6rem; }
+      radial-gradient(1200px 600px at 50% -10%, rgba(227,25,55,0.26), transparent 60%),
+      linear-gradient(180deg,#0c0608 0%,#160a0d 60%,#0e0709 100%);
+    border-bottom:1px solid rgba(255,120,140,0.16); }
+  .tsl-stars { position:absolute; inset:0; z-index:0; pointer-events:none; }
+  .tsl-container { position:relative; z-index:1; max-width:1120px; margin:0 auto; padding:calc(var(--nav-height) + 2.5rem) 1.25rem 2rem; }
+  .tsl-kicker { display:inline-flex; align-items:center; gap:8px; font-size:0.78rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--tsl-glow); font-weight:700; margin-bottom:0.6rem; }
+  .tsl-kicker .dot { width:8px; height:8px; border-radius:50%; background:var(--tsl-glow); box-shadow:0 0 10px var(--tsl-glow); animation:tsl-pulse 1.8s infinite; }
+  @keyframes tsl-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+  .tsl-h1 { font-size:clamp(1.8rem,4vw,2.8rem); line-height:1.05; margin:0 0 0.4rem; font-weight:800; letter-spacing:-0.02em; }
+  .tsl-sub { color:#e2b9c1; font-size:1.02rem; max-width:62ch; margin:0 0 1.4rem; }
+  .tsl-price-row { display:flex; align-items:baseline; gap:16px; flex-wrap:wrap; margin:0.4rem 0 0.6rem; }
+  .tsl-price { font-size:clamp(2.4rem,6vw,3.6rem); font-weight:800; color:#fff; font-variant-numeric:tabular-nums; }
+  .tsl-chg { font-size:1.2rem; font-weight:700; font-variant-numeric:tabular-nums; }
+  .tsl-chg.up { color:#5ef0a0; } .tsl-chg.down { color:#ff8a8a; }
+  .tsl-disc { color:#b88; font-size:0.74rem; margin-top:0.3rem; }
 
-  .spx-countdown {
-    display: flex; gap: 0.6rem; flex-wrap: wrap; margin: 0.4rem 0 1.2rem;
-  }
-  .spx-cd-unit {
-    min-width: 78px; text-align: center;
-    background: rgba(13,22,46,0.7); border: 1px solid rgba(120,160,255,0.22);
-    border-radius: 14px; padding: 0.7rem 0.5rem;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 30px rgba(0,0,0,0.35);
-    backdrop-filter: blur(6px);
-  }
-  .spx-cd-num { font-size: clamp(1.6rem, 4.5vw, 2.6rem); font-weight: 800; font-variant-numeric: tabular-nums;
-    background: linear-gradient(180deg, #fff, #9fc0ff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-  .spx-cd-label { font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: #8ea3d6; margin-top: 2px; }
+  .tsl-grid { max-width:1120px; margin:1.5rem auto; padding:0 1.25rem; display:grid; gap:1.1rem; grid-template-columns:1fr 1fr; }
+  @media (max-width:760px){ .tsl-grid{ grid-template-columns:1fr; } }
+  .tsl-panel { background:var(--nn-surface,#160d10); border:1px solid rgba(255,120,140,0.16); border-radius:16px; padding:1.1rem 1.2rem; }
+  .tsl-panel h2 { font-size:1.05rem; margin:0 0 0.9rem; letter-spacing:-0.01em; }
+  .tsl-muted { color:#c79aa3; font-size:0.82rem; }
+  .tsl-disclaimer { color:#a8838c; font-size:0.74rem; margin-top:0.4rem; }
 
-  .spx-status {
-    display:inline-flex; align-items:center; gap:7px; font-weight:700; font-size:0.82rem;
-    padding: 4px 12px; border-radius: 999px; border:1px solid transparent;
-  }
-  .spx-status.go   { color:#7efbb0; background:rgba(40,200,120,0.12); border-color:rgba(40,200,120,0.35); }
-  .spx-status.tbd  { color:#ffd27a; background:rgba(255,180,40,0.12); border-color:rgba(255,180,40,0.32); }
-  .spx-status.hold { color:#ff9a9a; background:rgba(255,80,80,0.12); border-color:rgba(255,80,80,0.32); }
+  .tsl-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:0.8rem; }
+  .tsl-stat { text-align:center; padding:0.6rem; border-radius:12px; background:rgba(227,25,55,0.08); border:1px solid rgba(255,120,140,0.14); }
+  .tsl-stat .n { font-size:1.6rem; font-weight:800; color:#fff; font-variant-numeric:tabular-nums; }
+  .tsl-stat .l { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:#c79aa3; margin-top:2px; }
 
-  .spx-launchcard {
-    background: rgba(11,18,38,0.66); border: 1px solid rgba(120,160,255,0.2);
-    border-radius: 18px; padding: 1.1rem 1.2rem; backdrop-filter: blur(8px);
-  }
-  .spx-launchcard h3 { margin: 0.2rem 0 0.5rem; font-size: 1.25rem; }
-  .spx-meta { display:grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 0.6rem 1rem; margin-top: 0.6rem; }
-  .spx-meta .k { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.1em; color:#8ea3d6; }
-  .spx-meta .v { font-size:0.95rem; color:#eaf0ff; font-weight:600; }
-  .spx-btn {
-    display:inline-flex; align-items:center; gap:8px; margin-top: 0.9rem;
-    background: linear-gradient(135deg, var(--spx-blue), #3f7bff); color:#fff; font-weight:700;
-    padding: 0.6rem 1.1rem; border-radius: 12px; text-decoration:none; font-size:0.92rem;
-    box-shadow: 0 8px 24px rgba(26,92,255,0.4);
-  }
-  .spx-btn.ghost { background: transparent; border:1px solid rgba(120,160,255,0.4); box-shadow:none; }
+  .tsl-bars { display:flex; align-items:flex-end; gap:8px; height:170px; padding-top:8px; overflow:hidden; }
+  .tsl-bw { flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
+  .tsl-bar { width:100%; border-radius:6px 6px 2px 2px; min-height:3px; background:linear-gradient(180deg,var(--tsl-glow),var(--tsl-red)); transition:height .6s cubic-bezier(.2,.7,.2,1); position:relative; }
+  .tsl-bar .cnt { position:absolute; top:-18px; left:0; right:0; text-align:center; font-size:0.68rem; color:#ffd6dd; font-weight:700; }
+  .tsl-blab { font-size:0.62rem; color:#a8838c; white-space:nowrap; }
 
-  .spx-grid { max-width:1120px; margin: 1.5rem auto; padding: 0 1.25rem; display:grid; gap:1.1rem; grid-template-columns: 1fr 1fr; }
-  @media (max-width: 760px){ .spx-grid{ grid-template-columns:1fr; } }
-  .spx-panel {
-    background: var(--nn-surface, #0f1830); border:1px solid rgba(120,160,255,0.16);
-    border-radius:16px; padding:1.1rem 1.2rem;
-  }
-  .spx-panel h2 { font-size:1.05rem; margin:0 0 0.9rem; letter-spacing:-0.01em; }
+  .tsl-area-svg { width:100%; height:210px; display:block; overflow:visible; }
+  .tsl-area-svg .grid { stroke:rgba(255,120,140,0.12); stroke-width:1; }
+  .tsl-area-svg .gl { fill:#a8838c; font-size:10px; }
+  .tsl-area-svg .xl { fill:#a8838c; font-size:10px; text-anchor:middle; }
+  .tsl-area-svg .ln { fill:none; stroke:var(--tsl-glow); stroke-width:2.5; stroke-linejoin:round; stroke-linecap:round; filter:drop-shadow(0 2px 8px rgba(255,90,115,0.4)); }
+  .tsl-area-svg .dot { fill:#fff; stroke:var(--tsl-red); stroke-width:2; }
 
-  .spx-stats { display:grid; grid-template-columns: repeat(auto-fit,minmax(120px,1fr)); gap:0.8rem; }
-  .spx-stat { text-align:center; padding:0.6rem; border-radius:12px; background:rgba(26,92,255,0.08); border:1px solid rgba(120,160,255,0.14); }
-  .spx-stat .n { font-size:1.7rem; font-weight:800; color:#fff; font-variant-numeric:tabular-nums; }
-  .spx-stat .l { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:#8ea3d6; margin-top:2px; }
-
-  /* cadence chart */
-  .spx-cadence { display:flex; align-items:flex-end; gap:6px; height:160px; padding-top:8px; overflow:hidden; }
-  .spx-bar-wrap { flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
-  .spx-bar {
-    width:100%; border-radius:6px 6px 2px 2px; min-height:3px;
-    background: linear-gradient(180deg, var(--spx-cyan), var(--spx-blue));
-    transition: height .6s cubic-bezier(.2,.7,.2,1);
-    position:relative;
-  }
-  .spx-bar .cnt { position:absolute; top:-18px; left:0; right:0; text-align:center; font-size:0.7rem; color:#cfe0ff; font-weight:700; }
-  .spx-bar-label { font-size:0.58rem; color:#7f93c4; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:clip; }
-  @media (max-width: 520px){ .spx-bar-label { font-size:0.5rem; letter-spacing:-0.03em; } .spx-cadence{ gap:4px; } }
-
-  /* cumulative growth area chart */
-  .spx-area-wrap { position:relative; }
-  .spx-area-svg { width:100%; height:200px; display:block; overflow:visible; }
-  .spx-area-svg .grid { stroke:rgba(120,160,255,0.12); stroke-width:1; }
-  .spx-area-svg .gridlabel { fill:#7f93c4; font-size:10px; }
-  .spx-area-svg .xlabel { fill:#7f93c4; font-size:10px; text-anchor:middle; }
-  .spx-area-svg .areapath { transition: opacity .8s ease; }
-  .spx-area-svg .linepath { fill:none; stroke:var(--spx-cyan); stroke-width:2.5;
-    stroke-linejoin:round; stroke-linecap:round;
-    filter: drop-shadow(0 2px 8px rgba(0,212,255,0.4)); }
-  .spx-area-svg .dot { fill:#fff; stroke:var(--spx-blue); stroke-width:2; }
-
-  /* vehicle-mix segmented bar */
-  .spx-mixbar { display:flex; height:26px; border-radius:8px; overflow:hidden; margin:4px 0 10px; }
-  .spx-mixseg { height:100%; min-width:2px; }
-  .spx-mixlegend { display:flex; flex-wrap:wrap; gap:10px 18px; font-size:0.8rem; }
-  .spx-mixlegend .it { display:flex; align-items:center; gap:6px; color:#cfe0ff; }
-  .spx-mixlegend .sw { width:11px; height:11px; border-radius:3px; flex:0 0 auto; }
-  .spx-mixlegend .ct { color:#8ea3d6; font-variant-numeric:tabular-nums; }
-
-  /* recently flown */
-  .spx-rl { display:flex; align-items:center; gap:10px; padding:0.5rem 0; border-bottom:1px solid rgba(120,160,255,0.12); font-size:0.88rem; }
-  .spx-rl:last-child{ border-bottom:none; }
-  .spx-rl .nm { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .spx-rl .badge { font-size:0.64rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding:2px 7px; border-radius:999px; white-space:nowrap; }
-  .spx-rl .badge.ok { color:#7efbb0; background:rgba(40,200,120,0.14); }
-  .spx-rl .badge.bad { color:#ff9a9a; background:rgba(255,80,80,0.14); }
-  .spx-rl .badge.tbd { color:#ffd27a; background:rgba(255,180,40,0.14); }
-  .spx-rl .dt { color:#8ea3d6; white-space:nowrap; font-variant-numeric:tabular-nums; font-size:0.78rem; }
-
-  .spx-since { font-size: clamp(1.4rem,3.5vw,2rem); font-weight:800; font-variant-numeric:tabular-nums; color:#fff; }
-  .spx-upcoming-item { display:flex; justify-content:space-between; gap:10px; padding:0.55rem 0; border-bottom:1px solid rgba(120,160,255,0.12); font-size:0.9rem; }
-  .spx-upcoming-item:last-child{ border-bottom:none; }
-  .spx-upcoming-item .when { color:#8ea3d6; white-space:nowrap; font-variant-numeric:tabular-nums; }
-
-  .spx-spcx { display:flex; align-items:baseline; gap:12px; }
-  .spx-spcx .px { font-size:2rem; font-weight:800; color:#fff; }
-  .spx-spcx .ch.up { color:#5ef0a0; } .spx-spcx .ch.down{ color:#ff8a8a; }
-  .spx-muted { color:#8ea3d6; font-size:0.82rem; }
-  .spx-foot-note { max-width:1120px; margin:0 auto 2rem; padding:0 1.25rem; color:#7f93c4; font-size:0.78rem; }
-  .spx-disclaimer { color:#7f93c4; font-size:0.74rem; margin-top:0.4rem; }
+  .tsl-hl { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:0.6rem 0; border-bottom:1px solid rgba(255,120,140,0.12); }
+  .tsl-hl:last-child{ border-bottom:none; }
+  .tsl-hl .v { font-size:1.2rem; font-weight:800; color:#fff; }
+  .tsl-foot-note { max-width:1120px; margin:0 auto 2rem; padding:0 1.25rem; color:#a8838c; font-size:0.78rem; }
 </style>
 
 
@@ -568,103 +476,92 @@
 
     <main id="main-content">
     
-<div class="spx-dash">
-  <div class="spx-hero-wrap">
-    <canvas class="spx-stars" id="spxStars"></canvas>
-    <div class="spx-container">
-      <div class="spx-kicker"><span class="dot"></span> SpaceX Launch Dashboard · Live</div>
-      <h1 class="spx-h1">Next SpaceX Launch</h1>
-      <p class="spx-sub">A live countdown to the next launch, time since the last one, cadence, and the SPCX market picture — the companion dashboard to <a href="spacex.html" style="color:var(--spx-cyan);">SpaceX Daily</a>.</p>
-
-      <div id="spxNext">
-        <div class="spx-countdown" id="spxCountdown">
-          <div class="spx-cd-unit"><div class="spx-cd-num" id="cd-d">--</div><div class="spx-cd-label">Days</div></div>
-          <div class="spx-cd-unit"><div class="spx-cd-num" id="cd-h">--</div><div class="spx-cd-label">Hours</div></div>
-          <div class="spx-cd-unit"><div class="spx-cd-num" id="cd-m">--</div><div class="spx-cd-label">Min</div></div>
-          <div class="spx-cd-unit"><div class="spx-cd-num" id="cd-s">--</div><div class="spx-cd-label">Sec</div></div>
-        </div>
-        <div class="spx-launchcard">
-          <span class="spx-status tbd" id="spxStatus">Loading…</span>
-          <h3 id="spxMission">Fetching the latest launch manifest…</h3>
-          <div class="spx-meta">
-            <div><div class="k">Vehicle</div><div class="v" id="spxRocket">—</div></div>
-            <div><div class="k">Launch Pad</div><div class="v" id="spxPad">—</div></div>
-            <div><div class="k">Location</div><div class="v" id="spxLoc">—</div></div>
-            <div><div class="k">Target (your time)</div><div class="v" id="spxLocal">—</div></div>
-          </div>
-          <p class="spx-muted" id="spxDesc" style="margin:0.7rem 0 0;"></p>
-          <a class="spx-btn" id="spxWebcast" href="#" target="_blank" rel="noopener" style="display:none;">▶ Watch the webcast</a>
-          <a class="spx-btn ghost" id="spxMore" href="#" target="_blank" rel="noopener" style="display:none;">Mission details</a>
-        </div>
+<div class="tsl-dash">
+  <div class="tsl-hero-wrap">
+    <canvas class="tsl-stars" id="tslStars"></canvas>
+    <div class="tsl-container">
+      <div class="tsl-kicker"><span class="dot"></span> Tesla Dashboard · Live</div>
+      <h1 class="tsl-h1">TSLA &amp; Tesla, by the numbers</h1>
+      <p class="tsl-sub">The live TSLA market picture plus the operating metrics that move it — deliveries, energy storage, and the long-run growth story. The companion data page to <a href="tesla.html" style="color:var(--tsl-glow);">Tesla Shorts Time</a>.</p>
+      <div class="tsl-price-row">
+        <span class="tsl-price" id="tslPrice">—</span>
+        <span class="tsl-chg" id="tslChg"></span>
+        <span class="tsl-muted" id="tslMcap"></span>
       </div>
+      <p class="tsl-disc" id="tslUpdated">Not financial advice.</p>
     </div>
   </div>
 
-  <div class="spx-grid">
-    <div class="spx-panel">
-      <h2>Time since last launch</h2>
-      <div class="spx-since" id="spxSince">—</div>
-      <p class="spx-muted" id="spxLast" style="margin:0.4rem 0 0;">—</p>
-    </div>
-    <div class="spx-panel">
-      <h2>SPCX</h2>
-      <div class="spx-spcx"><span class="px" id="spxPx">—</span><span class="ch" id="spxChg"></span></div>
-      <p class="spx-muted" id="spxPxNote" style="margin:0.4rem 0 0;">Nasdaq: SPCX</p>
-      <p class="spx-disclaimer">Not financial advice.</p>
-    </div>
-  </div>
-
-  <div class="spx-grid" style="grid-template-columns:1fr;">
-    <div class="spx-panel">
-      <h2>Launch cadence — last 12 months</h2>
-      <div class="spx-cadence" id="spxCadence"></div>
-      <div class="spx-stats" style="margin-top:1.2rem;">
-        <div class="spx-stat"><div class="n" id="stYtd">—</div><div class="l">Launches YTD</div></div>
-        <div class="spx-stat"><div class="n" id="st30">—</div><div class="l">Last 30 days</div></div>
-        <div class="spx-stat"><div class="n" id="stAvg">—</div><div class="l">Avg days apart</div></div>
-        <div class="spx-stat"><div class="n" id="stStar">—</div><div class="l">Starlink YTD</div></div>
-        <div class="spx-stat"><div class="n" id="stTotal">—</div><div class="l">Total launches</div></div>
+  <div class="tsl-grid" style="grid-template-columns:1fr;">
+    <div class="tsl-panel">
+      <h2>TSLA — last 12 months</h2>
+      <div class="tsl-area-wrap"><svg class="tsl-area-svg" id="tslArea" preserveAspectRatio="none" role="img" aria-label="TSLA price, last 12 months"></svg></div>
+      <div class="tsl-stats" style="margin-top:1rem;">
+        <div class="tsl-stat"><div class="n" id="tslHigh">—</div><div class="l">52-week high</div></div>
+        <div class="tsl-stat"><div class="n" id="tslLow">—</div><div class="l">52-week low</div></div>
+        <div class="tsl-stat"><div class="n" id="tslMcap2">—</div><div class="l">Market cap</div></div>
+        <div class="tsl-stat"><div class="n" id="tslVol">—</div><div class="l">Avg volume (10d)</div></div>
       </div>
+      <p class="tsl-disclaimer">Live market data via Yahoo Finance, refreshed each pipeline run. Not financial advice.</p>
     </div>
   </div>
 
-  <div class="spx-grid" style="grid-template-columns:1fr;">
-    <div class="spx-panel">
-      <h2>Mass to orbit — last 12 months <span class="spx-muted" style="font-size:0.7rem;font-weight:400;">(estimated, tonnes)</span></h2>
-      <div class="spx-cadence" id="spxMass"></div>
-      <div class="spx-stats" style="margin-top:1.2rem;">
-        <div class="spx-stat"><div class="n" id="flStarlinkActive">—</div><div class="l">Active Starlink satellites (live)</div></div>
-        <div class="spx-stat"><div class="n" id="flMass">—</div><div class="l">Est. mass to orbit, 12 mo (t)</div></div>
-        <div class="spx-stat"><div class="n" id="flSats">—</div><div class="l">Est. satellites deployed, 12 mo</div></div>
-        <div class="spx-stat"><div class="n" id="flStarShare">—</div><div class="l">Starlink share</div></div>
-        <div class="spx-stat"><div class="n" id="flSuccess">—</div><div class="l">Success rate</div></div>
+  <div class="tsl-grid">
+    <div class="tsl-panel">
+      <h2>Annual vehicle deliveries</h2>
+      <div class="tsl-bars" id="tslDeliveries">
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="367656" style="height:0"><span class="cnt">368k</span></div><div class="tsl-blab">2019</div></div>
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="499550" style="height:0"><span class="cnt">500k</span></div><div class="tsl-blab">2020</div></div>
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="936172" style="height:0"><span class="cnt">936k</span></div><div class="tsl-blab">2021</div></div>
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="1313851" style="height:0"><span class="cnt">1314k</span></div><div class="tsl-blab">2022</div></div>
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="1808581" style="height:0"><span class="cnt">1809k</span></div><div class="tsl-blab">2023</div></div>
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="1789226" style="height:0"><span class="cnt">1789k</span></div><div class="tsl-blab">2024</div></div>
+        
       </div>
-      <div id="flVehicles" style="margin-top:1rem;"></div>
-      <p class="spx-disclaimer">Mass and satellite figures are estimates from public per-vehicle averages (SpaceX doesn't publish per-flight mass); launch counts and vehicle mix are from the launch record. These metrics are logged to a growing time-series so the trends lengthen over time.</p>
+      <p class="tsl-disclaimer">From Tesla's published annual figures. Operator-maintained — newest year appended each January.</p>
+    </div>
+    <div class="tsl-panel">
+      <h2>Energy storage deployed (GWh / yr)</h2>
+      <div class="tsl-bars" id="tslEnergy">
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="3.0" style="height:0"><span class="cnt">3.0</span></div><div class="tsl-blab">2020</div></div>
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="4.0" style="height:0"><span class="cnt">4.0</span></div><div class="tsl-blab">2021</div></div>
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="6.5" style="height:0"><span class="cnt">6.5</span></div><div class="tsl-blab">2022</div></div>
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="14.7" style="height:0"><span class="cnt">14.7</span></div><div class="tsl-blab">2023</div></div>
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="31.4" style="height:0"><span class="cnt">31.4</span></div><div class="tsl-blab">2024</div></div>
+        
+      </div>
+      <p class="tsl-disclaimer">Powerwall + Megapack, from Tesla's energy deployments. Operator-maintained.</p>
     </div>
   </div>
 
-  <div class="spx-grid" style="grid-template-columns:1fr;">
-    <div class="spx-panel">
-      <h2>Constellation growth — est. satellites to orbit <span class="spx-muted" style="font-size:0.7rem;font-weight:400;">(cumulative, tracked window)</span></h2>
-      <div class="spx-area-wrap"><svg class="spx-area-svg" id="spxArea" preserveAspectRatio="none" role="img" aria-label="Cumulative estimated satellites to orbit"></svg></div>
-      <p class="spx-disclaimer">Cumulative estimate over the months this dashboard has tracked — it extends to the left automatically as the dataset grows month over month.</p>
+  
+  <div class="tsl-grid" style="grid-template-columns:1fr;">
+    <div class="tsl-panel">
+      <h2>Milestones</h2>
+      
+      <div class="tsl-hl"><span>Cumulative vehicles delivered <span class="tsl-muted">since 2012, through 2024</span></span><span class="v">7.7M+</span></div>
+      
+      <div class="tsl-hl"><span>Gigafactories <span class="tsl-muted">Fremont, NV, TX, Berlin, Shanghai, + energy</span></span><span class="v">6</span></div>
+      
+      <div class="tsl-hl"><span>Cumulative energy storage <span class="tsl-muted">Powerwall + Megapack, through 2024</span></span><span class="v">~60 GWh</span></div>
+      
     </div>
   </div>
+  
 
-  <div class="spx-grid">
-    <div class="spx-panel">
-      <h2>Recently flown</h2>
-      <div id="spxRecent"><p class="spx-muted">Loading…</p></div>
-    </div>
-    <div class="spx-panel">
-      <h2>Upcoming manifest</h2>
-      <div id="spxUpcoming"><p class="spx-muted">Loading…</p></div>
-    </div>
-  </div>
-
-  <p class="spx-foot-note">
-    Launch data from <a href="https://thespacedevs.com/" target="_blank" rel="noopener" style="color:var(--spx-cyan);">The Space Devs</a> Launch Library 2 (updated each pipeline run). Times are “no earlier than” and slip often — always confirm against the official <a href="https://www.spacex.com/launches/" target="_blank" rel="noopener" style="color:var(--spx-cyan);">SpaceX launch schedule</a> and webcast. Full source links live on the <a href="spacex.html#resources" style="color:var(--spx-cyan);">SpaceX Daily resources</a> page.
+  <p class="tsl-foot-note">
+    Live TSLA data via Yahoo Finance (refreshed each run). Operating metrics are from Tesla's published reports and operator-maintained. This is the data companion to <a href="tesla.html" style="color:var(--tsl-glow);">Tesla Shorts Time</a> — full resources on the <a href="tesla.html#resources" style="color:var(--tsl-glow);">show page</a>. Nothing here is financial advice.
   </p>
 </div>
 
@@ -863,264 +760,69 @@
     
 <script>
 (function(){
-  // ---- Starfield ----
-  const cv = document.getElementById('spxStars');
-  if (cv) {
-    const ctx = cv.getContext('2d');
-    let stars = [];
-    function resize(){
-      cv.width = cv.offsetWidth; cv.height = cv.offsetHeight;
-      stars = Array.from({length: Math.min(180, Math.floor(cv.width/8))}, () => ({
-        x: Math.random()*cv.width, y: Math.random()*cv.height,
-        r: Math.random()*1.4+0.2, a: Math.random()*0.6+0.2, tw: Math.random()*0.02+0.005
-      }));
-    }
-    function draw(){
-      if(!ctx) return;
-      ctx.clearRect(0,0,cv.width,cv.height);
-      for(const s of stars){
-        s.a += s.tw; const al = 0.3+Math.abs(Math.sin(s.a))*0.7;
-        ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,7); ctx.fillStyle='rgba(180,205,255,'+al+')'; ctx.fill();
-      }
-      requestAnimationFrame(draw);
-    }
-    resize(); draw(); window.addEventListener('resize', resize);
-  }
+  const cv=document.getElementById('tslStars');
+  if(cv){ const ctx=cv.getContext('2d'); let stars=[];
+    function resize(){ cv.width=cv.offsetWidth; cv.height=cv.offsetHeight;
+      stars=Array.from({length:Math.min(140,Math.floor(cv.width/9))},()=>({x:Math.random()*cv.width,y:Math.random()*cv.height,r:Math.random()*1.3+0.2,a:Math.random()*0.6+0.2,tw:Math.random()*0.02+0.005})); }
+    function draw(){ if(!ctx) return; ctx.clearRect(0,0,cv.width,cv.height);
+      for(const s of stars){ s.a+=s.tw; const al=0.25+Math.abs(Math.sin(s.a))*0.6; ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,7); ctx.fillStyle='rgba(255,190,200,'+al+')'; ctx.fill(); }
+      requestAnimationFrame(draw); }
+    resize(); draw(); window.addEventListener('resize',resize); }
 
-  const pad = n => String(n).padStart(2,'0');
-  function fmtLocal(iso){
-    try { return new Date(iso).toLocaleString([], {weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}); }
-    catch(_) { return iso || '—'; }
-  }
-  function statusClass(abbr){
-    const a = (abbr||'').toUpperCase();
-    if(a==='GO') return 'go';
-    if(a.includes('HOLD')||a.includes('FAIL')||a==='TBC') return 'hold';
-    return 'tbd';
-  }
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function countUp(id,target,fmt){ const el=document.getElementById(id); if(!el||target==null) return;
+    fmt=fmt||(v=>Math.round(v).toLocaleString());
+    if(reduce){ el.textContent=fmt(target); return; }
+    const dur=900,t0=performance.now();
+    function step(t){ const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3); el.textContent=fmt(target*e); if(k<1) requestAnimationFrame(step); }
+    requestAnimationFrame(step); }
+  const money=v=>'$'+Number(v).toFixed(2);
+  const big=v=>{ v=Number(v); if(v>=1e12) return '$'+(v/1e12).toFixed(2)+'T'; if(v>=1e9) return '$'+(v/1e9).toFixed(1)+'B'; return '$'+Math.round(v).toLocaleString(); };
+  const vol=v=>{ v=Number(v); if(v>=1e6) return (v/1e6).toFixed(1)+'M'; if(v>=1e3) return (v/1e3).toFixed(0)+'K'; return Math.round(v).toLocaleString(); };
 
-  let nextNet = null, lastNet = null;
-
-  function tick(){
-    const now = Date.now();
-    if(nextNet){
-      let diff = Math.max(0, nextNet - now);
-      const d = Math.floor(diff/86400000); diff -= d*86400000;
-      const h = Math.floor(diff/3600000); diff -= h*3600000;
-      const m = Math.floor(diff/60000); diff -= m*60000;
-      const s = Math.floor(diff/1000);
-      const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=v;};
-      set('cd-d', d); set('cd-h', pad(h)); set('cd-m', pad(m)); set('cd-s', pad(s));
-    }
-    if(lastNet){
-      let diff = Math.max(0, now - lastNet);
-      const d = Math.floor(diff/86400000); diff -= d*86400000;
-      const h = Math.floor(diff/3600000); diff -= h*3600000;
-      const m = Math.floor(diff/60000);
-      const el = document.getElementById('spxSince');
-      if(el) el.textContent = (d>0? d+'d ':'') + pad(h)+'h '+pad(m)+'m ago';
-    }
+  // animate the server-rendered bars
+  function animateBars(id){ const w=document.getElementById(id); if(!w) return;
+    const bars=[...w.querySelectorAll('.tsl-bar')]; const max=Math.max(1,...bars.map(b=>parseFloat(b.dataset.v)||0));
+    bars.forEach(b=>{ const h=Math.round((parseFloat(b.dataset.v)/max)*140)+3; requestAnimationFrame(()=>{ b.style.height=h+'px'; }); });
   }
+  animateBars('tslDeliveries'); animateBars('tslEnergy');
 
-  function renderBars(elId, months, key){
-    const wrap = document.getElementById(elId);
-    if(!wrap || !months || !months.length) return;
-    const max = Math.max(1, ...months.map(x=>x[key]||0));
-    wrap.innerHTML = months.map(x=>{
-      const v = x[key]||0;
-      const h = Math.round((v/max)*130)+3;
-      const lab = x.month.slice(2).replace('-','/'); // YY/MM
-      return '<div class="spx-bar-wrap"><div class="spx-bar" style="height:0" data-h="'+h+'"><span class="cnt">'+v.toLocaleString()+'</span></div><div class="spx-bar-label">'+lab+'</div></div>';
-    }).join('');
-    requestAnimationFrame(()=>{ wrap.querySelectorAll('.spx-bar').forEach(b=>{ b.style.height=b.dataset.h+'px'; }); });
-  }
-
-  function renderCadence(months){
-    const wrap = document.getElementById('spxCadence');
-    if(!wrap || !months || !months.length) return;
-    const max = Math.max(1, ...months.map(x=>x.count));
-    wrap.innerHTML = months.map(x=>{
-      const h = Math.round((x.count/max)*130)+3;
-      const lab = x.month.slice(2).replace('-','/'); // YY/MM
-      return '<div class="spx-bar-wrap"><div class="spx-bar" style="height:0" data-h="'+h+'"><span class="cnt">'+x.count+'</span></div><div class="spx-bar-label">'+lab+'</div></div>';
-    }).join('');
-    requestAnimationFrame(()=>{ wrap.querySelectorAll('.spx-bar').forEach(b=>{ b.style.height=b.dataset.h+'px'; }); });
-  }
-
-  function renderNext(n){
-    if(!n){ document.getElementById('spxMission').textContent='No upcoming launch on the manifest right now.'; return; }
-    nextNet = n.net ? new Date(n.net).getTime() : null;
-    const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=v||'—';};
-    const st = document.getElementById('spxStatus');
-    st.textContent = n.status_name || n.status || 'Scheduled';
-    st.className = 'spx-status '+statusClass(n.status);
-    set('spxMission', n.name || n.mission || 'Upcoming SpaceX launch');
-    set('spxRocket', n.rocket);
-    set('spxPad', n.pad);
-    set('spxLoc', n.location);
-    set('spxLocal', n.net ? fmtLocal(n.net) : 'TBD');
-    document.getElementById('spxDesc').textContent = n.mission_description || '';
-    if(n.webcast){ const w=document.getElementById('spxWebcast'); w.href=n.webcast; w.style.display='inline-flex'; }
-    const more = n.info_url || 'https://www.spacex.com/launches/';
-    const mEl=document.getElementById('spxMore'); mEl.href=more; mEl.style.display='inline-flex';
-  }
-
-  function renderPrev(p){
-    if(!p) return;
-    lastNet = p.net ? new Date(p.net).getTime() : null;
-    const el=document.getElementById('spxLast');
-    if(el) el.textContent = (p.name||'Last launch') + (p.net ? ' · '+fmtLocal(p.net) : '');
-  }
-
-  // Animated count-up for a stat number. Respects reduced-motion.
-  function countUp(id, target, suffix){
-    const el=document.getElementById(id); if(!el || target==null) return;
-    suffix = suffix||'';
-    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const isFloat = !Number.isInteger(target);
-    if(reduce){ el.textContent=(isFloat?target.toFixed(1):Math.round(target).toLocaleString())+suffix; return; }
-    const dur=900, t0=performance.now();
-    function step(t){
-      const k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,3), v=target*e;
-      el.textContent=(isFloat?v.toFixed(1):Math.round(v).toLocaleString())+suffix;
-      if(k<1) requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
-  }
-
-  function renderStats(s, total){
-    const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=(v==null?'—':v);};
-    if(s){ countUp('stYtd', s.launches_ytd); countUp('st30', s.launches_last_30d);
-           set('stAvg', s.avg_days_between_last_365d); countUp('stStar', s.starlink_launches_ytd); }
-    if(total!=null) countUp('stTotal', total); else set('stTotal','—');
-  }
-
-  // SVG area+line chart of a cumulative series [{month,total}].
-  function renderArea(series){
-    const svg=document.getElementById('spxArea');
-    if(!svg || !series || series.length<2) return;
-    const W=1000, H=200, padL=44, padR=8, padT=12, padB=22;
-    const xs=W-padL-padR, ys=H-padT-padB;
-    const vals=series.map(p=>p.total);
-    const max=Math.max(...vals), min=Math.min(0, ...vals);
-    const n=series.length;
-    const X=i=> padL + (n===1?0:(i/(n-1))*xs);
-    const Y=v=> padT + ys - ((v-min)/((max-min)||1))*ys;
-    let line='', area='M'+X(0)+','+(padT+ys);
-    series.forEach((p,i)=>{ const x=X(i),y=Y(p.total); line+=(i?'L':'M')+x+','+y+' '; area+='L'+x+','+y+' '; });
+  function renderArea(series){ const svg=document.getElementById('tslArea'); if(!svg||!series||series.length<2) return;
+    const W=1000,H=210,padL=46,padR=10,padT=12,padB=22, xs=W-padL-padR, ys=H-padT-padB;
+    const vals=series.map(p=>p.close), max=Math.max(...vals), min=Math.min(...vals)*0.97, n=series.length;
+    const X=i=>padL+(i/(n-1))*xs, Y=v=>padT+ys-((v-min)/((max-min)||1))*ys;
+    let line='',area='M'+X(0)+','+(padT+ys);
+    series.forEach((p,i)=>{const x=X(i),y=Y(p.close); line+=(i?'L':'M')+x+','+y+' '; area+='L'+x+','+y+' ';});
     area+='L'+X(n-1)+','+(padT+ys)+'Z';
-    // y gridlines (0, mid, max)
-    let grid='';
-    [0,0.5,1].forEach(f=>{ const v=min+(max-min)*f, y=Y(v);
-      grid+='<line class="grid" x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'"/>'+
-            '<text class="gridlabel" x="0" y="'+(y+3)+'">'+Math.round(v).toLocaleString()+'</text>'; });
-    // a few x labels
-    let xl=''; const step=Math.max(1,Math.floor(n/4));
-    for(let i=0;i<n;i+=step){ xl+='<text class="xlabel" x="'+X(i)+'" y="'+(H-6)+'">'+series[i].month.slice(2).replace('-','/')+'</text>'; }
+    let grid=''; [0,0.5,1].forEach(f=>{const v=min+(max-min)*f,y=Y(v); grid+='<line class="grid" x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'"/><text class="gl" x="0" y="'+(y+3)+'">$'+Math.round(v)+'</text>';});
+    let xl=''; const step=Math.max(1,Math.floor(n/5));
+    for(let i=0;i<n;i+=step){ xl+='<text class="xl" x="'+X(i)+'" y="'+(H-6)+'">'+series[i].date.slice(2,7)+'</text>'; }
     const last=series[n-1];
     svg.setAttribute('viewBox','0 0 '+W+' '+H);
-    svg.innerHTML =
-      '<defs><linearGradient id="spxAreaGrad" x1="0" y1="0" x2="0" y2="1">'+
-      '<stop offset="0%" stop-color="rgba(0,212,255,0.45)"/><stop offset="100%" stop-color="rgba(26,92,255,0.02)"/>'+
-      '</linearGradient></defs>'+grid+
-      '<path class="areapath" d="'+area+'" fill="url(#spxAreaGrad)"/>'+
-      '<path class="linepath" d="'+line+'"/>'+
-      '<circle class="dot" cx="'+X(n-1)+'" cy="'+Y(last.total)+'" r="4"/>'+
-      '<text x="'+X(n-1)+'" y="'+(Y(last.total)-10)+'" text-anchor="end" fill="#fff" font-size="12" font-weight="700">'+last.total.toLocaleString()+'</text>'+
-      xl;
+    svg.innerHTML='<defs><linearGradient id="tslGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(255,90,115,0.42)"/><stop offset="100%" stop-color="rgba(227,25,55,0.02)"/></linearGradient></defs>'+grid+
+      '<path d="'+area+'" fill="url(#tslGrad)"/><path class="ln" d="'+line+'"/>'+
+      '<circle class="dot" cx="'+X(n-1)+'" cy="'+Y(last.close)+'" r="4"/>'+
+      '<text x="'+X(n-1)+'" y="'+(Y(last.close)-10)+'" text-anchor="end" fill="#fff" font-size="12" font-weight="700">$'+last.close.toFixed(0)+'</text>'+xl;
   }
 
-  function renderRecent(list){
-    const wrap=document.getElementById('spxRecent');
-    if(!wrap) return;
-    if(!list || !list.length){ wrap.innerHTML='<p class="spx-muted">No recent launches.</p>'; return; }
-    const cls=a=>{ a=(a||'').toLowerCase(); if(a==='success') return 'ok'; if(a.includes('fail')) return 'bad'; return 'tbd'; };
-    wrap.innerHTML = list.map(x=>{
-      const st=x.status||'—';
-      return '<div class="spx-rl"><span class="badge '+cls(st)+'">'+st+'</span>'+
-             '<span class="nm">'+(x.name||'Launch')+'</span>'+
-             '<span class="dt">'+(x.net?fmtLocal(x.net):'')+'</span></div>';
-    }).join('');
-  }
-
-  function renderUpcoming(list){
-    const wrap=document.getElementById('spxUpcoming');
-    if(!wrap) return;
-    if(!list || !list.length){ wrap.innerHTML='<p class="spx-muted">No upcoming launches listed.</p>'; return; }
-    wrap.innerHTML = list.map(x=>'<div class="spx-upcoming-item"><span>'+(x.name||'Launch')+'</span><span class="when">'+(x.net?fmtLocal(x.net):'TBD')+'</span></div>').join('');
-  }
-
-  var VEHICLE_COLORS = {'Falcon 9':'#1A5CFF','Starship':'#00D4FF','Falcon Heavy':'#8ab4ff'};
-  var VEHICLE_FALLBACK = ['#a78bfa','#7efbb0','#ffd27a','#ff9a9a'];
-
-  function renderFleet(f){
-    if(!f) return;
-    const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=(v==null?'—':v);};
-    // Real active-Starlink count from CelesTrak (falls back to the
-    // cumulative estimate if the live count is unavailable).
-    if(f.starlink_active!=null) countUp('flStarlinkActive', f.starlink_active);
-    else if(f.cumulative_satellites_est!=null) countUp('flStarlinkActive', f.cumulative_satellites_est);
-    countUp('flMass', f.est_mass_to_orbit_tonnes);
-    countUp('flSats', f.est_satellites_deployed);
-    set('flStarShare', f.starlink_share_pct!=null ? f.starlink_share_pct+'%' : '—');
-    set('flSuccess', f.success_rate_pct!=null ? f.success_rate_pct+'%' : '—');
-    const bv = f.by_vehicle || {};
-    const wrap = document.getElementById('flVehicles');
-    if(wrap){
-      const entries = Object.entries(bv).sort((a,b)=>b[1]-a[1]);
-      const total = entries.reduce((s,[,v])=>s+v,0) || 1;
-      if(entries.length){
-        const color=(k,i)=>VEHICLE_COLORS[k]||VEHICLE_FALLBACK[i%VEHICLE_FALLBACK.length];
-        const segs = entries.map(([k,v],i)=>'<div class="spx-mixseg" style="width:'+(100*v/total)+'%;background:'+color(k,i)+';" title="'+k+': '+v+'"></div>').join('');
-        const legend = entries.map(([k,v],i)=>'<span class="it"><span class="sw" style="background:'+color(k,i)+'"></span>'+k+' <span class="ct">'+v+'</span></span>').join('');
-        wrap.innerHTML = '<div class="spx-muted" style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Launches by vehicle</div>' +
-          '<div class="spx-mixbar">'+segs+'</div><div class="spx-mixlegend">'+legend+'</div>';
-      }
-    }
-  }
-
-  function applyLaunches(data){
-    if(!data) return;
-    renderNext(data.next);
-    renderPrev(data.previous);
-    renderStats(data.stats, data.total_launches);
-    renderCadence(data.cadence_monthly);
-    renderBars('spxMass', data.mass_monthly, 'tonnes');
-    renderArea(data.sats_cumulative_monthly);
-    renderFleet(data.fleet);
-    renderRecent(data.recent);
-    renderUpcoming(data.upcoming);
-  }
-
-  // SPCX price (same source as the show page pill)
-  function applyPrice(d){
+  function apply(d){
     if(!d || !(d.price>0)) return;
-    const px=document.getElementById('spxPx'); px.textContent='$'+Number(d.price).toFixed(2);
-    if(d.prev_close>0){
-      const ch=(d.price-d.prev_close), pct=(ch/d.prev_close*100);
-      const up=ch>=0; const el=document.getElementById('spxChg');
-      el.textContent=(up?'+':'')+ch.toFixed(2)+' ('+(up?'+':'')+pct.toFixed(2)+'%)';
-      el.className='ch '+(up?'up':'down');
-    }
+    countUp('tslPrice', d.price, money);
+    if(d.change_pct!=null){ const up=d.change_pct>=0; const el=document.getElementById('tslChg');
+      el.textContent=(up?'+':'')+d.change_pct.toFixed(2)+'%'; el.className='tsl-chg '+(up?'up':'down'); }
+    if(d.market_cap){ document.getElementById('tslMcap').textContent='Market cap '+big(d.market_cap);
+      const m2=document.getElementById('tslMcap2'); if(m2) m2.textContent=big(d.market_cap); }
+    if(d.updated_at){ try{ document.getElementById('tslUpdated').textContent='Updated '+new Date(d.updated_at).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})+' · not financial advice'; }catch(_){} }
+    const set=(id,v,f)=>{const e=document.getElementById(id); if(e&&v!=null) e.textContent=f?f(v):v;};
+    set('tslHigh', d.year_high, money); set('tslLow', d.year_low, money);
+    set('tslVol', d.avg_volume_10d||d.day_volume, vol);
+    renderArea(d.price_history);
   }
 
-  // PRIMARY: same-origin cache written by the pipeline. Fallback: live API.
-  fetch('/api/spacex_launches.json',{cache:'no-cache'})
-    .then(r=>r.ok?r.json():Promise.reject())
-    .then(applyLaunches)
-    .catch(()=>{
-      // Client-side fallback straight to Launch Library 2 (CORS-enabled).
-      fetch('https://ll.thespacedevs.com/2.3.0/launches/upcoming/?lsp__id=121&limit=1&ordering=net&mode=detailed')
-        .then(r=>r.json()).then(d=>{ const r=(d.results||[])[0]; if(r) renderNext({
-          name:r.name, net:r.net, status:(r.status||{}).abbrev, status_name:(r.status||{}).name,
-          rocket:((r.rocket||{}).configuration||{}).name, pad:(r.pad||{}).name,
-          location:((r.pad||{}).location||{}).name, webcast:((r.vidURLs||[])[0]||{}).url
-        }); }).catch(()=>{ document.getElementById('spxMission').textContent='Launch data is temporarily unavailable — check spacex.com/launches.'; });
-    });
-
-  fetch('/api/spcx.json',{cache:'no-cache'}).then(r=>r.ok?r.json():Promise.reject()).then(applyPrice).catch(()=>{});
-
-  tick(); setInterval(tick, 1000);
+  fetch('/api/tesla_dashboard.json',{cache:'no-cache'})
+    .then(r=>r.ok?r.json():Promise.reject()).then(apply)
+    .catch(()=>{ document.getElementById('tslPrice').textContent='—';
+      document.getElementById('tslUpdated').textContent='Live market data temporarily unavailable.'; });
 })();
 </script>
 

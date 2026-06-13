@@ -82,6 +82,11 @@ jobs:
         # run is skipped.
         run: python scripts/fetch_spacex_launches.py --out api/spacex_launches.json || true
 
+      - name: Refresh Tesla dashboard data
+        # Live TSLA market data + 1y price history for tesla-dashboard.html
+        # (Yahoo Finance). Keeps last-good cache on failure.
+        run: python scripts/fetch_tesla_dashboard.py --out api/tesla_dashboard.json || true
+
       - name: Generate Management Dashboard
         run: python scripts/generate_dashboard.py --out api/dashboard.json
 
@@ -135,6 +140,7 @@ jobs:
             digests/planetterrian/planetterrian_performance_tracker.json
             digests/spacex/spacex_performance_tracker.json
             api/spacex_launches.json
+            api/tesla_dashboard.json
             site/data/spacex_metrics.json
             site/data/popular_episodes.json
             site/data/gallery-manifest.json
@@ -144,8 +150,9 @@ jobs:
             modern-investing.html
             tesla-narrative.html
             tesla.html
+            tesla-dashboard.html
             spacex-dashboard.html
-          commit-message: "Nightly maintenance: update dashboard + gallery + search index + MIT + Tesla narrative + SpaceX launch pages"
+          commit-message: "Nightly maintenance: update dashboards + gallery + search index + MIT + Tesla/SpaceX data pages"
 
       - name: Notify on failure (webhook)
         if: failure() && env.NOTIFICATION_WEBHOOK_URL != ''

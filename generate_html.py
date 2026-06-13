@@ -1613,6 +1613,59 @@ def _load_mit_performance_data():
         return None
 
 
+def _mit_chart_data(tracker):
+    """Build chart-ready series from the investment tracker for the MIT
+    performance page: an equity curve (cumulative % over closed trades by
+    date), the win/loss split, and per-sector P&L. Returns {} when the
+    tracker is missing so the template's charts simply don't render."""
+    import math
+
+    def _fin(v):
+        """Finite float or None (guards the yfinance-NaN class so the
+        baked JSON never contains NaN/Infinity, which break JSON.parse)."""
+        try:
+            f = float(v)
+            return f if math.isfinite(f) else None
+        except (TypeError, ValueError):
+            return None
+
+    if not isinstance(tracker, dict):
+        return {}
+    trades = [t for t in tracker.get("trades", [])
+              if isinstance(t, dict) and _fin(t.get("pnl_pct")) is not None and t.get("date")]
+    trades.sort(key=lambda t: t.get("date", ""))
+    equity, cum = [], 0.0
+    for t in trades:
+        cum += _fin(t["pnl_pct"])
+        equity.append({"date": t["date"], "cum": round(cum, 2),
+                       "symbol": t.get("symbol", "")})
+    s = tracker.get("summary", {}) or {}
+    sectors = tracker.get("sectors", {}) or {}
+    sector_pnl = sorted(
+        ({"sector": k.replace("_", " "), "pnl": round(_fin(v.get("cumulative_pnl")) or 0.0, 2),
+          "trades": v.get("trade_count", 0)}
+         for k, v in sectors.items() if (v or {}).get("trade_count", 0) > 0),
+        key=lambda x: x["pnl"], reverse=True,
+    )
+    recent = [{"date": t.get("date", ""), "symbol": t.get("symbol", ""),
+               "strategy": t.get("strategy", ""), "pnl": _fin(t.get("pnl_pct"))}
+              for t in reversed(trades[-8:])]
+    return {
+        "equity_curve": equity,
+        "winloss": {"wins": s.get("wins", 0), "losses": s.get("losses", 0),
+                    "breakeven": s.get("breakeven", 0)},
+        "sector_pnl": sector_pnl,
+        "recent_trades": recent,
+        "headline": {
+            "cumulative_pnl": _fin(s.get("cumulative_pnl")),
+            "cumulative_alpha": _fin(s.get("cumulative_alpha_vs_nasdaq")),
+            "win_rate": _fin(s.get("win_rate_pct")),
+            "best": _fin(s.get("best_trade_pct")), "worst": _fin(s.get("worst_trade_pct")),
+            "longest_win_streak": s.get("longest_win_streak"),
+        },
+    }
+
+
 def _load_tesla_narrative_data():
     """Load the Tesla narrative tracker for the public page."""
     import json
@@ -1758,6 +1811,7 @@ def generate_mit_performance_page(*, dry_run=False):
         "show": cfg,
         "performance_data": performance_data,
         "tracker": tracker_data,
+        "mit_charts": _mit_chart_data(tracker_data),
         "path_prefix": "",
         "is_russian": False,
         "t": {
@@ -1922,6 +1976,59 @@ def generate_spacex_dashboard(*, dry_run=False):
     }
     html = template.render(**context)
     out_path = ROOT / "spacex-dashboard.html"
+    if dry_run:
+        print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
+        return out_path
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path} ({len(html):,} bytes)")
+    return out_path
+
+
+def generate_tesla_dashboard(*, dry_run=False):
+    """Render the Tesla data dashboard (tesla-dashboard.html).
+
+    Live TSLA market data + a 1-year price chart are read client-side from
+    ``api/tesla_dashboard.json``; the curated operating metrics
+    (deliveries, energy storage, milestones) are baked in from
+    ``site/data/tesla_metrics.json`` at generation time, so the page is
+    cheap to regenerate and grows as the operator appends new years.
+    """
+    cfg = NETWORK_SHOWS.get("tesla")
+    if cfg is None:
+        return None
+    metrics = {}
+    try:
+        import json as _json
+        mp = ROOT / "site" / "data" / "tesla_metrics.json"
+        if mp.exists():
+            metrics = _json.loads(mp.read_text(encoding="utf-8"))
+    except Exception as exc:
+        print(f"Warning: could not load tesla_metrics.json: {exc}")
+    env = _get_jinja_env()
+    template = env.get_template("tesla_dashboard.html.j2")
+    context = {
+        "path_prefix": "",
+        "page_lang": "en",
+        "show_name": "Tesla Shorts Time",
+        "page_title": "Tesla Dashboard — TSLA, Deliveries & Energy | Nerra Network",
+        "meta_description": (
+            "Live Tesla dashboard — TSLA price and 1-year chart, market cap and "
+            "52-week range, plus annual vehicle deliveries and energy-storage "
+            "deployments. The data companion to the Tesla Shorts Time podcast."
+        ),
+        "theme_color": cfg.get("brand_color", "#E31937"),
+        "brand_color": cfg.get("brand_color", "#E31937"),
+        "canonical_url": f"{GITHUB_RAW}/tesla-dashboard.html",
+        "og_image": f"{GITHUB_RAW}/{_url_encode_image(cfg['podcast_image'])}",
+        "rss_url": f"{cfg['rss_file']}",
+        "deliveries_annual": metrics.get("deliveries_annual", []),
+        "energy_storage_annual_gwh": metrics.get("energy_storage_annual_gwh", []),
+        "highlights": metrics.get("highlights", []),
+        "t": _NAV_T,
+        "all_shows": _build_all_shows_list(),
+    }
+    html = template.render(**context)
+    out_path = ROOT / "tesla-dashboard.html"
     if dry_run:
         print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
         return out_path
@@ -2737,7 +2844,7 @@ def generate_sitemap(*, dry_run=False):
                   "press.html", "contact.html", "editorial.html",
                   "gallery.html", "player.html",
                   "modern-investing-performance.html",
-                  "spacex-dashboard.html"]:
+                  "spacex-dashboard.html", "tesla-dashboard.html"]:
         if (ROOT / extra).exists():
             urls.append((f"{base}/{extra}", "0.5", _file_lastmod(ROOT / extra)))
 
@@ -3232,9 +3339,10 @@ def main():
         # Dedicated MIT performance page
         if args.show == "modern_investing":
             generate_mit_performance_page(dry_run=args.dry_run)
-        # Tesla Narrative page
+        # Tesla Narrative page + Tesla data dashboard
         if args.show == "tesla":
             generate_tesla_narrative_page(dry_run=args.dry_run)
+            generate_tesla_dashboard(dry_run=args.dry_run)
         # SpaceX Launch Dashboard
         if args.show == "spacex":
             generate_spacex_dashboard(dry_run=args.dry_run)
@@ -3258,6 +3366,7 @@ def main():
         generate_about_page(dry_run=args.dry_run)
         generate_gallery_page(dry_run=args.dry_run)
         generate_spacex_dashboard(dry_run=args.dry_run)
+        generate_tesla_dashboard(dry_run=args.dry_run)
         generate_how_to_listen_page(dry_run=args.dry_run)
         generate_press_page(dry_run=args.dry_run)
         generate_contact_page(dry_run=args.dry_run)
@@ -3286,9 +3395,10 @@ def main():
         generate_all_summaries(dry_run=args.dry_run)
     if args.network:
         generate_network_page(dry_run=args.dry_run)
-        # The SpaceX dashboard is data-light (reads same-origin caches at
-        # runtime) so it's cheap to regenerate on every network rebuild.
+        # The data dashboards are data-light (read same-origin caches at
+        # runtime) so they're cheap to regenerate on every network rebuild.
         generate_spacex_dashboard(dry_run=args.dry_run)
+        generate_tesla_dashboard(dry_run=args.dry_run)
         # --network --blogs: regenerate network blog index only (not all posts)
         if args.blogs:
             generate_network_blog_index(dry_run=args.dry_run)
