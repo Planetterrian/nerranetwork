@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Live SpaceX launch dashboard — countdown to the next launch, time since the last one, launch cadence, the upcoming manifest, and the SPCX market picture. The companion to the SpaceX Daily podcast.">
+    
+    
+    <title>SpaceX Launch Dashboard | Nerra Network</title>
+    <meta name="theme-color" content="#1A5CFF">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="SpaceX Launch Dashboard | Nerra Network">
+    <meta property="og:description" content="Live SpaceX launch dashboard — countdown to the next launch, time since the last one, launch cadence, the upcoming manifest, and the SPCX market picture. The companion to the SpaceX Daily podcast.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://nerranetwork.com/assets/covers/spacex.jpg">
+    <meta property="og:url" content="https://nerranetwork.com/spacex-dashboard.html">
+    <meta property="og:site_name" content="Nerra Network">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="SpaceX Launch Dashboard | Nerra Network">
+    <meta name="twitter:description" content="Live SpaceX launch dashboard — countdown to the next launch, time since the last one, launch cadence, the upcoming manifest, and the SPCX market picture. The companion to the SpaceX Daily podcast.">
+    <meta name="twitter:image" content="https://nerranetwork.com/assets/covers/spacex.jpg">
+
+    <link rel="canonical" href="https://nerranetwork.com/spacex-dashboard.html">
+    
+    <link rel="alternate" type="application/rss+xml" title="SpaceX Daily RSS" href="spacex_podcast.rss">
+    
+    
+    
+
+    <!-- Google Fonts: DM Sans + Source Serif 4 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='6' fill='%236B47FF'/><circle cx='20' cy='30' r='4' fill='%2300D4FF'/><circle cx='80' cy='30' r='4' fill='%2300D4FF'/><circle cx='25' cy='75' r='4' fill='%2300D4FF'/><circle cx='75' cy='75' r='4' fill='%2300D4FF'/><line x1='50' y1='50' x2='20' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='80' y2='30' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='25' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/><line x1='50' y1='50' x2='75' y2='75' stroke='%236B47FF' stroke-width='1.5' opacity='0.6'/></svg>">
+
+    
+    
+    <!-- Cookie consent (Google Consent Mode v2) — loads BEFORE gtag.js -->
+    <script src="assets/js/consent.js"></script>
+    <!-- gtag.js — covers both GA4 and Google Ads -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6PWJCVQQ7B"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      gtag('config', 'G-6PWJCVQQ7B', { 'anonymize_ip': true });
+      
+      
+    </script>
+    
+    
+    
+    <script defer src="assets/js/tracking.js"></script>
+
+    <!-- Shared CSS -->
+    <link rel="stylesheet" href="styles/main.css">
+
+    
+<style>
+  /* ---- SpaceX Launch Dashboard (scoped under .spx-dash) ---- */
+  .spx-dash {
+    --spx-blue: #1A5CFF;
+    --spx-cyan: #00D4FF;
+    --spx-ink: #0a1020;
+    position: relative;
+    color: #eaf0ff;
+  }
+  .spx-hero-wrap {
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(26,92,255,0.28), transparent 60%),
+      linear-gradient(180deg, #05080f 0%, #0a1124 60%, #0a0f1e 100%);
+    border-bottom: 1px solid rgba(120,160,255,0.15);
+  }
+  .spx-stars {
+    position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  }
+  .spx-container {
+    position: relative; z-index: 1;
+    max-width: 1120px; margin: 0 auto;
+    padding: calc(var(--nav-height) + 2.5rem) 1.25rem 2rem;
+  }
+  .spx-kicker {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--spx-cyan); font-weight: 700; margin-bottom: 0.6rem;
+  }
+  .spx-kicker .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--spx-cyan);
+    box-shadow: 0 0 10px var(--spx-cyan); animation: spx-pulse 1.8s infinite; }
+  @keyframes spx-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+  .spx-h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); line-height: 1.05; margin: 0 0 0.4rem; font-weight: 800; letter-spacing: -0.02em; }
+  .spx-sub { color: #aebbe0; font-size: 1.02rem; max-width: 62ch; margin: 0 0 1.6rem; }
+
+  .spx-countdown {
+    display: flex; gap: 0.6rem; flex-wrap: wrap; margin: 0.4rem 0 1.2rem;
+  }
+  .spx-cd-unit {
+    min-width: 78px; text-align: center;
+    background: rgba(13,22,46,0.7); border: 1px solid rgba(120,160,255,0.22);
+    border-radius: 14px; padding: 0.7rem 0.5rem;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 30px rgba(0,0,0,0.35);
+    backdrop-filter: blur(6px);
+  }
+  .spx-cd-num { font-size: clamp(1.6rem, 4.5vw, 2.6rem); font-weight: 800; font-variant-numeric: tabular-nums;
+    background: linear-gradient(180deg, #fff, #9fc0ff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .spx-cd-label { font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: #8ea3d6; margin-top: 2px; }
+
+  .spx-status {
+    display:inline-flex; align-items:center; gap:7px; font-weight:700; font-size:0.82rem;
+    padding: 4px 12px; border-radius: 999px; border:1px solid transparent;
+  }
+  .spx-status.go   { color:#7efbb0; background:rgba(40,200,120,0.12); border-color:rgba(40,200,120,0.35); }
+  .spx-status.tbd  { color:#ffd27a; background:rgba(255,180,40,0.12); border-color:rgba(255,180,40,0.32); }
+  .spx-status.hold { color:#ff9a9a; background:rgba(255,80,80,0.12); border-color:rgba(255,80,80,0.32); }
+
+  .spx-launchcard {
+    background: rgba(11,18,38,0.66); border: 1px solid rgba(120,160,255,0.2);
+    border-radius: 18px; padding: 1.1rem 1.2rem; backdrop-filter: blur(8px);
+  }
+  .spx-launchcard h3 { margin: 0.2rem 0 0.5rem; font-size: 1.25rem; }
+  .spx-meta { display:grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 0.6rem 1rem; margin-top: 0.6rem; }
+  .spx-meta .k { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.1em; color:#8ea3d6; }
+  .spx-meta .v { font-size:0.95rem; color:#eaf0ff; font-weight:600; }
+  .spx-btn {
+    display:inline-flex; align-items:center; gap:8px; margin-top: 0.9rem;
+    background: linear-gradient(135deg, var(--spx-blue), #3f7bff); color:#fff; font-weight:700;
+    padding: 0.6rem 1.1rem; border-radius: 12px; text-decoration:none; font-size:0.92rem;
+    box-shadow: 0 8px 24px rgba(26,92,255,0.4);
+  }
+  .spx-btn.ghost { background: transparent; border:1px solid rgba(120,160,255,0.4); box-shadow:none; }
+
+  .spx-grid { max-width:1120px; margin: 1.5rem auto; padding: 0 1.25rem; display:grid; gap:1.1rem; grid-template-columns: 1fr 1fr; }
+  @media (max-width: 760px){ .spx-grid{ grid-template-columns:1fr; } }
+  .spx-panel {
+    background: var(--nn-surface, #0f1830); border:1px solid rgba(120,160,255,0.16);
+    border-radius:16px; padding:1.1rem 1.2rem;
+  }
+  .spx-panel h2 { font-size:1.05rem; margin:0 0 0.9rem; letter-spacing:-0.01em; }
+
+  .spx-stats { display:grid; grid-template-columns: repeat(auto-fit,minmax(120px,1fr)); gap:0.8rem; }
+  .spx-stat { text-align:center; padding:0.6rem; border-radius:12px; background:rgba(26,92,255,0.08); border:1px solid rgba(120,160,255,0.14); }
+  .spx-stat .n { font-size:1.7rem; font-weight:800; color:#fff; font-variant-numeric:tabular-nums; }
+  .spx-stat .l { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:#8ea3d6; margin-top:2px; }
+
+  /* cadence chart */
+  .spx-cadence { display:flex; align-items:flex-end; gap:6px; height:160px; padding-top:8px; overflow:hidden; }
+  .spx-bar-wrap { flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
+  .spx-bar {
+    width:100%; border-radius:6px 6px 2px 2px; min-height:3px;
+    background: linear-gradient(180deg, var(--spx-cyan), var(--spx-blue));
+    transition: height .6s cubic-bezier(.2,.7,.2,1);
+    position:relative;
+  }
+  .spx-bar .cnt { position:absolute; top:-18px; left:0; right:0; text-align:center; font-size:0.7rem; color:#cfe0ff; font-weight:700; }
+  .spx-bar-label { font-size:0.58rem; color:#7f93c4; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:clip; }
+  @media (max-width: 520px){ .spx-bar-label { font-size:0.5rem; letter-spacing:-0.03em; } .spx-cadence{ gap:4px; } }
+
+  .spx-since { font-size: clamp(1.4rem,3.5vw,2rem); font-weight:800; font-variant-numeric:tabular-nums; color:#fff; }
+  .spx-upcoming-item { display:flex; justify-content:space-between; gap:10px; padding:0.55rem 0; border-bottom:1px solid rgba(120,160,255,0.12); font-size:0.9rem; }
+  .spx-upcoming-item:last-child{ border-bottom:none; }
+  .spx-upcoming-item .when { color:#8ea3d6; white-space:nowrap; font-variant-numeric:tabular-nums; }
+
+  .spx-spcx { display:flex; align-items:baseline; gap:12px; }
+  .spx-spcx .px { font-size:2rem; font-weight:800; color:#fff; }
+  .spx-spcx .ch.up { color:#5ef0a0; } .spx-spcx .ch.down{ color:#ff8a8a; }
+  .spx-muted { color:#8ea3d6; font-size:0.82rem; }
+  .spx-foot-note { max-width:1120px; margin:0 auto 2rem; padding:0 1.25rem; color:#7f93c4; font-size:0.78rem; }
+  .spx-disclaimer { color:#7f93c4; font-size:0.74rem; margin-top:0.4rem; }
+</style>
+
+
+    
+    <style>
+        @media (max-width: 768px) {
+            .nn-footer-grid { grid-template-columns: 1fr; }
+            .nn-footer-col h4 {
+                cursor: pointer;
+                position: relative;
+                padding-right: 1.5rem;
+            }
+            .nn-footer-col h4::after {
+                content: '+';
+                position: absolute;
+                right: 0;
+                font-size: 1.2rem;
+                color: var(--nn-text-muted);
+            }
+            .nn-footer-col.expanded h4::after { content: '\2212'; }
+            .nn-footer-col > a,
+            .nn-footer-col > ul { display: none; }
+            .nn-footer-col.expanded > a,
+            .nn-footer-col.expanded > ul { display: block; }
+        }
+    </style>
+</head>
+<body><a href="#main-content" class="skip-link">Skip to content</a>
+    <!-- Navigation -->
+    <nav class="nn-nav" aria-label="Main navigation">
+        <div class="nn-nav-inner">
+            <a href="index.html" class="nn-nav-logo">
+                <img src="assets/nerra-logo-icon.svg" alt="Nerra Network" width="36" height="36">
+                <span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span>
+            </a>
+
+            
+            <div class="nn-global-search" style="position:relative;margin-left:auto;margin-right:0.5rem;max-width:180px;flex:1 1 auto;min-width:120px;">
+                <input type="search" id="nn-global-search-input"
+                       placeholder="Search…"
+                       style="width:100%;padding:6px 8px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.85rem;"
+                       aria-label="Search all episodes across the network">
+                <div id="nn-global-search-results"
+                     style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            <ul class="nn-nav-links">
+                <li class="nn-nav-dropdown">
+                    <button class="nn-nav-dropdown-btn" aria-expanded="false" aria-haspopup="true">
+                        Shows
+                        <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <div class="nn-nav-dropdown-menu" role="menu">
+                        
+                        <a href="models-agents.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/models-agents-400.webp"><img src="assets/covers/models-agents.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            Models & Agents
+                        </a>
+                        
+                        <a href="planetterrian.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp"><img src="assets/covers/planetterrian-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            Planetterrian Daily
+                        </a>
+                        
+                        <a href="omni-view.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View
+                        </a>
+                        
+                        <a href="models-agents-beginners.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp"><img src="assets/covers/models-agents-beginners.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            Models & Agents for Beginners
+                        </a>
+                        
+                        <a href="fascinating-frontiers.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp"><img src="assets/covers/fascinating-frontiers.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            Fascinating Frontiers
+                        </a>
+                        
+                        <a href="modern-investing.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/modern-investing-400.webp"><img src="assets/covers/modern-investing.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            Modern Investing Techniques
+                        </a>
+                        
+                        <a href="tesla.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/tesla-shorts-time-400.webp"><img src="assets/covers/tesla-shorts-time.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            Tesla Shorts Time
+                        </a>
+                        
+                        <a href="env-intel.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            Environmental Intelligence
+                        </a>
+                        
+                        <a href="ru/finansy-prosto.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            Финансы Просто
+                        </a>
+                        
+                        <a href="ru/privet-russian.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            Привет, Русский!
+                        </a>
+                        
+                        <a href="unintended-consequences.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp"><img src="assets/covers/unintended-consequences.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            Unintended Consequences
+                        </a>
+                        
+                        <a href="first-principles.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/first-principles-daily-400.webp"><img src="assets/covers/first-principles-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            First Principles Daily
+                        </a>
+                        
+                        <a href="spacex.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/spacex-400.webp"><img src="assets/covers/spacex.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            SpaceX Daily
+                        </a>
+                        
+                    </div>
+                </li>
+                <li class="nn-nav-dropdown">
+                    <button class="nn-nav-dropdown-btn" aria-expanded="false" aria-haspopup="true">
+                        Blog
+                        <svg viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <div class="nn-nav-dropdown-menu">
+                        <a href="blog/index.html" style="font-weight:600;border-bottom:1px solid var(--nn-border);padding-bottom:8px;margin-bottom:4px">
+                            All Blog Posts
+                        </a>
+                        
+                        <a href="blog/models_agents/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/models-agents-400.webp"><img src="assets/covers/models-agents.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            Models & Agents Blog
+                        </a>
+                        
+                        <a href="blog/planetterrian/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp"><img src="assets/covers/planetterrian-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            Planetterrian Daily Blog
+                        </a>
+                        
+                        <a href="blog/omni_view/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            Omni View Blog
+                        </a>
+                        
+                        <a href="blog/models_agents_beginners/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp"><img src="assets/covers/models-agents-beginners.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            Models & Agents for Beginners Blog
+                        </a>
+                        
+                        <a href="blog/fascinating_frontiers/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp"><img src="assets/covers/fascinating-frontiers.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            Fascinating Frontiers Blog
+                        </a>
+                        
+                        <a href="blog/modern_investing/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/modern-investing-400.webp"><img src="assets/covers/modern-investing.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            Modern Investing Techniques Blog
+                        </a>
+                        
+                        <a href="blog/tesla/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/tesla-shorts-time-400.webp"><img src="assets/covers/tesla-shorts-time.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            Tesla Shorts Time Blog
+                        </a>
+                        
+                        <a href="blog/env_intel/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            Environmental Intelligence Blog
+                        </a>
+                        
+                        <a href="blog/finansy_prosto/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            Финансы Просто Blog
+                        </a>
+                        
+                        <a href="blog/privet_russian/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            Привет, Русский! Blog
+                        </a>
+                        
+                        <a href="blog/unintended_consequences/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp"><img src="assets/covers/unintended-consequences.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            Unintended Consequences Blog
+                        </a>
+                        
+                        <a href="blog/first_principles/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/first-principles-daily-400.webp"><img src="assets/covers/first-principles-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            First Principles Daily Blog
+                        </a>
+                        
+                        <a href="blog/spacex/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/spacex-400.webp"><img src="assets/covers/spacex.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            SpaceX Daily Blog
+                        </a>
+                        
+                    </div>
+                </li>
+                
+                <li><a href="start-here.html">Start Here</a></li>
+                <li><a href="how-to-listen.html">Listen</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="player.html">Player</a></li>
+                <li><a href="index.html">Home</a></li>
+                
+            </ul>
+
+            <button class="nn-hamburger" aria-label="Toggle menu" aria-expanded="false" onclick="var m=document.getElementById('mobileMenu');m.classList.toggle('open');this.setAttribute('aria-expanded',m.classList.contains('open'));document.body.classList.toggle('menu-open')">&#9776;</button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="nn-mobile-menu">
+        
+        <a href="start-here.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">Start Here</a>
+        <a href="how-to-listen.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">How to Listen</a>
+        <a href="about.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">About</a>
+        <a href="player.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">Player</a>
+        <a href="index.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">Home</a>
+        
+        <div class="nn-mobile-shows">
+            <div class="nn-mobile-shows-title">All Shows</div>
+            
+            <a href="models-agents.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/models-agents-400.webp"><img src="assets/covers/models-agents.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Models & Agents
+            </a>
+            
+            <a href="planetterrian.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp"><img src="assets/covers/planetterrian-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Planetterrian Daily
+            </a>
+            
+            <a href="omni-view.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Omni View
+            </a>
+            
+            <a href="models-agents-beginners.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp"><img src="assets/covers/models-agents-beginners.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Models & Agents for Beginners
+            </a>
+            
+            <a href="fascinating-frontiers.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp"><img src="assets/covers/fascinating-frontiers.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Fascinating Frontiers
+            </a>
+            
+            <a href="modern-investing.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/modern-investing-400.webp"><img src="assets/covers/modern-investing.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Modern Investing Techniques
+            </a>
+            
+            <a href="tesla.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/tesla-shorts-time-400.webp"><img src="assets/covers/tesla-shorts-time.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Tesla Shorts Time
+            </a>
+            
+            <a href="env-intel.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Environmental Intelligence
+            </a>
+            
+            <a href="ru/finansy-prosto.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Финансы Просто
+            </a>
+            
+            <a href="ru/privet-russian.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Привет, Русский!
+            </a>
+            
+            <a href="unintended-consequences.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp"><img src="assets/covers/unintended-consequences.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Unintended Consequences
+            </a>
+            
+            <a href="first-principles.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/first-principles-daily-400.webp"><img src="assets/covers/first-principles-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                First Principles Daily
+            </a>
+            
+            <a href="spacex.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/spacex-400.webp"><img src="assets/covers/spacex.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                SpaceX Daily
+            </a>
+            
+        </div>
+        <div class="nn-mobile-shows">
+            <div class="nn-mobile-shows-title">Blogs</div>
+            <a href="blog/index.html" class="nn-mobile-show-link" style="font-weight:600" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                All Blog Posts
+            </a>
+            
+            <a href="blog/models_agents/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/models-agents-400.webp"><img src="assets/covers/models-agents.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Models & Agents Blog
+            </a>
+            
+            <a href="blog/planetterrian/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp"><img src="assets/covers/planetterrian-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Planetterrian Daily Blog
+            </a>
+            
+            <a href="blog/omni_view/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Omni View Blog
+            </a>
+            
+            <a href="blog/models_agents_beginners/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp"><img src="assets/covers/models-agents-beginners.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Models & Agents for Beginners Blog
+            </a>
+            
+            <a href="blog/fascinating_frontiers/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp"><img src="assets/covers/fascinating-frontiers.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Fascinating Frontiers Blog
+            </a>
+            
+            <a href="blog/modern_investing/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/modern-investing-400.webp"><img src="assets/covers/modern-investing.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Modern Investing Techniques Blog
+            </a>
+            
+            <a href="blog/tesla/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/tesla-shorts-time-400.webp"><img src="assets/covers/tesla-shorts-time.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Tesla Shorts Time Blog
+            </a>
+            
+            <a href="blog/env_intel/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Environmental Intelligence Blog
+            </a>
+            
+            <a href="blog/finansy_prosto/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Финансы Просто Blog
+            </a>
+            
+            <a href="blog/privet_russian/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Привет, Русский! Blog
+            </a>
+            
+            <a href="blog/unintended_consequences/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp"><img src="assets/covers/unintended-consequences.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                Unintended Consequences Blog
+            </a>
+            
+            <a href="blog/first_principles/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/first-principles-daily-400.webp"><img src="assets/covers/first-principles-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                First Principles Daily Blog
+            </a>
+            
+            <a href="blog/spacex/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/spacex-400.webp"><img src="assets/covers/spacex.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                SpaceX Daily Blog
+            </a>
+            
+        </div>
+    </div>
+
+    <main id="main-content">
+    
+<div class="spx-dash">
+  <div class="spx-hero-wrap">
+    <canvas class="spx-stars" id="spxStars"></canvas>
+    <div class="spx-container">
+      <div class="spx-kicker"><span class="dot"></span> SpaceX Launch Dashboard · Live</div>
+      <h1 class="spx-h1">Next SpaceX Launch</h1>
+      <p class="spx-sub">A live countdown to the next launch, time since the last one, cadence, and the SPCX market picture — the companion dashboard to <a href="spacex.html" style="color:var(--spx-cyan);">SpaceX Daily</a>.</p>
+
+      <div id="spxNext">
+        <div class="spx-countdown" id="spxCountdown">
+          <div class="spx-cd-unit"><div class="spx-cd-num" id="cd-d">--</div><div class="spx-cd-label">Days</div></div>
+          <div class="spx-cd-unit"><div class="spx-cd-num" id="cd-h">--</div><div class="spx-cd-label">Hours</div></div>
+          <div class="spx-cd-unit"><div class="spx-cd-num" id="cd-m">--</div><div class="spx-cd-label">Min</div></div>
+          <div class="spx-cd-unit"><div class="spx-cd-num" id="cd-s">--</div><div class="spx-cd-label">Sec</div></div>
+        </div>
+        <div class="spx-launchcard">
+          <span class="spx-status tbd" id="spxStatus">Loading…</span>
+          <h3 id="spxMission">Fetching the latest launch manifest…</h3>
+          <div class="spx-meta">
+            <div><div class="k">Vehicle</div><div class="v" id="spxRocket">—</div></div>
+            <div><div class="k">Launch Pad</div><div class="v" id="spxPad">—</div></div>
+            <div><div class="k">Location</div><div class="v" id="spxLoc">—</div></div>
+            <div><div class="k">Target (your time)</div><div class="v" id="spxLocal">—</div></div>
+          </div>
+          <p class="spx-muted" id="spxDesc" style="margin:0.7rem 0 0;"></p>
+          <a class="spx-btn" id="spxWebcast" href="#" target="_blank" rel="noopener" style="display:none;">▶ Watch the webcast</a>
+          <a class="spx-btn ghost" id="spxMore" href="#" target="_blank" rel="noopener" style="display:none;">Mission details</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="spx-grid">
+    <div class="spx-panel">
+      <h2>Time since last launch</h2>
+      <div class="spx-since" id="spxSince">—</div>
+      <p class="spx-muted" id="spxLast" style="margin:0.4rem 0 0;">—</p>
+    </div>
+    <div class="spx-panel">
+      <h2>SPCX</h2>
+      <div class="spx-spcx"><span class="px" id="spxPx">—</span><span class="ch" id="spxChg"></span></div>
+      <p class="spx-muted" id="spxPxNote" style="margin:0.4rem 0 0;">Nasdaq: SPCX</p>
+      <p class="spx-disclaimer">Not financial advice.</p>
+    </div>
+  </div>
+
+  <div class="spx-grid" style="grid-template-columns:1fr;">
+    <div class="spx-panel">
+      <h2>Launch cadence — last 12 months</h2>
+      <div class="spx-cadence" id="spxCadence"></div>
+      <div class="spx-stats" style="margin-top:1.2rem;">
+        <div class="spx-stat"><div class="n" id="stYtd">—</div><div class="l">Launches YTD</div></div>
+        <div class="spx-stat"><div class="n" id="st30">—</div><div class="l">Last 30 days</div></div>
+        <div class="spx-stat"><div class="n" id="stAvg">—</div><div class="l">Avg days apart</div></div>
+        <div class="spx-stat"><div class="n" id="stStar">—</div><div class="l">Starlink YTD</div></div>
+        <div class="spx-stat"><div class="n" id="stTotal">—</div><div class="l">Total launches</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="spx-grid" style="grid-template-columns:1fr;">
+    <div class="spx-panel">
+      <h2>Upcoming manifest</h2>
+      <div id="spxUpcoming"><p class="spx-muted">Loading…</p></div>
+    </div>
+  </div>
+
+  <p class="spx-foot-note">
+    Launch data from <a href="https://thespacedevs.com/" target="_blank" rel="noopener" style="color:var(--spx-cyan);">The Space Devs</a> Launch Library 2 (updated each pipeline run). Times are “no earlier than” and slip often — always confirm against the official <a href="https://www.spacex.com/launches/" target="_blank" rel="noopener" style="color:var(--spx-cyan);">SpaceX launch schedule</a> and webcast. Full source links live on the <a href="spacex.html#resources" style="color:var(--spx-cyan);">SpaceX Daily resources</a> page.
+  </p>
+</div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="nn-footer">
+        <div class="container">
+            <div class="nn-footer-grid">
+                <div>
+                    <div class="nn-footer-brand"><span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span></div>
+                    <p class="nn-footer-desc">13 shows. Zero fluff. Independent podcast network produced in Vancouver, Canada.</p>
+                </div>
+                <div class="nn-footer-col">
+                    <h4>Shows</h4>
+                    
+                    <a href="models-agents.html">Models & Agents</a>
+                    
+                    <a href="planetterrian.html">Planetterrian Daily</a>
+                    
+                    <a href="omni-view.html">Omni View</a>
+                    
+                    <a href="models-agents-beginners.html">Models & Agents for Beginners</a>
+                    
+                    <a href="fascinating-frontiers.html">Fascinating Frontiers</a>
+                    
+                    <a href="modern-investing.html">Modern Investing Techniques</a>
+                    
+                    <a href="tesla.html">Tesla Shorts Time</a>
+                    
+                    <a href="env-intel.html">Environmental Intelligence</a>
+                    
+                    <a href="ru/finansy-prosto.html">Финансы Просто</a>
+                    
+                    <a href="ru/privet-russian.html">Привет, Русский!</a>
+                    
+                    <a href="unintended-consequences.html">Unintended Consequences</a>
+                    
+                    <a href="first-principles.html">First Principles Daily</a>
+                    
+                    <a href="spacex.html">SpaceX Daily</a>
+                    
+                </div>
+                <div class="nn-footer-col">
+                    <h4>Blog</h4>
+                    <a href="blog/index.html">All Blog Posts</a>
+                    
+                    <a href="blog/models_agents/index.html">Models & Agents</a>
+                    
+                    <a href="blog/planetterrian/index.html">Planetterrian Daily</a>
+                    
+                    <a href="blog/omni_view/index.html">Omni View</a>
+                    
+                    <a href="blog/models_agents_beginners/index.html">Models & Agents for Beginners</a>
+                    
+                    <a href="blog/fascinating_frontiers/index.html">Fascinating Frontiers</a>
+                    
+                    <a href="blog/modern_investing/index.html">Modern Investing Techniques</a>
+                    
+                    <a href="blog/tesla/index.html">Tesla Shorts Time</a>
+                    
+                    <a href="blog/env_intel/index.html">Environmental Intelligence</a>
+                    
+                    <a href="blog/finansy_prosto/index.html">Финансы Просто</a>
+                    
+                    <a href="blog/privet_russian/index.html">Привет, Русский!</a>
+                    
+                    <a href="blog/unintended_consequences/index.html">Unintended Consequences</a>
+                    
+                    <a href="blog/first_principles/index.html">First Principles Daily</a>
+                    
+                    <a href="blog/spacex/index.html">SpaceX Daily</a>
+                    
+                    <a href="blog.rss">Blog RSS (All Shows)</a>
+                </div>
+                <div class="nn-footer-col">
+                    <h4>Listen</h4>
+                    <a href="how-to-listen.html" style="font-weight:600">How to Listen</a>
+                    <a href="player.html" style="font-weight:600">Network Player</a>
+                    <a href="https://podcasts.apple.com/us/podcast/tesla-shorts-time/id1855142939?utm_source=nerranetwork&utm_medium=footer&utm_campaign=tesla" target="_blank" rel="noopener" data-show="tesla">Apple Podcasts</a>
+                    <a href="network.rss">Network RSS</a>
+                    
+                    <a href="models_agents_podcast.rss">Models & Agents RSS</a>
+                    
+                    <a href="planetterrian_podcast.rss">Planetterrian Daily RSS</a>
+                    
+                    <a href="omni_view_podcast.rss">Omni View RSS</a>
+                    
+                    <a href="models_agents_beginners_podcast.rss">Models & Agents for Beginners RSS</a>
+                    
+                    <a href="fascinating_frontiers_podcast.rss">Fascinating Frontiers RSS</a>
+                    
+                    <a href="modern_investing_podcast.rss">Modern Investing Techniques RSS</a>
+                    
+                    <a href="podcast.rss">Tesla Shorts Time RSS</a>
+                    
+                    <a href="env_intel_podcast.rss">Environmental Intelligence RSS</a>
+                    
+                    <a href="finansy_prosto_podcast.rss">Финансы Просто RSS</a>
+                    
+                    <a href="privet_russian_podcast.rss">Привет, Русский! RSS</a>
+                    
+                    <a href="unintended_consequences_podcast.rss">Unintended Consequences RSS</a>
+                    
+                    <a href="first_principles_podcast.rss">First Principles Daily RSS</a>
+                    
+                    <a href="spacex_podcast.rss">SpaceX Daily RSS</a>
+                    
+                </div>
+                <div class="nn-footer-col">
+                    <h4>Connect</h4>
+                    <a href="https://x.com/teslashortstime" target="_blank" rel="noopener">@teslashortstime</a>
+                    <a href="https://x.com/omniviewnews" target="_blank" rel="noopener">@omniviewnews</a>
+                    <a href="https://x.com/planetterrian" target="_blank" rel="noopener">@planetterrian</a>
+                </div>
+            </div>
+            <div class="nn-footer-col">
+                <h4>About</h4>
+                <a href="about.html">About Nerra Network</a>
+                <a href="start-here.html">Start Here</a>
+                <a href="how-to-listen.html">How to Listen</a>
+                <a href="faq.html">FAQ</a>
+                <a href="contact.html">Contact</a>
+                <a href="press.html">Press Kit</a>
+                <a href="privacy-policy.html">Privacy Policy</a>
+                <a href="terms-of-service.html">Terms of Service</a>
+                <a href="ai-disclosure.html">AI Disclosure</a>
+                <a href="editorial.html">Editorial Process</a>
+                <a href="gallery.html">Image Gallery</a>
+                <a href="management.html">Network Status</a>
+            </div>
+            <!-- Newsletter Subscribe -->
+            <div class="nn-footer-subscribe">
+                <form action="https://buttondown.com/api/emails/embed-subscribe/patricknovak1" method="post" target="popupwindow" class="nn-subscribe-form"
+                      onsubmit="var btn=this.querySelector('button[type=submit]');btn.disabled=true;btn.textContent="Subscribing…";setTimeout(function(){btn.textContent="Check your email ✓";btn.disabled=false;},500);">
+                    <h4>Get Show Updates</h4>
+                    <p>Pick the shows you want in your inbox:</p>
+                    <div class="nn-subscribe-tags"><label><input type="checkbox" name="tag" value="Tesla Shorts Time"> Tesla Shorts Time</label>
+                        <label><input type="checkbox" name="tag" value="Omni View"> Omni View</label>
+                        <label><input type="checkbox" name="tag" value="Fascinating Frontiers"> Fascinating Frontiers</label>
+                        <label><input type="checkbox" name="tag" value="Planetterrian Daily"> Planetterrian Daily</label>
+                        <label><input type="checkbox" name="tag" value="Environmental Intelligence"> Environmental Intelligence</label>
+                        <label><input type="checkbox" name="tag" value="Models & Agents"> Models &amp; Agents</label>
+                        <label><input type="checkbox" name="tag" value="Models & Agents for Beginners"> Models &amp; Agents for Beginners</label>
+                        <label><input type="checkbox" name="tag" value="Modern Investing Techniques"> Modern Investing Techniques</label>
+                        <label><input type="checkbox" name="tag" value="Unintended Consequences"> Unintended Consequences</label><label><input type="checkbox" name="tag" value="Finansy Prosto"> Финансы Просто</label>
+                        <label><input type="checkbox" name="tag" value="Privet Russian"> Привет, Русский!</label>
+                    </div>
+                    <div class="nn-subscribe-row">
+                        <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address">
+                        <input type="hidden" value="1" name="embed">
+                        <button type="submit">Subscribe</button>
+                    </div>
+                </form>
+            </div>
+            <div class="nn-footer-bottom">
+                <span>© 2026 Nerra Network. All shows independently produced.</span>
+                <a href="index.html">nerranetwork.com</a>
+            </div>
+            <div class="nn-footer-legal">
+                <p class="ai-notice">Nerra Network uses AI tools in content production. <a href="ai-disclosure.html">Learn more</a></p>
+                <div>
+                    <a href="privacy-policy.html">Privacy</a> &middot;
+                    <a href="terms-of-service.html">Terms</a> &middot;
+                    <a href="ai-disclosure.html">AI Disclosure</a>
+                    <span style="opacity:0.5;">&middot;</span>
+                    <span style="font-size:0.7rem;opacity:0.6;">Automation: reliable nightly + post-publish pipeline</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+    // Toggle aria-expanded on dropdown hover/focus
+    document.querySelectorAll('.nn-nav-dropdown').forEach(function(dd) {
+        var btn = dd.querySelector('.nn-nav-dropdown-btn');
+        if (!btn) return;
+        dd.addEventListener('mouseenter', function() { btn.setAttribute('aria-expanded', 'true'); });
+        dd.addEventListener('mouseleave', function() { btn.setAttribute('aria-expanded', 'false'); });
+        btn.addEventListener('focus', function() { btn.setAttribute('aria-expanded', 'true'); });
+        btn.addEventListener('blur', function() {
+            setTimeout(function() {
+                if (!dd.contains(document.activeElement)) btn.setAttribute('aria-expanded', 'false');
+            }, 100);
+        });
+    });
+    // Mobile footer accordions
+    if (window.innerWidth <= 768) {
+        document.querySelectorAll('.nn-footer-col h4').forEach(function(h4) {
+            h4.addEventListener('click', function() {
+                h4.parentElement.classList.toggle('expanded');
+            });
+        });
+    }
+    </script>
+    
+<script>
+(function(){
+  // ---- Starfield ----
+  const cv = document.getElementById('spxStars');
+  if (cv) {
+    const ctx = cv.getContext('2d');
+    let stars = [];
+    function resize(){
+      cv.width = cv.offsetWidth; cv.height = cv.offsetHeight;
+      stars = Array.from({length: Math.min(180, Math.floor(cv.width/8))}, () => ({
+        x: Math.random()*cv.width, y: Math.random()*cv.height,
+        r: Math.random()*1.4+0.2, a: Math.random()*0.6+0.2, tw: Math.random()*0.02+0.005
+      }));
+    }
+    function draw(){
+      if(!ctx) return;
+      ctx.clearRect(0,0,cv.width,cv.height);
+      for(const s of stars){
+        s.a += s.tw; const al = 0.3+Math.abs(Math.sin(s.a))*0.7;
+        ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,7); ctx.fillStyle='rgba(180,205,255,'+al+')'; ctx.fill();
+      }
+      requestAnimationFrame(draw);
+    }
+    resize(); draw(); window.addEventListener('resize', resize);
+  }
+
+  const pad = n => String(n).padStart(2,'0');
+  function fmtLocal(iso){
+    try { return new Date(iso).toLocaleString([], {weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}); }
+    catch(_) { return iso || '—'; }
+  }
+  function statusClass(abbr){
+    const a = (abbr||'').toUpperCase();
+    if(a==='GO') return 'go';
+    if(a.includes('HOLD')||a.includes('FAIL')||a==='TBC') return 'hold';
+    return 'tbd';
+  }
+
+  let nextNet = null, lastNet = null;
+
+  function tick(){
+    const now = Date.now();
+    if(nextNet){
+      let diff = Math.max(0, nextNet - now);
+      const d = Math.floor(diff/86400000); diff -= d*86400000;
+      const h = Math.floor(diff/3600000); diff -= h*3600000;
+      const m = Math.floor(diff/60000); diff -= m*60000;
+      const s = Math.floor(diff/1000);
+      const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=v;};
+      set('cd-d', d); set('cd-h', pad(h)); set('cd-m', pad(m)); set('cd-s', pad(s));
+    }
+    if(lastNet){
+      let diff = Math.max(0, now - lastNet);
+      const d = Math.floor(diff/86400000); diff -= d*86400000;
+      const h = Math.floor(diff/3600000); diff -= h*3600000;
+      const m = Math.floor(diff/60000);
+      const el = document.getElementById('spxSince');
+      if(el) el.textContent = (d>0? d+'d ':'') + pad(h)+'h '+pad(m)+'m ago';
+    }
+  }
+
+  function renderCadence(months){
+    const wrap = document.getElementById('spxCadence');
+    if(!wrap || !months || !months.length) return;
+    const max = Math.max(1, ...months.map(x=>x.count));
+    wrap.innerHTML = months.map(x=>{
+      const h = Math.round((x.count/max)*130)+3;
+      const lab = x.month.slice(2).replace('-','/'); // YY/MM
+      return '<div class="spx-bar-wrap"><div class="spx-bar" style="height:0" data-h="'+h+'"><span class="cnt">'+x.count+'</span></div><div class="spx-bar-label">'+lab+'</div></div>';
+    }).join('');
+    requestAnimationFrame(()=>{ wrap.querySelectorAll('.spx-bar').forEach(b=>{ b.style.height=b.dataset.h+'px'; }); });
+  }
+
+  function renderNext(n){
+    if(!n){ document.getElementById('spxMission').textContent='No upcoming launch on the manifest right now.'; return; }
+    nextNet = n.net ? new Date(n.net).getTime() : null;
+    const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=v||'—';};
+    const st = document.getElementById('spxStatus');
+    st.textContent = n.status_name || n.status || 'Scheduled';
+    st.className = 'spx-status '+statusClass(n.status);
+    set('spxMission', n.name || n.mission || 'Upcoming SpaceX launch');
+    set('spxRocket', n.rocket);
+    set('spxPad', n.pad);
+    set('spxLoc', n.location);
+    set('spxLocal', n.net ? fmtLocal(n.net) : 'TBD');
+    document.getElementById('spxDesc').textContent = n.mission_description || '';
+    if(n.webcast){ const w=document.getElementById('spxWebcast'); w.href=n.webcast; w.style.display='inline-flex'; }
+    const more = n.info_url || 'https://www.spacex.com/launches/';
+    const mEl=document.getElementById('spxMore'); mEl.href=more; mEl.style.display='inline-flex';
+  }
+
+  function renderPrev(p){
+    if(!p) return;
+    lastNet = p.net ? new Date(p.net).getTime() : null;
+    const el=document.getElementById('spxLast');
+    if(el) el.textContent = (p.name||'Last launch') + (p.net ? ' · '+fmtLocal(p.net) : '');
+  }
+
+  function renderStats(s, total){
+    const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=(v==null?'—':v);};
+    if(s){ set('stYtd',s.launches_ytd); set('st30',s.launches_last_30d); set('stAvg',s.avg_days_between_last_365d); set('stStar',s.starlink_launches_ytd); }
+    set('stTotal', total!=null ? total.toLocaleString() : '—');
+  }
+
+  function renderUpcoming(list){
+    const wrap=document.getElementById('spxUpcoming');
+    if(!wrap) return;
+    if(!list || !list.length){ wrap.innerHTML='<p class="spx-muted">No upcoming launches listed.</p>'; return; }
+    wrap.innerHTML = list.map(x=>'<div class="spx-upcoming-item"><span>'+(x.name||'Launch')+'</span><span class="when">'+(x.net?fmtLocal(x.net):'TBD')+'</span></div>').join('');
+  }
+
+  function applyLaunches(data){
+    if(!data) return;
+    renderNext(data.next);
+    renderPrev(data.previous);
+    renderStats(data.stats, data.total_launches);
+    renderCadence(data.cadence_monthly);
+    renderUpcoming(data.upcoming);
+  }
+
+  // SPCX price (same source as the show page pill)
+  function applyPrice(d){
+    if(!d || !(d.price>0)) return;
+    const px=document.getElementById('spxPx'); px.textContent='$'+Number(d.price).toFixed(2);
+    if(d.prev_close>0){
+      const ch=(d.price-d.prev_close), pct=(ch/d.prev_close*100);
+      const up=ch>=0; const el=document.getElementById('spxChg');
+      el.textContent=(up?'+':'')+ch.toFixed(2)+' ('+(up?'+':'')+pct.toFixed(2)+'%)';
+      el.className='ch '+(up?'up':'down');
+    }
+  }
+
+  // PRIMARY: same-origin cache written by the pipeline. Fallback: live API.
+  fetch('/api/spacex_launches.json',{cache:'no-cache'})
+    .then(r=>r.ok?r.json():Promise.reject())
+    .then(applyLaunches)
+    .catch(()=>{
+      // Client-side fallback straight to Launch Library 2 (CORS-enabled).
+      fetch('https://ll.thespacedevs.com/2.3.0/launches/upcoming/?lsp__id=121&limit=1&ordering=net&mode=detailed')
+        .then(r=>r.json()).then(d=>{ const r=(d.results||[])[0]; if(r) renderNext({
+          name:r.name, net:r.net, status:(r.status||{}).abbrev, status_name:(r.status||{}).name,
+          rocket:((r.rocket||{}).configuration||{}).name, pad:(r.pad||{}).name,
+          location:((r.pad||{}).location||{}).name, webcast:((r.vidURLs||[])[0]||{}).url
+        }); }).catch(()=>{ document.getElementById('spxMission').textContent='Launch data is temporarily unavailable — check spacex.com/launches.'; });
+    });
+
+  fetch('/api/spcx.json',{cache:'no-cache'}).then(r=>r.ok?r.json():Promise.reject()).then(applyPrice).catch(()=>{});
+
+  tick(); setInterval(tick, 1000);
+})();
+</script>
+
+
+    <!-- Centralized, improved global search -->
+    <script src="assets/js/search.js" defer></script>
+</body>
+</html>

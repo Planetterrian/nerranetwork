@@ -1293,6 +1293,104 @@ NETWORK_SHOWS = {
 }
 
 
+# Complete English nav/footer translation map for standalone pages that
+# extend base.html.j2 (dashboard, etc.). Mirrors the inline dicts the
+# narrative pages use, with the mobile-nav keys filled in so no label
+# renders empty.
+_NAV_T = {
+    "nav_shows": "Shows", "nav_blog": "Blog", "all_blog_posts": "All Blog Posts",
+    "show_blog_suffix": "Blog", "nav_start_here": "Start Here",
+    "nav_listen": "How to Listen", "nav_how_to_listen": "How to Listen",
+    "nav_about": "About", "nav_player": "Player", "nav_home": "Home",
+    "toggle_menu": "Toggle menu", "mobile_all_shows": "All Shows",
+    "mobile_blogs": "Blogs", "footer_network_status": "Network Status",
+}
+
+
+# Shows that render a live stock-price pill in the hero. Each show's
+# pipeline hook writes the same-origin JSON; the page JS reads it first
+# and falls back to Yahoo Finance via CORS proxies. yahoo_symbol is the
+# fallback ticker queried at query{1,2}.finance.yahoo.com.
+_STOCK_WIDGETS: dict = {
+    "tesla": {"ticker": "TSLA", "json_path": "/api/tsla.json", "yahoo_symbol": "TSLA"},
+    "spacex": {"ticker": "SPCX", "json_path": "/api/spcx.json", "yahoo_symbol": "SPCX"},
+}
+
+
+# Curated "best source of <topic> information" resource blocks for
+# scaffolded shows (the hardcoded NETWORK_SHOWS entries carry their own;
+# this layers rich resources onto shows defined in network_meta.yaml
+# without bloating that auto-generated file). Merged in below.
+_SCAFFOLD_SHOW_RESOURCES: dict = {
+    "spacex": {
+        "resource_categories": [
+            {
+                "title": "SpaceX — Official",
+                "resources": [
+                    {"name": "SpaceX.com", "url": "https://www.spacex.com", "desc": "The company's official site — vehicles, missions, and capabilities"},
+                    {"name": "SpaceX Launches", "url": "https://www.spacex.com/launches/", "desc": "Upcoming and past launches with mission details and webcasts"},
+                    {"name": "Starship", "url": "https://www.spacex.com/vehicles/starship/", "desc": "The fully reusable launch system built for the Moon and Mars"},
+                    {"name": "Starlink", "url": "https://www.starlink.com", "desc": "SpaceX's satellite-internet constellation — the company's cash engine"},
+                    {"name": "SpaceX on X", "url": "https://x.com/SpaceX", "desc": "Official launch announcements, webcasts, and mission updates"},
+                    {"name": "SpaceX on YouTube", "url": "https://www.youtube.com/@SpaceX", "desc": "Live launch webcasts and mission replays in full"},
+                ],
+            },
+            {
+                "title": "SPCX — Stock, Filings & the IPO",
+                "resources": [
+                    {"name": "SpaceX S-1 / Prospectus (SEC EDGAR)", "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=space+exploration+technologies&type=S-1&dateb=&owner=include&count=40", "desc": "The registration statement behind the June 2026 IPO — the numbers, straight from the source"},
+                    {"name": "SEC EDGAR — all SpaceX filings", "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=space+exploration+technologies&type=&dateb=&owner=include&count=40", "desc": "Every public filing as it lands — 10-Ks, 10-Qs, 8-Ks, insider forms"},
+                    {"name": "SPCX on Yahoo Finance", "url": "https://finance.yahoo.com/quote/SPCX", "desc": "Real-time quote, charts, financials, and analyst coverage"},
+                    {"name": "SPCX on TradingView", "url": "https://www.tradingview.com/symbols/NASDAQ-SPCX/", "desc": "Advanced charting, technicals, and community trade ideas"},
+                    {"name": "SPCX on Nasdaq", "url": "https://www.nasdaq.com/market-activity/stocks/spcx", "desc": "Exchange-of-record quote page, volume, and corporate data"},
+                ],
+            },
+            {
+                "title": "Spaceflight News & Analysis",
+                "resources": [
+                    {"name": "NASASpaceflight", "url": "https://www.nasaspaceflight.com", "desc": "The deepest independent launch reporting and Starbase coverage"},
+                    {"name": "SpaceNews", "url": "https://spacenews.com", "desc": "Industry, policy, and business of the space sector"},
+                    {"name": "Ars Technica — Space", "url": "https://arstechnica.com/space/", "desc": "Eric Berger's authoritative, skeptical spaceflight analysis"},
+                    {"name": "Spaceflight Now", "url": "https://spaceflightnow.com", "desc": "Launch schedules and live mission coverage"},
+                    {"name": "Eric Berger on X", "url": "https://x.com/SciGuySpace", "desc": "Breaking SpaceX news and reporting from Ars Technica's senior space editor"},
+                    {"name": "Michael Sheetz on X", "url": "https://x.com/thesheetztweetz", "desc": "CNBC's space-business reporter — the SPCX investor angle"},
+                ],
+            },
+            {
+                "title": "Launch Tracking & Data",
+                "resources": [
+                    {"name": "Next Spaceflight", "url": "https://nextspaceflight.com", "desc": "Every upcoming launch with countdowns, rockets, and pads"},
+                    {"name": "Flight Club", "url": "https://flightclub.io", "desc": "Live trajectory simulations and telemetry for orbital launches"},
+                    {"name": "Jonathan's Space Report", "url": "https://planet4589.org/space/jsr/jsr.html", "desc": "Jonathan McDowell's authoritative catalogue of launches and satellites"},
+                    {"name": "r/SpaceX", "url": "https://www.reddit.com/r/spacex/", "desc": "The largest SpaceX community — launch threads and technical discussion"},
+                    {"name": "r/SpaceXLounge", "url": "https://www.reddit.com/r/SpaceXLounge/", "desc": "Looser SpaceX discussion, speculation, and community analysis"},
+                ],
+            },
+            {
+                "title": "Musk & the xAI Ecosystem",
+                "resources": [
+                    {"name": "Elon Musk on X", "url": "https://x.com/elonmusk", "desc": "First-hand program updates and milestones, straight from the CEO"},
+                    {"name": "xAI", "url": "https://x.ai", "desc": "Musk's AI company — the AI-compute thread that runs through the SpaceX story"},
+                    {"name": "Grok", "url": "https://grok.com", "desc": "xAI's assistant — the AI that powers this show's research and voice"},
+                ],
+            },
+        ],
+        "tools": [
+            {"name": "SPCX on TradingView", "url": "https://www.tradingview.com/symbols/NASDAQ-SPCX/", "desc": "Chart SPCX with technicals and alerts", "badge": "Free tier"},
+            {"name": "SEC EDGAR Full-Text Search", "url": "https://efts.sec.gov/LATEST/search-index?q=%22space+exploration+technologies%22", "desc": "Search every word of every SpaceX filing", "badge": "Free"},
+            {"name": "Next Spaceflight", "url": "https://nextspaceflight.com", "desc": "Never miss a launch — schedules and countdowns", "badge": "Free"},
+        ],
+        "faq": [
+            {"q": "What is SpaceX Daily?", "a": "A daily podcast and blog that tracks SpaceX now that it's a public company (Nasdaq: SPCX). Every weekday: the day's developments with sources, what the spaceflight community is talking about, one honest counterpoint, the engineering and economics behind the headlines, and the SPCX market picture. Hosted by Patrick in Vancouver."},
+            {"q": "What is SPCX?", "a": "SPCX is SpaceX's stock ticker on the Nasdaq. SpaceX held the largest IPO in history in June 2026, pricing at $135 per share and raising about $75 billion at a valuation near $1.8 trillion. A dual-class share structure leaves Elon Musk with a controlling majority of the voting power. Nothing on this show is financial advice."},
+            {"q": "Where do the numbers come from?", "a": "Official sources wherever possible — SpaceX announcements, the SEC S-1/prospectus and later filings, and credible reporting from NASASpaceflight, SpaceNews, Ars Technica, and CNBC. Community and social posts are clearly flagged as unverified. The live SPCX price on this page is refreshed every run from market data."},
+            {"q": "How long are episodes?", "a": "About 12 to 14 minutes — enough to walk through the day's launches, programs, and market picture, short enough for a commute."},
+            {"q": "Is this just Elon Musk fan content?", "a": "No. The show is genuinely balanced: every episode carries an honest counterpoint, and the premiere named the real risks — stretched valuation, Musk's concentrated voting control, and a launch business that still loses money while Starlink carries the profit. Enthusiasm grounded in numbers is the brand."},
+        ],
+    },
+}
+
+
 def _merge_scaffolded_network_registry() -> None:
     """Overlay shows/network_meta.yaml (from scaffold_show.py) onto registries."""
     meta_path = SHOWS_DIR / "network_meta.yaml"
@@ -1310,13 +1408,17 @@ def _merge_scaffolded_network_registry() -> None:
             continue
         meta = dict(meta)
         picker = meta.pop("picker_tags", None)
+        # Layer curated resource blocks (resource_categories/tools/faq)
+        # onto the scaffolded base metadata — keeps the rich, hand-written
+        # link sets in Python instead of the auto-generated YAML.
+        if slug in _SCAFFOLD_SHOW_RESOURCES:
+            for key, value in _SCAFFOLD_SHOW_RESOURCES[slug].items():
+                if not meta.get(key):
+                    meta[key] = value
         if slug not in NETWORK_SHOWS:
             NETWORK_SHOWS[slug] = meta
         if picker and slug not in _SHOW_PICKER_TAGS:
             _SHOW_PICKER_TAGS[slug] = picker
-
-
-_merge_scaffolded_network_registry()
 
 
 # Per-show interest tags used by the "Find Your Show" picker on the
@@ -1387,6 +1489,12 @@ _SHOW_PICKER_TAGS = {
         "language": ["english"],
     },
 }
+
+
+# Must run AFTER _SHOW_PICKER_TAGS is defined — the merge writes scaffolded
+# shows' picker tags into it (NameError at import time otherwise, which only
+# fires once network_meta.yaml has its first entry).
+_merge_scaffolded_network_registry()
 
 
 def _newsletter_tag_for_slug(slug: str, fallback_name: str) -> str:
@@ -1763,6 +1871,49 @@ def generate_narrative_page(slug, *, dry_run=False):
     return out_path
 
 
+def generate_spacex_dashboard(*, dry_run=False):
+    """Render the SpaceX Launch Dashboard (spacex-dashboard.html).
+
+    A standalone themed page with a live next-launch countdown, time
+    since last launch, launch-cadence chart, SPCX price, and the upcoming
+    manifest. All data is read client-side from same-origin caches
+    (``api/spacex_launches.json`` + ``api/spcx.json``) with a live
+    Launch Library 2 fallback, so the page itself carries no data and
+    regenerates cheaply on every site build.
+    """
+    cfg = NETWORK_SHOWS.get("spacex")
+    if cfg is None:
+        return None
+    env = _get_jinja_env()
+    template = env.get_template("spacex_dashboard.html.j2")
+    context = {
+        "path_prefix": "",
+        "page_lang": "en",
+        "show_name": "SpaceX Daily",
+        "page_title": "SpaceX Launch Dashboard | Nerra Network",
+        "meta_description": (
+            "Live SpaceX launch dashboard — countdown to the next launch, time "
+            "since the last one, launch cadence, the upcoming manifest, and the "
+            "SPCX market picture. The companion to the SpaceX Daily podcast."
+        ),
+        "theme_color": cfg.get("brand_color", "#1A5CFF"),
+        "brand_color": cfg.get("brand_color", "#1A5CFF"),
+        "canonical_url": f"{GITHUB_RAW}/spacex-dashboard.html",
+        "og_image": f"{GITHUB_RAW}/{_url_encode_image(cfg['podcast_image'])}",
+        "rss_url": f"{cfg['rss_file']}",
+        "t": _NAV_T,
+        "all_shows": _build_all_shows_list(),
+    }
+    html = template.render(**context)
+    out_path = ROOT / "spacex-dashboard.html"
+    if dry_run:
+        print(f"[dry-run] Would write {out_path} ({len(html):,} bytes)")
+        return out_path
+    out_path.write_text(_strip_lone_surrogates(html), encoding="utf-8")
+    print(f"Wrote {out_path} ({len(html):,} bytes)")
+    return out_path
+
+
 def generate_all_narrative_pages(*, dry_run=False):
     """Generate narrative pages for every memory-configured show (except Tesla,
     which has its own dedicated generator)."""
@@ -1940,12 +2091,19 @@ def generate_show_page(slug, *, dry_run=False):
     else:
         narrative_page_url = ""
 
+    # Live stock-price pill (Tesla + SpaceX). Each show's pipeline hook
+    # writes a same-origin api/<ticker>.json the page JS reads first, with
+    # a Yahoo-Finance CORS-proxy fallback. SPCX joined when SpaceX IPO'd
+    # June 2026.
+    stock_widget = _STOCK_WIDGETS.get(slug)
+
     context = {
         **cfg,
         "narrative_page_url": narrative_page_url,
         "path_prefix": prefix,
         "show_name": cfg["name"],
         "show_slug": cfg["slug"],
+        "stock_widget": stock_widget,
         "show_description": cfg.get("about_text", cfg["description"]),
         "page_title": page_title,
         "meta_description": meta_description,  # override the static one from **cfg
@@ -2562,7 +2720,8 @@ def generate_sitemap(*, dry_run=False):
                   "about.html", "how-to-listen.html", "faq.html",
                   "press.html", "contact.html", "editorial.html",
                   "gallery.html", "player.html",
-                  "modern-investing-performance.html"]:
+                  "modern-investing-performance.html",
+                  "spacex-dashboard.html"]:
         if (ROOT / extra).exists():
             urls.append((f"{base}/{extra}", "0.5", _file_lastmod(ROOT / extra)))
 
@@ -3060,6 +3219,9 @@ def main():
         # Tesla Narrative page
         if args.show == "tesla":
             generate_tesla_narrative_page(dry_run=args.dry_run)
+        # SpaceX Launch Dashboard
+        if args.show == "spacex":
+            generate_spacex_dashboard(dry_run=args.dry_run)
         # Phase 3 narrative page for other memory-enabled shows (no-op otherwise)
         generate_narrative_page(args.show, dry_run=args.dry_run)
         if args.blogs:
@@ -3079,6 +3241,7 @@ def main():
         generate_start_here_page(dry_run=args.dry_run)
         generate_about_page(dry_run=args.dry_run)
         generate_gallery_page(dry_run=args.dry_run)
+        generate_spacex_dashboard(dry_run=args.dry_run)
         generate_how_to_listen_page(dry_run=args.dry_run)
         generate_press_page(dry_run=args.dry_run)
         generate_contact_page(dry_run=args.dry_run)
@@ -3107,6 +3270,9 @@ def main():
         generate_all_summaries(dry_run=args.dry_run)
     if args.network:
         generate_network_page(dry_run=args.dry_run)
+        # The SpaceX dashboard is data-light (reads same-origin caches at
+        # runtime) so it's cheap to regenerate on every network rebuild.
+        generate_spacex_dashboard(dry_run=args.dry_run)
         # --network --blogs: regenerate network blog index only (not all posts)
         if args.blogs:
             generate_network_blog_index(dry_run=args.dry_run)

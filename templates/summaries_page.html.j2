@@ -8,7 +8,10 @@
 <li><a href="{{ path_prefix }}how-to-listen.html">{{ t.nav_listen }}</a></li>
 <li><a href="{{ path_prefix }}about.html">{{ t.nav_about }}</a></li>
 <li><a href="{{ path_prefix }}player.html">{{ t.nav_player }}</a></li>
-<li><a href="{{ path_prefix }}{{ show_page }}">{{ show_name }}</a></li>
+{# Show-name link removed from the DESKTOP nav (June 2026 look-and-feel
+   pass): the 9th flat item overflowed the bar at 1440px — links wrapped
+   to 2-3 lines and the search box collided with the wordmark. The page
+   header names the show; the mobile menu keeps the link. #}
 <li><a href="{{ path_prefix }}blog/{{ show_slug }}/index.html">Blog</a></li>
 <li><a href="{{ path_prefix }}{{ summaries_page }}">Summaries</a></li>
 <li><a href="{{ path_prefix }}{{ rss_file }}">RSS</a></li>
@@ -429,6 +432,8 @@
 
                 if (!trimmed) { flush(); out += '<p></p>'; continue; }
 
+                if (/^-{3,}$/.test(trimmed) || /^\u2014{3,}$/.test(trimmed) || /^\u2501{3,}$/.test(trimmed)) { flush(); out += '<hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;">'; continue; }
+                if (trimmed.startsWith('&gt; ')) { flush(); const hookText = trimmed.slice(5).replace(/\*\*([^*]+)\*\*/g, '$1'); out += `<p style="border-left:3px solid var(--show-color, var(--nn-purple));padding-left:0.75rem;font-weight:600;">${linkify(hookText)}</p>`; continue; }
                 if (trimmed.startsWith('### ')) { flush(); out += `<h3>${linkify(trimmed.slice(4))}</h3>`; continue; }
                 if (trimmed.startsWith('## '))  { flush(); out += `<h2>${linkify(trimmed.slice(3))}</h2>`; continue; }
                 if (trimmed.startsWith('# '))   { flush(); out += `<h1>${linkify(trimmed.slice(2))}</h1>`; continue; }

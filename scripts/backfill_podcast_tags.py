@@ -50,6 +50,7 @@ SHOW_FEEDS: Dict[str, str] = {
     "privet_russian_podcast.rss": "privet_russian",
     "unintended_consequences_podcast.rss": "unintended_consequences",
     "first_principles_podcast.rss": "first_principles",
+    "spacex_podcast.rss": "spacex",
 }
 
 

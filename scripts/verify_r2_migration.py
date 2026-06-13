@@ -33,6 +33,7 @@ RSS_FEEDS = [
     "modern_investing_podcast.rss",
     "unintended_consequences_podcast.rss",
     "first_principles_podcast.rss",
+    "spacex_podcast.rss",
     "network.rss",
 ]
 

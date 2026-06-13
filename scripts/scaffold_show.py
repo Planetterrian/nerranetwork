@@ -43,7 +43,7 @@ def _parse_sources(raw: list[str]) -> list[dict[str, str]]:
                 "url": (
                     f"https://news.google.com/rss/search?q={q}&hl=en-US&gl=US&ceid=US:en"
                 ),
-                "label": f"Google News: {item.strip()}",
+                "label": f"Google News — {item.strip()}",
             })
     return out
 

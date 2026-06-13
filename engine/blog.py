@@ -166,6 +166,20 @@ def extract_blog_metadata(
     if not title and hook:
         title = hook[:80] + ("..." if len(hook) > 80 else "")
 
+    # June 2026 look-and-feel pass: when the extracted title is just the
+    # show name (digests lead with "# <Show Name>"), prefer the unique
+    # episode hook — previously normalized only on the post page, so
+    # every blog-INDEX card and feed item for a show carried an
+    # identical title. Lazy import avoids a module cycle.
+    if title and hook:
+        try:
+            from generate_html import NETWORK_SHOWS
+            _show_name = (NETWORK_SHOWS.get(show_slug) or {}).get("name", "")
+        except Exception:
+            _show_name = ""
+        if _show_name and (title == _show_name or title.startswith(_show_name)):
+            title = hook[:100].rstrip(" .,;:—-") + ("…" if len(hook) > 100 else "")
+
     # Fallback: derive hook from first substantive content paragraph
     if not hook:
         for line in lines:
@@ -222,6 +236,11 @@ def extract_blog_metadata(
     reading_time_min = max(1, round(word_count / 220))
 
     return {
+        # June 2026 look-and-feel pass: prefer the unique episode hook as
+        # the title HERE (not only in generate_blog_post_html) so blog
+        # INDEX cards and feeds stop titling every card with the show
+        # name. The post-page normalization remains as idempotent
+        # defense (a hook-derived title never equals the show name).
         "title": title,
         "date": date_str,
         "date_iso": parsed_date.strftime("%Y-%m-%d") if parsed_date else "",
@@ -733,7 +752,7 @@ def generate_blog_post_html(
         # entry point to the binge surface).
         "narrative_page": (
             show_config.get("show_page", "").replace(".html", "-narrative.html")
-            if show_slug in ("tesla", "models_agents", "fascinating_frontiers", "planetterrian")
+            if show_slug in ("tesla", "models_agents", "fascinating_frontiers", "planetterrian", "spacex")
             and show_config.get("show_page")
             else ""
         ),
