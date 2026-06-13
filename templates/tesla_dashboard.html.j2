@@ -155,16 +155,27 @@
     </div>
   </div>
 
-  {% if highlights %}
-  <div class="tsl-grid" style="grid-template-columns:1fr;">
+  <div class="tsl-grid">
+    {% if supercharger_connectors_annual %}
+    <div class="tsl-panel">
+      <h2>Supercharger network (connectors, year-end)</h2>
+      <div class="tsl-bars" id="tslSupercharger">
+        {% for s in supercharger_connectors_annual %}
+        <div class="tsl-bw"><div class="tsl-bar" data-v="{{ s.connectors }}" style="height:0"><span class="cnt">{{ (s.connectors/1000)|round|int }}k</span></div><div class="tsl-blab">{{ s.year }}</div></div>
+        {% endfor %}
+      </div>
+      <p class="tsl-disclaimer">Cumulative Supercharger connectors at year-end, from Tesla's published figures — the fast-charging network that's now opening to other automakers (NACS). Operator-maintained.</p>
+    </div>
+    {% endif %}
+    {% if highlights %}
     <div class="tsl-panel">
       <h2>Milestones</h2>
       {% for h in highlights %}
       <div class="tsl-hl"><span>{{ h.label }} <span class="tsl-muted">{{ h.note }}</span></span><span class="v">{{ h.value }}</span></div>
       {% endfor %}
     </div>
+    {% endif %}
   </div>
-  {% endif %}
 
   <p class="tsl-foot-note">
     Live TSLA data via Yahoo Finance (refreshed each run). Operating metrics are from Tesla's published reports and operator-maintained. This is the data companion to <a href="{{ path_prefix }}tesla.html" style="color:var(--tsl-glow);">Tesla Shorts Time</a> — full resources on the <a href="{{ path_prefix }}tesla.html#resources" style="color:var(--tsl-glow);">show page</a>. Nothing here is financial advice.
@@ -200,7 +211,7 @@
     const bars=[...w.querySelectorAll('.tsl-bar')]; const max=Math.max(1,...bars.map(b=>parseFloat(b.dataset.v)||0));
     bars.forEach(b=>{ const h=Math.round((parseFloat(b.dataset.v)/max)*140)+3; requestAnimationFrame(()=>{ b.style.height=h+'px'; }); });
   }
-  animateBars('tslDeliveries'); animateBars('tslEnergy');
+  animateBars('tslDeliveries'); animateBars('tslEnergy'); animateBars('tslSupercharger');
 
   // quarterly paired bars share one scale across produced + delivered
   (function(){ const w=document.getElementById('tslQuarterly'); if(!w) return;

@@ -656,8 +656,29 @@
     </div>
   </div>
 
-  
-  <div class="tsl-grid" style="grid-template-columns:1fr;">
+  <div class="tsl-grid">
+    
+    <div class="tsl-panel">
+      <h2>Supercharger network (connectors, year-end)</h2>
+      <div class="tsl-bars" id="tslSupercharger">
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="16103" style="height:0"><span class="cnt">16k</span></div><div class="tsl-blab">2019</div></div>
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="23277" style="height:0"><span class="cnt">23k</span></div><div class="tsl-blab">2020</div></div>
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="31498" style="height:0"><span class="cnt">31k</span></div><div class="tsl-blab">2021</div></div>
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="42419" style="height:0"><span class="cnt">42k</span></div><div class="tsl-blab">2022</div></div>
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="54892" style="height:0"><span class="cnt">55k</span></div><div class="tsl-blab">2023</div></div>
+        
+        <div class="tsl-bw"><div class="tsl-bar" data-v="65495" style="height:0"><span class="cnt">65k</span></div><div class="tsl-blab">2024</div></div>
+        
+      </div>
+      <p class="tsl-disclaimer">Cumulative Supercharger connectors at year-end, from Tesla's published figures — the fast-charging network that's now opening to other automakers (NACS). Operator-maintained.</p>
+    </div>
+    
+    
     <div class="tsl-panel">
       <h2>Milestones</h2>
       
@@ -668,8 +689,8 @@
       <div class="tsl-hl"><span>Cumulative energy storage <span class="tsl-muted">Powerwall + Megapack, through 2024</span></span><span class="v">~60 GWh</span></div>
       
     </div>
+    
   </div>
-  
 
   <p class="tsl-foot-note">
     Live TSLA data via Yahoo Finance (refreshed each run). Operating metrics are from Tesla's published reports and operator-maintained. This is the data companion to <a href="tesla.html" style="color:var(--tsl-glow);">Tesla Shorts Time</a> — full resources on the <a href="tesla.html#resources" style="color:var(--tsl-glow);">show page</a>. Nothing here is financial advice.
@@ -896,7 +917,7 @@
     const bars=[...w.querySelectorAll('.tsl-bar')]; const max=Math.max(1,...bars.map(b=>parseFloat(b.dataset.v)||0));
     bars.forEach(b=>{ const h=Math.round((parseFloat(b.dataset.v)/max)*140)+3; requestAnimationFrame(()=>{ b.style.height=h+'px'; }); });
   }
-  animateBars('tslDeliveries'); animateBars('tslEnergy');
+  animateBars('tslDeliveries'); animateBars('tslEnergy'); animateBars('tslSupercharger');
 
   // quarterly paired bars share one scale across produced + delivered
   (function(){ const w=document.getElementById('tslQuarterly'); if(!w) return;

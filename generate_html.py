@@ -2024,6 +2024,7 @@ def generate_tesla_dashboard(*, dry_run=False):
         "deliveries_annual": metrics.get("deliveries_annual", []),
         "deliveries_quarterly": metrics.get("deliveries_quarterly", []),
         "energy_storage_annual_gwh": metrics.get("energy_storage_annual_gwh", []),
+        "supercharger_connectors_annual": metrics.get("supercharger_connectors_annual", []),
         "highlights": metrics.get("highlights", []),
         "t": _NAV_T,
         "all_shows": _build_all_shows_list(),

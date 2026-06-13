@@ -38,6 +38,15 @@ class TestTeslaMetricsDataset:
             if full and yr in annual:
                 assert by_year[yr] == annual[yr], f"{yr}: {by_year[yr]} != {annual[yr]}"
 
+    def test_supercharger_series_monotonic(self):
+        d = json.loads((_ROOT / "site/data/tesla_metrics.json").read_text(encoding="utf-8"))
+        sc = d.get("supercharger_connectors_annual") or []
+        assert len(sc) >= 5
+        vals = [r["connectors"] for r in sc]
+        assert all(isinstance(v, int) for v in vals)
+        # The network only grows — a decreasing year signals a data-entry error.
+        assert vals == sorted(vals), "connector counts should be non-decreasing"
+
 
 class TestTeslaFetcher:
     def _mod(self):
@@ -64,7 +73,8 @@ class TestTeslaDashboardPage:
         t = (_ROOT / "templates/tesla_dashboard.html.j2").read_text(encoding="utf-8")
         for needle in ('id="tslArea"', 'id="tslDeliveries"', 'id="tslEnergy"',
                        'id="tslPrice"', "function renderArea", "function countUp",
-                       'id="tslQuarterly"', "tsl-qbar", "deliveries_quarterly"):
+                       'id="tslQuarterly"', "tsl-qbar", "deliveries_quarterly",
+                       'id="tslSupercharger"', "supercharger_connectors_annual"):
             assert needle in t, needle
 
     def test_show_page_links_dashboard(self):
