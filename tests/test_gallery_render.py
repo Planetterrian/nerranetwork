@@ -176,25 +176,28 @@ def test_gallery_enabled_requires_grok_image_provider():
         f"Tesla expected on grok provider, got {tesla_provider!r}"
     assert tesla_enabled, "Tesla should have gallery_enabled=True"
 
+    # June 14 2026 — SpaceX Daily took MAB's YouTube slot (full format on Grok),
+    # so SpaceX is now the gallery-enabled show and MAB's gallery auto-hides
+    # (YouTube paused). SpaceX keeps Grok imagery so its gallery embed populates.
+    spacex_yt = _read_show_youtube("spacex")
+    spacex_provider = _read_show_image_provider("spacex")
+    spacex_enabled = (
+        bool(spacex_yt.get("youtube_enabled"))
+        and spacex_provider in ("grok", "hybrid")
+    )
+    assert spacex_provider == "grok", \
+        f"SpaceX expected on grok provider, got {spacex_provider!r}"
+    assert spacex_enabled is True, "SpaceX gallery_enabled must be True"
+
+    # MAB's YouTube is paused — its gallery must auto-hide (no uploads → empty
+    # embed otherwise). The image_provider stays 'grok' in the YAML so
+    # re-enabling MAB later is a one-line flip that restores the gallery.
     mab_yt = _read_show_youtube("models_agents_beginners")
-    mab_provider = _read_show_image_provider("models_agents_beginners")
     mab_enabled = (
         bool(mab_yt.get("youtube_enabled"))
-        and mab_provider in ("grok", "hybrid")
+        and _read_show_image_provider("models_agents_beginners") in ("grok", "hybrid")
     )
-    # MAB was flipped to ``grok`` after the May 2026 A/B vs Tesla;
-    # Pexels images don't flow into the gallery bucket so MAB on
-    # Pexels would have rendered an empty gallery embed forever.
-    # If MAB ever moves back to Pexels, flip this assertion AND the
-    # YAML in the same commit (the section will auto-hide either
-    # way thanks to the provider gate added in PR #412).
-    assert mab_provider in ("grok", "hybrid"), (
-        f"MAB expected on grok / hybrid, got {mab_provider!r}. If "
-        "you intentionally moved MAB back to Pexels, flip this "
-        "assertion to expect 'pexels' and the gallery section will "
-        "auto-hide on the MAB show page."
-    )
-    assert mab_enabled is True, "MAB gallery_enabled must be True"
+    assert mab_enabled is False, "MAB gallery must auto-hide while YouTube is paused"
 
 
 def test_read_show_image_provider_defaults_to_pexels_for_unknown_show():

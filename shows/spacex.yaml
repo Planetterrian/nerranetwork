@@ -236,14 +236,55 @@ content_tracking:
   section_patterns: {}
 
 youtube:
-  enabled: false
+  # OPERATOR SETUP (one-time, landmine #15): create the SpaceX Daily podcast
+  # playlist in YouTube Studio on @NerraNetwork and paste its PL... id here,
+  # then flag it as a podcast. Until set, uploads still publish — they just
+  # won't appear in the Podcasts surface (a non-fatal warning logs).
+  # podcast_playlist_id: PL...
+  # June 14 2026 — SpaceX Daily takes MAB's EN-channel YouTube slot (full
+  # format: long-form + 1 Short) until the @NerraNetwork quota increase lands.
+  # Mirrors the Tesla block; same per-episode footprint MAB had, so the EN
+  # channel quota math (landmine #20) is unchanged by the swap.
+  enabled: true
   channel: en
-  category_id: 28
+  category_id: 28               # Science & Technology
+  default_language: en
   privacy_status: public
+  # Auto-pick the Shorts start at the most engaging beat (numeric reveal,
+  # "the kicker is…" framing, surprise hook) instead of the legacy voice-intro
+  # start. Falls back to voice mode when the heuristic can't find a winner.
+  shorts_start_mode: smart
+  shorts_per_episode: 1         # 1 Short/episode while the quota increase is pending
+  short_duration_seconds: 40    # 30-45 s Shorts sweet spot for completion rate
+  # SpaceX stories are narrative/measured like Tesla's; lower the smart-selector
+  # floor from the 5.0 default so good-but-not-perfect beats still win over the
+  # boilerplate voice-intro start. See engine/shorts_selector.py.
+  shorts_min_score_threshold: 3.5
+  # Grok Imagine for all imagery (long-form slideshow + Shorts) — unique,
+  # narrative-tied spaceflight visuals and feeds the gallery pipeline. ~$0.32/
+  # episode (8 imgs × 2 formats × $0.02 standard model).
+  image_provider: grok
+  grok_image_model: grok-imagine-image
+  grok_image_descriptor: "cinematic, high-energy spaceflight photo, dramatic lighting, ultra-detailed"
+  # Curated, disambiguated subjects spanning the whole SpaceX business so the
+  # slideshow matches the day's narrative (rockets, Starship, Raptor, launch
+  # sites, Starlink, crewed flight). Per-scene narrative context + the episode
+  # hook are layered on top at prompt-build time.
   image_queries:
-    - spacex rocket launch
-    - starship rocket
-    - falcon 9 landing
-    - rocket engine test
+    - Falcon 9 rocket night launch
+    - Starship on the launch pad
+    - Super Heavy booster tower catch
+    - Raptor engine static fire
+    - Starlink satellites deploying in orbit
+    - Dragon capsule docking with space station
+    - rocket booster landing on droneship
   image_query_prefix: ""
-  image_provider: pexels
+  tags:
+    - spacex
+    - starship
+    - falcon 9
+    - spaceflight
+    - rocket launch
+    - starlink
+    - spacex news
+    - space podcast

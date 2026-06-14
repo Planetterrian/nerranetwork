@@ -451,8 +451,10 @@ The network-wide page is
 [`templates/gallery_page.html.j2`](templates/gallery_page.html.j2)
 rendered to `/gallery.html` by `generate_gallery_page()` in
 `generate_html.py`. Per-show galleries are embedded on each show page
-when `gallery_enabled` is true (today: any show with
-`youtube.enabled: true`, currently Tesla + MAB — see landmine #20).
+when `gallery_enabled` is true (any show with `youtube.enabled: true`
+AND `image_provider: grok`; as of June 14 2026 that's Tesla, SpaceX,
+Fascinating Frontiers, Modern Investing + the two RU shows — MAB's
+YouTube is paused so its gallery auto-hides — see landmine #20).
 Prompt visibility is a per-image **toggle** (hidden by default in the
 lightbox).
 
@@ -1505,7 +1507,8 @@ decision); everything else has a live status card.
     for in the coming weeks. Drift guards in `tests/test_schedule.py`
     pin: cron consistency, the 7 daily shows carrying the recap flag,
     alt-cadence shows NOT carrying it, and the YouTube quota cap
-    (only TST and MAB enabled — see also landmine #20).
+    (the EN full-format pair is Tesla + SpaceX as of June 14 2026,
+    MAB paused — see also landmine #20).
 
 20. **YouTube quota cap (May 2026; four-show expansion June 2026)** —
     the YouTube Data API quota is 10,000 units/day **per channel**;
@@ -1534,6 +1537,19 @@ decision); everything else has a live status card.
     `test_only_tst_and_mab_enable_youtube` pins the exact enabled set,
     `test_youtube_expansion_quota_shape` pins the 1-Short /
     Shorts-only / ru-channel shape so a partial revert fails CI.
+    - **June 14 2026 — SpaceX Daily swapped in for MAB.** SpaceX Daily
+      took MAB's EN-channel **full-format** slot (long-form + 1 Short);
+      MAB's `youtube.enabled` flipped to `false` (rest of its block
+      retained for a one-line re-enable). Same per-episode EN footprint,
+      so the 11,000/day paper-math and the expected preflight `::error::`
+      are unchanged. The EN full-format pair is now **Tesla + SpaceX**;
+      FF + MIT stay Shorts-only; RU shows unchanged. `YOUTUBE_ENABLED_SHOWS`
+      in `tests/test_schedule.py` updated accordingly. **All YouTube-enabled
+      shows now generate imagery with Grok Imagine** (FF/MIT/RU previously
+      inherited the `pexels` default → stock Shorts; now `image_provider:
+      grok` is pinned, guarded by `test_all_youtube_shows_use_grok_imagine`).
+      Operator one-time setup pending: create the SpaceX podcast playlist in
+      Studio + flag it (landmine #15); uploads publish without it (warned).
 
 21. **`min_articles_skip` is tuned per-show, not per-network (May 2026)**
     — `engine/config.py` defaults `min_articles_skip` to `3` (a show
