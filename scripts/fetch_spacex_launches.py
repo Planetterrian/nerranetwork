@@ -47,25 +47,42 @@ def _get(url: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-_CELESTRAK_STARLINK = (
-    "https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=json"
+# One CelesTrak download (1/2h rate limit) of the full active-payload
+# catalogue gives BOTH the total active-satellite population and the
+# Starlink subset — so we fetch GROUP=active once and derive both, instead
+# of two rate-limited calls.
+_CELESTRAK_ACTIVE = (
+    "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=json"
 )
 
 
-def _starlink_active_count() -> Optional[int]:
-    """Real count of active Starlink satellites on orbit, from CelesTrak's
-    free catalogue (one download / 2h update). Best-effort: returns None on
-    any failure so the dashboard falls back to the estimate."""
+def _satellite_counts() -> Dict[str, Optional[int]]:
+    """Real active-satellite counts from CelesTrak's free catalogue (one
+    download / 2h update): total active payloads + the Starlink subset.
+    Best-effort: returns Nones on any failure so the dashboard falls back."""
     try:
-        req = urllib.request.Request(_CELESTRAK_STARLINK, headers=_UA)
+        req = urllib.request.Request(_CELESTRAK_ACTIVE, headers=_UA)
         with urllib.request.urlopen(req, timeout=_TIMEOUT) as resp:
             data = json.load(resp)
-        n = len(data) if isinstance(data, list) else 0
-        # Sanity band — the constellation is ~6k-30k this era; reject junk.
-        return n if 1000 <= n <= 60000 else None
+        if not isinstance(data, list):
+            return {"total": None, "starlink": None}
+        total = len(data)
+        starlink = sum(
+            1 for s in data
+            if isinstance(s, dict) and str(s.get("OBJECT_NAME", "")).upper().startswith("STARLINK")
+        )
+        # Sanity bands — total active payloads ~8k-50k this era; Starlink ~1k-60k.
+        total_ok = total if 5000 <= total <= 100000 else None
+        starlink_ok = starlink if 1000 <= starlink <= 60000 else None
+        return {"total": total_ok, "starlink": starlink_ok}
     except Exception as exc:
-        logger.info("CelesTrak Starlink count failed (non-fatal): %s", exc)
-        return None
+        logger.info("CelesTrak active-satellite fetch failed (non-fatal): %s", exc)
+        return {"total": None, "starlink": None}
+
+
+def _starlink_active_count() -> Optional[int]:
+    """Back-compat thin wrapper — the Starlink subset of the active catalogue."""
+    return _satellite_counts().get("starlink")
 
 
 def _slim_launch(r: Dict[str, Any]) -> Dict[str, Any]:
@@ -313,6 +330,14 @@ def _update_metrics_timeseries(monthly: List[Dict[str, Any]], now: _dt.datetime,
     months: Dict[str, Any] = existing.get("months") or {}
     for b in monthly:
         # Refresh the last-12 window each run; older months stay locked.
+        # Guard: as the date advances, the oldest month in the breakdown ages
+        # out of the LL2 detailed window and comes back with 0 launches. Never
+        # let that zero overwrite a previously-locked, non-zero month — that
+        # would corrupt the accumulated history (it did, for 2025-07).
+        prev_month = months.get(b["month"])
+        if (b.get("launches", 0) == 0 and isinstance(prev_month, dict)
+                and prev_month.get("launches", 0) > 0):
+            continue
         months[b["month"]] = {
             "launches": b["launches"],
             "mass_t": b["mass_t"],
@@ -515,7 +540,9 @@ def build_payload() -> Optional[Dict[str, Any]]:
     cumulative_sats, cumulative_series = _update_metrics_timeseries(monthly, now)
     fleet = _fleet_payload(slim_prev, now)
     fleet["cumulative_satellites_est"] = cumulative_sats
-    fleet["starlink_active"] = _starlink_active_count()  # real count, or None
+    sat_counts = _satellite_counts()  # one CelesTrak call → both numbers
+    fleet["starlink_active"] = sat_counts.get("starlink")  # real count, or None
+    fleet["total_active_satellites"] = sat_counts.get("total")  # real, or None
     fleet["boosters"] = _booster_stats(prev_results)  # reuse record watch
     return {
         "next": next_launch,
@@ -553,15 +580,16 @@ def main() -> int:
         logger.error("Launch fetch empty and no existing cache to keep.")
         return 0  # non-fatal: dashboard shows a friendly empty state
 
-    # Keep last-good for the live Starlink count: CelesTrak rate-limits (1 dl /
-    # 2h), so a transient None must not wipe a previously-fetched real number.
-    if (payload.get("fleet") or {}).get("starlink_active") is None and out_path.exists():
+    # Keep last-good for the live CelesTrak counts: it rate-limits (1 dl / 2h),
+    # so a transient None must not wipe previously-fetched real numbers.
+    if out_path.exists():
         try:
             prev = json.loads(out_path.read_text(encoding="utf-8"))
-            last = (prev.get("fleet") or {}).get("starlink_active")
-            if last:
-                payload["fleet"]["starlink_active"] = last
-                logger.info("Kept last-good Starlink count: %s", last)
+            prev_fleet = prev.get("fleet") or {}
+            for key in ("starlink_active", "total_active_satellites"):
+                if (payload.get("fleet") or {}).get(key) is None and prev_fleet.get(key):
+                    payload["fleet"][key] = prev_fleet[key]
+                    logger.info("Kept last-good %s: %s", key, prev_fleet[key])
         except Exception:
             pass
 

@@ -655,9 +655,11 @@
       <div class="spx-cadence" id="spxMass"></div>
       <div class="spx-stats" style="margin-top:1.2rem;">
         <div class="spx-stat"><div class="n" id="flStarlinkActive">—</div><div class="l">Active Starlink satellites (live)</div></div>
+        <div class="spx-stat"><div class="n" id="flActiveSats">—</div><div class="l">All active satellites (live)</div></div>
+        <div class="spx-stat"><div class="n" id="flStarlinkOfActive">—</div><div class="l">Starlink % of all active sats</div></div>
         <div class="spx-stat"><div class="n" id="flMass">—</div><div class="l">Est. mass to orbit, 12 mo (t)</div></div>
         <div class="spx-stat"><div class="n" id="flSats">—</div><div class="l">Est. satellites deployed, 12 mo</div></div>
-        <div class="spx-stat"><div class="n" id="flStarShare">—</div><div class="l">Starlink share</div></div>
+        <div class="spx-stat"><div class="n" id="flStarShare">—</div><div class="l">Starlink launch share</div></div>
         <div class="spx-stat"><div class="n" id="flSuccess">—</div><div class="l">Success rate</div></div>
       </div>
       <div id="flVehicles" style="margin-top:1rem;"></div>
@@ -1167,6 +1169,11 @@
     // cumulative estimate if the live count is unavailable).
     if(f.starlink_active!=null) countUp('flStarlinkActive', f.starlink_active);
     else if(f.cumulative_satellites_est!=null) countUp('flStarlinkActive', f.cumulative_satellites_est);
+    // Real total active-satellite population + Starlink's share of it (CelesTrak).
+    if(f.total_active_satellites!=null) countUp('flActiveSats', f.total_active_satellites);
+    if(f.total_active_satellites>0 && f.starlink_active!=null){
+      set('flStarlinkOfActive', Math.round(100*f.starlink_active/f.total_active_satellites)+'%');
+    }
     countUp('flMass', f.est_mass_to_orbit_tonnes);
     countUp('flSats', f.est_satellites_deployed);
     set('flStarShare', f.starlink_share_pct!=null ? f.starlink_share_pct+'%' : '—');

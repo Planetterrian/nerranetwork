@@ -102,6 +102,62 @@ class TestSpacexStarlinkCount:
         dash = (_ROOT / "templates/spacex_dashboard.html.j2").read_text(encoding="utf-8")
         assert "flStarlinkActive" in dash and "Active Starlink" in dash
 
+    def test_satellite_counts_single_fetch_derives_both(self, monkeypatch):
+        m = self._mod()
+        # One catalogue download yields total + the Starlink subset.
+        fake = [{"OBJECT_NAME": "STARLINK-1"}, {"OBJECT_NAME": "STARLINK-2"},
+                {"OBJECT_NAME": "ISS (ZARYA)"}, {"OBJECT_NAME": "ONEWEB-9"}] * 2000
+        import io, json as _json
+
+        class _Resp(io.BytesIO):
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+        monkeypatch.setattr(m.urllib.request, "urlopen",
+                            lambda *a, **k: _Resp(_json.dumps(fake).encode()))
+        c = m._satellite_counts()
+        assert c["total"] == 8000 and c["starlink"] == 4000
+        assert m._starlink_active_count() == 4000  # back-compat wrapper
+
+    def test_satellite_counts_rejects_junk(self, monkeypatch):
+        m = self._mod()
+        import io, json as _json
+
+        class _Resp(io.BytesIO):
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+        monkeypatch.setattr(m.urllib.request, "urlopen",
+                            lambda *a, **k: _Resp(_json.dumps([]).encode()))
+        c = m._satellite_counts()  # empty list → below sanity band
+        assert c["total"] is None and c["starlink"] is None
+
+    def test_aged_out_month_does_not_overwrite_locked_value(self, tmp_path):
+        # As the date advances the oldest month ages out of the LL2 window and
+        # returns 0 launches — that zero must NOT clobber a locked non-zero month.
+        m = self._mod()
+        import json as _json, datetime as dt
+        p = tmp_path / "spacex_metrics.json"
+        p.write_text(_json.dumps({"months": {"2025-07": {
+            "launches": 13, "mass_t": 181, "satellites": 184, "vehicles": {"Falcon 9": 13}}}}))
+        # New breakdown reports 2025-07 with 0 (aged out) + a fresh real month.
+        monthly = [
+            {"month": "2025-07", "launches": 0, "mass_t": 0, "satellites": 0, "vehicles": {}},
+            {"month": "2026-06", "launches": 6, "mass_t": 90, "satellites": 130, "vehicles": {"Falcon 9": 6}},
+        ]
+        m._update_metrics_timeseries(monthly, dt.datetime(2026, 6, 14, tzinfo=dt.timezone.utc), path=p)
+        saved = _json.loads(p.read_text())["months"]
+        assert saved["2025-07"]["launches"] == 13  # locked value preserved
+        assert saved["2026-06"]["launches"] == 6   # fresh month written
+
+    def test_dashboard_shows_active_satellite_share(self):
+        dash = (_ROOT / "templates/spacex_dashboard.html.j2").read_text(encoding="utf-8")
+        assert "flActiveSats" in dash and "flStarlinkOfActive" in dash
+        assert "total_active_satellites" in dash
+        # build_payload sets the new field + keep-last-good covers it.
+        m = self._mod()
+        import inspect
+        assert 'fleet["total_active_satellites"]' in inspect.getsource(m.build_payload)
+        assert "total_active_satellites" in inspect.getsource(m.main)
+
 
 class TestMitPerformanceCharts:
     def test_chart_data_is_finite_safe(self):
@@ -299,8 +355,9 @@ class TestStarshipTracker:
         m = self._mod()
         import inspect
         src = inspect.getsource(m.main)
-        assert 'starlink_active") is None' in src
-        assert "Kept last-good Starlink count" in src
+        # keep-last-good loop covers both CelesTrak-derived counts
+        assert '"starlink_active"' in src and "is None" in src
+        assert "Kept last-good" in src
 
     def test_dashboard_has_starship_panel(self):
         t = (_ROOT / "templates/spacex_dashboard.html.j2").read_text(encoding="utf-8")
