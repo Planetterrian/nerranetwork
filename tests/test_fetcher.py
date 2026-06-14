@@ -24,10 +24,33 @@ import pytest
 from engine.fetcher import (
     _get_source_name,
     _parse_entry_date,
+    _publisher_from_entry,
     _fetch_single_feed,
     fetch_rss_articles,
     _SOURCE_MAP,
 )
+
+
+class TestPublisherFromEntry:
+    """Transparent sourcing: recover the real outlet from a Google News item
+    so digests/blogs cite the publisher, not the opaque 'Google News' redirect
+    (June 14 2026)."""
+
+    def test_prefers_source_element(self):
+        entry = {"source": {"title": "Space.com", "href": "https://www.space.com"},
+                 "title": "A black hole at the dawn of time - Space.com"}
+        assert _publisher_from_entry(entry) == "Space.com"
+
+    def test_falls_back_to_title_suffix(self):
+        entry = {"title": "Japan's H3 rocket returns to flight successfully - Ars Technica"}
+        assert _publisher_from_entry(entry) == "Ars Technica"
+
+    def test_guards_against_headline_clause(self):
+        # Short head before the dash must NOT be mistaken for a headline.
+        assert _publisher_from_entry({"title": "AI - the future"}) is None
+
+    def test_none_when_no_publisher(self):
+        assert _publisher_from_entry({"title": "A plain headline with no dash"}) is None
 
 
 # ---------------------------------------------------------------------------

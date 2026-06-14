@@ -171,3 +171,27 @@ def test_run_show_republish_carries_sources_tail():
     source = _RUN_SHOW.read_text(encoding="utf-8")
     assert 'x_thread.split("## Sources", 1)' in source
     assert "_sources_tail" in source
+
+
+def test_recap_blog_title_is_unique_per_week():
+    """The recap H1/blog title must carry the week-ending date so each weekly
+    recap is a distinct, archivable page (identical titles every week kill
+    per-episode SEO). The spoken intro stays date-free — this is title-only."""
+    from unittest.mock import patch
+    from datetime import date
+    from engine import weekly_recap
+
+    eps = [
+        {"episode_num": 1, "date": "2026-06-12", "hook": "h",
+         "digest_md": "# X\n\nbody. Source: [a.com](https://a.com/x)"},
+        {"episode_num": 2, "date": "2026-06-13", "hook": "h2",
+         "digest_md": "# X\n\nbody2. Source: [b.com](https://b.com/y)"},
+    ]
+    with patch("engine.content_lake.query_show_range", return_value=eps):
+        a = weekly_recap.build_weekly_recap_digest("ff", "FF", date(2026, 6, 14))
+        b = weekly_recap.build_weekly_recap_digest("ff", "FF", date(2026, 6, 21))
+    line_a = a.splitlines()[0]
+    line_b = b.splitlines()[0]
+    assert line_a.startswith("# FF — Weekly Recap (Week of ")
+    assert "June 14, 2026" in line_a
+    assert line_a != line_b  # distinct week -> distinct title

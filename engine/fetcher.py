@@ -174,6 +174,33 @@ def _get_source_name(feed_url: str, feed_title: str = "Unknown") -> str:
     return feed_title if feed_title != "Unknown" else "Unknown"
 
 
+def _publisher_from_entry(entry, title: str = "") -> Optional[str]:
+    """Recover the real publisher for a Google News aggregated item.
+
+    Google News RSS carries the original outlet in the per-item ``<source>``
+    element (feedparser → ``entry.source.title``) and appends it to the
+    headline as ``Headline - Publisher``. Surfacing it keeps sourcing
+    transparent — digests/blogs cite the actual outlet ("Space.com") instead
+    of the opaque "Google News" redirect, even when the redirect URL can't be
+    resolved from CI egress. Returns None when no reliable publisher is found.
+    """
+    src = entry.get("source") if hasattr(entry, "get") else None
+    if isinstance(src, dict):
+        t = (src.get("title") or "").strip()
+        if t:
+            return t
+    # Fallback: parse the trailing " - Publisher" Google News appends. Guard
+    # against grabbing a headline clause: publisher names are short and the
+    # split must leave a non-trivial headline in front.
+    title = title or (entry.get("title", "") if hasattr(entry, "get") else "")
+    if " - " in title:
+        head, _, cand = title.rpartition(" - ")
+        cand = cand.strip()
+        if cand and len(cand) <= 40 and len(head.strip()) >= 15:
+            return cand
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Date parsing
 # ---------------------------------------------------------------------------
@@ -292,6 +319,7 @@ def _fetch_single_feed(
             # network failure so we ship the redirect rather than
             # nothing.
             from engine.url_utils import (
+                is_google_news_url,
                 resolve_google_news_url,
                 sanitize_url,
             )
@@ -304,6 +332,19 @@ def _fetch_single_feed(
                 continue
             link = resolve_google_news_url(link_clean)
 
+            # Transparent sourcing: when this is a Google News item (the URL
+            # is still a redirect, or the feed itself is Google News), cite the
+            # real publisher rather than "Google News", and strip the
+            # "Headline - Publisher" suffix Google News appends to titles.
+            article_source = source_name
+            if is_google_news_url(link) or "google news" in source_name.lower():
+                publisher = _publisher_from_entry(entry, title)
+                if publisher:
+                    article_source = publisher
+                    suffix = f" - {publisher}"
+                    if title.endswith(suffix):
+                        title = title[: -len(suffix)].strip()
+
             # Keyword filtering (if keywords provided)
             if keywords:
                 text_lower = (title + " " + description).lower()
@@ -315,7 +356,7 @@ def _fetch_single_feed(
                     "title": title,
                     "description": description,
                     "url": link,
-                    "source_name": source_name,
+                    "source_name": article_source,
                     "published_date": (
                         published_time.isoformat()
                         if published_time
