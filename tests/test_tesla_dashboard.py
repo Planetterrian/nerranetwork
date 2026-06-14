@@ -138,6 +138,56 @@ class TestMitPerformanceCharts:
             assert needle in t, needle
 
 
+class TestPadBreakdown:
+    def _mod(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "fetch_spacex_launches", _ROOT / "scripts" / "fetch_spacex_launches.py")
+        m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+        return m
+
+    def test_pad_label_friendly_names(self):
+        m = self._mod()
+        assert m._pad_label("Space Launch Complex 40", "Cape Canaveral SFS") == "Cape Canaveral SLC-40"
+        assert m._pad_label("Launch Complex 39A", "Kennedy Space Center") == "Kennedy LC-39A"
+        assert m._pad_label("Space Launch Complex 4E", "Vandenberg SFB") == "Vandenberg SLC-4E"
+        assert m._pad_label("Orbital Launch Mount A", "SpaceX Starbase") == "Starbase, TX"
+        # Unknown pad falls back to its raw name, never crashes.
+        assert m._pad_label(None, "Somewhere") == "Somewhere"
+
+    def test_pad_breakdown_counts_and_sorts(self):
+        import datetime as dt
+        m = self._mod()
+        now = dt.datetime(2026, 6, 14, tzinfo=dt.timezone.utc)
+        prev = [
+            {"net": "2026-06-01T00:00:00Z", "pad": "Space Launch Complex 40", "location": "Cape"},
+            {"net": "2026-05-01T00:00:00Z", "pad": "Space Launch Complex 40", "location": "Cape"},
+            {"net": "2026-04-01T00:00:00Z", "pad": "Space Launch Complex 4E", "location": "Vandenberg"},
+            {"net": "2020-01-01T00:00:00Z", "pad": "Launch Complex 39A", "location": "KSC"},  # >365d, excluded
+        ]
+        out = m._pad_breakdown(prev, now)
+        assert out[0] == {"site": "Cape Canaveral SLC-40", "count": 2}  # most, sorted first
+        sites = {r["site"]: r["count"] for r in out}
+        assert sites.get("Vandenberg SLC-4E") == 1
+        assert "Kennedy LC-39A" not in sites  # outside the 365d window
+
+    def test_dashboard_renders_pads_and_hub_link(self):
+        m = self._mod()
+        import inspect
+        assert '"pads": _pad_breakdown(slim_prev, now)' in inspect.getsource(m.build_payload)
+        t = (_ROOT / "templates/spacex_dashboard.html.j2").read_text(encoding="utf-8")
+        assert 'id="spxPads"' in t and "renderPads" in t and "data.pads" in t
+        assert 'data.html' in t  # back-link to the hub
+
+
+class TestDashboardHubBackLinks:
+    def test_each_dashboard_links_to_hub(self):
+        for tpl in ("spacex_dashboard.html.j2", "tesla_dashboard.html.j2",
+                    "mit_performance_page.html.j2"):
+            t = (_ROOT / "templates" / tpl).read_text(encoding="utf-8")
+            assert "data.html" in t, tpl
+
+
 class TestDataHubPage:
     def test_generator_and_links(self):
         import generate_html as g

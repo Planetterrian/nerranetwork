@@ -225,6 +225,14 @@
 
   <div class="spx-grid" style="grid-template-columns:minmax(0,1fr);">
     <div class="spx-panel">
+      <h2>Launches by site <span class="spx-muted" style="font-size:0.7rem;font-weight:400;">(last 12 months)</span></h2>
+      <div id="spxPads"></div>
+      <p class="spx-disclaimer">Where SpaceX flew over the past year, from the launch record — the West Coast (Vandenberg) and Florida (Cape Canaveral SLC-40, Kennedy LC-39A) pads plus Starbase, TX for Starship.</p>
+    </div>
+  </div>
+
+  <div class="spx-grid" style="grid-template-columns:minmax(0,1fr);">
+    <div class="spx-panel">
       <h2>Mass to orbit — last 12 months <span class="spx-muted" style="font-size:0.7rem;font-weight:400;">(estimated, tonnes)</span></h2>
       <div class="spx-cadence" id="spxMass"></div>
       <div class="spx-stats" style="margin-top:1.2rem;">
@@ -301,7 +309,7 @@
   </div>
 
   <p class="spx-foot-note">
-    Launch data from <a href="https://thespacedevs.com/" target="_blank" rel="noopener" style="color:var(--spx-cyan);">The Space Devs</a> Launch Library 2 (updated each pipeline run). Times are “no earlier than” and slip often — always confirm against the official <a href="https://www.spacex.com/launches/" target="_blank" rel="noopener" style="color:var(--spx-cyan);">SpaceX launch schedule</a> and webcast. Full source links live on the <a href="{{ path_prefix }}spacex.html#resources" style="color:var(--spx-cyan);">SpaceX Daily resources</a> page.
+    Launch data from <a href="https://thespacedevs.com/" target="_blank" rel="noopener" style="color:var(--spx-cyan);">The Space Devs</a> Launch Library 2 (updated each pipeline run). Times are “no earlier than” and slip often — always confirm against the official <a href="https://www.spacex.com/launches/" target="_blank" rel="noopener" style="color:var(--spx-cyan);">SpaceX launch schedule</a> and webcast. Full source links live on the <a href="{{ path_prefix }}spacex.html#resources" style="color:var(--spx-cyan);">SpaceX Daily resources</a> page. Explore every dashboard at the <a href="{{ path_prefix }}data.html" style="color:var(--spx-cyan);">Nerra data hub</a>.
   </p>
 </div>
 {% endblock %}
@@ -379,6 +387,21 @@
       return '<div class="spx-bar-wrap"><div class="spx-bar" style="height:0" data-h="'+h+'"><span class="cnt">'+v.toLocaleString()+'</span></div><div class="spx-bar-label">'+lab+'</div></div>';
     }).join('');
     requestAnimationFrame(()=>{ wrap.querySelectorAll('.spx-bar').forEach(b=>{ b.style.height=b.dataset.h+'px'; }); });
+  }
+
+  function renderPads(pads){
+    var list = pads||[];
+    var wrap = document.getElementById('spxPads');
+    if(!wrap || !list.length) return;
+    var max = Math.max(1, ...list.map(function(x){ return x.count||0; }));
+    wrap.innerHTML = list.map(function(x){
+      var pct = 100*(x.count||0)/max;
+      return '<div style="display:flex;align-items:center;gap:10px;margin:7px 0;">'+
+        '<span style="width:160px;flex:0 0 160px;color:#cfe0ff;font-size:0.86rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+x.site+'</span>'+
+        '<span style="flex:1;min-width:0;height:16px;border-radius:8px;background:rgba(255,255,255,0.06);overflow:hidden;"><span style="display:block;height:100%;width:0;background:linear-gradient(90deg,var(--spx-cyan),var(--spx-blue));transition:width .7s cubic-bezier(.2,.7,.2,1);" data-w="'+pct+'"></span></span>'+
+        '<span style="width:34px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;">'+x.count+'</span></div>';
+    }).join('');
+    requestAnimationFrame(function(){ wrap.querySelectorAll('span[data-w]').forEach(function(b){ b.style.width=b.dataset.w+'%'; }); });
   }
 
   function renderAnnual(al){
@@ -611,6 +634,7 @@
     renderStats(data.stats, data.total_launches);
     renderCadence(data.cadence_monthly);
     renderAnnual(data.annual_launches);
+    renderPads(data.pads);
     renderBars('spxMass', data.mass_monthly, 'tonnes');
     renderArea(data.sats_cumulative_monthly);
     renderFleet(data.fleet);
