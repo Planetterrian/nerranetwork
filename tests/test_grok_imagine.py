@@ -473,3 +473,42 @@ class TestNarrativeKeywordBiasing:
         for p in prompts:
             assert "professional editorial photography" in p
             assert "sharp focus" in p
+
+
+class TestSourceSuffixStripping:
+    """June 14 2026: per-scene image contexts must be pure story subjects, not
+    'Headline - Publisher'. The trailing outlet name is noise for image
+    generation and nudges Grok to render the publisher as on-image text."""
+
+    def test_strips_trailing_publisher(self):
+        from engine.grok_imagine import _strip_source_suffix
+        assert _strip_source_suffix(
+            "SpaceX prepares for Vandenberg rocket launch - The Desert Sun"
+        ) == "SpaceX prepares for Vandenberg rocket launch"
+        assert _strip_source_suffix(
+            "AI isn't replacing aerospace workers — SpaceNews"
+        ) == "AI isn't replacing aerospace workers"
+
+    def test_preserves_internal_dashes(self):
+        from engine.grok_imagine import _strip_source_suffix
+        h = ("Raptor 3 — the world's most powerful methane engine — "
+             "and what it means for investors - MEXC Exchange")
+        out = _strip_source_suffix(h)
+        assert out.endswith("what it means for investors")
+        assert "—" in out  # internal em-dashes intact
+
+    def test_guards_short_head_and_no_separator(self):
+        from engine.grok_imagine import _strip_source_suffix
+        assert _strip_source_suffix("AI - the future") == "AI - the future"
+        assert _strip_source_suffix("Starship and Mars") == "Starship and Mars"
+
+    def test_extraction_applies_suffix_strip(self):
+        from engine.grok_imagine import extract_story_headlines
+        digest = (
+            "1. **SpaceX catches its booster at the tower again - Ars Technica**\n"
+            "2. **Starlink crosses ten thousand active satellites — Space.com**\n"
+        )
+        hs = extract_story_headlines(digest)
+        assert "SpaceX catches its booster at the tower again" in hs
+        assert "Starlink crosses ten thousand active satellites" in hs
+        assert all(" - Ars Technica" not in h and " — Space.com" not in h for h in hs)
