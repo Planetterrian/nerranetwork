@@ -87,6 +87,28 @@ _HEADLINE_PATTERNS = (
 )
 
 
+def _strip_source_suffix(headline: str) -> str:
+    """Drop a trailing ``- Publisher`` / ``— Publisher`` / ``| Publisher``
+    segment from an extracted headline.
+
+    Digest headlines often carry the outlet name (Google-News "Headline -
+    Publisher" style, e.g. "…Vandenberg rocket launch - The Desert Sun"). As a
+    per-scene image context that publisher name is noise — it's not part of what
+    the slide should depict and nudges Grok toward rendering the outlet name as
+    on-image text. Strip it conservatively: only when the trailing segment is
+    short (publisher-length) and a substantial headline remains in front, so
+    headlines with meaningful internal dashes are left intact.
+    """
+    for sep in (" — ", " - ", " | "):
+        if sep in headline:
+            head, _, tail = headline.rpartition(sep)
+            head = head.strip()
+            tail = tail.strip()
+            if tail and len(tail) <= 35 and len(head) >= 20:
+                return head
+    return headline
+
+
 def extract_story_headlines(digest_text: str, max_count: int = 12) -> List[str]:
     """Pull per-story headlines out of an episode digest's markdown.
 
@@ -115,7 +137,7 @@ def extract_story_headlines(digest_text: str, max_count: int = 12) -> List[str]:
     seen: set[str] = set()
 
     def _add(raw: str) -> bool:
-        h = raw.strip().rstrip(":.,;").strip()
+        h = _strip_source_suffix(raw.strip()).rstrip(":.,;").strip()
         # Drop obvious junk: too short, too long, or already seen
         # (case-insensitive — same story sometimes appears in two
         # sections with slight casing changes).
