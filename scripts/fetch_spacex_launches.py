@@ -227,6 +227,46 @@ def _stats(previous: List[Dict[str, Any]], now: _dt.datetime) -> Dict[str, Any]:
     }
 
 
+# Friendly short labels for the four active SpaceX pads (LL2 names are long).
+_PAD_LABELS = (
+    ("39", "Kennedy LC-39A"),
+    ("40", "Cape Canaveral SLC-40"),
+    ("4e", "Vandenberg SLC-4E"),
+    ("4 e", "Vandenberg SLC-4E"),
+    ("orbital launch", "Starbase, TX"),
+    ("starbase", "Starbase, TX"),
+)
+
+
+def _pad_label(pad: Optional[str], location: Optional[str]) -> str:
+    p = (pad or "").lower()
+    for needle, label in _PAD_LABELS:
+        if needle in p:
+            return label
+    # Fall back to the raw pad name, or the location, or a generic label.
+    return pad or location or "Other"
+
+
+def _pad_breakdown(previous: List[Dict[str, Any]], now: _dt.datetime) -> List[Dict[str, Any]]:
+    """Launch counts by pad over the last 365 days — real, from the LL2
+    detailed records (not estimated). Powers the 'Launches by site' chart."""
+    def _parse(net: Optional[str]) -> Optional[_dt.datetime]:
+        try:
+            return _dt.datetime.fromisoformat((net or "").replace("Z", "+00:00"))
+        except (ValueError, AttributeError):
+            return None
+
+    counts: Dict[str, int] = {}
+    for r in previous:
+        d = _parse(r.get("net"))
+        if not d or (now - d).days > 365:
+            continue
+        label = _pad_label(r.get("pad"), r.get("location"))
+        counts[label] = counts.get(label, 0) + 1
+    return [{"site": k, "count": v}
+            for k, v in sorted(counts.items(), key=lambda kv: kv[1], reverse=True)]
+
+
 # Representative payload-to-orbit per vehicle/mission, in tonnes. Used ONLY
 # for the clearly-labelled "estimated mass to orbit" headline — SpaceX
 # doesn't publish per-flight mass, so these are conservative public
@@ -486,6 +526,7 @@ def build_payload() -> Optional[Dict[str, Any]]:
         "mass_monthly": [{"month": b["month"], "tonnes": b["mass_t"]} for b in monthly],
         "sats_cumulative_monthly": cumulative_series,
         "stats": _stats(slim_prev, now),
+        "pads": _pad_breakdown(slim_prev, now),
         "fleet": fleet,
         "starship": _starship_flights(),
         "annual_launches": _annual_launches(),
