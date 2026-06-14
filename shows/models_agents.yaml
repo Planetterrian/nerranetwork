@@ -258,7 +258,13 @@ chapters:
       title: "Agent & Tool Developments"
     - pattern: "practical and community|community corner|open.source"
       title: "Practical & Community"
-    - pattern: "under the hood|deep dive|technical deep dive"
+    # June 14 2026 review: the engineering deep-dive opens with "let's pop
+    # the hood on …" in 9-10/10 episodes (the prompt seeds that exact
+    # phrase) but never the literal "under the hood", so only 1/5 recent
+    # episodes got an Under the Hood chapter — the missing marker dropped
+    # several episodes below min_chapters (4), firing the auto-segmentation
+    # fallback that titled chapters from raw mid-sentence text (Ep080).
+    - pattern: "under the hood|deep dive|technical deep dive|pop the hood"
       title: "Under the Hood"
     - pattern: "things to try|try this week"
       title: "Things to Try"

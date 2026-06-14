@@ -175,7 +175,26 @@ nerranetwork/
   period closes in 19 days …" replaced the absence hook). Digest-prompt edit
   changes output — A/B-listen per landmine #17.
 - **M&A** (Models & Agents) runs exclusively via `run_show.py` +
-  `shows/models_agents.yaml`; no legacy script. X posting disabled.
+  `shows/models_agents.yaml`; no legacy script.
+  **June 14 2026 quality pass** (review:
+  [`docs/reviews/models_agents_review_2026_06_14.md`](docs/reviews/models_agents_review_2026_06_14.md);
+  drift guards: `tests/test_models_agents_quality_pass.py`): two
+  listener-facing metadata bugs, both no-A/B. (1) The script-gen step
+  spelled core AI proper nouns phonetically despite the prompt ban and
+  they reached TTS *and* chapter titles (`parse_chapters` runs after the
+  repair): `An-thropic` shipped in nearly every episode (6× in Ep080, present
+  since Ep004), plus `Lah-mah` (Llama) and `Hah-sah-biss` (Hassabis) —
+  added to the blessed `engine.utils.fix_phonetic_garbles` restore layer
+  (global; removes a respelling, so outside landmine #17). (2) The Under
+  the Hood chapter marker only matched literal "under the hood" but the
+  deep-dive opens with "let's pop the hood on …" in 9-10/10 episodes, so
+  only 1/5 recent episodes got the chapter — the miss dropped several below
+  `min_chapters` (4) and fired the auto-segment fallback that titled
+  chapters from raw mid-sentence text (Ep080); added `|pop the hood` to the
+  marker (`shows/models_agents.yaml`). Deferred: digest-driven chapter
+  titles (Ep078-class residual, Tesla-deferred) and Under-the-Hood length
+  expansion (after the four-show length A/B). The "pop the hood" opener tic
+  was left unchanged (signature phrase; shipped-audio risk).
 - **MAB** (Models & Agents for Beginners) runs via `run_show.py` +
   `shows/models_agents_beginners.yaml`; beginner/teen-focused version of M&A.
   Uses **ElevenLabs TTS**. X posting disabled.
