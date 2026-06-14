@@ -427,3 +427,49 @@ class TestApiSizeForAspect:
     def test_square_returns_square(self):
         from engine.grok_imagine import _api_size_for_aspect
         assert _api_size_for_aspect("1:1") == "1024x1024"
+
+
+class TestNarrativeKeywordBiasing:
+    """June 14 2026: image generation biases toward each show's tracked
+    narrative programs (not just the day's hook) so the imagery reinforces the
+    ongoing story. Generalized from Tesla-only to every memory show (SpaceX +
+    FF are now YouTube-enabled on Grok)."""
+
+    def test_memory_shows_yield_program_keywords(self):
+        from pathlib import Path
+        from engine import show_memory
+        # Worst case: no live tracker → seeded default programs still give
+        # meaningful keywords for a brand-new show.
+        for slug in ("spacex", "fascinating_frontiers", "models_agents",
+                     "planetterrian"):
+            mcfg = show_memory.get_config(slug)
+            assert mcfg is not None, f"{slug} should have a memory config"
+            tracker = show_memory.load_narrative_tracker(
+                Path(f"/tmp/_nonexistent_{slug}"), mcfg
+            )
+            kws = [
+                (p.get("display_name") or k).lower()
+                for k, p in tracker.get("programs", {}).items()
+            ][:6]
+            assert kws, f"{slug} yielded no narrative keywords"
+
+    def test_run_show_generalizes_keyword_biasing_beyond_tesla(self):
+        # The narrative-keyword block must use the generalized show_memory
+        # engine, not be gated to Tesla alone.
+        src = (Path(__file__).resolve().parent.parent / "run_show.py").read_text(
+            encoding="utf-8"
+        )
+        assert "show_memory.get_config(args.show)" in src
+        assert "narrative_keywords" in src
+
+    def test_quality_cue_present_in_every_prompt(self):
+        # Network-wide visual-quality cue lifts every generated image.
+        from engine.grok_imagine import build_image_prompts
+        prompts = build_image_prompts(
+            hook="A booster catch", image_queries=["starship", "raptor"],
+            count=2, show_descriptor="cinematic spaceflight photo",
+        )
+        assert prompts
+        for p in prompts:
+            assert "professional editorial photography" in p
+            assert "sharp focus" in p
