@@ -1196,8 +1196,13 @@ def run(args: argparse.Namespace) -> None:
         if is_weekly_recap:
             logger.info("Sunday weekly-recap mode active for %s.", config.slug)
             from engine.weekly_recap import build_weekly_recap_digest
+            # Pass the freshly-fetched news so the recap can surface genuinely
+            # new, not-yet-covered developments (Sunday still fetches; the recap
+            # historically discarded it). Falls back to a pure look-back when
+            # the fetch was empty / topic-driven.
             x_thread = build_weekly_recap_digest(
                 config.slug, config.name, today,
+                articles=articles if not _topic_driven else None,
             )
             if not x_thread:
                 logger.warning(
@@ -2161,7 +2166,14 @@ def run(args: argparse.Namespace) -> None:
                     if _ln.startswith("# ") or _ln.startswith("**HOOK:"):
                         _hdr_lines.append(_ln)
                 _recap_header = "\n".join(_hdr_lines).strip() or f"# {config.name} — Weekly Recap"
-                x_thread = _recap_header + "\n\n" + podcast_script.strip()
+                # Carry the scaffold's "## Sources" block onto the published
+                # digest so the recap blog / summary / RSS stay transparently
+                # sourced (the spoken script the LLM wrote carries no URLs by
+                # design). The scaffold appends Sources as its final block.
+                _sources_tail = ""
+                if "## Sources" in x_thread:
+                    _sources_tail = "\n\n## Sources" + x_thread.split("## Sources", 1)[1].rstrip()
+                x_thread = _recap_header + "\n\n" + podcast_script.strip() + _sources_tail
                 try:
                     from engine.utils import strip_lone_surrogates as _scrub_sur
                     digest_md.write_text(_scrub_sur(x_thread), encoding="utf-8")

@@ -336,14 +336,18 @@ class TestWeeklyRecapHelper:
         # Continuity ('where we are now') cues.
         assert "where we are now" in low
         assert "since we last" in low
-        assert "update on" in low
+        assert "where the story stands now" in low
         # Stakes framing.
         assert "why this matters" in low
-        assert "what this means for" in low
         # Specifics + forward look.
         assert "numbers" in low
         assert "watch for next week" in low
         assert "open question" in low
+        # June 14 2026 improvements: go deep on the biggest events, open
+        # intuitively (not by reciting the date range), and never read URLs aloud.
+        assert "go deep on the biggest events" in low
+        assert "do not open by reciting the calendar date range" in low
+        assert "never read urls" in low
 
 
 def test_youtube_expansion_quota_shape():
