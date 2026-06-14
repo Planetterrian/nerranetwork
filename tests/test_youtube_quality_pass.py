@@ -73,3 +73,11 @@ class TestObservability:
     def test_shorts_captions_path_metric(self):
         src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
         assert 'result["shorts_captions_path"]' in src
+
+    def test_grok_degraded_slideshow_is_loud(self):
+        """June 14 2026: with six shows on Grok Imagine, a silent outage that
+        drops the slideshow to the static cover must surface as a GitHub
+        annotation + metric, not hide in the per-episode JSON."""
+        src = (_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert "grok_slideshow_degraded" in src
+        assert "::warning::Grok Imagine produced only" in src
