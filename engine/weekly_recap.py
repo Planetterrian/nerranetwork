@@ -151,6 +151,20 @@ def build_weekly_recap_digest(
         key=lambda ep: (ep.get("date") or "", ep.get("episode_num") or 0),
     )
 
+    # Deterministic "biggest events" signal: an entity covered on multiple days
+    # is, by definition, the week's most consequential ongoing thread. Counting
+    # per-episode recurrence (from the content lake's stored entities) gives the
+    # host concrete grounding for the deep-dive beats instead of leaving "what
+    # was biggest" entirely to LLM judgment.
+    from collections import Counter
+    _ent_days: Counter = Counter()
+    for ep in episodes:
+        ents = ep.get("entities") or []
+        if isinstance(ents, list):
+            for ent in {str(e).strip() for e in ents if str(e).strip()}:
+                _ent_days[ent] += 1
+    recurring_threads = [ent for ent, n in _ent_days.most_common() if n >= 2][:5]
+
     # Headline: a recap-flavoured one-liner that signals this isn't a normal
     # daily WITHOUT reciting the date range (operator feedback: the formulaic
     # "from <start> to <end>" open reads like a database query, not a digest).
@@ -252,9 +266,14 @@ def build_weekly_recap_digest(
             "### Fresh this week (not yet covered)",
             "\n".join(fresh_items),
         ]
-    parts += [
-        "━━━━━━━━━━━━━━━━━━━━",
-        "## Recap framing for the host",
+    framing_parts = ["━━━━━━━━━━━━━━━━━━━━", "## Recap framing for the host"]
+    if recurring_threads:
+        framing_parts.append(
+            "BIGGEST RECURRING THREADS THIS WEEK (each appeared across 2+ "
+            "episodes — these are the strongest candidates for your deep-dive "
+            "segments): " + ", ".join(recurring_threads) + "."
+        )
+    parts += framing_parts + [
         (
             "This is a Sunday weekly recap — a 'where we are now' episode, "
             "NOT a flat list of news items, and NOT a database-style readout. "
