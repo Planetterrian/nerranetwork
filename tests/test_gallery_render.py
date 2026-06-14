@@ -208,3 +208,44 @@ def test_read_show_image_provider_defaults_to_pexels_for_unknown_show():
         sys.path.insert(0, str(PROJECT_ROOT))
     from generate_html import _read_show_image_provider
     assert _read_show_image_provider("__nonexistent__") == "pexels"
+
+
+def test_all_grok_youtube_shows_are_gallery_enabled():
+    """June 14 2026 (operator request): every YouTube-enabled Grok show must
+    embed the per-show gallery section (like Tesla), so its generated imagery
+    is browsable on the show page — especially SpaceX Daily + Fascinating
+    Frontiers. Guards against a regeneration that drops the section."""
+    import sys
+    if str(PROJECT_ROOT) not in sys.path:
+        sys.path.insert(0, str(PROJECT_ROOT))
+    from generate_html import _read_show_image_provider, _read_show_youtube
+    for slug in ("tesla", "spacex", "fascinating_frontiers", "modern_investing",
+                 "finansy_prosto", "privet_russian"):
+        yt = _read_show_youtube(slug)
+        provider = _read_show_image_provider(slug)
+        gallery_enabled = (
+            bool(yt.get("youtube_enabled")) and provider in ("grok", "hybrid")
+        )
+        assert gallery_enabled, (
+            f"{slug} should embed the per-show gallery (youtube_enabled + grok), "
+            f"got youtube_enabled={yt.get('youtube_enabled')} provider={provider!r}"
+        )
+
+
+def test_committed_show_pages_have_gallery_mount():
+    """The regenerated show pages for the Grok shows carry the gallery mount
+    so the section is live on the site now (not only after the next nightly)."""
+    pages = {
+        "spacex.html": "spacex",
+        "fascinating-frontiers.html": "fascinating_frontiers",
+        "modern-investing.html": "modern_investing",
+        "ru/finansy-prosto.html": "finansy_prosto",
+        "ru/privet-russian.html": "privet_russian",
+    }
+    for rel, slug in pages.items():
+        p = PROJECT_ROOT / rel
+        if not p.exists():
+            continue
+        html = p.read_text(encoding="utf-8")
+        assert "data-nn-gallery" in html, f"{rel} missing gallery mount"
+        assert f'data-show-slug="{slug}"' in html, f"{rel} wrong/absent show slug"
