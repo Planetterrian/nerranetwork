@@ -3809,18 +3809,35 @@ def _publish_youtube(
     except Exception:  # pragma: no cover — best-effort
         _scene_contexts = []
 
-    # For TST: bias Grok Imagine visuals toward currently active narrative programs
+    # Bias Grok Imagine visuals toward the show's currently-tracked narrative
+    # programs so the imagery reinforces the ongoing story, not only the day's
+    # hook. Tesla uses its bespoke memory module; the Phase-3 memory shows
+    # (SpaceX, Fascinating Frontiers, Models & Agents, Planetterrian) use the
+    # generalized engine. Best-effort — on any failure (or a show with no
+    # memory config) we fall back to hook-only prompts. Even with no live
+    # tracker the loader returns the seeded default programs, so the keywords
+    # are still meaningful on a brand-new show.
     narrative_keywords = None
-    if args.show == "tesla":
-        try:
+    try:
+        if args.show == "tesla":
             from engine import tesla_memory
             tracker = tesla_memory.load_narrative_tracker(Path(config.episode.output_dir))
-            narrative_keywords = [
-                p.get("display_name", k).lower()
-                for k, p in tracker.get("programs", {}).items()
-            ][:6]
-        except Exception:
-            narrative_keywords = None
+            programs = tracker.get("programs", {})
+        else:
+            from engine import show_memory
+            mcfg = show_memory.get_config(args.show)
+            programs = {}
+            if mcfg is not None:
+                tracker = show_memory.load_narrative_tracker(
+                    Path(config.episode.output_dir), mcfg
+                )
+                programs = tracker.get("programs", {})
+        narrative_keywords = [
+            (p.get("display_name") or k).lower()
+            for k, p in programs.items()
+        ][:6] or None
+    except Exception:  # pragma: no cover — best-effort
+        narrative_keywords = None
 
     def _run_grok_path(*, aspect: str, label_suffix: str) -> "list[Path]":
         from engine.grok_imagine import (
