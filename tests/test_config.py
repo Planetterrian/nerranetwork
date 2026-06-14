@@ -796,32 +796,31 @@ class TestYouTubeImageProviderConfig:
         cfg = load_config(SHOWS_DIR / "tesla.yaml")
         assert cfg.youtube.image_provider == "grok"
 
-    def test_mab_yaml_uses_grok_image_provider(self):
-        """MAB ran on ``pexels`` for the May 2026 A/B test against
-        Tesla on Grok Imagine; operator concluded the A/B was
-        inconclusive AND the Phase 1 gallery uploader is wired only
-        into the Grok Imagine code path (Pexels images never reach
-        the gallery R2 bucket). MAB flipped back to ``grok`` so the
-        per-show gallery embed on the MAB show page actually has
-        images to render. Cost: ~$0.16/episode added (8 images ×
-        $0.02 standard model). Flip the YAML AND this assertion in
-        the same commit if the show ever moves back to Pexels."""
-        cfg = load_config(SHOWS_DIR / "models_agents_beginners.yaml")
-        assert cfg.youtube.image_provider == "grok"
+    def test_youtube_enabled_shows_use_grok_image_provider(self):
+        """Operator directive (June 14 2026): every YouTube-enabled show
+        generates imagery with Grok Imagine — unique, narrative-tied visuals
+        that also feed the gallery pipeline (Pexels images never reach the
+        gallery R2 bucket). MAB keeps ``grok`` in its YAML even while its
+        YouTube is paused, so re-enabling it stays a one-line flip."""
+        for slug in ("tesla", "spacex", "fascinating_frontiers",
+                     "modern_investing", "finansy_prosto", "privet_russian"):
+            cfg = load_config(SHOWS_DIR / f"{slug}.yaml")
+            assert cfg.youtube.image_provider == "grok", (
+                f"{slug} is YouTube-enabled but not on Grok Imagine"
+            )
 
-    def test_other_shows_remain_on_pexels(self):
-        """Every other show (the 9 that aren't YouTube-enabled today,
-        plus any future YouTube-enabled show) must stay on Pexels
-        until the operator explicitly flips them. Pexels is free;
-        Grok costs $0.32/episode."""
-        for slug in ("omni_view", "fascinating_frontiers", "planetterrian",
-                     "env_intel", "models_agents", "modern_investing",
-                     "finansy_prosto", "privet_russian",
-                     "unintended_consequences"):
+    def test_non_youtube_shows_remain_on_pexels(self):
+        """Shows that don't publish to YouTube stay on the free Pexels
+        default — image generation only runs for YouTube-enabled shows, so
+        this just guards against accidental drift / surprise Grok cost if one
+        is later enabled without a deliberate provider choice."""
+        for slug in ("omni_view", "planetterrian", "env_intel",
+                     "models_agents", "unintended_consequences",
+                     "first_principles"):
             cfg = load_config(SHOWS_DIR / f"{slug}.yaml")
             assert cfg.youtube.image_provider == "pexels", (
                 f"{slug} drifted off pexels — would silently incur Grok "
-                f"Imagine cost"
+                f"Imagine cost if YouTube is enabled"
             )
 
 

@@ -195,3 +195,27 @@ def test_recap_blog_title_is_unique_per_week():
     assert line_a.startswith("# FF — Weekly Recap (Week of ")
     assert "June 14, 2026" in line_a
     assert line_a != line_b  # distinct week -> distinct title
+
+
+def test_recap_surfaces_recurring_threads_for_deep_dives():
+    """Deterministic 'biggest events' signal: entities covered on 2+ days are
+    surfaced to the host as deep-dive candidates (grounds the deep-dive beat in
+    data, not only LLM judgment). Single-day entities are excluded."""
+    from unittest.mock import patch
+    from datetime import date
+    from engine import weekly_recap
+
+    eps = [
+        {"episode_num": 1, "date": "2026-06-10", "hook": "h",
+         "entities": ["Starship", "Artemis"], "digest_md": "# X\n\nb. Source: [a.com](https://a.com/1)"},
+        {"episode_num": 2, "date": "2026-06-11", "hook": "h",
+         "entities": ["Starship", "NASA"], "digest_md": "# X\n\nb. Source: [b.com](https://b.com/2)"},
+        {"episode_num": 3, "date": "2026-06-12", "hook": "h",
+         "entities": ["Starship", "NASA"], "digest_md": "# X\n\nb. Source: [c.com](https://c.com/3)"},
+    ]
+    with patch("engine.content_lake.query_show_range", return_value=eps):
+        out = weekly_recap.build_weekly_recap_digest("ff", "FF", date(2026, 6, 14))
+    line = [ln for ln in out.splitlines() if "BIGGEST RECURRING THREADS" in ln]
+    assert line, "recurring-threads grounding line missing"
+    assert "Starship" in line[0] and "NASA" in line[0]  # 3x and 2x
+    assert "Artemis" not in line[0]  # only 1x → excluded

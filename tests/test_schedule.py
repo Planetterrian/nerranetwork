@@ -197,8 +197,11 @@ def test_daily_narrative_show_runs_daily_without_recap(slug):
 # Investing launched Shorts-only (publish_long_form: false) on
 # @NerraNetwork while the quota-increase request is pending; both Russian
 # shows launched full-format on @NerraRU, which has its own 10k/day quota.
+# June 14 2026: SpaceX Daily took MAB's EN-channel full-format slot (long-form
+# + 1 Short); MAB YouTube paused. Same EN per-episode footprint, so the quota
+# math is unchanged by the swap.
 YOUTUBE_ENABLED_SHOWS = {
-    "tesla", "models_agents_beginners",
+    "tesla", "spacex",
     "fascinating_frontiers", "modern_investing",
     "finansy_prosto", "privet_russian",
 }
@@ -363,11 +366,16 @@ def test_youtube_expansion_quota_shape():
             encoding="utf-8")) or {}
         return cfg.get("youtube") or {}
 
-    for slug in ("tesla", "models_agents_beginners"):
+    for slug in ("tesla", "spacex"):
         assert int(yt(slug).get("shorts_per_episode", 1)) == 1, (
             f"{slug} must stay at 1 Short/episode until the quota "
             f"increase is granted"
         )
+    # MAB YouTube is paused (SpaceX took its slot) — re-enabling it without
+    # freeing a slot would overrun the EN channel.
+    assert yt("models_agents_beginners").get("enabled") is False, (
+        "MAB YouTube must stay paused while SpaceX holds the EN-channel slot"
+    )
     for slug in ("fascinating_frontiers", "modern_investing"):
         assert yt(slug).get("publish_long_form") is False, (
             f"{slug} launched Shorts-only; long-form flips on only after "
@@ -378,3 +386,22 @@ def test_youtube_expansion_quota_shape():
             f"{slug} must upload to @NerraRU (its own quota), never the "
             f"EN channel"
         )
+
+
+def test_all_youtube_shows_use_grok_imagine():
+    """Every YouTube-enabled show must generate imagery with Grok Imagine
+    (operator directive June 14 2026: all Shorts/long-form imagery is
+    Grok-generated — unique, narrative-tied, and feeds the gallery pipeline).
+    A show inheriting the ``pexels`` default would silently ship stock photos."""
+    import yaml as _yaml
+    for cfg_path in SHOWS_DIR.glob("*.yaml"):
+        if cfg_path.name.startswith("_"):
+            continue
+        cfg = _yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
+        yt = cfg.get("youtube") or {}
+        if yt.get("enabled") is True:
+            assert yt.get("image_provider") == "grok", (
+                f"{cfg.get('slug')} has YouTube enabled but image_provider="
+                f"{yt.get('image_provider')!r} — must be 'grok' so imagery is "
+                f"Grok-generated, not stock Pexels."
+            )
