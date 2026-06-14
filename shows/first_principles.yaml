@@ -153,17 +153,19 @@ content_freshness:
   similarity_threshold: 1.0
 
 youtube:
-  # Disabled — network YouTube quota cap (only TST + MAB; landmine #20).
-  # image_queries are still required by test_visual_assets and are kept
-  # curated/disambiguated (landmine #14) so a future enablement is safe.
-  podcast_playlist_id: ""
-  enabled: false
+  # June 14 2026 — Enabled as PODCAST-ONLY (long-form upload, no Shorts) on
+  # @NerraNetwork. Playlist created + flagged as a podcast in YouTube Studio
+  # the same day (landmine #15). Adds ~2,100 units/day to the EN channel
+  # paper budget; flip publish_shorts back to true once the @NerraNetwork
+  # quota increase lands. See landmine #20.
+  podcast_playlist_id: PLRHMnzNNXPYChHSTQ19lcAN_oV_yz1tsu
+  enabled: true
   channel: en
-  category_id: 28                # Science & Technology
+  category_id: 27                # Education (first-principles thinking framing)
   default_language: en
   privacy_status: public
   publish_long_form: true
-  publish_shorts: true
+  publish_shorts: false           # podcast-only: long-form on, Shorts off until quota approval
   synthetic_disclosure: "All audio narration is generated using AI voice synthesis. Curated and produced by Patrick at the Nerra Network in Vancouver, Canada."
   image_queries:
     - "rocket engine factory"
@@ -175,3 +177,16 @@ youtube:
     - "engineer examining components"
     - "cost analysis spreadsheet engineering"
   image_query_prefix: "engineering"
+  # Grok Imagine for podcast-format imagery (long-form slideshow only since
+  # Shorts are off). Required by test_all_youtube_shows_use_grok_imagine.
+  image_provider: grok
+  grok_image_model: grok-imagine-image
+  grok_image_descriptor: "documentary-style engineering photo, dramatic lighting, technical, ultra-detailed"
+  tags:
+    - first principles
+    - engineering thinking
+    - idiot index
+    - innovation
+    - problem solving
+    - learning
+    - education podcast

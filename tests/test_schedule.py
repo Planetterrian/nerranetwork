@@ -199,9 +199,11 @@ def test_daily_narrative_show_runs_daily_without_recap(slug):
 # shows launched full-format on @NerraRU, which has its own 10k/day quota.
 # June 14 2026: SpaceX Daily took MAB's EN-channel full-format slot (long-form
 # + 1 Short); MAB YouTube paused. Same EN per-episode footprint, so the quota
-# math is unchanged by the swap.
+# math is unchanged by the swap. Same day later: First Principles Daily
+# enabled as PODCAST-ONLY on EN (publish_long_form: true, publish_shorts:
+# false; +~2,100 units/day) ahead of the @NerraNetwork quota approval.
 YOUTUBE_ENABLED_SHOWS = {
-    "tesla", "spacex",
+    "tesla", "spacex", "first_principles",
     "fascinating_frontiers", "modern_investing",
     "finansy_prosto", "privet_russian",
 }
