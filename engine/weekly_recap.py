@@ -156,7 +156,12 @@ def build_weekly_recap_digest(
     # "from <start> to <end>" open reads like a database query, not a digest).
     # The podcast prompt turns this hook into the spoken opener, so it stays
     # intuitive and theme-forward.
-    title = f"# {show_name} — Weekly Recap"
+    # The H1/blog title carries the week-ending date so each recap is a unique,
+    # archivable page (identical titles every week kill per-episode SEO). This
+    # is the WRITTEN title only — the spoken intro is driven by the hook +
+    # framing below and stays date-free/intuitive per operator feedback.
+    week_title_date = f"{week_ending.strftime('%B')} {week_ending.day}, {week_ending.year}"
+    title = f"# {show_name} — Weekly Recap (Week of {week_title_date})"
     hook = (
         "**HOOK:** The week's biggest developments, pulled together — "
         "what actually moved, why it matters, and what to watch next."
