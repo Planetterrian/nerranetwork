@@ -30,11 +30,30 @@ def test_drops_realtime_tsla_price_header():
     assert "Tesla launched a sunshade" in out
 
 
-def test_markdown_links_collapse_to_text():
-    src = "See [Google News](https://news.google.com/x) and [EVChargingStations.com](https://ev.com)."
+def test_markdown_links_preserved_by_default():
+    # June 14 2026: the recap must stay transparently sourced — proper markdown
+    # source citations are PRESERVED so the blog/summary render clickable links
+    # (the prior collapse-to-text was the cause of the unsourced Sunday blog).
+    src = "Detail. Source: [space.com](https://www.space.com/x)."
     out = _sanitize_recap_body(src)
+    assert "[space.com](https://www.space.com/x)" in out  # link intact
+
+
+def test_markdown_links_collapse_when_keep_links_false():
+    # Plain-text contexts (e.g. a story title line) still collapse links.
+    src = "See [Google News](https://news.google.com/x) and [EVChargingStations.com](https://ev.com)."
+    out = _sanitize_recap_body(src, keep_links=False)
     assert "](http" not in out and "https://" not in out
     assert "Google News" in out and "EVChargingStations.com" in out
+
+
+def test_bare_urls_dropped_but_markdown_link_urls_kept():
+    # A bare URL reads badly aloud and is dropped; a markdown-link URL is part
+    # of a citation and must survive (the bare-URL strip must not corrupt it).
+    src = "Body https://bare.example.com more. Source: [nasa.gov](https://nasa.gov/r)."
+    out = _sanitize_recap_body(src)
+    assert "https://bare.example.com" not in out
+    assert "[nasa.gov](https://nasa.gov/r)" in out
 
 
 def test_drops_read_more_sources_line():

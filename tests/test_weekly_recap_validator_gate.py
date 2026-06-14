@@ -92,5 +92,82 @@ def test_recap_digest_has_recap_shape_not_daily():
     assert "— Weekly Recap" in out
     # Recap-shaped section — distinct from "Top 10 News Items".
     assert "This Week's Top Stories" in out
-    # Hook explicitly references the look-back framing.
-    assert "Looking back at" in out
+    # Hook is recap-flavoured but INTUITIVE — it must not recite the calendar
+    # date range (operator feedback June 14 2026: the old "Looking back at N
+    # episodes from <start> to <end>" read like a database query).
+    assert "Looking back at" not in out
+    assert "2026-05-04 to 2026-05-10" not in out
+    assert "**HOOK:**" in out and "biggest developments" in out
+
+
+def _build_sourced_recap():
+    """Helper: build a recap from episodes that carry inline source citations
+    plus a fresh-news article, mirroring the real daily-digest shape."""
+    from unittest.mock import patch
+    from datetime import date
+    from engine import weekly_recap
+
+    eps = [
+        {"episode_num": 98, "date": "2026-06-11", "hook": "Ancient quasar",
+         "digest_md": "# FF\n\n1. **Quasar**\n   Existed 12.9 Gyr ago. "
+                      "Source: [space.com](https://www.space.com/quasar)"},
+        {"episode_num": 99, "date": "2026-06-12", "hook": "Orbital data centers",
+         "digest_md": "# FF\n\n1. **Orbital DCs**\n   Bright moving sources. "
+                      "Source: [spacenews.com](https://spacenews.com/dc)"},
+    ]
+    arts = [{"title": "New exoplanet found", "url": "https://phys.org/exo",
+             "source": "phys.org"}]
+    with patch("engine.content_lake.query_show_range", return_value=eps):
+        return weekly_recap.build_weekly_recap_digest(
+            "fascinating_frontiers", "Fascinating Frontiers",
+            date(2026, 6, 14), articles=arts,
+        )
+
+
+def test_recap_preserves_source_links_and_sources_section():
+    """Transparent sourcing: the recap must keep markdown source citations and
+    emit a '## Sources' block (June 14 2026 — the unsourced Sunday-blog fix).
+    The prior behaviour collapsed links to dead text, so the blog/summary/RSS
+    rendered no clickable sources. This guard blocks that regression."""
+    out = _build_sourced_recap()
+    # Inline citations preserved (not collapsed to plain text).
+    assert "[space.com](https://www.space.com/quasar)" in out
+    assert "[spacenews.com](https://spacenews.com/dc)" in out
+    # A deduplicated Sources section exists as the final block.
+    assert "## Sources" in out
+    sources_block = out.split("## Sources", 1)[1]
+    assert "https://www.space.com/quasar" in sources_block
+    assert "https://spacenews.com/dc" in sources_block
+
+
+def test_recap_surfaces_fresh_news_with_sources():
+    """The weekly recap can break new ground: fresh, not-yet-covered news is
+    surfaced (with its source link) instead of only rehashing the week."""
+    out = _build_sourced_recap()
+    assert "Fresh this week" in out
+    assert "New exoplanet found" in out
+    assert "https://phys.org/exo" in out  # carried into the Sources block too
+
+
+def test_republished_recap_keeps_sources_without_scaffold_leak():
+    """Mirror run_show.py's recap republish: header + clean spoken script +
+    the scaffold's '## Sources' tail. The blog renders THIS, so the Sources
+    must survive while the host-framing / narrative-memory scaffold must not."""
+    scaffold = _build_sourced_recap()
+    assert "## Sources" in scaffold
+    sources_tail = "\n\n## Sources" + scaffold.split("## Sources", 1)[1].rstrip()
+    published = "# Fascinating Frontiers — Weekly Recap\n\nClean narration, no urls." + sources_tail
+    # Sources reach the published digest…
+    assert "[space.com](https://www.space.com/quasar)" in published
+    # …without leaking the host-only scaffold.
+    assert "Recap framing for the host" not in published
+    assert "GO DEEP ON THE BIGGEST EVENTS" not in published
+    assert "NARRATIVE MEMORY" not in published
+
+
+def test_run_show_republish_carries_sources_tail():
+    """Pin the run_show.py republish step that lifts the Sources block onto the
+    published recap digest — without it, the blog loses all source links."""
+    source = _RUN_SHOW.read_text(encoding="utf-8")
+    assert 'x_thread.split("## Sources", 1)' in source
+    assert "_sources_tail" in source
