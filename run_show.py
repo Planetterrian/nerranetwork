@@ -2748,6 +2748,30 @@ def run(args: argparse.Namespace) -> None:
                 "grok_image_failures",
                 youtube_urls["grok_image_failures"],
             )
+        # Loud, actionable signal when a Grok-enabled show ships a DEGRADED
+        # slideshow — i.e. Grok Imagine produced fewer than 2 usable images so
+        # the video fell back to the static cover. With six shows now on Grok,
+        # a silent outage (bad key / model id / rate limit) would quietly
+        # degrade many uploads; this surfaces it as a GitHub annotation +
+        # metric instead of hiding in the per-episode JSON. Only fires for
+        # grok/hybrid shows that actually published video.
+        _img_provider = str(youtube_urls.get("image_provider") or "")
+        if _img_provider in ("grok", "hybrid"):
+            _imgs = int(youtube_urls.get("grok_images_generated", 0) or 0)
+            metrics.record("grok_slideshow_degraded", _imgs < 2)
+            if _imgs < 2:
+                _why = "; ".join(youtube_urls.get("grok_image_failures") or []) \
+                    or "no failure detail captured"
+                print(
+                    f"::warning::Grok Imagine produced only {_imgs} image(s) "
+                    f"for {args.show} — the video shipped with the static cover "
+                    f"as a fallback. Cause: {_why}",
+                    flush=True,
+                )
+                logger.warning(
+                    "Grok slideshow degraded for %s: %d images (fell back to "
+                    "cover). Cause: %s", args.show, _imgs, _why,
+                )
     except Exception:
         logger.warning("post-publish step failed (non-fatal)", exc_info=True)
 
