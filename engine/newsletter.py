@@ -388,6 +388,17 @@ def send_newsletter(
         return None
 
 
+def _dashboard_stats_for(slug: str) -> List[Dict[str, str]]:
+    """Best-effort dashboard stat tiles for the newsletter 'By the numbers'
+    block. Import-guarded so a refactor of the dashboard module can never
+    break a send."""
+    try:
+        from engine.newsletter_dashboard import build_dashboard_stats
+        return build_dashboard_stats(slug)
+    except Exception:  # pragma: no cover — never block a send
+        return []
+
+
 def send_show_newsletter(
     digest_text: str,
     config,
@@ -527,6 +538,11 @@ def send_show_newsletter(
         daily_date=_today,
         adjacent_shows=adjacent_shows,
         requires_financial_disclaimer=requires_disc,
+        # Surface the show's live dashboard data as a "By the numbers" block
+        # under the hero (SpaceX: SPCX/launches/Starlink; Tesla: TSLA/deliveries;
+        # Modern Investing: alpha/win-rate/trades). Best-effort + empty for shows
+        # with no dashboard mapping, so this is a no-op everywhere else.
+        by_the_numbers=_dashboard_stats_for(slug),
         # Daily emails count by episode, not by weeks-since-launch.
         # The latter (compute_issue_number) is for weekly synthesis
         # newsletters; on a daily it produces "Issue #1" for any show
