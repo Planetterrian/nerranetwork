@@ -3672,13 +3672,20 @@ def _publish_youtube(
         logger.info("YouTube publishing skipped — no final mp3.")
         return result
 
-    # Resolve cover image. We fall back to whatever the show used in the
-    # RSS <itunes:image> tag if a local file isn't obvious from the slug.
+    # Resolve cover image. Prefer the slug-derived name; then fall back to the
+    # basename the show references in its RSS <itunes:image> (some shows name
+    # the file after the title, e.g. first-principles-daily.jpg) so a YouTube-
+    # enabled show with a title-named cover still gets its art instead of
+    # silently skipping the upload.
     cover_path = None
     cover_candidates = [
         PROJECT_ROOT / "assets" / "covers" / f"{config.slug.replace('_', '-')}.jpg",
         PROJECT_ROOT / "assets" / "covers" / f"{config.slug}.jpg",
     ]
+    _rss_image = getattr(config.publishing, "rss_image", "") or ""
+    _rss_basename = _rss_image.rstrip("/").rsplit("/", 1)[-1]
+    if _rss_basename:
+        cover_candidates.append(PROJECT_ROOT / "assets" / "covers" / _rss_basename)
     for candidate in cover_candidates:
         if candidate.exists():
             cover_path = candidate
