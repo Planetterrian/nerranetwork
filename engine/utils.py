@@ -659,6 +659,17 @@ _PHONETIC_GARBLES = {
     # trailing \b leaves the "-2" suffix intact → "Tianwen-2").
     "en-sell-uh-dus": "Enceladus",
     "tee-en-wen": "Tianwen",
+    # Models & Agents (June 14 2026 review): the podcast-gen step spelled
+    # core AI proper nouns phonetically despite the prompt ban — these
+    # shipped to TTS *and* into chapter titles (parse_chapters runs after
+    # this repair). "An-thropic" alone appeared in nearly every episode
+    # (6× in Ep080); the hyphen forces an audible break on the custom
+    # voice. The trailing \b leaves possessives/compounds intact:
+    # "An-thropic's" → "Anthropic's", "An-thropic-style" → "Anthropic-style",
+    # "Lah-mah-swap" → "Llama-swap", "Lah-mah-cpp" → "Llama-cpp".
+    "an-thropic": "Anthropic",
+    "lah-mah": "Llama",
+    "hah-sah-biss": "Hassabis",
 }
 
 _PHONETIC_GARBLE_RE = re.compile(
