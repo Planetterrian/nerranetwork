@@ -803,7 +803,8 @@ class TestYouTubeImageProviderConfig:
         gallery R2 bucket). MAB keeps ``grok`` in its YAML even while its
         YouTube is paused, so re-enabling it stays a one-line flip."""
         for slug in ("tesla", "spacex", "fascinating_frontiers",
-                     "modern_investing", "finansy_prosto", "privet_russian"):
+                     "modern_investing", "finansy_prosto", "privet_russian",
+                     "first_principles"):
             cfg = load_config(SHOWS_DIR / f"{slug}.yaml")
             assert cfg.youtube.image_provider == "grok", (
                 f"{slug} is YouTube-enabled but not on Grok Imagine"
@@ -813,10 +814,12 @@ class TestYouTubeImageProviderConfig:
         """Shows that don't publish to YouTube stay on the free Pexels
         default — image generation only runs for YouTube-enabled shows, so
         this just guards against accidental drift / surprise Grok cost if one
-        is later enabled without a deliberate provider choice."""
+        is later enabled without a deliberate provider choice.
+
+        (first_principles moved to the grok list above — the operator enabled
+        its YouTube, podcast-only/long-form, on Jun 14 2026.)"""
         for slug in ("omni_view", "planetterrian", "env_intel",
-                     "models_agents", "unintended_consequences",
-                     "first_principles"):
+                     "models_agents", "unintended_consequences"):
             cfg = load_config(SHOWS_DIR / f"{slug}.yaml")
             assert cfg.youtube.image_provider == "pexels", (
                 f"{slug} drifted off pexels — would silently incur Grok "
