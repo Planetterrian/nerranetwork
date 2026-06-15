@@ -411,6 +411,30 @@ TST received a full recursive improvement architecture (analogous to MIT):
   only the brief — is capped; the digest-expansion retry is the deferred
   network lever, and the grok-4.3 narrative plateau is accepted. Closing-
   pool + prompt edits change shipped audio — A/B-listen per landmine #17.
+- **SpaceX** (SpaceX Daily) runs via `run_show.py` + `shows/spacex.yaml`;
+  engineering-first daily on SpaceX as a public company (Nasdaq: SPCX),
+  `memory_enabled`, X disabled. **June 13 2026 quality pass** (review:
+  [`docs/reviews/spacex_review_2026_06_13.md`](docs/reviews/spacex_review_2026_06_13.md);
+  drift guards: `tests/test_spacex_show.py`,
+  `tests/test_network_quality_pass.py`): two days post-launch, after the
+  operator's same-day fixes for the Ep2 AI-chapter `A I` spacing and the
+  AI-section accuracy guardrail (Colossus/Anthropic is real — do not
+  relitigate). The theme miner mined source-attribution LABELS — the
+  bare-URL strip in `engine/show_memory.py` missed the markdown
+  `[Google News](url)` label, so `"google spacex"` shipped as the #1
+  recurring theme (latent network-wide: FF `science nasa`, M&A `reddit
+  localllama`); now strips the whole `[label](url)` construct first, and
+  the polluted `spacex_theme_history.json` was rebuilt clean. The rocket
+  thrust unit `tf` (tonne-force) was spoken letter-by-letter ("280 T F",
+  twice in Ep2) — a per-show `pronunciation_overrides()` in
+  `shows/hooks/spacex.py` expands `tf → tons-force` (a unit expansion, not
+  a respelling — outside landmine #17; A/B-listen the audio change anyway).
+  Deferred with levers: the SPCX price is spoken twice/episode (Market
+  Watch segment + closing block) — the clean fix needs the Closing chapter
+  marker reordered ahead of Market Watch to avoid an orphan-closing
+  regression; and "AI & Compute" chapter lumping (swallows trailing Top
+  News when the LLM emits news after the editorial markers) — observe Ep3+
+  before a prompt change.
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:

@@ -253,6 +253,27 @@ class TestStockClosing:
         )
         assert pron["corrections"].get("SPCX") == "S P C X"
 
+    def test_tf_thrust_unit_expanded_for_tts(self):
+        """Ep2 lesson: "thrust now exceeds 280 tf" was spoken as "280 T F"
+        (Whisper transcribed letters, twice). The hook's pronunciation
+        override expands the rocket-thrust unit so it reads as a unit, not
+        spelled letters. A unit expansion (km→kilometers class), NOT a
+        phonetic respelling (landmine #17)."""
+        from shows.hooks.spacex import pronunciation_overrides
+        from assets.pronunciation import prepare_text_for_tts
+
+        ov = pronunciation_overrides()
+        assert ov["extra_words"]["tf"] == "tons-force"
+        out = prepare_text_for_tts(
+            "Thrust now exceeds 280 tf today.",
+            extra_words=ov["extra_words"],
+        )
+        assert "tons-force" in out
+        assert "280 tf " not in out + " "
+        # Must not maul real words that merely contain the letters.
+        assert "software" in prepare_text_for_tts(
+            "the software shipped", extra_words=ov["extra_words"])
+
 
 class TestEp001RegressionChapters:
     """Ep001 lesson: chapters parse the POST-pronunciation script, where

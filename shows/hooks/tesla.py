@@ -44,7 +44,8 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     # Refresh the public Tesla data dashboard (best-effort, non-fatal):
     # live TSLA market data + 1y price history for tesla-dashboard.html.
     try:
-        import subprocess, sys as _sys
+        import subprocess
+        import sys as _sys
         subprocess.run(
             [_sys.executable, str(Path(__file__).resolve().parent.parent.parent
                                   / "scripts" / "fetch_tesla_dashboard.py")],

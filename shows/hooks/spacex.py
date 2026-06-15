@@ -77,6 +77,22 @@ def post_generate(config, *, digest_text: str = "", episode_num: int = 0) -> Non
     show_memory.memory_post_generate(config, "spacex", digest_text, episode_num)
 
 
+def pronunciation_overrides() -> dict:
+    """Per-show TTS pronunciation overrides (see run_show._apply_pronunciation).
+
+    "tf" — tonne-force, the standard unit for rocket-engine thrust — is read
+    letter-by-letter by Grok TTS: Ep2's "thrust now exceeds 280 tf" was
+    transcribed by Whisper as "280 TF" (i.e. the audio said "tee eff"), twice.
+    On a thrust-heavy engineering-first show this recurs whenever the model
+    copies "tf" from a source. Expand it to the spoken unit so the episode
+    says "two hundred eighty tons-force". This is a unit EXPANSION (the same
+    class as km→kilometers, already in assets.pronunciation.UNIT_ABBREVIATIONS),
+    NOT a phonetic respelling of a word — so it is outside the landmine #17 ban
+    on theory-driven respellings.
+    """
+    return {"extra_words": {"tf": "tons-force"}}
+
+
 # ---------------------------------------------------------------------------
 # SPCX quote (landmine #22 pattern, lean two-source chain)
 # ---------------------------------------------------------------------------
