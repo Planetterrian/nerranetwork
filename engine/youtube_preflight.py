@@ -20,15 +20,24 @@ def validate_youtube_show_ready(
         return issues
 
     slug = getattr(config, "slug", "show")
-    for name in (
-        f"{slug.replace('_', '-')}.jpg",
-        f"{slug}.jpg",
-    ):
+    candidates = [f"{slug.replace('_', '-')}.jpg", f"{slug}.jpg"]
+    # Also accept the cover the show actually references in its RSS
+    # <itunes:image> — some shows name the file after the title rather than the
+    # slug (e.g. first_principles → first-principles-daily.jpg). Without this,
+    # enabling YouTube on such a show hard-fails preflight even though a valid
+    # cover exists. Strictly additive: an unset/foreign rss_image just falls
+    # through to the slug-derived names.
+    rss_image = getattr(getattr(config, "publishing", None), "rss_image", "") or ""
+    rss_basename = rss_image.rstrip("/").rsplit("/", 1)[-1]
+    if rss_basename:
+        candidates.append(rss_basename)
+    for name in candidates:
         if (project_root / "assets" / "covers" / name).exists():
             break
     else:
         issues.append(
-            f"YouTube enabled but no cover at assets/covers/ for slug={slug}"
+            f"YouTube enabled but no cover at assets/covers/ for slug={slug} "
+            f"(checked: {', '.join(candidates)})"
         )
 
     channel = (getattr(yt, "channel", "en") or "en").lower()
