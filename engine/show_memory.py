@@ -452,9 +452,16 @@ def update_theme_history_from_digest(output_dir: Path, cfg: MemoryConfig,
         elif noise_key in echo_bigrams or noise_key in self_ref_bigrams:
             del themes[noise_key]
 
-    # Strip URLs before mining — digests carry "Source: https://..."
-    # lines whose tokens otherwise become junk bigrams ("google https").
-    text_lower = re.sub(r"https?://\S+", " ", (digest_text or "").lower())
+    # Strip source attributions before mining. Digests format sources as
+    # "Source: [Google News](https://…)" markdown links; the bare-URL strip
+    # below missed the LABEL ("Google News", "nasa.gov", "reddit.com"), so
+    # the repeated source name paired with the next story's first word into
+    # junk bigrams — "google spacex" ranked #1 on SpaceX Daily, with "science
+    # nasa" / "reddit localllama" the same artifact on the sibling memory
+    # shows. Remove the whole [label](url) construct first, then any bare URL
+    # that survives (e.g. a plain "Source: https://…" with no markdown).
+    _no_links = re.sub(r"\[[^\]]*\]\([^)]*\)", " ", digest_text or "")
+    text_lower = re.sub(r"https?://\S+", " ", _no_links.lower())
     for kw in cfg.theme_keywords:
         if kw in text_lower:
             themes[kw] = themes.get(kw, 0) + 1

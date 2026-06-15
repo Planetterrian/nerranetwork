@@ -65,6 +65,32 @@ class TestShowMemoryFixesPorted:
         for noise in ("open questions", "questions show", "narrative memory"):
             assert noise not in themes
 
+    def test_theme_mining_strips_source_attribution_labels(self, tmp_path):
+        """Markdown source links ("Source: [Google News](url)") must be
+        stripped LABEL-and-all before mining. The bare-URL strip alone left
+        the label, so the repeated source name paired with the next story's
+        first word into junk bigrams — "google spacex" ranked #1 on SpaceX
+        Daily (June 2026 review); "science nasa" / "reddit localllama" on the
+        sibling memory shows.
+        """
+        from engine import show_memory as sm
+        import json
+
+        cfg = sm.get_config("spacex")
+        assert cfg is not None
+        digest = (
+            "SpaceX flew a Falcon mission today.\n"
+            "Source: [Google News](https://news.google.com/rss/articles/abc)\n\n"
+            "Starship static-fired at Starbase.\n"
+            "Source: [Google News](https://news.google.com/rss/articles/def)\n"
+        )
+        sm.update_theme_history_from_digest(tmp_path, cfg, digest, 3)
+        themes = json.loads(
+            (tmp_path / cfg.theme_filename).read_text())["recurring_themes"]
+        # No theme may contain a source-label token from a stripped link.
+        for key in themes:
+            assert "google" not in key.split(), f"source-label leak: {key!r}"
+
     def test_auto_narrative_freshness_exists_and_runs(self, tmp_path):
         from engine import show_memory as sm
 

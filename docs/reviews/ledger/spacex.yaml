@@ -1,0 +1,37 @@
+reviews:
+  - date: 2026-06-13
+    pr: 615
+    doc: docs/reviews/spacex_review_2026_06_13.md
+    summary: >
+      First review, 2 days post-launch. Operator had already cleared the Ep2
+      AI-chapter spacing + AI-accuracy items same-day; this pass took the next
+      tier: theme-miner source-label pollution and a spoken thrust-unit garble.
+    shipped:
+      - theme miner strips markdown source-link labels (was leaking "google
+        spacex" as the #1 theme; latent on all memory shows) + rebuilt clean
+        spacex_theme_history.json
+      - "tf" thrust unit expanded to "tons-force" via per-show
+        pronunciation_overrides (was spoken "T F")
+    deferred:
+      - SPCX price spoken twice/episode (Market Watch segment + closing block);
+        clean fix needs Closing marker reordered ahead of Market Watch AND the
+        Market Watch spoken price dropped — coupled, own A/B pass
+      - chapter lumping — "AI & Compute" swallows trailing Top News after the
+        a-i marker fix; root cause LLM section-ordering; observe Ep3+ before
+        a prompt change
+      - cold-open hook leads with unglossed "Idiot Index" jargon (n=1)
+      - tomorrow-teaser "watch for the first …" tic (n=2)
+    predictions:
+      - metric: highest-weighted key in spacex_theme_history.json recurring_themes
+        baseline: "'google spacex' (count 6)"
+        expected: "no source-label token (google/news/com/gov/reddit) in any top-30 theme key after Ep3-Ep5 mine"
+        verdict: pending
+        evidence: null
+      - metric: count of "tf" / "T F" letter-spellings in spacex _tts.txt + transcripts
+        baseline: "2 (Ep2)"
+        expected: "0 — 'tf' renders as 'tons-force' going forward"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
+do_not_retry: []
