@@ -1,0 +1,74 @@
+What's up? Welcome to Models and Agents Episode 81 for June 15th, 2026.
+Your daily AI briefing. Monday in the AI world, which means a weekend's worth of announcements to catch up on.
+Let's go.
+Z.AI just shipped GLM 5.2 with a usable one million token context
+and dual thinking modes that drop straight into existing clawed compatible tools.
+The release adds high and max effort thinking levels
+that trade extra compute for deeper reasoning on the same request.
+It lands through anthropic, compatible endpoints, so existing users of clawed code,
+client, and open claw can swap it in without code changes.
+No benchmark numbers appeared at launch.
+And the team scheduled MIT licensed open weights for the following week.
+This continues the open weight push we have tracked since last week,
+where families like Quinn and Deepseek keep closing the gap on closed frontier systems
+while adding reasoning controls that were previously limited to proprietary offerings.
+Builders should watch how the two effort tiers affect cost and latency on long context coding tasks
+this week. Z.AI released GLM 5.2 across every GLM coding plan tier on June 13th, 2026.
+The model introduces a usable one million token context window plus high and max effort thinking
+levels. It integrates immediately through an anthropic compatible endpoint into clawed code,
+client, and open claw without code changes. No benchmarks were released at launch.
+MIT licensed open weights are scheduled for the following week.
+Teams already using those tools can swap in GLM 5.2 today to test whether the extra
+context improves multi-file refactoring or long document analysis.
+A separate study on 29 tasks found pairwise LLM judge preferences flipped 13.6% of the time
+on average. Some questions reach 56% flips across 50 repeated trials. GPT-40 mini showed significant
+first position bias. The work recommends at least 11 trials for stable majority votes on most questions.
+Cash RL trains small agent models for multi-turn tool calling using cashed rollouts and a hybrid
+reward that avoids live execution costs. It reached 92% process accuracy on multi-step tasks while
+using 100 times less compute than GPT-5. The system adds LLM generated reasoning traces to
+trajectories and applies token level masking over a three-tier fuzzy cash. Removing knowledge transfer
+dropped performance 41% while the cash aware reward contributed a 17% gain. Dialogue SWE
+bench evaluates coding agents on real software engineering tasks through multi-turn dialogue
+with a persona grounded user simulator. The benchmark adds automatic dialogue quality metrics alongside
+task resolution. A new schema-guided agent improved over strong baselines by three to 14% on
+dialogue capability. Results show stronger base coding models do not automatically produce better
+dialogue agents. SANA provides a diagnostic ablation framework that turns exploratory QA tasks over
+data lakes into runtime profiles with gold source sequences and execution records. It isolates
+failures in search, planning, data analysis, and action policy on Lake QA and Krama bench. Data
+analysis emerged as the consistent bottleneck across both suites. Lightweight and mid-sized agents
+were tested under fixed prompts and budgets. PrintGuard 2.0 ships a 5-megabyte TF light model via
+LightRT that runs unchanged on both CPython and Pyodide in the browser for few-shot FDM failure
+detection. A single Python engine handles inference scheduling with dynamic worker allocation based
+on observed latency using max-min fairness across cameras. Platform specific code is isolated to a
+contract covering camera discovery, capture, and inference, so the same files execute in hub and
+local modes. The defect pipeline triggers octoprint or moonraker actions after end consecutive frames
+exceed a tunable threshold. Swob GLM 5.2 and Declod code or client on a long-context refactoring task
+and compare high versus max effort on the same prompt to measure latency versus quality trade-offs.
+Run the cache RL training recipe on a 4 billion to 7 billion base model if you need a lightweight
+tool calling agent without live execution costs during RL. Add dialog SWE bench to your coding
+agent eVal suite to measure dialog quality separately from task completion. Test PrintGuard 2.0's
+browser demo on a spare machine to see whether the Pyodide plus light RT bridge meets your real-time
+monitoring latency needs. MIT open waits for GLM 5.2 are expected within the next week. Further
+independent evaluations of GLM 5.2 effort tiers on coding and long document tasks are also coming.
+Expanded use of multi-trial aggregation and position randomization in public leaderboards will
+follow the LLM as judge reliability findings. Okay, let's pop the hood on the LLM as a judge findings
+because the variance numbers matter for anyone running eVALs. Everyone treats LLM as a judge as a
+reliable low-cost replacement for human Raiders. In practice, it is a noisy measurement process
+whose variance depends on prompt phrasing, position, and temperature in ways that single trial
+scores hide. The core issue is that pairwise preference and point-wise scoring are only loosely
+coupled. Judges often declare a winner even when their own scalar scores show negligible difference.
+Temperature and prompt paraphrases shift majority outcomes in roughly a quarter of cases.
+First position bias can reach 72 percent for some models. Cross-judge agreement between two
+open AI models sits at 76 percent with moderate Kappa. The practical fix is to run 11 to 15 repeated
+trials with randomized order and report both the majority vote and the flip rate. Anything less leaves
+high stakes rankings vulnerable to sampling noise rather than true capability differences. So when should
+you actually reach for this versus the alternative? Run the multi-trial protocol whenever the ranking
+will drive model selection or paper claims. Tomorrow, keep an eye on the MIT Open Wates release for
+GLM 5.2 and the first independent comparisons of its effort tiers. That's models and agents for today.
+If you found this useful, share it with someone who's trying to keep up with all these changes
+and subscribe so you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up.
+See you tomorrow. And before you go, this show is part of the Narrow Network, a family of daily
+podcasts covering tech, science, markets, and more. If you enjoyed today's episode, give models and
+agents for beginners a listen. Artificial intelligence explained simply for beginners and curious teens.
+You can explore the whole lineup at NarrowNetwork.com. This episode used AI voice synthesis of my voice,
+editorial selection, and analysis are my own.
