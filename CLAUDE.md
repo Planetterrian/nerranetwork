@@ -174,6 +174,23 @@ nerranetwork/
   lead with a forward-looking item (A/B render: "CCME soil vapour … comment
   period closes in 19 days …" replaced the absence hook). Digest-prompt edit
   changes output — A/B-listen per landmine #17.
+  **June 15 2026 third pass** (review:
+  [`docs/reviews/env_intel_review_2026_06_15.md`](docs/reviews/env_intel_review_2026_06_15.md);
+  drift guards: `tests/test_env_intel_quality_pass.py::TestDeepDiveOpenerNotTic`):
+  scored the prior predictions against Ep045 (first true post-merge,
+  normal-news episode — Closing chapter present, real hook, cadence-neutral
+  closing, 958w; orphan-Closing + absence-hook predictions both HIT). Next
+  tier: the Practitioner Deep Dive opened with the verbatim "You arrive at
+  a…" scenario in 9/10 episodes — root cause was the DIGEST prompt seeding
+  that exact example (`env_intel_digest.txt:173`), which the podcast
+  faithfully echoed (an Omni-View "strongest case" tic class). Dropped the
+  seeded example, required a rotated deep-dive entry point in both prompts,
+  and banned the verbatim "here's something I wish someone had told me…"
+  lead-in (5/10). A/B render: "A Phase I ESA flags a B.C. site within 5 km
+  of a glacial lake…" replaced "You arrive at a…". The structural format
+  (scenario → science → most-common-mistake + fix) is the show's intentional
+  B2B signature and is unchanged. Prompt edits change output — A/B-listen
+  per landmine #17.
 - **M&A** (Models & Agents) runs exclusively via `run_show.py` +
   `shows/models_agents.yaml`; no legacy script.
   **June 14 2026 quality pass** (review:

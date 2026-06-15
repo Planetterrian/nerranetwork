@@ -61,16 +61,48 @@ reviews:
       - metric: episodes shipping with no Closing chapter, last 10
         baseline: "Ep044 had none (merged teaser+closing paragraph)"
         expected: "0/10 post-merge — merged final paragraph now titles 'Closing'"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "Ep045 (first true post-merge episode) ends on 'Closing'; chapters_ep045.json last title = Closing. Pre-merge eps still lack it by definition."
       - metric: digest HOOKs that state the absence of news (thin-news days)
         baseline: "Ep044 hook = 'No major Canadian regulatory announcements … appeared in today's feed'"
         expected: "0 absence-hooks; thin-day hooks lead with a deadline/consultation/deep-dive topic"
-        verdict: pending
-        evidence: "A/B render on a thin pool produced 'CCME soil vapour … comment period closes in 19 days …' instead of an absence hook."
+        verdict: hit
+        evidence: "Ep045 hook = 'Newfoundland advances 25-year fish sauce site remediation…' (a real story). No post-fix thin-news day yet to stress-test, but mechanism is live."
       - metric: blog <title>/<h1> on thin-news episodes
         baseline: "Ep044 blog titled 'No major … appeared in today's feed — Episode 44'"
         expected: "thin-news blog titles read as actionable intelligence, not absence statements"
+        verdict: partial
+        evidence: "No post-fix thin-news episode to observe (Ep045 was a normal-news day). Carry forward."
+    agent_cost_usd: null
+
+  - date: 2026-06-15
+    pr: null
+    doc: docs/reviews/env_intel_review_2026_06_15.md
+    summary: >
+      Third pass. Scored the prior passes' predictions against Ep045 (first
+      true post-merge, normal-news episode — Closing chapter present, real
+      hook, cadence-neutral closing, 958w). Attacked the next tier: the
+      Practitioner Deep Dive opened "You arrive at a…" in 9/10 episodes
+      (root cause: the DIGEST prompt seeded that literal example), plus a
+      verbatim podcast transition seed ("here's something I wish someone had
+      told me…", 5/10). Both are the Omni-View "strongest case" tic class.
+    shipped:
+      - digest prompt drops the seeded "You arrive at a former gas station site" example; requires a rotated deep-dive entry point
+      - podcast prompt bans the repetitive "You arrive at a…" opener + "here's something I wish someone had told me…" lead-in, requires rotation
+    deferred:
+      - digest-driven / position-aware mid-section chapter titles (medium effort, shared) — carried from Jun 10/11
+      - numbers/dates spell-out drift ("1 meters intervals"; digit dates) — landmine #17, needs A/B before any repair layer
+      - chronic under-length on thin-news days (digest ceiling, FF/UC root cause) — re-score median on 2-3 normal-news post-fix episodes
+      - thin-news blog title reads as intelligence — re-score on a post-fix thin-news day
+    predictions:
+      - metric: deep-dive openers using "You arrive at a…", last 10 episodes
+        baseline: "9/10 (Ep036-045, all but the short Ep043)"
+        expected: "<= 3/10 within 2 weeks of post-merge episodes; openers rotate among the menu framings"
+        verdict: pending
+        evidence: "A/B test render (Ep046 thin pool) opened 'A Phase I ESA flags a B.C. site within 5 km of a glacial lake…' instead of 'You arrive at a…'."
+      - metric: transcripts using "here's something I wish someone had told me early in my career"
+        baseline: "5/10"
+        expected: "0/10 post-merge"
         verdict: pending
         evidence: null
     agent_cost_usd: null
