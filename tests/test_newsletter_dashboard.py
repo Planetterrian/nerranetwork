@@ -78,3 +78,22 @@ def test_block_renders_in_branded_body():
     stats = [{"value": "$160.95", "label": "SPCX price"}]
     body = wrap_with_branding("spacex", "Body.", daily_label="Ep 4", by_the_numbers=stats)
     assert "By the numbers" in body and "SPCX price" in body
+
+
+def test_spacex_and_first_principles_newsletters_configured():
+    """June 15 2026: operator created the 'SpaceX Daily' + 'First Principles
+    Daily' Buttondown tags and asked for both shows' newsletters live. Pin that
+    each is enabled with a tag that matches the created Buttondown tag exactly
+    (a mismatch silently blocks the send — see the Jun 15 SpaceX incident)."""
+    from engine.config import load_config
+    expected = {
+        "spacex": "SpaceX Daily",
+        "first_principles": "First Principles Daily",
+    }
+    for slug, tag in expected.items():
+        cfg = load_config(Path(__file__).resolve().parent.parent / "shows" / f"{slug}.yaml")
+        n = cfg.newsletter
+        assert n.enabled is True, f"{slug} newsletter must be enabled"
+        assert n.tag == tag, f"{slug} tag {n.tag!r} must match Buttondown tag {tag!r}"
+        assert n.api_key_env == "BUTTONDOWN_API_KEY"
+        assert n.short_label and n.emoji, f"{slug} needs short_label + emoji"
