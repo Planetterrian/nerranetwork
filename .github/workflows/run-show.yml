@@ -741,6 +741,19 @@ jobs:
 
           git commit -m "Update shared pages (network index, blog index, sitemap, search index) $(date +%Y-%m-%d)"
 
+          # The regeneration above (generate_html.py --network --blogs) also
+          # rewrites per-show pages — especially after a template change, where
+          # every page changes — leaving them modified-but-unstaged. This step
+          # deliberately commits only the CURATED shared pages above (committing
+          # per-show pages here would rebase-conflict with each show's own job).
+          # Those incidental unstaged changes must be discarded, or
+          # `git pull --rebase` aborts with "cannot pull with rebase: you have
+          # unstaged changes" and fails all 5 attempts (observed 2026-06-16).
+          # The per-show pages are owned + committed by each show's own job
+          # (generate_html.py --show <slug> --blogs), so discarding the redundant
+          # regen here is safe.
+          git checkout -- . 2>/dev/null || true
+
           # 5 attempts + slightly longer backoff for the shared-pages commit
           # (lower stakes than per-episode artifacts; pages are fully regenerable
           # from the per-show commits that already landed).

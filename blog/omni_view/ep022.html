@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Trump administration shares 15-point plan to end Iran war as Tehran launches new strikes on US and I… — Episode 22</h1>
+            <h1><span class="nn-i18n-title">Trump administration shares 15-point plan to end Iran war as Tehran launches new strikes on US and I…</span> — Episode 22</h1>
             
             <p class="blog-hero-hook">Trump administration shares 15-point plan to end Iran war as Tehran launches new strikes on US and Israeli targets.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1184,14 +1265,6 @@
 <li>What incentives do regional powers like Saudi Arabia and the UAE have in this conflict?</li>
 <li>How might the reported troop movements affect negotiation prospects?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-03-25/what-we-know-about-trump-s-15-point-plan-video" target="_blank" rel="noopener">What We Know About Trump's 15-Point Plan</a> — Bloomberg overview of the plan</li>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/25/middle-east-crisis-live-iran-war-oil-prices-more-us-troops-reportedly-deployed-donald-trump-attacks-on-lebanon" target="_blank" rel="noopener">Middle East crisis live: Iran launches strikes on US bases in Gulf</a> — Guardian live updates including Iranian response</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15675749/trump-iran-nukes-peace-push-jd-vance-marco-rubio.html" target="_blank" rel="noopener">Trump claims Iran agreed to give up nukes</a> — Mail Online on Trump’s statements</li>
-<li><a href="https://www.npr.org/2026/03/25/g-s1-115053/rubio-plans-travel-to-france-to-sell-iran-war-to-skeptical-g7-allies" target="_blank" rel="noopener">Rubio plans travel to France to sell Iran war to skeptical G7 allies</a> — NPR on diplomatic efforts</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15676423/Saudi-Arabia-Trump-Iran-war-Middle-East-UAE-Tehran.html" target="_blank" rel="noopener">Saudi Arabia presses Trump to continue Iran war</a> — Mail Online on Gulf states’ positions</li>
-</ul>
 <h4 id="2-oil-prices-fall-after-trump-peace-plan-report-amid-ongoing-strikes">2) Oil prices fall after Trump peace plan report amid ongoing strikes</h4>
 <p><strong>What happened (neutral):</strong> Crude oil prices dropped sharply after reports emerged about Trump’s 15-point Iran plan and comments signaling possible de-escalation. Trump said he decided to back off from threats to strike Iranian energy infrastructure because negotiations were underway. Iran stated that “non-hostile” vessels can use the Strait of Hormuz. However, Iran also launched new strikes on US bases and Israel, and the conflict continues to affect global energy markets.</p>
 <p><strong>Perspectives:</strong> CNBC reports South Korea stocks led regional gains as Trump comments signaled possible Iran war de-escalation. BBC News notes oil prices fell as Trump talked up Iran peace negotiations, while Iran allowed non-hostile vessels through the Strait of Hormuz. The Guardian reports oil prices dropped after the Trump “peace plan” report even as Iran launched strikes on US bases. Both outlets agree prices fell following Trump’s comments; they differ on how sustainable any de-escalation might be given continued military actions. Al Jazeera highlights how the Iran war is driving up fuel prices across the Global South from Pakistan to Egypt, showing the uneven impact on developing economies.</p>
@@ -1201,13 +1274,6 @@
 <li>What role does the Strait of Hormuz play in global energy security?</li>
 <li>Which economies are most vulnerable to sustained energy price spikes?</li>
 <li>What distinguishes temporary price drops from genuine shifts in supply risk?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/03/25/asia-markets-today-nikkei-225-kospi-hang-seng-index.html" target="_blank" rel="noopener">South Korea stocks lead regional gains as Trump comments signal Iran war de-escalation</a> — CNBC on market reaction</li>
-<li><a href="https://www.bbc.com/news/articles/c995xp4jxj2o" target="_blank" rel="noopener">Oil price falls as Trump talks up Iran peace negotiations</a> — BBC on price movement and Hormuz access</li>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/25/middle-east-crisis-live-iran-war-oil-prices-more-us-troops-reportedly-deployed-donald-trump-attacks-on-lebanon" target="_blank" rel="noopener">Middle East crisis live: Iran launches strikes on US bases in Gulf; oil prices drop after Trump ‘peace plan’ report</a> — Guardian live coverage</li>
-<li><a href="https://www.aljazeera.com/economy/2026/3/25/from-pakistan-to-egypt-iran-war-drives-up-fuel-prices-in-the-global-south" target="_blank" rel="noopener">From Pakistan to Egypt, Iran war drives up fuel prices in the Global South</a> — Al Jazeera on impacts in developing nations</li>
 </ul>
 <h4 id="3-irans-domestic-struggles-and-regional-attacks">3) Iran’s domestic struggles and regional attacks</h4>
 <p><strong>What happened (neutral):</strong> Amid US-Israeli attacks, people in Iran are struggling to survive an ailing economy with some losing income, others temporarily displaced, and uncertainty about when internet service will return. Iran’s Revolutionary Guards reported launching missile strikes on Israel and US bases in multiple Gulf countries. Lebanese state media reported Israeli strikes killing people in southern Lebanon.</p>
@@ -1219,11 +1285,6 @@
 <li>How might internet disruptions affect information flow during wartime?</li>
 <li>What are the longer-term humanitarian implications of prolonged instability?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/features/2026/3/25/amid-us-israeli-attacks-people-in-iran-struggle-to-survive-ailing-economy" target="_blank" rel="noopener">Amid US-Israeli attacks, people in Iran struggle to survive ailing economy</a> — Al Jazeera on conditions inside Iran</li>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/25/middle-east-crisis-live-iran-war-oil-prices-more-us-troops-reportedly-deployed-donald-trump-attacks-on-lebanon" target="_blank" rel="noopener">Middle East crisis live: Iran launches strikes on US bases in Gulf</a> — Guardian on strikes and Lebanese casualties</li>
-</ul>
 <h4 id="4-philippines-declares-national-energy-emergency-boosts-coal">4) Philippines declares national energy emergency, boosts coal</h4>
 <p><strong>What happened (neutral):</strong> The Philippines has declared a “national energy emergency” due to the Middle East war, which the government says poses an imminent danger of critically low energy supply. The one-year emergency declaration allows officials to address fuel hoarding or profiteering. The energy secretary stated the country will increase output from coal-fired power plants to keep electricity costs down as the war disrupts gas shipments.</p>
 <p><strong>Perspectives:</strong> The Guardian reports the declaration and the shift toward greater coal use as a direct response to supply threats caused by the Iran conflict. This framing connects the distant war to immediate energy security decisions in Southeast Asia. The move reflects a priority on maintaining affordable electricity and preventing shortages over longer-term environmental considerations during the declared emergency.</p>
@@ -1234,10 +1295,6 @@
 <li>What mechanisms does a “national energy emergency” declaration actually enable?</li>
 <li>How do developing economies balance immediate needs against climate commitments?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/mar/25/philippines-declares-national-energy-emergency-iran-war" target="_blank" rel="noopener">Philippines declares ‘national energy emergency’ and boosts coal power as Iran war grinds on</a> — Guardian on the emergency declaration</li>
-</ul>
 <h4 id="5-australia-responds-to-fuel-crisis-with-major-aluminium-smelter-investment">5) Australia responds to fuel crisis with major aluminium smelter investment</h4>
 <p><strong>What happened (neutral):</strong> The Australian government announced that federal and Queensland governments will each contribute $1bn to Rio Tinto’s Boyne aluminium smelter in central Queensland. The investment aims to keep the smelter viable and is expected to unlock almost $7.5bn in private investment in Queensland, including significant spending on energy and transmission infrastructure. National cabinet is scheduled to meet again next week on the fuel crisis.</p>
 <p><strong>Perspectives:</strong> The Guardian frames the public investment as catalysing fourfold private investment that will build out the renewable energy grid and preserve regional jobs. Treasury fuel price modelling is described by Chalmers as looking “pretty conservative now” given current conditions. The coverage emphasizes the dual goals of economic viability for industry and supporting the transition to renewable energy infrastructure.</p>
@@ -1247,10 +1304,6 @@
 <li>What determines whether such investments successfully deliver promised renewable energy outcomes?</li>
 <li>How might fuel crisis pressures influence long-term industrial policy?</li>
 <li>What accountability mechanisms exist for tracking the promised investment returns?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/mar/25/politics-federal-queensland-nsw-parliament-tony-burke-jim-chalmers-middle-east-fuel-crisis-ntwnfb" target="_blank" rel="noopener">Australia news live: Chalmers says Treasury fuel price modelling looks ‘pretty conservative now’</a> — Guardian on Australian government response</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-us-set-to-send-airborne-troops-to-middle-east-as-conflict-widens">1) US set to send airborne troops to Middle East as conflict widens</h4>
@@ -1263,10 +1316,6 @@
 <li>What role do third-party actors play in either escalating or resolving such conflicts?</li>
 <li>What information would help assess whether talks are substantive or tactical?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/mar/24/middle-east-violence-trump-claims-very-good-talks-iran" target="_blank" rel="noopener">US set to send airborne troops to Middle East as Trump claims talks with Iran taking place</a> — Guardian on troop movements and conflicting claims</li>
-</ul>
 <h4 id="2-no-israeli-prosecutions-for-killings-of-palestinian-civilians-in-west-bank">2) No Israeli prosecutions for killings of Palestinian civilians in West Bank</h4>
 <p><strong>What happened (neutral):</strong> Israel has not prosecuted its citizens for killing Palestinian civilians in the occupied West Bank since the start of this decade, according to a Guardian analysis of legal data and public records. Dozens of former Israeli military, police and spy chiefs have described the situation as “organised Jewish terrorism.” Former prime minister Ehud Olmert called for international criminal court intervention.</p>
 <p><strong>Perspectives:</strong> The Guardian presents data showing zero prosecutions alongside statements from former security officials criticizing the lack of accountability. The coverage frames this as creating impunity for settler violence sometimes carried out with complicity of state forces.</p>
@@ -1276,10 +1325,6 @@
 <li>How do perspectives from former security officials differ from current policy?</li>
 <li>What are the established international legal frameworks for addressing such situations?</li>
 <li>What challenges exist in balancing security concerns with accountability?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/mar/25/no-israel-prosecutions-for-killing-palestinian-civilians-in-occupied-west-bank-since-start-of-decade" target="_blank" rel="noopener">No Israel prosecutions for killing Palestinian civilians in occupied West Bank since start of decade</a> — Guardian analysis</li>
 </ul>
 <h4 id="3-india-secures-russian-oil-supplies-amid-middle-east-disruptions">3) India secures Russian oil supplies amid Middle East disruptions</h4>
 <p><strong>What happened (neutral):</strong> Indian refiners have bought about 60 million barrels of Russian oil for delivery in April. This move comes as the Middle East war affects global oil flows. The purchases are intended to ease supply concerns.</p>
@@ -1291,10 +1336,6 @@
 <li>How do current purchases compare with historical patterns?</li>
 <li>What factors influence the economic calculations behind such decisions?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-03-25/india-has-bought-60-million-barrels-of-russian-oil-for-april" target="_blank" rel="noopener">India Has Bought 60 Million Barrels of Russian Oil for April</a> — Bloomberg on Indian oil purchases</li>
-</ul>
 <h4 id="4-fire-at-russias-ust-luga-oil-port-after-drone-attack">4) Fire at Russia’s Ust-Luga Oil Port after drone attack</h4>
 <p><strong>What happened (neutral):</strong> A fire broke out at Russia’s Ust-Luga port on the Baltic Sea after a drone attack. Local authorities reported that 56 drones were destroyed over the Leningrad region. The incident is the latest strike on Russian oil export infrastructure.</p>
 <p><strong>Perspectives:</strong> Bloomberg reports the fire and the interception of drones, placing it in the context of repeated attacks on Russian energy facilities. The coverage focuses on the operational impact rather than assigning responsibility.</p>
@@ -1305,10 +1346,6 @@
 <li>How do such incidents affect overall market sentiment beyond immediate supply?</li>
 <li>What defensive measures have countries taken in response to similar threats?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-03-25/fire-at-russia-s-ust-luga-oil-port-on-baltic-after-drone-attack" target="_blank" rel="noopener">Fire at Russia’s Ust-Luga Oil Port on Baltic After Drone Attack</a> — Bloomberg on the incident</li>
-</ul>
 <h4 id="5-australia-and-philippines-respond-to-fuel-crisis-caused-by-iran-war">5) Australia and Philippines respond to fuel crisis caused by Iran war</h4>
 <p><strong>What happened (neutral):</strong> Multiple countries are taking emergency measures in response to energy supply threats stemming from the Iran war. The Philippines declared a national energy emergency and is increasing coal use. Australia is investing in aluminium smelter viability and renewable grid development while holding further national cabinet meetings on the fuel crisis.</p>
 <p><strong>Perspectives:</strong> Guardian coverage shows how the distant conflict is forcing concrete policy responses in Asia and Oceania, ranging from emergency declarations to large infrastructure investments. These stories illustrate the global ripple effects of Middle East instability on everyday energy costs and industrial policy.</p>
@@ -1318,11 +1355,6 @@
 <li>How do different countries choose between short-term fixes and long-term solutions?</li>
 <li>What common challenges are governments facing in explaining these measures to citizens?</li>
 <li>How might these responses affect future energy independence goals?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/mar/25/philippines-declares-national-energy-emergency-iran-war" target="_blank" rel="noopener">Philippines declares ‘national energy emergency’ and boosts coal power as Iran war grinds on</a> — Guardian on Philippines measures</li>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/mar/25/politics-federal-queensland-nsw-parliament-tony-burke-jim-chalmers-middle-east-fuel-crisis-ntwnfb" target="_blank" rel="noopener">Australia news live: Chalmers says Treasury fuel price modelling looks ‘pretty conservative now’</a> — Guardian on Australian response</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-mystery-traders-profit-from-timing-before-trumps-peace-post">1) Mystery traders profit from timing before Trump’s peace post</h4>
@@ -1335,10 +1367,6 @@
 <li>What oversight mechanisms exist for unusual trading patterns before major news?</li>
 <li>How common are such rapid profit events during geopolitical developments?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/money/markets/article-15675763/So-whos-cashing-Trumps-war-Mystery-traders-millions-just-minutes-peace-hopes-post.html" target="_blank" rel="noopener">So who's cashing in from Trump's war? Mystery traders who made millions in just minutes before 'peace hopes' post</a> — Mail Online on trading activity</li>
-</ul>
 <h4 id="2-hsbc-sees-explosion-of-demand-for-life-solutions-and-insurance">2) HSBC sees ‘explosion’ of demand for life solutions and insurance</h4>
 <p><strong>What happened (neutral):</strong> HSBC’s Insurance CEO reported seeing significant “new money” coming in as clients look to de-risk. The bank is observing strong demand for life solutions products. Discussions also covered HSBC insurance’s exposure to private credit.</p>
 <p><strong>Perspectives:</strong> Bloomberg reports the increased client interest in insurance and de-risking products amid current global uncertainties. The story reflects broader financial industry observations about shifting client priorities during periods of geopolitical tension.</p>
@@ -1349,13 +1377,100 @@
 <li>What does “new money” entering these products suggest about investor sentiment?</li>
 <li>How might this demand shift affect broader financial markets?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-03-25/hsbc-see-explosion-of-demand-for-life-solutions-video" target="_blank" rel="noopener">HSBC: See 'Explosion' of Demand for Life Solutions</a> — Bloomberg interview with HSBC executive</li>
-</ul>
-<p>###</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-03-25/what-we-know-about-trump-s-15-point-plan-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/mar/25/middle-east-crisis-live-iran-war-oil-prices-more-us-troops-reportedly-deployed-donald-trump-attacks-on-lebanon" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15675749/trump-iran-nukes-peace-push-jd-vance-marco-rubio.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.npr.org/2026/03/25/g-s1-115053/rubio-plans-travel-to-france-to-sell-iran-war-to-skeptical-g7-allies" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15676423/Saudi-Arabia-Trump-Iran-war-Middle-East-UAE-Tehran.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/25/asia-markets-today-nikkei-225-kospi-hang-seng-index.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c995xp4jxj2o" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/economy/2026/3/25/from-pakistan-to-egypt-iran-war-drives-up-fuel-prices-in-the-global-south" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/features/2026/3/25/amid-us-israeli-attacks-people-in-iran-struggle-to-survive-ailing-economy" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/mar/25/philippines-declares-national-energy-emergency-iran-war" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/live/2026/mar/25/politics-federal-queensland-nsw-parliament-tony-burke-jim-chalmers-middle-east-fuel-crisis-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/mar/24/middle-east-violence-trump-claims-very-good-talks-iran" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/mar/25/no-israel-prosecutions-for-killing-palestinian-civilians-in-occupied-west-bank-since-start-of-decade" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-03-25/india-has-bought-60-million-barrels-of-russian-oil-for-april" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-03-25/fire-at-russia-s-ust-luga-oil-port-on-baltic-after-drone-attack" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/money/markets/article-15675763/So-whos-cashing-Trumps-war-Mystery-traders-millions-just-minutes-peace-hopes-post.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-03-25/hsbc-see-explosion-of-demand-for-life-solutions-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1762,10 +1877,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

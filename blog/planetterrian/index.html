@@ -121,6 +121,25 @@
             background: color-mix(in srgb, var(--show-color) 20%, transparent);
             border-color: var(--show-color);
         }
+        /* Multilingual availability badges (June 2026) */
+        .blog-idx-langs {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin: var(--sp-2) 0 var(--sp-1);
+            color: var(--nn-text-muted);
+        }
+        .blog-idx-langs .lang-badge {
+            font-family: var(--font-ui);
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            padding: 1px 7px;
+            border-radius: 100px;
+            border: 1px solid color-mix(in srgb, var(--show-color) 35%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            background: color-mix(in srgb, var(--show-color) 10%, transparent);
+        }
     </style>
 
 
@@ -172,6 +191,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -516,6 +559,24 @@
     
     <div class="blog-idx-grid">
         
+        <a href="ep091.html" class="blog-idx-card">
+            <div class="blog-idx-card-top">
+                <span class="blog-idx-date">June 16, 2026</span>
+                <span class="blog-idx-ep">Ep 91</span>
+                <span class="blog-idx-reading">5 min</span>
+            </div>
+            <h2>Models indicate a moon-sized impactor set Venus spinning retrograde within its first 50 million year…</h2>
+            
+            <p>Models indicate a moon-sized impactor set Venus spinning retrograde within its first 50 million years.</p>
+            
+            <span class="blog-idx-langs" aria-label="Also available in other languages">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <span class="lang-badge">FR</span><span class="lang-badge">RU</span><span class="lang-badge">ES</span><span class="lang-badge">中文</span>
+            </span>
+            
+            <span class="blog-idx-read-more">Read article &rarr;</span>
+        </a>
+        
         <a href="ep090.html" class="blog-idx-card">
             <div class="blog-idx-card-top">
                 <span class="blog-idx-date">June 15, 2026</span>
@@ -525,6 +586,7 @@
             <h2>Underground fungal networks span 110 quadrillion kilometers and move 4 billion tons of carbon dioxid…</h2>
             
             <p>Underground fungal networks span 110 quadrillion kilometers and move 4 billion tons of carbon dioxide into soils each year.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -539,6 +601,7 @@
             
             <p>Hey, welcome to Planetterrian Daily, episode 89. Today is June 14, 2026. Let's get into today's research and health developments.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -551,6 +614,7 @@
             <h2>Physical books supply spatial cues that improve recall of story details compared with tablets</h2>
             
             <p>Physical books supply spatial cues that improve recall of story details compared with tablets.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -565,6 +629,7 @@
             
             <p>Electric fish research reveals a single brain hub that times sensory predictions during self-generated actions.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -577,6 +642,7 @@
             <h2>Higher vitamin C levels track with larger gray matter volume and stronger brain network connectivity…</h2>
             
             <p>Higher vitamin C levels track with larger gray matter volume and stronger brain network connectivity in adults over 64.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -591,6 +657,7 @@
             
             <p>AI analysis of normal mammograms can flag elevated breast cancer risk up to a decade before diagnosis.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -603,6 +670,7 @@
             <h2>A genomic analysis shows koalas suffered a sharp population decline 100,000 years ago, long before h…</h2>
             
             <p>A genomic analysis shows koalas suffered a sharp population decline 100,000 years ago, long before humans arrived.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -617,6 +685,7 @@
             
             <p>Acetylcholine surges in the brain when expected rewards fail, prompting mice to switch strategies in a virtual maze.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -629,6 +698,7 @@
             <h2>Looking back at 7 episodes from 2026-06-01 to 2026-06-07 — the stories that mattered, what we learne…</h2>
             
             <p>Looking back at 7 episodes from 2026-06-01 to 2026-06-07 — the stories that mattered, what we learned, and what to watch next.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -643,6 +713,7 @@
             
             <p>Strength training shows a clear upper limit of benefit at 120 minutes weekly for lowering mortality risk.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -655,6 +726,7 @@
             <h2>Brains from people aged 80–100 reveal how microglia shift from protective to destructive states in A…</h2>
             
             <p>Brains from people aged 80–100 reveal how microglia shift from protective to destructive states in Alzheimer's.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -669,6 +741,7 @@
             
             <p>Physical fitness correlates with brain health in young adults, with effects varying by sex.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -681,6 +754,7 @@
             <h2>Childhood flu vaccine analysis shows 9 to 14 fewer influenza cases per 100 children aged 2 to 5</h2>
             
             <p>Childhood flu vaccine analysis shows 9 to 14 fewer influenza cases per 100 children aged 2 to 5.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -695,6 +769,7 @@
             
             <p>Engineered hookworms can now produce and deliver therapeutics inside a living host.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -707,6 +782,7 @@
             <h2>Smartphone cameras can now measure resting heart rate passively across skin tones using facial video…</h2>
             
             <p>Smartphone cameras can now measure resting heart rate passively across skin tones using facial video alone.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -721,6 +797,7 @@
             
             <p>AI analysis of CT scans links healthier thymuses to longer lifespans and lower disease risk in adults.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -733,6 +810,7 @@
             <h2>Looking back at 5 episodes from 2026-05-25 to 2026-05-31 — the stories that mattered, what we learne…</h2>
             
             <p>Looking back at 5 episodes from 2026-05-25 to 2026-05-31 — the stories that mattered, what we learned, and what to watch next.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -747,6 +825,7 @@
             
             <p>UK data show air pollution directly slows lung growth in children.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -759,6 +838,7 @@
             <h2>Stem cell patches restored heart function in 12 of 20 patients with severe heart failure</h2>
             
             <p>Stem cell patches restored heart function in 12 of 20 patients with severe heart failure.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -773,6 +853,7 @@
             
             <p>Older adults allocate extra cortical resources to balance as sensory and motor signals slow with age.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -785,6 +866,7 @@
             <h2>Satellites have measured sulfur dioxide released by refinery fires in Tehran</h2>
             
             <p>Satellites have measured sulfur dioxide released by refinery fires in Tehran.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -799,6 +881,7 @@
             
             <p>A liver protein called HELZ2 shuts down production of the cholesterol carrier apoB.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -811,6 +894,7 @@
             <h2>Looking back at 3 episodes from 2026-05-18 to 2026-05-24 — the stories that mattered, what we learne…</h2>
             
             <p>Looking back at 3 episodes from 2026-05-18 to 2026-05-24 — the stories that mattered, what we learned, and what to watch next.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -825,6 +909,7 @@
             
             <p>Ordinary WiFi signals can identify people with near-perfect accuracy even when phones are off.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -837,6 +922,7 @@
             <h2>A new review details how sleep physiology influences dementia risk through glymphatic clearance and…</h2>
             
             <p>A new review details how sleep physiology influences dementia risk through glymphatic clearance and vascular dynamics.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -851,6 +937,7 @@
             
             <p>Sunlight alone can now generate quantum photon pairs for high-quality ghost imaging.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -863,6 +950,7 @@
             <h2>Looking back at 4 episodes from 2026-05-11 to 2026-05-17 — the stories that mattered, what we learne…</h2>
             
             <p>Looking back at 4 episodes from 2026-05-11 to 2026-05-17 — the stories that mattered, what we learned, and what to watch next.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -877,6 +965,7 @@
             
             <p>Ancient tree rings have preserved evidence of a massive solar storm 800 years ago that produced red auroras across the sky.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -889,6 +978,7 @@
             <h2>Researchers decoded the two enzymes plants use to build mitraphylline, a rare twisted molecule with…</h2>
             
             <p>Researchers decoded the two enzymes plants use to build mitraphylline, a rare twisted molecule with anti-cancer properties.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -903,6 +993,7 @@
             
             <p>Fossils long interpreted as early animal trails are now recognized as preserved bacterial and algal communities.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -915,6 +1006,7 @@
             <h2>Over 1000 genetic switches function differently in female immune cells, helping explain women's high…</h2>
             
             <p>Over 1000 genetic switches function differently in female immune cells, helping explain women's higher rates of autoimmune disease.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -929,6 +1021,7 @@
             
             <p>A neural brake on scratching has been found that prevents over-scratching once itch relief begins.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -941,6 +1034,7 @@
             <h2>Researchers identified a shared set of genes that enable limb regrowth in salamanders, fish, and mic…</h2>
             
             <p>Researchers identified a shared set of genes that enable limb regrowth in salamanders, fish, and mice.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -955,6 +1049,7 @@
             
             <p>Macrophage volume shifts trigger immune danger signals in new cell biology findings.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -967,6 +1062,7 @@
             <h2>A single 25 mg dose of psilocybin produced measurable brain structural changes in healthy adults tha…</h2>
             
             <p>A single 25 mg dose of psilocybin produced measurable brain structural changes in healthy adults that persisted for at least one month.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -981,6 +1077,7 @@
             
             <p>Centenarians maintain immune systems far less prone to chronic inflammation than typical older adults.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -993,6 +1090,7 @@
             <h2>Planetterrian Daily — Ep 54</h2>
             
             <p>Researchers have identified a blood-based DNA marker that tracks arsenic exposure and may predict toxicity risks for those affected by contaminated water.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1007,6 +1105,7 @@
             
             <p>A blood test for p-tau217 can predict Alzheimer's risk years before any symptoms appear.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1019,6 +1118,7 @@
             <h2>A blood test using AI models is showing early promise for monitoring a rare childhood bone and soft…</h2>
             
             <p>A blood test using AI models is showing early promise for monitoring a rare childhood bone and soft tissue cancer.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1033,6 +1133,7 @@
             
             <p>Mixing workout types over decades lowers mortality risk more effectively than repeating the same activity.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1045,6 +1146,7 @@
             <h2>Higher education levels strongly predict longer lifespans across global populations, even where heal…</h2>
             
             <p>Higher education levels strongly predict longer lifespans across global populations, even where health records are incomplete.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1059,6 +1161,7 @@
             
             <p>Supplementing a specific polyunsaturated fatty acid restored visual function and reversed cellular aging signs in the retinas of older mice.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1071,6 +1174,7 @@
             <h2>California hybrid honeybees resist Varroa mites from the larval stage, carrying far fewer parasites…</h2>
             
             <p>California hybrid honeybees resist Varroa mites from the larval stage, carrying far fewer parasites without heavy chemical use.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1085,6 +1189,7 @@
             
             <p>Protein engineers created over 10 million data points in three days, dramatically accelerating AI-guided design of custom molecules.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1097,6 +1202,7 @@
             <h2>Ideaya’s eye cancer drug met its phase 2/3 primary endpoint, clearing a path to ...</h2>
             
             <p>Ideaya’s eye cancer drug met its phase 2/3 primary endpoint, clearing a path to accelerated FDA filing later this year.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1111,6 +1217,7 @@
             
             <p>A single CAR-T cell therapy has driven three distinct autoimmune diseases into remission in one patient for the first time.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1123,6 +1230,7 @@
             <h2>Marine heat waves are now measurably supercharging global hurricane damage according to a major new…</h2>
             
             <p>Marine heat waves are now measurably supercharging global hurricane damage according to a major new study.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1137,6 +1245,7 @@
             
             <p>New genetic markers now identify seedless self-pollinating muscadine grapes years before fruit appears, accelerating breeding of better varieties.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1149,6 +1258,7 @@
             <h2>A new high-temperature memory chip keeps functioning at 700°C, potentially transforming electronics…</h2>
             
             <p>A new high-temperature memory chip keeps functioning at 700°C, potentially transforming electronics and AI in extreme environments.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1163,6 +1273,7 @@
             
             <p>Sugarcane-derived protein creates artificial saliva that shields teeth from acid far better than current options, especially when combined with fluoride.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1175,6 +1286,7 @@
             <h2>New research shows BMI misclassifies more than one third of adults when compared to precise DXA body…</h2>
             
             <p>New research shows BMI misclassifies more than one third of adults when compared to precise DXA body-fat scans.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1189,6 +1301,7 @@
             
             <p>Squid genomes reveal they retreated to deep-sea oxygen refuges over 100 million years ago to survive Earth's largest extinction.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1201,6 +1314,7 @@
             <h2>Deep sleep activates a brain-driven feedback loop that releases growth hormone to build muscle, burn…</h2>
             
             <p>Deep sleep activates a brain-driven feedback loop that releases growth hormone to build muscle, burn fat, and sharpen cognition.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1215,6 +1329,7 @@
             
             <p>Supercomputer simulations have mapped the full motions of the spliceosome inside a two-million-atom model of the human cell.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1227,6 +1342,7 @@
             <h2>Excess belly fat combined with low muscle mass raises death risk by 83% through ...</h2>
             
             <p>Excess belly fat combined with low muscle mass raises death risk by 83% through accelerated inflammation and muscle loss.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1241,6 +1357,7 @@
             
             <p>Light-activated nanoparticles trigger copper overload to kill cancer cells 100 times more effectively than existing chemotherapy.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1253,6 +1370,7 @@
             <h2>Engineered probiotic bacteria infiltrated tumors in mice and produced cancer drugs on site, potentia…</h2>
             
             <p>Engineered probiotic bacteria infiltrated tumors in mice and produced cancer drugs on site, potentially improving precision while cutting side effects.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1267,6 +1385,7 @@
             
             <p>South African raptors have declined sharply over 16 years, with half the studied species dropping more than 50%.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1279,6 +1398,7 @@
             <h2>Ravens in Yellowstone navigate directly to likely wolf kill sites using memorized landscape patterns…</h2>
             
             <p>Ravens in Yellowstone navigate directly to likely wolf kill sites using memorized landscape patterns rather than following the predators.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1293,6 +1413,7 @@
             
             <p>Scientists uncovered evidence of ancient underground water on Mars that may have sustained microbial life longer than expected.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1305,6 +1426,7 @@
             <h2>Researchers found that combining two colon polyp types raises bowel cancer risk up to fivefold</h2>
             
             <p>Researchers found that combining two colon polyp types raises bowel cancer risk up to fivefold.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1319,6 +1441,7 @@
             
             <p>European trial finds sulthiame drug cuts sleep apnea breathing pauses by up to 47%, improving oxygen levels.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1331,6 +1454,7 @@
             <h2>Mayo Clinic identified a rare MET gene mutation directly causing fatty liver disease without common…</h2>
             
             <p>Mayo Clinic identified a rare MET gene mutation directly causing fatty liver disease without common risk factors.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1345,6 +1469,7 @@
             
             <p>Phase 1 trial uses base editing to safely lower LDL cholesterol in familial hypercholesterolemia patients.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1357,6 +1482,7 @@
             <h2>A massive cellular atlas of 7 million cells shows aging begins earlier and coordinates across 21 org…</h2>
             
             <p>A massive cellular atlas of 7 million cells shows aging begins earlier and coordinates across 21 organs.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1371,6 +1497,7 @@
             
             <p>Infusing stem cells from young donors reduced frailty in older people, boosting their strength and mobility.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1383,6 +1510,7 @@
             <h2>Shingles vaccine may slow biological aging and reduce inflammation</h2>
             
             <p>Shingles vaccine may slow biological aging and reduce inflammation.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1587,5 +1715,6 @@
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

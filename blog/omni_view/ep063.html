@@ -107,7 +107,12 @@
       "url": "https://nerranetwork.com/omni-view.html"
     },
     "image": "https://nerranetwork.com/assets/covers/omni-view.jpg",
-    "transcript": "https://nerranetwork.com/blog/omni_view/ep063.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/omni_view/ep063.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://audio.nerranetwork.com/omni_view/Omni_View_Ep063_20260528.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -708,6 +713,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +818,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1181,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>US core inflation rose to 3.3% in April while consumer spending edged higher, shaping expectations f… — Episode 63</h1>
+            <h1><span class="nn-i18n-title">US core inflation rose to 3.3% in April while consumer spending edged higher, shaping expectations f…</span> — Episode 63</h1>
             
             <p class="blog-hero-hook">US core inflation rose to 3.3% in April while consumer spending edged higher, shaping expectations for interest-rate decisions that affect household costs nationwide.</p>
             
@@ -1129,6 +1212,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1214,10 +1300,6 @@
 <li>How might this affect similar civil cases involving public officials?</li>
 <li>What safeguards exist for accusers when funding sources face examination?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/clyp77jd407o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Details on the reported criminal investigation</li>
-</ul>
 <h4 id="2-core-inflation-hit-an-annual-rate-of-33-in-april-as-expected-feds-preferred-gauge-shows">2) Core inflation hit an annual rate of 3.3% in April, as expected, Fed’s preferred gauge shows</h4>
 <p><strong>What happened (neutral):</strong> The Personal Consumption Expenditures price index rose at the anticipated pace, with the core measure excluding food and energy reaching 3.3% year-over-year. Overall inflation came in at 3.8%. The figures align with forecasts released ahead of the data.</p>
 <p><strong>Perspectives:</strong> Analysts following Federal Reserve communications see the reading as consistent with a gradual cooling path, while others note that energy price pressures remain visible in the broader index. Policymakers have previously signaled they watch core trends closely when weighing rate adjustments. The data release itself does not alter prior guidance but supplies one more datapoint for ongoing assessments.</p>
@@ -1226,10 +1308,6 @@
 <li>Which components within the index moved most from the prior month?</li>
 <li>How do markets typically adjust rate expectations after such releases?</li>
 <li>What additional data would shift the current outlook?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/28/core-inflation-hit-an-annual-rate-of-3point3percent-in-april-as-expected-feds-preferred-gauge-shows-.html" target="_blank" rel="noopener">CNBC</a> — Full PCE breakdown and expectations</li>
 </ul>
 <h4 id="3-us-consumer-spending-increases-as-inflation-accelerates">3) US Consumer Spending Increases as Inflation Accelerates</h4>
 <p><strong>What happened (neutral):</strong> Consumer spending rose modestly in April after inflation adjustment, posting a 0.1% gain. Energy price increases contributed to the higher annual inflation reading. The combination points to resilient household outlays alongside price pressures.</p>
@@ -1240,10 +1318,6 @@
 <li>How might continued energy price moves affect future months?</li>
 <li>What signals would indicate a shift in household behavior?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-05-28/us-consumer-spending-increases-as-inflation-accelerates-video" target="_blank" rel="noopener">Bloomberg</a> — Video analysis of the spending and inflation figures</li>
-</ul>
 <h4 id="4-russia-on-the-back-foot-with-dynamics-of-war-shifting-in-ukraines-favour-eu-says">4) Russia on the back foot with dynamics of war shifting in Ukraine’s favour, EU says</h4>
 <p><strong>What happened (neutral):</strong> The EU’s chief diplomat stated that Russia faces mounting challenges on military, economic, and diplomatic fronts in the Ukraine conflict. The assessment comes amid ongoing talks and battlefield developments. No specific timeline for changes was provided.</p>
 <p><strong>Perspectives:</strong> European officials frame the situation as one where pressure on Russia is increasing across multiple fronts, potentially opening space for negotiations. Russian statements continue to emphasize resolve and reject external characterizations of weakness. Observers note that battlefield realities and sanctions effects form the factual basis, while interpretations differ on how quickly or decisively any shift will materialize.</p>
@@ -1253,10 +1327,6 @@
 <li>How have similar diplomatic statements aligned with later developments?</li>
 <li>Which factors could alter the current momentum?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/may/28/europe-russia-ukraine-talks-heatwave-kaja-kallas-putin-latest-news-updates" target="_blank" rel="noopener">The Guardian</a> — Live updates on EU remarks and related talks</li>
-</ul>
 <h4 id="5-iran-turns-internet-back-on-but-old-restrictions-remain">5) Iran turns internet back on, but old restrictions remain</h4>
 <p><strong>What happened (neutral):</strong> Iran restored internet access after an 88-day nationwide blockade. Connections to the outside world remain limited by longstanding filters and controls. The blackout period produced documented economic and social disruptions.</p>
 <p><strong>Perspectives:</strong> Iranian authorities present the restoration as a return to normal operations under existing rules. International observers and domestic users report that pre-blockade restrictions continue to constrain information flow and business activity. Both accounts agree the blackout has ended; they differ on the practical extent of restored connectivity.</p>
@@ -1265,10 +1335,6 @@
 <li>Which sectors reported the largest economic losses during the outage?</li>
 <li>How do remaining filters compare to practices in other countries?</li>
 <li>What verification methods exist for assessing current access levels?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/iran-turns-internet-back-on-but-old-restrictions-remain/a-77331981?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — Report on connectivity status and lingering limits</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-eu-chief-says-russia-must-remove-troops-from-moldova-and-georgia">1) EU Chief Says Russia Must Remove Troops From Moldova and Georgia</h4>
@@ -1280,10 +1346,6 @@
 <li>How have similar demands been received in past negotiations?</li>
 <li>Which regional actors would need to agree for implementation?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.reddit.com/r/worldnews/comments/1tq31hc/eu_chief_says_russia_must_remove_troops_from/" target="_blank" rel="noopener">Reddit /r/worldnews</a> — Summary of the EU position</li>
-</ul>
 <h4 id="2-finish-the-job-in-iran">2) Finish the Job in Iran?</h4>
 <p><strong>What happened (neutral):</strong> Discussion continues over whether additional U.S. military action in Iran would be worthwhile. Officials note that cost assessments always factor into presidential decisions on further force. No new operations were announced.</p>
 <p><strong>Perspectives:</strong> Some analysts weigh the potential benefits of decisive action against risks of escalation and resource commitment. Others emphasize diplomatic channels and the uncertain outcomes of expanded involvement. The shared starting point is that any decision rests on explicit cost-benefit calculations rather than open-ended commitments.</p>
@@ -1292,10 +1354,6 @@
 <li>What metrics define “worth it” in official assessments?</li>
 <li>How have past decisions balanced similar cost questions?</li>
 <li>Which stakeholders influence the final evaluation?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.realclearpolitics.com/2026/05/28/finish_the_job_in_iran_700894.html" target="_blank" rel="noopener">RealClearPolitics</a> — Analysis of the cost considerations</li>
 </ul>
 <h4 id="3-middle-east-crisis-live-iran-says-trumps-threats-to-blow-up-oman-dangerous-and-bullying">3) Middle East crisis live: Iran says Trump’s threats to ‘blow up’ Oman ‘dangerous and bullying’</h4>
 <p><strong>What happened (neutral):</strong> Iranian officials described reported U.S. statements about Oman as provocative. The comments occurred against a backdrop of continued regional tensions and Hezbollah activity. No immediate change in posture was detailed.</p>
@@ -1306,10 +1364,6 @@
 <li>How do regional actors typically respond to such language?</li>
 <li>What verification exists for claims of shifting alliances?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/may/28/middle-east-crisis-trump-us-iran-war-lebanon-israel-strikes-latest-news-live" target="_blank" rel="noopener">The Guardian</a> — Live coverage of the exchange</li>
-</ul>
 <h4 id="4-how-putin-plans-to-target-the-uk-by-disrupting-our-daily-lives">4) How Putin plans to target the UK by disrupting our daily lives</h4>
 <p><strong>What happened (neutral):</strong> Reports outline alleged Russian strategies aimed at interfering with everyday UK infrastructure and routines. The discussion draws on intelligence assessments and public commentary. Specific operational details remain classified or unconfirmed in open sources.</p>
 <p><strong>Perspectives:</strong> UK security voices highlight the need for vigilance against hybrid tactics. Russian representatives dismiss such reports as unfounded. The underlying disagreement concerns the credibility and sourcing of the attributed plans.</p>
@@ -1319,10 +1373,6 @@
 <li>How do similar claims compare to documented past incidents?</li>
 <li>What defensive measures are already in place?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.reddit.com/r/geopolitics/comments/1tq38dz/how_putin_plans_to_target_the_uk_by_disrupting/" target="_blank" rel="noopener">Reddit /r/geopolitics</a> — Thread summarizing the reported approach</li>
-</ul>
 <h4 id="5-true-patriot-white-house-pays-bizarre-tribute-to-harambe-10-years-after-gorillas-death">5) ‘True patriot’: White House pays bizarre tribute to Harambe 10 years after gorilla’s death</h4>
 <p><strong>What happened (neutral):</strong> The White House posted a social media message marking the tenth anniversary of the death of the gorilla Harambe at a Cincinnati zoo. The post referred to the animal as a “true patriot.” The tribute referenced the 2016 incident involving a toddler entering the enclosure.</p>
 <p><strong>Perspectives:</strong> Some readers viewed the post as light-hearted or satirical, while others questioned its appropriateness for an official account. The White House has not issued further clarification. The factual event—the 2016 shooting—is undisputed; reactions center on tone and context.</p>
@@ -1331,10 +1381,6 @@
 <li>What precedent exists for official accounts marking animal-related events?</li>
 <li>How do audiences distinguish between humor and official messaging?</li>
 <li>What standards apply to anniversary posts from government channels?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/2026/may/28/white-house-harambe-tribute" target="_blank" rel="noopener">The Guardian</a> — Account of the post and reactions</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-actis-raises-25-billion-at-energy-funds-first-close">1) Actis Raises $2.5 Billion at Energy Fund’s First Close</h4>
@@ -1346,10 +1392,6 @@
 <li>How does this close compare to prior Actis vehicles?</li>
 <li>What milestones remain before the final target?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-28/actis-raises-2-5-billion-at-energy-fund-s-first-close" target="_blank" rel="noopener">Bloomberg</a> — Fundraising details</li>
-</ul>
 <h4 id="2-best-buy-beats-on-top-and-bottom-lines-as-retailer-aims-to-reinvigorate-sales">2) Best Buy beats on top and bottom lines as retailer aims to reinvigorate sales</h4>
 <p><strong>What happened (neutral):</strong> Best Buy reported earnings above analyst expectations for the quarter. The company continues efforts to reverse a period of softer sales. Management highlighted specific initiatives underway.</p>
 <p><strong>Perspectives:</strong> Retail analysts note the beat as a positive signal amid broader sector challenges. Company statements emphasize operational adjustments rather than immediate recovery. The earnings release supplies the primary data point for evaluating progress.</p>
@@ -1359,10 +1401,6 @@
 <li>What specific steps is the company taking to lift sales?</li>
 <li>How sustainable are the current trends according to management?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/28/best-buy-bby-q1-2027-earnings.html" target="_blank" rel="noopener">CNBC</a> — Earnings summary and outlook</li>
-</ul>
 <h4 id="3-kohls-stock-spikes-more-than-15-as-slumping-retailer-says-sales-trends-are-improving">3) Kohl's stock spikes more than 15% as slumping retailer says sales trends are improving</h4>
 <p><strong>What happened (neutral):</strong> Kohl’s shares rose sharply after the company reported its strongest comparable sales growth in four years. Revenue still declined overall. Investors reacted to the improving trend line.</p>
 <p><strong>Perspectives:</strong> Market participants viewed the sales growth figure as encouraging despite the revenue drop. Company commentary focused on the direction of change rather than absolute levels. The stock movement reflects immediate interpretation of the quarterly update.</p>
@@ -1371,10 +1409,6 @@
 <li>What drove the comparable sales improvement?</li>
 <li>How does the revenue decline compare with prior quarters?</li>
 <li>What additional indicators would confirm a sustained turnaround?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/28/kohls-kss-earnings-q1-2026.html" target="_blank" rel="noopener">CNBC</a> — Details on the earnings and stock reaction</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-irish-datacentres-have-increased-household-bills-by-hundreds-of-euros-report-finds">1) Irish datacentres have increased household bills by hundreds of euros, report finds</h4>
@@ -1386,10 +1420,6 @@
 <li>What efficiency measures are already in use at these facilities?</li>
 <li>Which policy options could alter future cost allocation?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/technology/2026/may/28/irish-datacentres-household-bills-electricity" target="_blank" rel="noopener">The Guardian</a> — Report findings and context</li>
-</ul>
 <h4 id="2-ferrari-ceo-defends-640000-price-tag-for-its-first-fully-electric-car">2) Ferrari CEO defends $640,000 price tag for its first fully electric car</h4>
 <p><strong>What happened (neutral):</strong> Ferrari’s chief executive stated that the $640,000 price for the upcoming Luce model reflects the cost of innovation. The vehicle marks the company’s first fully electric offering. Production and delivery timelines were not detailed in the remarks.</p>
 <p><strong>Perspectives:</strong> The company frames the pricing as justified by advanced technology and brand positioning. Potential buyers and observers weigh the cost against performance expectations and alternatives. The statement provides the manufacturer’s rationale without additional pricing comparisons.</p>
@@ -1399,10 +1429,6 @@
 <li>How does the model compare with other high-end electric vehicles?</li>
 <li>What market response does Ferrari anticipate?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/28/ferrari-ceo-luce-price-electric-car.html" target="_blank" rel="noopener">CNBC</a> — CEO comments on pricing</li>
-</ul>
 <h4 id="3-us-funding-markets-are-flooded-with-cash-thats-here-to-stay">3) US Funding Markets Are Flooded With Cash That’s Here to Stay</h4>
 <p><strong>What happened (neutral):</strong> Strategists attribute abundant cash in U.S. funding markets to structural shifts that increase balance-sheet capacity at major banks. The liquidity appears durable rather than temporary. No immediate policy changes were tied to the observation.</p>
 <p><strong>Perspectives:</strong> Market analysts describe the cash levels as a new baseline driven by regulatory and operational changes. Banks benefit from greater flexibility in deploying resources. The assessment rests on observed funding patterns rather than short-term fluctuations.</p>
@@ -1411,10 +1437,6 @@
 <li>Which regulatory changes contributed to the increased capacity?</li>
 <li>How might sustained liquidity affect lending or investment decisions?</li>
 <li>What indicators would signal a reversal of the current abundance?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-28/us-funding-markets-are-flooded-with-cash-that-s-here-to-stay" target="_blank" rel="noopener">Bloomberg</a> — Analysis of funding market conditions</li>
 </ul>
 <h3 id="top-popular-media-stories-3">Top popular media stories (3)</h3>
 <h4 id="1-self-help-tiktok-influencer-bill-hooper-reported-missing-as-parents-fear-he-was-overwhelmed-by-social-media">1) Self-help TikTok influencer Bill Hooper reported missing as parents fear he was 'overwhelmed' by social media</h4>
@@ -1426,10 +1448,6 @@
 <li>How common are similar reports among social media creators?</li>
 <li>What resources exist for individuals experiencing platform-related stress?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/lifestyle/article-15855407/self-help-tiktok-influencer-bill-hooper-missing-parents-social-media.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Family account and timeline</li>
-</ul>
 <h4 id="2-dont-get-a-whippet-as-celebs-new-favourite-breed-soars-up-the-popularity-charts-experts-warn-the-anxious-high-energy-dogs-are-not-for-everyone">2) Don't get a whippet! As celebs' new favourite breed soars up the popularity charts, experts warn the anxious, high-energy dogs are not for everyone</h4>
 <p><strong>What happened (neutral):</strong> Whippets have risen sharply in popularity in the UK, with celebrity owners including Gemma Collins and Kit Harington. Experts caution that the breed’s high energy and anxiety traits require experienced handling. The trend follows increased visibility in media and social channels.</p>
 <p><strong>Perspectives:</strong> Breed enthusiasts highlight the dogs’ affectionate nature and suitability for active homes. Trainers and rescue organizations stress the importance of matching the breed’s needs to owner lifestyles. The popularity data itself is undisputed; advice centers on preparation rather than discouragement.</p>
@@ -1439,10 +1457,6 @@
 <li>How have adoption or purchase numbers changed in recent years?</li>
 <li>What preparation steps do experts recommend before acquiring one?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15855361/Dont-whippet-celebs-new-favourite-breed-soars-popularity-charts-experts-warn-anxious-high-energy-dogs-not-everyone.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Expert warnings and trend details</li>
-</ul>
 <h4 id="3-richard-madeley-is-kicked-out-of-el-salvadors-mega-jail-after-challenging-guards-over-brutal-conditions">3) Richard Madeley is kicked out of El Salvador's mega jail after challenging guards over brutal conditions</h4>
 <p><strong>What happened (neutral):</strong> The television presenter was removed from a Salvadoran prison facility during filming after questioning guards about conditions. He encountered an inmate known as “Psycho” during the visit. The documentary segment lasted approximately 15 minutes before the crew was asked to leave.</p>
 <p><strong>Perspectives:</strong> The presenter described the experience as revealing harsh realities inside the facility. Prison authorities maintain strict control over access and filming. The account provides one observer’s perspective on the environment without independent verification of all details.</p>
@@ -1451,10 +1465,6 @@
 <li>What access protocols govern media visits to the facility?</li>
 <li>How do official descriptions of conditions compare with visitor accounts?</li>
 <li>What safety considerations apply to such reporting?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15853607/Hapless-Richard-Madeley-kicked-El-Salvadors-mega-jail-15-minutes-new-prison-documentary.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Description of the visit</li>
 </ul>
 <h3 id="top-gossip-stories-3">Top gossip stories (3)</h3>
 <h4 id="1-the-selfish-sunseekers-sparking-outrage-across-heatwave-britain">1) The 'selfish' sunseekers sparking outrage across heatwave Britain</h4>
@@ -1466,10 +1476,6 @@
 <li>How have similar heatwave behaviors been managed in past years?</li>
 <li>What enforcement options are available to local councils?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15854977/The-selfish-sunseekers-sparking-outrage-heatwave-britain-crowds-ignore-swim-bans-wildlife-pond-turned-beach-club-illegal-parking-causes-traffic-gridlock.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Examples of reported incidents</li>
-</ul>
 <h4 id="2-poundland-founder-struggled-for-years-to-sell-his-13-bedroom-mansion">2) Poundland founder struggled for years to sell his 13-bedroom mansion</h4>
 <p><strong>What happened (neutral):</strong> The former owners of the Worcestershire property originally purchased in 2004 for £2.2 million have faced prolonged difficulty finding buyers. The new owners have now reduced the asking price again. No sale has been reported.</p>
 <p><strong>Perspectives:</strong> Property market observers note that large rural estates can take extended periods to sell depending on location and condition. The repeated price adjustments reflect ongoing efforts to attract interest. The history of ownership and pricing changes forms the factual record.</p>
@@ -1478,10 +1484,6 @@
 <li>What features of the property may affect buyer interest?</li>
 <li>How do current market conditions compare with 2004?</li>
 <li>What typical timelines apply to similar high-value homes?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/property/article-15855105/Poundland-struggled-sell-13-bedroom-mansion-price.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Property history and pricing updates</li>
 </ul>
 <h4 id="3-pub-landlords-plans-to-run-funfair-in-garden-sparks-row-as-neighbours-claim-eyesore-will-cause-parking-chaos">3) Pub landlord's plans to run funfair in garden sparks row as neighbours claim 'eyesore' will cause parking chaos</h4>
 <p><strong>What happened (neutral):</strong> A Surrey couple installed bouncy castles and paddling pools at their pub, prompting neighbor complaints about visual impact and parking. The installations have been described by some residents as turning the village into a “circus.” No formal planning decision has been reported.</p>
@@ -1492,16 +1494,129 @@
 <li>How have similar disputes been resolved in other villages?</li>
 <li>What mediation options exist for residents and business owners?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15855069/Pub-landlords-funfair-garden-row-neighbours.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Neighbor and owner accounts</li>
-</ul>
 <h3 id="understanding-the-issue-how-core-inflation-data-shapes-central-bank-decisions">Understanding the Issue: How Core Inflation Data Shapes Central Bank Decisions</h3>
 <p>Most coverage of inflation reports treats the headline number as a simple signal of rising or falling prices, yet the process behind how central banks convert that number into policy involves several intermediate steps that are often left implicit. The Federal Reserve’s preferred core PCE measure strips out volatile food and energy components to isolate underlying price trends, then feeds those trends into economic models that project future inflation paths under different interest-rate scenarios. Those projections, combined with assessments of employment and financial conditions, inform whether officials lean toward holding rates steady, easing, or tightening. Knowing this, when you hear claims that a single monthly reading “forces” a rate cut or hike, you can evaluate whether the claim accounts for the full set of inputs the Fed actually uses or simply highlights one data point. Next time you see a headline about inflation and policy, ask: which measure is being cited, what other indicators are moving alongside it, and what historical episodes show similar readings producing different outcomes.</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference inflation and spending figures with the original statistical agency releases rather than secondary summaries. Compare multiple outlets’ framing of the same data release to identify which elements each emphasizes. Primary documents such as central bank statements provide the clearest record of how officials themselves interpret incoming numbers.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.bbc.com/news/articles/clyp77jd407o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/05/28/core-inflation-hit-an-annual-rate-of-3point3percent-in-april-as-expected-feds-preferred-gauge-shows-.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-05-28/us-consumer-spending-increases-as-inflation-accelerates-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/may/28/europe-russia-ukraine-talks-heatwave-kaja-kallas-putin-latest-news-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/iran-turns-internet-back-on-but-old-restrictions-remain/a-77331981?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/worldnews/comments/1tq31hc/eu_chief_says_russia_must_remove_troops_from/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.realclearpolitics.com/2026/05/28/finish_the_job_in_iran_700894.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=realclearpolitics.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">realclearpolitics.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/may/28/middle-east-crisis-trump-us-iran-war-lebanon-israel-strikes-latest-news-live" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/geopolitics/comments/1tq38dz/how_putin_plans_to_target_the_uk_by_disrupting/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/2026/may/28/white-house-harambe-tribute" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-28/actis-raises-2-5-billion-at-energy-fund-s-first-close" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/05/28/best-buy-bby-q1-2027-earnings.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/05/28/kohls-kss-earnings-q1-2026.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/technology/2026/may/28/irish-datacentres-household-bills-electricity" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/05/28/ferrari-ceo-luce-price-electric-car.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-28/us-funding-markets-are-flooded-with-cash-that-s-here-to-stay" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/lifestyle/article-15855407/self-help-tiktok-influencer-bill-hooper-missing-parents-social-media.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15855361/Dont-whippet-celebs-new-favourite-breed-soars-popularity-charts-experts-warn-anxious-high-energy-dogs-not-everyone.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15853607/Hapless-Richard-Madeley-kicked-El-Salvadors-mega-jail-15-minutes-new-prison-documentary.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15854977/The-selfish-sunseekers-sparking-outrage-heatwave-britain-crowds-ignore-swim-bans-wildlife-pond-turned-beach-club-illegal-parking-causes-traffic-gridlock.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/property/article-15855105/Poundland-struggled-sell-13-bedroom-mansion-price.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15855069/Pub-landlords-funfair-garden-row-neighbours.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1910,10 +2025,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

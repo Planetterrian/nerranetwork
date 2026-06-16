@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Escalating Iran conflict triggers global energy crisis warnings, market turmoil, and emergency gover… — Episode 21</h1>
+            <h1><span class="nn-i18n-title">Escalating Iran conflict triggers global energy crisis warnings, market turmoil, and emergency gover…</span> — Episode 21</h1>
             
             <p class="blog-hero-hook">Escalating Iran conflict triggers global energy crisis warnings, market turmoil, and emergency government meetings.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1192,13 +1273,6 @@
 <li>How do markets typically respond to geopolitical threats in oil-producing regions?</li>
 <li>What options do governments have to mitigate energy shocks?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/mar/23/iran-war-energy-crisis-1970s-oil-shocks-fatih-birol-iea" target="_blank" rel="noopener">Iran war energy crisis equal to 70s twin oil shocks</a> — IEA chief's assessment</li>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/23/middle-east-crisis-live-iea-chief-says-iran-war-energy-crunch-worse-than-1970s-oil-crises-and-ukraine-war-combined" target="_blank" rel="noopener">Middle East crisis live: Starmer calls emergency meeting</a> — UK government response</li>
-<li><a href="https://www.bbc.com/news/articles/czex56kwxxzo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">Asia stocks slide as US and Iran threaten to escalate war</a> — Market reaction coverage</li>
-<li><a href="https://www.cnbc.com/2026/03/23/iran-war-tensions-build-as-conflict-enters-its-fourth-week.html" target="_blank" rel="noopener">Iran and U.S.-Israel continue to raise the stakes</a> — Latest threats reported</li>
-</ul>
 <h4 id="2-four-ambulances-set-on-fire-in-london-in-suspected-antisemitic-attack">2) Four ambulances set on fire in London in suspected antisemitic attack</h4>
 <p><strong>What happened (neutral):</strong> Four ambulances belonging to a Jewish community ambulance service were set on fire in Golders Green, north London, in the early hours. Police are treating the incident as an antisemitic hate crime and are looking for three suspects. The London Fire Brigade was called to the scene around 1:40-1:45am.</p>
 <p><strong>Perspectives:</strong> Both BBC News and The Guardian report the basic facts of the arson attack on the Jewish volunteer ambulances with no major factual disputes between them. The Guardian frames the story within the context of rising antisemitic incidents, noting the vehicles belonged specifically to the Jewish community ambulance service. BBC News focuses on the police investigation details and the search for suspects. Coverage reflects concerns about community safety and hate crime prevention, with authorities emphasising the seriousness of targeting emergency medical vehicles.</p>
@@ -1208,11 +1282,6 @@
 <li>How do hate crime classifications affect police investigations?</li>
 <li>What security measures exist for community service vehicles?</li>
 <li>How do local communities typically respond to such incidents?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/cwyj1p49gdpo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">Four ambulances set on fire in London in suspected antisemitic hate crime</a> — BBC investigation details</li>
-<li><a href="https://www.theguardian.com/uk-news/2026/mar/23/jewish-volunteer-ambulances-fire-golders-green-suspected-arson-antisemitic-ntwnfb" target="_blank" rel="noopener">Arson attack on London volunteer ambulances being treated as antisemitic hate crime</a> — Guardian community focus</li>
 </ul>
 <h4 id="3-ex-tropical-cyclone-narelle-threatens-rare-crossing-of-australia">3) Ex-Tropical Cyclone Narelle threatens rare crossing of Australia</h4>
 <p><strong>What happened (neutral):</strong> Ex-Tropical Cyclone Narelle has weakened to a tropical low after bringing heavy rain to saturated parts of the Northern Territory. The system is moving westward across the continent and could re-intensify, with Perth a possible target later in the week. Communities in Australia's far north remain on flood alert.</p>
@@ -1224,10 +1293,6 @@
 <li>What coordination is needed between different Australian states during such events?</li>
 <li>How do weather forecasts influence emergency planning?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/mar/23/ex-tropical-cyclone-narelle-northern-territory-perth-western-australia-cross-continent" target="_blank" rel="noopener">Ex-Tropical Cyclone Narelle to intensify with Perth a possible target</a> — Full weather system update</li>
-</ul>
 <h4 id="4-plan-to-scrap-most-short-jail-terms-comes-into-effect">4) Plan to scrap most short jail terms comes into effect</h4>
 <p><strong>What happened (neutral):</strong> A new government policy to eliminate most short prison sentences has taken effect in the UK. The measure aims to reduce pressure on overcrowded prisons. Officials hope it will ease the population crisis in the prison system.</p>
 <p><strong>Perspectives:</strong> BBC News presents the policy as a practical step toward addressing prison overcrowding, focusing on the government's stated goals of managing capacity issues. The coverage reflects ongoing debates about criminal justice priorities, with some emphasising rehabilitation and cost-effectiveness while others may prioritise different approaches to sentencing. The story connects to broader questions about balancing public safety with practical constraints of the justice system.</p>
@@ -1238,10 +1303,6 @@
 <li>What evidence exists regarding effectiveness of short sentences?</li>
 <li>How do different justice philosophies view this change?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/cdxk6dqqp1qo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">Plan to scrap most short jail terms comes into effect</a> — Official policy implementation</li>
-</ul>
 <h4 id="5-air-canada-plane-collides-with-ground-vehicle-at-laguardia">5) Air Canada plane collides with ground vehicle at LaGuardia</h4>
 <p><strong>What happened (neutral):</strong> An Air Canada flight collided with a Port Authority ground vehicle at New York's LaGuardia airport, leading to a complete ground stop for all flights. The incident caused widespread cancellations and delays. Emergency management authorities warned passengers to expect major disruptions.</p>
 <p><strong>Perspectives:</strong> The Guardian reports the collision between the plane and vehicle, noting confirmation from both the New York Police Department and flight tracking sources. Coverage focuses on the immediate operational impact rather than assigning early blame. The story highlights vulnerabilities in airport ground operations and the cascading effects of even minor incidents on busy travel hubs.</p>
@@ -1251,10 +1312,6 @@
 <li>How do single incidents create widespread flight disruptions?</li>
 <li>What investigation processes typically follow such collisions?</li>
 <li>How do airlines and airports communicate with affected passengers?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/2026/mar/23/air-canada-plane-collides-with-ground-vehicle-at-new-yorks-laguardia-airport-halting-all-flights" target="_blank" rel="noopener">Air Canada plane collides with ground vehicle at New York’s LaGuardia airport</a> — Incident and response details</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-paris-elects-socialist-mayor-as-far-right-fails-to-gain-key-cities">1) Paris elects Socialist mayor as far-right fails to gain key cities</h4>
@@ -1267,10 +1324,6 @@
 <li>What does this suggest about French political trends?</li>
 <li>How do different parties approach city governance?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/mar/22/paris-mayoral-race-socialist-emmanuel-gregoire-projected-to-win" target="_blank" rel="noopener">Socialist Emmanuel Grégoire elected Paris mayor</a> — Election outcome analysis</li>
-</ul>
 <h4 id="2-un-warns-earths-heat-trapping-levels-hit-record-in-2025">2) UN warns Earth's heat-trapping levels hit record in 2025</h4>
 <p><strong>What happened (neutral):</strong> The United Nations has reported that Earth's heat-trapping levels reached a record in 2025. The World Meteorological Organisation stated the 11 warmest years on record occurred between 2015 and 2025. The UN warned that warming impacts will persist for thousands of years.</p>
 <p><strong>Perspectives:</strong> Both France 24 and BBC News report the UN's climate findings with similar factual basis. France 24 emphasises the long-term duration of warming effects, while BBC News describes the Earth's climate as "further out of balance than at any time in recorded history." Coverage reflects scientific consensus on temperature trends while noting the challenge of communicating long-term risks to policymakers and the public.</p>
@@ -1280,11 +1333,6 @@
 <li>How do short-term weather events relate to long-term climate trends?</li>
 <li>What does persistence for thousands of years imply for policy?</li>
 <li>How do different nations typically respond to UN climate reports?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/environment/20260323-earth-heat-record-2025-un-warns-warming-thousands-years" target="_blank" rel="noopener">Earth heat hits record in 2025 as UN warns warming will last thousands of years</a> — UN report summary</li>
-<li><a href="https://www.bbc.com/news/articles/c203rdxkezwo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">UN issues new climate warning as El Niño looms</a> — BBC climate coverage</li>
 </ul>
 <h4 id="3-abc-staff-in-australia-to-strike-for-first-time-in-20-years">3) ABC staff in Australia to strike for first time in 20 years</h4>
 <p><strong>What happened (neutral):</strong> Staff at Australia's public broadcaster ABC will strike for 24 hours on Wednesday, the first such action in two decades. The union cites below-inflation pay rises and insecure work as threats to public-interest journalism. The action is expected to cause widespread disruption to news services.</p>
@@ -1296,10 +1344,6 @@
 <li>What alternatives to striking exist in such disputes?</li>
 <li>How might audiences be affected by news service disruption?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/media/2026/mar/23/abc-staff-strike-first-time-20-years" target="_blank" rel="noopener">ABC staff to strike for first time in 20 years</a> — Union and impact details</li>
-</ul>
 <h4 id="4-funding-for-populist-right-media-political-complex-exceeds-170m">4) Funding for populist-right media-political complex exceeds £170m</h4>
 <p><strong>What happened (neutral):</strong> New research by Labour MP Liam Byrne found that over £170m was given to MPs, parties, media organisations and thinktanks aligned with the UK's populist right over five years. The funding reportedly came largely from a handful of billionaires. Byrne described this as a "media-political complex."</p>
 <p><strong>Perspectives:</strong> The Guardian reports on the research findings, framing them as evidence of concentrated influence by specific wealthy donors. The story reflects ongoing debates about political funding transparency and media independence. Coverage connects to questions about how different ideological groups secure financial support and whether current systems adequately address potential influence imbalances.</p>
@@ -1310,10 +1354,6 @@
 <li>How do different political movements typically fund their activities?</li>
 <li>What role should media play in reporting on political funding?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/media/2026/mar/23/funding-for-populist-right-media-political-complex-exceeded-170m-in-five-years-research-finds" target="_blank" rel="noopener">Funding for populist-right ‘media-political complex’ exceeded £170m</a> — Research findings</li>
-</ul>
 <h4 id="5-south-yorkshire-revival-gathers-pace-with-new-industries">5) South Yorkshire revival gathers pace with new industries</h4>
 <p><strong>What happened (neutral):</strong> The Sheffield region in South Yorkshire is seeing economic diversification with new investment in industries ranging from steel to screen production, podcasts, and defence. The area has benefited from success of local productions gaining international recognition. Residents report a tangible sense of positive change.</p>
 <p><strong>Perspectives:</strong> The Guardian presents the story as an example of regional regeneration through industry diversification beyond traditional sectors. Coverage highlights both traditional manufacturing revival and growth in creative industries. The narrative reflects optimism about economic transitions in former industrial heartlands while acknowledging the journey from past decline.</p>
@@ -1323,10 +1363,6 @@
 <li>How do creative industries complement traditional manufacturing?</li>
 <li>What role does local culture play in economic development?</li>
 <li>How sustainable are such revivals in changing economies?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/uk-news/2026/mar/23/you-can-feel-it-south-yorkshire-revival-gathers-pace-as-new-industries-move-in" target="_blank" rel="noopener">‘You can feel it’: South Yorkshire revival gathers pace</a> — Regional development story</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-hs2-contractor-warns-new-steel-tariffs-will-raise-costs">1) HS2 contractor warns new steel tariffs will raise costs</h4>
@@ -1339,10 +1375,6 @@
 <li>What trade-offs exist between protecting industries and controlling project costs?</li>
 <li>How might global events influence domestic construction?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/business/2026/mar/22/hs2-firm-says-new-steel-tariffs-will-exacerbate-cost-pressures-for-uk-construction-industry" target="_blank" rel="noopener">HS2 firm says new steel tariffs will ‘exacerbate’ cost pressures</a> — Contractor warning</li>
-</ul>
 <h4 id="2-private-capital-shifts-from-software-to-heavy-assets">2) Private capital shifts from software to heavy assets</h4>
 <p><strong>What happened (neutral):</strong> Private capital firms are increasingly moving away from software investments toward "heavy assets" as the artificial intelligence boom changes industry priorities. This represents a notable shift in investment strategy within the sector.</p>
 <p><strong>Perspectives:</strong> Bloomberg reports on the changing preferences of private capital, linking the move to the effects of the AI boom. The coverage reflects how technological developments can rapidly reshape investment landscapes and capital allocation decisions. The story connects to broader questions about where future economic value will be created.</p>
@@ -1353,10 +1385,6 @@
 <li>What might drive a shift away from software investments?</li>
 <li>How do such changes eventually affect the wider economy?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-03-23/private-capital-turns-to-heavy-assets-as-software-trade-dims" target="_blank" rel="noopener">Private Capital Turns to Heavy Assets as Software Trade Dims</a> — Investment trend analysis</li>
-</ul>
 <h4 id="3-china-better-positioned-than-peers-for-energy-shock">3) China better positioned than peers for energy shock</h4>
 <p><strong>What happened (neutral):</strong> Goldman Sachs' APAC Ex-Japan President Kevin Sneader stated that China is better equipped than other countries to handle the impact of the Iran war on energy prices.</p>
 <p><strong>Perspectives:</strong> Bloomberg reports Sneader's assessment from the Milken Institute symposium, highlighting differences in how various economies may weather energy market disruptions. The coverage reflects analysis of national economic resilience factors in the face of global commodity shocks.</p>
@@ -1366,10 +1394,6 @@
 <li>How do different economies depend on imported energy?</li>
 <li>What preparation strategies help countries manage price volatility?</li>
 <li>How might this affect global economic relationships?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-03-23/china-insulated-from-energy-shock-goldman-s-sneader-video" target="_blank" rel="noopener">China Insulated From Energy Shock: Goldman's Sneader</a> — Economic analysis</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-samsung-and-sk-hynix-leveraged-etfs-planned-for-may">1) Samsung and SK Hynix leveraged ETFs planned for May</h4>
@@ -1382,15 +1406,113 @@
 <li>What risks are associated with such financial products?</li>
 <li>How does this reflect the importance of the semiconductor industry?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-03-23/samsung-sk-hynix-leveraged-etfs-set-for-may-debut-report-says" target="_blank" rel="noopener">Samsung, SK Hynix Leveraged ETFs Set for May Debut</a> — Product launch details</li>
-</ul>
 <h4 id="2-thailand-sees-major-bond-outflows-amid-regional-tensions">2) Thailand sees major bond outflows amid regional tensions</h4>
 <p><strong>What happened (neutral):</strong> Global funds have sold more than $1 billion of Thai bonds this month, putting the market on track for its largest foreign selloff in four years. The outflows are linked to investors exiting emerging markets due to escalating Middle East tensions.</p>
 <p><strong>Perspectives:</strong> Bloomberg connects the Thai bond market movements to broader investor reactions to geopolitical developments. Coverage reflects how distant conflicts can influence capital flows in unrelated regions through risk sentiment. The story illustrates the interconnected nature of</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.theguardian.com/world/2026/mar/23/iran-war-energy-crisis-1970s-oil-shocks-fatih-birol-iea" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/mar/23/middle-east-crisis-live-iea-chief-says-iran-war-energy-crunch-worse-than-1970s-oil-crises-and-ukraine-war-combined" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/czex56kwxxzo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/23/iran-war-tensions-build-as-conflict-enters-its-fourth-week.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cwyj1p49gdpo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/uk-news/2026/mar/23/jewish-volunteer-ambulances-fire-golders-green-suspected-arson-antisemitic-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/mar/23/ex-tropical-cyclone-narelle-northern-territory-perth-western-australia-cross-continent" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cdxk6dqqp1qo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/2026/mar/23/air-canada-plane-collides-with-ground-vehicle-at-new-yorks-laguardia-airport-halting-all-flights" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/mar/22/paris-mayoral-race-socialist-emmanuel-gregoire-projected-to-win" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/environment/20260323-earth-heat-record-2025-un-warns-warming-thousands-years" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c203rdxkezwo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/media/2026/mar/23/abc-staff-strike-first-time-20-years" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/media/2026/mar/23/funding-for-populist-right-media-political-complex-exceeded-170m-in-five-years-research-finds" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/uk-news/2026/mar/23/you-can-feel-it-south-yorkshire-revival-gathers-pace-as-new-industries-move-in" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/business/2026/mar/22/hs2-firm-says-new-steel-tariffs-will-exacerbate-cost-pressures-for-uk-construction-industry" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-03-23/private-capital-turns-to-heavy-assets-as-software-trade-dims" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-03-23/china-insulated-from-energy-shock-goldman-s-sneader-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-03-23/samsung-sk-hynix-leveraged-etfs-set-for-may-debut-report-says" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1801,10 +1923,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

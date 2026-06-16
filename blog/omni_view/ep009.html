@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>US and Israeli strikes ignite oil depots in Tehran, escalating the Middle East war into its second w… — Episode 9</h1>
+            <h1><span class="nn-i18n-title">US and Israeli strikes ignite oil depots in Tehran, escalating the Middle East war into its second w…</span> — Episode 9</h1>
             
             <p class="blog-hero-hook">US and Israeli strikes ignite oil depots in Tehran, escalating the Middle East war into its second week.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1187,13 +1268,6 @@
 <li>What evidence supports claims of targeting only military sites versus civilian infrastructure?</li>
 <li>Could this lead to direct involvement from other nations?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15625701/Iran-flames-Trump-US-troops-read-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — reports on fires engulfing Iran and US troop readiness</li>
-<li><a href="https://www.france24.com/en/middle-east/20260308-middle-east-war-live-deadly-strike-on-ramada-hotel-in-central-beirut-israel-bombs-iran-oil-facilities" target="_blank" rel="noopener">France 24</a> — covers strikes on Tehran fuel depots amid leadership changes</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15625737/fire-flows-streets-tehran-US-strikes-oil-depots.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — describes apocalyptic scenes of fire in Tehran streets</li>
-<li><a href="https://www.france24.com/en/the-israeli-army-expects-the-phase-of-this-campaign-to-last-another-two-weeks" target="_blank" rel="noopener">France 24</a> — notes Israeli expectations for the campaign to continue two more weeks</li>
-</ul>
 <h4 id="2-iran-selects-new-supreme-leader-amid-ongoing-attacks">2) Iran selects new supreme leader amid ongoing attacks</h4>
 <p><strong>What happened (neutral):</strong> Iran's Assembly of Experts announced a consensus on a successor to the late Supreme Leader Ali Khamenei, based on his prior advice. This development occurs as Israeli forces vow to target anyone involved in the appointment process. Street demonstrations reportedly show support for the Islamic Republic during this transition.</p>
 <p><strong>Perspectives:</strong> Some reports portray the selection as a stabilizing move for Iran, emphasizing public chants of support and distancing it from military influence, while others view it through the lens of external threats, with Israeli warnings seen as an aggressive overreach that could prolong the war. International outlets balance this by noting rejections of US demands for surrender as unrealistic, contrasting with views that frame the new leader as a potential escalation point hated by adversaries. Discussions often intertwine optimism for regime continuity with concerns over how this might fuel further strikes or internal divisions.</p>
@@ -1202,13 +1276,6 @@
 <li>How reliable are reports of public support versus potential coercion?</li>
 <li>What impact could targeting the new leader have on diplomatic efforts?</li>
 <li>Does the selection process indicate shifts in Iran's power structure?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/middle-east/20260308-middle-east-war-live-deadly-strike-on-ramada-hotel-in-central-beirut-israel-bombs-iran-oil-facilities" target="_blank" rel="noopener">France 24</a> — details strikes alongside new supreme leader choice</li>
-<li><a href="https://www.aljazeera.com/video/quotable/2026/3/8/selecting-irans-next-supreme-leader-has-nothing-to-with-the?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — quotes on selection having no IRGC involvement and street support</li>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/08/middle-east-crisis-live-china-warns-world-cannot-return-to-law-of-the-jungle-trump-says-iran-being-decimated" target="_blank" rel="noopener">The Guardian</a> — covers Israeli threats to pursue the next leader</li>
-<li><a href="https://www.aljazeera.com/news/2026/3/8/irans-assembly-of-experts-says-consensus-reached-on-khameneis-successor?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — reports consensus based on late leader's advice for a hated candidate</li>
 </ul>
 <h4 id="3-iranian-strikes-hit-gulf-infrastructure-including-dubai">3) Iranian strikes hit Gulf infrastructure, including Dubai</h4>
 <p><strong>What happened (neutral):</strong> Iranian projectiles continued targeting civilian sites in Bahrain, the UAE, and Kuwait, with a drone attack in Dubai killing one person and setting skyscrapers ablaze. This follows earlier strikes on Dubai's airport. Fires engulfed a tower in Kuwait City amid the broader conflict.</p>
@@ -1219,12 +1286,6 @@
 <li>How might this affect international alliances in the region?</li>
 <li>What verification exists for casualty and damage reports?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/03/08/iranian-projectiles-continue-to-strike-gulf-countries-infrastructure.html" target="_blank" rel="noopener">CNBC</a> — reports ongoing strikes on Bahrain and UAE civilian targets</li>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/08/middle-east-crisis-live-china-warns-world-cannot-return-to-law-of-the-jungle-trump-says-iran-being-decimated" target="_blank" rel="noopener">The Guardian</a> — describes fire in Kuwait tower from Iranian strikes</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15624541/Iran-drone-attack-Dubai-man-killed-skyscrapers-flames-airport-struck.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — details Dubai drone attack killing one and igniting buildings</li>
-</ul>
 <h4 id="4-trump-considers-ground-troops-and-nuclear-site-missions-in-iran">4) Trump considers ground troops and nuclear site missions in Iran</h4>
 <p><strong>What happened (neutral):</strong> US President Trump indicated American ground troops are prepared for deployment in Iran and is weighing operations to seize nuclear stockpiles. This comes amid fears of uranium falling into unintended hands. Iran has rejected demands for unconditional surrender.</p>
 <p><strong>Perspectives:</strong> US-centric reports present Trump's stance as a strong deterrent against nuclear threats, emphasizing the shift from his "peace president" image to aggressive action, while international views criticize it as reckless escalation that ignores diplomatic paths. Some outlets frame the potential missions as essential to prevent catastrophe, contrasting with portrayals of them as overambitious dreams that could prolong the war. Discussions often highlight allied tensions, like UK criticisms of Trump's social media diplomacy, blending support for decisive moves with warnings of broader fallout.</p>
@@ -1234,12 +1295,6 @@
 <li>How accurate are assessments of Iran's nuclear risks?</li>
 <li>Could this strain US alliances further?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15625701/Iran-flames-Trump-US-troops-read-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — covers Trump's pledge to intensify attacks and troop readiness</li>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/08/middle-east-crisis-live-china-warns-world-cannot-return-to-law-of-the-jungle-trump-says-iran-being-decimated" target="_blank" rel="noopener">The Guardian</a> — links to reports on Iran rejecting Trump's surrender demand</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15625619/Trump-Iran-nuclear-sites-mission-war-airstrikes.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — details considerations for nuclear stockpile missions</li>
-</ul>
 <h4 id="5-explosion-at-us-embassy-in-oslo">5) Explosion at US Embassy in Oslo</h4>
 <p><strong>What happened (neutral):</strong> An explosion occurred at the US Embassy in Oslo early in the morning, causing minor material damage but no injuries. The cause remains unknown. Police are investigating the incident.</p>
 <p><strong>Perspectives:</strong> Coverage varies, with some outlets speculating on links to global tensions like the Middle East war, portraying it as a potential security lapse amid heightened alerts, while others treat it as an isolated event possibly unrelated to international conflicts. International reports emphasize the lack of casualties as a relief, contrasting with views that frame it as part of broader instability affecting diplomatic sites. Discussions weave in calls for vigilance without assuming motives, balancing immediate facts with uncertainty about implications.</p>
@@ -1248,10 +1303,6 @@
 <li>Could this be connected to the Middle East conflict, or is it unrelated?</li>
 <li>What security measures might prevent similar incidents?</li>
 <li>How should authorities verify the cause?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.newsmax.com/newsfront/us-embassy-oslo/2026/03/08/id/1248697" target="_blank" rel="noopener">Newsmax</a> — reports on the explosion with no injuries and unknown cause</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-israeli-strikes-target-iranian-commanders-in-beirut-hotel">1) Israeli strikes target Iranian commanders in Beirut hotel</h4>
@@ -1263,12 +1314,6 @@
 <li>How might this affect Lebanon's stability?</li>
 <li>What evidence supports claims of Guards' six-month fighting capacity?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/middle-east/20260308-middle-east-war-live-deadly-strike-on-ramada-hotel-in-central-beirut-israel-bombs-iran-oil-facilities" target="_blank" rel="noopener">France 24</a> — covers deadly strike on Beirut hotel</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15625715/Seaside-hotel-Beirut-hit-Israeli-missiles-strike-Irans-Revolutionary-Guards-based-building.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — details targeting of Revolutionary Guards in the hotel</li>
-<li><a href="https://www.france24.com/en/the-israeli-army-expects-the-phase-of-this-campaign-to-last-another-two-weeks" target="_blank" rel="noopener">France 24</a> — mentions strikes on southern Lebanon and Beirut</li>
-</ul>
 <h4 id="2-uk-foreign-secretary-criticizes-trumps-diplomacy-amid-iran-war">2) UK Foreign Secretary criticizes Trump's diplomacy amid Iran war</h4>
 <p><strong>What happened (neutral):</strong> UK Foreign Secretary Cooper mocked Trump's "diplomacy through social media" after the US president criticized Prime Minister Starmer's lack of support. Trump warned the US would remember the "frayed special relationship." Cooper called for a calm approach.</p>
 <p><strong>Perspectives:</strong> British outlets frame the exchange as straining historic alliances, portraying Trump's online attacks as impulsive and Cooper's response as a push for measured diplomacy amid war pressures. US views might see it as justified frustration over insufficient allied backing, while international reports highlight it as evidence of transatlantic divides exacerbated by the conflict. Discussions often blend concerns about weakened cooperation with hopes that cooler heads could restore ties, contrasting fiery rhetoric with calls for unity.</p>
@@ -1277,10 +1322,6 @@
 <li>Does social media diplomacy help or hinder international relations?</li>
 <li>How might this affect UK-US coordination on Iran?</li>
 <li>What "lack of support" is being referenced?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15625807/Diplomacy-social-media-isnt-style-Labour-Cooper-Trump-Starmer-Iran.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — covers Cooper's blast at Trump's style and frayed relations</li>
 </ul>
 <h4 id="3-britain-faces-gas-supply-fears-due-to-middle-east-conflict">3) Britain faces gas supply fears due to Middle East conflict</h4>
 <p><strong>What happened (neutral):</strong> Britain has only two days of gas stored, raising concerns of a shortage crisis as the Iran war threatens global supplies. The conflict's impact on energy routes is sparking fears of disruptions. No immediate shortages have been reported.</p>
@@ -1291,10 +1332,6 @@
 <li>What alternatives could mitigate potential shortages?</li>
 <li>Are these fears based on verified supply chain data?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15625735/Britain-two-days-gas-stored-fears-supply-crisis.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — details low gas storage and conflict-related fears</li>
-</ul>
 <h4 id="4-tim-tebow-urges-congress-to-combat-child-trafficking">4) Tim Tebow urges Congress to combat child trafficking</h4>
 <p><strong>What happened (neutral):</strong> Former NFL quarterback Tim Tebow testified before Congress, calling for action against child trafficking and abuse. He described it as fighting for the "most vulnerable people" in their "darkest hour of need." Tebow shifted his focus from sports to this cause.</p>
 <p><strong>Perspectives:</strong> US reports portray Tebow's plea as an emotional, bipartisan call to prioritize vulnerable children, emphasizing his personal transformation from athlete to advocate, while some frame it as part of ongoing efforts to address exploitation without political divisiveness. Broader coverage highlights the issue's global scope, contrasting supportive views of celebrity involvement with questions about legislative effectiveness. Discussions often blend hope for policy changes with recognition of the challenges in tackling such hidden crimes.</p>
@@ -1304,10 +1341,6 @@
 <li>How effective are celebrity testimonies in influencing policy?</li>
 <li>What data supports the scale of child trafficking?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.foxnews.com/politics/tim-tebow-urges-congress-fight-child-trafficking-abuse-emotional-plea-darkest-hour-need" target="_blank" rel="noopener">Fox News</a> — covers Tebow's emotional plea and focus on vulnerable people</li>
-</ul>
 <h4 id="5-parents-of-murder-victim-share-story-post-conviction">5) Parents of murder victim share story post-conviction</h4>
 <p><strong>What happened (neutral):</strong> Kevin and Nicola Wells, parents of murdered child Holly Wells, invited a journalist to stay with them after Ian Huntley's conviction. They discussed reclaiming memories, including a lock of hair. The account reflects on the emotional intensity of the period.</p>
 <p><strong>Perspectives:</strong> British media presents this as a poignant look at parental grief and resilience, framing it as a way to humanize tragedy beyond headlines, while some view it as a reminder of justice system's impacts on families. International angles might see it as highlighting long-term effects of violent crimes, contrasting intimate personal stories with broader societal discussions on evil and innocence. Coverage often weaves empathy for the parents with reflections on media's role in such narratives.</p>
@@ -1316,10 +1349,6 @@
 <li>How do personal accounts like this influence public understanding of crimes?</li>
 <li>What support do families need post-conviction?</li>
 <li>Is the timing of this story tied to any anniversary or event?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15624739/haunting-stay-Hollys-parents-SARAH-OLIVER.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — journalist's account of staying with the parents and their revelations</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-gulf-countries-report-infrastructure-damage-from-iranian-strikes">1) Gulf countries report infrastructure damage from Iranian strikes</h4>
@@ -1331,10 +1360,6 @@
 <li>How might this influence global markets?</li>
 <li>Are damage assessments independently verified?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/03/08/iranian-projectiles-continue-to-strike-gulf-countries-infrastructure.html" target="_blank" rel="noopener">CNBC</a> — covers strikes on Gulf infrastructure</li>
-</ul>
 <h4 id="2-couple-builds-6-million-hmo-property-empire">2) Couple builds £6 million HMO property empire</h4>
 <p><strong>What happened (neutral):</strong> Greta and Daniil Vnoutchkov, a Lithuanian-Dutch couple, amassed a £2.4 million portfolio of houses in multiple occupation by converting family homes into bedsits over two years. They claim to have started from scratch. The empire is valued at £6 million overall.</p>
 <p><strong>Perspectives:</strong> Lifestyle and news coverage portrays their success as an inspiring rags-to-riches story in real estate, highlighting quick growth through savvy investments, while critics frame it as contributing to housing shortages by prioritizing rentals over family homes. Broader discussions weave in debates on property market ethics, contrasting admiration for entrepreneurial hustle with concerns about affordability and community impacts.</p>
@@ -1344,15 +1369,103 @@
 <li>What regulations govern HMO developments?</li>
 <li>Is their claimed timeline verifiable?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15621191/The-flashy-HMO-king-queen-whove-built-6MILLION-property-empire-turning-cheap-family-homes-bedsits.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — details the couple's portfolio and methods</li>
-</ul>
 <h4 id="3-sarah-ferguson-rejected-for-us-book-deal">3) Sarah Ferguson rejected for US book deal</h4>
 <p><strong>What happened (neutral):</strong> Sarah Ferguson was snubbed by US publishers for a £1.5 million tell-all memoir deal. Sources say no one wants her to "cash in" on the Epstein scandal. She pitched to major houses but all declined.</p>
 <p><strong>Perspectives:</strong> Entertainment reports depict this as a setback linked to royal controversies, framing publishers' caution as avoiding scandal exploitation, while some see it as missed opportunity for her perspective on personal challenges. Broader views contrast sympathy for her financial ambitions with ethical debates on</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15625701/Iran-flames-Trump-US-troops-read-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/middle-east/20260308-middle-east-war-live-deadly-strike-on-ramada-hotel-in-central-beirut-israel-bombs-iran-oil-facilities" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15625737/fire-flows-streets-tehran-US-strikes-oil-depots.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/the-israeli-army-expects-the-phase-of-this-campaign-to-last-another-two-weeks" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/video/quotable/2026/3/8/selecting-irans-next-supreme-leader-has-nothing-to-with-the?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/mar/08/middle-east-crisis-live-china-warns-world-cannot-return-to-law-of-the-jungle-trump-says-iran-being-decimated" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/3/8/irans-assembly-of-experts-says-consensus-reached-on-khameneis-successor?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/08/iranian-projectiles-continue-to-strike-gulf-countries-infrastructure.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15624541/Iran-drone-attack-Dubai-man-killed-skyscrapers-flames-airport-struck.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15625619/Trump-Iran-nuclear-sites-mission-war-airstrikes.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.newsmax.com/newsfront/us-embassy-oslo/2026/03/08/id/1248697" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=newsmax.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">newsmax.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15625715/Seaside-hotel-Beirut-hit-Israeli-missiles-strike-Irans-Revolutionary-Guards-based-building.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15625807/Diplomacy-social-media-isnt-style-Labour-Cooper-Trump-Starmer-Iran.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15625735/Britain-two-days-gas-stored-fears-supply-crisis.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.foxnews.com/politics/tim-tebow-urges-congress-fight-child-trafficking-abuse-emotional-plea-darkest-hour-need" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=foxnews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">foxnews.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15624739/haunting-stay-Hollys-parents-SARAH-OLIVER.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15621191/The-flashy-HMO-king-queen-whove-built-6MILLION-property-empire-turning-cheap-family-homes-bedsits.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1675,10 +1788,67 @@ That's Omni View. For full source links and more context, check out today's writ
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

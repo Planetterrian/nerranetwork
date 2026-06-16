@@ -107,7 +107,12 @@
       "url": "https://nerranetwork.com/models-agents.html"
     },
     "image": "https://nerranetwork.com/assets/covers/models-agents.jpg",
-    "transcript": "https://nerranetwork.com/blog/models_agents/ep080.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/models_agents/ep080.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://audio.nerranetwork.com/models_agents/Models_Agents_Ep080_20260614.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -708,6 +713,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +818,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1181,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/models-agents-400.webp"><img src="../../assets/covers/models-agents.jpg" alt="Models & Agents" width="40" height="40"></picture>
                 Models & Agents Blog
             </a>
-            <h1>Hey, welcome to Models and Agents, episode 80, for June 14, 2026. Your daily AI briefing. Your daily… — Episode 80</h1>
+            <h1><span class="nn-i18n-title">Hey, welcome to Models and Agents, episode 80, for June 14, 2026. Your daily AI briefing. Your daily…</span> — Episode 80</h1>
             
             <p class="blog-hero-hook">Hey, welcome to Models and Agents, episode 80, for June 14, 2026. Your daily AI briefing. Your daily briefing on the AI models and agents that are changing everything. And no, not THOSE kinds of model...</p>
             
@@ -1130,6 +1213,9 @@
         </div>
     </header>
 
+    
+    
+
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
         
@@ -1137,8 +1223,6 @@
             <div class="blog-toc-title">Contents</div>
             
             <a href="#models-agents-weekly-recap-week-of-june-14-2026" class="">Models & Agents — Weekly Recap (Week of June 14, 2026)</a>
-            
-            <a href="#sources" class="toc-h3">Sources</a>
             
         </aside>
         
@@ -1208,66 +1292,290 @@
 <p>Tomorrow, keep an eye on any updates to the export control directive and the first community benchmarks for DiffusionGemma against standard Gemma four checkpoints.</p>
 <p>That wraps up today's AI briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow. And before you go — this show is part of the Nerra Network, a family of daily podcasts covering tech, science, markets, and more.</p>
 <p>If you enjoyed today's episode, give Environmental Intelligence a listen: the environment and climate-policy brief for Canada. You can explore the whole lineup at nerranetwork.com.</p>
-<h3 id="sources">Sources</h3>
-<ul>
-<li><a href="https://www.marktechpost.com/2026/06/08/google-research-adds-agentic-rag-to-gemini-enterprise-agent-platform-with-a-sufficient-context-agent-for-multi-hop-queries/" target="_blank" rel="noopener">marktechpost.com</a></li>
-<li><a href="https://www.reddit.com/r/LocalLLaMA/comments/1u05t6u/benchmark_dflash_speculative_decoding_kv_cache/" target="_blank" rel="noopener">reddit.com</a></li>
-<li><a href="https://www.reddit.com/r/LocalLLaMA/comments/1u04rnh/meddies_pii_an_open_multilingual_deidentification/" target="_blank" rel="noopener">reddit.com</a></li>
-<li><a href="https://www.reddit.com/r/LocalLLaMA/comments/1tzxmm8/qats_q4_0_from_google_have_more_precision_than_q4/" target="_blank" rel="noopener">reddit.com</a></li>
-<li><a href="https://www.reddit.com/r/MachineLearning/comments/1u0119r/open_image_generation_models_are_closer_to/" target="_blank" rel="noopener">reddit.com</a></li>
-<li><a href="https://www.reddit.com/r/LocalLLaMA/comments/1u02mow/vllmdoctor_a_cli_tool_to_diagnose_and_monitor/" target="_blank" rel="noopener">reddit.com</a></li>
-<li><a href="https://www.marktechpost.com/2026/06/08/a-new-study-from-harvard-and-perplexity-finds-ai-agents-perform-26-minutes-of-autonomous-work-per-session-vs-33-seconds-for-search/" target="_blank" rel="noopener">marktechpost.com</a></li>
-<li><a href="https://www.reddit.com/r/LocalLLaMA/comments/1u0ubbo/gemma_4_26b_a4b_it_qat_comparison/" target="_blank" rel="noopener">reddit.com</a></li>
-<li><a href="https://www.reddit.com/r/LocalLLaMA/comments/1u0yzts/gemma_4_31bs_competence_surprised_me/" target="_blank" rel="noopener">reddit.com</a></li>
-<li><a href="https://www.reddit.com/r/LocalLLaMA/comments/1u0vltz/anyone_seen_benchmarks_comparing_gemma_4_4bit_qat/" target="_blank" rel="noopener">reddit.com</a></li>
-<li><a href="https://huggingface.co/blog/mishig/spaces-agents-md" target="_blank" rel="noopener">huggingface.co</a></li>
-<li><a href="https://www.reddit.com/r/LocalLLaMA/comments/1u11wvo/jetson_orin_nx_build_for_hermes_agent_benchmarking/" target="_blank" rel="noopener">reddit.com</a></li>
-<li><a href="https://www.reddit.com/r/LocalLLaMA/comments/1u106rc/still_a_very_lightweight_open_websearch_tool_for/" target="_blank" rel="noopener">reddit.com</a></li>
-<li><a href="https://www.marktechpost.com/2026/06/09/nvidia-cutile-python-tutorial-building-tiled-gpu-kernels-for-vector-addition-matrix-addition-and-matrix-multiplication-in-colab/" target="_blank" rel="noopener">marktechpost.com</a></li>
-<li><a href="https://x.com/AnthropicAI/status/2064054837294354677" target="_blank" rel="noopener">x.com</a></li>
-<li><a href="https://x.com/karpathy/status/2064409694761054332" target="_blank" rel="noopener">x.com</a></li>
-<li><a href="https://www.reddit.com/r/LocalLLaMA/comments/1u1za0m/cohere_released_north_mini_code_its_first/" target="_blank" rel="noopener">reddit.com</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMijgFBVV95cUxQRlFZajJpbGpQQjQ2Z2djWk8taGQ0X3BwbWxzaEVzU0NKazUxWVFQTFhUbUJNZldHQ29JVUNaaHJnbXRGY2V3b1Zvd3R2Y0ozZTBIUGZwRnl3YWRyeUdNbWVCY2NQd3JmaVVOd1ZEV2g3MmlxaVF4UTZpUGU4cnNIZXRSdUtQdDk2QUVvWlpn?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://www.reddit.com/r/LocalLLaMA/comments/1u1ygkw/qwen36mtp27b_on_tesla_v100_55_tps_llamacpp_any/" target="_blank" rel="noopener">reddit.com</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMipwFBVV95cUxNMmIyaTA2QU5JLUMyT3JfMFJRTmoySFVVLXF1X1plQU42aHBvUzEyb3FpNmFodnBpeUtzaUozRFBILUJ3TjZpc2xta3dSNG5VLW5KdkVCZ01qXzhNek1Kc0xuamxlN2M1bm94WTZqcnlQQU9aR1hRZElZTFRodmJVaHBiMzk4Z2hiYWs4Zi1JeS1YZGNfWFUza2Q0UXNsellxcERoNzR0OA?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://arxiv.org/abs/2606.10316" target="_blank" rel="noopener">arxiv.org</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMiswFBVV95cUxOZjQ0MVEtX0xuUUFuYl90T1RVeVZ1RzZUMXR4a3kzQjFsR2tKSTRWVU9fUUpkZkNfZUgwT0ltWGg2VE1OeUVDTjVMRzdWUE1iTkJUdTRIQ1BVc1l6blRQUUc4dXZxNG1nTUd1R3NLRGhaYWZIRHBrQlRtckxDSUxEbFRuNlA0RDVtUjFkRkpubVVBNTN0SWQ4dVJHbGZkNFMwN3ZrTWdGajhCaDBUdGRJM2d1OA?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://www.reddit.com/r/MachineLearning/comments/1u1wq0a/introducing_papers_without_code_p/" target="_blank" rel="noopener">reddit.com</a></li>
-<li><a href="https://www.marktechpost.com/2026/06/09/building-a-code-dataset-pipeline-from-nvidia-nemotron-pretraining-code-v3-metadata-with-streaming-pandas-and-tiktoken/" target="_blank" rel="noopener">marktechpost.com</a></li>
-<li><a href="https://x.com/AnthropicAI/status/2064783418844762489" target="_blank" rel="noopener">x.com</a></li>
-<li><a href="https://www.marktechpost.com/2026/06/11/meet-north-mini-code-coheres-30b-open-weight-mixture-of-experts-model-with-3b-active-parameters-for-agentic-coding/" target="_blank" rel="noopener">marktechpost.com</a></li>
-<li><a href="https://www.reddit.com/r/LocalLLaMA/comments/1u2uje1/minimax_m3_open_weights_release_planned_for_friday/" target="_blank" rel="noopener">reddit.com</a></li>
-<li><a href="https://www.marktechpost.com/2026/06/11/nous-research-ships-hermes-agent-profile-builder-identity-model-skills-and-mcp-servers-in-one-dashboard-flow/" target="_blank" rel="noopener">marktechpost.com</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMihwFBVV95cUxPSWg2OE1xN0F1cnRDOEJoT29iYmxLcmI5RzFacWh0a3QySUhjTExXTnNrNlRrZnZiZFgxbHdvdHhmQWNmRWRNdzU1TFlmWUY0MjZkTkNGdEFRSTdaS185QldVdDkzRjVJNXN2NjkxWWJPSlAwWWtkTEc4NTBPWElaUjlxcTh3Njg?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://www.artificialintelligence-news.com/news/visa-chatgpt-integration-enables-ai-agent-retail-purchasing/" target="_blank" rel="noopener">artificialintelligence-news.com</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMidkFVX3lxTE5EVzluNzAyT0o5b2pWSHd2LWY3WVhWZE9SLXh5UHpNNUR2a3BULXA3SDFhclBsNEpWNDUyUkM5aWVzQm1NVTJIV29Va2xfejJJN3NZTTRXb3FsQmF1cHJwaXhwc3lmUUh4MHV0UER3aEk0Y3NrU2c?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://www.reddit.com/r/LocalLLaMA/comments/1u2vr8g/how_i_implemented_asr_bias_for_voice/" target="_blank" rel="noopener">reddit.com</a></li>
-<li><a href="https://www.reddit.com/r/LocalLLaMA/comments/1u2wy8s/buy_recommendations_on_a_thight_budget_to_aid_my/" target="_blank" rel="noopener">reddit.com</a></li>
-<li><a href="https://x.com/demishassabis/status/2064873362799600042" target="_blank" rel="noopener">x.com</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMiX0FVX3lxTE54SDl4dzQxX3BOdU9sNjRMWU8tQ29mYVpxRURxeWlZZ20zQVpramJCZVd0QlVOZmZqb3JvVkc2Qm5jaURhV3NCdVNIdUJIQTZHdjhlbEZEcDB6eG5wUDN3?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://arxiv.org/abs/2606.12569" target="_blank" rel="noopener">arxiv.org</a></li>
-<li><a href="https://arxiv.org/abs/2606.12608" target="_blank" rel="noopener">arxiv.org</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMizAFBVV95cUxOOThsT3lFYzRHbUROS0FrY0VJX25QdnFXQXhxNml0aURGbzdXZnhBMDdSbnRqT2tTZzh2dGk2RlFpNXlhSFkxYTlkeFplcVV1MlNRMlotOFZOU3h6c01zcm5Hc3ktRnlabFFjOF9GdlRrbXNtMFdHTGpaZzBCWUtoN0JqanRjMW1XaDVYdGJuS2ZpSXFJdy11NkxlN000VHI5dW9sWS1ma1ZsUGlhS2pkTnRSUXExZllXY3JNYUdBTW42SHduTlhxS2dnZGI?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMipgFBVV95cUxQdnZ4NkpGYjVhLXdyTGRQdWJGVEdTRlhibkNfSHlzdDNuR3VUMUI3aWxFYXNkclg2Z0daTnVPODBaY0dyY3dkS3hKYlhvYWNvbk04V1VEeWpUSHRUOFkxcnV0RDhVUFh1U2NrWG4xTlpDY1hzcUd2bkZqV2k5QjZsWWxpN1FJbGg4cU91NUhhajBHaFlpYzU3OTZaMERPOTdXZzFvM3N3?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMifEFVX3lxTE5mTDNlOVlKWk9meVhEZnBYbDNqLUI2UlZNNGE1U3U0UVdkZm1CeVBlcGlCS01zcWxPNFVFTDZDdEV0a3BKSm0xa19faHNxQXhIRVF0UW1EU21VYjNENGwtb0lCdWdWMHZ2ZE1UQk4xdTZZZ3luU3RyX1hOWjA?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMioAFBVV95cUxNMkVMdzBKQ1VQS0t1OXVGM1hFOWpNb0FXR19JY0pDcmJfR0NTVlgyWmFpLS1ManVDVlZkWHZybVN4SGRRM0dxZnNmTDA0ZTJ6OThMOTFUWHh3T1ZaeXFhU2hrOVZCUF90ZTZLQ0MtMXpqMW9Ndnd3WXdWUW1hejE3ai14VTBXWGJ0cFJNM3JTX014VjRTSGlNMUY0bFVySTNZ?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://arxiv.org/abs/2606.12708" target="_blank" rel="noopener">arxiv.org</a></li>
-<li><a href="https://arxiv.org/abs/2606.12789" target="_blank" rel="noopener">arxiv.org</a></li>
-<li><a href="https://x.com/AnthropicAI/status/2065597531644743999" target="_blank" rel="noopener">x.com</a></li>
-<li><a href="https://www.marktechpost.com/2026/06/12/moonshot-ai-releases-kimi-k2-7-code-a-coding-model-reporting-21-8-on-kimi-code-bench-v2-over-k2-6/" target="_blank" rel="noopener">marktechpost.com</a></li>
-<li><a href="https://github.blog/ai-and-ml/how-we-made-github-copilot-cli-more-selective-about-delegation/" target="_blank" rel="noopener">github.blog</a></li>
-<li><a href="https://venturebeat.com/security/nanoclaw-and-jfrog-launch-immune-system-to-block-ai-agents-from-downloading-malicious-code" target="_blank" rel="noopener">venturebeat.com</a></li>
-<li><a href="https://venturebeat.com/data/pixelrag-beats-text-parsers-on-accuracy-and-cuts-ai-agent-token-costs-10x" target="_blank" rel="noopener">venturebeat.com</a></li>
-<li><a href="https://www.reddit.com/r/MachineLearning/comments/1u4hy2x/paddleocr_v3v4v5v6_implemented_in_c_with_ncnn_p/" target="_blank" rel="noopener">reddit.com</a></li>
-<li><a href="https://huggingface.co/blog/allenai/olmo-eval" target="_blank" rel="noopener">huggingface.co</a></li>
-<li><a href="https://x.com/simonw/status/2065949364187807818" target="_blank" rel="noopener">x.com</a></li>
-<li><a href="https://x.com/simonw/status/2065618703480414666" target="_blank" rel="noopener">x.com</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMipwFBVV95cUxQVVpiZnIzcDZST2pQaHdZM0hCUERVZ05aZTZzTDRJamxFU081QkFKdmZHSXB6MkFHVVVORVpnQVdzblN1UzM5TDdicnhCSzdHS0tOdkxwcThZV3ktTkRHNlZrVWJfTTFneUgwWUIwNExFal90X2RvNURDRFZVSmdIOUJnWDl4SWxmLXFjMW9nelZheVlOaG5wenI1VmtrX3pRb2xYNldhOA?oc=5" target="_blank" rel="noopener">news.google.com</a></li>
-<li><a href="https://www.reddit.com/r/LocalLLaMA/comments/1u5g9pr/dual_dgx_sparks_40tks_single_1m_350_tks_agg/" target="_blank" rel="noopener">reddit.com</a></li>
-<li><a href="https://www.reddit.com/r/LocalLLaMA/comments/1u5fv6n/local_models_in_mid2026/" target="_blank" rel="noopener">reddit.com</a></li>
-</ul>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.marktechpost.com/2026/06/08/google-research-adds-agentic-rag-to-gemini-enterprise-agent-platform-with-a-sufficient-context-agent-for-multi-hop-queries/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=marktechpost.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">marktechpost.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/LocalLLaMA/comments/1u05t6u/benchmark_dflash_speculative_decoding_kv_cache/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/LocalLLaMA/comments/1u04rnh/meddies_pii_an_open_multilingual_deidentification/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/LocalLLaMA/comments/1tzxmm8/qats_q4_0_from_google_have_more_precision_than_q4/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/MachineLearning/comments/1u0119r/open_image_generation_models_are_closer_to/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/LocalLLaMA/comments/1u02mow/vllmdoctor_a_cli_tool_to_diagnose_and_monitor/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.marktechpost.com/2026/06/08/a-new-study-from-harvard-and-perplexity-finds-ai-agents-perform-26-minutes-of-autonomous-work-per-session-vs-33-seconds-for-search/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=marktechpost.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">marktechpost.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/LocalLLaMA/comments/1u0ubbo/gemma_4_26b_a4b_it_qat_comparison/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/LocalLLaMA/comments/1u0yzts/gemma_4_31bs_competence_surprised_me/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/LocalLLaMA/comments/1u0vltz/anyone_seen_benchmarks_comparing_gemma_4_4bit_qat/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://huggingface.co/blog/mishig/spaces-agents-md" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=huggingface.co&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">huggingface.co</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/LocalLLaMA/comments/1u11wvo/jetson_orin_nx_build_for_hermes_agent_benchmarking/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/LocalLLaMA/comments/1u106rc/still_a_very_lightweight_open_websearch_tool_for/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.marktechpost.com/2026/06/09/nvidia-cutile-python-tutorial-building-tiled-gpu-kernels-for-vector-addition-matrix-addition-and-matrix-multiplication-in-colab/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=marktechpost.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">marktechpost.com</span>
+                    </a>
+                    
+                    <a href="https://x.com/AnthropicAI/status/2064054837294354677" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=x.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">x.com</span>
+                    </a>
+                    
+                    <a href="https://x.com/karpathy/status/2064409694761054332" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=x.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">x.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/LocalLLaMA/comments/1u1za0m/cohere_released_north_mini_code_its_first/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMijgFBVV95cUxQRlFZajJpbGpQQjQ2Z2djWk8taGQ0X3BwbWxzaEVzU0NKazUxWVFQTFhUbUJNZldHQ29JVUNaaHJnbXRGY2V3b1Zvd3R2Y0ozZTBIUGZwRnl3YWRyeUdNbWVCY2NQd3JmaVVOd1ZEV2g3MmlxaVF4UTZpUGU4cnNIZXRSdUtQdDk2QUVvWlpn?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/LocalLLaMA/comments/1u1ygkw/qwen36mtp27b_on_tesla_v100_55_tps_llamacpp_any/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMipwFBVV95cUxNMmIyaTA2QU5JLUMyT3JfMFJRTmoySFVVLXF1X1plQU42aHBvUzEyb3FpNmFodnBpeUtzaUozRFBILUJ3TjZpc2xta3dSNG5VLW5KdkVCZ01qXzhNek1Kc0xuamxlN2M1bm94WTZqcnlQQU9aR1hRZElZTFRodmJVaHBiMzk4Z2hiYWs4Zi1JeS1YZGNfWFUza2Q0UXNsellxcERoNzR0OA?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://arxiv.org/abs/2606.10316" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arxiv.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arxiv.org</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMiswFBVV95cUxOZjQ0MVEtX0xuUUFuYl90T1RVeVZ1RzZUMXR4a3kzQjFsR2tKSTRWVU9fUUpkZkNfZUgwT0ltWGg2VE1OeUVDTjVMRzdWUE1iTkJUdTRIQ1BVc1l6blRQUUc4dXZxNG1nTUd1R3NLRGhaYWZIRHBrQlRtckxDSUxEbFRuNlA0RDVtUjFkRkpubVVBNTN0SWQ4dVJHbGZkNFMwN3ZrTWdGajhCaDBUdGRJM2d1OA?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/MachineLearning/comments/1u1wq0a/introducing_papers_without_code_p/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.marktechpost.com/2026/06/09/building-a-code-dataset-pipeline-from-nvidia-nemotron-pretraining-code-v3-metadata-with-streaming-pandas-and-tiktoken/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=marktechpost.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">marktechpost.com</span>
+                    </a>
+                    
+                    <a href="https://x.com/AnthropicAI/status/2064783418844762489" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=x.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">x.com</span>
+                    </a>
+                    
+                    <a href="https://www.marktechpost.com/2026/06/11/meet-north-mini-code-coheres-30b-open-weight-mixture-of-experts-model-with-3b-active-parameters-for-agentic-coding/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=marktechpost.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">marktechpost.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/LocalLLaMA/comments/1u2uje1/minimax_m3_open_weights_release_planned_for_friday/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.marktechpost.com/2026/06/11/nous-research-ships-hermes-agent-profile-builder-identity-model-skills-and-mcp-servers-in-one-dashboard-flow/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=marktechpost.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">marktechpost.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMihwFBVV95cUxPSWg2OE1xN0F1cnRDOEJoT29iYmxLcmI5RzFacWh0a3QySUhjTExXTnNrNlRrZnZiZFgxbHdvdHhmQWNmRWRNdzU1TFlmWUY0MjZkTkNGdEFRSTdaS185QldVdDkzRjVJNXN2NjkxWWJPSlAwWWtkTEc4NTBPWElaUjlxcTh3Njg?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://www.artificialintelligence-news.com/news/visa-chatgpt-integration-enables-ai-agent-retail-purchasing/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=artificialintelligence-news.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">artificialintelligence-news.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMidkFVX3lxTE5EVzluNzAyT0o5b2pWSHd2LWY3WVhWZE9SLXh5UHpNNUR2a3BULXA3SDFhclBsNEpWNDUyUkM5aWVzQm1NVTJIV29Va2xfejJJN3NZTTRXb3FsQmF1cHJwaXhwc3lmUUh4MHV0UER3aEk0Y3NrU2c?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/LocalLLaMA/comments/1u2vr8g/how_i_implemented_asr_bias_for_voice/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/LocalLLaMA/comments/1u2wy8s/buy_recommendations_on_a_thight_budget_to_aid_my/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://x.com/demishassabis/status/2064873362799600042" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=x.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">x.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMiX0FVX3lxTE54SDl4dzQxX3BOdU9sNjRMWU8tQ29mYVpxRURxeWlZZ20zQVpramJCZVd0QlVOZmZqb3JvVkc2Qm5jaURhV3NCdVNIdUJIQTZHdjhlbEZEcDB6eG5wUDN3?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://arxiv.org/abs/2606.12569" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arxiv.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arxiv.org</span>
+                    </a>
+                    
+                    <a href="https://arxiv.org/abs/2606.12608" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arxiv.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arxiv.org</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMizAFBVV95cUxOOThsT3lFYzRHbUROS0FrY0VJX25QdnFXQXhxNml0aURGbzdXZnhBMDdSbnRqT2tTZzh2dGk2RlFpNXlhSFkxYTlkeFplcVV1MlNRMlotOFZOU3h6c01zcm5Hc3ktRnlabFFjOF9GdlRrbXNtMFdHTGpaZzBCWUtoN0JqanRjMW1XaDVYdGJuS2ZpSXFJdy11NkxlN000VHI5dW9sWS1ma1ZsUGlhS2pkTnRSUXExZllXY3JNYUdBTW42SHduTlhxS2dnZGI?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMipgFBVV95cUxQdnZ4NkpGYjVhLXdyTGRQdWJGVEdTRlhibkNfSHlzdDNuR3VUMUI3aWxFYXNkclg2Z0daTnVPODBaY0dyY3dkS3hKYlhvYWNvbk04V1VEeWpUSHRUOFkxcnV0RDhVUFh1U2NrWG4xTlpDY1hzcUd2bkZqV2k5QjZsWWxpN1FJbGg4cU91NUhhajBHaFlpYzU3OTZaMERPOTdXZzFvM3N3?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMifEFVX3lxTE5mTDNlOVlKWk9meVhEZnBYbDNqLUI2UlZNNGE1U3U0UVdkZm1CeVBlcGlCS01zcWxPNFVFTDZDdEV0a3BKSm0xa19faHNxQXhIRVF0UW1EU21VYjNENGwtb0lCdWdWMHZ2ZE1UQk4xdTZZZ3luU3RyX1hOWjA?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMioAFBVV95cUxNMkVMdzBKQ1VQS0t1OXVGM1hFOWpNb0FXR19JY0pDcmJfR0NTVlgyWmFpLS1ManVDVlZkWHZybVN4SGRRM0dxZnNmTDA0ZTJ6OThMOTFUWHh3T1ZaeXFhU2hrOVZCUF90ZTZLQ0MtMXpqMW9Ndnd3WXdWUW1hejE3ai14VTBXWGJ0cFJNM3JTX014VjRTSGlNMUY0bFVySTNZ?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://arxiv.org/abs/2606.12708" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arxiv.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arxiv.org</span>
+                    </a>
+                    
+                    <a href="https://arxiv.org/abs/2606.12789" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arxiv.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arxiv.org</span>
+                    </a>
+                    
+                    <a href="https://x.com/AnthropicAI/status/2065597531644743999" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=x.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">x.com</span>
+                    </a>
+                    
+                    <a href="https://www.marktechpost.com/2026/06/12/moonshot-ai-releases-kimi-k2-7-code-a-coding-model-reporting-21-8-on-kimi-code-bench-v2-over-k2-6/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=marktechpost.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">marktechpost.com</span>
+                    </a>
+                    
+                    <a href="https://github.blog/ai-and-ml/how-we-made-github-copilot-cli-more-selective-about-delegation/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=github.blog&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">github.blog</span>
+                    </a>
+                    
+                    <a href="https://venturebeat.com/security/nanoclaw-and-jfrog-launch-immune-system-to-block-ai-agents-from-downloading-malicious-code" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=venturebeat.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">venturebeat.com</span>
+                    </a>
+                    
+                    <a href="https://venturebeat.com/data/pixelrag-beats-text-parsers-on-accuracy-and-cuts-ai-agent-token-costs-10x" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=venturebeat.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">venturebeat.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/MachineLearning/comments/1u4hy2x/paddleocr_v3v4v5v6_implemented_in_c_with_ncnn_p/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://huggingface.co/blog/allenai/olmo-eval" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=huggingface.co&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">huggingface.co</span>
+                    </a>
+                    
+                    <a href="https://x.com/simonw/status/2065949364187807818" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=x.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">x.com</span>
+                    </a>
+                    
+                    <a href="https://x.com/simonw/status/2065618703480414666" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=x.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">x.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMipwFBVV95cUxQVVpiZnIzcDZST2pQaHdZM0hCUERVZ05aZTZzTDRJamxFU081QkFKdmZHSXB6MkFHVVVORVpnQVdzblN1UzM5TDdicnhCSzdHS0tOdkxwcThZV3ktTkRHNlZrVWJfTTFneUgwWUIwNExFal90X2RvNURDRFZVSmdIOUJnWDl4SWxmLXFjMW9nelZheVlOaG5wenI1VmtrX3pRb2xYNldhOA?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/LocalLLaMA/comments/1u5g9pr/dual_dgx_sparks_40tks_single_1m_350_tks_agg/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/LocalLLaMA/comments/1u5fv6n/local_models_in_mid2026/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1702,10 +2010,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

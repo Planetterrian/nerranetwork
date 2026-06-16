@@ -121,6 +121,25 @@
             background: color-mix(in srgb, var(--show-color) 20%, transparent);
             border-color: var(--show-color);
         }
+        /* Multilingual availability badges (June 2026) */
+        .blog-idx-langs {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin: var(--sp-2) 0 var(--sp-1);
+            color: var(--nn-text-muted);
+        }
+        .blog-idx-langs .lang-badge {
+            font-family: var(--font-ui);
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            padding: 1px 7px;
+            border-radius: 100px;
+            border: 1px solid color-mix(in srgb, var(--show-color) 35%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            background: color-mix(in srgb, var(--show-color) 10%, transparent);
+        }
     </style>
 
 
@@ -172,6 +191,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -516,6 +559,24 @@
     
     <div class="blog-idx-grid">
         
+        <a href="ep078.html" class="blog-idx-card">
+            <div class="blog-idx-card-top">
+                <span class="blog-idx-date">June 16, 2026</span>
+                <span class="blog-idx-ep">Ep 78</span>
+                <span class="blog-idx-reading">5 min</span>
+            </div>
+            <h2>Canadian investors with energy exposure should watch oil price moderation closely as the U.S.-Iran d…</h2>
+            
+            <p>Canadian investors with energy exposure should watch oil price moderation closely as the U.S.-Iran deal heads toward formal signing, with the Strait of Hormuz r&hellip;</p>
+            
+            <span class="blog-idx-langs" aria-label="Also available in other languages">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <span class="lang-badge">FR</span><span class="lang-badge">RU</span><span class="lang-badge">ES</span><span class="lang-badge">中文</span>
+            </span>
+            
+            <span class="blog-idx-read-more">Read article &rarr;</span>
+        </a>
+        
         <a href="ep077.html" class="blog-idx-card">
             <div class="blog-idx-card-top">
                 <span class="blog-idx-date">June 15, 2026</span>
@@ -525,6 +586,7 @@
             <h2>The Iran ceasefire deal is lifting equities while pressuring oil, giving Canadian TFSA holders a win…</h2>
             
             <p>The Iran ceasefire deal is lifting equities while pressuring oil, giving Canadian TFSA holders a window to rotate into tech names with acquisition catalysts rat&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -539,6 +601,7 @@
             
             <p>Hey, welcome to Modern Investing Techniques, episode 76. It's June 14, 2026 and I'm Patrick in Vancouver. Here's your daily market intelligence and today's prac&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -551,6 +614,7 @@
             <h2>PPI at +6.5% makes defensive consumer staples like Coca-Cola worth adding to TFSA watchlists for inf…</h2>
             
             <p>PPI at +6.5% makes defensive consumer staples like Coca-Cola worth adding to TFSA watchlists for inflation protection.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -565,6 +629,7 @@
             
             <p>Bank stocks stand to gain trading revenue from SpaceX and other mega-IPOs, creating a rotation opportunity inside TFSA accounts today.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -577,6 +642,7 @@
             <h2>Bank of Canada holding at 2.25% means Canadian mortgage shoppers and TFSA dividend investors face th…</h2>
             
             <p>Bank of Canada holding at 2.25% means Canadian mortgage shoppers and TFSA dividend investors face the same steady-rate environment for at least another six week&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -591,6 +657,7 @@
             
             <p>Canadian investors holding energy or rate-sensitive holdings face direct pressure today as U.S. inflation hit a three-year high on gas prices, coinciding with t&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -603,6 +670,7 @@
             <h2>Canadian investors holding housing-related assets should reassess exposure after insolvency volumes…</h2>
             
             <p>Canadian investors holding housing-related assets should reassess exposure after insolvency volumes hit their highest level since 2009.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -617,6 +685,7 @@
             
             <p>AI-exposed TFSA holdings could rebound faster than broad indexes as chip and software names recover Monday's premarket losses.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -629,6 +698,7 @@
             <h2>Looking back at 7 episodes from 2026-06-01 to 2026-06-07 — the stories that mattered, what we learne…</h2>
             
             <p>Looking back at 7 episodes from 2026-06-01 to 2026-06-07 — the stories that mattered, what we learned, and what to watch next.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -643,6 +713,7 @@
             
             <p>Canadian investors holding U.S. index exposure just saw the S&P 500 post its worst day of 2026, so re-checking stop levels and sector weights before Monday’s op&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -655,6 +726,7 @@
             <h2>Stronger-than-expected U.S. hiring data raises the odds that rate-cut hopes fade, so Canadian invest…</h2>
             
             <p>Stronger-than-expected U.S. hiring data raises the odds that rate-cut hopes fade, so Canadian investors holding rate-sensitive dividend payers in TFSAs should r&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -669,6 +741,7 @@
             
             <p>Rising U.S. jobless claims to 225K signal potential Fed easing that could lift Canadian dividend payers in your RRSP this quarter.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -681,6 +754,7 @@
             <h2>Canadian investors holding energy names face renewed pressure as oil climbs toward $100 amid fresh t…</h2>
             
             <p>Canadian investors holding energy names face renewed pressure as oil climbs toward $100 amid fresh tariff and supply disruption risks.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -695,6 +769,7 @@
             
             <p>American buyers are flooding Canadian real estate searches, creating a potential tailwind for TFSA holders eyeing cross-border property exposure.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -707,6 +782,7 @@
             <h2>Canadian investors holding healthcare platforms now have a concrete acquisition catalyst to evaluate…</h2>
             
             <p>Canadian investors holding healthcare platforms now have a concrete acquisition catalyst to evaluate after Hims & Hers closed its Eucalyptus deal, accelerating &hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -721,6 +797,7 @@
             
             <p>Canadian steel names could see fresh defense demand after Hanwha selected Algoma material for armoured vehicles built in Canada.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -733,6 +810,7 @@
             <h2>Looking back at 8 episodes from 2026-05-25 to 2026-05-31 — the stories that mattered, what we learne…</h2>
             
             <p>Looking back at 8 episodes from 2026-05-25 to 2026-05-31 — the stories that mattered, what we learned, and what to watch next.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -747,6 +825,7 @@
             
             <p>SpaceX filed its S-1 on May 20 targeting a June 12 Nasdaq listing at roughly $1.8 trillion valuation; this episode gives retail investors a concrete plan across&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -759,6 +838,7 @@
             <h2>SpaceX has no announced IPO, yet the mechanics of how retail investors actually ...</h2>
             
             <p>SpaceX has no announced IPO, yet the mechanics of how retail investors actually access or approach any future listing are worth mastering now.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -773,6 +853,7 @@
             
             <p>Record 10-day Bitcoin ETF outflows totaling nearly $3 billion create a potential contrarian entry point for crypto allocation inside a TFSA.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -785,6 +866,7 @@
             <h2>Canada’s Q1 stall into technical recession tightens the lens on consumer discretionary names already…</h2>
             
             <p>Canada’s Q1 stall into technical recession tightens the lens on consumer discretionary names already guiding lower, while AI infrastructure demand keeps select &hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -799,6 +881,7 @@
             
             <p>Oil prices jumping over 2% on renewed Iran tensions means Canadian energy exposure in a TFSA could face sudden volatility this week.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -811,6 +894,7 @@
             <h2>Rising US inflation and energy costs from Iran tensions could pressure consumer discretionary names…</h2>
             
             <p>Rising US inflation and energy costs from Iran tensions could pressure consumer discretionary names, making selective bank dividend plays worth screening in TFS&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -825,6 +909,7 @@
             
             <p>Canadian investors holding bank stocks got a double signal today as BMO and Scotiabank both raised dividends after beating earnings, highlighting capital-market&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -837,6 +922,7 @@
             <h2>Oil price drops could ease energy costs for Canadian portfolios as U.S.-Iran talks progress toward r…</h2>
             
             <p>Oil price drops could ease energy costs for Canadian portfolios as U.S.-Iran talks progress toward reopening the Strait of Hormuz.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -851,6 +937,7 @@
             
             <p>Looking back at 6 episodes from 2026-05-18 to 2026-05-24 — the stories that mattered, what we learned, and what to watch next.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -863,6 +950,7 @@
             <h2>Bitcoin index options are coming to Nasdaq, giving Canadian investors in TFSA accounts a new listed…</h2>
             
             <p>Bitcoin index options are coming to Nasdaq, giving Canadian investors in TFSA accounts a new listed vehicle to express views on crypto without holding the under&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -877,6 +965,7 @@
             
             <p>Canadian investors holding rail or dividend-growth names should watch CNR closely after its lengthy bear-market slump created an unusually attractive entry poin&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -889,6 +978,7 @@
             <h2>Nvidia topping expectations hands Canadian TFSA holders in AI names a potential re-entry window, but…</h2>
             
             <p>Nvidia topping expectations hands Canadian TFSA holders in AI names a potential re-entry window, but only if volume confirms the move before broader rotation hi&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -903,6 +993,7 @@
             
             <p>Canadian investors holding heavy TFSA positions in growth names should watch the 10-year Treasury yield at 4.69% because it is already repricing long-duration a&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -915,6 +1006,7 @@
             <h2>Oil shocks and today's StatCan inflation print could lift input costs for consumer names, giving TFS…</h2>
             
             <p>Oil shocks and today's StatCan inflation print could lift input costs for consumer names, giving TFSA holders a narrow window to rotate into names with pricing &hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -929,6 +1021,7 @@
             
             <p>Canadian TFSA holders eyeing healthcare innovation now have fresh catalyst data to evaluate after Design Therapeutics reported positive trial results that could&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -941,6 +1034,7 @@
             <h2>Looking back at 6 episodes from 2026-05-11 to 2026-05-17 — the stories that mattered, what we learne…</h2>
             
             <p>Looking back at 6 episodes from 2026-05-11 to 2026-05-17 — the stories that mattered, what we learned, and what to watch next.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -955,6 +1049,7 @@
             
             <p>Canadian investors holding U.S. financials should review exposure to private-credit names like Apollo after the stock hit 15x earnings amid sticky insurance flo&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -967,6 +1062,7 @@
             <h2>Bill Ackman’s new Microsoft stake highlights a barbell approach that pairs AI infrastructure growth…</h2>
             
             <p>Bill Ackman’s new Microsoft stake highlights a barbell approach that pairs AI infrastructure growth with defensive holdings, giving TFSA investors a template fo&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -981,6 +1077,7 @@
             
             <p>Canadian investors holding auto suppliers should reassess exposure after Honda indefinitely suspended its $15B Ontario EV plant to prioritize hybrids.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -993,6 +1090,7 @@
             <h2>Mortgage rates just hit their highest level in five weeks, yet applications stayed positive — Canadi…</h2>
             
             <p>Mortgage rates just hit their highest level in five weeks, yet applications stayed positive — Canadian investors should review how rate-sensitive REITs and MICs&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1007,6 +1105,7 @@
             
             <p>Surging oil prices from Iran war tensions could raise costs across shipping and energy holdings in Canadian portfolios, forcing a fresh look at exposure before &hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1019,6 +1118,7 @@
             <h2>Energy holdings could tighten as oil jumps more than 2% after President Trump rejects Iran's latest…</h2>
             
             <p>Energy holdings could tighten as oil jumps more than 2% after President Trump rejects Iran's latest ceasefire response, giving Canadian investors in the sector &hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1033,6 +1133,7 @@
             
             <p>Earnings from AtkinsRealis and Manulife this week give Canadian investors in financials and industrials a clear window to position ahead of results that could s&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1045,6 +1146,7 @@
             <h2>U.S. sanctions on 11 entities and three individuals in Iran, China, Belarus and UAE target supply ch…</h2>
             
             <p>U.S. sanctions on 11 entities and three individuals in Iran, China, Belarus and UAE target supply chains that could ripple into energy and materials pricing.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1059,6 +1161,7 @@
             
             <p>Fed's 2019 repo experience shows balance sheet tightening can spike rates even without active QT, complicating 2026 rate-cut math.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1071,6 +1174,7 @@
             <h2>AMD's 15% surge after data center revenue and guidance beat shows AI infrastructure demand remains a…</h2>
             
             <p>AMD's 15% surge after data center revenue and guidance beat shows AI infrastructure demand remains a powerful driver worth watching for tech allocation.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1085,6 +1189,7 @@
             
             <p>US companies have announced $665 billion in share buybacks year-to-date, offering a potential support level for equities amid geopolitical cross-currents.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1097,6 +1202,7 @@
             <h2>Oil prices rise on Middle East conflict news while Berkshire Hathaway holds a record $397 billion in…</h2>
             
             <p>Oil prices rise on Middle East conflict news while Berkshire Hathaway holds a record $397 billion in cash.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1111,6 +1217,7 @@
             
             <p>Clorox cuts profit forecast on weak demand while oil prices hold gains amid Iran tensions and yen intervention.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1123,6 +1230,7 @@
             <h2>Oil topped $126 on Iran tensions yet equities stayed mixed, signaling the war is accelerating the sh…</h2>
             
             <p>Oil topped $126 on Iran tensions yet equities stayed mixed, signaling the war is accelerating the shift to renewables.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1137,6 +1245,7 @@
             
             <p>Big Tech earnings and Powell’s final FOMC tomorrow loom as stagflation concerns weigh on private credit and energy supply chains.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1149,6 +1258,7 @@
             <h2>Oil tops $110 on stalled Iran talks while clean power eyes records despite policy risks — two signal…</h2>
             
             <p>Oil tops $110 on stalled Iran talks while clean power eyes records despite policy risks — two signals demanding disciplined positioning.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1163,6 +1273,7 @@
             
             <p>Stalled Iran talks lift oil $2.50 while global shares gain — value strategies offer Canadian investors a practical edge right now.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1175,6 +1286,7 @@
             <h2>Fed faces stagflation trap as Hormuz closure removes 20% of global oil supply, with no painless poli…</h2>
             
             <p>Fed faces stagflation trap as Hormuz closure removes 20% of global oil supply, with no painless policy option available.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1189,6 +1301,7 @@
             
             <p>Canada Growth Fund acquires 22% of Nouveau Monde Graphite, triggering investor interest in Canadian critical minerals.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1201,6 +1314,7 @@
             <h2>Adobe is staking roughly 25% of its market value on AI complementing rather than destroying its SaaS…</h2>
             
             <p>Adobe is staking roughly 25% of its market value on AI complementing rather than destroying its SaaS business model.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1215,6 +1329,7 @@
             
             <p>J.P. Morgan lifts S&P 500 target to 7,600 on AI earnings strength and potential Iran ceasefire.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1227,6 +1342,7 @@
             <h2>Narrow earnings revisions are powering S&P records while commercial vacancies drop for the first tim…</h2>
             
             <p>Narrow earnings revisions are powering S&P records while commercial vacancies drop for the first time since 2020.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1241,6 +1357,7 @@
             
             <p>Hopes of an Israel-Lebanon ceasefire are supporting stocks near record highs while oil stays below $100, but insider moves and diversification gaps offer cleare&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1253,6 +1370,7 @@
             <h2>S&P 500 hits fresh record highs while TSMC raises full-year outlook on unrelenting AI demand</h2>
             
             <p>S&P 500 hits fresh record highs while TSMC raises full-year outlook on unrelenting AI demand.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1267,6 +1385,7 @@
             
             <p>TSX hits six-week high at 34,102.36 as Middle East de-escalation hopes lift tech and financials while energy lags on softer oil.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1279,6 +1398,7 @@
             <h2>Stocks climb as investors price in US-Iran diplomatic progress despite shaky ceasefire and elevated…</h2>
             
             <p>Stocks climb as investors price in US-Iran diplomatic progress despite shaky ceasefire and elevated oil.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1293,6 +1413,7 @@
             
             <p>German €1.6B fuel relief and Philippines tax cuts signal broad input-cost easing that could widen margins for European and Asian consumer-exposed names.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1305,6 +1426,7 @@
             <h2>StatCan March jobs data lands today after Canada’s labour market stumbled in early 2026, creating fr…</h2>
             
             <p>StatCan March jobs data lands today after Canada’s labour market stumbled in early 2026, creating fresh signals for rate-sensitive sectors.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1319,6 +1441,7 @@
             
             <p>Surging fuel prices and fragile Middle East ceasefire are creating divergent winners in Canadian agriculture, EVs, and gold miners.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1331,6 +1454,7 @@
             <h2>Iran ceasefire triggers 15% oil plunge, unwinding the geopolitical premium and shifting capital acro…</h2>
             
             <p>Iran ceasefire triggers 15% oil plunge, unwinding the geopolitical premium and shifting capital across energy, currencies, and defensives.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1345,6 +1469,7 @@
             
             <p>Samsung forecasts 8-fold Q1 profit jump on AI memory chip demand while oil surges above $110 on Iran deadline tension.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1357,6 +1482,7 @@
             <h2>Global equity funds saw their second straight weekly inflow as investors price in Mideast ceasefire…</h2>
             
             <p>Global equity funds saw their second straight weekly inflow as investors price in Mideast ceasefire hopes, lifting futures and Bitcoin.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1371,6 +1497,7 @@
             
             <p>Norwegian Cruise Line dropped 24% in March after disappointing earnings and Iran-related travel fears — a reminder that external shocks can override fundamental&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1383,6 +1510,7 @@
             <h2>Alberta’s potential US$1T lithium resource meets geopolitical oil shock — creating a rare Canadian c…</h2>
             
             <p>Alberta’s potential US$1T lithium resource meets geopolitical oil shock — creating a rare Canadian critical-minerals catalyst.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1397,6 +1525,7 @@
             
             <p>World stocks rocket higher on optimism the Iran war could end soon, lifting S&P 500 futures +2.9%.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1409,6 +1538,7 @@
             <h2>Geopolitical energy shock sends S&P 500 toward its worst quarter since 2022 while pushing Eurozone i…</h2>
             
             <p>Geopolitical energy shock sends S&P 500 toward its worst quarter since 2022 while pushing Eurozone inflation to 2.5%.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1423,6 +1553,7 @@
             
             <p>Modern Investing Techniques – Special Educational Episode</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1435,6 +1566,7 @@
             <h2>Oil prices climb as Trump notes Iran allowed 10 tankers through the Strait of Hormuz, creating fresh…</h2>
             
             <p>Oil prices climb as Trump notes Iran allowed 10 tankers through the Strait of Hormuz, creating fresh energy-sector volatility.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1449,6 +1581,7 @@
             
             <p>Canada hits the NATO 2% GDP defence target, opening fresh capital-flow opportunities in Canadian aerospace and defence names.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1461,6 +1594,7 @@
             <h2>Short sellers piling into SoFi while XRP gets positive SEC clarity — two clear signals worth dissect…</h2>
             
             <p>Short sellers piling into SoFi while XRP gets positive SEC clarity — two clear signals worth dissecting for your portfolio.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1475,6 +1609,7 @@
             
             <p>Brookfield and La Caisse’s $37.25/share takeover of Boralex creates a textbook Canadian M&A premium play worth dissecting.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1487,6 +1622,7 @@
             <h2>Estée Lauder confirms a potential merger suitor yet its stock still struggles — a textbook lesson in…</h2>
             
             <p>Estée Lauder confirms a potential merger suitor yet its stock still struggles — a textbook lesson in market skepticism versus headline optimism.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1501,6 +1637,7 @@
             
             <p>Stocks jump and oil eases after Trump says Iran is talking with the U.S., despite Tehran’s denials.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1513,6 +1650,7 @@
             <h2>Modern Investing Techniques – Special Educational Episode</h2>
             
             <p>Modern Investing Techniques – Special Educational Episode</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1717,5 +1855,6 @@
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

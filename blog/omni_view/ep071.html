@@ -107,7 +107,12 @@
       "url": "https://nerranetwork.com/omni-view.html"
     },
     "image": "https://nerranetwork.com/assets/covers/omni-view.jpg",
-    "transcript": "https://nerranetwork.com/blog/omni_view/ep071.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/omni_view/ep071.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://audio.nerranetwork.com/omni_view/Omni_View_Ep071_20260604.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -708,6 +713,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +818,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1181,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>A new Israel-Lebanon ceasefire takes hold even as Israel continues operations in southern Lebanon, t… — Episode 71</h1>
+            <h1><span class="nn-i18n-title">A new Israel-Lebanon ceasefire takes hold even as Israel continues operations in southern Lebanon, t…</span> — Episode 71</h1>
             
             <p class="blog-hero-hook">A new Israel-Lebanon ceasefire takes hold even as Israel continues operations in southern Lebanon, testing whether the agreement can hold amid broader regional talks.</p>
             
@@ -1129,6 +1212,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1195,10 +1281,6 @@
 <li>How do the terms compare to previous Israel-Lebanon understandings?</li>
 <li>Which regional actors gain or lose leverage if the ceasefire holds?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/jun/04/israel-lebanon-renew-ceasefire-hezbollah-trump-iran-deal-middle-east-us" target="_blank" rel="noopener">The Guardian</a> — Details on the agreement and conditions</li>
-</ul>
 <h4 id="2-reform-uk-raising-millions-more-than-other-parties-donation-figures-show">2) Reform UK raising millions more than other parties, donation figures show</h4>
 <p><strong>What happened (neutral):</strong> Reform UK received £9 million in private donations in the first three months of the year, more than twice the amount raised by Labour or the Conservatives. The largest contributions came from cryptocurrency investors Christopher Harborne and Ben Delo.</p>
 <p><strong>Perspectives:</strong> The Guardian reports the figures as evidence that Reform UK is drawing significant support from high-value donors in the cryptocurrency sector. Both sides agree on the reported donation totals; they differ on whether the sources signal broader voter appeal or concentrated financial backing.</p>
@@ -1208,10 +1290,6 @@
 <li>How do UK donation disclosure rules compare to other countries?</li>
 <li>What limits, if any, apply to cryptocurrency-related contributions?</li>
 <li>How might large individual donations influence party priorities?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/politics/2026/jun/04/reform-uk-raising-millions-more-than-other-parties-donation-figures-show" target="_blank" rel="noopener">The Guardian</a> — Breakdown of donation sources</li>
 </ul>
 <h4 id="3-softbank-shares-plunge-over-11-amid-broader-tech-sell-off">3) SoftBank shares plunge over 11% amid broader tech sell-off</h4>
 <p><strong>What happened (neutral):</strong> SoftBank shares fell more than 11 percent following an overnight sell-off in US markets driven by wider profit-taking in the technology sector.</p>
@@ -1223,10 +1301,6 @@
 <li>How have similar sector-wide sell-offs resolved in past cycles?</li>
 <li>What indicators would distinguish a temporary dip from a sustained trend?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/06/04/softbanks-shares-are-down-10percent-amid-broader-tech-sell-off.html" target="_blank" rel="noopener">CNBC</a> — Market context for the decline</li>
-</ul>
 <h4 id="4-arms-218-billion-leap-makes-it-one-of-markets-priciest-stocks">4) Arm’s $218 Billion Leap Makes It One of Market’s Priciest Stocks</h4>
 <p><strong>What happened (neutral):</strong> Arm Holdings’ share price has nearly doubled in recent weeks, pushing its valuation to levels rarely seen for companies of its size since its 2023 US listing.</p>
 <p><strong>Perspectives:</strong> Bloomberg notes that the rapid rise has placed Arm among the market’s most expensive stocks by traditional valuation measures. Observers agree the price increase has been steep; they differ on whether current earnings justify the premium.</p>
@@ -1236,10 +1310,6 @@
 <li>What revenue growth would be required to align with the current price?</li>
 <li>How do Arm’s licensing model and customer concentration compare to peers?</li>
 <li>What historical parallels exist for stocks reaching similar multiples?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-06-04/arm-s-218-billion-leap-makes-it-one-of-market-s-priciest-stocks" target="_blank" rel="noopener">Bloomberg</a> — Valuation analysis</li>
 </ul>
 <h4 id="5-bondi-attack-hero-ahmed-al-ahmed-charged-with-assaulting-his-father">5) Bondi attack hero Ahmed al-Ahmed charged with assaulting his father</h4>
 <p><strong>What happened (neutral):</strong> Ahmed al-Ahmed, who was praised for disarming one of the gunmen in the December Bondi attack, has been charged with assault after allegedly putting his father in a headlock in March.</p>
@@ -1251,10 +1321,6 @@
 <li>How do Australian authorities typically handle cases involving public figures?</li>
 <li>What information remains unavailable pending court proceedings?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/jun/04/bondi-attack-hero-charged-with-assaulting-his-father-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — Charge details</li>
-</ul>
 <h3 id="top-world-stories-2">Top world stories (2)</h3>
 <h4 id="1-marjane-satrapi-author-of-persepolis-dies-at-56">1) Marjane Satrapi, author of 'Persepolis,' dies at 56</h4>
 <p><strong>What happened (neutral):</strong> Marjane Satrapi, the Iranian-born author of the graphic novel and film Persepolis, has died at age 56. The work offered a personal account of Iran’s Islamic Revolution.</p>
@@ -1265,10 +1331,6 @@
 <li>Which aspects of Persepolis reached the widest audiences?</li>
 <li>How have other graphic memoirs addressed political upheaval?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/marjane-satrapi-author-of-persepolis-dies-at-56/a-77419269?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — Obituary and context</li>
-</ul>
 <h4 id="2-fifa-bans-fans-from-taking-water-bottles-into-world-cup-stadiums">2) Fifa bans fans from taking water bottles into World Cup stadiums</h4>
 <p><strong>What happened (neutral):</strong> Fifa has announced that fans will not be allowed to bring reusable water bottles into World Cup stadiums due to safety concerns.</p>
 <p><strong>Perspectives:</strong> BBC News reports the policy change as a late adjustment aimed at stadium security. Observers agree the rule alters what spectators may carry; they differ on whether the safety rationale outweighs convenience for attendees.</p>
@@ -1277,10 +1339,6 @@
 <ul>
 <li>What alternatives for water access are planned inside stadiums?</li>
 <li>How have similar restrictions been handled at past major events?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/sport/football/articles/c302gelj8evo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Policy announcement</li>
 </ul>
 <h3 id="top-business-stories-2">Top business stories (2)</h3>
 <h4 id="1-tire-giant-pirelli-vows-legal-action-as-short-seller-alleges-close-relationship-with-russia">1) Tire giant Pirelli vows legal action as short seller alleges ‘close relationship’ with Russia</h4>
@@ -1292,10 +1350,6 @@
 <li>What specific claims does the short seller report contain?</li>
 <li>How have other companies responded to similar short seller allegations?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/06/04/pirelli-grizzly-research-russia-legal-action.html" target="_blank" rel="noopener">CNBC</a> — Company response</li>
-</ul>
 <h4 id="2-trafigura-pays-record-dividend-as-profit-soars-over-4-billion">2) Trafigura Pays Record Dividend as Profit Soars Over $4 Billion</h4>
 <p><strong>What happened (neutral):</strong> Trafigura Group made a record payout to its top traders and executives after reporting profits of over $4 billion in the first half of its financial year.</p>
 <p><strong>Perspectives:</strong> Bloomberg presents the dividend as a direct result of elevated commodity trading profits. Observers agree the payout reflects strong earnings; they differ on whether such results are sustainable beyond the current market environment.</p>
@@ -1304,10 +1358,6 @@
 <ul>
 <li>Which commodity segments drove the profit increase?</li>
 <li>How do record payouts compare to historical patterns in the sector?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-06-04/trafigura-pays-record-dividend-as-profit-soars-over-4-billion" target="_blank" rel="noopener">Bloomberg</a> — Earnings and dividend details</li>
 </ul>
 <h3 id="top-technology-stories-1">Top technology stories (1)</h3>
 <h4 id="1-academic-is-caught-using-ai-to-write-article-telling-students-dont-use-ai">1) Academic is caught using AI to write article telling students 'don't use AI'</h4>
@@ -1319,10 +1369,6 @@
 <li>What detection methods identified the AI contribution?</li>
 <li>How are universities updating policies on AI disclosure?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15873179/Academic-caught-using-AI-write-article-telling-students-dont-use-AI.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Incident report</li>
-</ul>
 <h3 id="top-popular-media-stories-1">Top popular media stories (1)</h3>
 <h4 id="1-indias-viral-cockroach-party-has-millions-of-followers-what-investors-need-to-know">1) India's viral 'Cockroach' party has millions of followers. What investors need to know</h4>
 <p><strong>What happened (neutral):</strong> A Gen Z-led, social media-first mock political party in India has amassed millions of followers and plans an in-person protest.</p>
@@ -1332,10 +1378,6 @@
 <ul>
 <li>What content has driven the account’s follower growth?</li>
 <li>How have similar online movements performed in past election cycles?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/06/04/indias-cockroach-cjp-party-what-investors-need-to-know.html" target="_blank" rel="noopener">CNBC</a> — Growth and context</li>
 </ul>
 <h3 id="top-gossip-stories-1">Top gossip stories (1)</h3>
 <h4 id="1-katie-price-has-privately-realised-her-marriage-to-lee-andrews-is-over-now-his-conman-lifestyle-has-finally-caught-up-with-him">1) Katie Price 'has privately realised her marriage to Lee Andrews is OVER' now his 'conman' lifestyle has finally caught up with him</h4>
@@ -1347,16 +1389,79 @@
 <li>What public statements have the couple made about their relationship?</li>
 <li>How do media reports typically verify private marital matters?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15873491/Katie-Price-realised-marriage-Lee-Andrews-finally-over.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Reporting on the situation</li>
-</ul>
 <h3 id="understanding-the-issue-how-political-donations-are-disclosed-and-regulated-in-the-uk">Understanding the Issue: How political donations are disclosed and regulated in the UK</h3>
 <p>Most coverage of large political donations assumes the public instantly knows who is funding which party and why. In the UK, parties must report donations above a certain threshold to the Electoral Commission within set timeframes, after which the information becomes public. The system relies on self-reporting by parties rather than real-time independent verification, and cryptocurrency donations are treated under the same rules as other contributions once converted to pounds. Knowing this, when you hear claims about “record fundraising,” you can check whether the totals reflect many small donors or a few large ones by reviewing the commission’s published registers. Next time you see a headline about party funding, ask: what is the disclosure threshold, when will the next report appear, and does the source separate one-off gifts from recurring support?</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference donation figures with the Electoral Commission’s primary database rather than secondary summaries. Compare coverage across outlets with different editorial priorities to see which details each emphasizes. Primary documents such as official statements and regulatory filings remain the clearest starting point for verifying claims.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.theguardian.com/world/2026/jun/04/israel-lebanon-renew-ceasefire-hezbollah-trump-iran-deal-middle-east-us" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/politics/2026/jun/04/reform-uk-raising-millions-more-than-other-parties-donation-figures-show" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/06/04/softbanks-shares-are-down-10percent-amid-broader-tech-sell-off.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-06-04/arm-s-218-billion-leap-makes-it-one-of-market-s-priciest-stocks" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/jun/04/bondi-attack-hero-charged-with-assaulting-his-father-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/marjane-satrapi-author-of-persepolis-dies-at-56/a-77419269?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/sport/football/articles/c302gelj8evo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/06/04/pirelli-grizzly-research-russia-legal-action.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-06-04/trafigura-pays-record-dividend-as-profit-soars-over-4-billion" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15873179/Academic-caught-using-AI-write-article-telling-students-dont-use-AI.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/06/04/indias-cockroach-cjp-party-what-investors-need-to-know.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15873491/Katie-Price-realised-marriage-Lee-Andrews-finally-over.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1783,10 +1888,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

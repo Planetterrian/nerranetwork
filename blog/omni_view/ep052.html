@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>A teacher’s sudden death during GCSE exams and a fatal shark attack in Australia show how sudden cri… — Episode 52</h1>
+            <h1><span class="nn-i18n-title">A teacher’s sudden death during GCSE exams and a fatal shark attack in Australia show how sudden cri…</span> — Episode 52</h1>
             
             <p class="blog-hero-hook">A teacher’s sudden death during GCSE exams and a fatal shark attack in Australia show how sudden crises can upend ordinary routines for families and communities.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1214,10 +1295,6 @@
 <li>What support systems exist for students who witness a crisis on campus?</li>
 <li>How transparent should schools be about staff health incidents?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15817971/Teacher-dies-school-horrified-students-medical-emergency.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Detailed account of the lockdown and tributes</li>
-</ul>
 <h4 id="2-man-killed-in-great-white-shark-attack-near-perth">2) Man killed in great white shark attack near Perth</h4>
 <p><strong>What happened (neutral):</strong> A 38-year-old man was fatally bitten by a great white shark at Horseshoe Reef, north-west of Rottnest Island, early on Saturday. Police and local authorities responded to the popular diving and fishing spot. The incident is being investigated as authorities warn beachgoers in the region.</p>
 <p><strong>Perspectives:</strong> Australian police statements stress the sudden nature of the attack at a well-used site. International coverage highlights ongoing debates about shark mitigation measures such as drum lines and drone patrols. Local residents and divers discuss the balance between ocean recreation and safety warnings that have been in place for years.</p>
@@ -1226,11 +1303,6 @@
 <li>What safety measures are currently in place at popular Western Australian dive sites?</li>
 <li>How do authorities decide when to close beaches after an attack?</li>
 <li>What long-term data exist on great white shark movements in the area?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/news/2026/5/16/man-killed-in-great-white-shark-attack-in-western-australia?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Initial police report and location details</li>
-<li><a href="https://www.bbc.com/news/articles/c1m2xy3dr20o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Timeline and witness context</li>
 </ul>
 <h4 id="3-trump-announces-death-of-senior-isil-commander-in-joint-us-nigerian-operation">3) Trump announces death of senior ISIL commander in joint US-Nigerian operation</h4>
 <p><strong>What happened (neutral):</strong> US President Trump stated that American and Nigerian forces killed Abu-Bilal al-Minuki, described as ISIL’s second-in-command and previously designated a global terrorist. The operation targeted the commander in Nigeria. No further operational details have been released by either government.</p>
@@ -1241,11 +1313,6 @@
 <li>How do joint operations between the US and African nations typically coordinate?</li>
 <li>What public information is usually released after such strikes?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/cy72p2kpd03o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Trump’s statement and background on the target</li>
-<li><a href="https://www.aljazeera.com/news/2026/5/16/trump-says-isil-second-in-command-abu-bilal-al-minuki-killed?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Context on prior designation</li>
-</ul>
 <h4 id="4-us-charges-alleged-senior-commander-of-iran-backed-kataib-hezbollah">4) US charges alleged senior commander of Iran-backed Kataib Hezbollah</h4>
 <p><strong>What happened (neutral):</strong> The US Justice Department arrested and charged an Iraqi national described as a senior commander in the Iran-backed armed group Kataib Hezbollah. The charges relate to activities tied to the organisation. Details of the arrest location and exact allegations remain limited in initial reports.</p>
 <p><strong>Perspectives:</strong> US officials present the case as part of broader efforts to disrupt Iran-linked networks operating across borders. Iraqi and regional voices have questioned the timing and legal basis of the charges. Analysts tracking militia groups note that Kataib Hezbollah has been sanctioned for years, yet enforcement actions vary in visibility.</p>
@@ -1255,10 +1322,6 @@
 <li>How do such arrests affect ongoing diplomatic channels with Iraq?</li>
 <li>What role do designations of Iran-backed groups play in US policy?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/news/2026/5/16/us-charges-alleged-iran-backed-%e2%81%a0kataib-hezbollah-suspect-what-we-know?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Summary of charges and background</li>
-</ul>
 <h4 id="5-pm-modi-begins-europe-tour-in-the-netherlands">5) PM Modi begins Europe tour in the Netherlands</h4>
 <p><strong>What happened (neutral):</strong> Indian Prime Minister Narendra Modi arrived in the Netherlands to open a multi-country European visit. The trip aims to strengthen trade ties and reduce reliance on single supply chains. Indian farmers have continued separate protests against domestic policies during the same period.</p>
 <p><strong>Perspectives:</strong> Indian government sources emphasise opportunities to diversify partnerships beyond existing major economies. European officials highlight mutual interest in technology and green energy cooperation. Domestic Indian reporting also covers ongoing farmer demonstrations that coincide with the diplomatic schedule.</p>
@@ -1267,10 +1330,6 @@
 <li>Which sectors are India prioritising in new European trade talks?</li>
 <li>How do farmer protests intersect with Modi’s foreign travel calendar?</li>
 <li>What concrete agreements are expected from this leg of the tour?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/india-news-pm-modi-visits-the-netherlands-at-start-of-europe-tour/live-77178271?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — Live updates on itinerary and goals</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-gang-members-jailed-after-ram-raid-ambush-in-walsall">1) Gang members jailed after ram-raid ambush in Walsall</h4>
@@ -1282,10 +1341,6 @@
 <li>How do police gather evidence in ram-raid cases?</li>
 <li>What community programmes address recurring gang conflicts in mid-sized UK towns?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15810731/Moment-car-rammed-two-vehicles-residential-street-gang-members-attack.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Court outcomes and incident description</li>
-</ul>
 <h4 id="2-family-and-friends-demand-justice-for-isla-bell-after-manslaughter-charge-dropped">2) Family and friends demand justice for Isla Bell after manslaughter charge dropped</h4>
 <p><strong>What happened (neutral):</strong> Supporters gathered in Melbourne to remember 19-year-old Isla Bell, whose body was found in a tip 18 months ago. Prosecutors recently dropped a manslaughter charge against the man previously accused. The protest highlighted ongoing calls for accountability.</p>
 <p><strong>Perspectives:</strong> Family statements stress the need for a full explanation of why charges were withdrawn. Local media have examined the original police investigation timeline. Advocacy groups argue that dropped charges in similar cases erode public confidence in the justice process.</p>
@@ -1294,10 +1349,6 @@
 <li>What standards must prosecutors meet before dropping serious charges?</li>
 <li>How are families notified when cases are discontinued?</li>
 <li>What avenues remain for further review of the evidence?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/may/16/teenager-isla-bells-body-was-found-in-a-melbourne-tip-18-months-ago-today-friends-and-family-demanded-justice-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — Protest details and background</li>
 </ul>
 <h4 id="3-where-eurovisions-apolitical-claim-faces-fresh-scrutiny">3) Where Eurovision’s apolitical claim faces fresh scrutiny</h4>
 <p><strong>What happened (neutral):</strong> This year’s Eurovision Song Contest has drawn renewed debate over whether the event can remain genuinely apolitical. Organisers have long asserted political neutrality while national entries sometimes reflect current events. Viewers and commentators are questioning how that balance is maintained.</p>
@@ -1308,10 +1359,6 @@
 <li>What voting reforms have been proposed to reduce bloc voting?</li>
 <li>How do host countries manage the political expectations placed on the event?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/features/longform/2026/5/16/where-did-eurovision-go-wrong?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Analysis of this year’s controversies</li>
-</ul>
 <h4 id="4-pilgrims-visit-assisi-to-see-remains-of-gods-influencer">4) Pilgrims visit Assisi to see remains of ‘God’s Influencer’</h4>
 <p><strong>What happened (neutral):</strong> The Italian town of Assisi has seen a surge in visitors drawn to the remains of a 15-year-old figure promoted as “God’s Influencer.” The site combines traditional Christian pilgrimage with modern interest in the teenager’s story. Local tourism has adapted to the increased footfall.</p>
 <p><strong>Perspectives:</strong> Religious authorities highlight the spiritual significance of the relics. Travel writers note the blend of historic pilgrimage routes with contemporary social-media interest. Town officials discuss infrastructure adjustments required by the new visitor patterns.</p>
@@ -1321,10 +1368,6 @@
 <li>What criteria determine which modern figures receive official recognition by the Church?</li>
 <li>How is the balance kept between commercial and devotional aspects of the site?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/travel/article-15810039/visited-assisi-remains-Gods-Influencer-religious-artefacts.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — On-site reporting from Assisi</li>
-</ul>
 <h4 id="5-biblical-diet-trend-promoted-for-health-benefits">5) Biblical diet trend promoted for health benefits</h4>
 <p><strong>What happened (neutral):</strong> A new diet trend encourages followers to eat only foods mentioned in the Bible, claiming benefits for skin conditions, mood and avoidance of processed items. Proponents cite specific scriptural references for allowed ingredients. Nutritionists have begun examining the claims.</p>
 <p><strong>Perspectives:</strong> Advocates present the approach as a return to simpler, whole-food eating. Health professionals caution that restrictive lists may overlook modern nutritional science. Media coverage notes the trend’s rapid spread on social platforms alongside traditional wellness advice.</p>
@@ -1333,10 +1376,6 @@
 <li>What scientific evidence supports or challenges the health claims made for biblical-era foods?</li>
 <li>How do restrictive diets affect long-term nutritional balance?</li>
 <li>What role does social media play in reviving historical eating patterns?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/sciencetech/article-15822337/biblical-diet-cure-depression-skin-poison.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Trend description and proponent statements</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-baggage-delays-strand-passengers-at-heathrow-for-hours">1) Baggage delays strand passengers at Heathrow for hours</h4>
@@ -1348,10 +1387,6 @@
 <li>How are passengers compensated for extended delays?</li>
 <li>What investments have airports made in automated baggage tracking?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15823133/Baggage-chaos-Heathrow-passengers-forced-wait-home-without-bags.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Passenger experiences and timeline</li>
-</ul>
 <h4 id="2-faa-lowers-air-traffic-control-staffing-targets">2) FAA lowers air traffic control staffing targets</h4>
 <p><strong>What happened (neutral):</strong> The Federal Aviation Administration has reduced its target for fully staffed air traffic control positions. The change reflects ongoing recruitment and training difficulties. Controllers and airlines are monitoring potential effects on flight schedules.</p>
 <p><strong>Perspectives:</strong> Agency statements emphasise realistic workforce planning given current hiring pipelines. Pilot unions and airlines express concern about safety margins during busy travel periods. Workforce analysts note that similar staffing shortfalls have appeared in other safety-critical transport sectors.</p>
@@ -1361,10 +1396,6 @@
 <li>What training bottlenecks slow the pipeline of new controllers?</li>
 <li>How do reduced targets influence flight delay statistics?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.reddit.com/r/news/comments/1teln66/faa_cuts_target_for_air_traffic_control_staffing/" target="_blank" rel="noopener">Reddit r/news</a> — Discussion of the policy shift</li>
-</ul>
 <h4 id="3-newly-elected-green-councillor-runs-car-dealership-and-haulage-firm">3) Newly elected Green councillor runs car dealership and haulage firm</h4>
 <p><strong>What happened (neutral):</strong> Bolton’s newest Green Party councillor, Mohammad Baghdadi Khan, operates a second-hand car business and a haulage company while driving a high-emission vehicle. He was elected on a platform that included support for Palestinian causes. Local coverage has examined the contrast between his business activities and party branding.</p>
 <p><strong>Perspectives:</strong> The councillor’s supporters argue that practical business experience strengthens his community role. Critics question whether ownership of carbon-intensive enterprises aligns with Green Party environmental goals. Local reporting highlights the tension between personal enterprise and political messaging.</p>
@@ -1373,10 +1404,6 @@
 <li>How do political parties vet candidates’ business interests before elections?</li>
 <li>What disclosure rules apply to councillors who own transport-related companies?</li>
 <li>How do voters weigh environmental platforms against candidates’ commercial activities?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15822289/Green-Party-councillor-Baggy-Khan-Lamborghini-car-dealership-haulage-firm-Palestine.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Profile of the councillor’s businesses</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-faa-adjusts-air-traffic-control-staffing-goals-amid-recruitment-challenges">1) FAA adjusts air traffic control staffing goals amid recruitment challenges</h4>
@@ -1416,10 +1443,6 @@
 <li>What role do surprise cameos play in driving initial viewership?</li>
 <li>How has the tone of British bonkbuster adaptations evolved?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15822071/Rivals-Aiden-Turner-fully-nude-EastEnders-legend-Pam-St-Clement.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Viewer and production reactions</li>
-</ul>
 <h4 id="2-kendall-jenner-and-jacob-elordi-spotted-together-in-hawaii">2) Kendall Jenner and Jacob Elordi spotted together in Hawaii</h4>
 <p><strong>What happened (neutral):</strong> Kendall Jenner and actor Jacob Elordi were photographed spending time together in Hawaii, prompting renewed dating speculation. Reports suggest Jenner’s sister Kylie may have facilitated the introduction. Neither party has confirmed a relationship.</p>
 <p><strong>Perspectives:</strong> Celebrity media outlets treat the sightings as the latest chapter in ongoing relationship rumours. Fans on social platforms debate the likelihood of a confirmed romance. Publicists for both individuals have remained silent on the matter.</p>
@@ -1428,10 +1451,6 @@
 <li>How do unconfirmed celebrity sightings typically influence media coverage cycles?</li>
 <li>What privacy considerations apply when public figures are photographed on holiday?</li>
 <li>How do family connections affect speculation about new relationships?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15823095/kendall-jenner-jacob-elordi-dating-rumors-hawaii-together.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Details of the reported sightings</li>
 </ul>
 <h4 id="3-debate-continues-over-eurovisions-political-balance">3) Debate continues over Eurovision’s political balance</h4>
 <p><strong>What happened (neutral):</strong> This year’s Eurovision Song Contest has reignited discussion about the event’s claim to political neutrality. Some entries and audience reactions have been interpreted as reflecting current events. Organisers maintain that rules prohibit overt political statements.</p>
@@ -1452,10 +1471,6 @@
 <li>What role does expert commentary play in shaping perceptions of royal style?</li>
 <li>How are valuations of high-value pieces typically sourced for media stories?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/royals/article-15821275/Who-best-royal-jewellery-box-Expert-rates-Kates-approachable-mum-accessories-against-Meghans-bling-including-56-000-diamond-pinky-ring.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Expert breakdown and valuations</li>
-</ul>
 <h4 id="2-kendall-jenner-fuels-dating-speculation-with-jacob-elordi">2) Kendall Jenner fuels dating speculation with Jacob Elordi</h4>
 <p><strong>What happened (neutral):</strong> Photographs of Kendall Jenner and Jacob Elordi together in Hawaii have circulated, adding to existing rumours. Reports indicate Kylie Jenner may have introduced the pair. No official confirmation has been issued.</p>
 <p><strong>Perspectives:</strong> Tabloid coverage frames the sightings as the next development in a possible romance. Online communities discuss the credibility of the reports and the couple’s privacy preferences. Entertainment outlets note the pattern of repeated unconfirmed links between high-profile individuals.</p>
@@ -1474,16 +1489,114 @@
 <li>What commercial arrangements often accompany celebrity family events?</li>
 <li>How do family members balance public interest with personal privacy on such days?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15823123/Venezuela-Fury-Noah-Price-Paris-bridesmaids-wedding.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Timeline of preparations</li>
-</ul>
 <h3 id="understanding-the-issue-how-cross-border-counter-terrorism-operations-are-coordinated">Understanding the Issue: How cross-border counter-terrorism operations are coordinated</h3>
 <p>Most coverage of announced killings of militant leaders presents them as straightforward successes, yet the mechanics of joint operations between the United States and partner nations involve layers of intelligence sharing, legal authorities, and diplomatic agreements that are rarely detailed publicly. When two countries conduct a strike together, each must satisfy its own domestic legal requirements while aligning on target selection, rules of engagement, and post-operation messaging. Historical examples from the past two decades show that such cooperation often relies on long-standing bilateral agreements rather than ad-hoc decisions made at the moment of action. Knowing this, when officials announce a “joint operation,” listeners can assess whether the statement reflects genuine shared command or simply coordinated public messaging after one side carried out the strike. The same framework helps evaluate claims about reduced terrorist capacity, because operational success depends on sustained intelligence networks that extend well beyond any single raid. Next time you see a headline about a high-value target eliminated abroad, ask: which country’s forces actually conducted the strike, what legal cover was used, and whether follow-up reporting confirms lasting disruption or merely a leadership change.</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-check official statements against reporting from multiple countries involved in any international incident. Primary documents such as court filings or police logs often contain details that summaries omit. Comparing timelines across outlets reveals where information remains consistent and where gaps persist.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.dailymail.com/news/article-15817971/Teacher-dies-school-horrified-students-medical-emergency.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/5/16/man-killed-in-great-white-shark-attack-in-western-australia?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c1m2xy3dr20o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cy72p2kpd03o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/5/16/trump-says-isil-second-in-command-abu-bilal-al-minuki-killed?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/5/16/us-charges-alleged-iran-backed-%e2%81%a0kataib-hezbollah-suspect-what-we-know?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/india-news-pm-modi-visits-the-netherlands-at-start-of-europe-tour/live-77178271?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15810731/Moment-car-rammed-two-vehicles-residential-street-gang-members-attack.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/may/16/teenager-isla-bells-body-was-found-in-a-melbourne-tip-18-months-ago-today-friends-and-family-demanded-justice-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/features/longform/2026/5/16/where-did-eurovision-go-wrong?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/travel/article-15810039/visited-assisi-remains-Gods-Influencer-religious-artefacts.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/sciencetech/article-15822337/biblical-diet-cure-depression-skin-poison.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15823133/Baggage-chaos-Heathrow-passengers-forced-wait-home-without-bags.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/news/comments/1teln66/faa_cuts_target_for_air_traffic_control_staffing/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15822289/Green-Party-councillor-Baggy-Khan-Lamborghini-car-dealership-haulage-firm-Palestine.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15822071/Rivals-Aiden-Turner-fully-nude-EastEnders-legend-Pam-St-Clement.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15823095/kendall-jenner-jacob-elordi-dating-rumors-hawaii-together.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/royals/article-15821275/Who-best-royal-jewellery-box-Expert-rates-Kates-approachable-mum-accessories-against-Meghans-bling-including-56-000-diamond-pinky-ring.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15823123/Venezuela-Fury-Noah-Price-Paris-bridesmaids-wedding.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1894,10 +2007,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>
