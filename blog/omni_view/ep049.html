@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Britain's Labour government faces a direct test of authority as Prime Minister Starmer meets a leadi… — Episode 49</h1>
+            <h1><span class="nn-i18n-title">Britain's Labour government faces a direct test of authority as Prime Minister Starmer meets a leadi…</span> — Episode 49</h1>
             
             <p class="blog-hero-hook">Britain's Labour government faces a direct test of authority as Prime Minister Starmer meets a leading rival while pledging to continue governing ahead of the King's Speech.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1214,10 +1295,6 @@
 <li>How might the outcome affect upcoming parliamentary votes on the King's Speech?</li>
 <li>Which policy areas could see immediate changes if leadership tensions persist?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/news/2026/5/13/uk-pm-starmer-set-to-meet-rival-streeting-amid-pledge-to-carry-on-governing?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Details on the planned meeting and Starmer's public stance</li>
-</ul>
 <h4 id="2-trump-and-xi-set-for-beijing-summit-on-trade-taiwan-and-iran">2) Trump and Xi set for Beijing summit on trade, Taiwan and Iran</h4>
 <p><strong>What happened (neutral):</strong> US President Donald Trump is travelling to Beijing for a meeting with Chinese leader Xi Jinping. The agenda includes trade relations, US arms sales to Taiwan, and the ongoing situation involving Iran. Both sides have described the talks as high-stakes amid broader international tensions.</p>
 <p><strong>Perspectives:</strong> France 24 presents the summit as an opportunity to address multiple overlapping global concerns in one setting. Al Jazeera coverage stresses the interconnected nature of trade disputes, regional security questions around Taiwan, and the Iran conflict as factors shaping the discussions. Some reporting notes the potential for limited agreements on specific issues while broader differences remain. Observers differ on whether the meeting is primarily about crisis management or long-term strategic positioning.</p>
@@ -1226,11 +1303,6 @@
 <li>Which specific outcomes would be viewed as progress by each side?</li>
 <li>How could agreements or disagreements here affect markets and regional allies?</li>
 <li>What historical summits offer useful comparisons for expectations?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/asia-pacific/20260513-trump-xi-summit-trade-taiwan-and-iran-on-the-table-at-high-stakes-beijing-meeting" target="_blank" rel="noopener">France 24</a> — Agenda overview and background</li>
-<li><a href="https://www.aljazeera.com/economy/2026/5/13/trump-and-xi-to-meet-in-beijing-the-key-issues-shaping-the-china-summit?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Key issues analysis</li>
 </ul>
 <h4 id="3-additional-britons-flown-home-for-hantavirus-monitoring">3) Additional Britons flown home for hantavirus monitoring</h4>
 <p><strong>What happened (neutral):</strong> Ten residents from UK overseas territories in the South Atlantic are being brought to Britain for further observation after exposure to hantavirus. Twenty others already in the UK have been discharged from hospital following initial checks. Health authorities are tracking the cases linked to specific environmental conditions.</p>
@@ -1241,11 +1313,6 @@
 <li>How do fatality rates and spread patterns compare with other known viruses?</li>
 <li>Which groups face elevated risk based on the reported exposure routes?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15813481/Hantavirus-Brits-flown-UK-monitored-hospital.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Repatriation and hospital discharge details</li>
-<li><a href="https://www.france24.com/en/serious-disease-hantavirus-less-infectious-than-covid-yet-has-significant-fatality-rate-1-in-3" target="_blank" rel="noopener">France 24</a> — Expert assessment of risks</li>
-</ul>
 <h4 id="4-china-expands-missile-production-capacity">4) China expands missile production capacity</h4>
 <p><strong>What happened (neutral):</strong> Bloomberg analysis shows China maintaining a network of roughly 80 firms supporting rapid growth in missile stockpiles. The expansion involves both state and civilian-linked companies and occurs against a backdrop of reduced US inventories from other commitments. Production revenues have reached record levels.</p>
 <p><strong>Perspectives:</strong> Bloomberg reporting highlights the scale of industrial involvement and its implications for long-term military reach. Some analysis connects the buildup to broader strategic competition, while others note the role of dual-use technologies in accelerating output. Views vary on whether the priority is defensive posture or power projection, with different outlets weighing the pace of expansion against transparency limits.</p>
@@ -1255,10 +1322,6 @@
 <li>What data gaps remain in assessing exact stockpile sizes?</li>
 <li>Which regions could see the most immediate effects from increased inventories?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-05-13/the-rapid-rise-of-china-s-missile-stockpiles-video" target="_blank" rel="noopener">Bloomberg</a> — Production network and revenue findings</li>
-</ul>
 <h4 id="5-softbank-vision-fund-records-46-billion-annual-gain">5) SoftBank Vision Fund records $46 billion annual gain</h4>
 <p><strong>What happened (neutral):</strong> SoftBank reported a $46 billion yearly profit for its Vision Fund, driven largely by the increased valuation of its stake in OpenAI. The result reflects strong performance in select technology investments amid fluctuating market conditions.</p>
 <p><strong>Perspectives:</strong> CNBC coverage centres on the outsized contribution of the OpenAI holding to overall returns. Some market commentary views the outcome as evidence of concentrated bets paying off, while others note the volatility inherent in large technology valuations. Perspectives differ on whether such gains signal broader sector recovery or remain tied to specific high-profile assets.</p>
@@ -1267,10 +1330,6 @@
 <li>How dependent are future results on continued growth in a few key holdings?</li>
 <li>What benchmarks are used to value private technology investments like OpenAI?</li>
 <li>Which other funds have shown similar patterns in recent reporting?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/13/softbank-earnings-fy-2025-vision-fund-openai-stake.html" target="_blank" rel="noopener">CNBC</a> — Earnings breakdown and drivers</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-prosecutors-seek-sentences-in-sarkozy-libya-funding-appeal">1) Prosecutors seek sentences in Sarkozy Libya funding appeal</h4>
@@ -1282,10 +1341,6 @@
 <li>How has Sarkozy responded to the lower-court ruling?</li>
 <li>Which aspects of the original evidence are being re-argued?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/france/20260513-prosecutors-to-announce-sentences-sought-for-sarkozy-in-libya-appeal-trial" target="_blank" rel="noopener">France 24</a> — Appeal status and background</li>
-</ul>
 <h4 id="2-greece-considers-further-early-repayment-of-bailout-loans">2) Greece considers further early repayment of bailout loans</h4>
 <p><strong>What happened (neutral):</strong> Greece is examining options to repay additional bailout-era loans ahead of schedule this year. A person familiar with the discussions indicated the government is reviewing the financial feasibility of further prepayments.</p>
 <p><strong>Perspectives:</strong> Bloomberg reporting frames the move as a sign of improved fiscal position allowing earlier exit from legacy obligations. Some analysis links the step to broader efforts to reduce interest burdens and restore market confidence. Views differ on the pace at which remaining debt should be cleared versus retained for liquidity management.</p>
@@ -1294,10 +1349,6 @@
 <li>What savings in interest costs are projected from earlier repayment?</li>
 <li>How does this fit with Greece's overall debt trajectory?</li>
 <li>Which other eurozone countries have pursued similar strategies?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-13/greece-weighs-further-early-repayment-of-bailout-era-loans" target="_blank" rel="noopener">Bloomberg</a> — Details on the repayment review</li>
 </ul>
 <h4 id="3-police-drop-charges-against-palestinian-australian-protester">3) Police drop charges against Palestinian Australian protester</h4>
 <p><strong>What happened (neutral):</strong> NSW Police have withdrawn charges against a Palestinian Australian man arrested during a Sydney rally involving former Israeli President Isaac Herzog. The move follows a review of cases brought under a now-defunct public assembly law, with further withdrawals expected.</p>
@@ -1308,10 +1359,6 @@
 <li>What guidance has been issued to officers following the law change?</li>
 <li>Which protest-related laws remain in active use?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/may/13/nsw-police-drop-charges-against-isaac-herzog-protesters-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — Charge withdrawal and context</li>
-</ul>
 <h4 id="4-inquest-examines-taser-use-on-95-year-old-with-dementia">4) Inquest examines taser use on 95-year-old with dementia</h4>
 <p><strong>What happened (neutral):</strong> A coronial inquest is hearing evidence about the death of Clare Nowland, 95, after she was tasered by police at a Cooma nursing home in 2023. A paramedic described shock at the sequence of events, and the inquiry is also considering dementia training for emergency responders.</p>
 <p><strong>Perspectives:</strong> Guardian Australia reporting focuses on the paramedic testimony and outstanding questions about training standards. Coverage connects the case to wider discussions on aged-care responses and use-of-force protocols. Perspectives differ on the balance between immediate safety decisions and longer-term procedural reforms.</p>
@@ -1321,10 +1368,6 @@
 <li>How have similar incidents elsewhere influenced current guidelines?</li>
 <li>What recommendations might emerge for police and ambulance coordination?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/may/13/inquest-into-tasering-death-of-clare-nowland-aims-to-answer-outstanding-questions" target="_blank" rel="noopener">The Guardian</a> — Inquest proceedings and testimony</li>
-</ul>
 <h4 id="5-paramedics-response-to-woman-trapped-in-sea-defences-under-scrutiny">5) Paramedics' response to woman trapped in sea defences under scrutiny</h4>
 <p><strong>What happened (neutral):</strong> An inquest is examining whether paramedics followed guidelines when responding to Saffron Cole-Nottage, 32, who became trapped headfirst in sea-defence rocks as the tide rose. An expert witness stated the team did not complete the required 30 minutes of rescue efforts.</p>
 <p><strong>Perspectives:</strong> Mail Online coverage centres on the expert assessment that protocols were not fully applied. Reporting notes assumptions made at the scene about survival prospects. Perspectives differ on whether the case points to training shortfalls or difficult real-time judgment calls under time pressure.</p>
@@ -1333,10 +1376,6 @@
 <li>What exact guidelines apply to confined-space water rescues?</li>
 <li>How are survival assumptions documented during incidents?</li>
 <li>Which changes in procedure have followed similar past cases?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15811169/Paramedics-helping-mother-stuck-sea-defence-rocks-tide-came-failed-follow-guidance-assuming-not-saved-expert-tells-inquest.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Expert evidence presented</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-uzbek-state-fund-debuts-higher-after-604-million-london-ipo">1) Uzbek state fund debuts higher after $604 million London IPO</h4>
@@ -1348,10 +1387,6 @@
 <li>How does the valuation compare with similar state-backed listings?</li>
 <li>Which investor groups participated most actively?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-13/uzbek-state-fund-rises-in-london-debut-after-604-million-ipo" target="_blank" rel="noopener">Bloomberg</a> — IPO results and market reaction</li>
-</ul>
 <h4 id="2-european-markets-open-higher-as-uk-gilts-rally">2) European markets open higher as UK gilts rally</h4>
 <p><strong>What happened (neutral):</strong> European stocks opened higher on Wednesday, reversing some of the previous session’s losses. UK government bonds also rallied amid developments in British politics.</p>
 <p><strong>Perspectives:</strong> CNBC coverage links the market movement to investor reactions to UK political statements. Some reporting views the gains as a temporary stabilisation, while others note ongoing uncertainty around policy direction. Perspectives differ on whether political signals or wider economic data are the dominant influence.</p>
@@ -1361,10 +1396,6 @@
 <li>How sensitive are gilt yields to domestic political developments?</li>
 <li>What external factors could alter the current upward trend?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/13/european-markets-stoxx-600-ftse-dax-iran-news-uk-starmer-latest.html" target="_blank" rel="noopener">CNBC</a> — Market opening summary</li>
-</ul>
 <h4 id="3-tony-blairs-daughter-in-law-appointed-to-head-500-million-ai-fund">3) Tony Blair’s daughter-in-law appointed to head £500 million AI fund</h4>
 <p><strong>What happened (neutral):</strong> Suzanne Ashman, married to Euan Blair, has been named managing partner of the UK government’s taxpayer-backed Sovereign AI fund. The £500 million vehicle aims to support artificial-intelligence initiatives.</p>
 <p><strong>Perspectives:</strong> Mail Online reporting notes the family connection and the scale of public funding involved. Some commentary focuses on the appointment process and experience brought to the role. Perspectives differ on the balance between private-sector expertise and public accountability in managing the fund.</p>
@@ -1373,10 +1404,6 @@
 <li>What criteria guided the selection of the managing partner?</li>
 <li>Which AI sectors are expected to receive priority support?</li>
 <li>How will performance and governance be measured?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15813447/Tony-Blairs-daughter-law-head-Governments-taxpayer-500million-Sovereign-AI-fund.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Appointment details</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-softbank-vision-fund-driven-by-openai-stake-performance">1) SoftBank Vision Fund driven by OpenAI stake performance</h4>
@@ -1406,10 +1433,6 @@
 <li>How have environmental campaigns adapted messaging for different audiences?</li>
 <li>Which historical shifts in masculinity offer useful parallels?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/is-caring-about-the-climate-unmanly/a-76779473?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — Cultural analysis and findings</li>
-</ul>
 <h3 id="top-popular-media-stories-3">Top popular media stories (3)</h3>
 <h4 id="1-hailey-bieber-fronts-alaïa-campaign-in-striking-visual">1) Hailey Bieber fronts Alaïa campaign in striking visual</h4>
 <p><strong>What happened (neutral):</strong> Hailey Bieber, 29, appears in French luxury brand Alaïa’s Summer Fall 2026 campaign photographed by Tyrone Lebon. The images feature a bold aesthetic that has drawn attention in fashion circles.</p>
@@ -1420,10 +1443,6 @@
 <li>How does this align with Alaïa’s previous seasonal direction?</li>
 <li>Which other celebrities have fronted similar luxury campaigns recently?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15813487/hailey-bieber-alaia-summer-fall-2026-campaign.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Campaign details and imagery</li>
-</ul>
 <h4 id="2-green-party-leader-addresses-houseboat-council-tax-issue">2) Green Party leader addresses houseboat council-tax issue</h4>
 <p><strong>What happened (neutral):</strong> Zack Polanski has stated he will immediately pay any council tax owed on his barge home after an oversight linked to the practicalities of riverside living. The case has prompted wider conversation about middle-class interest in houseboat living.</p>
 <p><strong>Perspectives:</strong> Mail Online coverage connects the personal situation to a growing trend of swapping traditional housing for river life. Some reporting examines the administrative challenges unique to floating homes, while others focus on the lifestyle appeal. Perspectives differ on whether such moves represent genuine downsizing or selective lifestyle choices.</p>
@@ -1432,10 +1451,6 @@
 <li>What specific council-tax rules apply to houseboats in different UK regions?</li>
 <li>How have local authorities adapted billing systems for mobile residences?</li>
 <li>Which costs are most frequently underestimated by new houseboat residents?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/lifestyle/article-15810381/houseboat-Zack-Polanski-council-tax-middle-classes-river.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Background and trend context</li>
 </ul>
 <h4 id="3-inquest-continues-into-mother-trapped-in-sea-defences">3) Inquest continues into mother trapped in sea defences</h4>
 <p><strong>What happened (neutral):</strong> The inquest into the death of Saffron Cole-Nottage is examining paramedic decision-making when she became trapped in sea-defence rocks. Expert testimony has focused on whether rescue protocols were followed in full.</p>
@@ -1465,10 +1480,6 @@
 <li>How have previous UK prime ministers’ approval ratings evolved in office?</li>
 <li>Which factors most reliably predict long-term public fatigue with leaders?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/columnists/article-15812465/STEPHEN-GLOVER-succeeds-Sir-Keir-hated.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Full column text</li>
-</ul>
 <h4 id="3-discussion-of-unregulated-psychologists-in-family-courts">3) Discussion of unregulated psychologists in family courts</h4>
 <p><strong>What happened (neutral):</strong> A Mail Online investigation highlights cases where unregulated psychologists provided advice that led to children being removed from parents, including a mother who was separated from her son for six years. The reporting questions oversight in family-court expert testimony.</p>
 <p><strong>Perspectives:</strong> Mail Online coverage emphasises the human impact on families and the lack of regulation for certain expert roles. Some commentary calls for stronger accreditation requirements, while others note the difficulty courts face in sourcing timely specialist input. Perspectives differ on the appropriate safeguards versus access to professional advice.</p>
@@ -1478,16 +1489,119 @@
 <li>How do other jurisdictions handle expert qualifications in family matters?</li>
 <li>Which reforms have been proposed following similar reported cases?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/lifestyle/family-parenting/article-15812411/unregulated-psychologist-instrumental-removal-countless-children-families.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Case examples and regulatory questions</li>
-</ul>
 <h3 id="understanding-the-issue-how-family-courts-assess-unregulated-expert-testimony">Understanding the Issue: How Family Courts Assess Unregulated Expert Testimony</h3>
 <p>Most coverage of family-court decisions assumes that expert psychological reports carry formal professional oversight, yet many experts providing testimony operate without statutory regulation. In practice, courts rely on a mix of registered psychologists, counsellors and other practitioners whose qualifications are evaluated case-by-case rather than through a single licensing body. This structure developed historically to ensure timely access to specialist insight in urgent custody matters, but it leaves room for varying standards of training and methodology. When judges weigh these reports, they must balance the expert’s stated experience against the absence of mandatory peer review or continuing professional development requirements. Knowing this, readers can better evaluate claims that a particular outcome resulted from “expert advice” by asking whether the individual held recognised credentials or simply presented relevant experience. Next time you see reporting on a custody dispute involving psychological evidence, ask: what formal qualifications did the expert hold, was their methodology open to challenge, and what alternative sources of information were available to the court?</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-check court documents and official regulatory registers against news summaries, especially when stories involve expert testimony or institutional processes. Primary sources such as inquest transcripts or fund announcements often clarify details that secondary reporting condenses. Comparing coverage across outlets with different editorial priorities helps identify which facts are consistently reported and which remain open to interpretation.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.aljazeera.com/news/2026/5/13/uk-pm-starmer-set-to-meet-rival-streeting-amid-pledge-to-carry-on-governing?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/asia-pacific/20260513-trump-xi-summit-trade-taiwan-and-iran-on-the-table-at-high-stakes-beijing-meeting" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/economy/2026/5/13/trump-and-xi-to-meet-in-beijing-the-key-issues-shaping-the-china-summit?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15813481/Hantavirus-Brits-flown-UK-monitored-hospital.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/serious-disease-hantavirus-less-infectious-than-covid-yet-has-significant-fatality-rate-1-in-3" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-05-13/the-rapid-rise-of-china-s-missile-stockpiles-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/05/13/softbank-earnings-fy-2025-vision-fund-openai-stake.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/france/20260513-prosecutors-to-announce-sentences-sought-for-sarkozy-in-libya-appeal-trial" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-13/greece-weighs-further-early-repayment-of-bailout-era-loans" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/may/13/nsw-police-drop-charges-against-isaac-herzog-protesters-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/may/13/inquest-into-tasering-death-of-clare-nowland-aims-to-answer-outstanding-questions" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15811169/Paramedics-helping-mother-stuck-sea-defence-rocks-tide-came-failed-follow-guidance-assuming-not-saved-expert-tells-inquest.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-13/uzbek-state-fund-rises-in-london-debut-after-604-million-ipo" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/05/13/european-markets-stoxx-600-ftse-dax-iran-news-uk-starmer-latest.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15813447/Tony-Blairs-daughter-law-head-Governments-taxpayer-500million-Sovereign-AI-fund.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/is-caring-about-the-climate-unmanly/a-76779473?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15813487/hailey-bieber-alaia-summer-fall-2026-campaign.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/lifestyle/article-15810381/houseboat-Zack-Polanski-council-tax-middle-classes-river.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/columnists/article-15812465/STEPHEN-GLOVER-succeeds-Sir-Keir-hated.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/lifestyle/family-parenting/article-15812411/unregulated-psychologist-instrumental-removal-countless-children-families.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1902,10 +2016,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

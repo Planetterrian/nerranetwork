@@ -107,7 +107,12 @@
       "url": "https://nerranetwork.com/fascinating-frontiers.html"
     },
     "image": "https://nerranetwork.com/assets/covers/fascinating-frontiers.jpg",
-    "transcript": "https://nerranetwork.com/blog/fascinating_frontiers/ep101.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/fascinating_frontiers/ep101.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://audio.nerranetwork.com/fascinating_frontiers/Fascinating_Frontiers_Ep101_20260614.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -708,6 +713,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +818,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1181,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers" width="40" height="40"></picture>
                 Fascinating Frontiers Blog
             </a>
-            <h1>Good to have you on Fascinating Frontiers, episode 101, coming to you on June 14, 2026. The universe… — Episode 101</h1>
+            <h1><span class="nn-i18n-title">Good to have you on Fascinating Frontiers, episode 101, coming to you on June 14, 2026. The universe…</span> — Episode 101</h1>
             
             <p class="blog-hero-hook">Good to have you on Fascinating Frontiers, episode 101, coming to you on June 14, 2026. The universe has been busy — let's get into it.</p>
             
@@ -1130,6 +1213,9 @@
         </div>
     </header>
 
+    
+    
+
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
         
@@ -1137,8 +1223,6 @@
             <div class="blog-toc-title">Contents</div>
             
             <a href="#fascinating-frontiers-weekly-recap-week-of-june-14-2026" class="">Fascinating Frontiers — Weekly Recap (Week of June 14, 2026)</a>
-            
-            <a href="#sources" class="toc-h3">Sources</a>
             
         </aside>
         
@@ -1234,62 +1318,270 @@
 <p>Before we go, keep an eye on the pace of Amazon’s next Project Kuiper launches and the initial demonstration flights for China’s commercial cargo vehicles.</p>
 <p>That's Fascinating Frontiers for today. If you enjoyed this, a rating or review on Apple Podcasts or Spotify really helps new listeners find the show. I'm Patrick in Vancouver. Thanks for exploring with me, and I'll see you next time. And if you'd rather watch than listen, find us on YouTube at @NerraNetwork — link's in the show notes.</p>
 <p>And before you go — this show is part of the Nerra Network, a family of daily podcasts covering tech, science, markets, and more. If you enjoyed today's episode, give Omni View a listen: a balanced daily world-news briefing that takes every side seriously. You can explore the whole lineup at nerranetwork.com.</p>
-<h3 id="sources">Sources</h3>
-<ul>
-<li><a href="https://spacenews.com/isar-aerospace-raises-270-million-euros-for-global-launch-expansion/" target="_blank" rel="noopener">spacenews.com</a></li>
-<li><a href="https://www.reddit.com/r/space/comments/1u10zt1/fcc_lifts_looming_deadline_for_amazon_leo/" target="_blank" rel="noopener">reddit.com</a></li>
-<li><a href="https://spacenews.com/commercial-launch-providers-shortlisted-for-chinas-low-cost-cargo-spacecraft/" target="_blank" rel="noopener">spacenews.com</a></li>
-<li><a href="https://spacenews.com/lets-procure-in-orbit-services-like-earth-observation-data-and-services/" target="_blank" rel="noopener">spacenews.com</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMi4gFBVV95cUxPVHhTVjU3MmEtT3FJc19JNG9ZYXJIejRtd1RybmhnWFI3TnBsbWJSZGdCeUZoaE94VlpfN2laaURLY08zX3g3aEx2M3pLa090eHg2MXQ2bDVUNF9YZVpkWjVsTkRmTlpaX2dfVER5SU5VQnY0V0RhRFA1aVVYZjRBWndnWXVvOU1kRW5sTmwzN2hKM0Q4RjZSRm9PUVMzbUxaZ1pFbGJaNVN1cW9OcVJBUzk3X0Y1MlUxX2w2LTNzYVRXSmdxbkVuS0V3NjkzTDduTHlhYi1XZGg5ZnN1a2tYVXdR?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMirAFBVV95cUxMb3ZYbVVucXl4UWlqVVJzbW4zUlA2ekFaWmdpRHBLV05IaVQ0Qk1XN2ZWYzM2dGNTeE1JWGdlalYzU0JNd1V4bllVRlVvYm5xM2RBNjNMdERPYTBrZVJMdkltYmRaVFp2WnlLenFWaFNQenlRUTdYdXkybjN0YjM0WTVDN0s3dzRYd1NlU0FRcXJaOVJjS2FDai1oTGp5bEtueXo0RjF0a2xRTG9H?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMie0FVX3lxTE52c0hHN1ZfWG9iRnlKNFJGeExzRGZSOWxKczZlVTZIVWRUT29zRjFEYUZfZGVlUTVtRF84Zm5SSnZlckpoTXFaSWNNaXBSSGhmV3ZGTWtiUUdPeVdYSjMwM05fcGJaLW1XcWZ2QTg1M1FLXzIxc3prcmo0cw?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://www.astronomy.com/observing/the-sky-today-tuesday-june-9-2026/" target="_blank" rel="noopener">astronomy.com</a></li>
-<li><a href="https://www.astronomy.com/picture-of-the-day/photo/a-deep-view-of-the-rosette/" target="_blank" rel="noopener">astronomy.com</a></li>
-<li><a href="https://www.esa.int/Applications/Observing_the_Earth/Copernicus/Sentinel-5P/Cleaner_air_and_prosperity_can_go_hand_in_hand" target="_blank" rel="noopener">esa.int</a></li>
-<li><a href="https://science.nasa.gov/missions/station/san-franciscos-metropolitan-mosaic/" target="_blank" rel="noopener">science.nasa.gov</a></li>
-<li><a href="https://www.reddit.com/r/space/comments/1u0u4as/nasa_quietly_talking_to_congress_about_more_moon/" target="_blank" rel="noopener">reddit.com</a></li>
-<li><a href="https://science.nasa.gov/astrophysics/programs/physics-of-the-cosmos/community/habitable-worlds-observatory-sig-seminar-10-june-2026/" target="_blank" rel="noopener">science.nasa.gov</a></li>
-<li><a href="https://science.nasa.gov/astrophysics/programs/physics-of-the-cosmos/community/16th-international-lisa-symposium-june-2026/" target="_blank" rel="noopener">science.nasa.gov</a></li>
-<li><a href="https://science.nasa.gov/astrophysics/programs/physics-of-the-cosmos/community/ad-astra/" target="_blank" rel="noopener">science.nasa.gov</a></li>
-<li><a href="https://phys.org/news/2026-06-galaxy-early-universe.html" target="_blank" rel="noopener">phys.org</a></li>
-<li><a href="https://www.space.com/space-exploration/search-for-life/nasa-is-building-a-new-space-telescope-to-search-for-life-on-nearby-planets-what-would-it-see-on-ancient-earth" target="_blank" rel="noopener">space.com</a></li>
-<li><a href="https://www.astronomy.com/today-in-the-history-of-astronomy/june-10-1927-the-birth-of-eugene-parker/" target="_blank" rel="noopener">astronomy.com</a></li>
-<li><a href="https://spacenews.com/orbital-raises-5-million-to-join-orbital-data-center-race/" target="_blank" rel="noopener">spacenews.com</a></li>
-<li><a href="https://spacenews.com/leolabs-deploys-mobile-space-tracking-radar-in-indo-pacific/" target="_blank" rel="noopener">spacenews.com</a></li>
-<li><a href="https://spacenews.com/arkadia-space-to-supply-thrusters-for-reflex-aerospace-satellite/" target="_blank" rel="noopener">spacenews.com</a></li>
-<li><a href="https://spacenews.com/spaceport-crunch-reviving-interest-in-sea-based-launch/" target="_blank" rel="noopener">spacenews.com</a></li>
-<li><a href="https://science.nasa.gov/science-research/science-enabling-technology/nasas-cloudcube-pioneers-miniaturizedradar-to-study-clouds-precipitation/" target="_blank" rel="noopener">science.nasa.gov</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMib0FVX3lxTE90ME80U3pqSGRtYVY4cS1hVno2enVPLVhPOFEweVFNdlpQeTRPSXZJa05ITGFyWnJPNzNxdVJDUW5vZllKWmdrSzRDcnItVkVzTjVLSWdkN25lOWxZRU9rMU1DbDRIbUdma1hZWVBxZw?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://spacenews.com/after-the-launch-why-europes-space-ambitions-depend-on-what-comes-next/" target="_blank" rel="noopener">spacenews.com</a></li>
-<li><a href="https://www.universetoday.com/articles/where-not-to-look-in-the-search-for-et" target="_blank" rel="noopener">universetoday.com</a></li>
-<li><a href="https://www.universetoday.com/articles/reading-the-moon-in-x-rays" target="_blank" rel="noopener">universetoday.com</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMiXEFVX3lxTFAyWm9SSlNaT0k5VHVmZUdtN2VGR3lZN3lCYnl1dm1aaWlrckNGNllkYzg1Wld5c0kwQUpCRnlzYmxrVzNOSi01dWY1Q1RuR25qd0dFam5zNWxacG9m?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://science.nasa.gov/learning-resources/science-activation/globe-mission-earth-educators-participate-in-land-cover-community-of-practice/" target="_blank" rel="noopener">science.nasa.gov</a></li>
-<li><a href="https://skyandtelescope.org/astronomy-news/meet-callisto-jupiters-ancient-moon/" target="_blank" rel="noopener">skyandtelescope.org</a></li>
-<li><a href="https://www.nasa.gov/news-release/nasa-to-cover-34th-spacex-resupply-mission-space-station-departure/" target="_blank" rel="noopener">nasa.gov</a></li>
-<li><a href="https://www.nasa.gov/podcasts/houston-we-have-a-podcast/meet-artemis-iii/" target="_blank" rel="noopener">nasa.gov</a></li>
-<li><a href="https://my.nasa.gov/specialevents/s/send-your-name-with-nancy-roman" target="_blank" rel="noopener">my.nasa.gov</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMi7AFBVV95cUxOYmRlTjgtby15VC1lR0ZZbVZkdXRIaGxIb0RmRWxUMUZZT1JjeWM3WGp0bUM2bVlXT1FwZ3JNWU84a1gybUVoZk1IUm5oVERPRXJiaG9PeXZSd1VWUmNvSHRHbVpCODAybEhCbXVUQzB0VFJISU9kN3Z1QnNOcHNfSEdSNjBkS1FhOVJVODhFLUNub2d6czl6djhhT3NkdFUwNV9IYnNHMnRYdGdyeDFwSzg2MUdsYi1NbS1ydWtTNWhnQ0cyNk11a0hEU1VuV1lRelZrYkJpaThWdWVVNG52YzdVcDc1T3kzWTJEdg" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://www.astronomy.com/today-in-the-history-of-astronomy/june-13-1983-pioneer-10-leaves-solar-system/" target="_blank" rel="noopener">astronomy.com</a></li>
-<li><a href="https://www.space.com/stargazing/astrophotography/closer-every-day-a-spectacular-30-day-collage-of-the-venus-jupiter-conjunction-photo" target="_blank" rel="noopener">space.com</a></li>
-<li><a href="https://www.space.com/astronomy/moon/how-japanese-scientists-sent-a-real-life-transformer-to-the-moon" target="_blank" rel="noopener">space.com</a></li>
-<li><a href="https://phys.org/news/2026-06-remora-autonomous-space-fleet-built.html" target="_blank" rel="noopener">phys.org</a></li>
-<li><a href="https://www.universetoday.com/articles/nasa-study-challenges-theories-on-where-the-ingredients-for-life-came-from" target="_blank" rel="noopener">universetoday.com</a></li>
-<li><a href="https://www.astronomy.com/observing/the-sky-today-saturday-june-13-2026/" target="_blank" rel="noopener">astronomy.com</a></li>
-<li><a href="https://www.space.com/astronomy/black-holes/could-the-secret-to-black-hole-formation-be-locked-away-in-this-record-breaking-ancient-quasar" target="_blank" rel="noopener">space.com</a></li>
-<li><a href="https://spacenews.com/astronomers-fear-orbital-data-centers-will-interfere-with-observations/" target="_blank" rel="noopener">spacenews.com</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMi0AFBVV95cUxQVlFtLURGTm5mZFJITjFqN3liWkxJRDlVVjNqNHBCM0tmUEFiVEpfVVk4amZ0cDFnbGpJNUp2b2tObmF3eXJCamExbU9hbEpuWUVhLTNLWlk2VkQ0OHdBNi0zR2lzc2Rzby14NUxVcmdfRkwwcUNaTFlpSjBoeDdvQ0Z5RzBkUm9KVnhWSFp4QlVaenBSOTdOV0hTQmdxTHRmZ2tIaFlzVnFDQ0d3NzZ3S2REemhWc0Zac1RFU0hiZE84Z0pJcTR0Nk1vdTFMdlVQ0gHWAUFVX3lxTE9HOVlybkxFOHU4Q19uYWpfcVRleEFQN2ZrTWZWSk9VczQtQnctaHZWWEhrQjVDNWVYcWNsRDM3ZzZTeFU4VmR0R2ZqRXcxb0JCcDMzRU1ucHlTNElmTkF3RHJaeXNrSmwzVGlVVVJVT0RRNWdWcXIzRTA0QXFTMVVDZEd1WHRnSVVnblhQZmNnNnZNUWxDcjdXWUJfUVhTY3FNeWYxWEMzUFJDanBnVG5fWUl5XzZpQnpqdUZhTlZwdHJCajBLNDZCRG16d3ZPaG0wcmhzSkE" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://arstechnica.com/space/2026/06/spacex-is-now-a-public-company-valued-for-its-ai-potential-so-what-comes-next/" target="_blank" rel="noopener">arstechnica.com</a></li>
-<li><a href="https://www.space.com/space-exploration/launches-spacecraft/japans-h3-rocket-bounces-back-from-failure-with-successful-return-to-flight-launch-carrying-6-satellites" target="_blank" rel="noopener">space.com</a></li>
-<li><a href="https://x.com/planet4589/status/2066058800876990748" target="_blank" rel="noopener">x.com</a></li>
-<li><a href="https://x.com/planet4589/status/2066058134217466067" target="_blank" rel="noopener">x.com</a></li>
-<li><a href="https://x.com/planet4589/status/2066057611020050475" target="_blank" rel="noopener">x.com</a></li>
-<li><a href="https://www.reddit.com/r/space/comments/1u5h5lq/biggest_globular_cluster_omega_centauri/" target="_blank" rel="noopener">reddit.com</a></li>
-<li><a href="https://www.space.com/astronomy/exoplanets/we-were-astonished-millions-of-exoplanets-could-be-born-near-active-supermassive-black-holes" target="_blank" rel="noopener">space.com</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMi0AFBVV95cUxPRFo4YTZURTVqU0YwbVMxYjJIQzk4RktmSGRsMmQwVmhfUjNyV3dBQkFybEc4RjJVS0NXQ0liX1NKWW9QVTA1dEhmSGVuT05WSkxEVE5JODVKcTJ3SkwxdDN4YUZ4T2pyODBMc1pSMTU0RExmN0dBcVE3SEUzWm1zcDl0Zy05d1VWNjJ3V01xNGZRbFZaamRTMkdEMEttaHBZSlJqaDIwYUVtU3VrdDVIMTRjYVVhNDMxTTRrVnpGT3dMaU5oSEExVVRHbmRUQUhs?oc=5" target="_blank" rel="noopener">news.google.com</a></li>
-</ul>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://spacenews.com/isar-aerospace-raises-270-million-euros-for-global-launch-expansion/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=spacenews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">spacenews.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/space/comments/1u10zt1/fcc_lifts_looming_deadline_for_amazon_leo/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://spacenews.com/commercial-launch-providers-shortlisted-for-chinas-low-cost-cargo-spacecraft/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=spacenews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">spacenews.com</span>
+                    </a>
+                    
+                    <a href="https://spacenews.com/lets-procure-in-orbit-services-like-earth-observation-data-and-services/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=spacenews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">spacenews.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMi4gFBVV95cUxPVHhTVjU3MmEtT3FJc19JNG9ZYXJIejRtd1RybmhnWFI3TnBsbWJSZGdCeUZoaE94VlpfN2laaURLY08zX3g3aEx2M3pLa090eHg2MXQ2bDVUNF9YZVpkWjVsTkRmTlpaX2dfVER5SU5VQnY0V0RhRFA1aVVYZjRBWndnWXVvOU1kRW5sTmwzN2hKM0Q4RjZSRm9PUVMzbUxaZ1pFbGJaNVN1cW9OcVJBUzk3X0Y1MlUxX2w2LTNzYVRXSmdxbkVuS0V3NjkzTDduTHlhYi1XZGg5ZnN1a2tYVXdR?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMirAFBVV95cUxMb3ZYbVVucXl4UWlqVVJzbW4zUlA2ekFaWmdpRHBLV05IaVQ0Qk1XN2ZWYzM2dGNTeE1JWGdlalYzU0JNd1V4bllVRlVvYm5xM2RBNjNMdERPYTBrZVJMdkltYmRaVFp2WnlLenFWaFNQenlRUTdYdXkybjN0YjM0WTVDN0s3dzRYd1NlU0FRcXJaOVJjS2FDai1oTGp5bEtueXo0RjF0a2xRTG9H?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMie0FVX3lxTE52c0hHN1ZfWG9iRnlKNFJGeExzRGZSOWxKczZlVTZIVWRUT29zRjFEYUZfZGVlUTVtRF84Zm5SSnZlckpoTXFaSWNNaXBSSGhmV3ZGTWtiUUdPeVdYSjMwM05fcGJaLW1XcWZ2QTg1M1FLXzIxc3prcmo0cw?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://www.astronomy.com/observing/the-sky-today-tuesday-june-9-2026/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=astronomy.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">astronomy.com</span>
+                    </a>
+                    
+                    <a href="https://www.astronomy.com/picture-of-the-day/photo/a-deep-view-of-the-rosette/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=astronomy.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">astronomy.com</span>
+                    </a>
+                    
+                    <a href="https://www.esa.int/Applications/Observing_the_Earth/Copernicus/Sentinel-5P/Cleaner_air_and_prosperity_can_go_hand_in_hand" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=esa.int&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">esa.int</span>
+                    </a>
+                    
+                    <a href="https://science.nasa.gov/missions/station/san-franciscos-metropolitan-mosaic/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=science.nasa.gov&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">science.nasa.gov</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/space/comments/1u0u4as/nasa_quietly_talking_to_congress_about_more_moon/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://science.nasa.gov/astrophysics/programs/physics-of-the-cosmos/community/habitable-worlds-observatory-sig-seminar-10-june-2026/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=science.nasa.gov&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">science.nasa.gov</span>
+                    </a>
+                    
+                    <a href="https://science.nasa.gov/astrophysics/programs/physics-of-the-cosmos/community/16th-international-lisa-symposium-june-2026/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=science.nasa.gov&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">science.nasa.gov</span>
+                    </a>
+                    
+                    <a href="https://science.nasa.gov/astrophysics/programs/physics-of-the-cosmos/community/ad-astra/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=science.nasa.gov&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">science.nasa.gov</span>
+                    </a>
+                    
+                    <a href="https://phys.org/news/2026-06-galaxy-early-universe.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=phys.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">phys.org</span>
+                    </a>
+                    
+                    <a href="https://www.space.com/space-exploration/search-for-life/nasa-is-building-a-new-space-telescope-to-search-for-life-on-nearby-planets-what-would-it-see-on-ancient-earth" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=space.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">space.com</span>
+                    </a>
+                    
+                    <a href="https://www.astronomy.com/today-in-the-history-of-astronomy/june-10-1927-the-birth-of-eugene-parker/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=astronomy.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">astronomy.com</span>
+                    </a>
+                    
+                    <a href="https://spacenews.com/orbital-raises-5-million-to-join-orbital-data-center-race/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=spacenews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">spacenews.com</span>
+                    </a>
+                    
+                    <a href="https://spacenews.com/leolabs-deploys-mobile-space-tracking-radar-in-indo-pacific/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=spacenews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">spacenews.com</span>
+                    </a>
+                    
+                    <a href="https://spacenews.com/arkadia-space-to-supply-thrusters-for-reflex-aerospace-satellite/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=spacenews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">spacenews.com</span>
+                    </a>
+                    
+                    <a href="https://spacenews.com/spaceport-crunch-reviving-interest-in-sea-based-launch/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=spacenews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">spacenews.com</span>
+                    </a>
+                    
+                    <a href="https://science.nasa.gov/science-research/science-enabling-technology/nasas-cloudcube-pioneers-miniaturizedradar-to-study-clouds-precipitation/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=science.nasa.gov&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">science.nasa.gov</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMib0FVX3lxTE90ME80U3pqSGRtYVY4cS1hVno2enVPLVhPOFEweVFNdlpQeTRPSXZJa05ITGFyWnJPNzNxdVJDUW5vZllKWmdrSzRDcnItVkVzTjVLSWdkN25lOWxZRU9rMU1DbDRIbUdma1hZWVBxZw?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://spacenews.com/after-the-launch-why-europes-space-ambitions-depend-on-what-comes-next/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=spacenews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">spacenews.com</span>
+                    </a>
+                    
+                    <a href="https://www.universetoday.com/articles/where-not-to-look-in-the-search-for-et" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=universetoday.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">universetoday.com</span>
+                    </a>
+                    
+                    <a href="https://www.universetoday.com/articles/reading-the-moon-in-x-rays" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=universetoday.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">universetoday.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMiXEFVX3lxTFAyWm9SSlNaT0k5VHVmZUdtN2VGR3lZN3lCYnl1dm1aaWlrckNGNllkYzg1Wld5c0kwQUpCRnlzYmxrVzNOSi01dWY1Q1RuR25qd0dFam5zNWxacG9m?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://science.nasa.gov/learning-resources/science-activation/globe-mission-earth-educators-participate-in-land-cover-community-of-practice/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=science.nasa.gov&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">science.nasa.gov</span>
+                    </a>
+                    
+                    <a href="https://skyandtelescope.org/astronomy-news/meet-callisto-jupiters-ancient-moon/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=skyandtelescope.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">skyandtelescope.org</span>
+                    </a>
+                    
+                    <a href="https://www.nasa.gov/news-release/nasa-to-cover-34th-spacex-resupply-mission-space-station-departure/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=nasa.gov&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">nasa.gov</span>
+                    </a>
+                    
+                    <a href="https://www.nasa.gov/podcasts/houston-we-have-a-podcast/meet-artemis-iii/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=nasa.gov&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">nasa.gov</span>
+                    </a>
+                    
+                    <a href="https://my.nasa.gov/specialevents/s/send-your-name-with-nancy-roman" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=my.nasa.gov&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">my.nasa.gov</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMi7AFBVV95cUxOYmRlTjgtby15VC1lR0ZZbVZkdXRIaGxIb0RmRWxUMUZZT1JjeWM3WGp0bUM2bVlXT1FwZ3JNWU84a1gybUVoZk1IUm5oVERPRXJiaG9PeXZSd1VWUmNvSHRHbVpCODAybEhCbXVUQzB0VFJISU9kN3Z1QnNOcHNfSEdSNjBkS1FhOVJVODhFLUNub2d6czl6djhhT3NkdFUwNV9IYnNHMnRYdGdyeDFwSzg2MUdsYi1NbS1ydWtTNWhnQ0cyNk11a0hEU1VuV1lRelZrYkJpaThWdWVVNG52YzdVcDc1T3kzWTJEdg" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://www.astronomy.com/today-in-the-history-of-astronomy/june-13-1983-pioneer-10-leaves-solar-system/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=astronomy.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">astronomy.com</span>
+                    </a>
+                    
+                    <a href="https://www.space.com/stargazing/astrophotography/closer-every-day-a-spectacular-30-day-collage-of-the-venus-jupiter-conjunction-photo" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=space.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">space.com</span>
+                    </a>
+                    
+                    <a href="https://www.space.com/astronomy/moon/how-japanese-scientists-sent-a-real-life-transformer-to-the-moon" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=space.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">space.com</span>
+                    </a>
+                    
+                    <a href="https://phys.org/news/2026-06-remora-autonomous-space-fleet-built.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=phys.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">phys.org</span>
+                    </a>
+                    
+                    <a href="https://www.universetoday.com/articles/nasa-study-challenges-theories-on-where-the-ingredients-for-life-came-from" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=universetoday.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">universetoday.com</span>
+                    </a>
+                    
+                    <a href="https://www.astronomy.com/observing/the-sky-today-saturday-june-13-2026/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=astronomy.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">astronomy.com</span>
+                    </a>
+                    
+                    <a href="https://www.space.com/astronomy/black-holes/could-the-secret-to-black-hole-formation-be-locked-away-in-this-record-breaking-ancient-quasar" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=space.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">space.com</span>
+                    </a>
+                    
+                    <a href="https://spacenews.com/astronomers-fear-orbital-data-centers-will-interfere-with-observations/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=spacenews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">spacenews.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMi0AFBVV95cUxQVlFtLURGTm5mZFJITjFqN3liWkxJRDlVVjNqNHBCM0tmUEFiVEpfVVk4amZ0cDFnbGpJNUp2b2tObmF3eXJCamExbU9hbEpuWUVhLTNLWlk2VkQ0OHdBNi0zR2lzc2Rzby14NUxVcmdfRkwwcUNaTFlpSjBoeDdvQ0Z5RzBkUm9KVnhWSFp4QlVaenBSOTdOV0hTQmdxTHRmZ2tIaFlzVnFDQ0d3NzZ3S2REemhWc0Zac1RFU0hiZE84Z0pJcTR0Nk1vdTFMdlVQ0gHWAUFVX3lxTE9HOVlybkxFOHU4Q19uYWpfcVRleEFQN2ZrTWZWSk9VczQtQnctaHZWWEhrQjVDNWVYcWNsRDM3ZzZTeFU4VmR0R2ZqRXcxb0JCcDMzRU1ucHlTNElmTkF3RHJaeXNrSmwzVGlVVVJVT0RRNWdWcXIzRTA0QXFTMVVDZEd1WHRnSVVnblhQZmNnNnZNUWxDcjdXWUJfUVhTY3FNeWYxWEMzUFJDanBnVG5fWUl5XzZpQnpqdUZhTlZwdHJCajBLNDZCRG16d3ZPaG0wcmhzSkE" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://arstechnica.com/space/2026/06/spacex-is-now-a-public-company-valued-for-its-ai-potential-so-what-comes-next/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arstechnica.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arstechnica.com</span>
+                    </a>
+                    
+                    <a href="https://www.space.com/space-exploration/launches-spacecraft/japans-h3-rocket-bounces-back-from-failure-with-successful-return-to-flight-launch-carrying-6-satellites" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=space.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">space.com</span>
+                    </a>
+                    
+                    <a href="https://x.com/planet4589/status/2066058800876990748" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=x.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">x.com</span>
+                    </a>
+                    
+                    <a href="https://x.com/planet4589/status/2066058134217466067" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=x.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">x.com</span>
+                    </a>
+                    
+                    <a href="https://x.com/planet4589/status/2066057611020050475" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=x.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">x.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/space/comments/1u5h5lq/biggest_globular_cluster_omega_centauri/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.space.com/astronomy/exoplanets/we-were-astonished-millions-of-exoplanets-could-be-born-near-active-supermassive-black-holes" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=space.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">space.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMi0AFBVV95cUxPRFo4YTZURTVqU0YwbVMxYjJIQzk4RktmSGRsMmQwVmhfUjNyV3dBQkFybEc4RjJVS0NXQ0liX1NKWW9QVTA1dEhmSGVuT05WSkxEVE5JODVKcTJ3SkwxdDN4YUZ4T2pyODBMc1pSMTU0RExmN0dBcVE3SEUzWm1zcDl0Zy05d1VWNjJ3V01xNGZRbFZaamRTMkdEMEttaHBZSlJqaDIwYUVtU3VrdDVIMTRjYVVhNDMxTTRrVnpGT3dMaU5oSEExVVRHbmRUQUhs?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1776,10 +2068,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

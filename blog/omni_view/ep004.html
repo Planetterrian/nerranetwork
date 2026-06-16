@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Bill Clinton testified before Congress on his ties to Jeffrey Epstein, denying any wrongdoing amid o… — Episode 4</h1>
+            <h1><span class="nn-i18n-title">Bill Clinton testified before Congress on his ties to Jeffrey Epstein, denying any wrongdoing amid o…</span> — Episode 4</h1>
             
             <p class="blog-hero-hook">Bill Clinton testified before Congress on his ties to Jeffrey Epstein, denying any wrongdoing amid ongoing scrutiny.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1193,12 +1274,6 @@
 <li>What additional evidence, if any, could clarify the nature of Clinton's Epstein ties?</li>
 <li>How does this hearing impact public trust in investigations of high-profile figures?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15599789/Trump-slams-Republicans-dragging-Clinton-Epstein-grilling.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Trump rebukes Republicans for the Clinton testimony push.</li>
-<li><a href="https://www.theguardian.com/us-news/live/2026/feb/27/bill-clinton-jeffrey-epstein-donald-trump-us-politics-latest-news-updates" target="_blank" rel="noopener">The Guardian</a> — Live coverage of Clinton's testimony and committee chair's comments.</li>
-<li><a href="https://www.cnbc.com/2026/02/27/bill-clinton-jeffrey-epstein-oversight-committee.html" target="_blank" rel="noopener">CNBC</a> — Notes the committee's decision not to call Trump for testimony.</li>
-</ul>
 <h4 id="2-trump-expresses-frustration-with-iran-nuclear-talks">2) Trump Expresses Frustration with Iran Nuclear Talks</h4>
 <p><strong>What happened (neutral):</strong> President Trump stated he is "not happy" with Iran's approach to negotiations over its nuclear program, accusing Tehran of failing to negotiate in good faith. He indicated that military force, including potential regime change, remains an option, following inconclusive talks with suggestions for further discussions next week. No final decision on strikes has been made.</p>
 <p><strong>Perspectives:</strong> Conservative outlets applaud Trump's tough stance as a necessary escalation to pressure Iran, viewing his warnings as a bold contrast to perceived weaknesses in past administrations and essential for regional stability. Liberal perspectives criticize the rhetoric as dangerously inflammatory, arguing it risks derailing diplomatic progress and heightens tensions without clear evidence of Iran's bad faith. International views express concern over potential escalation, with some framing Trump's comments as part of a broader U.S. strategy that could isolate allies if military options are pursued prematurely.</p>
@@ -1207,11 +1282,6 @@
 <li>What specific actions from Iran prompted Trump's dissatisfaction?</li>
 <li>How might military threats affect ongoing diplomatic efforts?</li>
 <li>Could further talks lead to de-escalation, or are they likely to stall?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/feb/27/us-urges-citizens-leave-israel-threat-strike-iran" target="_blank" rel="noopener">The Guardian</a> — Trump's remarks on military options and negotiation frustrations.</li>
-<li><a href="https://www.bbc.com/news/articles/c309vz0z893o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Trump unhappy with Iran's stance but undecided on attacks.</li>
 </ul>
 <h4 id="3-pentagon-pressures-scouting-america-for-reforms">3) Pentagon Pressures Scouting America for Reforms</h4>
 <p><strong>What happened (neutral):</strong> Scouting America has agreed to implement five changes under pressure from the Pentagon, as announced by War Secretary Pete Hegseth. The department will review the group's progress in six months. Details of the specific reforms remain unclear from available information.</p>
@@ -1222,10 +1292,6 @@
 <li>How might this affect the organization's operations and membership?</li>
 <li>Does Pentagon involvement set a precedent for other groups?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.foxnews.com/politics/scouting-america-agrees-5-changes-under-pentagon-pressure" target="_blank" rel="noopener">Fox News</a> — Announcement of reforms and future review.</li>
-</ul>
 <h4 id="4-fbi-raids-la-school-superintendents-home-and-office">4) FBI Raids LA School Superintendent's Home and Office</h4>
 <p><strong>What happened (neutral):</strong> The FBI searched the home of Los Angeles Unified School District Superintendent Alberto Carvalho and the district's headquarters. Media reports suggest a possible link to a bankrupt educational technology company that developed a chatbot for the district. The school board held an emergency meeting to discuss Carvalho's employment, with further discussions planned.</p>
 <p><strong>Perspectives:</strong> Local and national outlets frame the raid as a potential scandal involving tech procurement in education, with some conservative voices highlighting it as evidence of mismanagement in public institutions and calling for accountability. Progressive perspectives emphasize the need for transparency without jumping to conclusions, noting the uncertainty around the investigation's focus and its impact on the nation's second-largest school district. Broader coverage discusses how such events fuel debates on oversight in ed-tech partnerships, with questions about whether this reflects systemic issues or isolated errors.</p>
@@ -1235,10 +1301,6 @@
 <li>How could this affect students and district operations?</li>
 <li>What steps might the board take regarding Carvalho's role?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/2026/feb/27/los-angeles-superintendent-fbi-raid" target="_blank" rel="noopener">The Guardian</a> — Details on the raid and board meetings.</li>
-</ul>
 <h4 id="5-rubio-directs-us-officials-to-limit-iran-related-commentary">5) Rubio Directs US Officials to Limit Iran-Related Commentary</h4>
 <p><strong>What happened (neutral):</strong> Secretary of State Marco Rubio issued a memo instructing U.S. ambassadors in the Middle East to avoid public statements that could inflame tensions or complicate relations amid Iran nuclear talks. The directive followed remarks by Mike Huckabee that sparked White House alarm. It aims to support Trump's pressure on Iran to abandon nuclear weapon capabilities.</p>
 <p><strong>Perspectives:</strong> Conservative sources view Rubio's memo as prudent diplomacy to maintain leverage in high-stakes negotiations, praising it as a unified front against Iranian threats while downplaying internal frictions. Liberal outlets criticize it as censorship that stifles free discourse, potentially hiding disagreements within the administration and raising questions about transparency in foreign policy. International perspectives highlight concerns that such restrictions could signal U.S. vulnerabilities, weaving in debates on how public rhetoric influences delicate talks with adversarial nations.</p>
@@ -1247,10 +1309,6 @@
 <li>How might limiting commentary impact diplomatic negotiations?</li>
 <li>What specific remarks prompted this memo?</li>
 <li>Could this approach strengthen or weaken U.S. positioning?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/2026/feb/27/marco-rubio-iran-talks-mike-huckabee" target="_blank" rel="noopener">The Guardian</a> — Exclusive on the memo and its context.</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-tram-derails-in-milan-causing-casualties">1) Tram Derails in Milan, Causing Casualties</h4>
@@ -1262,11 +1320,6 @@
 <li>How will this affect public confidence in Milan's transit system?</li>
 <li>What support is available for the injured and families?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/c5y599degnqo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Report on the crash and casualties.</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15599419/At-one-dead-dozens-injured-tram-derails-crashes-building-Milan.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Details on the incident's location and impact.</li>
-</ul>
 <h4 id="2-israels-court-allows-aid-groups-to-continue-in-gaza">2) Israel's Court Allows Aid Groups to Continue in Gaza</h4>
 <p><strong>What happened (neutral):</strong> Israel's Supreme Court ruled that 37 aid groups facing a ban from Gaza can continue operations, despite new rules they allegedly failed to follow. The decision came after Israel announced the bans. Specifics on the groups and rules are unclear.</p>
 <p><strong>Perspectives:</strong> Pro-Israel outlets portray the ruling as a balanced judicial check that maintains security while allowing humanitarian work, emphasizing the need for compliance with regulations amid ongoing conflicts. Palestinian and international human rights perspectives criticize the initial bans as overly restrictive, viewing the court's decision as a partial victory that highlights broader tensions in aid delivery. Coverage integrates debates on how such policies affect Gaza's vulnerable populations, with some framing it as evidence of Israel's legal system responding to global scrutiny.</p>
@@ -1275,10 +1328,6 @@
 <li>What new rules led to the proposed bans?</li>
 <li>How might this ruling impact aid delivery in Gaza?</li>
 <li>Could similar bans be revisited in the future?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/news/2026/2/27/israels-top-court-allows-aid-groups-facing-gaza-ban-to-continue-working?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Court ruling and context of the bans.</li>
 </ul>
 <h4 id="3-uk-greens-win-byelection-shocking-labour">3) UK Greens Win Byelection, Shocking Labour</h4>
 <p><strong>What happened (neutral):</strong> The Green Party won the Gorton and Denton byelection, erasing Labour's previous 13,000-vote majority. Labour had framed it as a contest with Reform UK, but the Greens' media campaign and candidate authenticity secured the victory. Some observers noted high levels of family voting.</p>
@@ -1289,11 +1338,6 @@
 <li>How might this influence future UK elections?</li>
 <li>What is the significance of reported family voting concerns?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/politics/2026/feb/27/greens-gorton-denton-win-wake-up-call-labour-needed-to-hear" target="_blank" rel="noopener">The Guardian</a> — Analysis of the byelection results and Labour's response.</li>
-<li><a href="https://www.bbc.com/news/articles/c5yqpr28jrwo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Reform UK's report of voting concerns to police.</li>
-</ul>
 <h4 id="4-uk-suicide-forum-breaches-online-safety-act">4) UK Suicide Forum Breaches Online Safety Act</h4>
 <p><strong>What happened (neutral):</strong> Ofcom ruled that a suicide forum violated the Online Safety Act by failing to block UK users as ordered last year. The site has been linked to multiple deaths in Britain. Regulators may seek court fines or require internet providers to block access, depending on the site's response in the next 10 days.</p>
 <p><strong>Perspectives:</strong> Progressive outlets emphasize the ruling as a crucial step in protecting vulnerable people, framing it as evidence of the need for stronger online regulations to combat harmful content while acknowledging free speech tensions. Conservative perspectives might support enforcement but question overregulation's impact on internet freedom, highlighting the site's failure to comply. International views integrate discussions on global online safety standards, noting how such cases test the balance between intervention and user autonomy.</p>
@@ -1303,10 +1347,6 @@
 <li>What penalties could the site face?</li>
 <li>How does this affect broader online safety debates?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/technology/2026/feb/27/suicide-forum-in-breach-of-online-safety-act-after-failing-to-block-uk-users" target="_blank" rel="noopener">The Guardian</a> — Ofcom's ruling and potential next steps.</li>
-</ul>
 <h4 id="5-new-hampshire-commandeering-case-continues">5) New Hampshire Commandeering Case Continues</h4>
 <p><strong>What happened (neutral):</strong> A judge refused to stay an injunction deemed unconstitutional in a case involving the commandeering of New Hampshire resources. The state attorney general's office is criticized for not raising its strongest constitutional defenses. Details on the underlying issue remain unclear.</p>
 <p><strong>Perspectives:</strong> Libertarian-leaning coverage frames the decision as government overreach, criticizing the judge's stance and urging stronger defenses against federal commandeering to protect state sovereignty. Broader legal analyses discuss it as part of ongoing federal-state power struggles, with some viewing the AG's approach as inadequate and potentially setting problematic precedents. Perspectives naturally blend concerns about constitutional integrity with calls for more robust legal strategies in similar disputes.</p>
@@ -1315,10 +1355,6 @@
 <li>What is the core constitutional issue in this case?</li>
 <li>Why might the AG's office have avoided certain defenses?</li>
 <li>How could this ruling influence other states?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://reason.com/volokh/2026/02/27/the-unconstitutional-commandeering-of-new-hampshire-continues/" target="_blank" rel="noopener">Reason.com</a> — Judge's refusal and criticism of state defenses.</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-us-crude-oil-production-drops-to-six-month-low">1) US Crude Oil Production Drops to Six-Month Low</h4>
@@ -1330,10 +1366,6 @@
 <li>How might this affect global oil prices?</li>
 <li>Could it signal longer-term trends in U.S. energy?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-02-27/us-crude-oil-production-hit-six-month-low-in-december-eia-says" target="_blank" rel="noopener">Bloomberg</a> — Government report on production levels.</li>
-</ul>
 <h4 id="2-paramount-eyes-warner-bros-acquisition">2) Paramount Eyes Warner Bros Acquisition</h4>
 <p><strong>What happened (neutral):</strong> Paramount, backed by Skydance and involving Larry and David Ellison, is pursuing a deal to acquire Warner Bros., which would expand their media empire if approved. The specifics of control and assets are highlighted in discussions. Regulatory approval remains uncertain.</p>
 <p><strong>Perspectives:</strong> Entertainment business reports frame this as a major consolidation in media, with some outlets excited about the potential for a powerhouse empire controlling vast content, while critics warn of reduced competition and antitrust issues. Investor perspectives emphasize the financial boosts, contrasting with concerns from creatives about corporate dominance. Discussions naturally flow into how such mergers reshape industry power dynamics.</p>
@@ -1343,10 +1375,6 @@
 <li>How likely is regulatory approval?</li>
 <li>What impact could this have on media diversity?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.wired.com/story/everything-the-ellison-family-will-control-if-paramount-acquires-warner-brothers-discovery/" target="_blank" rel="noopener">WIRED</a> — Overview of potential empire expansion.</li>
-</ul>
 <h4 id="3-netflix-walks-away-from-warner-bros-deal">3) Netflix Walks Away from Warner Bros Deal</h4>
 <p><strong>What happened (neutral):</strong> Netflix declined to increase its bid for Warner Bros. after Paramount offered a higher proposal, leading to a surge in Netflix's stock. This decision allows Netflix to step back from the acquisition race. Market reactions suggest investor approval of the move.</p>
 <p><strong>Perspectives:</strong> Financial media views Netflix's withdrawal as a strategic pivot, with some praising it for avoiding overpayment and focusing on core strengths, while others speculate on missed opportunities in content expansion. Broader business angles contrast this with Paramount's aggressive bid, highlighting competitive tensions in streaming. Perspectives blend optimism about Netflix's independence with debates on consolidation's long-term effects.</p>
@@ -1355,10 +1383,6 @@
 <li>Why did Netflix choose not to match the bid?</li>
 <li>How does this affect competition in media?</li>
 <li>What are the implications for Warner Bros.?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/economy/2026/2/27/netflix-stock-surges-as-it-walks-away-from-warner-bros-deal?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Stock surge and deal withdrawal details.</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-pentagon-clashes-with-anthropic-over-military-ai">1) Pentagon Clashes with Anthropic Over Military AI</h4>
@@ -1370,15 +1394,121 @@
 <li>How might this affect AI development for defense?</li>
 <li>Could it lead to broader industry standards?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/02/27/defense-anthropic-ai-war-risks-hegseth-amodei.html" target="_blank" rel="noopener">CNBC</a> — Standoff over military AI control.</li>
-<li><a href="https://reason.com/2026/02/27/anthropic-ceo-refuses-pentagon-demands-to-remove-safeguards-on-military-ai/" target="_blank" rel="noopener">Reason.com</a> — CEO's refusal and illustrations.</li>
-<li><a href="https://www.cnbc.com/2026/02/27/openai-sam-altman-de-escalate-tensions-pentagon-anthropic.html" target="_blank" rel="noopener">CNBC</a> — OpenAI's Altman on de-escalating tensions.</li>
-</ul>
 <h4 id="2-open">2) Open</h4>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15599789/Trump-slams-Republicans-dragging-Clinton-Epstein-grilling.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/live/2026/feb/27/bill-clinton-jeffrey-epstein-donald-trump-us-politics-latest-news-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/02/27/bill-clinton-jeffrey-epstein-oversight-committee.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/feb/27/us-urges-citizens-leave-israel-threat-strike-iran" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c309vz0z893o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.foxnews.com/politics/scouting-america-agrees-5-changes-under-pentagon-pressure" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=foxnews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">foxnews.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/2026/feb/27/los-angeles-superintendent-fbi-raid" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/2026/feb/27/marco-rubio-iran-talks-mike-huckabee" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c5y599degnqo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15599419/At-one-dead-dozens-injured-tram-derails-crashes-building-Milan.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/2/27/israels-top-court-allows-aid-groups-facing-gaza-ban-to-continue-working?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/politics/2026/feb/27/greens-gorton-denton-win-wake-up-call-labour-needed-to-hear" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c5yqpr28jrwo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/technology/2026/feb/27/suicide-forum-in-breach-of-online-safety-act-after-failing-to-block-uk-users" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://reason.com/volokh/2026/02/27/the-unconstitutional-commandeering-of-new-hampshire-continues/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reason.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reason.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-02-27/us-crude-oil-production-hit-six-month-low-in-december-eia-says" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.wired.com/story/everything-the-ellison-family-will-control-if-paramount-acquires-warner-brothers-discovery/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=wired.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">wired.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/economy/2026/2/27/netflix-stock-surges-as-it-walks-away-from-warner-bros-deal?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/02/27/defense-anthropic-ai-war-risks-hegseth-amodei.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://reason.com/2026/02/27/anthropic-ceo-refuses-pentagon-demands-to-remove-safeguards-on-military-ai/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reason.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reason.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/02/27/openai-sam-altman-de-escalate-tensions-pentagon-anthropic.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1741,10 +1871,67 @@ That's Omni View. For full source links and more context, check out today's writ
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

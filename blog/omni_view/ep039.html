@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>King Charles addresses Congress and shares laughs with Trump at White House stat... — Episode 39</h1>
+            <h1><span class="nn-i18n-title">King Charles addresses Congress and shares laughs with Trump at White House stat...</span> — Episode 39</h1>
             
             <p class="blog-hero-hook">King Charles addresses Congress and shares laughs with Trump at White House state dinner during historic royal visit.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1204,12 +1285,6 @@
 <li>Why might timing matter when a foreign leader addresses another nation’s legislature?</li>
 <li>How do different outlets choose which parts of a speech to foreground?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/c87qglyjr44o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">King gets ovation for Congress speech warning of volatile world</a> — BBC overview of the address</li>
-<li><a href="https://www.dailymail.com/news/royals/article-15772361/King-Charles-state-visit-Congress-speech-Donald-Trump.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">King delivers hard truths to Congress</a> — Daily Mail report with emphasis on Nato, Ukraine and UK forces</li>
-<li><a href="https://www.theguardian.com/world/2026/apr/29/wednesday-briefing-where-starmer-stands-after-another-precarious-day-in-parliament" target="_blank" rel="noopener">Wednesday briefing: Where Starmer stands</a> — Guardian contextual coverage linking speech to UK politics</li>
-</ul>
 <h4 id="2-king-charles-and-queen-camilla-attend-glamorous-white-house-state-dinner-with-trump">2) King Charles and Queen Camilla attend glamorous White House state dinner with Trump</h4>
 <p><strong>What happened (neutral):</strong> President Donald Trump and First Lady Melania Trump hosted King Charles and Queen Camilla at a formal state dinner at the White House. The evening featured jokes, gifts, and notable guests including athletes, business leaders and media personalities. Trump interrupted his own remarks to praise golfer Rory McIlroy.</p>
 <p><strong>Perspectives:</strong> Daily Mail reports focused on the warmth and humor, detailing Charles’s jokes about “speaking French” and the Boston Tea Party that reportedly left the room roaring with laughter, as well as the presentation of a specially chosen gift with a serendipitous name. Coverage highlighted the dazzling setting and cross-Atlantic camaraderie. Other outlets noted the event’s significance as a display of traditional diplomatic pageantry amid current global tensions. The reporting generally agrees on the sequence of events while varying in tone between celebratory detail and broader diplomatic context.</p>
@@ -1219,12 +1294,6 @@
 <li>How do personal anecdotes and humor shape coverage of official visits?</li>
 <li>Why might media focus on specific jokes or gifts exchanged?</li>
 <li>What expectations do audiences bring to royal-presidential interactions?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15773573/donald-melania-trump-state-dinner-king-charles-queen-camilla.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">King Charles leaves White House roaring with laughter</a> — Detailed Mail Online account</li>
-<li><a href="https://www.dailymail.com/news/article-15774425/King-Charles-gift-Trump-state-dinner.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">King Charles gifts Trump treasured item</a> — Report on the gift and additional jokes</li>
-<li><a href="https://www.dailymail.com/sport/golf/article-15774065/donald-trump-rory-mcilroy-masters-white-house-king-charles.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Donald Trump interrupts his speech to King Charles to praise Rory McIlroy</a> — Coverage of Trump’s golf tribute</li>
 </ul>
 <h4 id="3-uae-quits-opec-after-60-years-amid-global-energy-market-turmoil">3) UAE quits OPEC after 60 years amid global energy market turmoil</h4>
 <p><strong>What happened (neutral):</strong> The United Arab Emirates has left the OPEC oil cartel. The departure comes as markets face the biggest supply crisis in history linked to the ongoing Iran conflict. Observers are now discussing which other members might follow.</p>
@@ -1236,12 +1305,6 @@
 <li>What historical parallels exist for OPEC member departures?</li>
 <li>How might this influence future energy diplomacy?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/04/29/uae-opec-exit-oil-iran-war.html" target="_blank" rel="noopener">UAE's departure from the OPEC oil cartel is not without precedence</a> — CNBC analysis of precedents and possible next members</li>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-29/distressed-uk-firms-pile-up-as-war-enters-third-month-btg-says" target="_blank" rel="noopener">Distressed UK Firms Pile Up as War Enters Third Month</a> — Bloomberg report linking war effects to business distress</li>
-<li><a href="https://www.theguardian.com/world/2026/apr/29/wednesday-briefing-where-starmer-stands-after-another-precarious-day-in-parliament" target="_blank" rel="noopener">Wednesday briefing</a> — Guardian mention within wider Middle East coverage</li>
-</ul>
 <h4 id="4-drivers-face-2-billion-extra-fuel-costs-from-iran-war-adding-pressure-on-uk-budget-plans">4) Drivers face £2 billion extra fuel costs from Iran war, adding pressure on UK budget plans</h4>
 <p><strong>What happened (neutral):</strong> Analysis shows UK motorists have already paid an additional £2 billion at the pumps due to rising prices triggered by the Iran conflict. The figure is projected to surpass this milestone within days. This development increases calls on Chancellor Rachel Reeves regarding planned fuel duty changes.</p>
 <p><strong>Perspectives:</strong> Daily Mail coverage presents the rising costs as a direct household burden that could force a policy reversal on fuel tax increases, framing it as an unexpected consequence of international conflict landing on British families. Broader economic reporting connects the same price spike to wider business distress and recession risks. The factual rise in forecourt prices is not disputed; outlets differ on whether the primary emphasis should be on immediate relief for drivers or on longer-term fiscal strategy.</p>
@@ -1252,11 +1315,6 @@
 <li>How reliable are short-term cost projections during volatile events?</li>
 <li>What responsibility, if any, do policymakers have to adjust plans when external shocks occur?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15772555/Drivers-hit-household-budget-busting-2billion-cost-pumps-thanks-Iran-war-piling-pressure-Chancellor-Rachel-Reeves-scrap-planned-fuel-tax-raid.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Drivers to be hit by household budget-busting £2billion cost at the pumps</a> — Mail Online analysis of the £2bn figure</li>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-29/distressed-uk-firms-pile-up-as-war-enters-third-month-btg-says" target="_blank" rel="noopener">Distressed UK Firms Pile Up as War Enters Third Month</a> — Bloomberg on wider UK business impact</li>
-</ul>
 <h4 id="5-anthony-albanese-rules-out-gas-export-tax-on-existing-contracts">5) Anthony Albanese rules out gas export tax on existing contracts</h4>
 <p><strong>What happened (neutral):</strong> Australian Prime Minister Anthony Albanese confirmed the upcoming federal budget will not introduce a new tax on existing gas export contracts. He described campaigns for such a levy as “populist” and argued that the middle of a global fuel crisis is the wrong time to risk partnerships with Asian trading partners.</p>
 <p><strong>Perspectives:</strong> The Guardian reported Albanese’s position as a deliberate effort to protect export relationships during an energy supply crunch. Coverage notes the decision comes amid cost-of-living concerns at home and international pressure on fuel supplies. Some voices had pushed for the tax to raise revenue; the prime minister’s office prioritizes diplomatic and trade stability. The reporting agrees on the policy choice while reflecting different stakeholder interests — domestic consumers versus trading partners and industry.</p>
@@ -1266,10 +1324,6 @@
 <li>How do export contracts interact with domestic cost-of-living debates?</li>
 <li>Why might a government label certain revenue ideas as populist?</li>
 <li>What longer-term considerations shape decisions on resource taxation?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/apr/29/anthony-albanese-rules-out-gas-export-tax-australia" target="_blank" rel="noopener">Anthony Albanese rules out gas export tax on existing contracts</a> — Guardian report on the decision and rationale</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-france-investigates-return-of-adult-website-linked-to-pelicot-mass-rape-trial">1) France investigates return of adult website linked to Pelicot mass-rape trial</h4>
@@ -1282,10 +1336,6 @@
 <li>What balance should exist between regulation and free expression on adult sites?</li>
 <li>How does high-profile litigation affect public awareness of platform accountability?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/france/20260429-france-investigates-return-of-adult-website-linked-to-pelicot-mass-rape-trial" target="_blank" rel="noopener">France investigates return of adult website linked to Pelicot mass-rape trial</a> — France 24 report on the investigation</li>
-</ul>
 <h4 id="2-rightwing-provocateur-plans-to-register-free-palestine-party-in-victoria">2) Rightwing provocateur plans to register ‘Free Palestine party’ in Victoria</h4>
 <p><strong>What happened (neutral):</strong> Australian right-wing figure Avi Yemini, associated with Rebel News Australia, announced plans to register a “Free Palestine party.” He intends to use it to direct preference flows to conservative parties in Victoria’s state election. The move has renewed debate about the state’s group voting ticket system.</p>
 <p><strong>Perspectives:</strong> The Guardian presents the announcement as a tactical maneuver that highlights weaknesses in Victoria’s voting mechanics. Coverage notes Yemini’s background as a former Israeli soldier and YouTube commentator. Some see the strategy as legitimate political creativity; others view it as exploiting loopholes that distort voter intent. The factual plan to register and preference certain parties is not contested; disagreement centers on whether this reveals a systemic flaw requiring legislative change.</p>
@@ -1295,10 +1345,6 @@
 <li>What safeguards, if any, should exist against tactical party registrations?</li>
 <li>How do provocative political tactics influence broader reform debates?</li>
 <li>What values are in tension when electoral mechanics meet strategic behavior?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/apr/29/avi-yemini-plan-register-free-palestine-party-ntwnfb" target="_blank" rel="noopener">Rightwing provocateur’s plan to register ‘Free Palestine party’</a> — Guardian article on the plan and voting system concerns</li>
 </ul>
 <h4 id="3-study-suggests-stress-from-racism-may-help-explain-higher-childbirth-mortality-for-black-women">3) Study suggests stress from racism may help explain higher childbirth mortality for Black women</h4>
 <p><strong>What happened (neutral):</strong> Cambridge researchers reviewed 44 existing studies examining oxidative stress, inflammation, and uteroplacental vascular resistance. They found higher levels of these markers in Black women. The study proposes that socioenvironmental stressors including racism and deprivation could contribute to worse pregnancy outcomes.</p>
@@ -1310,10 +1356,6 @@
 <li>How can studies like this be responsibly communicated to the public?</li>
 <li>What further evidence would strengthen or challenge these conclusions?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/society/2026/apr/29/stress-racism-black-women-more-likely-die-childbirth-study-suggests" target="_blank" rel="noopener">Stress from racism may help explain why black women more likely to die in childbirth</a> — Guardian exclusive on the Cambridge research</li>
-</ul>
 <h4 id="4-new-football-rule-will-issue-red-cards-for-covering-mouths-while-confronting-opponents">4) New football rule will issue red cards for covering mouths while confronting opponents</h4>
 <p><strong>What happened (neutral):</strong> The International Football Association Board has approved a rule change penalizing players with a red card if they cover their mouths when confronting another player. The measure aims to improve transparency and reduce hidden abuse. It will be implemented at this summer’s World Cup.</p>
 <p><strong>Perspectives:</strong> NPR coverage explains the rule as a practical step toward accountability on the pitch, noting that covering the mouth has long been used to conceal insults or threats from officials. Football governing bodies support the change on grounds of fairness and player safety. Some fans and commentators view it as necessary modernization; others worry it could lead to controversial dismissals or change the emotional dynamics of competition. The factual approval and intended purpose are widely agreed upon.</p>
@@ -1324,10 +1366,6 @@
 <li>What challenges will referees face in consistent enforcement?</li>
 <li>How might this affect on-field behavior and post-match debate?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/04/29/g-s1-119149/red-cards-cover-mouths" target="_blank" rel="noopener">Red cards can be given to players who cover their mouths while confronting opponents</a> — NPR report on the IFAB decision</li>
-</ul>
 <h4 id="5-australia-proposes-taxing-meta-google-and-tiktok-to-fund-newsrooms">5) Australia proposes taxing Meta, Google and TikTok to fund newsrooms</h4>
 <p><strong>What happened (neutral):</strong> The Australian government is advancing legislation that would tax a proportion of revenue from Meta, Google and TikTok. Proceeds would support local news reporting. Draft legislation is expected to be introduced to Parliament by July.</p>
 <p><strong>Perspectives:</strong> NPR described the proposal as a direct policy response to concerns about platform dominance and declining traditional media revenues. Coverage notes the government’s intent to sustain journalistic employment. Tech companies have historically resisted similar measures elsewhere; supporters argue platforms benefit from news content without adequately compensating creators. The core policy mechanism is clear, while debate continues over its likely effectiveness and international precedent.</p>
@@ -1337,10 +1375,6 @@
 <li>How do digital platforms and traditional news outlets interact economically?</li>
 <li>What are possible unintended consequences of revenue-based taxes on tech firms?</li>
 <li>How might other countries view Australia’s approach?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/04/29/g-s1-119142/australia-moves-to-tax-meta-google-and-tiktok-to-fund-newsrooms" target="_blank" rel="noopener">Australia moves to tax Meta, Google and TikTok to fund newsrooms</a> — NPR overview of the proposal</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-aston-martin-reports-another-quarterly-loss-as-turnaround-stalls">1) Aston Martin reports another quarterly loss as turnaround stalls</h4>
@@ -1353,10 +1387,6 @@
 <li>What expectations should investors set for turnaround timelines?</li>
 <li>How does ownership by a wealthy individual influence corporate strategy?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-29/aston-martin-posts-another-loss-as-turnaround-effort-stalls" target="_blank" rel="noopener">Aston Martin Posts Another Loss as Turnaround Effort Stalls</a> — Bloomberg business update</li>
-</ul>
 <h4 id="2-carlsberg-sees-sales-volumes-rise-driven-by-alcohol-free-products">2) Carlsberg sees sales volumes rise driven by alcohol-free products</h4>
 <p><strong>What happened (neutral):</strong> Carlsberg began the year with positive sales volume growth across all regions. The Danish brewer’s push into alcohol-free drinks appears to be gaining traction despite disruptions caused by the Iran war.</p>
 <p><strong>Perspectives:</strong> Bloomberg coverage presents the results as validation of Carlsberg’s diversification strategy. The company’s ability to grow non-alcoholic lines is seen as a hedge against traditional beer market pressures and geopolitical volatility. Analysts differ on whether this represents a permanent shift in consumer behavior or a temporary bright spot. The reported volume increases are the agreed factual baseline.</p>
@@ -1367,10 +1397,6 @@
 <li>What risks and opportunities exist in brand diversification?</li>
 <li>How should investors weigh short-term results against long-term strategic bets?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-29/carlsberg-sales-volumes-rise-as-alcohol-free-push-gains-traction" target="_blank" rel="noopener">Carlsberg Sales Volumes Rise as Alcohol-Free Push Gains Traction</a> — Bloomberg report on regional performance</li>
-</ul>
 <h4 id="3-deutsche-bank-cfo-reports-constructive-start-to-trading-in-april">3) Deutsche Bank CFO reports constructive start to trading in April</h4>
 <p><strong>What happened (neutral):</strong> Deutsche Bank’s Chief Financial Officer stated that the bank’s fixed income and currencies trading business began the second quarter on a positive note after volatility in March. Overall first-quarter profit and revenue exceeded expectations, helped by trading income, asset management and retail banking.</p>
 <p><strong>Perspectives:</strong> Bloomberg interviews with the CFO emphasize resilience in core trading activities amid uncertainty in the Middle East. Coverage notes improved performance in private credit and other areas. Market observers weigh whether April’s improvement signals sustained momentum or reflects normal quarterly fluctuation. The bank’s reported profit beat forms the common factual foundation.</p>
@@ -1380,11 +1406,6 @@
 <li>What role does diversification across business lines play in quarterly results?</li>
 <li>How do public statements from CFOs influence market perceptions?</li>
 <li>What uncertainties remain for European banks in the current environment?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-04-29/deutsche-cfo-trading-started-constructively-in-april-video" target="_blank" rel="noopener">Deutsche CFO: Trading Started ‘Constructively’ in April</a> — Video interview with Raja Akram</li>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-29/deutsche-bank-cfo-says-trading-business-started-well-in-april" target="_blank" rel="noopener">Deutsche Bank CFO Says Trading Business Started Well in April</a> — Written summary of the comments</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-australia-moves-to-tax-meta-google-and-tiktok-to-fund-newsrooms">1) Australia moves to tax Meta, Google and TikTok to fund newsrooms</h4>
@@ -1417,10 +1438,6 @@
 <li>What distinguishes ceremonial decisions from policy decisions?</li>
 <li>How might audiences with different political views interpret the same symbol?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/04/29/g-s1-119146/us-to-issue-passports-with-trumps-picture-for-americas-250th-birthday" target="_blank" rel="noopener">U.S. to issue commemorative passports with Trump's picture for America's 250th birthday</a> — NPR report on the State Department plan</li>
-</ul>
 <h3 id="top-popular-media-stories-3">Top popular media stories (3)</h3>
 <h4 id="1-daily-mail-columnist-criticizes-us-style-tipping-culture-after-restaurant-dispute">1) Daily Mail columnist criticizes US-style tipping culture after restaurant dispute</h4>
 <p><strong>What happened (neutral):</strong> A Daily Mail writer described being publicly embarrassed after giving a 15% tip to a New York waiter. He warned against importing America’s more aggressive tipping norms into Britain.</p>
@@ -1432,10 +1449,6 @@
 <li>How do personal anecdotes influence broader cultural commentary?</li>
 <li>Where should the line fall between custom and obligation?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15772907/Top-tip-import-US-style-service-charges-waiter-row.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Top tip... don't import US-style service charges! Mailman reveals NY waiter row</a> — Original Daily Mail column</li>
-</ul>
 <h4 id="2-trump-praises-rory-mcilroy-at-white-house-state-dinner-attended-by-king-charles">2) Trump praises Rory McIlroy at White House state dinner attended by King Charles</h4>
 <p><strong>What happened (neutral):</strong> During remarks at the White House state dinner for King Charles and Queen Camilla, President Trump paused to praise Northern Irish golfer Rory McIlroy as “unconquerable.” McIlroy was a guest despite skipping a PGA Tour event at a Trump-owned course.</p>
 <p><strong>Perspectives:</strong> Daily Mail sport coverage highlighted the unexpected golf reference within a diplomatic occasion, portraying it as a light moment that blended sport, celebrity and politics. The presence of high-profile athletes at the dinner is presented as typical for such events. Different outlets might emphasize either the sporting tribute or the broader guest list. The factual interruption and praise are not contested.</p>
@@ -1445,10 +1458,6 @@
 <li>What does the attendance of certain celebrities signal about an event?</li>
 <li>Why might media pay particular attention to off-script remarks?</li>
 <li>How do personal enthusiasms of leaders become part of official coverage?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/sport/golf/article-15774065/donald-trump-rory-mcilroy-masters-white-house-king-charles.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Donald Trump interrupts his speech to King Charles to praise 'unconquerable' Rory McIlroy</a> — Mail Online sport desk report</li>
 </ul>
 <h4 id="3-king-charles-uses-humor-about-boston-tea-party-and-french-during-state-dinner">3) King Charles uses humor about Boston Tea Party and French during state dinner</h4>
 <p><strong>What happened (neutral):</strong> At the White House state dinner, King Charles delivered jokes referencing the Boston Tea Party and “speaking French” that reportedly caused laughter throughout the room. He also presented President Trump with a symbolically named gift.</p>
@@ -1460,17 +1469,124 @@
 <li>Why do light moments often dominate coverage of serious state visits?</li>
 <li>What cultural knowledge is required to appreciate such jokes?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15773573/donald-melania-trump-state-dinner-king-charles-queen-camilla.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">King Charles leaves White House roaring with laughter with jokes to Trump</a> — Detailed account of the evening</li>
-<li><a href="https://www.dailymail.com/news/article-15774425/King-Charles-gift-Trump-state-dinner.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">King Charles gifts Trump treasured item with serendipitous name</a> — Report focusing on the gift and additional humor</li>
-</ul>
 <h3 id="top-gossip-stories-3">Top gossip stories (3)</h3>
 <h4 id="1-beau-lamarre-condons-mother-charged-with-attempting-to-influence-witness-in-double-murder-trial">1) Beau Lamarre-Condon’s mother charged with attempting to influence witness in double murder trial</h4>
 <p><strong>What happened (neutral):</strong> The mother of Beau Lamarre-Condon has been charged after allegedly trying to influence a key witness in the double murder trial involving her son. The case continues to attract significant public attention in Australia.</p>
 <p><strong>Perspectives:</strong> Guardian live coverage notes the development within wider Australian news, presenting it as a serious allegation of interference in the judicial process. Tabloid-style interest focuses on the family dimension of a high-profile criminal</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.bbc.com/news/articles/c87qglyjr44o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/royals/article-15772361/King-Charles-state-visit-Congress-speech-Donald-Trump.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/apr/29/wednesday-briefing-where-starmer-stands-after-another-precarious-day-in-parliament" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15773573/donald-melania-trump-state-dinner-king-charles-queen-camilla.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15774425/King-Charles-gift-Trump-state-dinner.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/sport/golf/article-15774065/donald-trump-rory-mcilroy-masters-white-house-king-charles.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/04/29/uae-opec-exit-oil-iran-war.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-29/distressed-uk-firms-pile-up-as-war-enters-third-month-btg-says" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15772555/Drivers-hit-household-budget-busting-2billion-cost-pumps-thanks-Iran-war-piling-pressure-Chancellor-Rachel-Reeves-scrap-planned-fuel-tax-raid.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/apr/29/anthony-albanese-rules-out-gas-export-tax-australia" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/france/20260429-france-investigates-return-of-adult-website-linked-to-pelicot-mass-rape-trial" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/apr/29/avi-yemini-plan-register-free-palestine-party-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/society/2026/apr/29/stress-racism-black-women-more-likely-die-childbirth-study-suggests" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.npr.org/2026/04/29/g-s1-119149/red-cards-cover-mouths" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.npr.org/2026/04/29/g-s1-119142/australia-moves-to-tax-meta-google-and-tiktok-to-fund-newsrooms" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-29/aston-martin-posts-another-loss-as-turnaround-effort-stalls" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-29/carlsberg-sales-volumes-rise-as-alcohol-free-push-gains-traction" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-04-29/deutsche-cfo-trading-started-constructively-in-april-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-29/deutsche-bank-cfo-says-trading-business-started-well-in-april" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.npr.org/2026/04/29/g-s1-119146/us-to-issue-passports-with-trumps-picture-for-americas-250th-birthday" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15772907/Top-tip-import-US-style-service-charges-waiter-row.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1973,10 +2089,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

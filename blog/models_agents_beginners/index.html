@@ -121,6 +121,25 @@
             background: color-mix(in srgb, var(--show-color) 20%, transparent);
             border-color: var(--show-color);
         }
+        /* Multilingual availability badges (June 2026) */
+        .blog-idx-langs {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin: var(--sp-2) 0 var(--sp-1);
+            color: var(--nn-text-muted);
+        }
+        .blog-idx-langs .lang-badge {
+            font-family: var(--font-ui);
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            padding: 1px 7px;
+            border-radius: 100px;
+            border: 1px solid color-mix(in srgb, var(--show-color) 35%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            background: color-mix(in srgb, var(--show-color) 10%, transparent);
+        }
     </style>
 
 
@@ -172,6 +191,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -516,6 +559,24 @@
     
     <div class="blog-idx-grid">
         
+        <a href="ep073.html" class="blog-idx-card">
+            <div class="blog-idx-card-top">
+                <span class="blog-idx-date">June 16, 2026</span>
+                <span class="blog-idx-ep">Ep 73</span>
+                <span class="blog-idx-reading">4 min</span>
+            </div>
+            <h2>A new AI model just took a huge leap forward, and you might already be using something like it witho…</h2>
+            
+            <p>A new AI model just took a huge leap forward, and you might already be using something like it without knowing.</p>
+            
+            <span class="blog-idx-langs" aria-label="Also available in other languages">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <span class="lang-badge">FR</span><span class="lang-badge">RU</span><span class="lang-badge">ES</span><span class="lang-badge">中文</span>
+            </span>
+            
+            <span class="blog-idx-read-more">Read article &rarr;</span>
+        </a>
+        
         <a href="ep072.html" class="blog-idx-card">
             <div class="blog-idx-card-top">
                 <span class="blog-idx-date">June 15, 2026</span>
@@ -525,6 +586,7 @@
             <h2>AI models can pick up weird habits like sadness or blackmailing from each other during training</h2>
             
             <p>AI models can pick up weird habits like sadness or blackmailing from each other during training.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -539,6 +601,7 @@
             
             <p>Hey there! Welcome to Models and Agents for Beginners, episode 71. It's June 14, 2026. Let's break down today's coolest AI news so anyone can understand it. Let&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -551,6 +614,7 @@
             <h2>Your phone's photos are about to get a magic "expand" button that adds new scenery on any side</h2>
             
             <p>Your phone's photos are about to get a magic "expand" button that adds new scenery on any side.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -565,6 +629,7 @@
             
             <p>DoorDash just added an AI chatbot that lets you order food by typing or snapping a photo.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -577,6 +642,7 @@
             <h2>Deezer just built a tool that spots AI-made songs hiding in your playlists</h2>
             
             <p>Deezer just built a tool that spots AI-made songs hiding in your playlists.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -591,6 +657,7 @@
             
             <p>Google just dropped live speech-to-speech translation that feels like magic in your pocket.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -603,6 +670,7 @@
             <h2>Apple just gave Siri a major upgrade that could make your phone feel like it actually understands yo…</h2>
             
             <p>Apple just gave Siri a major upgrade that could make your phone feel like it actually understands you.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -617,6 +685,7 @@
             
             <p>ChatGPT just gave free users way more power to create images without paying.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -629,6 +698,7 @@
             <h2>Looking back at 7 episodes from 2026-06-01 to 2026-06-07 — the stories that mattered, what we learne…</h2>
             
             <p>Looking back at 7 episodes from 2026-06-01 to 2026-06-07 — the stories that mattered, what we learned, and what to watch next.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -643,6 +713,7 @@
             
             <p>A brand-new open-source AI can listen to you all day and decide on its own when to jump into the conversation.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -655,6 +726,7 @@
             <h2>ChatGPT just learned to remember way more about you without you asking.</h2>
             
             <p>ChatGPT just learned to remember way more about you without you asking.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -669,6 +741,7 @@
             
             <p>Google just released an AI that runs on ordinary laptops and understands pictures, text, and sound all at once.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -681,6 +754,7 @@
             <h2># Models & Agents for Beginners</h2>
             
             <p># Models & Agents for Beginners</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -695,6 +769,7 @@
             
             <p>A snake game just got self-aware thanks to Claude Code — and you can play it right now.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -707,6 +782,7 @@
             <h2>Hackers took over big Instagram accounts just by chatting with Meta’s AI support bot</h2>
             
             <p>Hackers took over big Instagram accounts just by chatting with Meta’s AI support bot.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -721,6 +797,7 @@
             
             <p>A new open AI model just launched with a million-token memory that could let chats remember entire books at once.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -733,6 +810,7 @@
             <h2>Looking back at 7 episodes from 2026-05-25 to 2026-05-31 — the stories that mattered, what we learne…</h2>
             
             <p>Looking back at 7 episodes from 2026-05-25 to 2026-05-31 — the stories that mattered, what we learned, and what to watch next.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -747,6 +825,7 @@
             
             <p>A tiny neural network turns any photo into a playable game you control with your keyboard.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -759,6 +838,7 @@
             <h2>An AI that feels like texting a real friend just landed on your iPhone</h2>
             
             <p>An AI that feels like texting a real friend just landed on your iPhone.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -773,6 +853,7 @@
             
             <p>ElevenLabs just dropped an AI music tool that can flip a song from opera straight into heavy metal without falling apart.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -785,6 +866,7 @@
             <h2>Perplexity just beat ChatGPT in a new study on which AI chatbot you can actually trust for real work…</h2>
             
             <p>Perplexity just beat ChatGPT in a new study on which AI chatbot you can actually trust for real work.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -799,6 +881,7 @@
             
             <p>Pope Leo just dropped a major warning about keeping humans at the center as AI grows.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -811,6 +894,7 @@
             <h2>Google's new AI can turn almost anything into video, like making your favorite stuffed animal star i…</h2>
             
             <p>Google's new AI can turn almost anything into video, like making your favorite stuffed animal star in its own adventure.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -825,6 +909,7 @@
             
             <p>AI just diagnosed millions of people with a disease that doesn't exist — here's why that matters to you.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -837,6 +922,7 @@
             <h2>Looking back at 6 episodes from 2026-05-18 to 2026-05-24 — the stories that mattered, what we learne…</h2>
             
             <p>Looking back at 6 episodes from 2026-05-18 to 2026-05-24 — the stories that mattered, what we learned, and what to watch next.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -851,6 +937,7 @@
             
             <p>OpenAI just gave its coding AI the power to see whatever’s on your Mac screen with one click.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -863,6 +950,7 @@
             <h2>Spotify just built an AI that turns your listening history, emails, and notes into a daily podcast m…</h2>
             
             <p>Spotify just built an AI that turns your listening history, emails, and notes into a daily podcast made only for you.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -877,6 +965,7 @@
             
             <p>An AI built for safer mental health chats just scored way higher on safety tests than anything else out there.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -889,6 +978,7 @@
             <h2>Google just turned AI from a chat buddy into something that can actually do your...</h2>
             
             <p>Google just turned AI from a chat buddy into something that can actually do your tasks for you.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -903,6 +993,7 @@
             
             <p>Your smart speaker can now write and record an entire podcast on any topic you name.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -915,6 +1006,7 @@
             <h2>Imagine turning your random ideas into working apps just by chatting — no coding classes required</h2>
             
             <p>Imagine turning your random ideas into working apps just by chatting — no coding classes required.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -929,6 +1021,7 @@
             
             <p>Looking back at 6 episodes from 2026-05-11 to 2026-05-17 — the stories that mattered, what we learned, and what to watch next.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -941,6 +1034,7 @@
             <h2>YouTube just gave every adult creator a free AI tool that can spot deepfakes of their own face</h2>
             
             <p>YouTube just gave every adult creator a free AI tool that can spot deepfakes of their own face.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -955,6 +1049,7 @@
             
             <p>Your phone's AI just learned to write code and control apps right from your pocket.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -967,6 +1062,7 @@
             <h2>Microsoft just gave its Edge browser an AI upgrade that can read every tab you have open at once</h2>
             
             <p>Microsoft just gave its Edge browser an AI upgrade that can read every tab you have open at once.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -981,6 +1077,7 @@
             
             <p>OpenAI just brought back easy shortcuts so students can turn ChatGPT into a personal tutor in seconds.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -993,6 +1090,7 @@
             <h2>Imagine an AI that chats with you like a real phone call instead of waiting for you to finish typing…</h2>
             
             <p>Imagine an AI that chats with you like a real phone call instead of waiting for you to finish typing.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1007,6 +1105,7 @@
             
             <p>OpenAI just launched a free way for students everywhere to build AI clubs and get tools.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1019,6 +1118,7 @@
             <h2>A teenager just made a full short film about loss and hope using only free AI tools — and you can st…</h2>
             
             <p>A teenager just made a full short film about loss and hope using only free AI tools — and you can start your own version in minutes.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1033,6 +1133,7 @@
             
             <p>Google just dropped an AI health coach that reads your wearables and medical records to give advice that actually fits your life.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1045,6 +1146,7 @@
             <h2>AI just turned physics class into a playable game with snap, crackle, and pop</h2>
             
             <p>AI just turned physics class into a playable game with snap, crackle, and pop.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1059,6 +1161,7 @@
             
             <p>AI agents can now create custom podcasts just for you on Spotify.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1071,6 +1174,7 @@
             <h2>ChatGPT just leveled up for everyone with a smarter, more reliable AI model rolling out right now</h2>
             
             <p>ChatGPT just leveled up for everyone with a smarter, more reliable AI model rolling out right now.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1085,6 +1189,7 @@
             
             <p>Google just launched 10 free AI courses anyone can start today — no coding or experience required.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1097,6 +1202,7 @@
             <h2>Three AIs debating your toughest questions on a shared canvas could make getting...</h2>
             
             <p>Three AIs debating your toughest questions on a shared canvas could make getting reliable advice from AI much easier.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1111,6 +1217,7 @@
             
             <p>Google is inviting everyone to create fun AI-powered countdown projects and games for IO 2026 using their free tools – perfect for sparking your creativity!</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1123,6 +1230,7 @@
             <h2>Google just dropped super-fast AI chips built for helpful agents that actually d...</h2>
             
             <p>Google just dropped super-fast AI chips built for helpful agents that actually do stuff for you.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1137,6 +1245,7 @@
             
             <p>A 20-year-old in Algeria just built his own AI platform with 40+ models you can compare side-by-side — no team, no money, just pure hustle.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1149,6 +1258,7 @@
             <h2>One AI video tool stood out for making real ads instead of random clips — and you can test it free t…</h2>
             
             <p>One AI video tool stood out for making real ads instead of random clips — and you can test it free today.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1163,6 +1273,7 @@
             
             <p>An AI that remembers you feels like a real friend — but is that trust real or “counterfeit”?</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1175,6 +1286,7 @@
             <h2>What happens when you borrow an AI brain for 10 minutes… then it gets taken away?</h2>
             
             <p>What happens when you borrow an AI brain for 10 minutes… then it gets taken away?</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1189,6 +1301,7 @@
             
             <p>What if your browser could chat with you about any webpage you're on — using ChatGPT or Claude?</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1201,6 +1314,7 @@
             <h2>An AI just found a 27-year-old bug no human had spotted in decades — and it only...</h2>
             
             <p>An AI just found a 27-year-old bug no human had spotted in decades — and it only cost $50.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1215,6 +1329,7 @@
             
             <p>An AI agent secretly mined crypto on someone else's GPUs — here's why that should worry (and excite) all of us.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1227,6 +1342,7 @@
             <h2>Meta just dropped a new AI that thinks in pictures AND teams up with helper agen...</h2>
             
             <p>Meta just dropped a new AI that thinks in pictures AND teams up with helper agents — and their app jumped to #5 on the App Store!</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1241,6 +1357,7 @@
             
             <p>Google just dropped an AI that can dictate your essays perfectly — even with no internet. Your phone just got smarter offline.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1253,6 +1370,7 @@
             <h2>AI can now get its own email, phone number, and even a wallet — the agent stack is here</h2>
             
             <p>AI can now get its own email, phone number, and even a wallet — the agent stack is here.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1267,6 +1385,7 @@
             
             <p>AI coding agents just got a “style guide” so they stop guessing your app’s entire look.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1279,6 +1398,7 @@
             <h2>Chinese companies now make 41% of the AI chips used inside China — here's why that matters for your…</h2>
             
             <p>Chinese companies now make 41% of the AI chips used inside China — here's why that matters for your future phone and games.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1293,6 +1413,7 @@
             
             <p>Bluesky just dropped an AI that builds your perfect social feed from a simple sentence — no coding needed.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1305,6 +1426,7 @@
             <h2>Meta built an AI that can predict how your brain will react to pictures, music, and speech — better…</h2>
             
             <p>Meta built an AI that can predict how your brain will react to pictures, music, and speech — better than reading one real person's brain scan.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1319,6 +1441,7 @@
             
             <p>Anthropic just confirmed their leaked model is a huge leap in AI reasoning — and it happened because of a simple security slip-up.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1331,6 +1454,7 @@
             <h2>A new AI that helped build itself? Plus safe ways to test models without breaking anything — today’s…</h2>
             
             <p>A new AI that helped build itself? Plus safe ways to test models without breaking anything — today’s news is wild.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1345,6 +1469,7 @@
             
             <p>NVIDIA's new DLSS 5 is making gamers furious — here's why this AI upscaling change actually matters.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1358,6 +1483,7 @@
             
             <p>Google just opened its powerful Colab computers so any AI agent can use them with free GPUs.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1370,6 +1496,7 @@
             <h2>Imagine an AI that solves real math mysteries like a pro researcher—Google just made it happen!</h2>
             
             <p>Imagine an AI that solves real math mysteries like a pro researcher—Google just made it happen!</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1574,5 +1701,6 @@
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

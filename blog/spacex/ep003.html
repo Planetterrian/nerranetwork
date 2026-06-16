@@ -107,7 +107,12 @@
       "url": "https://nerranetwork.com/spacex.html"
     },
     "image": "https://nerranetwork.com/assets/covers/spacex.jpg",
-    "transcript": "https://nerranetwork.com/blog/spacex/ep003.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/spacex/ep003.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://audio.nerranetwork.com/spacex/SpaceX_Daily_Ep003_20260614.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -708,6 +713,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +818,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1181,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/spacex-400.webp"><img src="../../assets/covers/spacex.jpg" alt="SpaceX Daily" width="40" height="40"></picture>
                 SpaceX Daily Blog
             </a>
-            <h1>Welcome back to SpaceX Daily, episode 3. It's June 14, 2026 and I'm Patrick in Vancouver. Let's get… — Episode 3</h1>
+            <h1><span class="nn-i18n-title">Welcome back to SpaceX Daily, episode 3. It's June 14, 2026 and I'm Patrick in Vancouver. Let's get…</span> — Episode 3</h1>
             
             <p class="blog-hero-hook">Welcome back to SpaceX Daily, episode 3. It's June 14, 2026 and I'm Patrick in Vancouver. Let's get into today's SpaceX developments.</p>
             
@@ -1130,6 +1213,9 @@
         </div>
     </header>
 
+    
+    
+
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
         
@@ -1137,8 +1223,6 @@
             <div class="blog-toc-title">Contents</div>
             
             <a href="#spacex-daily-weekly-recap-week-of-june-14-2026" class="">SpaceX Daily — Weekly Recap (Week of June 14, 2026)</a>
-            
-            <a href="#sources" class="toc-h3">Sources</a>
             
         </aside>
         
@@ -1180,34 +1264,130 @@
 <p>Before we go, that static-fire attempt and the engine install on Booster Twenty are the items to watch next week.</p>
 <p>And that's a wrap on today's SpaceX developments. S P C X closed at one hundred sixty dollars and ninety-five cents. Share this with a fellow spaceflight fan if you found it useful, and subscribe so you don't miss tomorrow's episode. I'm Patrick in Vancouver. See you next time.</p>
 <p>And before you go — this show is part of the Nerra Network, a family of daily podcasts covering tech, science, markets, and more. If you enjoyed today's episode, give Unintended Consequences a listen: true stories of good intentions that backfired. You can explore the whole lineup at nerranetwork.com.</p>
-<h3 id="sources">Sources</h3>
-<ul>
-<li><a href="https://news.google.com/rss/articles/CBMinAFBVV95cUxPanotbENJdl9keE5RSGhJWFVoRExnQXp1dXdmVTY2bDZLc3lTbjJkdTVxdTcxYWNJblVkb29fMGRuSk82RThROVdtT1dpUEEtT1U1SnpkbnBjTFJOU1l4R1hGQndFMGNZdm9VeVRnZzFVckZNakNHeC1HQUt6ck9VZE5tNEh2SHNKTWwtcUdXbnR6TkVpQUhGek5STkk?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMi0wFBVV95cUxOT1RZWnlDQTB4T29mbXdUbVRzZjE3WkVEWUdtM1BZeFZUOW9xWWdFTkt0N0Z2Ul9aeFJUeTVVMDRrUTdhLWtTNzMtelREcUNEdzJwOEVlSkFGRFN4c1FuTW1ZZkFmODQ4NUwxRXJyMVh4S0xqd0pERHUteDFseDlyay1MUVhLZTR3SmN6ajJmUHo4eGhmZDhRc0ZZLW1FWHlWQmlJSFB1N1J6Wk1OeTdwWmV6aVhUSHV4dlZiNG9FRlhGSlhoOTJHa29SWFlMVGRGTXhz?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMi3AFBVV95cUxOcnRaT3pVMVZ6Y19Icnpvb01SMXFycnktMmEycWFlX2NuUElFd3NDQlFsTGtMeXp4Q1lPSzBIeEszYkFfNU1fNUNmeWU2NEhmSExWaGJDdzhxTkJ4ZGFmRVdNRXZMb0V6SXc0aXRsd2N5bTFzYWZLUWx1SWtTRnNmVTRwY3ViWTBkRl83dXI4NGNMYVVENVZpRWMzeEdfTVo2Vk9sNTg4RFpVYWgyMVRMQ0JZZ0FId0pncUFLMkZZZ0hBR0pBdGUwb3ZKMW1nLXNaNS01Vkh6MC1vRFdI?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://spacenews.com/astronomers-fear-orbital-data-centers-will-interfere-with-observations/" target="_blank" rel="noopener">spacenews.com</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMipgFBVV95cUxOSHFEYnZBVDhxd2hCbEpOX0ZlOF9yNXlSbGtRbUkxYXhPS2ZEUjJ0SzdZUXA0ZXVNeDFlY09ESjhXTEljUUlyS0dDUjhUOHBSVzNxdUtMTkNQR0F2TjB3Ql91WWQwcFhVUk8wUll3R3M3MVU2SVJqTldKckl1U2RmcGxlUy1fUlFoSzUyeVlRU0xadTBteWt0R1ZnMXlhSlpfWl9jWDRB?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMiuAFBVV95cUxPaDlTcnZXTEFSZXhueUZmZmJxdjRNSEQzVkNtUGwxalpjclA1MHB4cThWY1BiU2xBdW1ETkFzdUVHYXBCWFRjNXN0MWhtcFZtOWJ3THNNQ0MzeVBvWmwyVkhBaW9vbUFnTHlzNDNGRHY3VjFnaTBkZzVtTWpQMUdxQnFQTUs0NjhaTUx5NVUzLWNUQWJ5b3lEa3FNQ2tvc2RJanZlU0FzVDBQc1lwREZId29maFE5WjZu?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://www.reddit.com/r/SpaceXLounge/comments/1u4b127/spacex_purchases_bell_429_helicopter_for_rocket/" target="_blank" rel="noopener">reddit.com</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMioAFBVV95cUxPZmVTRGJMSS1mbzZLcVQ2SzlIWnVjbFoxT2wxMmFacG5kM3pldWJUTHNtZmZIaWFvVW9qbVlCbUIwRVZmdjEzLVoxV096QWhXbjZJTTY1V1B0V1FlVWVqNHR0b0kxSjlKM2ZXUkFZc3FIa1IxdlBQZGQxNlp3WWd2QUQyMEZOUFZqT01USW9feXZWRjV1Y2hDcXQtTFB4Z1hN?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMiiAFBVV95cUxNN3h4dFZNend3SHFYRXdGMHhoc0k4SEMzZ0hjVnBkVERTMWNob01lUHE3WEVBdUpNMjBYbC15QUpMOTl6eDNKbWVPVjJYS052YWlPb09oWTZwOUZ5NkhDRjBZbFpBSkE4NnBlajNPdXBmMmZBLW1nMk5TbmNPTENvZFpTSGs4bnRY?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMitgFBVV95cUxNQ0F1bHZnbW9nRWQwMmJQRWJDZUlXc1pVRmtJVG8tYV8zTDF3THg0cGxWSnRoTjZWSVBvRDhZQmthZTY4RkdvazgtUDBTRHh5UHNlb1R6R0JUbEEwQVFZVm9ER1ZvdkV5N2l5M0JXZ0NfRHlKMmF5cC1HV0ktQ2l6c3NFbmJBZUk1eFJqUUpXLVkzT19kVzJiNGZIU2ZUZmVmSXQyUWVObFpjME0xdnJxTS1iU0tVQQ?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMi6AFBVV95cUxPaUcySHV1Y3FnYmZxT0VfalhJRExsWGdaYzJfSUpYV1k2S3JYMXYtbXVJVjM5UHdWbWNjVXFOM2g1U0kxOC1zZm5VS3FCTnA0VlRMcUprbEN2bjJGWGVna1JRSno2ZTg0X0MxOWxTYlVzdTR5aUV5dTNzdG5BbnRjSlJ4cTdydGRIUGZqc3h2VUZXRkd6SExvbHVmX1Y5R0NLNDZQMEVVcjY3MnZydjQyeWVQa0ZjTUthdWViVllIZVZGSzZFTE9rMUpkSUtWbjVzdFd6TTl1U0V4S3hack1XWjF2UUdQdk5y?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMilwFBVV95cUxNeU5qUDl1Mi1HX3JPa0doaGZMMGtUOHZqTEJiV1psanF3WkJRczNDd0JfZDQ2UWlDS0s5cTZJeW5hcTI5VDRMekktREN4MTVxTUtVb2RxSjdOUXljWC1wQjRRZWJRdjBNR1liMUhCOUdjNF9JNU5CTVA5WnBPa0Q3Y1hGTVVYVlF0Vy1HSWtEYVo2N1Q5R1p3?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMitAFBVV95cUxOdV9UWXNtd3Q1d2c3YmdlanhBWWxwYjJybWNZUGhNanZhMERyRXBIbWRwQmZaX3VyNTFCWEZ2d0lJdUJaV19KRG9LR090STAxVEt5LTVROVV4a1RzVTFpaXVfZFoxd0RuMHhIRTZ1M2dHcGh5QnZVN3pDNHlCdW1iNFptUk43REJKclQyaF9mU0ZZTzA0czFXNHJmUHlVV1ZldEV2cTBGWXBFUGYxSmpkVXhQYUw?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMidkFVX3lxTFB5WlVqTnVCRGJIVDdramI5TTNacHhBUU5XRkItMHpWQVlMQVlscmRIVzBQcG5MY3MzNjZVNlhBb0hDelAwdGJ2VTJXTl9KR1dyUjJUcFJfMTcxUm5yRm5zSFBsSVBZVW1WRUh4Y1MydkEtQldWeEE?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMiiwFBVV95cUxNOWstQlBoTXJ5Y1p1TXV2VmhhWDFNTWtZV2tJV1Jhb2FDNnNNWDVrMEd5ZkZaZmVlYUhRb0J2R2M2WVplQ2pORWFXU3pVM1d0TnBwYWw1YnVHcmhNZWg1UFB2X3psNF85blktLWFjYTJvM3EwT253QVJWUzMtb1FkVXR1bzdwSndPQ1dN?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://spacenews.com/in-aerospace-ai-isnt-replacing-workers-its-filling-a-shortage/" target="_blank" rel="noopener">spacenews.com</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMisAFBVV95cUxPNWFNeWptakdKdnZhd2lmel8zWUZrUkNaYWIxUkk5Ym1QRUZLQ2UxdDY0cFlVMU5HRF96dmZuRDFFNEF4UElMTDdRUVIxdjJFVmxicHBCZFk1N3hpT1VVQ2J4aXBPbDM4c0piTEF1bWZKTVQzbHJlOWhUamlWV0piSDVQVXdaUTNOcTZBeXZjcDJxcXVpN2ExYnZYeDlEdXpENTgwVVpnNWdTY2J6VFVFUA?oc=5" target="_blank" rel="noopener">Google News</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMirgFBVV95cUxOUXFMZGt2VHFQUjg2YUhJZWo0dzgzcXItX1NQVEJvM0d1am9FLU1kRy16MGdkMVBxRUVfN2t0U2VQLTh6Ym1PQlhjcmFJUV9ZSnlUVklnX3gtaEtnZWlxa3FzWFE3bnlMYlNpR0plWktEb1VQR25UTmVFN1JIS0hpbXRGS3lHQmdCU2tFd2VqZVRNNXhZN3hhS3FsQW1JY2ZMZE1IMWtWUkhhY21hUmc?oc=5" target="_blank" rel="noopener">news.google.com</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMingFBVV95cUxOajFzNWtkM3hhMUJQUzJ6dGpCN0V3NUpEMlRQem0yNklvU1psVTlKNGRjZ2k0cXllN3VzLTR3YUpPZTJaUU9qbWJoT05IYmFIX21PWmNtbjBSNVdsT1pEMFo5MHVlcG5QVnViS1Rlc20xVkhzWkx1WnFBZFpYWjRXbHNZYlIydzlfVDFFMXhQZjRVVGRic2VpT0xUTE12dw?oc=5" target="_blank" rel="noopener">news.google.com</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMiVEFVX3lxTE5Jc05jS3dKRmI4U1Fwc1JNZDZMN0lqWnJHVFhzajdiUW96TENDVkM5eDVXUGk3MGtYcm9CZHBKZWpjYndSM0hScDRGaFpsVlRUYjd5cQ?oc=5" target="_blank" rel="noopener">news.google.com</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMisAFBVV95cUxNc0kxRkNGSkk2S3hfRk91VUhNcUxKREw5MFpLcHRsT3pPbG93YnRrbUd2UW1Hbk5GenhiV1luTTlFQVZfOHI0ZF80eHN0WXlwdU1GS282aW92Qy1WSGlxQnF6SlJUV0FiSzNaRk5oeGlEd3BQRkYxM1l2ZjRqcmYxTkt6OVpGM09uRnMzR3g4UFh3NWEyM0ZWVmk3clRwSDVBbVh5djRtZm4wZE5WcGUtdg?oc=5" target="_blank" rel="noopener">news.google.com</a></li>
-<li><a href="https://news.google.com/rss/articles/CBMie0FVX3lxTE1UOU9pY09OLWFjT2l6NUxTaGhQdW5OQ0U3TTZlLVdXMS1FcjRWd1dmS0VYQ1hjZTV2OWVwWnc3NXJmb081VTRjS1JmYmdBZDRQTHduUldXa21hVmtyZ1hPeF95Y1ZmNWlLcV9EX25xNExJQ1IyRFF2V240Yw?oc=5" target="_blank" rel="noopener">news.google.com</a></li>
-<li><a href="https://spacenews.com/revised-artemis-lunar-lander-plans-take-shape/" target="_blank" rel="noopener">spacenews.com</a></li>
-</ul>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://news.google.com/rss/articles/CBMinAFBVV95cUxPanotbENJdl9keE5RSGhJWFVoRExnQXp1dXdmVTY2bDZLc3lTbjJkdTVxdTcxYWNJblVkb29fMGRuSk82RThROVdtT1dpUEEtT1U1SnpkbnBjTFJOU1l4R1hGQndFMGNZdm9VeVRnZzFVckZNakNHeC1HQUt6ck9VZE5tNEh2SHNKTWwtcUdXbnR6TkVpQUhGek5STkk?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMi0wFBVV95cUxOT1RZWnlDQTB4T29mbXdUbVRzZjE3WkVEWUdtM1BZeFZUOW9xWWdFTkt0N0Z2Ul9aeFJUeTVVMDRrUTdhLWtTNzMtelREcUNEdzJwOEVlSkFGRFN4c1FuTW1ZZkFmODQ4NUwxRXJyMVh4S0xqd0pERHUteDFseDlyay1MUVhLZTR3SmN6ajJmUHo4eGhmZDhRc0ZZLW1FWHlWQmlJSFB1N1J6Wk1OeTdwWmV6aVhUSHV4dlZiNG9FRlhGSlhoOTJHa29SWFlMVGRGTXhz?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMi3AFBVV95cUxOcnRaT3pVMVZ6Y19Icnpvb01SMXFycnktMmEycWFlX2NuUElFd3NDQlFsTGtMeXp4Q1lPSzBIeEszYkFfNU1fNUNmeWU2NEhmSExWaGJDdzhxTkJ4ZGFmRVdNRXZMb0V6SXc0aXRsd2N5bTFzYWZLUWx1SWtTRnNmVTRwY3ViWTBkRl83dXI4NGNMYVVENVZpRWMzeEdfTVo2Vk9sNTg4RFpVYWgyMVRMQ0JZZ0FId0pncUFLMkZZZ0hBR0pBdGUwb3ZKMW1nLXNaNS01Vkh6MC1vRFdI?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://spacenews.com/astronomers-fear-orbital-data-centers-will-interfere-with-observations/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=spacenews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">spacenews.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMipgFBVV95cUxOSHFEYnZBVDhxd2hCbEpOX0ZlOF9yNXlSbGtRbUkxYXhPS2ZEUjJ0SzdZUXA0ZXVNeDFlY09ESjhXTEljUUlyS0dDUjhUOHBSVzNxdUtMTkNQR0F2TjB3Ql91WWQwcFhVUk8wUll3R3M3MVU2SVJqTldKckl1U2RmcGxlUy1fUlFoSzUyeVlRU0xadTBteWt0R1ZnMXlhSlpfWl9jWDRB?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMiuAFBVV95cUxPaDlTcnZXTEFSZXhueUZmZmJxdjRNSEQzVkNtUGwxalpjclA1MHB4cThWY1BiU2xBdW1ETkFzdUVHYXBCWFRjNXN0MWhtcFZtOWJ3THNNQ0MzeVBvWmwyVkhBaW9vbUFnTHlzNDNGRHY3VjFnaTBkZzVtTWpQMUdxQnFQTUs0NjhaTUx5NVUzLWNUQWJ5b3lEa3FNQ2tvc2RJanZlU0FzVDBQc1lwREZId29maFE5WjZu?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/SpaceXLounge/comments/1u4b127/spacex_purchases_bell_429_helicopter_for_rocket/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMioAFBVV95cUxPZmVTRGJMSS1mbzZLcVQ2SzlIWnVjbFoxT2wxMmFacG5kM3pldWJUTHNtZmZIaWFvVW9qbVlCbUIwRVZmdjEzLVoxV096QWhXbjZJTTY1V1B0V1FlVWVqNHR0b0kxSjlKM2ZXUkFZc3FIa1IxdlBQZGQxNlp3WWd2QUQyMEZOUFZqT01USW9feXZWRjV1Y2hDcXQtTFB4Z1hN?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMiiAFBVV95cUxNN3h4dFZNend3SHFYRXdGMHhoc0k4SEMzZ0hjVnBkVERTMWNob01lUHE3WEVBdUpNMjBYbC15QUpMOTl6eDNKbWVPVjJYS052YWlPb09oWTZwOUZ5NkhDRjBZbFpBSkE4NnBlajNPdXBmMmZBLW1nMk5TbmNPTENvZFpTSGs4bnRY?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMitgFBVV95cUxNQ0F1bHZnbW9nRWQwMmJQRWJDZUlXc1pVRmtJVG8tYV8zTDF3THg0cGxWSnRoTjZWSVBvRDhZQmthZTY4RkdvazgtUDBTRHh5UHNlb1R6R0JUbEEwQVFZVm9ER1ZvdkV5N2l5M0JXZ0NfRHlKMmF5cC1HV0ktQ2l6c3NFbmJBZUk1eFJqUUpXLVkzT19kVzJiNGZIU2ZUZmVmSXQyUWVObFpjME0xdnJxTS1iU0tVQQ?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMi6AFBVV95cUxPaUcySHV1Y3FnYmZxT0VfalhJRExsWGdaYzJfSUpYV1k2S3JYMXYtbXVJVjM5UHdWbWNjVXFOM2g1U0kxOC1zZm5VS3FCTnA0VlRMcUprbEN2bjJGWGVna1JRSno2ZTg0X0MxOWxTYlVzdTR5aUV5dTNzdG5BbnRjSlJ4cTdydGRIUGZqc3h2VUZXRkd6SExvbHVmX1Y5R0NLNDZQMEVVcjY3MnZydjQyeWVQa0ZjTUthdWViVllIZVZGSzZFTE9rMUpkSUtWbjVzdFd6TTl1U0V4S3hack1XWjF2UUdQdk5y?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMilwFBVV95cUxNeU5qUDl1Mi1HX3JPa0doaGZMMGtUOHZqTEJiV1psanF3WkJRczNDd0JfZDQ2UWlDS0s5cTZJeW5hcTI5VDRMekktREN4MTVxTUtVb2RxSjdOUXljWC1wQjRRZWJRdjBNR1liMUhCOUdjNF9JNU5CTVA5WnBPa0Q3Y1hGTVVYVlF0Vy1HSWtEYVo2N1Q5R1p3?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMitAFBVV95cUxOdV9UWXNtd3Q1d2c3YmdlanhBWWxwYjJybWNZUGhNanZhMERyRXBIbWRwQmZaX3VyNTFCWEZ2d0lJdUJaV19KRG9LR090STAxVEt5LTVROVV4a1RzVTFpaXVfZFoxd0RuMHhIRTZ1M2dHcGh5QnZVN3pDNHlCdW1iNFptUk43REJKclQyaF9mU0ZZTzA0czFXNHJmUHlVV1ZldEV2cTBGWXBFUGYxSmpkVXhQYUw?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMidkFVX3lxTFB5WlVqTnVCRGJIVDdramI5TTNacHhBUU5XRkItMHpWQVlMQVlscmRIVzBQcG5MY3MzNjZVNlhBb0hDelAwdGJ2VTJXTl9KR1dyUjJUcFJfMTcxUm5yRm5zSFBsSVBZVW1WRUh4Y1MydkEtQldWeEE?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMiiwFBVV95cUxNOWstQlBoTXJ5Y1p1TXV2VmhhWDFNTWtZV2tJV1Jhb2FDNnNNWDVrMEd5ZkZaZmVlYUhRb0J2R2M2WVplQ2pORWFXU3pVM1d0TnBwYWw1YnVHcmhNZWg1UFB2X3psNF85blktLWFjYTJvM3EwT253QVJWUzMtb1FkVXR1bzdwSndPQ1dN?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://spacenews.com/in-aerospace-ai-isnt-replacing-workers-its-filling-a-shortage/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=spacenews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">spacenews.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMisAFBVV95cUxPNWFNeWptakdKdnZhd2lmel8zWUZrUkNaYWIxUkk5Ym1QRUZLQ2UxdDY0cFlVMU5HRF96dmZuRDFFNEF4UElMTDdRUVIxdjJFVmxicHBCZFk1N3hpT1VVQ2J4aXBPbDM4c0piTEF1bWZKTVQzbHJlOWhUamlWV0piSDVQVXdaUTNOcTZBeXZjcDJxcXVpN2ExYnZYeDlEdXpENTgwVVpnNWdTY2J6VFVFUA?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMirgFBVV95cUxOUXFMZGt2VHFQUjg2YUhJZWo0dzgzcXItX1NQVEJvM0d1am9FLU1kRy16MGdkMVBxRUVfN2t0U2VQLTh6Ym1PQlhjcmFJUV9ZSnlUVklnX3gtaEtnZWlxa3FzWFE3bnlMYlNpR0plWktEb1VQR25UTmVFN1JIS0hpbXRGS3lHQmdCU2tFd2VqZVRNNXhZN3hhS3FsQW1JY2ZMZE1IMWtWUkhhY21hUmc?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMingFBVV95cUxOajFzNWtkM3hhMUJQUzJ6dGpCN0V3NUpEMlRQem0yNklvU1psVTlKNGRjZ2k0cXllN3VzLTR3YUpPZTJaUU9qbWJoT05IYmFIX21PWmNtbjBSNVdsT1pEMFo5MHVlcG5QVnViS1Rlc20xVkhzWkx1WnFBZFpYWjRXbHNZYlIydzlfVDFFMXhQZjRVVGRic2VpT0xUTE12dw?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMiVEFVX3lxTE5Jc05jS3dKRmI4U1Fwc1JNZDZMN0lqWnJHVFhzajdiUW96TENDVkM5eDVXUGk3MGtYcm9CZHBKZWpjYndSM0hScDRGaFpsVlRUYjd5cQ?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMisAFBVV95cUxNc0kxRkNGSkk2S3hfRk91VUhNcUxKREw5MFpLcHRsT3pPbG93YnRrbUd2UW1Hbk5GenhiV1luTTlFQVZfOHI0ZF80eHN0WXlwdU1GS282aW92Qy1WSGlxQnF6SlJUV0FiSzNaRk5oeGlEd3BQRkYxM1l2ZjRqcmYxTkt6OVpGM09uRnMzR3g4UFh3NWEyM0ZWVmk3clRwSDVBbVh5djRtZm4wZE5WcGUtdg?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMie0FVX3lxTE1UOU9pY09OLWFjT2l6NUxTaGhQdW5OQ0U3TTZlLVdXMS1FcjRWd1dmS0VYQ1hjZTV2OWVwWnc3NXJmb081VTRjS1JmYmdBZDRQTHduUldXa21hVmtyZ1hPeF95Y1ZmNWlLcV9EX25xNExJQ1IyRFF2V240Yw?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://spacenews.com/revised-artemis-lunar-lander-plans-take-shape/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=spacenews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">spacenews.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1586,10 +1766,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>
