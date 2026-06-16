@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>King Charles begins US state visit amid heightened security fears following the ... — Episode 38</h1>
+            <h1><span class="nn-i18n-title">King Charles begins US state visit amid heightened security fears following the ...</span> — Episode 38</h1>
             
             <p class="blog-hero-hook">King Charles begins US state visit amid heightened security fears following the White House Correspondents' Dinner shooting.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1200,13 +1281,6 @@
 <li>What historical parallels exist for attacks on major US political-media events?</li>
 <li>How might this incident affect planning for future high-profile Washington gatherings?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/apr/27/monday-briefing-everything-we-know-about-the-white-house-correspondents-dinner-shooting" target="_blank" rel="noopener">Everything we know about the White House correspondents’ dinner shooting</a> — Guardian newsletter summary</li>
-<li><a href="https://www.dailymail.com/news/article-15767475/Hiding-table-feared-shots-coming-NICK-ALLEN-tells-panic-inside-ballroom-gunman-launched-frenzied-attack-Washington-Hilton.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Hiding under the table, we feared more shots were coming</a> — First-person account from inside the ballroom</li>
-<li><a href="https://www.dailymail.com/news/article-15767077/Cole-Allen-Correspondents-Dinner-shooter-manifesto-MOCKED-lack-security.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">White House Correspondents' Dinner shooter mocked lack of security</a> — Details from the manifesto</li>
-<li><a href="https://www.dailymail.com/news/article-15767839/Obama-ignores-Cole-Allen-manifesto.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Obama ignores gunman's manifesto</a> — Coverage of Obama's response</li>
-</ul>
 <h4 id="2-king-charles-and-queen-camilla-begin-four-day-us-state-visit">2) King Charles and Queen Camilla begin four-day US state visit</h4>
 <p><strong>What happened (neutral):</strong> The King and Queen fly to Washington today to begin a four-day state visit. The trip proceeds despite security concerns heightened by the recent shooting at the White House Correspondents' Dinner. President Trump had been hosting an event when a gunman attempted to storm it shortly before the royal arrival.</p>
 <p><strong>Perspectives:</strong> Mail Online coverage frames the visit as continuing under a cloud of security fears linked to the recent attack on a Trump-hosted dinner, reflecting anxieties about high-profile international visits in the current climate. The decision to proceed underscores the importance both the UK and US place on maintaining diplomatic traditions even amid threats. Some commentary highlights the timing as particularly sensitive given recent tensions involving the US, Iran, and broader global instability. British outlets tend to emphasize the symbolic value of the monarchy strengthening ties with the US at a turbulent time, while noting practical security enhancements that will likely be in place.</p>
@@ -1216,10 +1290,6 @@
 <li>What is the stated purpose of this particular state visit?</li>
 <li>How do security arrangements for royal visits compare to those for domestic US events?</li>
 <li>What historical role have royal state visits played in UK-US relations?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15767875/King-Queens-US-state-visit.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">King and Queen's royal US state visit starts today amid security fears</a> — Live updates from Mail Online</li>
 </ul>
 <h4 id="3-labour-rebels-urge-starmer-to-set-departure-date-after-expected-poor-local-elections">3) Labour rebels urge Starmer to set departure date after expected poor local elections</h4>
 <p><strong>What happened (neutral):</strong> Labour MPs are preparing to call on Keir Starmer to announce his departure timeline following anticipated difficult results in the May local elections. Informal proposals for an "orderly transition" are circulating across party factions. Discussions have reportedly shifted from whether the prime minister should leave to how and when that might occur.</p>
@@ -1231,11 +1301,6 @@
 <li>What role do local elections traditionally play in signaling national political mood?</li>
 <li>How might the timing of any departure affect Labour's policy agenda?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15767317/Starmer-Labour-rebels-PM-departure-local-elections.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Set a date to go, Starmer! Labour rebels will urge PM to set out his departure</a> — Mail Online report</li>
-<li><a href="https://www.theguardian.com/world/2026/apr/27/monday-briefing-everything-we-know-about-the-white-house-correspondents-dinner-shooting" target="_blank" rel="noopener">Monday briefing: Everything we know about the White House correspondents’ dinner shooting</a> — Includes UK politics update on Labour transition talks</li>
-</ul>
 <h4 id="4-us-iran-peace-talks-stall-as-irans-foreign-minister-visits-russia">4) US-Iran peace talks stall as Iran’s foreign minister visits Russia</h4>
 <p><strong>What happened (neutral):</strong> Planned US-Iran negotiations in Pakistan were canceled, with President Trump announcing the decision. Iran's Foreign Minister Abbas Araghchi has traveled to Russia for talks as diplomatic efforts between Washington and Tehran remain on hold. Oil prices have risen in response to the deadlock.</p>
 <p><strong>Perspectives:</strong> CNBC and BBC News report the stalling of talks and subsequent increase in oil prices, focusing on market implications and the cancellation of the Pakistan meeting. Deutsche Welle notes Araghchi's continued diplomatic efforts in Russia amid the war with his country, presenting Iran's outreach as an attempt to maintain alliances while direct US talks are paused. Coverage varies in emphasis: business outlets connect the diplomatic impasse directly to energy market movements, while diplomatic-focused reporting highlights the broader geopolitical maneuvering involving multiple powers. Both sides agree talks have not progressed; they differ on whether this represents a temporary pause or a more serious breakdown, and on the relative importance of regional versus economic consequences.</p>
@@ -1246,12 +1311,6 @@
 <li>What historical patterns exist in US-Iran diplomatic engagement?</li>
 <li>How do oil market reactions reflect broader geopolitical risk assessments?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/04/27/us-iran-peace-talks-stall-global-markets-stocks-oil-treasurys.html" target="_blank" rel="noopener">Iran reportedly proposes Hormuz Strait deal to U.S. Here’s where things stand</a> — Market implications</li>
-<li><a href="https://www.bbc.com/news/articles/c15d57pv925o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">Oil prices rise as US-Iran peace talks stall</a> — BBC overview</li>
-<li><a href="https://www.dw.com/en/iran-s-araghchi-visits-russia-as-talks-with-us-on-hold/a-76947020?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Iran's Araghchi visits Russia as talks with US on hold</a> — DW diplomatic coverage</li>
-</ul>
 <h4 id="5-malcolm-turnbull-criticises-liberal-partys-preference-deal-with-one-nation">5) Malcolm Turnbull criticises Liberal party’s preference deal with One Nation</h4>
 <p><strong>What happened (neutral):</strong> Former Australian Prime Minister Malcolm Turnbull described the Liberal party's decision to preference One Nation in the Farrer by-election as "a retrograde move." The comment came during ongoing Australia news coverage that also included reports of a house fire in the Blue Mountains where two missing people are believed to be children, and reactions to Anzac Day events.</p>
 <p><strong>Perspectives:</strong> The Guardian's live blog presents Turnbull's remarks as a notable intervention from a prominent Liberal, framing the preference deal as controversial within the party's broader traditions. Coverage also captures emotional responses to the Blue Mountains fire and criticism of attempts to politicize Anzac Day commemorations, reflecting values around community safety, appropriate respect for national remembrance, and internal party standards. Turnbull's stance appears rooted in concerns about the direction of conservative politics in Australia and the implications of aligning with One Nation.</p>
@@ -1261,10 +1320,6 @@
 <li>How do preference deals affect outcomes in Australian by-elections?</li>
 <li>What constitutes appropriate use of Anzac Day according to different voices?</li>
 <li>How might this debate influence voter perceptions ahead of future elections?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/apr/27/australia-news-live-penny-wong-fuel-crisis-cost-of-living-budget-jim-chalmers-booing-anzac-day-welcome-to-country-anthony-albanese-angus-taylor-ntwnfb" target="_blank" rel="noopener">Australia news live: Malcolm Turnbull says Liberal party’s decision to preference One Nation</a> — Guardian live updates</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-record-bear-sightings-in-japan-prompt-safety-warnings">1) Record bear sightings in Japan prompt safety warnings</h4>
@@ -1277,10 +1332,6 @@
 <li>What precautions are recommended for people in affected regions?</li>
 <li>How does this compare to wildlife management challenges in other countries?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/apr/27/bear-sightings-warning-japan" target="_blank" rel="noopener">Record bear sightings in Japan cause alarm as hibernation ends</a> — Guardian report</li>
-</ul>
 <h4 id="2-archbishop-of-canterbury-responds-to-pope-leos-comments-on-trump">2) Archbishop of Canterbury responds to Pope Leo's comments on Trump</h4>
 <p><strong>What happened (neutral):</strong> The Archbishop of Canterbury condemned "violence inflicted on innocent people across the globe" following an exchange of words between Pope Leo and Donald Trump. Dame Sarah Mullally emphasized the importance of defending the dignity of every human being, including refugees.</p>
 <p><strong>Perspectives:</strong> Mail Online coverage presents the Archbishop's statement as a call for moral clarity amid high-profile international disagreements. The remarks appear to reflect longstanding Christian institutional values concerning peace, human dignity, and protection of vulnerable populations. Different outlets may frame the Pope-Trump exchange according to their editorial priorities, with some emphasizing ecclesiastical independence from political leaders and others focusing on specific policy disagreements involving refugees and global conflict.</p>
@@ -1290,10 +1341,6 @@
 <li>How have religious leaders historically commented on political leaders?</li>
 <li>What role do statements from figures like the Archbishop play in public discourse?</li>
 <li>How are refugee issues connected to broader discussions of global violence?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15767043/Archbishop-Canterbury-condemns-violence-inflicted-innocent-people-globe-Pope-Leos-war-words-Trump.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Archbishop of Canterbury condemns 'violence inflicted on innocent people'</a> — Full context from Mail Online</li>
 </ul>
 <h4 id="3-taiwan-court-sentences-defendants-in-tsmc-trade-secrets-case">3) Taiwan court sentences defendants in TSMC trade secrets case</h4>
 <p><strong>What happened (neutral):</strong> A Taiwan court has handed down jail terms in a trade secrets theft case involving TSMC. A former Tokyo Electron employee received a 10-year sentence, while four other defendants received terms ranging from 10 months to six years.</p>
@@ -1305,10 +1352,6 @@
 <li>What are the typical legal protections for corporate intellectual property in Taiwan?</li>
 <li>How might these sentences affect future industry hiring and collaboration practices?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/economy/2026/4/27/taiwan-court-hands-down-jail-terms-in-tsmc-trade-secrets-case?traffic_source=rss" target="_blank" rel="noopener">Taiwan court hands down jail terms in TSMC trade secrets case</a> — Al Jazeera report</li>
-</ul>
 <h4 id="4-turkish-owners-renovation-plans-spark-further-anger-in-cotswolds-village">4) Turkish owners' renovation plans spark further anger in Cotswolds village</h4>
 <p><strong>What happened (neutral):</strong> Metin Dener and his wife Gulbin, Turkish owners of a home on what is described as "England's prettiest street" in the Cotswolds village of Bibury, have submitted new plans for additional work. Neighbors have expressed frustration after years of disruption described as turning the area into a "war zone."</p>
 <p><strong>Perspectives:</strong> The Daily Mail presents the story as a continuation of long-running local tensions, focusing on the impact on community character and residents' quality of life. Coverage reflects values around preservation of historic English villages versus property owners' rights to develop their holdings. Some voices prioritize the aesthetic and historical integrity of the Cotswolds, while others may emphasize legal property rights and economic investment in the area.</p>
@@ -1319,10 +1362,6 @@
 <li>How do local authorities balance resident complaints with property rights?</li>
 <li>What precedent might this case set for similar disputes?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15762637/Turkish-owners-home-England-street-anger-neighbours.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Turkish owners of home on 'England's prettiest street' infuriate their neighbours</a> — Mail Online investigation</li>
-</ul>
 <h4 id="5-greens-candidates-accused-of-promoting-antisemitic-content">5) Greens candidates accused of promoting antisemitic content</h4>
 <p><strong>What happened (neutral):</strong> The Green party has been accused of selecting local election candidates who have previously made statements described as antisemitic, including claims about Jewish involvement in 9/11, accusations of "loving genocide," and using terms like "cockroaches." The candidates have also called for greater "compassion" in politics.</p>
 <p><strong>Perspectives:</strong> The Daily Mail frames the selections as contradictory, highlighting the tension between stated values of compassion and the nature of the alleged past statements. This coverage reflects ongoing debates about standards for public office candidates, the boundaries of acceptable political speech, and the responsibilities of parties in vetting those who represent them. Different groups weigh freedom of expression against the need to reject hate speech, particularly regarding Jewish communities and historical events like 9/11.</p>
@@ -1332,10 +1371,6 @@
 <li>How have the individuals responded to the accusations?</li>
 <li>What constitutes antisemitic rhetoric according to different monitoring groups?</li>
 <li>How do political parties typically handle controversies involving past statements of candidates?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15767265/Greens-accused-candidates-compassion-Jewish-slurs.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Greens accused of picking candidates who call for more 'compassion' despite Jewish slurs</a> — Mail Online report</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-apollo-acquires-forvias-auto-interiors-unit-for-182-billion">1) Apollo acquires Forvia’s auto interiors unit for €1.82 billion</h4>
@@ -1348,10 +1383,6 @@
 <li>What factors determine enterprise value in such transactions?</li>
 <li>How might this acquisition affect competition in the sector?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-27/apollo-acquires-forvia-s-auto-interiors-unit-for-1-82-billion" target="_blank" rel="noopener">Apollo Acquires Forvia’s Auto Interiors Unit for €1.82 Billion</a> — Bloomberg announcement</li>
-</ul>
 <h4 id="2-hong-kong-airport-operator-plans-19-billion-local-bond-sale">2) Hong Kong airport operator plans $1.9 billion local bond sale</h4>
 <p><strong>What happened (neutral):</strong> Hong Kong’s airport operator intends to raise at least HK$15 billion ($1.9 billion) through its only public bond sale this year. The move taps into a surge in debt sales denominated in the city's currency.</p>
 <p><strong>Perspectives:</strong> Bloomberg presents this as evidence of a booming local debt market in Hong Kong, showing institutional confidence in the city's financial instruments. Coverage focuses on market mechanics and the practical benefits for infrastructure operators seeking funding, reflecting neutral business analysis of capital-raising strategies amid regional economic conditions.</p>
@@ -1362,10 +1393,6 @@
 <li>How does this compare to other infrastructure financing methods?</li>
 <li>What risks and benefits are associated with this approach?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-27/hong-kong-airport-taps-local-debt-boom-with-1-9-billion-plan" target="_blank" rel="noopener">Hong Kong Airport Taps Local Debt Boom With $1.9 Billion Plan</a> — Bloomberg report</li>
-</ul>
 <h4 id="3-nationwide-building-society-could-elect-first-customer-board-member-in-25-years">3) Nationwide building society could elect first customer board member in 25 years</h4>
 <p><strong>What happened (neutral):</strong> James Sherwin-Smith has secured more than 250 nominations from fellow members to stand for election to Nationwide's board at its July AGM. If successful, he would be the first customer representative on the board in nearly 25 years.</p>
 <p><strong>Perspectives:</strong> The Guardian frames this development as a potential return to greater member influence in one of Britain's largest building societies. Coverage reflects interest in corporate governance questions, particularly the balance between professional directors and customer voices in mutual organizations. This connects to broader debates about accountability in financial institutions and how member-owned entities should structure their leadership.</p>
@@ -1375,10 +1402,6 @@
 <li>Why has Nationwide not had a customer director for nearly 25 years?</li>
 <li>How do mutual building societies differ in governance from shareholder banks?</li>
 <li>What precedent would this create for other mutual organizations?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/business/2026/apr/27/nationwide-first-customer-on-board-nearly-25-years" target="_blank" rel="noopener">Nationwide could have first customer on board for nearly 25 years</a> — Guardian business report</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-taiwan-tsmc-trade-secrets-case-highlights-semiconductor-security">1) Taiwan TSMC trade secrets case highlights semiconductor security</h4>
@@ -1401,10 +1424,6 @@
 <li>How might this affect the perceived value of legal scholarship?</li>
 <li>What parallels exist with previous technological disruptions to creative work?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://reason.com/volokh/2026/04/27/what-to-do-with-ai-generated-legal-scholarship-part-2/" target="_blank" rel="noopener">What To Do With AI-Generated Legal Scholarship?: Part 2</a> — Reason.com analysis</li>
-</ul>
 <h4 id="3-central-banks-expected-to-hold-rates-amid-iran-war-fallout">3) Central banks expected to hold rates amid Iran war fallout</h4>
 <p><strong>What happened (neutral):</strong> The Federal Reserve, Bank of Japan, and Bank of Canada are expected to maintain their current interest rates this week. Policymakers are monitoring economic effects from the Iran conflict. The Bank of England and European Central Bank are also likely to hold rates with similar cautious messaging.</p>
 <p><strong>Perspectives:</strong> Bloomberg's analysis focuses on the hawkish stance central banks are taking due to geopolitical uncertainty from the Iran situation. Coverage reflects standard economic reporting that examines how global events influence monetary policy decisions. Different economic schools of thought may emphasize varying risks — inflation versus growth — but agree that central bank independence requires careful assessment of data rather than political pressure.</p>
@@ -1414,10 +1433,6 @@
 <li>How has geopolitical risk historically affected monetary policy?</li>
 <li>What tools remain available if economic conditions deteriorate further?</li>
 <li>How do coordinated or similar decisions by multiple central banks affect global markets?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-04-27/fed-boj-bank-of-canada-expected-to-hold-rates-video" target="_blank" rel="noopener">Fed, BOJ, Bank of Canada Expected to Hold Rates</a> — Bloomberg video breakdown</li>
 </ul>
 <h3 id="top-popular-media-stories-3">Top popular media stories (3)</h3>
 <h4 id="1-jimmy-kimmel-criticized-for-joke-about-melania-trump-before-shooting">1) Jimmy Kimmel criticized for joke about Melania Trump before shooting</h4>
@@ -1430,10 +1445,6 @@
 <li>What is the traditional role of political humor at events like the Correspondents' Dinner?</li>
 <li>How do standards for comedy differ across various media platforms?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15767215/jimmy-kimmel-joke-melania-widow-white-house-correspondents-dinner-shooting.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Jimmy Kimmel is bashed for bad-taste joke about Melania becoming 'widow'</a> — Mail Online report</li>
-</ul>
 <h4 id="2-adam-peaty-supports-ramsay-family-at-london-marathon-amid-ongoing-feud">2) Adam Peaty supports Ramsay family at London Marathon amid ongoing feud</h4>
 <p><strong>What happened (neutral):</strong> Olympic swimmer Adam Peaty, 31, joined his wife Holly Ramsay, 26, and her father Gordon Ramsay to support family members running the London Marathon. This public appearance occurs as a family feud continues, which reportedly led to Peaty's mother being disinvited from their December wedding at Bath Abbey.</p>
 <p><strong>Perspectives:</strong> The Daily Mail focuses on the visible show of unity between Peaty and the Ramsay side of the family despite the reported rift with his own mother. Coverage of celebrity family disputes often reflects public fascination with how famous individuals navigate personal conflicts while maintaining public careers. Different outlets may emphasize either the importance of family reconciliation or the right to set personal boundaries even when it creates public drama.</p>
@@ -1443,10 +1454,6 @@
 <li>How do high-profile family disputes typically play out in British media?</li>
 <li>What role do public appearances play in shaping narratives around private conflicts?</li>
 <li>How might this story affect the participants' professional brands?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15767379/Adam-Peaty-joins-wife-Holly-father-law-Gordon-support-Ramsays-London-Marathon-family-feud-rumbles-on.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Adam Peaty joins wife Holly and father-in-law Gordon to show his support for the Ramsays</a> — Mail Online coverage</li>
 </ul>
 <h4 id="3-im-a-celeb-viewers-claim-new-evidence-about-jimmy-bullard-and-adam-thomas-trial">3) I'm A Celeb viewers claim new evidence about Jimmy Bullard and Adam Thomas trial</h4>
 <p><strong>What happened (neutral):</strong> Viewers of I'm A Celebrity have pointed to a specific moment during a Bushtucker Trial in South Africa that they believe shows Jimmy Bullard was not truthful about events involving Adam Thomas. The trial occurred last year when Bullard reportedly refused to participate, potentially affecting his partner's position.</p>
@@ -1458,12 +1465,130 @@
 <li>What obligations do participants have regarding honesty after filming ends?</li>
 <li>How might show producers respond to such public debates?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li>[I'm a Celeb viewers spot the moment that 'proves' Jimmy Bullard 'lied' about Adam Thomas trial](https://www.dailymail.com/tvshowbiz/article-15766961/Im-Celeb-viewers-spot-moment-proves-Jimmy-Bullard-lied-Adam-</li>
-</ul>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.theguardian.com/world/2026/apr/27/monday-briefing-everything-we-know-about-the-white-house-correspondents-dinner-shooting" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15767475/Hiding-table-feared-shots-coming-NICK-ALLEN-tells-panic-inside-ballroom-gunman-launched-frenzied-attack-Washington-Hilton.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15767077/Cole-Allen-Correspondents-Dinner-shooter-manifesto-MOCKED-lack-security.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15767839/Obama-ignores-Cole-Allen-manifesto.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15767875/King-Queens-US-state-visit.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15767317/Starmer-Labour-rebels-PM-departure-local-elections.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/04/27/us-iran-peace-talks-stall-global-markets-stocks-oil-treasurys.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c15d57pv925o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/iran-s-araghchi-visits-russia-as-talks-with-us-on-hold/a-76947020?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/live/2026/apr/27/australia-news-live-penny-wong-fuel-crisis-cost-of-living-budget-jim-chalmers-booing-anzac-day-welcome-to-country-anthony-albanese-angus-taylor-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/apr/27/bear-sightings-warning-japan" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15767043/Archbishop-Canterbury-condemns-violence-inflicted-innocent-people-globe-Pope-Leos-war-words-Trump.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/economy/2026/4/27/taiwan-court-hands-down-jail-terms-in-tsmc-trade-secrets-case?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15762637/Turkish-owners-home-England-street-anger-neighbours.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15767265/Greens-accused-candidates-compassion-Jewish-slurs.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-27/apollo-acquires-forvia-s-auto-interiors-unit-for-1-82-billion" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-27/hong-kong-airport-taps-local-debt-boom-with-1-9-billion-plan" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/business/2026/apr/27/nationwide-first-customer-on-board-nearly-25-years" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://reason.com/volokh/2026/04/27/what-to-do-with-ai-generated-legal-scholarship-part-2/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reason.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reason.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-04-27/fed-boj-bank-of-canada-expected-to-hold-rates-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15767215/jimmy-kimmel-joke-melania-widow-white-house-correspondents-dinner-shooting.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15767379/Adam-Peaty-joins-wife-Holly-father-law-Gordon-support-Ramsays-London-Marathon-family-feud-rumbles-on.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15766961/Im-Celeb-viewers-spot-moment-proves-Jimmy-Bullard-lied-Adam-" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1970,10 +2095,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

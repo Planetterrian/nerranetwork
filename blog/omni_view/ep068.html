@@ -107,7 +107,12 @@
       "url": "https://nerranetwork.com/omni-view.html"
     },
     "image": "https://nerranetwork.com/assets/covers/omni-view.jpg",
-    "transcript": "https://nerranetwork.com/blog/omni_view/ep068.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/omni_view/ep068.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://audio.nerranetwork.com/omni_view/Omni_View_Ep068_20260602.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -708,6 +713,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +818,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1181,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Escalating Russian drone and missile barrages on Ukrainian cities are testing the limits of civilian… — Episode 68</h1>
+            <h1><span class="nn-i18n-title">Escalating Russian drone and missile barrages on Ukrainian cities are testing the limits of civilian…</span> — Episode 68</h1>
             
             <p class="blog-hero-hook">Escalating Russian drone and missile barrages on Ukrainian cities are testing the limits of civilian protection and Western support as casualty counts rise.</p>
             
@@ -1129,6 +1212,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1211,11 +1297,6 @@
 <li>What thresholds typically trigger new rounds of international sanctions or aid?</li>
 <li>How do urban drone attacks differ from earlier phases of the conflict?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/c5y8nq8ljqwo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Details on rescue operations and confirmed deaths</li>
-<li><a href="https://www.france24.com/en/video/20260602-ukrainian-cities-targeted-by-hundreds-of-russian-drones" target="_blank" rel="noopener">France 24</a> — Overview of drone and missile numbers used</li>
-</ul>
 <h4 id="2-trump-seeks-to-reduce-lebanon-tensions-to-keep-iran-talks-on-track">2) Trump seeks to reduce Lebanon tensions to keep Iran talks on track</h4>
 <p><strong>What happened (neutral):</strong> President Donald Trump stated he remains optimistic about an interim deal with Iran and is working to ease friction in Lebanon. Iranian officials have threatened to pause negotiations because of Israeli strikes in Lebanon.</p>
 <p><strong>Perspectives:</strong> Reporting presents the effort as an attempt to compartmentalize separate regional conflicts. Some coverage stresses the fragility of talks when linked violence occurs elsewhere, while other accounts focus on the administration’s stated goal of reaching an agreement despite those pressures.</p>
@@ -1225,10 +1306,6 @@
 <li>What specific steps has the administration taken to address Lebanon tensions?</li>
 <li>How are parallel conflicts typically managed during bilateral nuclear or sanctions talks?</li>
 <li>Which regional actors hold the greatest leverage over continuation of the Iran discussions?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-06-02/trump-aims-to-ease-lebanon-tensions-to-extend-iran-talks-video" target="_blank" rel="noopener">Bloomberg</a> — Report on Trump’s comments and Iranian threats</li>
 </ul>
 <h4 id="3-aipac-affiliate-funded-congressional-trips-to-israel-since-october-2023">3) AIPAC affiliate funded congressional trips to Israel since October 2023</h4>
 <p><strong>What happened (neutral):</strong> A Guardian analysis of ethics filings shows that dozens of members of Congress and staff from both parties received trips to Israel funded by the American Israel Education Foundation, an AIPAC affiliate. The trips included meetings with officials, military contractors, and advocates for West Bank annexation.</p>
@@ -1240,10 +1317,6 @@
 <li>How do lawmakers typically balance multiple briefings on contested foreign policy issues?</li>
 <li>What trends in public opinion are cited alongside the travel data?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/2026/jun/02/aipac-aief-congress-israel-travel" target="_blank" rel="noopener">The Guardian</a> — Full analysis of filings and trip content</li>
-</ul>
 <h4 id="4-california-governor-primary-heads-to-the-wire">4) California governor primary heads to the wire</h4>
 <p><strong>What happened (neutral):</strong> Voters in California and several other states are casting ballots in primaries that include the race for governor. Additional primaries are underway in New Jersey, South Dakota, New Mexico, Iowa, and Montana.</p>
 <p><strong>Perspectives:</strong> Coverage describes the California contest as particularly close. National outlets note that results may offer early signals about party positioning ahead of the next general election cycle.</p>
@@ -1254,10 +1327,6 @@
 <li>How do primary systems differ across the states voting today?</li>
 <li>What factors typically determine whether primary results predict general election outcomes?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/live/2026/jun/02/donald-trump-primaries-midterms-california-governor-iran-latest-news-updates" target="_blank" rel="noopener">The Guardian</a> — Live updates on multiple state primaries</li>
-</ul>
 <h4 id="5-london-tube-workers-begin-24-hour-strike">5) London Tube workers begin 24-hour strike</h4>
 <p><strong>What happened (neutral):</strong> Members of the Rail, Maritime and Transport union walked out today after talks with Transport for London failed to resolve a dispute over working hours. A second strike is scheduled for Thursday.</p>
 <p><strong>Perspectives:</strong> Union statements focus on the need for improved schedules, while management has pointed to the impact on commuters during the action. Local coverage notes the timing during rainy weather added to travel difficulties for millions.</p>
@@ -1267,10 +1336,6 @@
 <li>What specific changes to the working week are under discussion?</li>
 <li>How have previous London Underground strikes affected ridership and alternative transport use?</li>
 <li>What legal requirements govern strike notices in UK public transport?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15866509/Tube-strike-chaos-London-Underground-workers-rain-RMT-TfL.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Details on union demands and service disruption</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-kenya-protests-turn-deadly-over-planned-us-ebola-quarantine-center">1) Kenya protests turn deadly over planned US Ebola quarantine center</h4>
@@ -1283,10 +1348,6 @@
 <li>How are community consultations typically conducted for international health projects?</li>
 <li>What precedents exist for protests against similar facilities elsewhere?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/cvgz7zny3pzo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Account of the demonstrations and casualties</li>
-</ul>
 <h4 id="2-europe-approves-offshore-return-hubs-for-failed-asylum-seekers">2) Europe approves offshore return hubs for failed asylum seekers</h4>
 <p><strong>What happened (neutral):</strong> The European Union has endorsed the creation of offshore “return hubs” to hold people whose asylum claims are rejected. The policy draws comparisons to earlier proposals in other countries.</p>
 <p><strong>Perspectives:</strong> Supporters describe the hubs as a practical way to manage returns and deter irregular migration. Critics argue the approach raises legal and humanitarian questions about detention outside EU territory.</p>
@@ -1296,10 +1357,6 @@
 <li>Which countries have expressed willingness to host such hubs?</li>
 <li>How do current EU asylum procedures handle rejected claims?</li>
 <li>What monitoring mechanisms are proposed for facilities outside EU jurisdiction?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/tv-shows/press-review/20260602-offshore-detention-hubs-europe-turns-to-trump-style-tactics-on-migration" target="_blank" rel="noopener">France 24</a> — Summary of the policy decision</li>
 </ul>
 <h4 id="3-three-ebola-vaccines-advance-amid-outbreak-concerns">3) Three Ebola vaccines advance amid outbreak concerns</h4>
 <p><strong>What happened (neutral):</strong> Developers are progressing three vaccine candidates as fears grow over the spread of the Bundibugyo strain. Experts warn the current situation could exceed the scale of the 2014-2016 outbreak.</p>
@@ -1311,10 +1368,6 @@
 <li>How does the Bundibugyo strain differ from the more commonly studied Zaire strain?</li>
 <li>What lessons from past outbreaks are being applied to the present response?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/health/article-15866677/Three-Ebola-vaccines-development-amid-growing-outbreak-fears.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Update on vaccine development status</li>
-</ul>
 <h4 id="4-taiwan-president-stresses-status-quo-for-tech-supply-chains">4) Taiwan president stresses status quo for tech supply chains</h4>
 <p><strong>What happened (neutral):</strong> President Lai Ching-te told an AI and technology summit that preserving the current cross-strait situation is essential for securing semiconductor supply chains. Taiwan remains a dominant global chip producer.</p>
 <p><strong>Perspectives:</strong> The remarks are presented as an effort to reassure international partners about stability. Coverage also notes ongoing concerns that any change in the status quo could disrupt manufacturing.</p>
@@ -1325,10 +1378,6 @@
 <li>How have companies diversified production in recent years?</li>
 <li>What diplomatic signals typically accompany statements about the status quo?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/taiwan-s-lai-status-quo-is-key-to-secure-tech-supply-chains/a-77386453?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — Summary of the summit address</li>
-</ul>
 <h4 id="5-softbank-announces-major-french-data-centre-investment">5) SoftBank announces major French data centre investment</h4>
 <p><strong>What happened (neutral):</strong> SoftBank’s group pledged 45 billion euros in French investments by 2031, including three new data centres. Operators cite available land and reliable electricity from nuclear power as reasons for choosing France.</p>
 <p><strong>Perspectives:</strong> French coverage welcomes the capital and job commitments. Industry reporting notes that energy availability is becoming a decisive factor in data centre location decisions across Europe.</p>
@@ -1338,10 +1387,6 @@
 <li>How does France’s nuclear capacity compare with other European countries in attracting data centres?</li>
 <li>What timeline is proposed for the three facilities?</li>
 <li>How are local communities typically involved in data centre planning?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/video/20260602-japanese-tech-giant-pledges-massive-investment-for-french-data-centres" target="_blank" rel="noopener">France 24</a> — Details on the investment announcement</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-victorias-secret-reports-resilient-sales-despite-economic-pressures">1) Victoria’s Secret reports resilient sales despite economic pressures</h4>
@@ -1354,10 +1399,6 @@
 <li>How has the company changed its product and marketing approach in recent years?</li>
 <li>What indicators would signal a broader slowdown in consumer spending?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/06/02/victorias-secret-vsxy-earnings-q1-2026.html" target="_blank" rel="noopener">CNBC</a> — Earnings report and executive comments</li>
-</ul>
 <h4 id="2-ms-chairman-says-uk-environment-is-rarely-less-friendly-to-growth">2) M&S chairman says UK environment is rarely less friendly to growth</h4>
 <p><strong>What happened (neutral):</strong> Archie Norman stated that recent tax increases are hitting smaller high-street businesses particularly hard and contributing to a decline in local retail. He said larger firms can absorb the costs more easily.</p>
 <p><strong>Perspectives:</strong> The comments are framed as a warning about the cumulative effect of tax policy on smaller retailers. Coverage also notes the ongoing challenges facing traditional high streets from online competition and changing consumer habits.</p>
@@ -1368,10 +1409,6 @@
 <li>How do smaller retailers typically differ from larger chains in their ability to adjust to cost increases?</li>
 <li>What other pressures on high-street businesses are commonly cited alongside tax policy?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/money/markets/article-15867115/Britain-rarely-friendly-growth-Labour-tax-hikes-hammer-High-Street-blasts-M-S-boss.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Chairman’s full statement</li>
-</ul>
 <h4 id="3-marvell-shares-surge-after-nvidia-chief-predicts-1-trillion-valuation">3) Marvell shares surge after Nvidia chief predicts $1 trillion valuation</h4>
 <p><strong>What happened (neutral):</strong> Marvell Technology stock rose 26 percent in premarket trading after Nvidia’s Jensen Huang said the company could become the next to reach a trillion-dollar market value.</p>
 <p><strong>Perspectives:</strong> Market reporting highlights the immediate investor reaction to the public endorsement. Coverage also notes Marvell’s current capitalization remains well below that threshold.</p>
@@ -1381,10 +1418,6 @@
 <li>What segments of Marvell’s business are most relevant to AI infrastructure?</li>
 <li>How have similar public predictions affected other companies’ share prices?</li>
 <li>What fundamentals would need to change for Marvell to approach a trillion-dollar valuation?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-06-02/marvell-surges-after-huang-calls-it-the-next-1-trillion-company" target="_blank" rel="noopener">Bloomberg</a> — Market reaction and context</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-the-amazing-digital-circus-moves-from-youtube-to-theaters">1) “The Amazing Digital Circus” moves from YouTube to theaters</h4>
@@ -1397,10 +1430,6 @@
 <li>How do theater operators decide which non-studio titles to book?</li>
 <li>What metrics will determine whether the experiment is repeated?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.wired.com/story/amazing-digital-circus-shake-up-the-box-office/" target="_blank" rel="noopener">WIRED</a> — Background on the release strategy</li>
-</ul>
 <h4 id="2-palo-alto-and-crowdstrike-earnings-to-test-cyber-rally">2) Palo Alto and CrowdStrike earnings to test cyber rally</h4>
 <p><strong>What happened (neutral):</strong> Investors will watch results from two major cybersecurity companies to assess whether the 37 percent sector rally can be sustained. Earnings are expected in the coming days.</p>
 <p><strong>Perspectives:</strong> Market analysis frames the reports as a key checkpoint for valuations built on expectations of continued AI-driven security spending. Some commentary notes that recent gains have outpaced broader technology indices.</p>
@@ -1411,10 +1440,6 @@
 <li>How has the sector’s valuation multiple changed during the recent rally?</li>
 <li>What external factors could alter spending plans in the second half of the year?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-06-02/palo-alto-crowdstrike-earnings-to-put-37-cyber-rally-to-test" target="_blank" rel="noopener">Bloomberg</a> — Preview of the earnings test</li>
-</ul>
 <h4 id="3-anthropic-reportedly-plans-1-trillion-ipo">3) Anthropic reportedly plans $1 trillion IPO</h4>
 <p><strong>What happened (neutral):</strong> The AI company is preparing for a potential initial public offering that could value it at one trillion dollars. UK investors are examining London-listed investment trusts as one route to gain exposure.</p>
 <p><strong>Perspectives:</strong> Financial coverage highlights the scale of the proposed valuation relative to current revenue. Commentary also notes the limited direct investment options available to retail investors outside the United States.</p>
@@ -1424,10 +1449,6 @@
 <li>What revenue milestones have comparable AI companies reached before going public?</li>
 <li>How do investment trusts provide indirect exposure to private companies?</li>
 <li>What regulatory or market hurdles could affect the timing of such an offering?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/money/investing/article-15866579/Anthropic-plots-1trn-IPO-UK-investors-gain-exposure.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Options for British investors</li>
 </ul>
 <h3 id="top-popular-media-stories-3">Top popular media stories (3)</h3>
 <h4 id="1-sydney-sweeney-omits-zendaya-from-euphoria-season-three-photo-roundup">1) Sydney Sweeney omits Zendaya from Euphoria season-three photo roundup</h4>
@@ -1440,10 +1461,6 @@
 <li>How do cast members typically handle promotional duties during final seasons?</li>
 <li>What factors influence whether co-stars appear together in individual social media content?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15866539/Sydney-Sweeney-snubs-Zendaya-Euphoria-season-three-photo-round-amid-claims-feud-polarising-politics.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Details of the post and surrounding claims</li>
-</ul>
 <h4 id="2-dua-lipas-wedding-hat-designed-by-mother-in-laws-former-colleague">2) Dua Lipa’s wedding hat designed by mother-in-law’s former colleague</h4>
 <p><strong>What happened (neutral):</strong> The singer wore a custom Schiaparelli outfit and a hat created by a milliner who once worked with her new mother-in-law. The choice is described as a personal nod to family connections.</p>
 <p><strong>Perspectives:</strong> Fashion and celebrity coverage presents the detail as a thoughtful gesture rather than a commercial placement. Reports note the milliner has known the groom since he was a child.</p>
@@ -1454,10 +1471,6 @@
 <li>What role do family networks play in the creative choices visible at high-profile weddings?</li>
 <li>How do media outlets decide which personal details to emphasize in coverage?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15866707/Dua-Lipas-sweet-wedding-nod-new-mother-law-Stars-hat-designed-milliner-Callum-Turners-mum-worked-80s-known-actor-baby.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Background on the milliner and family link</li>
-</ul>
 <h4 id="3-greg-james-encourages-anti-bartlett-cult-after-podcast-comments">3) Greg James encourages “anti-Bartlett cult” after podcast comments</h4>
 <p><strong>What happened (neutral):</strong> The radio host urged followers to join a light-hearted pushback against “optimisation culture” after Steven Bartlett said two glasses of wine had affected him for days. Several celebrities voiced support.</p>
 <p><strong>Perspectives:</strong> Coverage frames the exchange as a humorous online moment rather than a serious dispute. Commentary notes it reflects wider discussion about wellness trends and work-life balance.</p>
@@ -1467,10 +1480,6 @@
 <li>How do wellness and productivity podcasts typically balance aspirational content with relatability?</li>
 <li>What patterns emerge when public figures comment on everyday habits?</li>
 <li>How do audiences distinguish between serious advocacy and humorous pushback online?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15866791/Greg-James-leads-rally-against-Steven-Bartlett-optimisation-culture-podcaster-mocked-saying-two-glasses-wine-ruined-life-days-host-stars-support.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Reaction from James and others</li>
 </ul>
 <h3 id="top-gossip-stories-3">Top gossip stories (3)</h3>
 <h4 id="1-woman-in-her-50s-regrets-not-having-children-after-fast-paced-london-life">1) Woman in her 50s regrets not having children after fast-paced London life</h4>
@@ -1483,10 +1492,6 @@
 <li>How do media outlets select which life-reflection stories to highlight?</li>
 <li>What support systems or policy discussions typically accompany coverage of delayed parenthood?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/lifestyle/family-parenting/article-15866879/I-forgot-children-Woman-50s-says-fast-paced-London-life-distracted-late-Anna-Richardson-55-shares-regret-missing-boat.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Full interview excerpts</li>
-</ul>
 <h4 id="2-susan-boyle-performs-breakdancing-routine-for-irn-bru-advert-remake">2) Susan Boyle performs breakdancing routine for IRN-BRU advert remake</h4>
 <p><strong>What happened (neutral):</strong> The Scottish singer recreated moves from a classic 1980s commercial while standing on the Forth Bridge. The spot highlights her continued public profile beyond singing.</p>
 <p><strong>Perspectives:</strong> Entertainment reporting treats the appearance as a light-hearted extension of her established persona. Coverage notes the original advert’s cultural resonance in Scotland.</p>
@@ -1497,15 +1502,128 @@
 <li>What role do brand partnerships play in extending performers’ careers?</li>
 <li>How do audiences respond when artists step outside their initial genre or style?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15866721/SuBo-breakdancer-Scottish-singer-Susan-Boyle-nations-kilt-y-pleasure-shows-moves-reimagining-iconic-1980s-IRN-BRU-advert-atop-Forth-Bridge.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Details of the advert recreation</li>
-</ul>
 <h4 id="3-nightclub-promoter-stabbed-to-death-after-dublin-brawl">3) Nightclub promoter stabbed to death after Dublin brawl</h4>
 <p><strong>What happened (neutral):</strong> Qayyum Balogun, 21, was chased and fatally stabbed following a clash between rival groups in the Grafton Street area after a gig. Police are investigating the incident.</p>
 <p><strong>Perspectives:</strong> Local reporting emphasizes the sudden violence in a busy tourist district. Coverage also notes the time of the attack, around 3 a.m. on Monday.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.bbc.com/news/articles/c5y8nq8ljqwo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/video/20260602-ukrainian-cities-targeted-by-hundreds-of-russian-drones" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-06-02/trump-aims-to-ease-lebanon-tensions-to-extend-iran-talks-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/2026/jun/02/aipac-aief-congress-israel-travel" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/live/2026/jun/02/donald-trump-primaries-midterms-california-governor-iran-latest-news-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15866509/Tube-strike-chaos-London-Underground-workers-rain-RMT-TfL.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cvgz7zny3pzo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/tv-shows/press-review/20260602-offshore-detention-hubs-europe-turns-to-trump-style-tactics-on-migration" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/health/article-15866677/Three-Ebola-vaccines-development-amid-growing-outbreak-fears.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/taiwan-s-lai-status-quo-is-key-to-secure-tech-supply-chains/a-77386453?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/video/20260602-japanese-tech-giant-pledges-massive-investment-for-french-data-centres" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/06/02/victorias-secret-vsxy-earnings-q1-2026.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/money/markets/article-15867115/Britain-rarely-friendly-growth-Labour-tax-hikes-hammer-High-Street-blasts-M-S-boss.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-06-02/marvell-surges-after-huang-calls-it-the-next-1-trillion-company" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.wired.com/story/amazing-digital-circus-shake-up-the-box-office/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=wired.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">wired.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-06-02/palo-alto-crowdstrike-earnings-to-put-37-cyber-rally-to-test" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/money/investing/article-15866579/Anthropic-plots-1trn-IPO-UK-investors-gain-exposure.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15866539/Sydney-Sweeney-snubs-Zendaya-Euphoria-season-three-photo-round-amid-claims-feud-polarising-politics.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15866707/Dua-Lipas-sweet-wedding-nod-new-mother-law-Stars-hat-designed-milliner-Callum-Turners-mum-worked-80s-known-actor-baby.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15866791/Greg-James-leads-rally-against-Steven-Bartlett-optimisation-culture-podcaster-mocked-saying-two-glasses-wine-ruined-life-days-host-stars-support.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/lifestyle/family-parenting/article-15866879/I-forgot-children-Woman-50s-says-fast-paced-London-life-distracted-late-Anna-Richardson-55-shares-regret-missing-boat.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15866721/SuBo-breakdancer-Scottish-singer-Susan-Boyle-nations-kilt-y-pleasure-shows-moves-reimagining-iconic-1980s-IRN-BRU-advert-atop-Forth-Bridge.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1946,10 +2064,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Israel and Lebanon ceasefire takes effect as Trump hails 'historic' peace effort... — Episode 34</h1>
+            <h1><span class="nn-i18n-title">Israel and Lebanon ceasefire takes effect as Trump hails 'historic' peace effort...</span> — Episode 34</h1>
             
             <p class="blog-hero-hook">Israel and Lebanon ceasefire takes effect as Trump hails 'historic' peace effort amid ongoing Iran war tensions.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1184,12 +1265,6 @@
 <li>How might this truce influence ongoing tensions involving Iran?</li>
 <li>What practical challenges remain for displaced civilians wanting to return home?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/apr/17/middle-east-crisis-live-news-israel-lebanon-ceasefire-iran-war-us-latest-updates" target="_blank" rel="noopener">Middle East crisis live: UN chief calls for Israel-Lebanon ceasefire</a> — Guardian live updates on truce details</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15741051/Celebrations-Lebanon-ceasefire-Israel.html" target="_blank" rel="noopener">Celebrations in Lebanon as ceasefire with Israel goes into effect</a> — Mail Online report on public reaction and Trump's comments</li>
-<li><a href="https://www.aljazeera.com/sports/2026/4/17/iran-women-football-players-thank-australian-government-for-protection" target="_blank" rel="noopener">Iran women football players thank Australian government for protection</a> — Al Jazeera on related regional human stories</li>
-</ul>
 <h4 id="2-meghan-markle-faces-criticism-over-commercial-events-during-australia-trip">2) Meghan Markle faces criticism over commercial events during Australia trip</h4>
 <p><strong>What happened (neutral):</strong> The Duchess of Sussex is preparing for a £1,700-a-head hotel meet-and-greet with fans in Sydney while she and Prince Harry met survivors of the Bondi terrorist attack, with Australian taxpayer-funded police involved. She is also hosting what some describe as her 'Her Best Life' retreat at a Sydney hotel, where guests have arrived and a "DOG SQUAD" is present. The couple spoke publicly about online bullying and mental health impacts of parenthood.</p>
 <p><strong>Perspectives:</strong> Daily Mail columnist Jan Moir argues that the Sussexes' activities represent the "worst pearl-clutching fears of the royals" coming true, with centuries-old soft power being traded for hard commerce. Coverage highlights the contrast between the paid VIP events and the couple's meetings with massacre heroes, raising questions about timing and priorities. Supporters view these as legitimate business and personal branding opportunities that allow the couple to maintain independence and connect directly with fans. The reporting often ties these events to Meghan's statements about being the most trolled person in the world for ten years and Harry's comments on fatherhood affecting his mental health, framing their public life as both vulnerable and commercially strategic.</p>
@@ -1199,12 +1274,6 @@
 <li>How do security costs funded by taxpayers factor into discussions of celebrity events?</li>
 <li>What does the contrast between paid fan events and victim meetings reveal about modern fame?</li>
 <li>How has a decade of intense online scrutiny shaped their approach to public appearances?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/royals/article-15740209/worst-fears-royals-coming-true-JAN-MOIR.html" target="_blank" rel="noopener">The worst pearl-clutching fears of the royals are coming true</a> — Jan Moir column in Mail Online</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15741173/Meghan-prepares-1-700-head-hotel-meet-greet-fans-Australian-taxpayer-funded-police-surround-Prince-Harry-meet-Bondi-massacre-heroes.html" target="_blank" rel="noopener">Meghan prepares for £1,700-a-head hotel meet-and-greet</a> — Mail Online on schedule and security</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15740553/Meghan-Harry-Australia-tour-sydney.html" target="_blank" rel="noopener">Now the DOG SQUAD arrives for Meghan's 'Her Best Life' retreat</a> — Live coverage from Mail Online</li>
 </ul>
 <h4 id="3-kenya-seeks-emergency-world-bank-funds-over-iran-war-impact">3) Kenya seeks emergency World Bank funds over Iran war impact</h4>
 <p><strong>What happened (neutral):</strong> Kenya is in talks with the World Bank for emergency funding to address the repercussions of the Iran war, according to central bank Governor Kamau Thugge. The request comes amid broader global effects from disruptions in the Middle East, including impacts on fuel supplies and economic stability in various regions.</p>
@@ -1216,10 +1285,6 @@
 <li>How might this funding need affect Kenya's longer-term economic planning?</li>
 <li>What does this reveal about global economic interconnectedness?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-17/kenya-seeks-emergency-world-bank-funds-to-absorb-iran-war-impact" target="_blank" rel="noopener">Kenya Seeks Emergency World Bank Funds to Absorb Iran War Impact</a> — Bloomberg report on the funding request</li>
-</ul>
 <h4 id="4-us-tech-firms-lobbied-eu-to-keep-datacentre-emissions-secret">4) US tech firms lobbied EU to keep datacentre emissions secret</h4>
 <p><strong>What happened (neutral):</strong> Microsoft and other US tech companies successfully lobbied the European Union to include a confidentiality clause that hides detailed environmental data on individual datacentres. The provision, added almost verbatim from industry demands in 2024, limits public scrutiny to national-level summaries rather than specific facility emissions.</p>
 <p><strong>Perspectives:</strong> The Guardian presents this as an investigation revealing how industry lobbying shaped EU rules in ways that hinder transparency on pollution. Critics argue the secrecy makes it difficult for researchers and the public to assess the true climate impact of the AI boom's infrastructure. Industry groups likely emphasize protecting proprietary information and avoiding competitive disadvantages. The story raises questions about balancing innovation incentives with environmental accountability in rapidly growing sectors.</p>
@@ -1230,10 +1295,6 @@
 <li>Who ultimately benefits from limited transparency on datacentre emissions?</li>
 <li>How common is this type of lobbying influence on EU regulations?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/technology/2026/apr/17/microsoft-us-tech-firms-lobbied-eu-secrecy-rules-datacentre-emissions" target="_blank" rel="noopener">US tech firms successfully lobbied EU to keep datacentre emissions secret</a> — Guardian investigation findings</li>
-</ul>
 <h4 id="5-more-than-15-million-oysters-to-be-released-in-north-sea-rewilding-project">5) More than 15 million oysters to be released in North Sea rewilding project</h4>
 <p><strong>What happened (neutral):</strong> One of the largest rewilding projects in UK waters will release more than 15 million juvenile oysters into the North Sea around Orkney. The scheme uses a unique rearing process aimed at re-establishing oyster beds to create a "trophic cascade" benefiting marine ecosystems and sequestering carbon.</p>
 <p><strong>Perspectives:</strong> The Guardian describes the project positively as an expert-backed effort to repair damaged marine environments while addressing climate change through natural solutions. Coverage highlights the potential for broader ecological recovery through this "trophic cascade" where one species restoration supports many others. Such initiatives reflect growing interest in nature-based solutions that work with ecosystems rather than against them. The scale of releasing 15 million oysters underscores both ambition and the extent of prior marine degradation.</p>
@@ -1243,10 +1304,6 @@
 <li>What makes this project unique in its rearing and release methods?</li>
 <li>How does marine rewilding compare to land-based conservation efforts?</li>
 <li>What measurements will determine if the project succeeds?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/environment/2026/apr/17/more-than-15m-oysters-to-be-released-in-the-north-sea-for-uk-rewilding-project" target="_blank" rel="noopener">More than 15m oysters to be released in the North Sea</a> — Guardian exclusive on the rewilding scheme</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-why-anti-war-protests-in-the-west-remain-muted-on-iran-conflict">1) Why anti-war protests in the West remain muted on Iran conflict</h4>
@@ -1259,11 +1316,6 @@
 <li>What role does media coverage play in shaping protest turnout?</li>
 <li>How might protest fatigue affect future international crises?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/news/2026/4/17/why-are-anti-war-protests-in-the-west-muted-on-iran" target="_blank" rel="noopener">Why are anti-war protests in the West muted on Iran?</a> — Al Jazeera analysis</li>
-<li><a href="https://www.aljazeera.com/news/2026/4/17/vengeance-for-all-how-irans-lego-videos-won-narrative-war-against-trump" target="_blank" rel="noopener">‘Vengeance for all’: How Iran’s Lego videos won narrative war against Trump</a> — Al Jazeera on alternative messaging</li>
-</ul>
 <h4 id="2-melonis-public-break-with-trump-becomes-political-moment-for-italy">2) Meloni's public break with Trump becomes political moment for Italy</h4>
 <p><strong>What happened (neutral):</strong> Italian Prime Minister Giorgia Meloni has faced repercussions from a public rebuke by US President Donald Trump over issues including the pope, Iran, and a defence deal with Israel. The rupture, which built up since the US-Israel war with Iran began, is being interpreted as a potential political opportunity for Meloni ahead of Italy's 2027 elections.</p>
 <p><strong>Perspectives:</strong> France 24 frames the exchange as Meloni asserting "allies, not vassals," positioning her stance as defending Italian interests and independence. The coverage suggests the break could ultimately strengthen her domestically by showing strength against external pressure. This reflects tensions within traditional alliances as European leaders navigate relations with the US during Middle East conflicts. The story highlights how international disagreements can be repurposed for domestic political narratives.</p>
@@ -1273,10 +1325,6 @@
 <li>Can public disagreements with powerful allies boost domestic popularity?</li>
 <li>What underlying policy differences on Iran and defence contributed to the rift?</li>
 <li>How might this affect Italy-US relations going forward?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/europe/20260417-allies-not-vassals-how-meloni-break-with-trump-became-political-moment-italy" target="_blank" rel="noopener">'Allies, not vassals': How Meloni's break with Trump became a political moment</a> — France 24 examination of the diplomatic and political impact</li>
 </ul>
 <h4 id="3-congos-denis-sassou-nguesso-sworn-in-for-fifth-term">3) Congo’s Denis Sassou Nguesso sworn in for fifth term</h4>
 <p><strong>What happened (neutral):</strong> Denis Sassou Nguesso has been officially sworn in for a fifth term as president of the Republic of Congo.</p>
@@ -1288,10 +1336,6 @@
 <li>What role does the international community play in recognizing such transitions?</li>
 <li>How do long-serving leaders maintain power in changing regional contexts?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/video/newsfeed/2026/4/17/congos-sassou-nguesso-sworn-in-for-fifth-term" target="_blank" rel="noopener">Congo’s Sassou Nguesso sworn in for fifth term</a> — Al Jazeera video newsfeed report</li>
-</ul>
 <h4 id="4-strasbourg-stuns-mainz-to-reach-historic-europa-conference-league-semi-finals">4) Strasbourg stuns Mainz to reach historic Europa Conference League semi-finals</h4>
 <p><strong>What happened (neutral):</strong> French club Strasbourg overcame a two-goal deficit to defeat Mainz and advance to the semi-finals of the Europa Conference League. This marks the first time the Alsatian team has reached this stage of European competition.</p>
 <p><strong>Perspectives:</strong> France 24 highlights the dramatic comeback spurred by home crowd support at the Meinau stadium, quoting midfielder Abdoul Ouattara saying "We told ourselves that anything was possible." The coverage celebrates it as a historic achievement for a club not traditionally among Europe's elite. Sports reporting often frames such stories as underdog triumphs that capture public imagination. The result adds to French clubs' presence in European competitions this season.</p>
@@ -1302,10 +1346,6 @@
 <li>What does this run say about the competitiveness of the Conference League?</li>
 <li>How might this success affect the club's future ambitions?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/tv-shows/sports/20260417-conference-league-strasbourg-stun-mainz-to-reach-historic-semi-finals" target="_blank" rel="noopener">Conference League: Strasbourg stun Mainz to reach historic semi-finals</a> — France 24 match report and reactions</li>
-</ul>
 <h4 id="5-woman-stranded-in-dusseldorf-due-to-home-office-administrative-error">5) Woman stranded in Dusseldorf due to Home Office administrative error</h4>
 <p><strong>What happened (neutral):</strong> Liza Tobay, a German woman who has lived in the UK for 15 years, was stranded in Dusseldorf after her return flight was blocked because her settled status was "red flagged" due to what she described as a serious Home Office administrative error. She was separated from her two-year-old daughter in Edinburgh after taking her six-year-old son to visit relatives over Easter.</p>
 <p><strong>Perspectives:</strong> The Guardian presents this as an example of how bureaucratic mistakes can have significant human impact on long-term residents. The case highlights ongoing challenges with the UK's immigration and settled status systems, even for those with established lives and young children. Such stories often fuel calls for improved administrative processes and safeguards. The emotional element of family separation adds weight to discussions about policy implementation versus individual circumstances.</p>
@@ -1315,10 +1355,6 @@
 <li>What recourse exists for individuals caught in such bureaucratic problems?</li>
 <li>How might post-Brexit settled status arrangements contribute to these issues?</li>
 <li>What responsibility do governments have when technical errors disrupt families?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/politics/2026/apr/17/woman-dusseldorf-uk-home-office-return-flight-blocked" target="_blank" rel="noopener">Woman stranded in Dusseldorf after return UK flight blocked over Home Office admin error</a> — Guardian report on the case</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-global-banks-scramble-for-land-in-mumbai-amid-indias-financial-boom">1) Global banks scramble for land in Mumbai amid India's financial boom</h4>
@@ -1331,10 +1367,6 @@
 <li>How sustainable is this level of expansion in a land-constrained city?</li>
 <li>What does this trend indicate about India's position in global finance?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-04-17/global-banks-scramble-for-land-in-mumbai-video" target="_blank" rel="noopener">Global Banks Scramble for Land in Mumbai</a> — Bloomberg video report on the trend</li>
-</ul>
 <h4 id="2-oil-shock-from-hormuz-disruption-may-weigh-on-global-equities">2) Oil shock from Hormuz disruption may weigh on global equities</h4>
 <p><strong>What happened (neutral):</strong> Morgan Stanley analyst Rajeev Sibal has warned that global equity markets have not fully priced in the energy shock caused by disruption in the Strait of Hormuz. He suggests the situation could weigh on growth sentiment going forward.</p>
 <p><strong>Perspectives:</strong> Bloomberg reports the analyst's view that recent market movements may underestimate the longer-term effects of constrained oil flows. This perspective connects energy security directly to broader economic confidence and stock valuations. Different market participants may weigh the temporary versus structural nature of the disruption differently. The analysis reflects ongoing attempts to quantify how geopolitical events translate into financial impacts.</p>
@@ -1345,13 +1377,101 @@
 <li>How might central banks respond if growth sentiment weakens further?</li>
 <li>What distinguishes a temporary shock from a longer-term economic drag?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-04-17/oil-shock-may-weigh-on-equities-morgan-stanley-s-sibal-video" target="_blank" rel="noopener">Oil Shock May Weigh on Equities: Morgan Stanley’s Sibal</a> — Bloomberg interview with the analyst</li>
-</ul>
 <h4 id="3-europes-best-performing">3) Europe’s best-performing</h4>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/apr/17/middle-east-crisis-live-news-israel-lebanon-ceasefire-iran-war-us-latest-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15741051/Celebrations-Lebanon-ceasefire-Israel.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/sports/2026/4/17/iran-women-football-players-thank-australian-government-for-protection" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/royals/article-15740209/worst-fears-royals-coming-true-JAN-MOIR.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15741173/Meghan-prepares-1-700-head-hotel-meet-greet-fans-Australian-taxpayer-funded-police-surround-Prince-Harry-meet-Bondi-massacre-heroes.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15740553/Meghan-Harry-Australia-tour-sydney.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-17/kenya-seeks-emergency-world-bank-funds-to-absorb-iran-war-impact" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/technology/2026/apr/17/microsoft-us-tech-firms-lobbied-eu-secrecy-rules-datacentre-emissions" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/environment/2026/apr/17/more-than-15m-oysters-to-be-released-in-the-north-sea-for-uk-rewilding-project" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/4/17/why-are-anti-war-protests-in-the-west-muted-on-iran" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/4/17/vengeance-for-all-how-irans-lego-videos-won-narrative-war-against-trump" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/europe/20260417-allies-not-vassals-how-meloni-break-with-trump-became-political-moment-italy" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/video/newsfeed/2026/4/17/congos-sassou-nguesso-sworn-in-for-fifth-term" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/tv-shows/sports/20260417-conference-league-strasbourg-stun-mainz-to-reach-historic-semi-finals" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/politics/2026/apr/17/woman-dusseldorf-uk-home-office-return-flight-blocked" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-04-17/global-banks-scramble-for-land-in-mumbai-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-04-17/oil-shock-may-weigh-on-equities-morgan-stanley-s-sibal-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1896,10 +2016,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

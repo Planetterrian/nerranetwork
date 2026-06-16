@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Oil prices fall as U.S. considers releasing sanctioned Iranian crude while Israel-Iran conflict disr… — Episode 18</h1>
+            <h1><span class="nn-i18n-title">Oil prices fall as U.S. considers releasing sanctioned Iranian crude while Israel-Iran conflict disr…</span> — Episode 18</h1>
             
             <p class="blog-hero-hook">Oil prices fall as U.S. considers releasing sanctioned Iranian crude while Israel-Iran conflict disrupts global energy markets.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1194,14 +1275,6 @@
 <li>How do constitutional limits on military action affect allies' decisions in joint operations?</li>
 <li>What remains unclear about the sequence of decisions leading to the strike?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15662001/donald-trump-netanyahu-israel-iran-attack.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Trump rages against Israel's Netanyahu for striking Iran's oil fields</a> — Daily Mail coverage of Trump's comments</li>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/19/iran-war-live-updates-oil-prices-gas-field-strikes-pentagon-more-funds-trump-news" target="_blank" rel="noopener">Middle East crisis live: Netanyahu says Israel acted alone</a> — Guardian report on Netanyahu's statements</li>
-<li><a href="https://www.realclearpolitics.com/articles/2026/03/19/iran_is_losing_what_happens_next_is_uncertain.html" target="_blank" rel="noopener">Iran Is Losing. What Happens Next Is Uncertain</a> — RealClearPolitics analysis</li>
-<li><a href="https://www.realclearpolitics.com/2026/03/19/is_iran_digging_in_for_protracted_conflict_694813.html" target="_blank" rel="noopener">Is Iran Digging In for Protracted Conflict?</a> — RealClearPolitics on Iran's position</li>
-<li><a href="https://www.theguardian.com/us-news/live/2026/mar/19/donald-trump-iran-bondi-epstein-mullin-japan-takaichi-save-voter-id-latest-news-updates" target="_blank" rel="noopener">Japanese prime minister explains to Trump that her country cannot join his Iran war</a> — Guardian on allied responses</li>
-</ul>
 <h4 id="2-oil-falls-as-us-weighs-releasing-sanctioned-iranian-crude">2) Oil falls as U.S. weighs releasing sanctioned Iranian crude</h4>
 <p><strong>What happened (neutral):</strong> U.S. oil prices continued to decline after Treasury Secretary Scott Bessent indicated Washington may lift sanctions on Iranian crude stored aboard tankers. The move is reportedly aimed at cooling prices amid disruptions from the Israel-Iran conflict. The situation has contributed to market volatility and concerns over global energy supplies.</p>
 <p><strong>Perspectives:</strong> CNBC presents the potential release of sanctioned crude as a pragmatic step to stabilize prices during the current crisis. The Guardian notes that the broader Middle East conflict has closed key waterways and attacked energy facilities, prompting countries like Australia to prepare for fuel shortages. China’s long-term preparation of oil and gas reserves plus renewables is portrayed as paying off by providing insulation from the crisis. These framings reflect differing priorities between immediate market intervention, national supply security, and strategic stockpiling.</p>
@@ -1211,12 +1284,6 @@
 <li>What trade-offs exist between using sanctions for foreign policy and managing domestic energy costs?</li>
 <li>How prepared are different nations for prolonged energy supply disruptions?</li>
 <li>What is the current status of the Strait of Hormuz according to available reports?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/03/20/oil-wti-brent-us-weighs-releasing-sanctioned-iranian-crude.html" target="_blank" rel="noopener">Oil falls as U.S. weighs releasing sanctioned Iranian crude to cool prices</a> — CNBC report on U.S. considerations</li>
-<li><a href="https://www.theguardian.com/world/2026/mar/20/china-oil-reserves-global-energy-crisis" target="_blank" rel="noopener">China has been preparing for a global energy crisis for years</a> — Guardian on China's energy strategy</li>
-<li><a href="https://www.cnbc.com/2026/03/20/asia-markets-today-nikkei-hang-seng-kospi.html" target="_blank" rel="noopener">Asia markets trade mixed after Wall Street losses as Iran war dents risk sentiment</a> — CNBC on market reactions</li>
 </ul>
 <h4 id="3-australia-pm-heckled-at-sydney-mosque-during-ramadan-event">3) Australia PM heckled at Sydney mosque during Ramadan event</h4>
 <p><strong>What happened (neutral):</strong> Australian Prime Minister Anthony Albanese was heckled at a Ramadan event at a Sydney mosque. The Guardian links the incident to the government’s move to outlaw “extremist organisations.” The heckling occurred amid broader discussions of the government’s response to the Israel-Gaza war and concerns about rising Islamophobia among Muslim Australians.</p>
@@ -1228,11 +1295,6 @@
 <li>How do political leaders respond to public criticism at community events?</li>
 <li>What details about the specific heckling remain unclear from initial reports?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/mar/20/australia-news-live-tropical-cyclone-narelle-queensland-floods-storm-coen-crisafulli-albanese-cost-of-living-tax-budget-chalmers-gas-fuel-crisis-ntwnfb" target="_blank" rel="noopener">Australia news live: PM links heckling at Lakemba mosque to government’s move to outlaw ‘extremist organisations’</a> — Guardian live coverage</li>
-<li><a href="https://www.bbc.com/news/articles/cz90wy2190go?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">Australia PM heckled at Sydney mosque Ramadan event</a> — BBC News report</li>
-</ul>
 <h4 id="4-lula-pins-blame-on-bolsonaro-for-banco-master-scandal-in-brazil">4) Lula pins blame on Bolsonaro for Banco Master scandal in Brazil</h4>
 <p><strong>What happened (neutral):</strong> Brazilian President Luiz Inacio Lula da Silva used a campaign event to blame former President Jair Bolsonaro for the collapse of Banco Master SA. The comments have escalated political tensions surrounding the financial scandal.</p>
 <p><strong>Perspectives:</strong> Bloomberg reports that Lula shifted blame onto his right-wing predecessor, framing the scandal as a legacy issue from the previous administration. This fits into ongoing political rivalries in Brazil where accountability for financial failures becomes a partisan issue.</p>
@@ -1243,10 +1305,6 @@
 <li>How does this fit into longer-term patterns of political polarization in Brazil?</li>
 <li>What facts about the bank's failure are agreed upon across sources?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-03-20/lula-pins-blame-on-bolsonaro-for-banco-master-scandal-in-brazil" target="_blank" rel="noopener">Lula Pins Blame on Bolsonaro for Banco Master Scandal in Brazil</a> — Bloomberg coverage of Lula's statements</li>
-</ul>
 <h4 id="5-tropical-cyclone-narelle-hits-far-north-queensland">5) Tropical Cyclone Narelle hits far north Queensland</h4>
 <p><strong>What happened (neutral):</strong> Severe Tropical Cyclone Narelle, described as a high-end category four storm, has struck far north Queensland. Residents in remote Cape York communities, including the township of Coen, have taken shelter as strong winds and rain affect the area. Local businesses reported moving to more secure buildings as conditions worsened.</p>
 <p><strong>Perspectives:</strong> The Guardian provides detailed accounts from residents about the storm's impact on older, non-cyclone-rated properties and the unusual stillness before winds picked up. Coverage appears alongside discussions of national preparedness for other crises.</p>
@@ -1256,10 +1314,6 @@
 <li>What infrastructure challenges exist in cyclone-prone areas of Australia?</li>
 <li>How does current weather reporting describe the storm's progression?</li>
 <li>What remains uncertain about the full extent of damage?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/mar/20/australia-news-live-tropical-cyclone-narelle-queensland-floods-storm-coen-crisafulli-albanese-cost-of-living-tax-budget-chalmers-gas-fuel-crisis-ntwnfb" target="_blank" rel="noopener">Australia news live: PM links heckling at Lakemba mosque to government’s move to outlaw ‘extremist organisations’</a> — Guardian live updates including cyclone coverage</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-netanyahu-says-israel-acted-alone-in-iran-gasfield-strike">1) Netanyahu says Israel acted alone in Iran gasfield strike</h4>
@@ -1272,10 +1326,6 @@
 <li>What is the current status of Iran's capabilities according to military officials?</li>
 <li>What facts are agreed upon regarding the strike itself?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/19/iran-war-live-updates-oil-prices-gas-field-strikes-pentagon-more-funds-trump-news" target="_blank" rel="noopener">Middle East crisis live: Netanyahu says Israel acted alone in Iran gasfield strike</a> — Guardian live updates</li>
-</ul>
 <h4 id="2-japanese-pm-tells-trump-japan-cannot-join-iran-war">2) Japanese PM tells Trump Japan cannot join Iran war</h4>
 <p><strong>What happened (neutral):</strong> Japanese Prime Minister Sanae Takaichi explained to President Trump that Japan cannot join the conflict with Iran due to limitations in its post-WWII constitution on deploying forces overseas. The discussion occurred amid broader talks about the Iran situation and securing the Strait of Hormuz.</p>
 <p><strong>Perspectives:</strong> The Guardian highlights constitutional constraints on Japanese military action. Trump reportedly invoked Pearl Harbor while praising Japan for assisting in securing the Strait of Hormuz, unlike NATO.</p>
@@ -1285,11 +1335,6 @@
 <li>What are the different roles allies play in regional conflicts?</li>
 <li>How do leaders reference history when discussing current security issues?</li>
 <li>What remains unclear about Japan's specific commitments?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/live/2026/mar/19/donald-trump-iran-bondi-epstein-mullin-japan-takaichi-save-voter-id-latest-news-updates" target="_blank" rel="noopener">Japanese prime minister explains to Trump that her country cannot join his Iran war</a> — Guardian coverage of the meeting</li>
-<li><a href="https://www.cnbc.com/2026/03/20/trump-pearl-harbor-japan-takaichi-iran-war.html" target="_blank" rel="noopener">Trump invokes Pearl Harbor in front of Japanese prime minister</a> — CNBC report on Trump's comments</li>
 </ul>
 <h4 id="3-palestinians-bury-four-women-killed-in-iranian-missile-attack">3) Palestinians bury four women killed in Iranian missile attack</h4>
 <p><strong>What happened (neutral):</strong> A small occupied West Bank community buried four women who were killed in a hair salon during an Iranian missile attack.</p>
@@ -1301,10 +1346,6 @@
 <li>How do various outlets report on civilian impacts from the conflict?</li>
 <li>What details about the specific incident require further verification?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/video/newsfeed/2026/3/20/palestinians-bury-four-women-killed-in-iranian-missile-attack?traffic_source=rss" target="_blank" rel="noopener">Palestinians bury four women killed in Iranian missile attack</a> — Al Jazeera coverage</li>
-</ul>
 <h4 id="4-french-influencer-arrested-in-dubai-after-filming-explosions">4) French influencer arrested in Dubai after filming explosions</h4>
 <p><strong>What happened (neutral):</strong> A French influencer was reportedly arrested in Dubai days after filming herself saying she was scared while explosions, described as Iranian missiles, occurred around her.</p>
 <p><strong>Perspectives:</strong> The Daily Mail presents the arrest occurring shortly after the influencer documented her fear during the incident.</p>
@@ -1315,10 +1356,6 @@
 <li>What remains uncertain about the reasons for the arrest?</li>
 <li>How do different locations handle such incidents?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15662079/French-influencer-arrested-Dubai-filming-explosions.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Glamorous French influencer is arrested in Dubai days after filming herself saying 'I'm scared'</a> — Daily Mail report</li>
-</ul>
 <h4 id="5-nashville-journalist-arrested-by-ice-released-after-15-days">5) Nashville journalist arrested by ICE released after 15 days</h4>
 <p><strong>What happened (neutral):</strong> Colombia-born journalist Estefany Rodríguez, who covers immigration for Nashville Noticias, was released from detention after 15 days. She had been detained by Immigration and Customs Enforcement without a warrant according to her lawyers.</p>
 <p><strong>Perspectives:</strong> The Guardian reports her release on $10,000 bond and notes that the detention had alarmed press freedom advocates.</p>
@@ -1328,10 +1365,6 @@
 <li>How do immigration enforcement actions intersect with press freedom concerns?</li>
 <li>What details about the detention process are still in dispute?</li>
 <li>What facts are confirmed regarding her release?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/2026/mar/19/journalist-detained-ice-released" target="_blank" rel="noopener">Nashville journalist arrested by ICE released after 15 days in detention</a> — Guardian coverage of the case</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-asia-markets-trade-mixed-after-wall-street-losses-as-iran-war-dents-risk-sentiment">1) Asia markets trade mixed after Wall Street losses as Iran war dents risk sentiment</h4>
@@ -1344,10 +1377,6 @@
 <li>How do different regions' markets respond to the same events?</li>
 <li>What is the current state of energy-related stocks according to reports?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/03/20/asia-markets-today-nikkei-hang-seng-kospi.html" target="_blank" rel="noopener">Asia markets trade mixed after Wall Street losses as Iran war dents risk sentiment</a> — CNBC market update</li>
-</ul>
 <h4 id="2-us-prosecutors-charge-super-micro-computer-employees-with-smuggling-nvidia-chips-to-china">2) U.S. prosecutors charge Super Micro Computer employees with smuggling Nvidia chips to China</h4>
 <p><strong>What happened (neutral):</strong> U.S. prosecutors charged employees of Super Micro Computer with smuggling Nvidia artificial intelligence chips to China. This is part of ongoing U.S. government efforts to restrict certain advanced technology exports.</p>
 <p><strong>Perspectives:</strong> CNBC frames the charges as part of broader enforcement against illegal shipments of high-end AI technology.</p>
@@ -1358,10 +1387,6 @@
 <li>What is the role of private companies in complying with such regulations?</li>
 <li>What facts are established regarding the specific charges?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/03/19/us-tech-execs-smuggled-nvidia-chips-to-china-prosecutors-say.html" target="_blank" rel="noopener">U.S. prosecutors charge Super Micro Computer employees with smuggling Nvidia chips to China</a> — CNBC report on the charges</li>
-</ul>
 <h4 id="3-good-riddance-to-corporate-social-responsibility">3) Good Riddance to Corporate Social Responsibility</h4>
 <p><strong>What happened (neutral):</strong> An opinion piece argues that corporate social responsibility has been an unnecessary fiction and welcomes its end.</p>
 <p><strong>Perspectives:</strong> RealClearPolitics presents the view that CSR represented an unnecessary approach to business operations.</p>
@@ -1371,10 +1396,6 @@
 <li>How has the concept of corporate social responsibility evolved over time?</li>
 <li>What underlying values inform debates about business responsibilities?</li>
 <li>What specific examples are discussed in the piece?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.realclearpolitics.com/2026/03/19/good_riddance_to_corporate_social_responsibility_694816.html" target="_blank" rel="noopener">Good Riddance to Corporate Social Responsibility</a> — RealClearPolitics opinion</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-us-prosecutors-charge-super-micro-computer-employees-with-smuggling-nvidia-chips-to-china">1) U.S. prosecutors charge Super Micro Computer employees with smuggling Nvidia chips to China</h4>
@@ -1387,10 +1408,6 @@
 <li>How might such cases affect global supply chains for advanced chips?</li>
 <li>What is confirmed about the specific actions alleged?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/03/19/us-tech-execs-smuggled-nvidia-chips-to-china-prosecutors-say.html" target="_blank" rel="noopener">U.S. prosecutors charge Super Micro Computer employees with smuggling Nvidia chips to China</a> — CNBC on the charges</li>
-</ul>
 <h4 id="2-china-has-been-preparing-for-a-global-energy-crisis-for-years">2) China has been preparing for a global energy crisis for years</h4>
 <p><strong>What happened (neutral):</strong> As other Asian economies manage energy conservation amid the Middle East conflict, China benefits from large reserves of oil, gas, and alternative energy sources like wind and solar. President Xi Jinping has emphasized securing energy supplies domestically.</p>
 <p><strong>Perspectives:</strong> The Guardian highlights China's strategic preparation through stockpiling and developing renewables as providing current advantages during the crisis.</p>
@@ -1401,13 +1418,101 @@
 <li>How do different countries approach energy independence?</li>
 <li>What specific preparations are mentioned in reports?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/mar/20/china-oil-reserves-global-energy-crisis" target="_blank" rel="noopener">China has been preparing for a global energy crisis for years. It is paying off now</a> — Guardian analysis</li>
-</ul>
 <h4 id="3-peter-hitchens">3) Peter Hitchens:</h4>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15662001/donald-trump-netanyahu-israel-iran-attack.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/mar/19/iran-war-live-updates-oil-prices-gas-field-strikes-pentagon-more-funds-trump-news" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.realclearpolitics.com/articles/2026/03/19/iran_is_losing_what_happens_next_is_uncertain.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=realclearpolitics.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">realclearpolitics.com</span>
+                    </a>
+                    
+                    <a href="https://www.realclearpolitics.com/2026/03/19/is_iran_digging_in_for_protracted_conflict_694813.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=realclearpolitics.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">realclearpolitics.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/live/2026/mar/19/donald-trump-iran-bondi-epstein-mullin-japan-takaichi-save-voter-id-latest-news-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/20/oil-wti-brent-us-weighs-releasing-sanctioned-iranian-crude.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/mar/20/china-oil-reserves-global-energy-crisis" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/20/asia-markets-today-nikkei-hang-seng-kospi.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/live/2026/mar/20/australia-news-live-tropical-cyclone-narelle-queensland-floods-storm-coen-crisafulli-albanese-cost-of-living-tax-budget-chalmers-gas-fuel-crisis-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cz90wy2190go?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-03-20/lula-pins-blame-on-bolsonaro-for-banco-master-scandal-in-brazil" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/20/trump-pearl-harbor-japan-takaichi-iran-war.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/video/newsfeed/2026/3/20/palestinians-bury-four-women-killed-in-iranian-missile-attack?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15662079/French-influencer-arrested-Dubai-filming-explosions.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/2026/mar/19/journalist-detained-ice-released" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/19/us-tech-execs-smuggled-nvidia-chips-to-china-prosecutors-say.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.realclearpolitics.com/2026/03/19/good_riddance_to_corporate_social_responsibility_694816.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=realclearpolitics.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">realclearpolitics.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1815,10 +1920,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

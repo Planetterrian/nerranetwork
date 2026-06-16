@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/fascinating-frontiers-400.webp"><img src="../../assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers" width="40" height="40"></picture>
                 Fascinating Frontiers Blog
             </a>
-            <h1>NASA has released a fresh batch of images from Artemis II operations showing Earth, the Moon, and th… — Episode 57</h1>
+            <h1><span class="nn-i18n-title">NASA has released a fresh batch of images from Artemis II operations showing Earth, the Moon, and th…</span> — Episode 57</h1>
             
             <p class="blog-hero-hook">NASA has released a fresh batch of images from Artemis II operations showing Earth, the Moon, and the Sun captured across multiple mission phases.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1215,6 +1296,16 @@
                         <span class="source-domain">news.google.com</span>
                     </a>
                     
+                    <a href="https://news.google.com/rss/articles/CBMi1wFBVV95cUxNX25ZSl8tREx6SnVRalhCc2l2LXZkWGxOSks2OHhPWmlmVGRZbEN1MGp2MkNHNzJnYTROcmJYY2I5VnluMFItWXBJUHBabk9XR1F3cUlNcElWWG1QQnh1ZEZLSUsyQXY3eGV6U09oQmdtSWZ6YWcyU3h6MnN6ZFE1OHB5cjd4VEpZTzA0ZHRIVzFBdVhDbVZIMlZXd1hhcHU1elVONGd6OEF6d0FtMkdrRjZtWXJlaU1lOUV2T0V2dkotZllUcmhVOFRaM0FnaGZVMjJJQThod9IB3AFBVV95cUxNZ3ZzcDNYTGZqNXBKSUdQU051SU9YVXJrSUN6U19LaFdwWU1GbmFpNURIMXdSejNuXzMtcWNHdEdMS0Z4ZVd5TnQ4SE1UWEFDdWZaLUdPTzRZT0std05KcmJTV2dvcnN4M0RGdHdfX291dmNvT291VGd2SGdGUDJYVlQ4RlNoMnE2MGlNbXlYendmUTk0aVlNTnRpRFlzaS1ERW44TU1CaXRpUzd2U3hJOTFRQ3FGc3BXLUNNaHNGTUo4a3F0LUdjMGlHZnEzdGtoanJFODlCQTBGU1hL?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMiwgFBVV95cUxPQm51LUc0ZUFIcVpxZ3B2V2Z4U19BOTI0SkpJMm9sSG9MX3l5Y2UydG0yQW1oSERtYnVhRW12NkptWl9ydGZnTExkNkZaWEZiQ0tPU0o3dGVXbzdBYlNBZzFwcGlKdUJSb21haWxIbU1BZ3lnanNjcV9zd1N3dlpoVnpSTVRXSHk1V0p2TjNpdzh5Q1FyTmhXT1Q5ekp5QUVrdHlNMFlzV1cyUmpDWU1yVEpEUHEtWWdSajdqWHFmc1VoUQ?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
                     <a href="https://www.teslarati.com/spacex-golden-dome-missle-defense/" target="_blank" rel="noopener" class="blog-source-card">
                         <img src="https://www.google.com/s2/favicons?domain=teslarati.com&sz=32" alt="" class="source-icon" loading="lazy">
                         <span class="source-domain">teslarati.com</span>
@@ -1225,6 +1316,11 @@
                         <span class="source-domain">astronomy.com</span>
                     </a>
                     
+                    <a href="https://news.google.com/rss/articles/CBMilAFBVV95cUxNcS0xSThKaGg3R0dtdm01Z1ZUSFgyWHV1UUVqRnVnUWZqWlNsbXk3c1EwZklRclJOQ3BNMXpxTE1VaExzdGw5cFZScE9HZUE3QmRsbF9BYUtQeFdIbUNwYklSUDVSOThKWU5yNWYyOW1IT1hORlhINFp4TTNjaFQ1TkN5V1VmNE1FZ29oRFNybHE1cWNh0gGoAUFVX3lxTFBGQkluNHg5MkUxazQ2cVVTcnh0UEZMT3o3bVNUeFRISlVhWlN0eUpOb2Y3NUdwMHdmYkthVC11YW1mNXNua25iUGx6Z19sSkVCNHg1UXROTUdxbFc1bDBRVGUxZlY2cDR5TlVTM0dVcEE2aVNieG1EbC1UOGEzSHNpY085TVR2TndOemVxUUg1YVh2RDFfb1Q0Y0RfblluSkF2c28yZGJnSw?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
                     <a href="https://science.nasa.gov/earth/human-dimensions/agriculture/an-agricultural-mosaic-in-taiwan/" target="_blank" rel="noopener" class="blog-source-card">
                         <img src="https://www.google.com/s2/favicons?domain=science.nasa.gov&sz=32" alt="" class="source-icon" loading="lazy">
                         <span class="source-domain">science.nasa.gov</span>
@@ -1233,6 +1329,36 @@
                     <a href="https://www.reddit.com/r/spacex/comments/1su4lzv/spacex_wins_57m_pentagon_deal_for_military_space/" target="_blank" rel="noopener" class="blog-source-card">
                         <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
                         <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMi3gFBVV95cUxPVVdsSS1EYWd6MEIxZVBSMWdBMWk2Mk9WLS1uUlluUGp6SEtKR1F5SjZjM2FFOXZ3d29TWlVBeWRXT0N6VlhGQmtHaFFZMC1sYXo3N2hVejBXb3AtZ0tSREowQTBFV0JIcTVNUlZqM0xvWlFWOWwwYzQ0WXF1Nm1HWGVEQXIwR0xWV25wOGw1ck50RkdlczhXT19VSEY1b0dFVnpwaElsdVllbXlKd0Y1a0NuNFY5NmxMd1piTmpqb2IyWE0wYzk1RFp3eXRiSTFLSDhkUVVTUTdpQzVEakE?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMiqgFBVV95cUxOZTlITGFiMUgwSG5uQU9fa29ka1B6MGIyZE1lczRuMlhTV09lVjdmWEw5YmwyLXNvWnpObk9FVF9EWFNTMzhZNWg2TV9uelJ2eXRVUlEyMWEyRkp6ZHRoX1NZc0hKYTczUVV2cV9WSGNZOU1IUThGLXRjcUhOX1JwNkhJUWtzZ1I0RmhKaEx3VktJREZ6aUxPN2xMZWdaUDZmUkJSOGNFc3pMZw?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/space/comments/1su1fir/nasa_welcomes_jordan_as_63rd_artemis_accords/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMiiwFBVV95cUxOeFB6X3FYRVJNR3AtbWx1WUl3THlxZUhFOTFBTGNuWldoYmctTDZ0bUpuWFUwSVNzY0dyMGtrNDhsMWE5Wmx0c2NGRF9uSmJVQlBaVU5Wc0tZZy1yQTNYMTVHeUxaQVNFX0JuNTRZY3l3d1NPa0dlUzd4UXk5ZlFMLVVaZGhBVms5Tzdn?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMijgFBVV95cUxQdDdCUW95VzNPWmZRb0EyMHRSYWF3SXpVUDFWZDgzZDdOMDliMC1kUldqYkthaUY0TWVPOWU0THJTSlRMdEZ4X0s0VW1OUGY0UEozcWFuMVRkaGltcTNrengzYkFQSzM1WDhJTlNFbG0zN2FPSlZuei1qRlNHdjRra3JDcVM1NTh2WTdMVm5R0gGiAUFVX3lxTE9LVW5ncEFjdlZsZ04xeXNjVmFpLXJUSnpRVjlKR3ZZOUZqcTZWNzg1THl6Q1JSZGhLdTFac1QwNl9pc3RmTTQwQXMwT3hSMVRvMDZiUmdHZ3M5cGxkSTNTUE1ZLWxHVUVIY0p1THVyY1o1aWljVmdRSHQ5SUJBSHlmOFJmRTdROUNUdno3UFdRaThrc0N0bUpmRERRZ2pBUTQ5Zw?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMiigFBVV95cUxOTEg2SWE3QTRRVVBYMUlsN1J3WlZUcG43ZnFKZFlUOWFmanRvd1RITnVlRWVtRFptSWZ6NFBYMi1abU5OQjBKcmNMd1pldk9YZWVUQlpCRzlyYWdDTk5yUEhVZGpsYmNfV1ZFQUF3RURzZjJCMjRIZE9UbldKcDJmR01RMlJRbWl2SHc?oc=5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
                     </a>
                     
                 </div>
@@ -1713,10 +1839,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

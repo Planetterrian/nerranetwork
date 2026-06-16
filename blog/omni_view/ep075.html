@@ -107,7 +107,12 @@
       "url": "https://nerranetwork.com/omni-view.html"
     },
     "image": "https://nerranetwork.com/assets/covers/omni-view.jpg",
-    "transcript": "https://nerranetwork.com/blog/omni_view/ep075.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/omni_view/ep075.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://audio.nerranetwork.com/omni_view/Omni_View_Ep075_20260608.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -708,6 +713,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +818,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1181,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Renewed strikes between Israel and Iran risk breaking the recent ceasefire and pushing global oil pr… — Episode 75</h1>
+            <h1><span class="nn-i18n-title">Renewed strikes between Israel and Iran risk breaking the recent ceasefire and pushing global oil pr…</span> — Episode 75</h1>
             
             <p class="blog-hero-hook">Renewed strikes between Israel and Iran risk breaking the recent ceasefire and pushing global oil prices higher for drivers and businesses everywhere.</p>
             
@@ -1129,6 +1212,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1194,12 +1280,6 @@
 <li>How do statements from the US president shape expectations on both sides?</li>
 <li>Which economic sectors are most exposed if tensions continue?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/jun/08/iran-israel-news-live-updates-strikes-attacks-intensify-trump-netanyahu" target="_blank" rel="noopener">The Guardian</a> — Live updates on strikes and reactions</li>
-<li><a href="https://www.france24.com/en/video/20260608-israel-iran-trade-fire-in-first-clash-since-truce" target="_blank" rel="noopener">France 24</a> — Video report on the overnight exchanges</li>
-<li><a href="https://www.dailymail.com/news/article-15882079/Oil-prices-spike-Netanyahu-defies-Trump-launches-strikes-Iran-prompting-retaliation-missile-attack-Tehran.html" target="_blank" rel="noopener">Daily Mail</a> — Coverage of oil price movement and statements</li>
-</ul>
 <h4 id="2-uk-government-to-require-tech-firms-to-block-under-16s-from-creating-or-sharing-nude-images">2) UK government to require tech firms to block under-16s from creating or sharing nude images</h4>
 <p><strong>What happened (neutral):</strong> Prime Minister Keir Starmer announced new rules that would force device makers and app providers to prevent children from taking or distributing nude or sexual images. The measures would apply across smartphones and tablets sold or used in the UK, with over-18s still able to access adult content after age verification.</p>
 <p><strong>Perspectives:</strong> Government statements highlight existing but inconsistently applied phone features that can already block such content by default. Conservative leader Kemi Badenoch argues a simpler outright ban on social media for under-16s would be more straightforward. Privacy advocates note the challenge of implementing blocks without collecting user data or weakening encryption. The strongest case for device-level defaults rests on reducing exposure without requiring constant parental oversight. The strongest case for broader age restrictions rests on the view that current tools are too easily bypassed. Both approaches concede limits in enforcement across all apps and imported devices.</p>
@@ -1208,11 +1288,6 @@
 <li>How would age verification work without storing personal data?</li>
 <li>What happens to devices already in use by families?</li>
 <li>Which companies would bear primary responsibility for compliance?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/politics/live/2026/jun/08/keir-starmer-technology-ai-online-harms-labour-andy-burnham-makerfield-kemi-badenoch-uk-politics-latest-news-updates" target="_blank" rel="noopener">The Guardian</a> — Details on proposed legislation and industry response</li>
-<li><a href="https://www.dailymail.com/news/article-15882317/Tech-firms-forced-block-children-taking-sharing-nude-images-online-Keir-Starmer-reveals.html" target="_blank" rel="noopener">Daily Mail</a> — Government announcement and timeline</li>
 </ul>
 <h4 id="3-mexico-approves-major-labor-changes-cutting-workweek-and-banning-after-hours-contact">3) Mexico approves major labor changes cutting workweek and banning after-hours contact</h4>
 <p><strong>What happened (neutral):</strong> Mexico enacted reforms that shorten the standard workweek, prohibit employers from requiring after-hours communication, and guarantee no reduction in pay for affected workers. The changes represent the largest shift in labor rules in a generation.</p>
@@ -1223,10 +1298,6 @@
 <li>What mechanisms exist to monitor compliance?</li>
 <li>How do these rules compare with labor standards in neighboring countries?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.reddit.com/r/worldnews/comments/1u04vkk/mexico_cuts_workweek_bans_afterhours_contact_and/" target="_blank" rel="noopener">Reddit</a> — Discussion of the reform details and public reaction</li>
-</ul>
 <h4 id="4-uber-to-launch-self-driving-robotaxis-in-london-this-summer">4) Uber to launch self-driving robotaxis in London this summer</h4>
 <p><strong>What happened (neutral):</strong> Uber announced that all-electric Ford Mustang Mach-E vehicles equipped with cameras and radar, developed with Wayve, will begin operating as robotaxis in London. The service is scheduled to start later this summer.</p>
 <p><strong>Perspectives:</strong> The company presents the rollout as an expansion of convenient, lower-emission transport options. Regulators and safety advocates stress the need for clear rules on liability and performance in mixed traffic. The strongest case for rapid deployment rests on potential reductions in accidents caused by human error and lower operating costs over time. The strongest case for caution rests on the limited real-world data for these systems in dense urban environments with unpredictable conditions. Both sides agree that public trust will depend on transparent incident reporting.</p>
@@ -1236,10 +1307,6 @@
 <li>How will traditional drivers be affected by the new service?</li>
 <li>Which other cities are watching the London trial?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/sciencetech/article-15882569/Uber-robotaxis-arrive-UK-Self-driving-cars.html" target="_blank" rel="noopener">Daily Mail</a> — Technical specifications and launch plans</li>
-</ul>
 <h4 id="5-analysis-finds-most-new-us-ai-data-centers-planned-for-drought-affected-areas">5) Analysis finds most new US AI data centers planned for drought-affected areas</h4>
 <p><strong>What happened (neutral):</strong> A Guardian review of planned facilities shows roughly two-thirds of upcoming AI data centers will be built in regions that have experienced severe drought in the past year. Data centers require substantial water for cooling systems.</p>
 <p><strong>Perspectives:</strong> Industry representatives point to economic benefits and the need for new capacity to support growing AI demand. Local communities and environmental groups highlight risks to already strained water supplies. The strongest case for proceeding rests on the economic growth and tax revenue these facilities can bring to host regions. The strongest case for greater scrutiny rests on long-term water availability and competing agricultural or residential needs. Both positions acknowledge that cooling technology choices will influence actual consumption.</p>
@@ -1248,10 +1315,6 @@
 <li>What alternatives exist for siting or cooling these facilities?</li>
 <li>How are water rights allocated in the affected states?</li>
 <li>Which other infrastructure projects face similar resource constraints?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/2026/jun/08/datacenter-ai-drought-water" target="_blank" rel="noopener">The Guardian</a> — Mapping of planned sites and water data</li>
 </ul>
 <h3 id="top-world-stories-2">Top world stories (2)</h3>
 <h4 id="1-armenian-prime-minister-declares-victory-in-parliamentary-elections">1) Armenian prime minister declares victory in parliamentary elections</h4>
@@ -1263,10 +1326,6 @@
 <li>How have neighboring countries responded?</li>
 <li>What policy areas are likely to see early action?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/video/newsfeed/2026/6/8/armenian-pm-pashinyan-declares-victory-in-parliamentary-elections" target="_blank" rel="noopener">Al Jazeera</a> — Election result coverage</li>
-</ul>
 <h4 id="2-malawi-begins-repatriating-citizens-from-south-africa-amid-xenophobia-concerns">2) Malawi begins repatriating citizens from South Africa amid xenophobia concerns</h4>
 <p><strong>What happened (neutral):</strong> Malawi is transporting its nationals out of South Africa following reports of violence targeting migrants. Several other African countries are taking similar steps.</p>
 <p><strong>Perspectives:</strong> Officials in Malawi cite safety as the primary reason for the organized returns. South African authorities have condemned attacks while managing domestic pressures on jobs and services. The strongest case for repatriation rests on the duty to protect citizens abroad when local conditions deteriorate. The strongest case for addressing root causes rests on the economic ties and labor flows between the two countries. Both positions recognize that sudden movements of people create logistical and humanitarian challenges.</p>
@@ -1275,10 +1334,6 @@
 <li>What support is being offered to returning citizens?</li>
 <li>How are South African officials responding to the violence?</li>
 <li>What longer-term migration patterns are involved?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/cnv9dz3reego" target="_blank" rel="noopener">BBC News</a> — Details on repatriation efforts</li>
 </ul>
 <h3 id="top-business-stories-2">Top business stories (2)</h3>
 <h4 id="1-tate-lyle-to-be-acquired-by-us-rival-in-27-billion-deal">1) Tate & Lyle to be acquired by US rival in £2.7 billion deal</h4>
@@ -1290,10 +1345,6 @@
 <li>What regulatory approvals are required?</li>
 <li>Are similar deals expected in the sector?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15882039/tate-lyle-sold-rival-britain-sale-stock-market.html" target="_blank" rel="noopener">Daily Mail</a> — Transaction details and company background</li>
-</ul>
 <h4 id="2-marvell-technology-to-join-sp-500-index">2) Marvell Technology to join S&P 500 index</h4>
 <p><strong>What happened (neutral):</strong> S&P Global announced that AI chipmaker Marvell Technology will be added to the S&P 500 on June 22. The stock rose nearly 9 percent in premarket trading on the news.</p>
 <p><strong>Perspectives:</strong> Index inclusion is viewed by investors as recognition of the company’s growth in the semiconductor sector. Some analysts note that passive funds tracking the index will need to purchase shares, potentially supporting the price. The strongest case for the addition rests on Marvell’s market capitalization and revenue profile meeting index criteria. The strongest case for watching subsequent performance rests on whether the valuation reflects sustainable demand for its products. Both perspectives recognize that index changes can create short-term trading effects.</p>
@@ -1302,10 +1353,6 @@
 <li>Which companies might be removed to accommodate the addition?</li>
 <li>How do index rules balance size and sector representation?</li>
 <li>What has driven Marvell’s recent growth?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/06/08/marvell-sp500-index-addition.html" target="_blank" rel="noopener">CNBC</a> — Market reaction and index criteria</li>
 </ul>
 <h3 id="top-technology-stories-1">Top technology stories (1)</h3>
 <h4 id="1-apple-investors-await-ai-features-at-upcoming-developers-conference">1) Apple investors await AI features at upcoming developers conference</h4>
@@ -1317,10 +1364,6 @@
 <li>How has Apple’s approach differed from competitors so far?</li>
 <li>Which product lines are most likely to see changes?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-06-08/apple-investors-look-for-ai-overhaul-to-power-next-leg-of-gains" target="_blank" rel="noopener">Bloomberg</a> — Investor expectations and timeline</li>
-</ul>
 <h3 id="top-popular-media-stories-1">Top popular media stories (1)</h3>
 <h4 id="1-stormzy-and-oritsé-williams-pay-tribute-to-musician-talay-riley-after-fatal-stabbing">1) Stormzy and Oritsé Williams pay tribute to musician Talay Riley after fatal stabbing</h4>
 <p><strong>What happened (neutral):</strong> Singer-songwriter Talay Riley, who collaborated with artists including Tinie Tempah and Britney Spears, was stabbed to death in east London. Fellow musicians have publicly mourned his death.</p>
@@ -1330,10 +1373,6 @@
 <li>What support exists for families affected by such incidents?</li>
 <li>How are local authorities responding in the area?</li>
 <li>What role do music communities play in public discussions of safety?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/uk-news/2026/jun/08/stormzy-oritse-williams-tribute-talay-riley-stabbed-east-london" target="_blank" rel="noopener">The Guardian</a> — Artist statements and investigation details</li>
 </ul>
 <h3 id="top-gossip-stories-1">Top gossip stories (1)</h3>
 <h4 id="1-boyzone-fans-rally-behind-mikey-graham-after-reunion-appearance-draws-criticism">1) Boyzone fans rally behind Mikey Graham after reunion appearance draws criticism</h4>
@@ -1345,16 +1384,94 @@
 <li>What pressures do artists face during reunion tours?</li>
 <li>Where do boundaries lie between public interest and personal privacy?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15882305/Boyzone-fans-support-struggling-Mikey-Graham-nasty-trolls-attack-star-reunion-appearance-said-never-return-band-avoid-frustration-depression.html" target="_blank" rel="noopener">Daily Mail</a> — Fan reactions and background</li>
-</ul>
 <h3 id="understanding-the-issue-how-index-additions-affect-company-visibility-and-investor-flows">Understanding the Issue: How index additions affect company visibility and investor flows</h3>
 <p>Most coverage of stock index changes treats them as simple recognition of a company’s size. In practice, when S&P Global adds a firm to the S&P 500, index-tracking funds and ETFs must buy the shares to match their benchmarks, creating predictable demand regardless of the company’s fundamentals. This mechanical buying can lift the stock price in the short term even if underlying business prospects remain unchanged. Knowing this, when you hear claims that index inclusion signals lasting success, you can evaluate whether the move reflects genuine growth or simply forces passive capital to follow the rules. Next time you see a headline about a company joining a major index, ask: who is required to buy the shares, what is the size of that forced demand relative to daily trading volume, and how long do such effects typically last?</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference claims across multiple outlets and check primary documents such as company filings or government announcements when available. Note which facts are agreed upon and which remain disputed before forming conclusions.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/jun/08/iran-israel-news-live-updates-strikes-attacks-intensify-trump-netanyahu" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/video/20260608-israel-iran-trade-fire-in-first-clash-since-truce" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15882079/Oil-prices-spike-Netanyahu-defies-Trump-launches-strikes-Iran-prompting-retaliation-missile-attack-Tehran.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/politics/live/2026/jun/08/keir-starmer-technology-ai-online-harms-labour-andy-burnham-makerfield-kemi-badenoch-uk-politics-latest-news-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15882317/Tech-firms-forced-block-children-taking-sharing-nude-images-online-Keir-Starmer-reveals.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/worldnews/comments/1u04vkk/mexico_cuts_workweek_bans_afterhours_contact_and/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/sciencetech/article-15882569/Uber-robotaxis-arrive-UK-Self-driving-cars.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/2026/jun/08/datacenter-ai-drought-water" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/video/newsfeed/2026/6/8/armenian-pm-pashinyan-declares-victory-in-parliamentary-elections" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cnv9dz3reego" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15882039/tate-lyle-sold-rival-britain-sale-stock-market.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/06/08/marvell-sp500-index-addition.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-06-08/apple-investors-look-for-ai-overhaul-to-power-next-leg-of-gains" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/uk-news/2026/jun/08/stormzy-oritse-williams-tribute-talay-riley-stabbed-east-london" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15882305/Boyzone-fans-support-struggling-Mikey-Graham-nasty-trolls-attack-star-reunion-appearance-said-never-return-band-avoid-frustration-depression.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1837,10 +1954,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

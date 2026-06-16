@@ -107,7 +107,12 @@
       "url": "https://nerranetwork.com/omni-view.html"
     },
     "image": "https://nerranetwork.com/assets/covers/omni-view.jpg",
-    "transcript": "https://nerranetwork.com/blog/omni_view/ep079.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/omni_view/ep079.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://audio.nerranetwork.com/omni_view/Omni_View_Ep079_20260612.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -708,6 +713,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +818,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1181,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>A potential US-Iran peace deal could reopen the Strait of Hormuz and ease global oil pressures if fi… — Episode 79</h1>
+            <h1><span class="nn-i18n-title">A potential US-Iran peace deal could reopen the Strait of Hormuz and ease global oil pressures if fi…</span> — Episode 79</h1>
             
             <p class="blog-hero-hook">A potential US-Iran peace deal could reopen the Strait of Hormuz and ease global oil pressures if finalized in coming days.</p>
             
@@ -1129,6 +1212,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1194,12 +1280,6 @@
 <li>What role could third-party guarantors play in sustaining an agreement?</li>
 <li>Which regional actors stand to gain or lose most from reopened shipping lanes?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/06/12/nx-s1-5855326/trump-cancels-further-strikes-on-iran-announcing-peace-deal-is-imminent" target="_blank" rel="noopener">NPR</a> — Details on Trump’s announcement and immediate Iranian response</li>
-<li><a href="https://www.theguardian.com/world/live/2026/jun/12/middle-east-crisis-live-us-iran-israel-lebanon-trump-hormuz-oil-peace-deal-doubt-latest-news-updates" target="_blank" rel="noopener">The Guardian</a> — Live updates on status of talks and potential Geneva venue</li>
-<li><a href="https://www.cnbc.com/2026/06/12/iran-us-peace-memo-strait-hormuz-oil-sanctions.html" target="_blank" rel="noopener">CNBC</a> — Analysis of sanctions relief and Hormuz reopening provisions</li>
-</ul>
 <h4 id="2-spacex-completes-record-ipo-with-shares-set-for-strong-debut">2) SpaceX completes record IPO with shares set for strong debut</h4>
 <p><strong>What happened (neutral):</strong> SpaceX raised $75 billion in its initial public offering, the largest in history. Shadow-market trading indicates shares could open significantly higher. Company president Gwynne Shotwell addressed investor questions ahead of the Nasdaq listing.</p>
 <p><strong>Perspectives:</strong> Market participants view the valuation as a referendum on long-term space sector growth. Company leadership highlights operational achievements as justification for the pricing. Some analysts note the IPO timing reflects broader investor appetite for aerospace exposure.</p>
@@ -1208,11 +1288,6 @@
 <li>What disclosure requirements will apply to SpaceX after listing?</li>
 <li>How might government contracts influence post-IPO volatility?</li>
 <li>Which competitors could see secondary effects from the valuation benchmark?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/newsletters/2026-06-12/spacex-set-to-pop-in-trading-debut-after-biggest-ever-ipo" target="_blank" rel="noopener">Bloomberg</a> — Trading indications and market context</li>
-<li><a href="https://www.cnbc.com/2026/06/12/spacex-coo-gwynne-shotwell-spcx-ipo.html" target="_blank" rel="noopener">CNBC</a> — Shotwell’s comments on investor concerns</li>
 </ul>
 <h4 id="3-eu-asylum-reforms-under-ceas-take-effect-across-member-states">3) EU asylum reforms under CEAS take effect across member states</h4>
 <p><strong>What happened (neutral):</strong> The Common European Asylum System began implementation on Friday. Germany’s interior minister stated the changes aim to lower new arrivals. Experts have noted that full results may take time to materialize.</p>
@@ -1223,10 +1298,6 @@
 <li>Which countries are likely to see the largest operational shifts first?</li>
 <li>What monitoring mechanisms exist to assess whether targets are met?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/ceas-comes-into-effect-how-will-it-impact-asylum-seekers/a-77508144?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — Overview of implementation timeline and expert assessments</li>
-</ul>
 <h4 id="4-china-detains-us-academic-on-espionage-suspicions">4) China detains US academic on espionage suspicions</h4>
 <p><strong>What happened (neutral):</strong> Chinese authorities arrested Min Zin, a US-based scholar focused on Myanmar and Chinese foreign policy, at a conference. Officials cited activities endangering national security. The detention follows a recent Trump visit to Beijing.</p>
 <p><strong>Perspectives:</strong> Chinese foreign ministry statements frame the case as standard enforcement against foreign intelligence threats. Academic and diplomatic circles in the US express concern over the timing and potential impact on scholarly exchange. Observers note the arrest adds friction to already delicate bilateral academic ties.</p>
@@ -1235,10 +1306,6 @@
 <li>What consular access has been provided to the detained scholar?</li>
 <li>How have similar cases affected academic travel patterns in the past?</li>
 <li>Which fields of study are most exposed to such enforcement actions?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/jun/12/china-arrests-us-academic-min-zin-espionage" target="_blank" rel="noopener">The Guardian</a> — Details on the charges and timing</li>
 </ul>
 <h4 id="5-key-us-surveillance-authority-faces-expiration-after-congressional-inaction">5) Key US surveillance authority faces expiration after congressional inaction</h4>
 <p><strong>What happened (neutral):</strong> A major foreign intelligence collection program is set to lapse at midnight without legislative extension. Lawmakers have not reached agreement on a short-term renewal amid disputes over leadership appointments.</p>
@@ -1249,10 +1316,6 @@
 <li>How have previous reauthorizations balanced collection needs with oversight?</li>
 <li>Which committees hold primary jurisdiction over renewal negotiations?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/live/2026/jun/12/donald-trump-fisa-kennedy-center-iran-ufc-white-house-latest-news-updates" target="_blank" rel="noopener">The Guardian</a> — Status of legislative efforts and agency concerns</li>
-</ul>
 <h3 id="top-world-stories-2">Top world stories (2)</h3>
 <h4 id="1-jordan-bardella-faces-criticism-over-public-appearance-with-italian-princess">1) Jordan Bardella faces criticism over public appearance with Italian princess</h4>
 <p><strong>What happened (neutral):</strong> The National Rally leader was photographed at the Monaco Grand Prix with his partner, Princess Maria Carolina of Bourbon-Two Sicilies. The images mark their first joint public appearance and have drawn commentary about image consistency.</p>
@@ -1262,10 +1325,6 @@
 <li>How have similar personal stories affected French political figures in recent cycles?</li>
 <li>What standards do French outlets apply when covering politicians’ private lives?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/lifestyle/article-15894463/French-presidential-hopeful-hero-working-class-Jordan-Bardella-30-faces-backlash-cosy-photos-Italian-princess-22-Monaco-Grand-Prix.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Description of the event and reactions</li>
-</ul>
 <h4 id="2-hungarys-roma-community-watches-new-government-approach-to-inclusion">2) Hungary’s Roma community watches new government approach to inclusion</h4>
 <p><strong>What happened (neutral):</strong> Viktor Orbán’s successor has pledged to address antiziganism. Observers are assessing whether policy changes will produce measurable improvements in daily conditions for Roma residents.</p>
 <p><strong>Perspectives:</strong> Government statements emphasize equal treatment and practical integration measures. Roma advocacy groups call for concrete programs beyond rhetoric. Local analysts note that historical patterns of marginalization will require sustained effort across multiple administrations.</p>
@@ -1273,10 +1332,6 @@
 <ul>
 <li>Which sectors show the widest outcome gaps for Roma citizens?</li>
 <li>What benchmarks will be used to evaluate progress?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/will-life-improve-for-hungary-s-roma-community-under-magyar/a-77509082?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — Context on previous policies and current expectations</li>
 </ul>
 <h3 id="top-business-stories-2">Top business stories (2)</h3>
 <h4 id="1-indian-banks-launch-campaign-to-attract-diaspora-deposits">1) Indian banks launch campaign to attract diaspora deposits</h4>
@@ -1287,10 +1342,6 @@
 <li>What incentives are being offered to attract these deposits?</li>
 <li>How do current rupee pressures compare with previous episodes?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-06-12/banks-court-wealthy-indian-diaspora-in-50-billion-deposit-drive" target="_blank" rel="noopener">Bloomberg</a> — Campaign details and reserve goals</li>
-</ul>
 <h4 id="2-england-world-cup-ticket-availability-raises-questions-about-demand-forecasts">2) England World Cup ticket availability raises questions about demand forecasts</h4>
 <p><strong>What happened (neutral):</strong> Hundreds of tickets remain unsold for England’s opening match despite high listed prices. Earlier games in the tournament have shown empty seats in some venues.</p>
 <p><strong>Perspectives:</strong> Organizers maintain overall interest remains strong across the tournament. Ticket sellers note that premium pricing can limit attendance even when broader demand exists. Local observers point to travel costs and scheduling as additional factors.</p>
@@ -1298,10 +1349,6 @@
 <ul>
 <li>Which matches have shown the largest gaps between capacity and attendance so far?</li>
 <li>How do secondary-market prices compare with official rates?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/sport/football/article-15894479/Now-England-face-World-Cup-seats-embarrassment-Hundreds-tickets-available-sky-high-prices-starting-648-opening-game-against-Croatia-despite-FIFAs-unprecedented-demand-boast.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Sales figures and pricing details</li>
 </ul>
 <h3 id="top-technology-stories-1">Top technology stories (1)</h3>
 <h4 id="1-ed-sheerans-looper-x-pedal-reaches-market-with-mixed-early-reviews">1) Ed Sheeran’s Looper X pedal reaches market with mixed early reviews</h4>
@@ -1312,10 +1359,6 @@
 <li>What specific workflow improvements does the unit offer over prior models?</li>
 <li>How do early adopters rate long-session reliability?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.wired.com/review/ed-sheeran-looper-x/" target="_blank" rel="noopener">WIRED</a> — Hands-on assessment and limitations noted</li>
-</ul>
 <h3 id="top-popular-media-stories-1">Top popular media stories (1)</h3>
 <h4 id="1-shakira-performance-at-world-cup-opening-sparks-online-speculation">1) Shakira performance at World Cup opening sparks online speculation</h4>
 <p><strong>What happened (neutral):</strong> Viewers questioned elements of the singer’s appearance and movements during the ceremony. Social media posts suggested the possibility of a stand-in performer.</p>
@@ -1324,10 +1367,6 @@
 <ul>
 <li>Which visual elements prompted the strongest reactions?</li>
 <li>How have past opening ceremonies handled similar online discussion?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15894457/Shakira-body-double-World-Cup-conspiracy-theory.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Summary of circulating claims</li>
 </ul>
 <h3 id="top-gossip-stories-1">Top gossip stories (1)</h3>
 <h4 id="1-katie-price-discusses-future-marriage-plans-amid-ongoing-personal-matters">1) Katie Price discusses future marriage plans amid ongoing personal matters</h4>
@@ -1338,16 +1377,94 @@
 <li>How have similar figures managed boundaries between personal updates and professional work?</li>
 <li>What patterns emerge in coverage of recurring celebrity personal stories?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15894367/Katie-Price-marry-men-downfall-surgery.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Context on recent statements</li>
-</ul>
 <h3 id="understanding-the-issue-how-diplomatic-backchannels-operate-between-the-us-and-adversarial-states">Understanding the Issue: How diplomatic backchannels operate between the US and adversarial states</h3>
 <p>Most coverage of sudden announcements like a potential US-Iran deal skips the long preparatory work that occurs outside public view. Backchannel communications typically run through third-country embassies, intelligence contacts, or trusted intermediaries who can test positions without formal commitments. These lines allow each side to gauge whether core demands are negotiable before leaders risk political capital on open talks. When an announcement appears abrupt, it usually reflects months of quiet iteration rather than a spontaneous breakthrough. Knowing this, listeners can assess whether a reported “imminent” deal rests on verifiable progress or simply on one side’s desire to shape expectations. Next time you see headlines about rapid diplomatic movement, ask: which third parties are positioned to facilitate messages, what past agreements provide the template, and which domestic constituencies must be managed on each side before signatures occur.</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference official statements from both governments with reporting from multiple countries before drawing conclusions about deal status. Primary documents such as joint communiqués or sanctions texts, once released, provide clearer ground than initial claims. Consistent patterns across outlets with different editorial lines offer stronger signals than any single narrative.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.npr.org/2026/06/12/nx-s1-5855326/trump-cancels-further-strikes-on-iran-announcing-peace-deal-is-imminent" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/jun/12/middle-east-crisis-live-us-iran-israel-lebanon-trump-hormuz-oil-peace-deal-doubt-latest-news-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/06/12/iran-us-peace-memo-strait-hormuz-oil-sanctions.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/newsletters/2026-06-12/spacex-set-to-pop-in-trading-debut-after-biggest-ever-ipo" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/06/12/spacex-coo-gwynne-shotwell-spcx-ipo.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/ceas-comes-into-effect-how-will-it-impact-asylum-seekers/a-77508144?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/jun/12/china-arrests-us-academic-min-zin-espionage" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/live/2026/jun/12/donald-trump-fisa-kennedy-center-iran-ufc-white-house-latest-news-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/lifestyle/article-15894463/French-presidential-hopeful-hero-working-class-Jordan-Bardella-30-faces-backlash-cosy-photos-Italian-princess-22-Monaco-Grand-Prix.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/will-life-improve-for-hungary-s-roma-community-under-magyar/a-77509082?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-06-12/banks-court-wealthy-indian-diaspora-in-50-billion-deposit-drive" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/sport/football/article-15894479/Now-England-face-World-Cup-seats-embarrassment-Hundreds-tickets-available-sky-high-prices-starting-648-opening-game-against-Croatia-despite-FIFAs-unprecedented-demand-boast.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.wired.com/review/ed-sheeran-looper-x/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=wired.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">wired.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15894457/Shakira-body-double-World-Cup-conspiracy-theory.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15894367/Katie-Price-marry-men-downfall-surgery.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1764,10 +1881,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

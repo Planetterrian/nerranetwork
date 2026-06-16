@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Trump issues Tuesday deadline threatening to strike Iranian infrastructure if the Strait of Hormuz r… — Episode 29</h1>
+            <h1><span class="nn-i18n-title">Trump issues Tuesday deadline threatening to strike Iranian infrastructure if the Strait of Hormuz r…</span> — Episode 29</h1>
             
             <p class="blog-hero-hook">Trump issues Tuesday deadline threatening to strike Iranian infrastructure if the Strait of Hormuz remains closed, driving up oil prices and rattling markets.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1212,15 +1293,6 @@
 <li>What role are third-party mediators playing, and why might talks be stalling?</li>
 <li>How do military warnings to civilians factor into escalation dynamics?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-04-07/oil-rises-as-trump-escalates-iran-threats-video" target="_blank" rel="noopener">Oil Rises as Trump Escalates Iran Threats</a> — Bloomberg video report</li>
-<li><a href="https://www.cnbc.com/2026/04/07/crude-oil-prices-today-iran-war-strait-hormuz-tuesday-deadline.html" target="_blank" rel="noopener">Oil prices extend gains as Trump reaffirms Tuesday deadline</a> — CNBC market update</li>
-<li><a href="https://www.theguardian.com/world/2026/apr/06/proposals-for-immediate-ceasefire-us-israel-iran-war" target="_blank" rel="noopener">Talks to end Iran war appear to falter a day before Trump deadline</a> — Guardian diplomatic coverage</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15710585/Trumps-craziest-press-conference-devolves-chaos-hes-ridiculed-mixed-messages-Iran.html" target="_blank" rel="noopener">Trump's 'craziest ever' press conference devolves into chaos</a> — Daily Mail account</li>
-<li><a href="https://www.bbc.com/news/articles/c20qv0w1j1do?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">Oil prices rise ahead of Trump's Iran deal deadline</a> — BBC summary</li>
-<li><a href="https://www.theguardian.com/world/live/2026/apr/07/iran-war-live-updates-trump-hormuz-threats-deadline-strikes-middle-east-conflict" target="_blank" rel="noopener">Middle East crisis live: Israel threatens entire Iran train network</a> — Guardian live updates</li>
-</ul>
 <h4 id="2-ben-roberts-smith-arrested-over-alleged-war-crimes">2) Ben Roberts-Smith arrested over alleged war crimes</h4>
 <p><strong>What happened (neutral):</strong> Australia’s most-decorated living soldier, Ben Roberts-Smith, has been arrested on allegations of war crimes. He denies all wrongdoing. The arrest follows his previous loss of a landmark defamation case related to alleged murders.</p>
 <p><strong>Perspectives:</strong> The BBC reports the arrest factually, noting Roberts-Smith denies the allegations and previously lost the defamation case. The Guardian includes the story in its live news blog alongside other domestic Australian developments. The Daily Mail headlines the arrest directly, emphasizing that the former special forces soldier has been taken into custody. Coverage reflects Australia’s ongoing examination of its military conduct in Afghanistan, with some outlets stressing accountability while others note the soldier’s distinguished record and continued denial.</p>
@@ -1230,12 +1302,6 @@
 <li>How do legal standards for war crimes differ from civil defamation standards?</li>
 <li>What does this case reveal about accountability processes for special forces?</li>
 <li>How might the arrest affect public trust in military institutions?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/crr1jyk0qwjo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">Australia's most-decorated living soldier arrested over alleged war crimes</a> — BBC News</li>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/apr/07/australia-news-live-cyclone-maila-threat-queensland-road-toll-trump-iran-ntwnfb" target="_blank" rel="noopener">News live: Albanese to visit Singapore... Ben Roberts-Smith arrested</a> — Guardian live blog</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15711327/Ben-Roberts-Smith-arrested-alleged-war-crime.html" target="_blank" rel="noopener">Ben Roberts-Smith is ARRESTED over alleged war crimes</a> — Daily Mail</li>
 </ul>
 <h4 id="3-european-stocks-set-to-open-higher-despite-iran-tensions">3) European stocks set to open higher despite Iran tensions</h4>
 <p><strong>What happened (neutral):</strong> European stocks are expected to open higher on Tuesday even as investors monitor President Trump’s deadline regarding Iran and the Strait of Hormuz. Markets are showing mixed signals overall as risk assets react to geopolitical uncertainty. Bitcoin and other cryptocurrencies have also slipped amid the broader volatility.</p>
@@ -1247,12 +1313,6 @@
 <li>What role does anticipation of potential conflict play in pricing?</li>
 <li>How quickly can markets shift if the Tuesday deadline produces new developments?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/04/07/european-stocks-set-to-rise-as-iran-war-deadline-unsettles-markets.html" target="_blank" rel="noopener">European stocks set to open higher as Iran war deadline unsettles markets</a> — CNBC</li>
-<li><a href="https://www.bloomberg.com/news/live-blog/2026-04-07/ftse-100-live-iran-war-trump-oil-prices-pound-gilts-gold-what-s-moving-uk-markets-right-now-markets-today" target="_blank" rel="noopener">Markets Struggle for Direction Ahead of Trump’s Iran Deadline</a> — Bloomberg live blog</li>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-07/bitcoin-slides-with-risk-assets-as-trump-s-iran-ultimatum-looms" target="_blank" rel="noopener">Bitcoin Slides With Risk Assets as Trump’s Iran Ultimatum Looms</a> — Bloomberg</li>
-</ul>
 <h4 id="4-howard-stern-and-wife-beth-sued-by-former-employee">4) Howard Stern and wife Beth sued by former employee</h4>
 <p><strong>What happened (neutral):</strong> Howard Stern and his wife Beth face a lawsuit from a fired former employee who accuses the couple of creating a hostile work environment.</p>
 <p><strong>Perspectives:</strong> The Daily Mail presents the lawsuit details, focusing on the claims made by the former employee. Coverage centers on allegations of workplace conduct rather than offering counter-narratives at this stage. The story is treated primarily as a celebrity legal matter.</p>
@@ -1263,10 +1323,6 @@
 <li>What rights do both employers and employees have in such cases?</li>
 <li>How might public perception influence ongoing legal proceedings?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/tvshowbiz/article-15710537/Howard-Stern-wife-Beth-sued-former-employee-new-york.html" target="_blank" rel="noopener">Howard Stern and wife Beth sued by fired former employee</a> — Daily Mail</li>
-</ul>
 <h4 id="5-nasa-astronauts-break-space-travel-distance-record">5) NASA astronauts break space travel distance record</h4>
 <p><strong>What happened (neutral):</strong> NASA’s four Artemis astronauts have swung behind the moon and are heading home after breaking records for distance traveled in space. The mission brought humans closest to the lunar surface in more than 50 years.</p>
 <p><strong>Perspectives:</strong> Bloomberg reports the achievement factually, highlighting both the distance record and the proximity to the moon. The story is framed as a milestone in renewed lunar exploration efforts. Coverage emphasizes technological and exploratory accomplishment rather than controversy.</p>
@@ -1276,10 +1332,6 @@
 <li>What technical challenges are involved in record-distance crewed spaceflight?</li>
 <li>How might this achievement affect future Artemis program timelines?</li>
 <li>What is the relationship between public interest and sustained space funding?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-04-07/nasa-astronauts-break-distance-record-for-space-travel" target="_blank" rel="noopener">NASA Astronauts Break Distance Record for Space Travel</a> — Bloomberg</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-israel-warns-iranians-to-avoid-trains-as-military-threats-continue">1) Israel warns Iranians to avoid trains as military threats continue</h4>
@@ -1292,10 +1344,6 @@
 <li>What role does third-party mediation play when direct talks falter?</li>
 <li>How might civilian warnings influence domestic opinion inside Iran?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/apr/07/iran-war-live-updates-trump-hormuz-threats-deadline-strikes-middle-east-conflict" target="_blank" rel="noopener">Middle East crisis live: Israel threatens entire Iran train network</a> — The Guardian</li>
-</ul>
 <h4 id="2-albanese-to-visit-singapore-to-shore-up-fuel-supply">2) Albanese to visit Singapore to shore up fuel supply</h4>
 <p><strong>What happened (neutral):</strong> Australian Prime Minister Albanese is visiting Singapore as part of efforts to secure fuel supplies. The story appears alongside other domestic Australian news including a new needle-free flu vaccine program for young children.</p>
 <p><strong>Perspectives:</strong> The Guardian’s live blog presents the trip as a practical response to energy security concerns amid global tensions. Coverage links energy supply issues to broader geopolitical instability without providing extensive analysis in the available reporting.</p>
@@ -1305,10 +1353,6 @@
 <li>How do bilateral visits function in energy diplomacy?</li>
 <li>What is the connection between international conflict and domestic fuel availability?</li>
 <li>How do public health initiatives like the new flu vaccine fit into a busy news cycle?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/apr/07/australia-news-live-cyclone-maila-threat-queensland-road-toll-trump-iran-ntwnfb" target="_blank" rel="noopener">News live: Albanese to visit Singapore to shore up fuel supply</a> — The Guardian</li>
 </ul>
 <h4 id="3-more-than-1700-brits-who-fell-ill-in-cape-verde-join-action-against-tui">3) More than 1,700 Brits who fell ill in Cape Verde join action against Tui</h4>
 <p><strong>What happened (neutral):</strong> More than 1,700 British tourists who became ill while in Cape Verde have joined legal action against tour operator Tui. Tui says it is investigating the claims and is not yet in a position to provide a statement.</p>
@@ -1320,10 +1364,6 @@
 <li>What information should travelers seek before booking overseas holidays?</li>
 <li>How do holiday illness claims balance individual experience with verifiable evidence?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/c70d8dn1nrpo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">More than 1,700 Brits who fell ill in Cape Verde join action against Tui</a> — BBC News</li>
-</ul>
 <h4 id="4-schools-in-knife-crime-hotspots-to-get-specialist-training">4) Schools in knife crime hotspots to get specialist training</h4>
 <p><strong>What happened (neutral):</strong> A new UK government partnership will provide specialist training for school leaders in knife-crime hotspots to help them manage risk.</p>
 <p><strong>Perspectives:</strong> The BBC presents the initiative as a targeted policy response. Coverage emphasizes prevention and support for educators rather than broader criminal justice debates. The story reflects ongoing societal concern about youth violence and the role of schools in addressing it.</p>
@@ -1334,10 +1374,6 @@
 <li>What is the appropriate balance between school responsibility and wider social factors?</li>
 <li>How should success of such programs be measured?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/c4gxz5zw348o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">Schools in knife crime hotspots to get specialist training</a> — BBC News</li>
-</ul>
 <h4 id="5-eastern-european-gang-tried-to-steal-joanna-lumleys-car">5) Eastern European gang tried to steal Joanna Lumley's car</h4>
 <p><strong>What happened (neutral):</strong> An Eastern European gang allegedly attempted to steal Joanna Lumley’s car outside her London home and threatened her husband with an iron bar. They reportedly targeted at least three other vehicles in the same street during a weekend crimewave.</p>
 <p><strong>Perspectives:</strong> The Daily Mail reports the specific incident involving the actress and her husband, framing it as part of a targeted crime spree. Coverage highlights the celebrity element while noting the broader pattern of vehicle thefts in the area.</p>
@@ -1347,10 +1383,6 @@
 <li>What preventive measures can residents in affluent areas take?</li>
 <li>How does media coverage of celebrity crime victims affect public perception of crime trends?</li>
 <li>What role do law enforcement patterns play in addressing repeat offending?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15710297/Eastern-European-gang-steal-Joanna-Lumleys-car-threatened-husband-bar.html" target="_blank" rel="noopener">Revealed: Eastern European gang 'tried to steal Joanna Lumley's car...'</a> — Daily Mail</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-oil-prices-continue-to-rise-ahead-of-trumps-iran-deadline">1) Oil prices continue to rise ahead of Trump’s Iran deadline</h4>
@@ -1363,12 +1395,6 @@
 <li>What hedging strategies might companies be using in this environment?</li>
 <li>How long can elevated oil prices persist without wider economic effects?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/04/07/crude-oil-prices-today-iran-war-strait-hormuz-tuesday-deadline.html" target="_blank" rel="noopener">Oil prices extend gains as Trump reaffirms Tuesday deadline</a> — CNBC</li>
-<li><a href="https://www.bloomberg.com/news/videos/2026-04-07/oil-rises-as-trump-escalates-iran-threats-video" target="_blank" rel="noopener">Oil Rises as Trump Escalates Iran Threats</a> — Bloomberg</li>
-<li><a href="https://www.cnbc.com/2026/04/07/european-stocks-set-to-rise-as-iran-war-deadline-unsettles-markets.html" target="_blank" rel="noopener">European stocks set to open higher as Iran war deadline unsettles markets</a> — CNBC</li>
-</ul>
 <h4 id="2-markets-struggle-for-direction-ahead-of-key-deadline">2) Markets struggle for direction ahead of key deadline</h4>
 <p><strong>What happened (neutral):</strong> Financial markets are showing mixed movements and struggling for clear direction as investors await developments related to President Trump’s Iran deadline.</p>
 <p><strong>Perspectives:</strong> Bloomberg describes generalized uncertainty across equities, bonds, currencies and commodities. The coverage reflects classic risk-off behavior in the face of potential military escalation while noting that some European equities are still expected to open positively.</p>
@@ -1379,10 +1405,6 @@
 <li>What historical parallels exist for markets pricing in potential conflict?</li>
 <li>How might central bank policies interact with these events?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/live-blog/2026-04-07/ftse-100-live-iran-war-trump-oil-prices-pound-gilts-gold-what-s-moving-uk-markets-right-now-markets-today" target="_blank" rel="noopener">Markets Struggle for Direction Ahead of Trump’s Iran Deadline</a> — Bloomberg</li>
-</ul>
 <h4 id="3-bitcoin-slides-along-with-other-risk-assets">3) Bitcoin slides along with other risk assets</h4>
 <p><strong>What happened (neutral):</strong> Bitcoin and other cryptocurrencies have declined in Asian trading as they move in tandem with broader risk assets ahead of President Trump’s Iran ultimatum.</p>
 <p><strong>Perspectives:</strong> Bloomberg reports the price movement as part of generalized risk aversion rather than crypto-specific news. The coverage treats cryptocurrencies as increasingly correlated with traditional financial markets during periods of geopolitical tension.</p>
@@ -1392,10 +1414,6 @@
 <li>How do macroeconomic and geopolitical factors interact in crypto markets?</li>
 <li>What role do institutional investors play in current price movements?</li>
 <li>How should investors think about diversification during geopolitical crises?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-07/bitcoin-slides-with-risk-assets-as-trump-s-iran-ultimatum-looms" target="_blank" rel="noopener">Bitcoin Slides With Risk Assets as Trump’s Iran Ultimatum Looms</a> — Bloomberg</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-china-and-us-competing-in-different-ai-races">1) China and US competing in different AI races</h4>
@@ -1408,11 +1426,6 @@
 <li>What role should government policy play in technological competition?</li>
 <li>How might breakthroughs in one area rapidly change the overall balance?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/c145enxln0go?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">China is winning one AI race, the US another - but either might pull ahead</a> — BBC News</li>
-<li><a href="https://www.cnbc.com/2026/04/07/ai-jobs-layoffs-us-china-engineers-hiring.html" target="_blank" rel="noopener">CNBC's The China Connection newsletter: Why AI isn't replacing jobs in China (yet)</a> — CNBC</li>
-</ul>
 <h4 id="2-insight-with-haslinda-amin-daily-analysis-program">2) Insight with Haslinda Amin – daily analysis program</h4>
 <p><strong>What happened (neutral):</strong> Bloomberg’s daily news program featured in-depth interviews and analysis spanning business, finance, politics and culture.</p>
 <p><strong>Perspectives:</strong> Bloomberg presents the program as providing viewers with comprehensive perspectives on major stories. The format itself reflects an attempt to synthesize complex global developments for audiences.</p>
@@ -1423,10 +1436,6 @@
 <li>How can viewers evaluate the selection of guests and topics?</li>
 <li>What questions should audiences bring when watching analytical shows?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-04-07/insight-with-haslinda-amin-4-7-2026-video" target="_blank" rel="noopener">Insight with Haslinda Amin 4/7/2026</a> — Bloomberg</li>
-</ul>
 <h4 id="3-australians-buy-record-number-of-new-evs-in-march">3) Australians buy record number of new EVs in March</h4>
 <p><strong>What happened (neutral):</strong> Australians purchased a record number of new electric vehicles in March according to recent data.</p>
 <p><strong>Perspectives:</strong> The Guardian notes the record EV sales within its Australian news live blog. The development is presented alongside other domestic stories without extensive analysis in available reporting. It reflects growing consumer interest in electric vehicles amid global energy concerns.</p>
@@ -1436,10 +1445,6 @@
 <li>How do fuel price concerns and environmental goals interact in consumer choices?</li>
 <li>What infrastructure challenges accompany rapid EV uptake?</li>
 <li>How do national trends compare with global patterns?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/apr/07/australia-news-live-cyclone-maila-threat-queensland-road-toll-trump-iran-ntwnfb" target="_blank" rel="noopener">News live: Albanese to visit Singapore... Australians buy record number of new EVs</a> — The Guardian</li>
 </ul>
 <h3 id="top-popular-media-stories-3">Top popular media stories (3)</h3>
 <h4 id="1-david-hasselhoff-looks-frail-in-first-public-sighting-after-surgeries">1) David Hasselhoff looks frail in first public sighting after surgeries</h4>
@@ -1452,10 +1457,6 @@
 <li>How has the nature of celebrity photography changed with modern media?</li>
 <li>What responsibility do outlets have when reporting on individuals’ health?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/tvshowbiz/article-15710997/baywatch-David-Hasselhoff-frail-wife-surgeries.html" target="_blank" rel="noopener">Baywatch star David Hasselhoff, 73, looks frail as he leans on wife</a> — Daily Mail</li>
-</ul>
 <h4 id="2-harry-kanes-ballon-dor-hopes-tied-to-real-glamour-tie">2) Harry Kane’s Ballon d’Or hopes tied to Real glamour tie</h4>
 <p><strong>What happened (neutral):</strong> Harry Kane is the leading goalscorer in Europe, but analysts suggest winning a major trophy may be necessary for him to win the Ballon d’Or. His performance in a key match against Real Madrid could be decisive.</p>
 <p><strong>Perspectives:</strong> The BBC examines the sporting narrative around individual awards, noting that statistical achievement alone may not be sufficient. Coverage connects the story to broader debates about how success is measured in football beyond raw numbers.</p>
@@ -1466,10 +1467,6 @@
 <li>How do media narratives influence award voting?</li>
 <li>What constitutes a “complete” footballing legacy?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/sport/football/articles/cp86v8zq4jeo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">Why Real glamour tie could decide Kane's Ballon d'Or hopes</a> — BBC Sport</li>
-</ul>
 <h4 id="3-viktor-gyokeres-returns-to-sporting-as-hero-and-villain">3) Viktor Gyokeres returns to Sporting as hero and villain</h4>
 <p><strong>What happened (neutral):</strong> Striker Viktor Gyokeres returns to his former club Sporting Lisbon while playing for Arsenal, hoping to help them reach the Champions League semi-finals. He remains a polarizing figure for Sporting fans.</p>
 <p><strong>Perspectives:</strong> The BBC frames the match as emotionally complex for the player and supporters. Coverage highlights both his past contributions to the club and the tensions surrounding his departure.</p>
@@ -1479,10 +1476,6 @@
 <li>What psychological pressures exist for players returning to former clubs?</li>
 <li>How does European competition amplify these narrative dynamics?</li>
 <li>What does this story reveal about loyalty in modern professional sport?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/sport/football/articles/c747wgze3meo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">Gyokeres returns to Sporting as hero and villain</a> — BBC Sport</li>
 </ul>
 <h3 id="top-gossip-stories-3">Top gossip stories (3)</h3>
 <h4 id="1-prince-edward-forced-to-spend-easter-elsewhere-due-to-prince-andrew-dispute">1) Prince Edward forced to spend Easter elsewhere due to Prince Andrew dispute</h4>
@@ -1495,10 +1488,6 @@
 <li>How does media coverage of minor royal disputes serve different purposes?</li>
 <li>What context might be missing from reports based on single sources?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15709779/holiday-let-prince-edward-forced-easter-andrew-wood-farm.html" target="_blank" rel="noopener">The holiday let where Edward was forced to spend Easter because Andrew is digging his heels in over Wood Farm</a> — Daily Mail</li>
-</ul>
 <h4 id="2-speculation-grows-over-identity-of-leaker-trump-vows-to-prosecute">2) Speculation grows over identity of leaker Trump vows to prosecute</h4>
 <p><strong>What happened (neutral):</strong> President Trump has vowed to pursue a “sick” leaker who revealed that the US was searching for a second missing airman after a fighter jet was downed over Iran. Speculation is growing about the person’s identity.</p>
 <p><strong>Perspectives:</strong> The Daily Mail reports on Trump’s statement and the subsequent media and public speculation. The story combines national security, leaks, and presidential rhetoric elements within a gossip-adjacent framing focused on the hunt for the individual responsible.</p>
@@ -1508,10 +1497,6 @@
 <li>How do leak investigations intersect with press freedom considerations?</li>
 <li>Why do some stories generate intense speculation about sources?</li>
 <li>How should readers evaluate anonymous sourcing in such reports?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15710599/Fervent-speculation-grows-sick-leaker-Trump-vowed-throw-bars-risking-Iran-pilot-rescue.html" target="_blank" rel="noopener">Fervent speculation grows on WHO is the 'sick' leaker Trump vowed to throw behind bars</a> — Daily Mail</li>
 </ul>
 <h4 id="3-joanna-lumley-car-theft-attempt-becomes-high-profile-crime-story">3) Joanna Lumley car theft attempt becomes high-profile crime story</h4>
 <p><strong>What happened (neutral):</strong> The attempted theft of Joanna Lumley’s car and the alleged threat to her husband have drawn significant attention as part of a reported crimewave targeting multiple vehicles.</p>
@@ -1523,15 +1508,143 @@
 <li>How do readers distinguish between verified facts and speculative elements?</li>
 <li>What is the impact on public understanding of urban crime when high-profile cases dominate coverage?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15710297/Eastern-European-gang-steal-Joanna-Lumleys-car-threatened-husband-bar.html" target="_blank" rel="noopener">Revealed: Eastern European gang 'tried to steal Joanna Lumley's car...'</a> — Daily Mail</li>
-</ul>
 <h3 id="understanding-the-issue-how-ultimatums-function-in-international-diplomacy">Understanding the Issue: How Ultimatums Function in International Diplomacy</h3>
 <p>Most coverage of Trump’s Iran deadline treats it as a simple countdown to potential military action or diplomatic breakthrough. What’s often missed is how ultimatums actually operate as signaling mechanisms within a larger bargaining framework that includes multiple parties, incomplete information, and domestic political incentives on all sides.</p>
 <p>When leaders issue public deadlines backed by specific threats, they are attempting to change the other side’s assessment of costs and benefits. The target (in this case Iran) must weigh compliance against resistance while calculating how credible the threat actually is. Mediators from Pakistan, Egypt and Turkey are simultaneously trying to create off-ramps that allow face-saving compromises. History shows that successful ultimatums are usually paired with credible face-saving exits</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-04-07/oil-rises-as-trump-escalates-iran-threats-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/04/07/crude-oil-prices-today-iran-war-strait-hormuz-tuesday-deadline.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/apr/06/proposals-for-immediate-ceasefire-us-israel-iran-war" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15710585/Trumps-craziest-press-conference-devolves-chaos-hes-ridiculed-mixed-messages-Iran.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c20qv0w1j1do?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/apr/07/iran-war-live-updates-trump-hormuz-threats-deadline-strikes-middle-east-conflict" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/crr1jyk0qwjo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/live/2026/apr/07/australia-news-live-cyclone-maila-threat-queensland-road-toll-trump-iran-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15711327/Ben-Roberts-Smith-arrested-alleged-war-crime.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/04/07/european-stocks-set-to-rise-as-iran-war-deadline-unsettles-markets.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/live-blog/2026-04-07/ftse-100-live-iran-war-trump-oil-prices-pound-gilts-gold-what-s-moving-uk-markets-right-now-markets-today" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-07/bitcoin-slides-with-risk-assets-as-trump-s-iran-ultimatum-looms" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/tvshowbiz/article-15710537/Howard-Stern-wife-Beth-sued-former-employee-new-york.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-04-07/nasa-astronauts-break-distance-record-for-space-travel" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c70d8dn1nrpo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c4gxz5zw348o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15710297/Eastern-European-gang-steal-Joanna-Lumleys-car-threatened-husband-bar.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c145enxln0go?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/04/07/ai-jobs-layoffs-us-china-engineers-hiring.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-04-07/insight-with-haslinda-amin-4-7-2026-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/tvshowbiz/article-15710997/baywatch-David-Hasselhoff-frail-wife-surgeries.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/sport/football/articles/cp86v8zq4jeo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/sport/football/articles/c747wgze3meo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15709779/holiday-let-prince-edward-forced-easter-andrew-wood-farm.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15710599/Fervent-speculation-grows-sick-leaker-Trump-vowed-throw-bars-risking-Iran-pilot-rescue.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1934,10 +2047,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

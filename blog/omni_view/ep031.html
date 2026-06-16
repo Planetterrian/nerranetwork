@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>US and Iranian officials begin highest-level direct talks in 40 years in Pakistan as Trump warns of… — Episode 31</h1>
+            <h1><span class="nn-i18n-title">US and Iranian officials begin highest-level direct talks in 40 years in Pakistan as Trump warns of…</span> — Episode 31</h1>
             
             <p class="blog-hero-hook">US and Iranian officials begin highest-level direct talks in 40 years in Pakistan as Trump warns of military buildup if diplomacy fails.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1208,14 +1289,6 @@
 <li>What role is Pakistan actually playing as host and mediator?</li>
 <li>If the Strait of Hormuz remains closed, how quickly do global ripple effects appear?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15721849/ceasefire-hanging-thread-JD-Vance-Steve-Witkoff-Jared-Kushner-touch-Islamabad-highest-level-Iran-talks-40-years-diplomats-warn-strategic-error.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">JD Vance faces the biggest test of his career as he leads Trump's talks with Iran</a> — Mail Online overview of stakes</li>
-<li><a href="https://www.aljazeera.com/news/2026/4/11/iran-war-what-is-happening-on-day-43-of-the-us-iran-conflict?traffic_source=rss" target="_blank" rel="noopener">Iran war: What is happening on day 43 of the US-Iran conflict?</a> — Al Jazeera daily update</li>
-<li><a href="https://www.aljazeera.com/video/newsfeed/2026/4/11/pakistan-ambassador-speaks-to-al-jazeera-on-eve-of-us-iran-talks?traffic_source=rss" target="_blank" rel="noopener">Pakistan ambassador speaks to Al Jazeera on eve of US-Iran talks</a> — Diplomatic context from mediator</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15723367/White-House-turns-heat-Tehran-Trump-warns-Iran.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">'You have no cards to play': White House turns up the heat on Tehran</a> — Trump statements</li>
-<li><a href="https://www.aljazeera.com/economy/2026/4/11/trump-says-strait-of-hormuz-to-reopen-soon-as-us-iran-head-to-talks?traffic_source=rss" target="_blank" rel="noopener">Trump says Strait of Hormuz to reopen ‘soon’ as US, Iran head to talks</a> — Economic angle</li>
-</ul>
 <h4 id="2-airports-warn-of-systemic-jet-fuel-shortage-if-strait-of-hormuz-stays-closed">2) Airports warn of systemic jet fuel shortage if Strait of Hormuz stays closed</h4>
 <p><strong>What happened (neutral):</strong> The Airports Council International sent a letter to the EU warning that a prolonged closure of the Strait of Hormuz will create real jet-fuel shortages during the upcoming peak summer holiday season. The waterway remains a central point of tension in the US-Iran conflict.</p>
 <p><strong>Perspectives:</strong> Mail Online coverage emphasizes the direct threat to summer travel and frames the shortage as an imminent “reality” if the strait is not reopened within weeks. Business outlets such as Bloomberg connect the same disruption to broader economic anxiety, reporting record outflows from Indian equities driven by energy-shock fears. Some voices treat Iran’s reported toll-booth policy as a de-facto blockade that justifies strong international pushback; others see the closure itself as a predictable consequence of escalating military rhetoric. All sources agree the strait’s status is the key variable; they differ on how quickly alternative supply routes could mitigate the problem and on whether the crisis stems more from Iranian actions or from the wider conflict.</p>
@@ -1225,13 +1298,6 @@
 <li>What historical precedents exist for rapid fuel-supply pivots during chokepoint crises?</li>
 <li>Who bears the greatest immediate economic pain — airlines, travelers, or oil producers?</li>
 <li>How does this story illustrate the link between geopolitics and everyday consumer costs?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15723749/Airports-systemic-jet-fuel-shortage-reality-Strait-Hormuz-reopen-fears-summer-holiday-chaos.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Airports warn 'systemic' jet fuel shortage will 'become a reality' if Strait of Hormuz does not reopen</a> — Mail Online report</li>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-11/global-funds-flee-indian-stocks-at-record-pace-on-growth-fears" target="_blank" rel="noopener">Global Funds Flee Indian Stocks at Record Pace on Growth Fears</a> — Bloomberg market reaction</li>
-<li><a href="https://www.reddit.com/r/worldnews/comments/1si7ha4/tankers_urged_not_to_pay_toll_to_iran_for_use_of/" target="_blank" rel="noopener">Tankers urged not to pay toll to Iran for use of Strait of Hormuz</a> — r/worldnews discussion</li>
-<li><a href="https://www.aljazeera.com/economy/2026/4/11/trump-says-strait-of-hormuz-to-reopen-soon-as-us-iran-head-to-talks?traffic_source=rss" target="_blank" rel="noopener">Trump says Strait of Hormuz to reopen ‘soon’ as US, Iran head to talks</a> — Presidential statement and context</li>
 </ul>
 <h4 id="3-nasas-artemis-ii-crew-returns-safely-after-lunar-mission">3) NASA’s Artemis II crew returns safely after lunar mission</h4>
 <p><strong>What happened (neutral):</strong> The four-person Artemis II crew — NASA astronauts Reid Wiseman, Victor Glover, Christina Koch, and Canadian astronaut Jeremy Hansen — splashed down safely in the Pacific after ten days in space. The mission marks a major step toward future lunar landings.</p>
@@ -1243,12 +1309,6 @@
 <li>What comes next in NASA’s Artemis sequence?</li>
 <li>Why might space exploration feel especially salient during periods of earthly conflict?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/sciencetech/article-15724013/nasa-artemis-ii-moon-mission-return-earth.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">NASA's Artemis II makes triumphant return to Earth</a> — Mission summary</li>
-<li><a href="https://www.dailymail.co.uk/sciencetech/article-15723487/artemis-return-earth-splashdown-moon-mission.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">NASA's Artemis II astronauts send first messages and display surprising ability</a> — Crew details</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15723911/President-Trump-welcome-Artemis-II-crew-White-House.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">President Trump to welcome Artemis II crew at the White House</a> — Political reaction</li>
-</ul>
 <h4 id="4-pentagon-to-automate-military-draft-registration-under-trump-signed-legislation">4) Pentagon to automate military draft registration under Trump-signed legislation</h4>
 <p><strong>What happened (neutral):</strong> New procedures will automatically enroll millions of young men — including certain undocumented immigrants — into the Selective Service System. The change stems from legislation signed by President Trump in December.</p>
 <p><strong>Perspectives:</strong> Mail Online reports significant criticism from opponents who accuse the administration of preparing for “endless war.” Supporters describe the automation as a straightforward modernization that removes outdated paperwork burdens. The inclusion of undocumented immigrants in the registry is presented by critics as a “sick twist,” while others note it simply reflects current legal requirements for draft registration. The factual basis — that the law was signed in December and automation is now being implemented — is not disputed; disagreement centers on motives and long-term implications.</p>
@@ -1259,10 +1319,6 @@
 <li>What legal and ethical questions arise regarding non-citizens’ inclusion?</li>
 <li>How does public reaction reflect broader attitudes toward military readiness?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15722909/donald-trump-endless-war-draft-changes.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Fury at Trump for 'endless war' as millions of young men set to be auto-enrolled in the military draft</a> — Mail Online coverage</li>
-</ul>
 <h4 id="5-starmer-praises-nato-while-trump-threatens-to-quit-amid-iran-tensions">5) Starmer praises NATO while Trump threatens to quit amid Iran tensions</h4>
 <p><strong>What happened (neutral):</strong> Prime Minister Keir Starmer called NATO “the single most effective military alliance the world has ever known” after President Trump escalated threats to leave the alliance. The comments occurred against the backdrop of the ongoing US-Iran conflict and European calls for greater defense spending.</p>
 <p><strong>Perspectives:</strong> Mail Online presents Starmer’s Gulf tour and rhetoric as largely performative, with columnist Andrew Neil labeling him a “phoney cowboy” who has sidelined Britain. Bloomberg reports Starmer is accelerating UK defense-spending increases partly to protect his own leadership position. European voices emphasize NATO’s historic value and the need for Europe to shoulder more burden; Trump-aligned perspectives treat the threat to quit as leverage to force fairer burden-sharing. The underlying facts — Trump’s renewed criticism and Starmer’s supportive statement — are consistent across reports.</p>
@@ -1272,12 +1328,6 @@
 <li>How has burden-sharing within the alliance been debated for decades?</li>
 <li>What domestic political incentives shape both leaders’ public statements?</li>
 <li>How does the Iran conflict influence NATO cohesion?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15723685/Starmer-NATO-Trump-threatens-quit-bloc.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Starmer calls NATO 'the single most effective military alliance the world has ever known'</a> — Starmer comments</li>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-11/starmer-plots-higher-uk-defense-spending-in-bid-to-save-his-job" target="_blank" rel="noopener">Starmer Plots Higher UK Defense Spending in Bid to Save His Job</a> — Bloomberg analysis</li>
-<li><a href="https://www.dailymail.co.uk/columnists/article-15722851/ANDREW-NEIL-hat-no-cattle-Starmer-phoney-cowboy-hes-sidelined-Britain-decades-come.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">ANDREW NEIL: All hat, no cattle, Starmer is a phoney cowboy</a> — Opinion column</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-hungarys-election-tests-orbáns-long-grip-on-power-amid-corruption-claims">1) Hungary’s election tests Orbán’s long grip on power amid corruption claims</h4>
@@ -1290,10 +1340,6 @@
 <li>How has Orbán maintained power for so long?</li>
 <li>What would a genuine shift in Hungarian politics mean for the EU?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/news/ng-interactive/2026/apr/11/zebras-wealth-and-power-hungarys-election-tests-orbans-grip-on-power" target="_blank" rel="noopener">Zebras, wealth and power: Hungary’s election tests Orbán’s grip on power</a> — Guardian interactive report</li>
-</ul>
 <h4 id="2-new-zealands-north-island-evacuates-ahead-of-cyclone-vaianu">2) New Zealand’s North Island evacuates ahead of Cyclone Vaianu</h4>
 <p><strong>What happened (neutral):</strong> Thousands have been ordered to leave their homes as Cyclone Vaianu approaches with forecast winds up to 130 km/h, heavy rain, coastal flooding, and landslide risk.</p>
 <p><strong>Perspectives:</strong> The Guardian coverage focuses on preparedness measures and the human impact on communities. Scientific and governmental sources stress the increasing frequency of severe weather events in the region.</p>
@@ -1303,10 +1349,6 @@
 <li>How do Pacific nations coordinate evacuations across remote islands?</li>
 <li>What long-term adaptation strategies are countries like New Zealand pursuing?</li>
 <li>How does immediate disaster coverage affect climate-policy debates?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/apr/11/new-zealands-north-island-braces-for-cyclone-vaianu-with-thousands-ordered-to-evacuate" target="_blank" rel="noopener">New Zealand’s North Island braces for Cyclone Vaianu with thousands ordered to evacuate</a> — Guardian dispatch</li>
 </ul>
 <h4 id="3-south-koreas-president-shares-video-alleging-abuse-of-palestinian-child-by-israeli-soldiers">3) South Korea’s president shares video alleging abuse of Palestinian child by Israeli soldiers</h4>
 <p><strong>What happened (neutral):</strong> The South Korean president posted a video on social media that alleges mistreatment of a Palestinian child by Israeli forces.</p>
@@ -1318,10 +1360,6 @@
 <li>What broader pattern of international commentary on the Israel-Palestine issue does this fit?</li>
 <li>How should audiences evaluate visual evidence circulated on social media?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.reddit.com/r/worldnews/comments/1sia9i6/south_koreas_president_shares_video_alleging/" target="_blank" rel="noopener">South Korea's President shares video alleging Israeli soldiers abused Palestinian child</a> — r/worldnews thread</li>
-</ul>
 <h4 id="4-uk-inquiry-expected-to-criticise-prevent-programme-after-southport-attack">4) UK inquiry expected to criticise Prevent programme after Southport attack</h4>
 <p><strong>What happened (neutral):</strong> Lawyers for Southport attack victims say the state is failing to learn lessons; an upcoming official report is expected to criticise multiple agencies including the counter-terrorism programme Prevent.</p>
 <p><strong>Perspectives:</strong> The Guardian reports an exclusive analysis suggesting violence-obsessed teenagers are still slipping through the system. The forthcoming judge-led report is anticipated to be strongly critical of systemic shortcomings.</p>
@@ -1332,10 +1370,6 @@
 <li>What constitutes “learning lessons” in complex public-safety systems?</li>
 <li>How does media coverage of such inquiries influence public trust in institutions?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/uk-news/2026/apr/11/state-failing-lessons-southport-attack-victims-lawyers" target="_blank" rel="noopener">State failing to learn lessons of Southport attack, say victims’ lawyers</a> — Guardian exclusive</li>
-</ul>
 <h4 id="5-public-inquiry-reopens-into-21bn-gold-mining-plan-in-northern-irelands-sperrins">5) Public inquiry reopens into £21bn gold-mining plan in Northern Ireland’s Sperrins</h4>
 <p><strong>What happened (neutral):</strong> Nine years after it was first proposed, a public inquiry into a major gold-mining project in the Sperrins area of County Tyrone is reopening. The plan has divided the local community.</p>
 <p><strong>Perspectives:</strong> The Guardian describes the battle as toxic and all-consuming for some residents. Pro-mining voices emphasize potential economic benefits; opponents focus on environmental and cultural damage to a rural landscape.</p>
@@ -1345,10 +1379,6 @@
 <li>What legal weight do local environmental concerns carry versus national economic interests?</li>
 <li>How has the balance between conservation and resource development shifted in the UK and Ireland?</li>
 <li>What role should independent public inquiries play when communities are deeply split?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/uk-news/2026/apr/11/omagh-northern-ireland-gold-mine-21bn-inquiry" target="_blank" rel="noopener">The war over Omagh’s gold: the £21bn mine plan tearing a community apart</a> — Guardian long read</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-global-funds-flee-indian-stocks-at-record-pace-on-energy-shock-fears">1) Global funds flee Indian stocks at record pace on energy-shock fears</h4>
@@ -1361,10 +1391,6 @@
 <li>What signals would indicate the sell-off is temporary versus structural?</li>
 <li>How does this episode illustrate interconnected global markets?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-11/global-funds-flee-indian-stocks-at-record-pace-on-growth-fears" target="_blank" rel="noopener">Global Funds Flee Indian Stocks at Record Pace on Growth Fears</a> — Bloomberg report</li>
-</ul>
 <h4 id="2-airports-warn-eu-of-imminent-systemic-jet-fuel-shortage">2) Airports warn EU of imminent systemic jet-fuel shortage</h4>
 <p><strong>What happened (neutral):</strong> The Airports Council International has formally warned that jet-fuel shortages will materialize if the Strait of Hormuz remains closed for more than a few weeks, coinciding with peak summer travel demand.</p>
 <p><strong>Perspectives:</strong> Mail Online highlights risks to holidaymakers; business audiences view it as another data point in the broader energy-market stress caused by the Iran conflict.</p>
@@ -1375,10 +1401,6 @@
 <li>What price effects are likely for consumers if shortages materialize?</li>
 <li>Does this represent a temporary spike or a longer-term vulnerability?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15723749/Airports-systemic-jet-fuel-shortage-reality-Strait-Hormuz-reopen-fears-summer-holiday-chaos.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Airports warn 'systemic' jet fuel shortage will 'become a reality' if Strait of Hormuz does not reopen</a> — Mail Online</li>
-</ul>
 <h4 id="3-starmer-accelerates-uk-defense-spending-to-bolster-political-position">3) Starmer accelerates UK defense spending to bolster political position</h4>
 <p><strong>What happened (neutral):</strong> The UK Prime Minister plans to increase defense expenditure faster than previously scheduled, partly to demonstrate leadership on security amid international tensions and domestic political pressure.</p>
 <p><strong>Perspectives:</strong> Bloomberg frames the move as a direct attempt to fend off a potential leadership challenge. It occurs alongside Starmer’s strong public support for NATO while Trump questions the alliance.</p>
@@ -1388,10 +1410,6 @@
 <li>How do domestic political calculations interact with genuine strategic needs?</li>
 <li>What procurement and readiness questions arise when spending is accelerated?</li>
 <li>How do allies and adversaries interpret sudden changes in defense budgets?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-11/starmer-plots-higher-uk-defense-spending-in-bid-to-save-his-job" target="_blank" rel="noopener">Starmer Plots Higher UK Defense Spending in Bid to Save His Job</a> — Bloomberg</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-nasas-artemis-ii-successfully-completes-lunar-flyby-mission">1) NASA’s Artemis II successfully completes lunar flyby mission</h4>
@@ -1404,11 +1422,6 @@
 <li>What international partnerships are involved?</li>
 <li>How does sustained public interest in spaceflight compare with coverage of earthly crises?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/sciencetech/article-15724013/nasa-artemis-ii-moon-mission-return-earth.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">NASA's Artemis II makes triumphant return to Earth</a> — Main report</li>
-<li><a href="https://www.dailymail.co.uk/sciencetech/article-15723487/artemis-return-earth-splashdown-moon-mission.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">NASA's Artemis II astronauts send first messages and display surprising ability</a> — Crew perspective</li>
-</ul>
 <h4 id="2-president-trump-schedules-white-house-reception-for-artemis-ii-astronauts">2) President Trump schedules White House reception for Artemis II astronauts</h4>
 <p><strong>What happened (neutral):</strong> The President will host the four returning crew members and has signaled continued strong support for NASA’s lunar exploration goals.</p>
 <p><strong>Perspectives:</strong> Coverage treats the event as bipartisan celebration of American space achievement while noting the contrast with simultaneous geopolitical tensions.</p>
@@ -1419,10 +1432,6 @@
 <li>How has NASA’s relationship with the executive branch evolved across administrations?</li>
 <li>Can scientific missions remain insulated from day-to-day political rhetoric?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15723911/President-Trump-welcome-Artemis-II-crew-White-House.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">President Trump to welcome Artemis II crew at the White House</a> — Announcement</li>
-</ul>
 <h4 id="3-scientists-link-heavier-suvs-to-worsening-british-road-damage-and-potholes">3) Scientists link heavier SUVs to worsening British road damage and potholes</h4>
 <p><strong>What happened (neutral):</strong> Research indicates that the shift toward heavier vehicles, including SUVs bought partly to cope with poor roads, is accelerating pavement deterioration and contributing to the UK’s pothole problem.</p>
 <p><strong>Perspectives:</strong> The Guardian reports engineers’ findings that cumulative weight from larger cars shortens road lifespan. Some drivers see bigger vehicles as a rational response to existing damage, creating a feedback loop.</p>
@@ -1432,10 +1441,6 @@
 <li>How do consumer choices interact with public infrastructure maintenance?</li>
 <li>What policy tools could address this cycle?</li>
 <li>How does this domestic example illustrate unintended consequences of technology and market trends?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/uk-news/2026/apr/11/suv-britain-potholes-worse-scientists-heavier-cars" target="_blank" rel="noopener">SUVs are making Britain’s potholes worse, say scientists</a> — Guardian report</li>
 </ul>
 <h3 id="top-popular-media-stories-3">Top popular media stories (3)</h3>
 <h4 id="1-king-charles-teams-with-david-beckham-to-decorate-garden-gnome-for-chelsea-flower-show">1) King Charles teams with David Beckham to decorate garden gnome for Chelsea Flower Show</h4>
@@ -1448,10 +1453,6 @@
 <li>What role do charity auctions play at prestigious horticultural shows?</li>
 <li>How does this story illustrate the blending of high culture and popular figures?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/lifeandstyle/2026/apr/11/king-signs-up-david-beckham-to-his-chelsea-flower-show-team" target="_blank" rel="noopener">King signs up David Beckham to his Chelsea flower show team</a> — Guardian feature</li>
-</ul>
 <h4 id="2-melania-trump-makes-public-statement-about-jeffrey-epstein">2) Melania Trump makes public statement about Jeffrey Epstein</h4>
 <p><strong>What happened (neutral):</strong> The First Lady spoke publicly in a business suit about the convicted paedophile Jeffrey Epstein, an unusual departure from typical charitable topics.</p>
 <p><strong>Perspectives:</strong> Mail Online columnist Caroline Graham reports sources close to the Trumps calling the move “a smart move,” framing it as deliberate and calculated. Coverage speculates on timing and intent without firm conclusions.</p>
@@ -1462,10 +1463,6 @@
 <li>What context is necessary to interpret the choice of topic and tone?</li>
 <li>How should audiences weigh anonymous sourcing in such reporting?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15723415/Trumps-Melania-Epstein-bombshell-CAROLINE-GRAHAM.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">'It's a smart move': What a source close to the Trumps told me about why Melania dropped Epstein bombshell</a> — Caroline Graham column</li>
-</ul>
 <h4 id="3-andrew-neil-column-sharply-criticises-keir-starmers-international-role">3) Andrew Neil column sharply criticises Keir Starmer’s international role</h4>
 <p><strong>What happened (neutral):</strong> The columnist accuses the Prime Minister of acting like a “phoney cowboy” during a Gulf tour on ceasefire diplomacy in which Neil says Britain played no meaningful part.</p>
 <p><strong>Perspectives:</strong> The Mail Online opinion piece argues Starmer’s activities have sidelined the UK for decades. It reflects a long-running debate in British media about the country’s proper place on the world stage post-Brexit.</p>
@@ -1475,10 +1472,6 @@
 <li>What measurable indicators would show a country has been “sidelined” diplomatically?</li>
 <li>How do domestic political rivalries shape coverage of foreign policy?</li>
 <li>What historical role has Britain played in Middle East diplomacy that commentators reference?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/columnists/article-15722851/ANDREW-NEIL-hat-no-cattle-Starmer-phoney-cowboy-hes-sidelined-Britain-decades-come.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">ANDREW NEIL: All hat, no cattle, Starmer is a phoney cowboy</a> — Opinion piece</li>
 </ul>
 <h3 id="top-gossip-stories-3">Top gossip stories (3)</h3>
 <h4 id="1-melania-trumps-unexpected-public-comments-on-jeffrey-epstein">1) Melania Trump’s unexpected public comments on Jeffrey Epstein</h4>
@@ -1491,14 +1484,132 @@
 <li>What standard of evidence should readers demand before drawing conclusions?</li>
 <li>How does celebrity-adjacent news influence broader trust in media?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15723415/Trumps-Melania-Epstein-bombshell-CAROLINE-GRAHAM.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">'It's a smart move': What a source close to the Trumps told me about why Melania dropped Epstein bombshell</a> — Mail Online</li>
-</ul>
 <h4 id="2-murder-of-young-film-student-in-londons-primrose-hill">2) Murder of young film student in London’s Primrose Hill</h4>
 <p><strong>What happened (neutral):</strong> 21-year-old Finbar Sullivan was killed in an attack in a normally peaceful area of north</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15721849/ceasefire-hanging-thread-JD-Vance-Steve-Witkoff-Jared-Kushner-touch-Islamabad-highest-level-Iran-talks-40-years-diplomats-warn-strategic-error.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/4/11/iran-war-what-is-happening-on-day-43-of-the-us-iran-conflict?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/video/newsfeed/2026/4/11/pakistan-ambassador-speaks-to-al-jazeera-on-eve-of-us-iran-talks?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15723367/White-House-turns-heat-Tehran-Trump-warns-Iran.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/economy/2026/4/11/trump-says-strait-of-hormuz-to-reopen-soon-as-us-iran-head-to-talks?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15723749/Airports-systemic-jet-fuel-shortage-reality-Strait-Hormuz-reopen-fears-summer-holiday-chaos.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-11/global-funds-flee-indian-stocks-at-record-pace-on-growth-fears" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/worldnews/comments/1si7ha4/tankers_urged_not_to_pay_toll_to_iran_for_use_of/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/sciencetech/article-15724013/nasa-artemis-ii-moon-mission-return-earth.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/sciencetech/article-15723487/artemis-return-earth-splashdown-moon-mission.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15723911/President-Trump-welcome-Artemis-II-crew-White-House.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15722909/donald-trump-endless-war-draft-changes.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15723685/Starmer-NATO-Trump-threatens-quit-bloc.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-11/starmer-plots-higher-uk-defense-spending-in-bid-to-save-his-job" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/columnists/article-15722851/ANDREW-NEIL-hat-no-cattle-Starmer-phoney-cowboy-hes-sidelined-Britain-decades-come.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/news/ng-interactive/2026/apr/11/zebras-wealth-and-power-hungarys-election-tests-orbans-grip-on-power" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/apr/11/new-zealands-north-island-braces-for-cyclone-vaianu-with-thousands-ordered-to-evacuate" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/worldnews/comments/1sia9i6/south_koreas_president_shares_video_alleging/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/uk-news/2026/apr/11/state-failing-lessons-southport-attack-victims-lawyers" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/uk-news/2026/apr/11/omagh-northern-ireland-gold-mine-21bn-inquiry" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/uk-news/2026/apr/11/suv-britain-potholes-worse-scientists-heavier-cars" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/lifeandstyle/2026/apr/11/king-signs-up-david-beckham-to-his-chelsea-flower-show-team" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15723415/Trumps-Melania-Epstein-bombshell-CAROLINE-GRAHAM.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1905,10 +2016,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

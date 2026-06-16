@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Iran has rejected President Trump’s proposed peace plan as a pretext for invasion, while Israel clai… — Episode 23</h1>
+            <h1><span class="nn-i18n-title">Iran has rejected President Trump’s proposed peace plan as a pretext for invasion, while Israel clai…</span> — Episode 23</h1>
             
             <p class="blog-hero-hook">Iran has rejected President Trump’s proposed peace plan as a pretext for invasion, while Israel claims it killed Iran’s naval chief amid escalating Middle East conflict.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1214,12 +1295,6 @@
 <li>What are the verified facts about the reported death of the Iranian naval chief?</li>
 <li>How might further escalation affect civilians across the region?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15680435/trump-iran-israel-war-oil-prices-netanyahu-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Iran rejects Trump's 'one-sided and unfair' peace plan</a> — live updates from Daily Mail</li>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/26/iran-war-live-updates-trump-deal-us-military-strikes-israel-lebanon-hezbollah" target="_blank" rel="noopener">Middle East crisis live: Israel says it has killed Iranian naval chief</a> — Guardian coverage including Iranian envoy comments</li>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/26/us-eu-trade-tariff-trade-deal-ukraine-iran-rutte-denmark-europe-live-news-updates" target="_blank" rel="noopener">Nato chief says Europe increased defence spending by 20% in 2025</a> — includes Trump comments on NATO and Iran</li>
-</ul>
 <h4 id="2-nearly-500-airport-security-staff-quit-amid-ongoing-dhs-shutdown">2) Nearly 500 airport security staff quit amid ongoing DHS shutdown</h4>
 <p><strong>What happened (neutral):</strong> Almost 500 airport security staff have left their jobs as a funding standoff between the Trump administration and Congress continues with no resolution in sight. The dispute stems from the administration’s immigration enforcement priorities. Negotiations have failed to produce a breakthrough, affecting TSA operations.</p>
 <p><strong>Perspectives:</strong> The Guardian presents the staff shortages as a direct consequence of the prolonged DHS shutdown linked to immigration policy disagreements. Coverage notes the White House has held multiple cabinet meetings on the matter. Perspectives differ on responsibility, with some coverage emphasizing the administration’s enforcement focus while others highlight congressional inaction on funding.</p>
@@ -1229,10 +1304,6 @@
 <li>What are the core sticking points in the funding negotiations?</li>
 <li>How long can operations continue with reduced staff?</li>
 <li>What impact is this having on travelers?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/live/2026/mar/26/tsa-dhs-shutdown-airports-ice-trump-administration-latest" target="_blank" rel="noopener">Nearly 500 airport security staff quit as DHS shutdown drags on</a> — Guardian US politics live updates</li>
 </ul>
 <h4 id="3-uk-doctors-strikes-face-government-deadline-amid-iran-war-economic-warnings">3) UK doctors’ strikes face government deadline amid Iran war economic warnings</h4>
 <p><strong>What happened (neutral):</strong> Health Secretary Wes Streeting has given resident doctors a deadline to accept the current pay offer or risk losing it, stating future deals will not improve. The BMA announced plans for a six-day strike. Streeting cited the economic impact of the Iran war as limiting room for better offers.</p>
@@ -1244,11 +1315,6 @@
 <li>What are the potential impacts of a six-day doctors’ strike?</li>
 <li>When does the government deadline expire?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/politics/live/2026/mar/26/keir-starmer-ukraine-iran-social-media-ban-councils-pensions-latest-news-updates" target="_blank" rel="noopener">Wes Streeting tells BMA economic impact of Iran war means strikes won’t lead to better pay offer</a> — Guardian UK politics live</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15681699/Wes-Streeting-strongarms-striking-resident-doctors-deadline.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Wes Streeting strongarms striking resident doctors with a deadline</a> — Daily Mail report</li>
-</ul>
 <h4 id="4-major-ceos-cite-ai-as-factor-in-stepping-down">4) Major CEOs cite AI as factor in stepping down</h4>
 <p><strong>What happened (neutral):</strong> Outgoing CEOs of major companies, including Coca-Cola’s James Quincey and former Walmart CEO Doug McMillon, have said the next wave of artificial intelligence is influencing their decisions to leave their roles.</p>
 <p><strong>Perspectives:</strong> CNBC reports the executives directly linking AI developments to their departures. Coverage suggests the technology’s rapid advancement is prompting leadership changes at the highest levels of business.</p>
@@ -1259,10 +1325,6 @@
 <li>Are other executives considering similar moves?</li>
 <li>What skills will future CEOs need in an AI-driven environment?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/03/26/coca-cola-james-quincey-walmart-doug-mcmillon-artificial-intelligence-step-down.html" target="_blank" rel="noopener">Major outgoing CEOs are citing AI as a factor in their decisions to step down</a> — CNBC report</li>
-</ul>
 <h4 id="5-olympics-to-ban-transgender-and-dsd-athletes-from-womens-sports">5) Olympics to ban transgender and DSD athletes from women’s sports</h4>
 <p><strong>What happened (neutral):</strong> The International Olympic Committee has announced a ban on transgender and DSD athletes from all women’s sports events. The policy will require a once-in-a-lifetime SRY gene test to protect fairness, safety, and integrity in the female category. The move will affect athletes such as Laurel Hubbard and Imane Khelif.</p>
 <p><strong>Perspectives:</strong> The Daily Mail presents the decision as a significant step to safeguard women’s competition. Coverage notes it will block certain high-profile athletes who have been at the center of previous gender eligibility debates.</p>
@@ -1272,10 +1334,6 @@
 <li>What criteria define DSD athletes under this policy?</li>
 <li>How have sports bodies handled similar issues in the past?</li>
 <li>What reactions have come from affected athletes and advocacy groups?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/sport/othersports/article-15681297/Olympics-BAN-transgender-DSD-athletes-womens-sports-using-sex-tests-block-likes-gender-row-boxer-Imane-Khelif-male-weightlifter-Laurel-Hubbard.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Olympics BAN transgender and DSD athletes from ALL women's sports</a> — Daily Mail coverage</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-iran-rejects-trumps-one-sided-peace-plan-as-officials-claim-it-is-cover-for-ground-invasion">1) Iran rejects Trump’s ‘one-sided’ peace plan as officials claim it is cover for ground invasion</h4>
@@ -1288,10 +1346,6 @@
 <li>What role is the Strait of Hormuz playing in current tensions?</li>
 <li>How are regional allies responding?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15680435/trump-iran-israel-war-oil-prices-netanyahu-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Iran rejects Trump's 'one-sided and unfair' peace plan as officials claim it is cover for a ground invasion</a> — Daily Mail live updates</li>
-</ul>
 <h4 id="2-nato-chief-praises-europes-20-defence-spending-increase-in-2025">2) NATO chief praises Europe’s 20% defence spending increase in 2025</h4>
 <p><strong>What happened (neutral):</strong> NATO Secretary General Mark Rutte credited increased European defence budgets, citing the US president as a motivating factor. Trump separately criticized NATO allies for providing no help in the Iran campaign.</p>
 <p><strong>Perspectives:</strong> The Guardian notes Rutte’s positive assessment alongside Trump’s sharp criticism on social media that NATO nations “have done absolutely nothing to help” with Iran and that the US “needs nothing from NATO.”</p>
@@ -1301,10 +1355,6 @@
 <li>How do current spending levels compare to NATO targets?</li>
 <li>What is the factual basis for claims about NATO’s role in the Iran situation?</li>
 <li>How might this affect transatlantic relations?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/26/us-eu-trade-tariff-trade-deal-ukraine-iran-rutte-denmark-europe-live-news-updates" target="_blank" rel="noopener">Nato chief says Europe increased defence spending by 20% in 2025</a> — Guardian Europe live updates</li>
 </ul>
 <h4 id="3-uk-forced-to-rely-on-german-warship-for-nato-commitment">3) UK forced to rely on German warship for NATO commitment</h4>
 <p><strong>What happened (neutral):</strong> Britain asked Germany to deploy the frigate Sachsen as flagship of a maritime task group after HMS Dragon was reassigned to help defend Cyprus from Iranian attacks. The Defence Secretary could not specify how many UK vessels are currently fit for duty.</p>
@@ -1316,10 +1366,6 @@
 <li>What does this reveal about UK naval readiness?</li>
 <li>How have previous governments handled similar NATO commitments?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15680727/Starmer-wont-commit-date-ramping-defence-spending-Russian-threat.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Starmer's Royal Navy 'shambles': Britain forced to beg the GERMANS for a warship</a> — Daily Mail report</li>
-</ul>
 <h4 id="4-oecd-warns-iran-war-will-spare-no-major-economy-uk-most-vulnerable">4) OECD warns Iran war will spare no major economy, UK most vulnerable</h4>
 <p><strong>What happened (neutral):</strong> The OECD stated that the Iran war will affect all major economies but predicted the UK would be hit harder than its developed-market peers.</p>
 <p><strong>Perspectives:</strong> CNBC reports the OECD’s interim economic outlook highlighting greater UK exposure.</p>
@@ -1330,10 +1376,6 @@
 <li>How do oil price changes factor into these projections?</li>
 <li>What policy options exist to mitigate the impact?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/03/26/uk-could-be-worse-hit-from-iran-war-of-all-major-economies-oecd.html" target="_blank" rel="noopener">Iran war will spare no major economy, says OECD — but the UK is more vulnerable than others</a> — CNBC analysis</li>
-</ul>
 <h4 id="5-kings-speech-scheduled-shortly-after-uk-local-elections">5) King’s Speech scheduled shortly after UK local elections</h4>
 <p><strong>What happened (neutral):</strong> King Charles III will deliver the government’s legislative agenda in Parliament a few days after important May elections.</p>
 <p><strong>Perspectives:</strong> The BBC reports the timing of the ceremonial event without linking it to current foreign policy or economic pressures.</p>
@@ -1343,10 +1385,6 @@
 <li>How does the timing relate to the election cycle?</li>
 <li>What is the constitutional role of the King’s Speech?</li>
 <li>How might current events influence the agenda?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/cdj7ddlz4ypo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">King's Speech to take place days after key May elections</a> — BBC News</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-major-outgoing-ceos-cite-ai-as-factor-in-stepping-down">1) Major outgoing CEOs cite AI as factor in stepping down</h4>
@@ -1359,10 +1397,6 @@
 <li>How might this trend affect corporate strategy?</li>
 <li>Are these isolated cases or part of a wider pattern?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/03/26/coca-cola-james-quincey-walmart-doug-mcmillon-artificial-intelligence-step-down.html" target="_blank" rel="noopener">Major outgoing CEOs are citing AI as a factor in their decisions to step down</a> — CNBC</li>
-</ul>
 <h4 id="2-british-airways-to-reward-pilots-for-cutting-fuel-consumption">2) British Airways to reward pilots for cutting fuel consumption</h4>
 <p><strong>What happened (neutral):</strong> British Airways is introducing incentives for pilots who reduce fuel use as airlines face sharply higher jet fuel costs, which surged about 106% compared to a month ago according to International Air Transport Association data.</p>
 <p><strong>Perspectives:</strong> CNBC reports the initiative as a direct response to rising fuel prices.</p>
@@ -1373,10 +1407,6 @@
 <li>How do fuel costs affect ticket prices?</li>
 <li>What safety implications, if any, exist with fuel-saving techniques?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/03/26/british-airways-reward-pilots-cutting-fuel-costs-climb.html" target="_blank" rel="noopener">British Airways to reward pilots for cutting fuel as airlines tackle higher costs</a> — CNBC</li>
-</ul>
 <h4 id="3-oecd-warns-iran-war-will-hit-uk-economy-hardest-among-major-nations">3) OECD warns Iran war will hit UK economy hardest among major nations</h4>
 <p><strong>What happened (neutral):</strong> The OECD’s latest outlook states the ongoing Iran conflict will affect all major economies but will impact the UK more severely than others.</p>
 <p><strong>Perspectives:</strong> CNBC highlights the UK’s relative vulnerability in its reporting of the OECD assessment.</p>
@@ -1386,10 +1416,6 @@
 <li>How reliable are these economic forecasts during active conflicts?</li>
 <li>What historical parallels exist for war-driven economic shocks?</li>
 <li>How might businesses and consumers prepare?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/03/26/uk-could-be-worse-hit-from-iran-war-of-all-major-economies-oecd.html" target="_blank" rel="noopener">Iran war will spare no major economy, says OECD — but the UK is more vulnerable than others</a> — CNBC</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-meghan-markle-and-prince-harry-hail-court-ruling-against-meta-and-google">1) Meghan Markle and Prince Harry hail court ruling against Meta and Google</h4>
@@ -1402,10 +1428,6 @@
 <li>What evidence was presented regarding addiction?</li>
 <li>How do platforms currently protect younger users?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15680471/Meghan-Harry-social-media-US-court-Meta-Google.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Meghan Markle and Prince Harry hail 'reckoning' for social media giants</a> — Daily Mail</li>
-</ul>
 <h4 id="2-ai-relies-on-data-centers-bernie-sanders-and-aoc-want-to-freeze-their-construction">2) AI Relies on Data Centers. Bernie Sanders and AOC Want To Freeze Their Construction</h4>
 <p><strong>What happened (neutral):</strong> Senator Bernie Sanders and Representative Alexandria Ocasio-Cortez have proposed measures that would halt construction of new data centers, which are essential infrastructure for artificial intelligence development.</p>
 <p><strong>Perspectives:</strong> Reason.com presents the proposal as a potential obstacle to AI progress due to data center requirements.</p>
@@ -1416,10 +1438,6 @@
 <li>What alternatives exist for meeting AI computing needs?</li>
 <li>How does this fit into broader technology and environmental policy debates?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://reason.com/2026/03/26/ai-relies-on-data-centers-sanders-and-aoc-want-to-freeze-their-construction/" target="_blank" rel="noopener">AI Relies on Data Centers. Bernie Sanders and AOC Want To Freeze Their Construction</a> — Reason.com</li>
-</ul>
 <h4 id="3-major-outgoing-ceos-cite-ai-as-factor-in-stepping-down">3) Major outgoing CEOs cite AI as factor in stepping down</h4>
 <p><strong>What happened (neutral):</strong> Senior executives at Coca-Cola and Walmart have named the advancing wave of artificial intelligence as influencing their decisions to leave their positions.</p>
 <p><strong>Perspectives:</strong> CNBC reports the executives directly connecting AI developments to leadership transitions.</p>
@@ -1429,10 +1447,6 @@
 <li>How quickly is AI changing business operations?</li>
 <li>What new roles or skills might emerge in AI-heavy companies?</li>
 <li>How transparent are companies being about their AI strategies?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/03/26/coca-cola-james-quincey-walmart-doug-mcmillon-artificial-intelligence-step-down.html" target="_blank" rel="noopener">Major outgoing CEOs are citing AI as a factor in their decisions to step down</a> — CNBC</li>
 </ul>
 <h3 id="top-popular-media-stories-3">Top popular media stories (3)</h3>
 <h4 id="1-bill-maher-is-getting-the-mark-twain-prize-after-all">1) Bill Maher is getting the Mark Twain Prize after all</h4>
@@ -1445,10 +1459,6 @@
 <li>What does this award typically recognize?</li>
 <li>How might political figures respond to the confirmation?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/03/26/nx-s1-5762207/bill-maher-mark-twain-prize" target="_blank" rel="noopener">Bill Maher is getting the Mark Twain Prize after all</a> — NPR</li>
-</ul>
 <h4 id="2-security-guard-who-confronted-jude-laws-daughter-was-protecting-sabrina-carpenter">2) Security guard who confronted Jude Law’s daughter was protecting Sabrina Carpenter</h4>
 <p><strong>What happened (neutral):</strong> The bodyguard involved in an incident that upset Jude Law’s 11-year-old daughter was actually assigned to pop star Sabrina Carpenter, not Chappell Roan, according to exclusive reporting.</p>
 <p><strong>Perspectives:</strong> The Daily Mail corrects earlier assumptions about who the security guard was protecting during the hotel incident.</p>
@@ -1459,10 +1469,6 @@
 <li>What are the responsibilities of celebrity security teams?</li>
 <li>How do such incidents get reported in entertainment media?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/tvshowbiz/article-15681237/Security-guard-Chappell-Roan-controversy-Sabrina-Carpenter.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Revealed: Security guard who 'aggressively confronted' Jude Law's daughter was looking after Sabrina Carpenter</a> — Daily Mail exclusive</li>
-</ul>
 <h4 id="3-italian-police-seize-20million-in-assets-embezzled-from-ursula-andress">3) Italian police seize €20million in assets embezzled from Ursula Andress</h4>
 <p><strong>What happened (neutral):</strong> Police in Italy have seized assets worth €20 million that were allegedly taken from the 90-year-old former Bond Girl Ursula Andress, who was reportedly left devastated by the loss of her fortune.</p>
 <p><strong>Perspectives:</strong> The Daily Mail reports on the recovery effort and the actress’s situation.</p>
@@ -1472,10 +1478,6 @@
 <li>How did the alleged embezzlement take place?</li>
 <li>What legal steps come next?</li>
 <li>How common are such cases involving elderly celebrities?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/tvshowbiz/article-15681459/Italian-police-seize-20million-assets-embezzled-Ursula-Andress-90-Bond-Girl-left-devastated-losing-fortune.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Italian police seize €20million in assets 'embezzled' from Ursula Andress</a> — Daily Mail</li>
 </ul>
 <h3 id="top-gossip-stories-3">Top gossip stories (3)</h3>
 <h4 id="1-prince-andrew-spotted-with-mystery-woman-visiting-new-sandringham-home">1) Prince Andrew spotted with 'mystery woman' visiting new Sandringham home</h4>
@@ -1488,10 +1490,6 @@
 <li>How has the royal family managed public interest in such stories?</li>
 <li>What is the current public role of Prince Andrew?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15680675/Andrew-Mountbatten-Windsor-spotted-Range-Rover-mystery-woman-seat-visits-new-Sandringham-home.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Andrew Mountbatten-Windsor is spotted in Range Rover with 'mystery woman'</a> — Daily Mail</li>
-</ul>
 <h4 id="2-prince-william-is-determined-charlotte-and-louis-wont-feel-less-relevant-as-spares">2) Prince William is 'determined' Charlotte and Louis won't feel less 'relevant' as spares</h4>
 <p><strong>What happened (neutral):</strong> Royal authors Tina Brown and Robert Hardman claim Prince William is focused on ensuring his younger children, Princess Charlotte and Prince Louis, are prepared and financially secure for independent lives.</p>
 <p><strong>Perspectives:</strong> The Daily Mail reports the authors’ comments about William’s parenting approach regarding the “spare” dynamic.</p>
@@ -1501,10 +1499,6 @@
 <li>What preparations are being made for the younger royals?</li>
 <li>How do these reports compare to past royal family dynamics?</li>
 <li>What sources are these authors drawing from?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/royals/article-15680829/Prince-William-Prince-Louis-Princess-Charlotte-spare.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">William is 'determined' that Charlotte and Louis won't feel any less 'relevant' as 'spares'</a> — Daily Mail</li>
 </ul>
 <h4 id="3-richard-eden-column-on-what-one-of-harrys-best-friends-said-about-spiteful-move">3) Richard Eden column on what one of Harry’s best friends said about ‘spiteful’ move</h4>
 <p><strong>What happened (neutral):</strong> Columnist Richard Eden reports comments from one of Prince Harry’s close friends regarding a decision made by the Sussexes, describing astonishment at the friend’s characterization.</p>
@@ -1516,10 +1510,6 @@
 <li>What was Boris Johnson’s involvement with the Sussexes’ decision?</li>
 <li>How do such columns influence public perception of the royals?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/royals/article-15681175/RICHARD-EDEN-Harry-best-friend-spiteful-astonished.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">RICHARD EDEN: What one of Harry's best friends told me about 'spiteful' move</a> — Daily Mail royal column</li>
-</ul>
 <h3 id="understanding-the-issue-how-nato-burden-sharing-actually-works">Understanding the Issue: How NATO Burden-Sharing Actually Works</h3>
 <p>Most coverage of NATO spending disputes treats the issue as a simple question of whether allies are “paying their fair share,” skipping over a crucial detail: the 2% of GDP target is a guideline, not a binding treaty obligation, and different countries measure and report defence spending in ways that can be hard to compare directly.</p>
 <p>Here’s how things actually work: NATO members agreed at the 2014 Wales Summit to aim to spend 2% of their gross domestic product on defence by 2024, with an additional target that 20% of that spending go toward major equipment. There is no enforcement mechanism or penalty for missing the target; it functions as a political commitment and peer-pressure benchmark. Each country self-reports its figures using NATO’s own definitions, which sometimes include items (such as pensions or certain infrastructure) that national budgets classify differently. This creates room for both genuine increases and creative accounting. The United States has historically accounted for roughly two-thirds of total NATO defence spending, giving it significant leverage to push others while also making it sensitive to any perception that it is carrying a disproportionate load.</p>
@@ -1529,6 +1519,113 @@
 <p>When following fast-moving stories like the Iran conflict or government funding disputes, cross-check multiple outlets with different editorial perspectives rather than relying on any single source. Pay attention to what factual claims all credible reports agree on versus what is presented as interpretation or prediction. Seeking primary documents—such as official statements, court filings, or NATO reporting guidelines—helps separate verified events from spin. Reading the full articles rather than just headlines or social media summaries remains one of the best ways to build an accurate picture.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15680435/trump-iran-israel-war-oil-prices-netanyahu-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/mar/26/iran-war-live-updates-trump-deal-us-military-strikes-israel-lebanon-hezbollah" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/mar/26/us-eu-trade-tariff-trade-deal-ukraine-iran-rutte-denmark-europe-live-news-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/live/2026/mar/26/tsa-dhs-shutdown-airports-ice-trump-administration-latest" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/politics/live/2026/mar/26/keir-starmer-ukraine-iran-social-media-ban-councils-pensions-latest-news-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15681699/Wes-Streeting-strongarms-striking-resident-doctors-deadline.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/26/coca-cola-james-quincey-walmart-doug-mcmillon-artificial-intelligence-step-down.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/sport/othersports/article-15681297/Olympics-BAN-transgender-DSD-athletes-womens-sports-using-sex-tests-block-likes-gender-row-boxer-Imane-Khelif-male-weightlifter-Laurel-Hubbard.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15680727/Starmer-wont-commit-date-ramping-defence-spending-Russian-threat.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/26/uk-could-be-worse-hit-from-iran-war-of-all-major-economies-oecd.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cdj7ddlz4ypo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/26/british-airways-reward-pilots-cutting-fuel-costs-climb.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15680471/Meghan-Harry-social-media-US-court-Meta-Google.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://reason.com/2026/03/26/ai-relies-on-data-centers-sanders-and-aoc-want-to-freeze-their-construction/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reason.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reason.com</span>
+                    </a>
+                    
+                    <a href="https://www.npr.org/2026/03/26/nx-s1-5762207/bill-maher-mark-twain-prize" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/tvshowbiz/article-15681237/Security-guard-Chappell-Roan-controversy-Sabrina-Carpenter.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/tvshowbiz/article-15681459/Italian-police-seize-20million-assets-embezzled-Ursula-Andress-90-Bond-Girl-left-devastated-losing-fortune.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15680675/Andrew-Mountbatten-Windsor-spotted-Range-Rover-mystery-woman-seat-visits-new-Sandringham-home.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/royals/article-15680829/Prince-William-Prince-Louis-Princess-Charlotte-spare.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/royals/article-15681175/RICHARD-EDEN-Harry-best-friend-spiteful-astonished.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1929,10 +2026,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

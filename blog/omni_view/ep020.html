@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Trump considers winding down Iran war while easing sanctions on Iranian oil as I... — Episode 20</h1>
+            <h1><span class="nn-i18n-title">Trump considers winding down Iran war while easing sanctions on Iranian oil as I...</span> — Episode 20</h1>
             
             <p class="blog-hero-hook">Trump considers winding down Iran war while easing sanctions on Iranian oil as Israel strikes Tehran targets and global energy prices surge.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1190,15 +1271,6 @@
 <li>What historical parallels exist for brinkmanship escalating into broader war?</li>
 <li>How do regional actors' incentives shape the potential for de-escalation?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/21/middle-east-crisis-live-iran-war-trump-eases-oil-sanctions-israel-strikes" target="_blank" rel="noopener">Middle East crisis live: Trump considering ‘winding down’ war as US eases sanctions on Iranian oil; Israel launches retaliatory strikes</a> — Guardian live updates</li>
-<li><a href="https://www.theguardian.com/us-news/2026/mar/20/us-sanctions-iranian-oil" target="_blank" rel="noopener">US lifts sanctions on Iranian oil at sea in bid to ease supply pressures</a> — Details on 30-day waiver</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15666233/Trump-winding-strikes-Iran-destroying-Tehran-military-capabilities.html" target="_blank" rel="noopener">Trump says he wants to 'wind down' Iran war</a> — Mail Online on Trump's statements</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15663741/Yemens-Houthi-rebels-join-war-Irans-vow-attack-US-ships-Strait-Hormuz-Gulf-battered-Iranian-drones-live-updates.html" target="_blank" rel="noopener">Iran fires ballistic missiles at joint UK-US base</a> — Mail Online live coverage</li>
-<li><a href="https://www.theguardian.com/world/2026/mar/21/iran-war-conflict-middle-east-trump-israel" target="_blank" rel="noopener">Iran’s willingness to escalate this high-stakes war is its greatest weapon</a> — Guardian analysis</li>
-<li><a href="https://www.theguardian.com/us-news/2026/mar/21/donald-trump-surprised-australia-strait-of-hormuz-fuel-prices" target="_blank" rel="noopener">Donald Trump ‘very surprised’ Australia declined to send troops</a> — Guardian on alliance reactions</li>
-</ul>
 <h4 id="2-flash-flooding-hits-hawaii-with-over-230-rescued-and-dam-failure-fears">2) Flash flooding hits Hawaii with over 230 rescued and dam failure fears</h4>
 <p><strong>What happened (neutral):</strong> Heavy rains triggered severe flash flooding on Oahu, described as the worst in 20 years, forcing mass rescues and urgent evacuation orders. A major dam faces imminent failure risk, prompting officials to tell thousands to "leave now" in the middle of the night. Videos showed streets inundated and vehicles swallowed by muddy waters.</p>
 <p><strong>Perspectives:</strong> The Guardian reports the rapid onset of flooding and ongoing storm impacts across Hawaii. Mail Online highlights the panic surrounding the potential dam collapse and the scale of the evacuation. Both sources agree on the severity of the flooding and the dam threat, with differences mainly in tone — Guardian emphasizing rescue operations while Mail Online stresses urgency of evacuation warnings.</p>
@@ -1208,11 +1280,6 @@
 <li>How do climate patterns contribute to flash flooding frequency?</li>
 <li>What role does early warning timing play in outcomes?</li>
 <li>How should authorities balance evacuation orders with public safety?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/2026/mar/20/hawaii-oahu-flash-floods" target="_blank" rel="noopener">More than 230 people rescued as flash flooding hits Hawaii and fears dam could fail</a> — Guardian report</li>
-<li><a href="https://www.dailymail.co.uk/sciencetech/article-15665907/hawaii-dam-failure-evacuation.html" target="_blank" rel="noopener">Panic in Hawaii as dam faces 'imminent' failure and thousands are told: 'Leave now'</a> — Mail Online coverage</li>
 </ul>
 <h4 id="3-britain-allows-us-bombers-to-target-iranian-sites-threatening-hormuz-shipping">3) Britain allows US bombers to target Iranian sites threatening Hormuz shipping</h4>
 <p><strong>What happened (neutral):</strong> The UK has permitted the US to use Britain-based bombers, including those from RAF Fairford and Diego Garcia, to strike Iranian targets threatening the strategically vital Strait of Hormuz. This comes amid a growing energy crisis caused by the regional conflict. Trump reportedly told Starmer the UK should have acted faster.</p>
@@ -1224,11 +1291,6 @@
 <li>What are the risks of escalation from such strikes?</li>
 <li>How might this affect energy prices in the short term?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15665631/Britain-US-UK-bombers-blast-Iranian-sites-Straits-Hormuz.html" target="_blank" rel="noopener">Britain to let US use UK-based bombers to blast Iranian sites</a> — Mail Online report</li>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/21/middle-east-crisis-live-iran-war-trump-eases-oil-sanctions-israel-strikes" target="_blank" rel="noopener">Middle East crisis live updates</a> — Guardian context</li>
-</ul>
 <h4 id="4-zombie-ship-posing-as-lng-carrier-transits-hormuz-amid-conflict">4) Zombie ship posing as LNG carrier transits Hormuz amid conflict</h4>
 <p><strong>What happened (neutral):</strong> A vessel appearing to impersonate a scrapped gas carrier successfully exited the Strait of Hormuz. This incident demonstrates evolving tactics for navigating the waterway as the Middle East war continues and shipping faces disruption.</p>
 <p><strong>Perspectives:</strong> Bloomberg reports the development as evidence of changing strategies in response to the conflict. Related Guardian coverage notes the broader risks to shipping and energy infrastructure from Iranian drones and other threats. The factual event of the ship's transit is not disputed, though interpretations differ on its significance for maritime security.</p>
@@ -1239,10 +1301,6 @@
 <li>What monitoring challenges do naval forces face?</li>
 <li>How might this affect insurance and shipping costs?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-03-21/zombie-ship-posing-as-lng-carrier-appears-to-transit-hormuz" target="_blank" rel="noopener">Zombie Ship Posing as LNG Carrier Appears to Transit Hormuz</a> — Bloomberg report</li>
-</ul>
 <h4 id="5-300-million-celebrate-nowruz-under-shadow-of-regional-war">5) 300 million celebrate Nowruz under shadow of regional war</h4>
 <p><strong>What happened (neutral):</strong> Millions across the region marked the ancient Persian New Year, Nowruz, while the Middle East conflict continues. The celebrations occur against a backdrop of military actions, economic pressures, and uncertainty.</p>
 <p><strong>Perspectives:</strong> Al Jazeera highlights the contrast between cultural tradition and current conflict. Guardian reporting on the war's human cost, including civilian casualties in Iran, provides context for the mood during the holiday. The factual occurrence of Nowruz celebrations is agreed upon, with coverage differing in focus between cultural resilience and the war's impact.</p>
@@ -1252,10 +1310,6 @@
 <li>What is the human dimension often overlooked in war reporting?</li>
 <li>How might public sentiment influence political decisions?</li>
 <li>What long-term effects could the conflict have on regional societies?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/video/newsfeed/2026/3/21/300-million-people-celebrate-nowruz-under-a-cloud-of-war" target="_blank" rel="noopener">300 million people celebrate Nowruz under a cloud of war</a> — Al Jazeera coverage</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-iran-war-sends-economic-shocks-across-globe-as-costs-mount">1) Iran war sends economic shocks across globe as costs mount</h4>
@@ -1268,12 +1322,6 @@
 <li>How might prolonged disruption affect global markets?</li>
 <li>What role do non-state actors play in current dynamics?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/mar/20/iran-war-shocks-across-globe-effects-key-takeaways" target="_blank" rel="noopener">How the Iran war has sent shocks rippling across the globe</a> — Guardian analysis</li>
-<li><a href="https://www.theguardian.com/world/2026/mar/21/iran-war-conflict-middle-east-trump-israel" target="_blank" rel="noopener">Iran’s willingness to escalate this high-stakes war is its greatest weapon</a> — Guardian perspective</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15665931/ANDREW-NEIL-stuck-oil-gas-crisis-theres-bunch-clueless-inadequates-tiller.html" target="_blank" rel="noopener">ANDREW NEIL: We're stuck in an oil and gas crisis</a> — Mail Online commentary</li>
-</ul>
 <h4 id="2-us-deploys-more-warships-and-troops-to-middle-east">2) US deploys more warships and troops to Middle East</h4>
 <p><strong>What happened (neutral):</strong> Reports indicate the US is sending three additional warships and thousands more troops to the region amid the Iran conflict. This occurs alongside efforts to secure the Strait of Hormuz and manage energy supply issues.</p>
 <p><strong>Perspectives:</strong> The Guardian links this deployment to efforts to stabilize shipping routes. Mail Online coverage includes related military actions and allied support. Coverage agrees on the deployment but varies in emphasis on defensive versus offensive posture.</p>
@@ -1283,10 +1331,6 @@
 <li>How do such moves affect chances for de-escalation?</li>
 <li>What historical precedents exist for US naval buildups?</li>
 <li>How transparent is reporting on troop movements?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/mar/20/us-considering-occupying-iran-kharg-island-hormuz-strait-trump" target="_blank" rel="noopener">US to send three more warships and thousands more troops, reports say</a> — Guardian report</li>
 </ul>
 <h4 id="3-painting-mors-imperator-returns-to-berlin-after-1887-scandal">3) Painting "Mors Imperator" returns to Berlin after 1887 scandal</h4>
 <p><strong>What happened (neutral):</strong> The 1887 painting by Hermione von Preuschen, depicting death toppling a royal throne, is being displayed in a Berlin state museum more than 100 years after it was rejected over fears it mocked the German emperor.</p>
@@ -1298,10 +1342,6 @@
 <li>How do museums handle historically controversial works?</li>
 <li>What parallels exist in today's debates over art and politics?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/artanddesign/2026/mar/21/death-power-and-paranoia-painting-that-shocked-german-society-finally-returns-to-berlin" target="_blank" rel="noopener">Death, power and paranoia: painting that shocked German society finally returns to Berlin</a> — Guardian article</li>
-</ul>
 <h4 id="4-nicholas-brendon-known-for-buffy-the-vampire-slayer-dies-at-54">4) Nicholas Brendon, known for Buffy the Vampire Slayer, dies at 54</h4>
 <p><strong>What happened (neutral):</strong> The actor Nicholas Brendon has died at age 54. His family described the cause as "natural causes" and remembered him as passionate and sensitive.</p>
 <p><strong>Perspectives:</strong> BBC News reports the death and family statement without additional speculation. Coverage focuses on his professional legacy in popular television.</p>
@@ -1312,10 +1352,6 @@
 <li>How does media coverage of deaths vary by public figure status?</li>
 <li>What constitutes appropriate reporting on causes of death?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/ckg9wgj9y5no" target="_blank" rel="noopener">Buffy the Vampire Slayer actor Nicholas Brendon dies aged 54</a> — BBC News report</li>
-</ul>
 <h4 id="5-labour-faces-criticism-over-response-to-trafalgar-square-prayer-event">5) Labour faces criticism over response to Trafalgar Square prayer event</h4>
 <p><strong>What happened (neutral):</strong> Controversy has arisen regarding a mass prayer event in Trafalgar Square, with commentary criticizing Labour's reaction as performative outrage and political opportunism.</p>
 <p><strong>Perspectives:</strong> Mail Online columnist Khadija Khan argues the response prevents honest discussion of certain topics in Britain. The piece reflects broader debates about public space, religion, and political rhetoric.</p>
@@ -1325,10 +1361,6 @@
 <li>How does political rhetoric influence community relations?</li>
 <li>What constitutes "performative" versus substantive political response?</li>
 <li>How do media outlets frame debates about cultural change?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/debate/article-15666089/KHADIJA-KHAN-Labour-performative-outrage-Trafalgar-Square-nick-timothy-mass-prayer.html" target="_blank" rel="noopener">KHADIJA KHAN: Labour's performative outrage over this Trafalgar Square mass prayer row sickens me</a> — Mail Online opinion</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-oil-and-gas-crisis-deepens-with-global-economic-risks">1) Oil and gas crisis deepens with global economic risks</h4>
@@ -1341,11 +1373,6 @@
 <li>What are the trade-offs in temporary sanctions relief?</li>
 <li>How might businesses and consumers be impacted long-term?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15665931/ANDREW-NEIL-stuck-oil-gas-crisis-theres-bunch-clueless-inadequates-tiller.html" target="_blank" rel="noopener">ANDREW NEIL: We're stuck in an oil and gas crisis</a> — Mail Online analysis</li>
-<li><a href="https://www.theguardian.com/us-news/2026/mar/20/us-sanctions-iranian-oil" target="_blank" rel="noopener">US lifts sanctions on Iranian oil at sea in bid to ease supply pressures</a> — Guardian on sanctions waiver</li>
-</ul>
 <h4 id="2-energy-infrastructure-damage-threatens-years-of-disruption">2) Energy infrastructure damage threatens years of disruption</h4>
 <p><strong>What happened (neutral):</strong> Qatar's Ras Laffan LNG facility may take up to five years to fully reopen after damage, costing approximately $20 billion annually. Other Gulf oil depots remain vulnerable.</p>
 <p><strong>Perspectives:</strong> The Guardian highlights the scale of economic damage from the conflict. Coverage connects this to broader supply chain pressures and the rationale for sanctions adjustments.</p>
@@ -1356,10 +1383,6 @@
 <li>What incentives exist for protecting versus targeting infrastructure?</li>
 <li>How accurate are early damage assessments?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/mar/20/iran-war-shocks-across-globe-effects-key-takeaways" target="_blank" rel="noopener">How the Iran war has sent shocks rippling across the globe</a> — Guardian economic impacts</li>
-</ul>
 <h4 id="3-trump-gold-coin-planned-for-us-250th-independence-anniversary">3) Trump gold coin planned for US 250th independence anniversary</h4>
 <p><strong>What happened (neutral):</strong> A 24-carat gold coin featuring Donald Trump is set to be minted to mark 250 years of American independence from Britain.</p>
 <p><strong>Perspectives:</strong> Mail Online presents the coin as both a celebration of national history and an example of personal branding. Coverage notes the symbolic nature of the commemoration.</p>
@@ -1369,10 +1392,6 @@
 <li>What role does personality play in official memorabilia?</li>
 <li>How have similar historical commemorations been received?</li>
 <li>What separates celebration from commercialism in such projects?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15666409/Donald-Trump-24-carat-gold-coin-250th-year-independence-Britain.html" target="_blank" rel="noopener">Donald Trump set to feature on 24-carat gold coin to celebrate 250 years of independence from Britain</a> — Mail Online report</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-fbi-warns-of-smart-device-hijacking-risks">1) FBI warns of smart device hijacking risks</h4>
@@ -1385,10 +1404,6 @@
 <li>Who bears responsibility when devices are compromised?</li>
 <li>How can average users recognize signs of hijacking?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/sciencetech/article-15665655/fbi-cyber-unit-smart-device-hijack.html" target="_blank" rel="noopener">FBI cyber unit exposes three signs your smart devices have been secretly hijacked</a> — Mail Online report</li>
-</ul>
 <h4 id="2-zombie-ship-uses-deceptive-identity-to-transit-hormuz">2) Zombie ship uses deceptive identity to transit Hormuz</h4>
 <p><strong>What happened (neutral):</strong> A ship impersonating a scrapped LNG carrier navigated the Strait of Hormuz, illustrating adaptive techniques amid regional tensions and potential sanctions.</p>
 <p><strong>Perspectives:</strong> Bloomberg focuses on the technical and maritime aspects of identity spoofing. The story connects to broader challenges in monitoring shipping during conflict.</p>
@@ -1399,12 +1414,115 @@
 <li>What regulatory gaps does this incident expose?</li>
 <li>How might this affect legitimate shipping operations?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li>[Zombie Ship Posing as LNG Carrier Appears to Transit Hormuz](https://www.bloomberg.com/news/articles/2026-</li>
-</ul>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/mar/21/middle-east-crisis-live-iran-war-trump-eases-oil-sanctions-israel-strikes" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/2026/mar/20/us-sanctions-iranian-oil" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15666233/Trump-winding-strikes-Iran-destroying-Tehran-military-capabilities.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15663741/Yemens-Houthi-rebels-join-war-Irans-vow-attack-US-ships-Strait-Hormuz-Gulf-battered-Iranian-drones-live-updates.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/mar/21/iran-war-conflict-middle-east-trump-israel" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/2026/mar/21/donald-trump-surprised-australia-strait-of-hormuz-fuel-prices" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/2026/mar/20/hawaii-oahu-flash-floods" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/sciencetech/article-15665907/hawaii-dam-failure-evacuation.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15665631/Britain-US-UK-bombers-blast-Iranian-sites-Straits-Hormuz.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-03-21/zombie-ship-posing-as-lng-carrier-appears-to-transit-hormuz" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/video/newsfeed/2026/3/21/300-million-people-celebrate-nowruz-under-a-cloud-of-war" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/mar/20/iran-war-shocks-across-globe-effects-key-takeaways" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15665931/ANDREW-NEIL-stuck-oil-gas-crisis-theres-bunch-clueless-inadequates-tiller.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/mar/20/us-considering-occupying-iran-kharg-island-hormuz-strait-trump" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/artanddesign/2026/mar/21/death-power-and-paranoia-painting-that-shocked-german-society-finally-returns-to-berlin" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/ckg9wgj9y5no" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/debate/article-15666089/KHADIJA-KHAN-Labour-performative-outrage-Trafalgar-Square-nick-timothy-mass-prayer.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15666409/Donald-Trump-24-carat-gold-coin-250th-year-independence-Britain.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/sciencetech/article-15665655/fbi-cyber-unit-smart-device-hijack.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1818,10 +1936,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>
