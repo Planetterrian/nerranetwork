@@ -960,15 +960,21 @@
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
-    var key = 'nn-i18n-lang:' + location.pathname;
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
 
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
     function preferred() {
-        try {
-            var saved = sessionStorage.getItem(key);
-            if (saved && tracks[saved]) return saved;
-        } catch (e) {}
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
         var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
-        return tracks[nav] ? nav : 'en';
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
     }
     function apply(code, persist) {
         var t = tracks[code];
@@ -984,7 +990,7 @@
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
         });
-        if (persist) { try { sessionStorage.setItem(key, code); } catch (e) {} }
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
     }
     pills.forEach(function(p) {
         p.addEventListener('click', function() { apply(p.dataset.lang, true); });

@@ -195,6 +195,10 @@
                 <div class="latest-episode-title" id="latest-title">Loading...</div>
                 <div class="latest-episode-date" id="latest-date"></div>
                 <audio id="latest-audio" controls preload="none" aria-label="Latest episode audio player" style="width:100%;height:42px;border-radius:8px;"></audio>
+                {# Language switcher for the latest episode — populated by JS only
+                   when the episode has translation tracks. Shares the site-wide
+                   `nn-pref-lang` preference with the per-episode blog switcher. #}
+                <div id="latest-langs" style="display:none;margin-top:10px;align-items:center;flex-wrap:wrap;gap:6px;" aria-label="Listen in another language"></div>
                 <div id="latest-summary" style="margin-top:var(--sp-4);color:var(--nn-text-muted);font-size:0.92rem;display:none;"></div>
 
                 {# Quick-win noscript fallback (May 2026 review): the JS "Latest Episode"
@@ -850,6 +854,8 @@
                 summaryEl.style.display = 'block';
             }
 
+            renderLatestLangs(latest);
+
             const grid = document.getElementById('episodes-grid');
             grid.innerHTML = '';
             episodes.slice(1, 13).forEach((ep, i) => {
@@ -863,6 +869,64 @@
                 `;
                 grid.appendChild(card);
             });
+        }
+
+        // Latest-episode language switcher. Shows pills only when the episode
+        // has translation tracks, and swaps the latest player's audio + title
+        // + summary in place. Uses the site-wide `nn-pref-lang` preference so a
+        // visitor's language choice (here or on any blog post) sticks
+        // everywhere. Russian shows opt out of multilingual, so this no-ops.
+        function renderLatestLangs(latest) {
+            const box = document.getElementById('latest-langs');
+            if (!box) return;
+            const tr = (latest && latest.translations) || {};
+            const langs = Object.keys(tr).filter((l) => tr[l] && tr[l].audio_url);
+            if (!langs.length) { box.style.display = 'none'; return; }
+            const LABELS = { en: 'English', fr: 'Français', ru: 'Русский', es: 'Español', zh: '中文' };
+            const order = ['en'].concat(langs);
+            const titleEl = document.getElementById('latest-title');
+            const audioEl = document.getElementById('latest-audio');
+            const summaryEl = document.getElementById('latest-summary');
+            const enTitle = latest.episode_title || 'Latest Episode';
+            const enSummary = summaryEl ? summaryEl.textContent : '';
+            const track = (code) => {
+                if (code === 'en') return { url: latest.audio_url || '', title: enTitle, desc: enSummary };
+                const t = tr[code] || {};
+                return { url: t.audio_url || '', title: t.title || enTitle, desc: t.description || enSummary };
+            };
+            const savedPref = () => { try { return localStorage.getItem('nn-pref-lang') || ''; } catch (e) { return ''; } };
+            const apply = (code, persist) => {
+                const t = track(code);
+                if (audioEl && t.url) { const playing = !audioEl.paused; audioEl.src = t.url; if (playing) audioEl.play().catch(() => {}); }
+                if (titleEl) titleEl.textContent = t.title;
+                if (summaryEl && t.desc) summaryEl.textContent = t.desc;
+                box.querySelectorAll('button[data-lang]').forEach((b) => {
+                    const on = b.dataset.lang === code;
+                    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+                    b.style.borderColor = on ? 'var(--show-color)' : 'var(--nn-border)';
+                    b.style.background = on ? 'color-mix(in srgb, var(--show-color) 15%, transparent)' : 'var(--nn-card)';
+                    b.style.color = on ? 'var(--show-color-text, var(--show-color))' : 'var(--nn-text-muted)';
+                });
+                if (persist) { try { localStorage.setItem('nn-pref-lang', code); } catch (e) {} }
+            };
+            box.innerHTML = '';
+            box.style.display = 'flex';
+            const label = document.createElement('span');
+            label.textContent = 'Listen in:';
+            label.style.cssText = 'font-size:0.8rem;color:var(--nn-text-muted);';
+            box.appendChild(label);
+            order.forEach((code) => {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.dataset.lang = code;
+                b.textContent = LABELS[code] || code.toUpperCase();
+                b.setAttribute('aria-pressed', 'false');
+                b.style.cssText = 'font:600 0.8rem/1.5 var(--font-ui,sans-serif);padding:2px 12px;border-radius:100px;border:1px solid var(--nn-border);background:var(--nn-card);color:var(--nn-text-muted);cursor:pointer;';
+                b.addEventListener('click', () => apply(code, true));
+                box.appendChild(b);
+            });
+            const pref = savedPref();
+            apply((pref && (pref === 'en' || tr[pref])) ? pref : 'en', false);
         }
 
         function loadFromRSS() {

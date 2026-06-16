@@ -462,3 +462,24 @@ class TestBlogIndexBadges:
         # rendered badge markup is absent for an English-only post.
         html = self._render_index([self._post(6)])
         assert '<span class="blog-idx-langs"' not in html
+
+
+# ---------------------------------------------------------------------------
+# Website language-switching UX (June 2026)
+# ---------------------------------------------------------------------------
+
+class TestLanguageSwitcherUX:
+    def test_blog_switcher_uses_global_persistent_pref(self):
+        # The choice must persist site-wide (localStorage) across episodes, not
+        # reset per page (the old sessionStorage-by-pathname behaviour).
+        html = (PROJECT_ROOT / "templates" / "blog_post.html.j2").read_text(encoding="utf-8")
+        assert "nn-pref-lang" in html
+        assert "localStorage" in html
+        assert "sessionStorage" not in html  # regressed back to per-page if present
+
+    def test_show_page_latest_player_has_switcher(self):
+        html = (PROJECT_ROOT / "templates" / "show_page.html.j2").read_text(encoding="utf-8")
+        assert 'id="latest-langs"' in html
+        assert "renderLatestLangs" in html
+        # Shares the same site-wide preference key as the blog switcher.
+        assert "nn-pref-lang" in html
