@@ -112,6 +112,32 @@ exclude_title_patterns:
   - '(telescope|binoculars?) deals?'
   - 'best (telescopes?|binoculars?|star projectors?)\b'
   - 'meteor shower.*(peak|tonight|when to|how to|watch)'
+  # June 16 2026 review: since the SpaceX/SPCX IPO (June 12) the Google
+  # News "SpaceX" queries flood FF with pure stock-market / corporate-
+  # finance items that belong to SpaceX Daily and Modern Investing, not an
+  # astronomy show. FF Ep103 shipped FOUR of fifteen stories as market
+  # action (an $85.7B funding round told twice, a "$60B merger with Cursor",
+  # NASDAQ index inclusion, a 20% share move) — duplicative and off-brand.
+  # These patterns drop market-action titles at fetch time while KEEPING
+  # SpaceX *mission/engineering/science* news (Dragon, Starship, launches,
+  # NASA contracts) and the legitimate "company goes public" milestone
+  # (no market-action keyword in that title). See engine.utils.drop_excluded_titles.
+  # NOTE: a bare \b(nasdaq|nyse)\b pattern was tried and REMOVED — it dropped
+  # "SpaceX launches its first Falcon 9 rocket since Nasdaq debut", a launch
+  # story that is core FF content. Every real stock item already trips one of
+  # the specific patterns below (SPCX / IPO / merger / funding / shares-move /
+  # index inclusion), so the exchange name on its own is unnecessary and unsafe.
+  - '\bSPCX\b'
+  - '\bmarket cap(italization)?\b'
+  - '\bgreen ?shoe\b'
+  - '\bfunding round\b'
+  - '\bIPO\b'
+  - '\bshares?\b.{0,25}\b(rise|rises|risen|climb|climbs|jump|jumps|surge|surges|soar|soars|skyrocket|fall|falls|drop|drops|plunge|tumble|rally|slip|slid|gain|gains|percent)\b'
+  - '\b(raises?|raised)\b.{0,20}\bbillion\b'
+  - '\b(\$|usd|billion|trillion|all-?stock|all stock)\b.{0,25}\bmerger\b'
+  - '\bmerger\b.{0,25}\b(valued|deal|shareholders?|billion|trillion)\b'
+  - '\bindex\b.{0,20}\b(inclusion|rebalanc|addition)\b'
+  - '\badded to\b.{0,20}\bindex\b'
 
 keywords:
   - space
