@@ -6,8 +6,10 @@ Fascinating Frontiers), plus two SpaceX-specific injections:
 * ``spcx_market_block`` — real-time SPCX quote for the digest's Market
   Watch section. SpaceX listed on Nasdaq June 12 2026 (the show's launch
   day); the fetcher mirrors the hard-won TSLA lessons from landmine #22:
-  yfinance ``history()`` primary, ``fast_info`` secondary, ``0.0`` treated
-  as falsy, sanity band + deviation guard vs the last cached quote, and a
+  yfinance ``fast_info`` (live last trade) primary so the spoken price is
+  the CURRENT market price, ``history()`` (last daily close) as fallback,
+  ``0.0`` treated as falsy, sanity band + deviation guard vs the last cached
+  quote, and a
   failed fetch NEVER overwrites the previous-good cache. A failed/invalid
   quote renders an EMPTY block — the prompts instruct the model to omit
   the price line entirely rather than speak "price unavailable".
@@ -99,12 +101,20 @@ def pronunciation_overrides() -> dict:
 
 def _fetch_spcx_quote() -> tuple[float, str, str]:
     """Return ``(price, change_str, source)`` or ``(0.0, "", "")`` when no
-    source yields a quote that passes validation. ``source`` lets callers
-    phrase honestly: a ``history`` bar is a close; a ``fast_info`` quote at
-    the ~12:07 UTC run time is a live pre-market price, not a close."""
+    source yields a quote that passes validation.
+
+    Order matters: try ``fast_info`` FIRST so the show speaks the CURRENT /
+    live last trade when the run happens during (or near) market hours —
+    previously ``history`` ran first and always returned the prior *daily
+    close*, so the episode spoke a stale price and never reached the live
+    quote. ``fast_info`` treats ``0.0`` (the degraded-response failure mode,
+    landmine #22) as falsy and falls through to ``history`` (the last daily
+    close), which is the honest fallback when the market is closed or the
+    live quote is unavailable. ``source`` lets the spoken line phrase it
+    correctly — "is trading at" for a live quote, "closed at" for a bar."""
     for source_name, fetch in (
-        ("yfinance_history", _quote_from_history),
         ("yfinance_fast_info", _quote_from_fast_info),
+        ("yfinance_history", _quote_from_history),
     ):
         try:
             result = fetch()
