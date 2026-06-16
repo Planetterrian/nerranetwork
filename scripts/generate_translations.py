@@ -33,7 +33,6 @@ import logging
 import os
 import subprocess
 import sys
-import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -142,7 +141,7 @@ def _resolve_languages(args, config) -> List[str]:
         langs = list(config.multilingual.languages)
     else:
         langs = list(translate.supported_languages())
-    unknown = [l for l in langs if l not in translate.supported_languages()]
+    unknown = [code for code in langs if code not in translate.supported_languages()]
     if unknown:
         raise SystemExit(f"Unsupported language(s): {unknown}; "
                          f"supported: {translate.supported_languages()}")
@@ -216,7 +215,7 @@ def main() -> int:
         logger.warning("Run:  python scripts/generate_translations.py %s "
                        "--languages zh --episode %s --sample-zh", args.show, targets[0]["episode_num"])
         logger.warning("listen, then re-run with --zh-approved to include ZH.")
-        languages = [l for l in languages if l != "zh"]
+        languages = [code for code in languages if code != "zh"]
         if not languages:
             return 0
 
