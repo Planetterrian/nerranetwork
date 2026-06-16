@@ -536,7 +536,8 @@ def convert_md_to_blog_html(md_text: str) -> tuple[str, list[dict]]:
 
 def _build_jsonld(metadata: dict, show_name: str, blog_url: str,
                    show_config: dict | None = None,
-                   *, transcript_url: str = "", audio_url: str = "") -> str:
+                   *, transcript_url: str = "", audio_url: str = "",
+                   translations: dict | None = None) -> str:
     """Build Schema.org JSON-LD: BlogPosting + PodcastEpisode (as array).
 
     PodcastEpisode enables Google's podcast features in Search results, links
@@ -597,7 +598,19 @@ def _build_jsonld(metadata: dict, show_name: str, blog_url: str,
     if transcript_url:
         podcast_episode["transcript"] = transcript_url
     if audio_url:
-        podcast_episode["associatedMedia"] = {"@type": "MediaObject", "contentUrl": audio_url}
+        # The English track plus any per-language audio versions (June 2026
+        # multilingual). Listing each track with its inLanguage lets search
+        # engines surface the episode's FR/RU/ES/ZH availability. Single track
+        # stays a lone object (back-compat); multiple becomes a list.
+        media = [{"@type": "MediaObject", "contentUrl": audio_url, "inLanguage": in_language}]
+        for code, track in (translations or {}).items():
+            t_url = (track or {}).get("audio_url")
+            if t_url:
+                media.append({"@type": "MediaObject", "contentUrl": t_url, "inLanguage": code})
+        podcast_episode["associatedMedia"] = media if len(media) > 1 else media[0]
+        if len(media) > 1:
+            # availableLanguage advertises every language the episode plays in.
+            podcast_episode["availableLanguage"] = [m["inLanguage"] for m in media]
 
     # ``ensure_ascii=False`` so Cyrillic show names ("Финансы Просто",
     # "Привет, Русский!") render as readable Unicode in the page source
@@ -705,6 +718,7 @@ def generate_blog_post_html(
     jsonld = _build_jsonld(
         metadata, show_config["name"], blog_url, show_config,
         transcript_url=_transcript_url, audio_url=_audio_url,
+        translations=metadata.get("translations", {}) or {},
     )
 
     template = template_env.get_template("blog_post.html.j2")

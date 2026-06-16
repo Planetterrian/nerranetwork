@@ -316,12 +316,21 @@
 
                     const titleHtml = title ? `<div style="font-weight:600;color:var(--show-color-text, var(--show-color));font-family:var(--font-ui);font-size:0.88rem;">${escapeHtml(title)}</div>` : '';
 
+                    // Multilingual availability badges (June 2026): surface the
+                    // per-language audio tracks recorded on this episode.
+                    const LANG_LABELS = { fr: 'FR', ru: 'RU', es: 'ES', zh: '中文' };
+                    const tr = (s.translations && typeof s.translations === 'object') ? s.translations : {};
+                    const langs = Object.keys(tr).filter(k => tr[k] && tr[k].audio_url);
+                    const badgeStyle = 'font-family:var(--font-ui);font-size:0.66rem;font-weight:600;padding:1px 7px;border-radius:100px;border:1px solid color-mix(in srgb, var(--show-color) 35%, transparent);color:var(--show-color-text, var(--show-color));background:color-mix(in srgb, var(--show-color) 10%, transparent);';
+                    const langsHtml = langs.length ? `<span class="nn-summary-langs" aria-label="Also available in other languages" style="display:inline-flex;gap:4px;margin-top:4px;">${langs.map(k => `<span style="${badgeStyle}">${LANG_LABELS[k] || k.toUpperCase()}</span>`).join('')}</span>` : '';
+
                     return `
                         <div class="nn-summary-item" data-date="${escapeAttr(date)}">
                             <div class="nn-summary-header">
                                 <div>
                                     <div class="nn-summary-date">${formatDate(date)}</div>
                                     ${titleHtml}
+                                    ${langsHtml}
                                 </div>
                                 ${audioHtml}
                             </div>

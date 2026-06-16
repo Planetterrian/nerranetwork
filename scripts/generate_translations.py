@@ -49,7 +49,7 @@ load_dotenv(PROJECT_ROOT / ".env")
 from engine import tts, translate  # noqa: E402
 from engine.config import load_config  # noqa: E402
 from engine.storage import upload_to_r2  # noqa: E402
-from engine.summaries_io import load_summaries, save_summaries  # noqa: E402
+from engine.summaries_io import load_summaries, upsert_translation  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="%(levelname)s %(message)s")
 logger = logging.getLogger("generate_translations")
@@ -211,7 +211,7 @@ def main() -> int:
         or "GROK_CLONED_VOICE_ID"
     max_chars = config.tts.max_chars or tts.GROK_MAX_CHARS_PER_REQUEST
 
-    wrapper, records = load_summaries(summaries_path)
+    _wrapper, records = load_summaries(summaries_path)
     targets = _select_records(records, args.latest, args.episode)
     if not targets:
         logger.error("No matching episode records in %s", summaries_path)
@@ -273,7 +273,6 @@ def main() -> int:
         en_title = rec.get("episode_title", "") or ""
         en_desc = _english_hook(output_dir, ep) or en_title
         translations: Dict[str, dict] = rec.setdefault("translations", {})
-        ep_changed = False
 
         for lang in languages:
             if lang in translations and not args.force:
@@ -330,22 +329,23 @@ def main() -> int:
                 logger.warning("Ep%s [%s]: R2 creds unset — track left local at %s",
                                ep, lang, local_mp3)
 
-            translations[lang] = {
+            entry = {
                 "audio_url": public_url,
                 "title": t_title,
                 "description": t_desc,
                 "duration_sec": round(dur, 1) if dur else 0,
                 "generated_at": datetime.now(timezone.utc).isoformat(),
             }
+            # Keep the in-memory copy current (skip-check + projection within
+            # this run), but PERSIST via a fresh read-modify-write per track so
+            # the live English cron can't have a record we appended clobbered
+            # by a stale in-memory snapshot (and a crash keeps finished work).
+            translations[lang] = entry
+            if not upsert_translation(summaries_path, ep, lang, entry):
+                logger.warning("Ep%s [%s]: record vanished from %s during run — "
+                               "track uploaded but not recorded", ep, lang, summaries_path)
             changed = True
-            ep_changed = True
             logger.info("Ep%s [%s]: done → %s", ep, lang, public_url)
-
-        # Persist after each EPISODE so a crash mid-batch keeps finished work
-        # (the R2 object is already up; the record is what makes it idempotent).
-        if ep_changed and not args.dry_run:
-            save_summaries(summaries_path, wrapper, records)
-            logger.info("Ep%s: summaries checkpointed", ep)
 
     if changed and not args.dry_run:
         logger.info("Done. Updated summaries: %s", summaries_path)

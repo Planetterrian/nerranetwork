@@ -33,6 +33,25 @@ def load_summaries(path: Path) -> Tuple[Optional[dict], List[dict]]:
     raise ValueError(f"Unrecognized summaries shape in {path}")
 
 
+def upsert_translation(path: Path, episode_num: int, lang: str, entry: dict) -> bool:
+    """Concurrency-safe write of one translation track to the summaries file.
+
+    Re-reads the file fresh, sets ``record.translations[lang] = entry`` on the
+    matching episode, and saves — so a translation run never clobbers a record
+    the live English cron appended between the run's initial load and its save
+    (the failure mode of holding an in-memory snapshot and overwriting the
+    whole file at the end of a long batch). Returns True if the episode was
+    found and written, False otherwise.
+    """
+    wrapper, records = load_summaries(path)
+    for rec in records:
+        if rec.get("episode_num") == episode_num:
+            rec.setdefault("translations", {})[lang] = entry
+            save_summaries(path, wrapper, records)
+            return True
+    return False
+
+
 def save_summaries(path: Path, wrapper: Optional[dict], records: List[dict]) -> None:
     """Atomically write ``records`` back, preserving the original shape."""
     path = Path(path)

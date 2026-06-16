@@ -184,6 +184,50 @@ class TestSummariesIO:
         assert again["podcast"] == "tesla"  # sibling key preserved
         assert again["summaries"][0]["translations"]["fr"]["audio_url"] == "u.fr.mp3"
 
+    def test_upsert_translation_targets_one_record(self, tmp_path: Path):
+        from engine.summaries_io import upsert_translation
+        p = tmp_path / "s.json"
+        p.write_text(json.dumps({
+            "podcast": "tesla",
+            "summaries": [
+                {"episode_num": 10, "audio_url": "a"},
+                {"episode_num": 11, "audio_url": "b"},
+            ],
+        }), encoding="utf-8")
+        ok = upsert_translation(p, 11, "fr", {"audio_url": "b.fr.mp3"})
+        assert ok is True
+        data = json.loads(p.read_text(encoding="utf-8"))
+        assert data["summaries"][1]["translations"]["fr"]["audio_url"] == "b.fr.mp3"
+        assert "translations" not in data["summaries"][0]  # only ep11 touched
+
+    def test_upsert_translation_missing_episode_returns_false(self, tmp_path: Path):
+        from engine.summaries_io import upsert_translation
+        p = tmp_path / "s.json"
+        p.write_text(json.dumps({"podcast": "t", "summaries": [{"episode_num": 1}]}),
+                     encoding="utf-8")
+        assert upsert_translation(p, 999, "fr", {"audio_url": "x"}) is False
+
+    def test_upsert_preserves_concurrently_added_record(self, tmp_path: Path):
+        # Simulates the live English cron appending a NEW episode between a
+        # translation run's initial load and its per-track write. Because
+        # upsert re-reads fresh, the new record must survive.
+        from engine.summaries_io import load_summaries, upsert_translation
+        p = tmp_path / "s.json"
+        p.write_text(json.dumps({"podcast": "t", "summaries": [{"episode_num": 5}]}),
+                     encoding="utf-8")
+        _wrapper, _stale = load_summaries(p)  # translation run's initial snapshot
+        # Concurrent writer appends episode 6.
+        cur = json.loads(p.read_text(encoding="utf-8"))
+        cur["summaries"].append({"episode_num": 6, "audio_url": "new"})
+        p.write_text(json.dumps(cur), encoding="utf-8")
+        # Translation run now writes its track for episode 5.
+        assert upsert_translation(p, 5, "ru", {"audio_url": "5.ru.mp3"}) is True
+        data = json.loads(p.read_text(encoding="utf-8"))
+        nums = {r["episode_num"] for r in data["summaries"]}
+        assert nums == {5, 6}  # episode 6 NOT clobbered
+        ep5 = next(r for r in data["summaries"] if r["episode_num"] == 5)
+        assert ep5["translations"]["ru"]["audio_url"] == "5.ru.mp3"
+
     def test_bare_list_roundtrip(self, tmp_path: Path):
         from engine.summaries_io import load_summaries, save_summaries
         p = tmp_path / "s.json"
@@ -278,3 +322,65 @@ class TestSwitcherGating:
         data = json.loads(m.group(1))
         assert set(data.keys()) == {"en", "fr"}
         assert data["fr"]["url"].endswith(".fr.mp3")
+
+
+class TestJsonLdMultilingual:
+    def _podcast_episode(self, html):
+        for raw in re.findall(
+            r'<script type="application/ld\+json">\s*(.*?)\s*</script>', html, re.DOTALL
+        ):
+            try:
+                data = json.loads(raw)
+            except Exception:
+                continue
+            for item in (data if isinstance(data, list) else [data]):
+                if item.get("@type") == "PodcastEpisode":
+                    return item
+        return None
+
+    def test_english_only_has_single_media_no_availablelanguage(self):
+        ep = self._podcast_episode(_render(None))
+        assert ep is not None
+        assert "availableLanguage" not in ep
+        # Single track stays a lone object, not a list (back-compat).
+        assert isinstance(ep.get("associatedMedia"), dict)
+
+    def test_translations_listed_in_jsonld(self):
+        tr = {
+            "fr": {"audio_url": "https://audio.nerranetwork.com/x/Ep.fr.mp3"},
+            "ru": {"audio_url": "https://audio.nerranetwork.com/x/Ep.ru.mp3"},
+        }
+        ep = self._podcast_episode(_render(tr))
+        assert set(ep["availableLanguage"]) == {"en", "fr", "ru"}
+        urls = {m["contentUrl"] for m in ep["associatedMedia"]}
+        assert any(u.endswith(".fr.mp3") for u in urls)
+        assert any(u.endswith(".ru.mp3") for u in urls)
+        langs = {m["inLanguage"] for m in ep["associatedMedia"]}
+        assert langs == {"en", "fr", "ru"}
+
+
+class TestBlogIndexBadges:
+    def _render_index(self, posts):
+        from engine.blog import generate_blog_index_html
+        from generate_html import NETWORK_SHOWS, _get_jinja_env
+        return generate_blog_index_html(posts, NETWORK_SHOWS["tesla"], _get_jinja_env())
+
+    def _post(self, ep, translations=None):
+        p = {"episode_num": ep, "date": "2026-06-15", "title": "A title",
+             "hook": "A hook.", "reading_time_min": 3, "filename": f"ep{ep}.md"}
+        if translations:
+            p["translations"] = translations
+        return p
+
+    def test_badges_shown_when_translations(self):
+        html = self._render_index([self._post(5, {"fr": {"audio_url": "a.fr.mp3"},
+                                                   "zh": {"audio_url": "a.zh.mp3"}})])
+        # The rendered badge ROW (not just the CSS rule) must be present.
+        assert '<span class="blog-idx-langs"' in html
+        assert ">FR<" in html and "中文" in html
+
+    def test_no_badges_for_english_only(self):
+        # CSS defining `.blog-idx-langs`/`.lang-badge` always ships; assert the
+        # rendered badge markup is absent for an English-only post.
+        html = self._render_index([self._post(6)])
+        assert '<span class="blog-idx-langs"' not in html
