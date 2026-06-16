@@ -184,6 +184,50 @@ class TestSummariesIO:
         assert again["podcast"] == "tesla"  # sibling key preserved
         assert again["summaries"][0]["translations"]["fr"]["audio_url"] == "u.fr.mp3"
 
+    def test_upsert_translation_targets_one_record(self, tmp_path: Path):
+        from engine.summaries_io import upsert_translation
+        p = tmp_path / "s.json"
+        p.write_text(json.dumps({
+            "podcast": "tesla",
+            "summaries": [
+                {"episode_num": 10, "audio_url": "a"},
+                {"episode_num": 11, "audio_url": "b"},
+            ],
+        }), encoding="utf-8")
+        ok = upsert_translation(p, 11, "fr", {"audio_url": "b.fr.mp3"})
+        assert ok is True
+        data = json.loads(p.read_text(encoding="utf-8"))
+        assert data["summaries"][1]["translations"]["fr"]["audio_url"] == "b.fr.mp3"
+        assert "translations" not in data["summaries"][0]  # only ep11 touched
+
+    def test_upsert_translation_missing_episode_returns_false(self, tmp_path: Path):
+        from engine.summaries_io import upsert_translation
+        p = tmp_path / "s.json"
+        p.write_text(json.dumps({"podcast": "t", "summaries": [{"episode_num": 1}]}),
+                     encoding="utf-8")
+        assert upsert_translation(p, 999, "fr", {"audio_url": "x"}) is False
+
+    def test_upsert_preserves_concurrently_added_record(self, tmp_path: Path):
+        # Simulates the live English cron appending a NEW episode between a
+        # translation run's initial load and its per-track write. Because
+        # upsert re-reads fresh, the new record must survive.
+        from engine.summaries_io import load_summaries, upsert_translation
+        p = tmp_path / "s.json"
+        p.write_text(json.dumps({"podcast": "t", "summaries": [{"episode_num": 5}]}),
+                     encoding="utf-8")
+        _wrapper, _stale = load_summaries(p)  # translation run's initial snapshot
+        # Concurrent writer appends episode 6.
+        cur = json.loads(p.read_text(encoding="utf-8"))
+        cur["summaries"].append({"episode_num": 6, "audio_url": "new"})
+        p.write_text(json.dumps(cur), encoding="utf-8")
+        # Translation run now writes its track for episode 5.
+        assert upsert_translation(p, 5, "ru", {"audio_url": "5.ru.mp3"}) is True
+        data = json.loads(p.read_text(encoding="utf-8"))
+        nums = {r["episode_num"] for r in data["summaries"]}
+        assert nums == {5, 6}  # episode 6 NOT clobbered
+        ep5 = next(r for r in data["summaries"] if r["episode_num"] == 5)
+        assert ep5["translations"]["ru"]["audio_url"] == "5.ru.mp3"
+
     def test_bare_list_roundtrip(self, tmp_path: Path):
         from engine.summaries_io import load_summaries, save_summaries
         p = tmp_path / "s.json"
