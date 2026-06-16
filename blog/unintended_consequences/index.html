@@ -121,6 +121,25 @@
             background: color-mix(in srgb, var(--show-color) 20%, transparent);
             border-color: var(--show-color);
         }
+        /* Multilingual availability badges (June 2026) */
+        .blog-idx-langs {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin: var(--sp-2) 0 var(--sp-1);
+            color: var(--nn-text-muted);
+        }
+        .blog-idx-langs .lang-badge {
+            font-family: var(--font-ui);
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            padding: 1px 7px;
+            border-radius: 100px;
+            border: 1px solid color-mix(in srgb, var(--show-color) 35%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            background: color-mix(in srgb, var(--show-color) 10%, transparent);
+        }
     </style>
 
 
@@ -172,6 +191,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -516,6 +559,24 @@
     
     <div class="blog-idx-grid">
         
+        <a href="ep031.html" class="blog-idx-card">
+            <div class="blog-idx-card-top">
+                <span class="blog-idx-date">June 16, 2026</span>
+                <span class="blog-idx-ep">Ep 31</span>
+                <span class="blog-idx-reading">3 min</span>
+            </div>
+            <h2>A sedative promoted as safe for pregnant women in the 1950s produced the largest...</h2>
+            
+            <p>A sedative promoted as safe for pregnant women in the 1950s produced the largest drug-related birth-defect epidemic on record before testing rules changed.</p>
+            
+            <span class="blog-idx-langs" aria-label="Also available in other languages">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <span class="lang-badge">FR</span><span class="lang-badge">RU</span><span class="lang-badge">ES</span><span class="lang-badge">中文</span>
+            </span>
+            
+            <span class="blog-idx-read-more">Read article &rarr;</span>
+        </a>
+        
         <a href="ep030.html" class="blog-idx-card">
             <div class="blog-idx-card-top">
                 <span class="blog-idx-date">June 15, 2026</span>
@@ -525,6 +586,7 @@
             <h2>Europe's GDPR required websites to obtain clear consent for tracking cookies — a...</h2>
             
             <p>Europe's GDPR required websites to obtain clear consent for tracking cookies — and produced an internet full of banners that almost no one reads.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -539,6 +601,7 @@
             
             <p>Congress set stricter fuel economy rules for cars than light trucks in 1975, and automakers responded by selling millions of SUVs instead.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -551,6 +614,7 @@
             <h2>Daylight Saving Time was introduced to conserve coal and oil, yet modern evidenc...</h2>
             
             <p>Daylight Saving Time was introduced to conserve coal and oil, yet modern evidence shows it saves almost no energy while raising heart attacks and crashes.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -565,6 +629,7 @@
             
             <p>Western aid meant to build self-sufficient African economies instead left many governments dependent on the next foreign transfer to stay afloat.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -577,6 +642,7 @@
             <h2>The No Child Left Behind Act tied federal funding to test scores to help every c...</h2>
             
             <p>The No Child Left Behind Act tied federal funding to test scores to help every child succeed and instead narrowed what millions of students were taught.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -591,6 +657,7 @@
             
             <p>Rent control was meant to shield tenants from unaffordable rents, yet it repeatedly reduced the supply of rental housing and raised prices for everyone else.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -603,6 +670,7 @@
             <h2>China's one-child policy aimed to ease population pressure but instead produced ...</h2>
             
             <p>China's one-child policy aimed to ease population pressure but instead produced a 30-million-person gender imbalance and a shrinking workforce that will shape t&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -617,6 +685,7 @@
             
             <p>Cash for Clunkers paid Americans to destroy nearly 700,000 old cars in 2009 to revive the economy, but it left low-income buyers facing higher used-car prices f&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -629,6 +698,7 @@
             <h2>Nixon declared the War on Drugs in 1971 to protect families by treating addictio...</h2>
             
             <p>Nixon declared the War on Drugs in 1971 to protect families by treating addiction as crime; five decades later the U.S. prison population had grown sixfold whil&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -643,6 +713,7 @@
             
             <p>California's three-strikes law promised to lock up dangerous repeat offenders — and instead gave life sentences for stealing pizza and videotapes.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -655,6 +726,7 @@
             <h2>Algorithms built to personalize the internet for every user instead narrowed eac...</h2>
             
             <p>Algorithms built to personalize the internet for every user instead narrowed each person’s view to what they had already clicked.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -669,6 +741,7 @@
             
             <p>Wikipedia invited the entire world to write its own encyclopedia, yet the result is an archive that still underrepresents half of humanity.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -681,6 +754,7 @@
             <h2>Ring sold doorbells to keep families safe, but its Neighbors app built a private...</h2>
             
             <p>Ring sold doorbells to keep families safe, but its Neighbors app built a private surveillance grid shared with thousands of police departments.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -695,6 +769,7 @@
             
             <p>Engineers built smartphones to put the world's knowledge in every pocket, and created 50 million tonnes of e-waste a year instead.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -707,6 +782,7 @@
             <h2>PageRank was meant to surface the web’s most relevant pages — and it trained eve...</h2>
             
             <p>PageRank was meant to surface the web’s most relevant pages — and it trained everyone to write for the algorithm instead.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -721,6 +797,7 @@
             
             <p>Ian Goodfellow designed GANs in 2014 to let machines create realistic images from scratch; five years later the same system was generating non-consensual pornog&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -733,6 +810,7 @@
             <h2>Justin Rosenstein built Facebook’s Like button to let friends share quick apprec...</h2>
             
             <p>Justin Rosenstein built Facebook’s Like button to let friends share quick appreciation — and it became the global yardstick for personal worth.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -747,6 +825,7 @@
             
             <p>A designer removed one click to make browsing smoother in 2006 — and helped build the endless feeds that now shape how billions spend their time.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -759,6 +838,7 @@
             <h2>GPS promised to erase every wrong turn, yet it quietly began shrinking the brain...</h2>
             
             <p>GPS promised to erase every wrong turn, yet it quietly began shrinking the brain’s built-in navigation system.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -773,6 +853,7 @@
             
             <p>In September 2006, Facebook rolled out its News Feed feature to give every user a personalized stream of updates rather than forcing them to hunt across separat&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -785,6 +866,7 @@
             <h2>In 1941, a police constable named Albert Alexander lay dying in an Oxford hospit...</h2>
             
             <p>In 1941, a police constable named Albert Alexander lay dying in an Oxford hospital from a simple scratch that had spread infection through his face and bloodstr&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -799,6 +881,7 @@
             
             <p>In the spring of 1939, French troops at Ouvrage Hackenberg rotated through underground barracks connected by electric railways, confident that the 1,500-meter-d&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -811,6 +894,7 @@
             <h2>In July 1960, Egyptian engineers began diverting the Nile at Aswan to lay the fo...</h2>
             
             <p>In July 1960, Egyptian engineers began diverting the Nile at Aswan to lay the foundation of a dam that would finally tame the river’s annual flood. The structur&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -825,6 +909,7 @@
             
             <p>In the spring of 1928, a young engineer named Thomas Midgley Jr. stood in a laboratory in Dayton, Ohio, and demonstrated that a new synthetic gas could be breat&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -837,6 +922,7 @@
             <h2>In the spring of 2003, Barbra Streisand filed a $50 million lawsuit in Los Angel...</h2>
             
             <p>In the spring of 2003, Barbra Streisand filed a $50 million lawsuit in Los Angeles Superior Court to force the removal of a single aerial photograph showing her&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -851,6 +937,7 @@
             
             <p>In January 1920, the day after the 18th Amendment banned the manufacture and sale of intoxicating liquor, Chicago police reported that saloons had simply shutte&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -863,6 +950,7 @@
             <h2>After Allied forces dusted civilians in Naples with DDT in 1944 to halt a typhus...</h2>
             
             <p>After Allied forces dusted civilians in Naples with DDT in 1944 to halt a typhus epidemic, the same persistent chemical that saved lives from insect-borne disea&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -877,6 +965,7 @@
             
             <p>In 1921 Thomas Midgley Jr. added tetraethyl lead to gasoline to silence engine knock, never imagining the additive would raise blood-lead levels in entire gener&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -890,6 +979,7 @@
             
             <p>In 1935, Australia brought 102 cane toads from Hawaii to battle sugarcane beetles — but the toads bred into the billions and killed native predators instead.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -902,6 +992,7 @@
             <h2>Delhi's British government paid for dead cobras to cut snake numbers, but the bo...</h2>
             
             <p>Delhi's British government paid for dead cobras to cut snake numbers, but the bounty led to breeding, and scrapping it released more snakes into the city.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1106,5 +1197,6 @@
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

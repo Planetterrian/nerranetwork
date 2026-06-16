@@ -121,6 +121,25 @@
             background: color-mix(in srgb, var(--show-color) 20%, transparent);
             border-color: var(--show-color);
         }
+        /* Multilingual availability badges (June 2026) */
+        .blog-idx-langs {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin: var(--sp-2) 0 var(--sp-1);
+            color: var(--nn-text-muted);
+        }
+        .blog-idx-langs .lang-badge {
+            font-family: var(--font-ui);
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            padding: 1px 7px;
+            border-radius: 100px;
+            border: 1px solid color-mix(in srgb, var(--show-color) 35%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            background: color-mix(in srgb, var(--show-color) 10%, transparent);
+        }
     </style>
 
 
@@ -172,6 +191,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -516,6 +559,20 @@
     
     <div class="blog-idx-grid">
         
+        <a href="ep054.html" class="blog-idx-card">
+            <div class="blog-idx-card-top">
+                <span class="blog-idx-date">June 16, 2026</span>
+                <span class="blog-idx-ep">Ep 54</span>
+                <span class="blog-idx-reading">3 min</span>
+            </div>
+            <h2>Рынок жилья в Канаде показывает первые признаки оживления — что это значит для покупателей в Ванкуве…</h2>
+            
+            <p>Рынок жилья в Канаде показывает первые признаки оживления — что это значит для покупателей в Ванкувере</p>
+            
+            
+            <span class="blog-idx-read-more">Read article &rarr;</span>
+        </a>
+        
         <a href="ep053.html" class="blog-idx-card">
             <div class="blog-idx-card-top">
                 <span class="blog-idx-date">June 15, 2026</span>
@@ -525,6 +582,7 @@
             <h2>Волна обновления ипотек: как не сдвинуть пенсию из-за новых платежей</h2>
             
             <p>Волна обновления ипотек: как не сдвинуть пенсию из-за новых платежей</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -539,6 +597,7 @@
             
             <p>Долги канадских семей растут быстрее доходов — что это значит для вашего бюджета в Ванкувере</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -551,6 +610,7 @@
             <h2>Почему растущая стоимость развода заставляет многих канадок оставаться в несчастливых браках дольше…</h2>
             
             <p>Почему растущая стоимость развода заставляет многих канадок оставаться в несчастливых браках дольше, чем хотелось бы</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -565,6 +625,7 @@
             
             <p>Bank of Canada готовит решение по ставке — как это отразится на вашей ипотеке в Ванкувере</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -577,6 +638,7 @@
             <h2>Bank of Canada, скорее всего, снова оставит ставку без изменений — что это значит для ипотеки и сбер…</h2>
             
             <p>Bank of Canada, скорее всего, снова оставит ставку без изменений — что это значит для ипотеки и сбережений</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -591,6 +653,7 @@
             
             <p>Сегодня разберёмся, как канадские иммигрантки могут защитить свои сбережения, даже если банковские системы подводят.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -603,6 +666,7 @@
             <h2>RRSP или TFSA: куда положить 15 тысяч долларов при переезде из Британской Колумбии</h2>
             
             <p>RRSP или TFSA: куда положить 15 тысяч долларов при переезде из Британской Колумбии</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -617,6 +681,7 @@
             
             <p>Молодые канадки всё чаще обращаются к ИИ за финансовыми советами — и это может дорого обойтись</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -629,6 +694,7 @@
             <h2>Сегодня разберёмся, как канадские брокеры помогают женщинам инвестировать без ли...</h2>
             
             <p>Сегодня разберёмся, как канадские брокеры помогают женщинам инвестировать без лишних комиссий и почему это важно для финансовой независимости.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -643,6 +709,7 @@
             
             <p>Переплатили в RRSP при увольнении — как вернуть комнату для взносов и не потерять налоговые льготы</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -655,6 +722,7 @@
             <h2>Когда GIC начинает конкурировать с ипотекой: что это значит для ваших сбережений в Ванкувере</h2>
             
             <p>Когда GIC начинает конкурировать с ипотекой: что это значит для ваших сбережений в Ванкувере</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -669,6 +737,7 @@
             
             <p>CRA закрывает все ящики для документов 29 мая — как это повлияет на вашу налоговую декларацию</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -681,6 +750,7 @@
             <h2>FHSA за два года до покупки дома: стоит ли открывать счёт, если доход средний</h2>
             
             <p>FHSA за два года до покупки дома: стоит ли открывать счёт, если доход средний</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -695,6 +765,7 @@
             
             <p>В Британской Колумбии компания маскировала комиссии и предлагала кредиты под 60 % — как не попасть в такую ловушку</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -707,6 +778,7 @@
             <h2>Мировые рынки колеблются, а ваши сбережения в Канаде остаются под защитой — разберёмся, как это рабо…</h2>
             
             <p>Мировые рынки колеблются, а ваши сбережения в Канаде остаются под защитой — разберёмся, как это работает</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -721,6 +793,7 @@
             
             <p>Как защитить свои сбережения от мошенников при поиске работы в Канаде</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -733,6 +806,7 @@
             <h2>Стоит ли сейчас вносить деньги в RRSP, если доход пока небольшой и впереди ещё полтора года до стаби…</h2>
             
             <p>Стоит ли сейчас вносить деньги в RRSP, если доход пока небольшой и впереди ещё полтора года до стабильной работы?</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -747,6 +821,7 @@
             
             <p>Как не растеряться в мире кредитов и сбережений: реальные истории из Ванкувера и простые шаги к спокойствию</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -759,6 +834,7 @@
             <h2>Планируйте налоги уже сейчас, чтобы не потерять деньги в следующем году, и разберитесь, как выгодно…</h2>
             
             <p>Планируйте налоги уже сейчас, чтобы не потерять деньги в следующем году, и разберитесь, как выгодно использовать неожиданные доходы.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -773,6 +849,7 @@
             
             <p>Как выбрать между GIC, HISA и облигациями, чтобы сбережения не теряли ценность</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -785,6 +862,7 @@
             <h2>Вторая работа в Британской Колумбии: как оптимизировать налоги и не получить большой счёт от CRA вес…</h2>
             
             <p>Вторая работа в Британской Колумбии: как оптимизировать налоги и не получить большой счёт от CRA весной</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -799,6 +877,7 @@
             
             <p>После налогового дедлайна CRA упростила исправление деклараций, а ошибки банков с кредитным рейтингом могут повлиять на вашу ипотеку в Ванкувере</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -811,6 +890,7 @@
             <h2>Как подготовиться к обновлению ипотеки в 2026 году и не потерять контроль над бю...</h2>
             
             <p>Как подготовиться к обновлению ипотеки в 2026 году и не потерять контроль над бюджетом</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -825,6 +905,7 @@
             
             <p>Bank of Canada готовит объявление о ключевой ставке — как это может изменить ваши платежи по ипотеке в Ванкувере</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -837,6 +918,7 @@
             <h2>Bank of Canada оставил ставку на уровне 2¼%</h2>
             
             <p>Bank of Canada оставил ставку на уровне 2¼% — что это значит для вашей ипотеки и сбережений в Ванкувере</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -851,6 +933,7 @@
             
             <p>Канада запускает свой суверенный фонд: что это значит для обычных семей в Ванкувере</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -863,6 +946,7 @@
             <h2>Финансы Просто — Ep 27</h2>
             
             <p># Финансы Просто</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -877,6 +961,7 @@
             
             <p># Финансы Просто</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -889,6 +974,7 @@
             <h2>Финансы Просто — Ep 25</h2>
             
             <p># Финансы Просто</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -903,6 +989,7 @@
             
             <p>Что сегодня важного:</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -915,6 +1002,7 @@
             <h2>Что сегодня важного:</h2>
             
             <p>CREA снизила прогноз продаж жилья на 2026 год — что это значит для Ванкувера</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -929,6 +1017,7 @@
             
             <p># Финансы Просто</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -941,6 +1030,7 @@
             <h2>Финансы Просто — Ep 21</h2>
             
             <p># Финансы Просто</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -955,6 +1045,7 @@
             
             <p># Финансы Просто</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -967,6 +1058,7 @@
             <h2>Наследство после тяжёлой утраты: как правильно начать, если вы никогда не занимались финансами</h2>
             
             <p>Наследство после тяжёлой утраты: как правильно начать, если вы никогда не занимались финансами</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -981,6 +1073,7 @@
             
             <p>Как не потерять деньги при оформлении RESP и EI — реальные истории от мам из Ванкувера</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -993,6 +1086,7 @@
             <h2>Bank of Canada следит за войной на Ближнем Востоке, но держит ставки — что это значит для вашей ипот…</h2>
             
             <p>Bank of Canada следит за войной на Ближнем Востоке, но держит ставки — что это значит для вашей ипотеки</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1007,6 +1101,7 @@
             
             <p>Ontario расширяет налоговую скидку на новые дома — что это значит для рынка недвижимости</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1019,6 +1114,7 @@
             <h2>Финансы Просто — Ep 15</h2>
             
             <p>Что сегодня важного:</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1033,6 +1129,7 @@
             
             <p>Как управлять семейным бюджетом в условиях высокой стоимости жизни в Ванкувере и Нижнем Материке.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1045,6 +1142,7 @@
             <h2>Как найти ипотеку, когда банки говорят «нет»: история одной семьи из Эдмонтона</h2>
             
             <p>Как найти ипотеку, когда банки говорят «нет»: история одной семьи из Эдмонтона</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1059,6 +1157,7 @@
             
             <p>Как открыть TFSA с нуля и пользоваться им с максимальной выгодой</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1071,6 +1170,7 @@
             <h2>Как открыть TFSA с нуля: пошаговый гид для каждой женщины в Ванкувере</h2>
             
             <p>Как открыть TFSA с нуля: пошаговый гид для каждой женщины в Ванкувере</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1085,6 +1185,7 @@
             
             <p>Почему ставки по ипотеке снова могут вырасти и что это значит для вашей семьи в Ванкувере</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1097,6 +1198,7 @@
             <h2>Банк Канады оставил ключевую ставку на уровне 2,25% — что это значит для вашей ипотеки и сбережений</h2>
             
             <p>Банк Канады оставил ключевую ставку на уровне 2,25% — что это значит для вашей ипотеки и сбережений</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1111,6 +1213,7 @@
             
             <p>Как открыть и использовать TFSA — пошаговое руководство от нуля</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1123,6 +1226,7 @@
             <h2>Банк России может снизить ключевую ставку 20 марта — это повлияет на рубль и ваши переводы семьям в…</h2>
             
             <p>Банк России может снизить ключевую ставку 20 марта — это повлияет на рубль и ваши переводы семьям в Россию или Украину.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1327,5 +1431,6 @@
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

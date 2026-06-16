@@ -121,6 +121,25 @@
             background: color-mix(in srgb, var(--show-color) 20%, transparent);
             border-color: var(--show-color);
         }
+        /* Multilingual availability badges (June 2026) */
+        .blog-idx-langs {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin: var(--sp-2) 0 var(--sp-1);
+            color: var(--nn-text-muted);
+        }
+        .blog-idx-langs .lang-badge {
+            font-family: var(--font-ui);
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            padding: 1px 7px;
+            border-radius: 100px;
+            border: 1px solid color-mix(in srgb, var(--show-color) 35%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            background: color-mix(in srgb, var(--show-color) 10%, transparent);
+        }
     </style>
 
 
@@ -172,6 +191,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -516,6 +559,20 @@
     
     <div class="blog-idx-grid">
         
+        <a href="ep041.html" class="blog-idx-card">
+            <div class="blog-idx-card-top">
+                <span class="blog-idx-date">June 16, 2026</span>
+                <span class="blog-idx-ep">Ep 41</span>
+                <span class="blog-idx-reading">3 min</span>
+            </div>
+            <h2>Медведь</h2>
+            
+            <p>Медведь</p>
+            
+            
+            <span class="blog-idx-read-more">Read article &rarr;</span>
+        </a>
+        
         <a href="ep040.html" class="blog-idx-card">
             <div class="blog-idx-card-top">
                 <span class="blog-idx-date">June 15, 2026</span>
@@ -525,6 +582,7 @@
             <h2>Today we’re learning Russian words that will help you talk about journeys, plane...</h2>
             
             <p>Today we’re learning Russian words that will help you talk about journeys, planes, trains, and adventures!</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -539,6 +597,7 @@
             
             <p>Хлеб</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -551,6 +610,7 @@
             <h2>Today we learn simple Russian weather words so you can describe sunny days, rainy afternoons, and sn…</h2>
             
             <p>Today we learn simple Russian weather words so you can describe sunny days, rainy afternoons, and snowy surprises like a local!</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -565,6 +625,7 @@
             
             <p>Today we explore the wonderful world of animals with fun Russian words that every kid and beginner can use right away!</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -577,6 +638,7 @@
             <h2>Today we feast on delicious everyday Russian food words that help you talk about...</h2>
             
             <p>Today we feast on delicious everyday Russian food words that help you talk about meals like a local!</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -591,6 +653,7 @@
             
             <p>Today we explore the wonderful world of animals in Russian, turning everyday creatures into your new favorite vocabulary friends.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -603,6 +666,7 @@
             <h2>кит</h2>
             
             <p>Today we explore the wonderful world of animals with fun Russian words that every beginner can use right away.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -617,6 +681,7 @@
             
             <p>Today we discover fun Russian words for animals while learning how Russians talk about their favorite pets and wild creatures.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -629,6 +694,7 @@
             <h2>Blast off with us today as we learn Russian words that will take you straight to...</h2>
             
             <p>Blast off with us today as we learn Russian words that will take you straight to the stars and planets!</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -643,6 +709,7 @@
             
             <p>Дождь</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -655,6 +722,7 @@
             <h2>Привет, Русский! — Episode Plan</h2>
             
             <p>- Russian (Cyrillic): космос</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -669,6 +737,7 @@
             
             <p>- Russian (Cyrillic): космос</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -681,6 +750,7 @@
             <h2>Привет, Русский! — Episode Plan</h2>
             
             <p>- Russian (Cyrillic): солнце</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -695,6 +765,7 @@
             
             <p>- Russian (Cyrillic): хлеб</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -707,6 +778,7 @@
             <h2>Привет, Русский! — Episode Plan</h2>
             
             <p>- Russian (Cyrillic): космос</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -721,6 +793,7 @@
             
             <p>- Russian (Cyrillic): Погода</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -733,6 +806,7 @@
             <h2>Привет, Русский! — Episode Plan</h2>
             
             <p>- Russian (Cyrillic): космос</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -747,6 +821,7 @@
             
             <p>- Russian (Cyrillic): космос</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -759,6 +834,7 @@
             <h2>Привет, Русский! — Episode Plan</h2>
             
             <p>- Russian (Cyrillic): птица</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -773,6 +849,7 @@
             
             <p>- Russian (Cyrillic): хлеб</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -785,6 +862,7 @@
             <h2>"Zhivotnoye" comes from "zhivot" (belly or life) — picture a lively animal with a big belly!</h2>
             
             <p>"Zhivotnoye" comes from "zhivot" (belly or life) — picture a lively animal with a big belly!</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -799,6 +877,7 @@
             
             <p>- Russian (Cyrillic): Космос</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -811,6 +890,7 @@
             <h2>Space (Космос)</h2>
             
             <p>Space (Космос)</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -825,6 +905,7 @@
             
             <p>Space</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -837,6 +918,7 @@
             <h2>Weather</h2>
             
             <p>Weather</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -851,6 +933,7 @@
             
             <p>Weather</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -863,6 +946,7 @@
             <h2>Animals</h2>
             
             <p>Animals</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -877,6 +961,7 @@
             
             <p>Weather</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -889,6 +974,7 @@
             <h2>Space (Космос)</h2>
             
             <p>Space (Космос)</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -903,6 +989,7 @@
             
             <p>School</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -915,6 +1002,7 @@
             <h2>Spring & Nature (Весна и природа)</h2>
             
             <p>Spring & Nature (Весна и природа)</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -929,6 +1017,7 @@
             
             <p>Space (Космос)</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -941,6 +1030,7 @@
             <h2>Art (Искусство)</h2>
             
             <p>Art (Искусство)</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -955,6 +1045,7 @@
             
             <p>Weather (Погода)</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -967,6 +1058,7 @@
             <h2>Travel (Путешествие)</h2>
             
             <p>Travel (Путешествие)</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -981,6 +1073,7 @@
             
             <p>Technology (Технологии)</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -993,6 +1086,7 @@
             <h2>Animals (Животные)</h2>
             
             <p>Animals (Животные)</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1007,6 +1101,7 @@
             
             <p>Space (Космос)</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1020,6 +1115,7 @@
             
             <p>Animals (Животные)</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1032,6 +1128,7 @@
             <h2>Winter Sports</h2>
             
             <p>Winter Sports</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1236,5 +1333,6 @@
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

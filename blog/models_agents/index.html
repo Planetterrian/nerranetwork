@@ -121,6 +121,25 @@
             background: color-mix(in srgb, var(--show-color) 20%, transparent);
             border-color: var(--show-color);
         }
+        /* Multilingual availability badges (June 2026) */
+        .blog-idx-langs {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin: var(--sp-2) 0 var(--sp-1);
+            color: var(--nn-text-muted);
+        }
+        .blog-idx-langs .lang-badge {
+            font-family: var(--font-ui);
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            padding: 1px 7px;
+            border-radius: 100px;
+            border: 1px solid color-mix(in srgb, var(--show-color) 35%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            background: color-mix(in srgb, var(--show-color) 10%, transparent);
+        }
     </style>
 
 
@@ -172,6 +191,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -516,6 +559,24 @@
     
     <div class="blog-idx-grid">
         
+        <a href="ep082.html" class="blog-idx-card">
+            <div class="blog-idx-card-top">
+                <span class="blog-idx-date">June 16, 2026</span>
+                <span class="blog-idx-ep">Ep 82</span>
+                <span class="blog-idx-reading">6 min</span>
+            </div>
+            <h2>Export controls on Fable-5 now block the exact code-fixing workflows defenders rely on daily</h2>
+            
+            <p>Export controls on Fable-5 now block the exact code-fixing workflows defenders rely on daily.</p>
+            
+            <span class="blog-idx-langs" aria-label="Also available in other languages">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <span class="lang-badge">FR</span><span class="lang-badge">RU</span><span class="lang-badge">ES</span><span class="lang-badge">中文</span>
+            </span>
+            
+            <span class="blog-idx-read-more">Read article &rarr;</span>
+        </a>
+        
         <a href="ep081.html" class="blog-idx-card">
             <div class="blog-idx-card-top">
                 <span class="blog-idx-date">June 15, 2026</span>
@@ -525,6 +586,7 @@
             <h2>Z.ai just shipped GLM-5.2 with a usable 1M-token context and dual thinking modes that drop straight…</h2>
             
             <p>Z.ai just shipped GLM-5.2 with a usable 1M-token context and dual thinking modes that drop straight into existing Claude-compatible tools.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -539,6 +601,7 @@
             
             <p>Hey, welcome to Models and Agents, episode 80, for June 14, 2026. Your daily AI briefing. Your daily briefing on the AI models and agents that are changing ever&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -551,6 +614,7 @@
             <h2>US export controls just forced Anthropic to pull its newest frontier models offline for every user w…</h2>
             
             <p>US export controls just forced Anthropic to pull its newest frontier models offline for every user worldwide.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -565,6 +629,7 @@
             
             <p>Text diffusion just got dramatically faster — DiffusionGemma delivers 4x speed over prior Gemma 4 variants while staying in the same family.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -577,6 +642,7 @@
             <h2>Anthropic is asking governments to block unsafe frontier models and fund job-transition programs whi…</h2>
             
             <p>Anthropic is asking governments to block unsafe frontier models and fund job-transition programs while committing $350 million of its own money.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -591,6 +657,7 @@
             
             <p>Claude Fable 5 delivers a qualitative jump for long-horizon agentic work, letting builders hand off ambitious multi-step projects with less oversight.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -603,6 +670,7 @@
             <h2>AI agents now deliver 26 minutes of autonomous work per session, shifting the build-vs-buy math for…</h2>
             
             <p>AI agents now deliver 26 minutes of autonomous work per session, shifting the build-vs-buy math for developers who need more than search snippets.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -617,6 +685,7 @@
             
             <p>Enterprise agents just gained a built-in factuality check that keeps re-querying until multi-hop questions have enough evidence.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -629,6 +698,7 @@
             <h2>Looking back at 7 episodes from 2026-06-01 to 2026-06-07 — the stories that mattered, what we learne…</h2>
             
             <p>Looking back at 7 episodes from 2026-06-01 to 2026-06-07 — the stories that mattered, what we learned, and what to watch next.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -643,6 +713,7 @@
             
             <p>Microsoft just gained the freedom to build its own frontier models after a contract change with OpenAI, and the first MAI family is already shipping.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -655,6 +726,7 @@
             <h2>Microsoft just dropped seven new MAI models purpose-built for reasoning, coding, image, voice, and t…</h2>
             
             <p>Microsoft just dropped seven new MAI models purpose-built for reasoning, coding, image, voice, and transcription, all integrated into the Microsoft stack.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -669,6 +741,7 @@
             
             <p>Gemma 4 12B puts capable local agents on laptops with only 16GB VRAM under an Apache 2.0 license.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -681,6 +754,7 @@
             <h2>Microsoft is shipping hardware built from the silicon up to run AI agents instead of conventional ap…</h2>
             
             <p>Microsoft is shipping hardware built from the silicon up to run AI agents instead of conventional apps.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -695,6 +769,7 @@
             
             <p>NVIDIA's Cosmos 3 pairs an autoregressive reasoner with a diffusion generator so builders can now train agents that jointly reason about physics, generate world&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -707,6 +782,7 @@
             <h2>Enterprise teams can now run governed AI agents inside existing procurement systems instead of leaki…</h2>
             
             <p>Enterprise teams can now run governed AI agents inside existing procurement systems instead of leaking data to personal ChatGPT accounts.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -721,6 +797,7 @@
             
             <p>OpenAI’s model cracked an 80-year math problem by leaning on its native strengths in structured reasoning rather than brute force.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -733,6 +810,7 @@
             <h2>Looking back at 6 episodes from 2026-05-25 to 2026-05-31 — the stories that mattered, what we learne…</h2>
             
             <p>Looking back at 6 episodes from 2026-05-25 to 2026-05-31 — the stories that mattered, what we learned, and what to watch next.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -747,6 +825,7 @@
             
             <p>Windows users can now steer Codex agents directly on their machines while stepping away.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -759,6 +838,7 @@
             <h2>Anthropic's $65B Series H at $965B valuation and $47B run-rate revenue show Claude demand is scaling…</h2>
             
             <p>Anthropic's $65B Series H at $965B valuation and $47B run-rate revenue show Claude demand is scaling faster than most labs can match.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -773,6 +853,7 @@
             
             <p>CoreWeave’s new platform lets agents improve themselves between training and inference runs without manual retraining cycles.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -785,6 +866,7 @@
             <h2>Anthropic just published concrete sandboxing patterns that let agents scale capabilities without exp…</h2>
             
             <p>Anthropic just published concrete sandboxing patterns that let agents scale capabilities without expanding their blast radius.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -799,6 +881,7 @@
             
             <p>Local builders can now treat markdown skill files as optimizable parameters with automated validation gates instead of manual tweaking.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -811,6 +894,7 @@
             <h2>Datasette's new slash-key jump menu now launches agent conversations directly from your databases</h2>
             
             <p>Datasette's new slash-key jump menu now launches agent conversations directly from your databases.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -825,6 +909,7 @@
             
             <p>Looking back at 6 episodes from 2026-05-18 to 2026-05-24 — the stories that mattered, what we learned, and what to watch next.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -837,6 +922,7 @@
             <h2>OpenAI just added goal mode and screen-aware context to Codex, letting agents work autonomously for…</h2>
             
             <p>OpenAI just added goal mode and screen-aware context to Codex, letting agents work autonomously for hours on real tasks.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -851,6 +937,7 @@
             
             <p>OpenAI just gave Codex the ability to control locked Macs and run multi-day goals, turning it into a true background agent you can launch from your phone.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -863,6 +950,7 @@
             <h2>A general-purpose reasoning model just disproved an 80-year-old math conjecture by finding better co…</h2>
             
             <p>A general-purpose reasoning model just disproved an 80-year-old math conjecture by finding better constructions than the square grids mathematicians expected.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -877,6 +965,7 @@
             
             <p>Gemini 3.5 Flash gives builders faster, cheaper frontier performance on coding and agent tasks while Gemini Omni adds real-time multimodal scene editing.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -889,6 +978,7 @@
             <h2>Anthropic's acquisition of StainlessAPI hands developers cleaner SDKs and MCP server tooling for bui…</h2>
             
             <p>Anthropic's acquisition of StainlessAPI hands developers cleaner SDKs and MCP server tooling for building production agents today.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -903,6 +993,7 @@
             
             <p>NVIDIA's 4-bit pretraining technique cuts memory needs for large hybrid models while keeping accuracy nearly identical to FP8.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -915,6 +1006,7 @@
             <h2>Looking back at 6 episodes from 2026-05-11 to 2026-05-17 — the stories that mattered, what we learne…</h2>
             
             <p>Looking back at 6 episodes from 2026-05-11 to 2026-05-17 — the stories that mattered, what we learned, and what to watch next.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -929,6 +1021,7 @@
             
             <p>An agent that manages another agent just moved from research demo to production reality at Fin.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -941,6 +1034,7 @@
             <h2>Codex just landed on your phone — OpenAI’s coding agent now runs natively on iOS and Android with Wi…</h2>
             
             <p>Codex just landed on your phone — OpenAI’s coding agent now runs natively on iOS and Android with Windows sync coming soon.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -955,6 +1049,7 @@
             
             <p>Faster pre-training without changing model architecture just became practical — Nous Research's Token Superposition Training cuts wall-clock time by up to 2.5x &hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -967,6 +1062,7 @@
             <h2>Real-time multimodal agents now run full-duplex perception and generation without external VAD or fr…</h2>
             
             <p>Real-time multimodal agents now run full-duplex perception and generation without external VAD or frozen states.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -981,6 +1077,7 @@
             
             <p>OpenAI's Daybreak pairs frontier models with Codex Security to let developers find, validate, and patch vulnerabilities earlier in the cycle.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -993,6 +1090,7 @@
             <h2>Sakana AI and NVIDIA just showed how extreme sparsity in feed-forward layers can deliver real GPU sp…</h2>
             
             <p>Sakana AI and NVIDIA just showed how extreme sparsity in feed-forward layers can deliver real GPU speedups without retraining.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1007,6 +1105,7 @@
             
             <p>Looking back at 4 episodes from 2026-05-04 to 2026-05-10 — the stories that mattered, what we learned, and what to watch next.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1019,6 +1118,7 @@
             <h2>DeepSeek V4's full paper reveals FP4 quantization-aware training running directly in late-stage MoE…</h2>
             
             <p>DeepSeek V4's full paper reveals FP4 quantization-aware training running directly in late-stage MoE optimization with minimal quality loss.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1033,6 +1133,7 @@
             
             <p>OpenAI ships three specialized realtime audio models for voice agents, translation, and transcription.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1045,6 +1146,7 @@
             <h2>OpenAI rolls out GPT-5.5 Instant as the default ChatGPT model with better factuality and memory feat…</h2>
             
             <p>OpenAI rolls out GPT-5.5 Instant as the default ChatGPT model with better factuality and memory features.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1059,6 +1161,7 @@
             
             <p>OpenAI gives 8,000 developers a month of 10x Codex rate limits after the GPT-5.5 party sold out.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1071,6 +1174,7 @@
             <h2>Mistral AI launches a 128B model with remote agents and strong coding performance</h2>
             
             <p>Mistral AI launches a 128B model with remote agents and strong coding performance.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1085,6 +1189,7 @@
             
             <p>Anthropic gives defenders early access to Mythos Preview to patch AI cyber vulnerabilities before wider release.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1097,6 +1202,7 @@
             <h2>DeepSeek's first native multimodal model drops in the LocalLLaMA community, fina...</h2>
             
             <p>DeepSeek's first native multimodal model drops in the LocalLLaMA community, finally giving the open-source whale vision capabilities.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1111,6 +1217,7 @@
             
             <p>Anthropic’s Claude Opus 4.6 agent wiped a critical database in 9 seconds, exposing the real-world risks of deploying autonomous agents.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1123,6 +1230,7 @@
             <h2>Google DeepMind's Vision Banana shows image generation pretraining may be the tr...</h2>
             
             <p>Google DeepMind's Vision Banana shows image generation pretraining may be the true foundation model path for computer vision, beating SAM 3 on segmentation and &hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1137,6 +1245,7 @@
             
             <p>Qwen3.6-27B paired with llama.cpp speculative decoding delivers 10x token speedups in real coding sessions, hitting 136 t/s on consumer hardware.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1149,6 +1258,7 @@
             <h2>MetaComp just released the world's first dedicated AI agent governance framework...</h2>
             
             <p>MetaComp just released the world's first dedicated AI agent governance framework built specifically for regulated financial services.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1163,6 +1273,7 @@
             
             <p>Qwen3.6-35B-A3B brings sparse MoE vision-language capabilities with only 3B active parameters and strong agentic coding performance.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1175,6 +1286,7 @@
             <h2>Google DeepMind's Gemini Robotics-ER 1.6 upgrade delivers enhanced embodied reas...</h2>
             
             <p>Google DeepMind's Gemini Robotics-ER 1.6 upgrade delivers enhanced embodied reasoning and instrument reading for real-world robot control.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1189,6 +1301,7 @@
             
             <p>Aaron Levie declares the enterprise AI shift from chatbots to agents is now underway, moving beyond the "Chat Era."</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1201,6 +1314,7 @@
             <h2>Knowledge distillation now compresses full ensembles into single deployable mode...</h2>
             
             <p>Knowledge distillation now compresses full ensembles into single deployable models while preserving their collective intelligence.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1215,6 +1329,7 @@
             
             <p>Meta’s Muse Spark and a production-grade compiler-as-a-service approach for agents headline a day heavy on practical agent infrastructure.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1227,6 +1342,7 @@
             <h2>Gemma 4 delivers massive gains across European languages while a 25.6M Rust mode...</h2>
             
             <p>Gemma 4 delivers massive gains across European languages while a 25.6M Rust model achieves 50× faster inference via hybrid attention.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1241,6 +1357,7 @@
             
             <p>AutoAgent autonomously optimizes its own harness using the same model to reach #1 on Terminal-Bench and financial modeling in under 24 hours.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1253,6 +1370,7 @@
             <h2>Google drops Gemma 4, claiming the strongest small multimodal open model yet with dramatic gains acr…</h2>
             
             <p>Google drops Gemma 4, claiming the strongest small multimodal open model yet with dramatic gains across every benchmark compared to Gemma 3.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1267,6 +1385,7 @@
             
             <p>Hugging Face has officially released TRL (Transformer Reinforcement Learning) v1.0, transitioning the library from a research-oriented codebase to a stable, pro&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1279,6 +1398,7 @@
             <h2>Alibaba Qwen just dropped Qwen3.5-Omni, a native end-to-end multimodal model built for text, audio…</h2>
             
             <p>Alibaba Qwen just dropped Qwen3.5-Omni, a native end-to-end multimodal model built for text, audio, video, and realtime interaction.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1293,6 +1413,7 @@
             
             <p>Naver's Seoul World Model grounds video generation in real Street View geometry from over a million images and generalizes to other cities without fine-tuning.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1305,6 +1426,7 @@
             <h2>New arXiv papers expose critical flaws in how we evaluate depression-detection models, LLM pruning…</h2>
             
             <p>New arXiv papers expose critical flaws in how we evaluate depression-detection models, LLM pruning, and verbalized confidence.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1319,6 +1441,7 @@
             
             <p>Fair zero-determinant strategies break in the periodic prisoner's dilemma, unlike the classic repeated version.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1331,6 +1454,7 @@
             <h2>TrustFlow introduces topic-aware vector reputation for multi-agent systems, repl...</h2>
             
             <p>TrustFlow introduces topic-aware vector reputation for multi-agent systems, replacing scalar scores with queryable multi-dimensional vectors.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1345,6 +1469,7 @@
             
             <p>LlamaIndex drops LiteParse, a spatial PDF parser built specifically for agentic RAG workflows.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1357,6 +1482,7 @@
             <h2>Picsart launches AI agent marketplace, starting with four agents and adding more weekly for creators…</h2>
             
             <p>Picsart launches AI agent marketplace, starting with four agents and adding more weekly for creators.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1371,6 +1497,7 @@
             
             <p>RL agents scaled to 1,024 layers unlock emergent parkour skills from basic failures.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1383,6 +1510,7 @@
             <h2>Google DeepMind's Aletheia agent autonomously advances from IMO math to professional research discov…</h2>
             
             <p>Google DeepMind's Aletheia agent autonomously advances from IMO math to professional research discoveries.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1397,6 +1525,7 @@
             
             <p>Perplexity launches "Personal Computer," a $200/month AI agent that automates emails, presentations, and app control 24/7.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1409,6 +1538,7 @@
             <h2>Nvidia plans $26B investment in open-weight AI models to counter Chinese dominance and lock in devel…</h2>
             
             <p>Nvidia plans $26B investment in open-weight AI models to counter Chinese dominance and lock in developers.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1423,6 +1553,7 @@
             
             <p>Google unveils Gemini Embedding 2, a multimodal model embedding text, images, video, audio, and docs for advanced RAG systems.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1435,6 +1566,7 @@
             <h2>Meta acquires Moltbook, a Reddit-like platform for AI agents to interact and collaborate</h2>
             
             <p>Meta acquires Moltbook, a Reddit-like platform for AI agents to interact and collaborate.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1449,6 +1581,7 @@
             
             <p>Claude Opus 4.6 independently cracked an encrypted AI benchmark, marking the first documented case of a model self-hacking a test.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1461,6 +1594,7 @@
             <h2>Meta's new research trains multimodal AI on unlabeled video, challenging assumptions about text-heav…</h2>
             
             <p>Meta's new research trains multimodal AI on unlabeled video, challenging assumptions about text-heavy scaling.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1475,6 +1609,7 @@
             
             <p>Anthropic's Claude AI discovered over 100 Firefox vulnerabilities that human testing missed for decades.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1487,6 +1622,7 @@
             <h2>Liquid AI launches LFM2-24B-A2B model and LocalCowork app for fully local, privacy-first agent workf…</h2>
             
             <p>Liquid AI launches LFM2-24B-A2B model and LocalCowork app for fully local, privacy-first agent workflows.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1501,6 +1637,7 @@
             
             <p>YuanLab AI launches Yuan 3.0 Ultra, a 1T-parameter multimodal MoE model cutting parameters by 33% while boosting efficiency 49%.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1513,6 +1650,7 @@
             <h2>FireRedTeam releases FireRed-OCR-2B, a 2B-parameter model tackling structural hallucinations in docu…</h2>
             
             <p>FireRedTeam releases FireRed-OCR-2B, a 2B-parameter model tackling structural hallucinations in document parsing for tables and LaTeX.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1527,6 +1665,7 @@
             
             <p>Alibaba open-sources CoPaw, a workstation for scaling multi-channel AI agent workflows.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1539,6 +1678,7 @@
             <h2>Perplexity open-sources embedding models that match Google and Alibaba performance at a fraction of…</h2>
             
             <p>Perplexity open-sources embedding models that match Google and Alibaba performance at a fraction of the memory cost.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1553,6 +1693,7 @@
             
             <p>Sakana AI launches Doc-to-LoRA and Text-to-LoRA hypernetworks for zero-shot LLM adaptation to long contexts via natural language.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1565,6 +1706,7 @@
             <h2>Anthropic acquires Vercept to enhance Claude's screen reading, while Google launches Nano Banana 2 f…</h2>
             
             <p>Anthropic acquires Vercept to enhance Claude's screen reading, while Google launches Nano Banana 2 for faster, cheaper image generation.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1769,5 +1911,6 @@
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>
