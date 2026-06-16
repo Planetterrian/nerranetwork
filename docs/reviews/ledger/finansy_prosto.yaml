@@ -1,0 +1,62 @@
+# Review ledger for finansy_prosto. Schema: docs/reviews/ledger/README.md
+reviews:
+  - date: 2026-06-16
+    pr: 658
+    doc: docs/reviews/finansy_prosto_review_2026_06_16.md
+    summary: >
+      First DEDICATED FP pass (June 10 covered FP+PR together). Scored the
+      June-10 floor-raise as a MISS (episodes still ~5 min / ~700w because the
+      podcast tracks a ~700w digest and may not pad). Shipped: localized the
+      English YouTube call-out to Russian for the Olya voice; stripped the "@"
+      sigil the TTS voiced as "at" ("...YouTube at at Nerra Network", 75+
+      times across 6 shows); cadence-neutral FP closings (was "до завтра" on an
+      even-days show); _extract_hook now recognizes the Russian "ЗАГОЛОВОК:"
+      label (stops a wasted structural regen every episode); de-Tesla'd the
+      structural-retry suffix; deepened the digest (3-4 tips / 3 quick-news /
+      5-7 articles) to re-attack under-length at the digest, where the content
+      is (69-129 articles/day).
+    shipped:
+      - Russian YouTube call-out for FP (engine/intros._RUSSIAN_SPOKEN_SHOWS)
+      - "@" stripped from spoken handle network-wide (fixes "at at" stutter)
+      - cadence-neutral FP closings ("до встречи" replaces "до завтра")
+      - _extract_hook matches "HOOK|ЗАГОЛОВОК"
+      - structural-retry suffix de-Tesla'd (generic section language)
+      - digest prompt: 3-4 tips, 3 quick-news, 5-7 articles (matches podcast min-3)
+    deferred:
+      - podcast-prompt length-target reconciliation (1300-1700 unreachable from ~700w digest) — re-score after digest-depth lands
+      - digest-stage expansion retry (standing network lever, shared with FF/UC/FPD)
+      - schedule anomaly: Ep53 aired Jun 15 (odd) — operator to confirm even-days dispatch (not a pipeline bug)
+    predictions:
+      - metric: transcripts ending with an English YouTube call-out (FP)
+        baseline: "5/5 recent FP episodes (English on the Olya voice)"
+        expected: "0 post-merge; the call-out is Russian ('Ссылка в описании выпуска')"
+        verdict: pending
+        evidence: null
+      - metric: episodes voicing "at at Nerra …" (network-wide)
+        baseline: "75+ across 6 shows (49 'at at Nerra Network', 8+10 'Nerra RU')"
+        expected: "0 post-merge; handle spoken without the '@' sigil"
+        verdict: pending
+        evidence: null
+      - metric: FP transcripts saying "до завтра" in the closing
+        baseline: "present in both closing-pool variants (even-days show)"
+        expected: "0 post-merge; closings cadence-neutral ('до встречи')"
+        verdict: pending
+        evidence: null
+      - metric: FP episodes with digest_structural_regen=true
+        baseline: "10/10 (Ep45-54, every episode — ЗАГОЛОВОК hook unrecognized)"
+        expected: "0 (or near 0) post-merge — ЗАГОЛОВОК now recognized"
+        verdict: pending
+        evidence: null
+      - metric: median FP _tts.txt words / audio minutes, last ~5 post-merge eps
+        baseline: "~700w / ~5.0 min (Ep50-54)"
+        expected: ">= 950w / >= 7 min on normal-news even-days; not lower than baseline"
+        verdict: pending
+        evidence: "Clean --test A/B not possible Jun 16 (news pool drained by real Ep54 + dedup). Score on Jun 18/20."
+      - metric: FP practical-tips count per episode (digest)
+        baseline: "2-3 (digest) vs podcast's required minimum of 3"
+        expected: ">= 3 tips every episode"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
+do_not_retry: []

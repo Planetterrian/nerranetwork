@@ -1670,16 +1670,24 @@ def run(args: argparse.Namespace) -> None:
                     "; ".join(_struct_defects),
                 )
                 metrics.record("digest_structural_regen", True)
+                # The corrective instruction is GENERIC — it used to name
+                # Tesla's specific sections ("Top 12 News Items, Tesla X
+                # Takeover…"), which were nonsensical for the other 12 shows
+                # that hit this gate (Финансы Просто regenerated every episode
+                # against Tesla section names). The formatting template above
+                # already lists each show's real mandatory sections; point at
+                # those instead.
                 _struct_suffix = (
                     "\n\nCRITICAL: Your previous attempt was structurally "
                     "invalid: " + "; ".join(_struct_defects) + ". You MUST "
-                    "output a one-sentence **HOOK:** line right after the "
-                    "date/price block, AND fill EVERY mandatory section "
-                    "(Top 12 News Items, Tesla X Takeover, Short Spot, Tesla "
-                    "First Principles) with real content. Do NOT leave any "
-                    "mandatory section empty and do NOT omit the HOOK. Use the "
-                    "available articles to write any thin section with extra "
-                    "depth rather than leaving it blank."
+                    "output the one-sentence hook line at the very top "
+                    "(immediately after the date/price block, using the exact "
+                    "hook label the template above specifies), AND fill EVERY "
+                    "mandatory section from the formatting template above with "
+                    "real content. Do NOT leave any mandatory section empty "
+                    "and do NOT omit the hook. Use the available articles to "
+                    "write any thin section with extra depth rather than "
+                    "leaving it blank."
                 )
                 try:
                     with metrics.stage("generate_digest_structural_retry"):
@@ -3348,6 +3356,11 @@ def _extract_hook(digest: str) -> str | None:
     The digest prompts instruct the LLM to include a line like:
         **HOOK:** Scientists just discovered a new way to...
 
+    The Russian shows (Финансы Просто / Привет, Русский!) label the same
+    line ``**ЗАГОЛОВОК:**``; both are recognized so the structural-integrity
+    gate doesn't fire a wasted regeneration on every Russian episode (and
+    the episode title doesn't fall back to a generic "Выпуск N — date").
+
     Falls back to the first top-of-digest blockquote (``> **<text>**``)
     that appears before any ``###`` section heading. Narrative shows
     (Unintended Consequences) occasionally drop the ``**HOOK:**`` label
@@ -3360,7 +3373,7 @@ def _extract_hook(digest: str) -> str | None:
     import re
 
     for line in digest.splitlines():
-        m = re.match(r"^\s*\*{0,2}HOOK:?\*{0,2}\s*(.+)", line, re.IGNORECASE)
+        m = re.match(r"^\s*\*{0,2}(?:HOOK|ЗАГОЛОВОК):?\*{0,2}\s*(.+)", line, re.IGNORECASE)
         if m:
             hook = m.group(1).strip()
             # Strip leftover markdown/brackets the LLM sometimes wraps

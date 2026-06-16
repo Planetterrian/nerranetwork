@@ -217,8 +217,31 @@ nerranetwork/
   Uses **ElevenLabs TTS**. X posting disabled.
 - **FP** (Финансы Просто) runs via `run_show.py` +
   `shows/finansy_prosto.yaml`; Russian-language financial literacy podcast
-  for women in Canada. Uses **ElevenLabs TTS** (`eleven_flash_v2_5`
-  with `language_code: ru`). All content generated in Russian. X posting disabled.
+  for women in Canada (even days only). Uses **Grok TTS** (Olya voice
+  `0b875ae2`, `language_code: ru`). All content generated in Russian. X posting disabled.
+  **June 16 2026 quality pass** (first dedicated FP review; combined June 10
+  pass was `docs/russian_shows_review_2026_06_10.md`; review:
+  [`docs/reviews/finansy_prosto_review_2026_06_16.md`](docs/reviews/finansy_prosto_review_2026_06_16.md);
+  drift guards: `tests/test_finansy_prosto_quality_pass.py`): scored the
+  June-10 floor-raise as a MISS (episodes still ~5 min / ~700w — the podcast
+  tracks a ~700w digest 1:1 and may not pad, so a podcast-side floor +
+  expand-retry can't help; re-attacked at the digest). Two listener-facing
+  P0s on the Olya voice: the YouTube call-out was an ENGLISH sentence (the
+  AI-disclosure wart class the June-10 pass localized, but the call-out in
+  `engine/intros._maybe_append_youtube_cta` was missed) — now Russian for
+  FP via `_RUSSIAN_SPOKEN_SHOWS` (PR stays English, it's taught in English);
+  and the "@" handle was voiced as the word "at" ("...YouTube **at at** Nerra
+  Network", 75+ times across six shows) — now stripped network-wide. The
+  closings said "до завтра" on an even-days show (EI-class cadence bug) — now
+  cadence-neutral ("до встречи"). P1s: `_extract_hook` now recognizes the
+  Russian `ЗАГОЛОВОК:` hook label (the FP/PR digest format), stopping a wasted
+  structural regen that fired on every FP episode (`digest_structural_regen:
+  true`, Ep45-54); the structural-retry corrective suffix was hardcoded with
+  Tesla section names ("Top 12 News Items, Tesla X Takeover…") and applied to
+  all shows — now generic. The digest prompt asks for 3-4 tips / 3 quick-news
+  / 5-7 articles (matching the podcast's already-required minimum of 3 tips;
+  content is abundant at 69-129 articles/day). Call-out/closing/digest edits
+  change shipped audio — A/B-listen per landmine #17.
 - **MIT** (Modern Investing Techniques) runs via `run_show.py` +
   `shows/modern_investing.yaml`; daily investing podcast focused on Canadian
   and US markets. Weekdays only. X posting disabled.
