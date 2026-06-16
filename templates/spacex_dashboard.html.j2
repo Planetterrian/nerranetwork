@@ -649,15 +649,50 @@
     renderUpcoming(data.upcoming);
   }
 
-  // SPCX price (same source as the show page pill)
-  function applyPrice(d){
+  // SPCX price — show the cached pipeline snapshot immediately, then upgrade
+  // to a LIVE Yahoo quote so the dashboard reflects the current price during
+  // the trading day instead of the pre-market run's closing snapshot. Mirrors
+  // the Tesla page's cache-primary + Yahoo-fallback widget.
+  function applyPrice(d, marketState){
     if(!d || !(d.price>0)) return;
-    const px=document.getElementById('spxPx'); px.textContent='$'+Number(d.price).toFixed(2);
-    if(d.prev_close>0){
-      const ch=(d.price-d.prev_close), pct=(ch/d.prev_close*100);
+    document.getElementById('spxPx').textContent='$'+Number(d.price).toFixed(2);
+    const prev=Number(d.prev_close)||0;
+    if(prev>0){
+      const ch=(d.price-prev), pct=(ch/prev*100);
       const up=ch>=0; const el=document.getElementById('spxChg');
       el.textContent=(up?'+':'')+ch.toFixed(2)+' ('+(up?'+':'')+pct.toFixed(2)+'%)';
       el.className='ch '+(up?'up':'down');
+    }
+    const note=document.getElementById('spxPxNote');
+    if(note){
+      const ms=String(marketState||'').toUpperCase();
+      let suffix='';
+      if(ms==='PRE') suffix=' · Pre-Market';
+      else if(ms.includes('POST')) suffix=' · After Hours';
+      else if(ms==='REGULAR') suffix=' · Live';
+      note.textContent='Nasdaq: SPCX'+suffix;
+    }
+  }
+  async function loadSpcx(){
+    // PRIMARY: same-origin snapshot written each pipeline run (no CORS).
+    try{
+      const r=await fetch('/api/spcx.json',{cache:'no-cache',signal:AbortSignal.timeout(4000)});
+      if(r.ok){ const c=await r.json(); if(c.price>0) applyPrice(c, c.market_state||null); }
+    }catch(_){}
+    // UPGRADE: live Yahoo v8 chart quote via CORS proxies (current price +
+    // marketState). Only overwrites when it returns a valid quote.
+    const chartUrl='https://query2.finance.yahoo.com/v8/finance/chart/SPCX?interval=1d&range=5d';
+    const proxies=[u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
+                   u=>'https://corsproxy.io/?'+encodeURIComponent(u), u=>u];
+    for(const mk of proxies){
+      try{
+        const resp=await fetch(mk(chartUrl),{signal:AbortSignal.timeout(8000)});
+        if(!resp.ok) continue;
+        const meta=(await resp.json())?.chart?.result?.[0]?.meta;
+        if(!meta) continue;
+        const price=meta.regularMarketPrice, prev=meta.chartPreviousClose||meta.previousClose;
+        if(price>0 && prev>0){ applyPrice({price:price, prev_close:prev}, meta.marketState||null); return; }
+      }catch(_){}
     }
   }
 
@@ -675,7 +710,8 @@
         }); }).catch(()=>{ document.getElementById('spxMission').textContent='Launch data is temporarily unavailable — check spacex.com/launches.'; });
     });
 
-  fetch('/api/spcx.json',{cache:'no-cache'}).then(r=>r.ok?r.json():Promise.reject()).then(applyPrice).catch(()=>{});
+  loadSpcx();
+  setInterval(loadSpcx, 300000);  // refresh live price every 5 min during the session
 
   tick(); setInterval(tick, 1000);
 })();
