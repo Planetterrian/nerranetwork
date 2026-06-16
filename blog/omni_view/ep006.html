@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Iran escalates Middle East attacks, hitting Saudi oil refinery and downing US F-15 jets in Kuwait fr… — Episode 6</h1>
+            <h1><span class="nn-i18n-title">Iran escalates Middle East attacks, hitting Saudi oil refinery and downing US F-15 jets in Kuwait fr…</span> — Episode 6</h1>
             
             <p class="blog-hero-hook">Iran escalates Middle East attacks, hitting Saudi oil refinery and downing US F-15 jets in Kuwait friendly fire blunder.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1179,12 +1260,6 @@
 <li>What verification is needed for claims about the incident's cause, given limited independent footage?</li>
 <li>Could this event influence ongoing diplomatic efforts in the region?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15605649/Fighter-jet-crashes-Kuwait-US-air-base-Video-F-15-fire-tailspin.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — details on the video and US confirmation</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15605589/us-israel-iran-trump-war-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — live updates on the broader conflict including the jet incident</li>
-<li><a href="https://www.france24.com/en/iran-attacking-regional-us-assets-in-a-war-of-wills-and-attrition" target="_blank" rel="noopener">France 24 - International breaking news, top stories and headlines</a> — analysis of Iran's attacks on US assets</li>
-</ul>
 <h4 id="2-iranian-drone-hits-worlds-largest-oil-refinery-in-saudi-arabia">2) Iranian Drone Hits World's Largest Oil Refinery in Saudi Arabia</h4>
 <p><strong>What happened (neutral):</strong> An Iranian drone struck the world's biggest oil refinery in Saudi Arabia, forcing its shutdown as part of wider attacks across the Middle East. This is amid a conflict entering its third day, with violence spreading to areas like Lebanon. Live updates indicate ongoing missile and drone activity in the region.</p>
 <p><strong>Perspectives:</strong> Reports portray this as a deliberate escalation by Iran to disrupt global energy supplies, with some outlets viewing it as retaliation against US and Israeli actions, while business-focused coverage warns of immediate economic fallout like surging oil prices and shipping halts. International perspectives contrast Iran's denial of negotiation interests with US assertions of defensive strikes, highlighting how this refinery hit amplifies fears of a prolonged war of attrition that could reshape Middle Eastern power dynamics. Conservative voices criticize perceived weaknesses in US foreign policy allowing such vulnerabilities, whereas more centrist analyses discuss the humanitarian and infrastructural toll on affected nations.</p>
@@ -1193,12 +1268,6 @@
 <li>How could the refinery shutdown impact global oil prices and supply chains?</li>
 <li>What evidence supports claims of Iranian involvement, and what might be unclear without independent verification?</li>
 <li>Could this lead to broader involvement from other countries in the conflict?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15605589/us-israel-iran-trump-war-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — live updates on the refinery strike and regional attacks</li>
-<li><a href="https://www.bloomberg.com/news/newsletters/2026-03-02/stocks-sell-off-as-us-attack-on-iran-drives-oil-prices-higher" target="_blank" rel="noopener">Bloomberg</a> — notes on oil price surges linked to the incident</li>
-<li><a href="https://www.cnbc.com/2026/03/02/strait-of-hormuz-crisis-us-iran-israel-war-shipping-trade-oil.html" target="_blank" rel="noopener">CNBC</a> — explanation of shipping disruptions from the crisis</li>
 </ul>
 <h4 id="3-cyprus-airport-evacuated-amid-iranian-drone-sighting">3) Cyprus Airport Evacuated Amid Iranian Drone Sighting</h4>
 <p><strong>What happened (neutral):</strong> A Cyprus airport was evacuated and an RAF base issued a 'take cover' alert after spotting a drone following overnight Iranian attacks. Sirens sounded and aircraft took off from the base near Limassol as missiles exploded across the Middle East. This adds to regional tensions with ongoing strikes.</p>
@@ -1209,12 +1278,6 @@
 <li>What confirmation is needed on the drone's origin and intent?</li>
 <li>Could similar alerts spread to other European bases?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15606015/RAF-base-Cyprus-issues-imminent-security-threat-alert-warns-servicemen-families-cover-braces-fresh-attacks-overnight-Iran-drone-strike.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — details on the evacuation and base alert</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15605781/Is-safe-travel-travel-Cyprus-Turkey-Egypt-right-Latest-advice-US-attack-Iran.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — travel advice amid strikes</li>
-<li><a href="https://www.bloomberg.com/news/videos/2026-03-02/iran-conflict-disrupts-global-air-travel-video" target="_blank" rel="noopener">Bloomberg</a> — overview of air travel disruptions</li>
-</ul>
 <h4 id="4-iran-targets-regional-us-assets-in-ongoing-conflict">4) Iran Targets Regional US Assets in Ongoing Conflict</h4>
 <p><strong>What happened (neutral):</strong> Iran is reportedly attacking US assets in a "war of wills and attrition," with no imminent Israeli ground invasion of Lebanon despite retaliatory air strikes. Iran has refuted US claims of wanting negotiations. This follows overnight attacks from Hezbollah prompting Israeli responses.</p>
 <p><strong>Perspectives:</strong> International coverage depicts Iran's actions as a calculated pushback against US and Israeli aggression, with some analysts seeing it as a bid for regional dominance, while others warn of the risks to global stability from unchecked escalation. Reports from Tehran emphasize defiance against negotiations, contrasting with Jerusalem-based views that frame retaliatory strikes as necessary self-defense amid missile threats. Broader perspectives weave in economic angles, noting how such attrition could prolong disruptions to trade and energy, with centrist outlets calling for multilateral diplomacy to de-escalate.</p>
@@ -1224,12 +1287,6 @@
 <li>How do conflicting claims about negotiations affect peace prospects?</li>
 <li>What independent sources could clarify the scale of these attacks?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/iran-attacking-regional-us-assets-in-a-war-of-wills-and-attrition" target="_blank" rel="noopener">France 24 - International breaking news, top stories and headlines</a> — breakdown from Jerusalem and Tehran</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15605589/us-israel-iran-trump-war-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — live conflict updates</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15606009/As-missiles-drones-rain-Middle-East-UK-military-bases-Green-leader-Polanski-demands-Starmer-STOP-cooperating-US-Irans-weapons.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — UK political response to attacks</li>
-</ul>
 <h4 id="5-stocks-plunge-as-iran-conflict-boosts-oil-prices">5) Stocks Plunge as Iran Conflict Boosts Oil Prices</h4>
 <p><strong>What happened (neutral):</strong> Global stocks sold off sharply as US attacks on Iran drove oil prices higher, with gold rallying amid closures in the Strait of Hormuz. This follows Iranian strikes disrupting shipping. The market reaction reflects fears of prolonged Middle East instability.</p>
 <p><strong>Perspectives:</strong> Financial outlets portray the sell-off as a direct consequence of geopolitical risks inflating energy costs, with some emphasizing investor panic over supply chain vulnerabilities, while others note opportunities in safe-haven assets like gold. Conservative analyses blame US policy for failing to contain Iran, potentially worsening economic fallout, whereas international views highlight how the conflict's spread could unevenly affect global economies, with developing nations facing steeper inflation from oil surges. Centrist reports weave in calls for diversified energy strategies to mitigate such shocks.</p>
@@ -1238,12 +1295,6 @@
 <li>How long might these market disruptions last if the conflict persists?</li>
 <li>What data is needed to assess the full economic impact?</li>
 <li>Could this influence central bank policies worldwide?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/newsletters/2026-03-02/stocks-sell-off-as-us-attack-on-iran-drives-oil-prices-higher" target="_blank" rel="noopener">Bloomberg</a> — details on stock sell-off and oil surges</li>
-<li><a href="https://www.cnbc.com/2026/03/02/strait-of-hormuz-crisis-us-iran-israel-war-shipping-trade-oil.html" target="_blank" rel="noopener">CNBC</a> — explanation of shipping and trade fears</li>
-<li><a href="https://www.bloomberg.com/news/videos/2026-03-02/iran-conflict-disrupts-global-air-travel-video" target="_blank" rel="noopener">Bloomberg</a> — related disruptions in global travel</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-edinburgh-knifeman-incident-prompts-armed-police-response">1) Edinburgh Knifeman Incident Prompts Armed Police Response</h4>
@@ -1255,12 +1306,6 @@
 <li>How might this affect local community safety perceptions?</li>
 <li>Could similar incidents be linked to wider trends in the UK?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15606067/Multiple-people-stabbed-knifeman-roaming-Edinburgh-neighbourhood-Armed-police-race-estate-man-seen-brandishing-two-knives.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — reports on stabbings and police response</li>
-<li><a href="https://www.bbc.com/news/articles/cn0ek3e6zk3o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — advice to avoid the area</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15605963/trapped-attack-Dubai-Chichester-daughters-labradoodles-Mounjaro.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — unrelated but mentions regional tensions</li>
-</ul>
 <h4 id="2-late-ayatollahs-95-billion-empire-exposed">2) Late Ayatollah's $95 Billion Empire Exposed</h4>
 <p><strong>What happened (neutral):</strong> Iran's late Supreme Leader Ali Khamenei allegedly built a $95 billion business empire by seizing and selling thousands of Iranians' properties. This revelation follows his assassination on February 28. The legacy is described as corrupt and repressive, but specifics on the empire's operations are limited.</p>
 <p><strong>Perspectives:</strong> Coverage portrays this as a stark example of authoritarian corruption, with some outlets emphasizing how it enriched the regime at citizens' expense, fueling anti-government sentiment, while others contextualize it within Iran's political history as a means of consolidating power. International views contrast the economic scale with calls for accountability post-assassination, and conservative analyses link it to broader critiques of Iran's governance. Reports naturally integrate discussions on how such revelations might influence internal reforms or external relations.</p>
@@ -1269,12 +1314,6 @@
 <li>What primary documents could verify the scale of the property seizures?</li>
 <li>How might this affect Iran's political stability after the assassination?</li>
 <li>Are there conflicting accounts of the empire's legitimacy?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15605827/How-Ayatollah-ran-95BILLION-business-empire-built-seizing-thousands-Iranians-properties-selling-profit.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — details on the empire and legacy</li>
-<li><a href="https://www.france24.com/en/iran-attacking-regional-us-assets-in-a-war-of-wills-and-attrition" target="_blank" rel="noopener">France 24 - International breaking news, top stories and headlines</a> — related Iran context</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15605589/us-israel-iran-trump-war-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — broader Iran conflict updates</li>
 </ul>
 <h4 id="3-british-mother-contracts-legionnaires-disease-after-hotel-injury-in-barbados">3) British Mother Contracts Legionnaires' Disease After Hotel Injury in Barbados</h4>
 <p><strong>What happened (neutral):</strong> A 66-year-old British woman nearly died from Legionnaires' disease after a granite worktop crushed her foot during a £6,800 holiday at Sandals Barbados. The incident occurred in her room on a ten-day trip. Details on the hotel's responsibility are unclear.</p>
@@ -1285,12 +1324,6 @@
 <li>How common is Legionnaires' disease in similar settings?</li>
 <li>Could this lead to changes in travel insurance requirements?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15605833/British-mother-66-nearly-died-contracting-Legionnaires-disease-hotel-granite-worktop-crushed-foot-holiday-Barbados.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — account of the incident and disease</li>
-<li><a href="https://www.dailymail.co.uk/travel/article-15605107/Dubai-expat-influencers-rude-awakening.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — related travel disruptions</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15605781/Is-safe-travel-travel-Cyprus-Turkey-Egypt-right-Latest-advice-US-attack-Iran.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — general travel advice</li>
-</ul>
 <h4 id="4-uk-green-leader-calls-for-end-to-us-cooperation-on-iran-strikes">4) UK Green Leader Calls for End to US Cooperation on Iran Strikes</h4>
 <p><strong>What happened (neutral):</strong> Green Party leader Polanski demanded that UK Prime Minister Starmer stop cooperating with the US on targeting Iran's weapons, amid missiles and drones in the Middle East and UK bases. Starmer had agreed to US use of UK bases for protection. This follows ongoing regional attacks.</p>
 <p><strong>Perspectives:</strong> Political coverage frames this as a divide in UK foreign policy, with progressive outlets supporting the call as a stand against escalation and potential war crimes, while conservative views criticize it as naive amid threats to British interests. International reports contrast the UK's involvement with broader anti-war sentiments, noting how it highlights tensions between alliance loyalties and domestic pacifism. Centrist analyses discuss the strategic implications for UK security.</p>
@@ -1299,12 +1332,6 @@
 <li>How might this affect UK-US relations?</li>
 <li>What public opinion data could clarify support for the demand?</li>
 <li>Are there uncertainties in the scope of UK cooperation?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15606009/As-missiles-drones-rain-Middle-East-UK-military-bases-Green-leader-Polanski-demands-Starmer-STOP-cooperating-US-Irans-weapons.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — details on the demand and Starmer's agreement</li>
-<li><a href="https://www.france24.com/en/iran-attacking-regional-us-assets-in-a-war-of-wills-and-attrition" target="_blank" rel="noopener">France 24 - International breaking news, top stories and headlines</a> — context on Iran-US dynamics</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15606015/RAF-base-Cyprus-issues-imminent-security-threat-alert-warns-servicemen-families-cover-braces-fresh-attacks-overnight-Iran-drone-strike.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — related UK base alerts</li>
 </ul>
 <h4 id="5-dubai-expats-face-challenges-amid-regional-attacks">5) Dubai Expats Face Challenges Amid Regional Attacks</h4>
 <p><strong>What happened (neutral):</strong> British expats in Dubai report feeling trapped and under attack due to the Middle East conflict, contrasting with their previous boasts of safe, tax-free living. One account mentions personal family issues back home amid the chaos. The situation has shattered perceptions of Dubai as an idyllic haven.</p>
@@ -1315,13 +1342,95 @@
 <li>What personal accounts could provide more context?</li>
 <li>Are safety claims in Dubai independently verifiable?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/travel/article-15605107/Dubai-expat-influencers-rude-awakening.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — analysis of shattered Dubai myth</li>
-<li>[Articles | Mail Online](https://www.dailymail.co.uk/news/article-15605963/trapped-attack-Dubai</li>
-</ul>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15605649/Fighter-jet-crashes-Kuwait-US-air-base-Video-F-15-fire-tailspin.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15605589/us-israel-iran-trump-war-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/iran-attacking-regional-us-assets-in-a-war-of-wills-and-attrition" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/newsletters/2026-03-02/stocks-sell-off-as-us-attack-on-iran-drives-oil-prices-higher" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/02/strait-of-hormuz-crisis-us-iran-israel-war-shipping-trade-oil.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15606015/RAF-base-Cyprus-issues-imminent-security-threat-alert-warns-servicemen-families-cover-braces-fresh-attacks-overnight-Iran-drone-strike.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15605781/Is-safe-travel-travel-Cyprus-Turkey-Egypt-right-Latest-advice-US-attack-Iran.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-03-02/iran-conflict-disrupts-global-air-travel-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15606009/As-missiles-drones-rain-Middle-East-UK-military-bases-Green-leader-Polanski-demands-Starmer-STOP-cooperating-US-Irans-weapons.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15606067/Multiple-people-stabbed-knifeman-roaming-Edinburgh-neighbourhood-Armed-police-race-estate-man-seen-brandishing-two-knives.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cn0ek3e6zk3o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15605963/trapped-attack-Dubai-Chichester-daughters-labradoodles-Mounjaro.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15605827/How-Ayatollah-ran-95BILLION-business-empire-built-seizing-thousands-Iranians-properties-selling-profit.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15605833/British-mother-66-nearly-died-contracting-Legionnaires-disease-hotel-granite-worktop-crushed-foot-holiday-Barbados.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/travel/article-15605107/Dubai-expat-influencers-rude-awakening.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15605963/trapped-attack-Dubai" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1686,10 +1795,67 @@ That's Omni View. For full source links and more context, check out today's writ
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Stalled Iran peace talks are pushing up energy costs and cutting international travel demand, direct… — Episode 47</h1>
+            <h1><span class="nn-i18n-title">Stalled Iran peace talks are pushing up energy costs and cutting international travel demand, direct…</span> — Episode 47</h1>
             
             <p class="blog-hero-hook">Stalled Iran peace talks are pushing up energy costs and cutting international travel demand, directly affecting household bills and holiday plans worldwide.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1200,12 +1281,6 @@
 <li>What indicators would show negotiations are genuinely advancing?</li>
 <li>Which sectors benefit or lose most when tensions ease or rise?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/11/european-markets-stoxx-600-ftse-dax-cac-iran-war-oil-prices.html" target="_blank" rel="noopener">CNBC</a> — European markets reaction to Iran talks</li>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-11/thai-oil-taps-africa-americas-for-crude-to-cut-mideast-reliance" target="_blank" rel="noopener">Bloomberg</a> — Thai Oil diversifying crude sources</li>
-<li><a href="https://www.theguardian.com/uk-news/2026/may/11/heathrow-passenger-numbers-dip-as-demand-for-international-travel-ebbs-amid-iran-war-fallout" target="_blank" rel="noopener">The Guardian</a> — Heathrow passenger impact</li>
-</ul>
 <h4 id="2-trump-rejects-latest-iranian-response-on-ceasefire-proposal">2) Trump rejects latest Iranian response on ceasefire proposal</h4>
 <p><strong>What happened (neutral):</strong> President Trump described Iran's reply to the U.S. ceasefire offer as insufficient and accused Tehran of "playing games." The exchange leaves the status of any agreement unresolved. No new timeline for further talks has been announced.</p>
 <p><strong>Perspectives:</strong> Outlets close to the administration emphasize Trump's firm stance as necessary leverage. Other reporting highlights that both parties have exchanged proposals yet remain apart on core terms. The factual record shows a rejected counter-offer; interpretations differ on whether this reflects standard negotiating tactics or a more serious breakdown.</p>
@@ -1214,11 +1289,6 @@
 <li>What specific conditions would make a deal acceptable to both sides?</li>
 <li>How do domestic politics in each country shape public statements?</li>
 <li>What role do third-party mediators currently play?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15806271/Trump-Iran-playing-games-peace-deal-rebuffs-offer.html" target="_blank" rel="noopener">Mail Online</a> — Trump response to Iran offer</li>
-<li><a href="https://www.dw.com/en/india-news-cut-fuel-use-gold-buys-and-foreign-trips-says-modi-as-no-end-in-sight-to-iran-war/live-77113618" target="_blank" rel="noopener">Deutsche Welle</a> — Modi comments on Iran situation</li>
 </ul>
 <h4 id="3-modi-calls-on-indians-to-reduce-fuel-gold-purchases-and-foreign-travel">3) Modi calls on Indians to reduce fuel, gold purchases and foreign travel</h4>
 <p><strong>What happened (neutral):</strong> Prime Minister Narendra Modi urged citizens to cut fuel consumption, limit gold buying, and reduce overseas trips. The appeal comes amid ongoing economic effects from the Iran conflict. No specific enforcement measures were detailed.</p>
@@ -1229,10 +1299,6 @@
 <li>How have similar past appeals performed in India?</li>
 <li>What alternative supply routes are being explored?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/india-news-cut-fuel-use-gold-buys-and-foreign-trips-says-modi-as-no-end-in-sight-to-iran-war/live-77113618" target="_blank" rel="noopener">Deutsche Welle</a> — Modi consumption advice</li>
-</ul>
 <h4 id="4-heathrow-reports-5-drop-in-passenger-numbers-linked-to-middle-east-situation">4) Heathrow reports 5% drop in passenger numbers linked to Middle East situation</h4>
 <p><strong>What happened (neutral):</strong> London Heathrow recorded about 6.7 million passengers in April, down 5% from the same month last year. Transit traffic through the airport increased as some travelers rerouted to avoid Middle East hubs. The airport attributed the overall decline to reduced international demand.</p>
 <p><strong>Perspectives:</strong> Airport management links the fall directly to geopolitical uncertainty affecting long-haul routes. Travel analysts note that transit growth shows the hub's continued usefulness even as origin-destination traffic softens. Both views accept the 5% figure; they differ on whether the dip is likely to deepen or rebound quickly once talks resume.</p>
@@ -1242,10 +1308,6 @@
 <li>How are airlines adjusting schedules in response?</li>
 <li>What does this mean for summer holiday bookings?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/uk-news/2026/may/11/heathrow-passenger-numbers-dip-as-demand-for-international-travel-ebbs-amid-iran-war-fallout" target="_blank" rel="noopener">The Guardian</a> — Heathrow passenger data</li>
-</ul>
 <h4 id="5-thai-oil-shifts-crude-purchases-toward-africa-and-the-americas">5) Thai Oil shifts crude purchases toward Africa and the Americas</h4>
 <p><strong>What happened (neutral):</strong> Thailand's largest refiner is increasing imports from Africa and the Americas to lessen dependence on Middle Eastern supplies. The move aims to keep domestic fuel production steady. Contracts and logistics adjustments are already underway.</p>
 <p><strong>Perspectives:</strong> Company statements stress supply security as the primary driver. Industry reports note that such diversification requires time to build new shipping and storage arrangements. Observers agree the strategy reduces single-region risk; they differ on the cost premium involved in sourcing from farther locations.</p>
@@ -1254,10 +1316,6 @@
 <li>How quickly can refiners complete supplier switches?</li>
 <li>What infrastructure limits faster diversification?</li>
 <li>Which other countries are pursuing similar changes?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-11/thai-oil-taps-africa-americas-for-crude-to-cut-mideast-reliance" target="_blank" rel="noopener">Bloomberg</a> — Thai Oil supply shift</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-body-believed-to-be-suspected-triple-murderer-found-in-rural-australia">1) Body believed to be suspected triple murderer found in rural Australia</h4>
@@ -1269,11 +1327,6 @@
 <li>How do long manhunts affect community safety perceptions?</li>
 <li>What bail decisions are now under review?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/may/11/body-alleged-triple-murderer-julian-ingram-found-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — Body discovery details</li>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/may/11/australia-politics-live-federal-budget-jim-chalmers-cost-of-living-deficit-farrer-byelection-coalition-one-nation-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — Live updates on case</li>
-</ul>
 <h4 id="2-mississippi-couple-killed-in-murder-suicide-over-land-dispute">2) Mississippi couple killed in murder-suicide over land dispute</h4>
 <p><strong>What happened (neutral):</strong> Walter Earnest Birdsong Jr. and his wife Amanda Lynn Birdsong were found dead in their rural home on Friday. Authorities believe a relative carried out the killings before taking his own life following a long-running argument over property. The case remains under investigation.</p>
 <p><strong>Perspectives:</strong> Local law enforcement presents the deaths as the tragic conclusion to a private land conflict. Community members describe the couple as well-known in the area. Reporting agrees on the basic sequence; perspectives vary on how such disputes can escalate without earlier intervention.</p>
@@ -1282,10 +1335,6 @@
 <li>What resources exist for resolving family property disagreements?</li>
 <li>How common are fatal outcomes in rural land disputes?</li>
 <li>What support is offered to surviving relatives?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15806719/Mississippi-husband-wife-murdered-Walter-Amanda-Birdsong-Kurt-land-dispute.html" target="_blank" rel="noopener">Mail Online</a> — Mississippi deaths report</li>
 </ul>
 <h4 id="3-turkish-airlines-plane-catches-fire-on-landing-in-kathmandu">3) Turkish Airlines plane catches fire on landing in Kathmandu</h4>
 <p><strong>What happened (neutral):</strong> A Turkish Airlines flight with 277 passengers and 11 crew experienced a fire while landing at Kathmandu airport on Monday. All occupants evacuated safely using emergency slides and no injuries were reported. The cause is under investigation.</p>
@@ -1296,10 +1345,6 @@
 <li>What training do crews receive for such events?</li>
 <li>How are passengers supported after emergency evacuations?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15807041/Plane-catches-fire-comes-land-forcing-passengers-evacuate-emergency-slide.html" target="_blank" rel="noopener">Mail Online</a> — Kathmandu plane incident</li>
-</ul>
 <h4 id="4-91-year-old-man-found-dead-after-garage-explosion-in-english-village">4) 91-year-old man found dead after garage explosion in English village</h4>
 <p><strong>What happened (neutral):</strong> Emergency services responded to a property on Church Lane in Selston, Nottinghamshire, on Saturday evening. They discovered the body of 91-year-old Derek Poole amid the wreckage of a garage explosion. Investigations into the cause continue.</p>
 <p><strong>Perspectives:</strong> Neighbors remember Poole as a respected local figure. Emergency responders noted the force of the blast damaged nearby structures. Reporting agrees on the basic facts of the incident; views differ on possible contributing factors such as stored materials.</p>
@@ -1309,10 +1354,6 @@
 <li>How do villages respond to sudden losses of long-term residents?</li>
 <li>What support exists for neighbors after such events?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15806999/tributes-paid-true-gentleman-dead-garage-explosion-village.html" target="_blank" rel="noopener">Mail Online</a> — Village explosion tributes</li>
-</ul>
 <h4 id="5-former-prison-guard-patents-tyre-shredding-device-to-protect-roadside-verge">5) Former prison guard patents tyre-shredding device to protect roadside verge</h4>
 <p><strong>What happened (neutral):</strong> Kevin Pringle, 64, has developed and patented a spike-lined fence that activates when vehicles drive over it. He created the device after repeated damage to his grass verge from inconsiderate drivers. The invention mimics police stinger technology.</p>
 <p><strong>Perspectives:</strong> Pringle presents the fence as a practical deterrent for a recurring local problem. Some observers question whether such devices could cause unintended harm or legal issues. All accounts accept the inventor's description of the mechanism; they differ on its suitability for widespread use.</p>
@@ -1321,10 +1362,6 @@
 <li>What legal limits apply to private property protection devices?</li>
 <li>How do communities balance individual rights with public road access?</li>
 <li>Are there non-damaging alternatives for verge protection?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15806235/prison-guard-invents-spike-tyre-shredder-drivers.html" target="_blank" rel="noopener">Mail Online</a> — Tyre shredder invention</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-european-markets-mixed-amid-iran-negotiation-updates">1) European markets mixed amid Iran negotiation updates</h4>
@@ -1336,10 +1373,6 @@
 <li>How do bond markets reflect the same uncertainty?</li>
 <li>What signals would prompt larger position changes?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/11/european-markets-stoxx-600-ftse-dax-cac-iran-war-oil-prices.html" target="_blank" rel="noopener">CNBC</a> — European markets update</li>
-</ul>
 <h4 id="2-ftse-100-edges-higher-as-borrowing-costs-rise-ahead-of-uk-political-speech">2) FTSE 100 edges higher as borrowing costs rise ahead of UK political speech</h4>
 <p><strong>What happened (neutral):</strong> The FTSE 100 opened slightly higher while UK borrowing costs increased. Attention focused on an upcoming address expected to address recent political developments. Traders monitored bond yields closely.</p>
 <p><strong>Perspectives:</strong> Market reports link the yield movement to uncertainty about future policy direction. Equity traders appear to be taking a wait-and-see approach. Observers agree on the direction of both indices and yields; they differ on the likely duration of the current caution.</p>
@@ -1349,10 +1382,6 @@
 <li>What sectors benefit from stable borrowing costs?</li>
 <li>Which data releases are traders watching next?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/money/markets/article-15807073/FTSE-100-opens-higher-borrowing-costs-rise-ahead-Starmers-reset-speech-MARKETS-LIVE.html" target="_blank" rel="noopener">Mail Online</a> — FTSE and bond market live</li>
-</ul>
 <h4 id="3-experts-outline-haggling-strategies-for-popular-suvs">3) Experts outline haggling strategies for popular SUVs</h4>
 <p><strong>What happened (neutral):</strong> Car buying specialists report that discounts remain available on established SUV models from Peugeot, Toyota, and Hyundai. Some buyers can negotiate below the price of certain newer Chinese alternatives. Guidance focuses on timing and preparation.</p>
 <p><strong>Perspectives:</strong> Dealership sources note that inventory levels still allow room for negotiation on well-known brands. Consumer advice columns emphasize researching invoice prices before visiting showrooms. Both sides agree discounts exist; they differ on how much leverage individual buyers can realistically expect.</p>
@@ -1361,10 +1390,6 @@
 <li>What factors determine current discount levels?</li>
 <li>How do new market entrants affect pricing on established models?</li>
 <li>What preparation helps buyers secure better deals?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/money/cars/article-15794817/Discounts-SUVs-Chinese-Temu-Range-Rover.html" target="_blank" rel="noopener">Mail Online</a> — SUV haggling advice</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-waymo-self-driving-vehicle-repeatedly-enters-dead-end-london-street">1) Waymo self-driving vehicle repeatedly enters dead-end London street</h4>
@@ -1376,10 +1401,6 @@
 <li>What oversight exists for autonomous vehicle testing in residential areas?</li>
 <li>How do residents report repeated issues to operators?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15798053/Waymo-Self-driving-car-stuck-driving-dead-end-London-street.html" target="_blank" rel="noopener">Mail Online</a> — Waymo London incident</li>
-</ul>
 <h4 id="2-bloomberg-analysts-discuss-ai-sector-resilience-amid-market-moves">2) Bloomberg analysts discuss AI sector resilience amid market moves</h4>
 <p><strong>What happened (neutral):</strong> A Bloomberg segment examined whether strong AI company performance can offset broader market concerns. Panelists reviewed recent earnings and investment trends. The discussion highlighted continued investor interest in the sector.</p>
 <p><strong>Perspectives:</strong> Analysts on the program presented AI as a relative bright spot even when other areas face pressure. Other market commentary notes that valuations in the sector remain elevated compared with historical norms. Both views accept ongoing investment flows; they differ on sustainability if economic conditions worsen.</p>
@@ -1388,10 +1409,6 @@
 <li>Which AI applications are showing the strongest revenue growth?</li>
 <li>How do regulatory developments affect sector valuations?</li>
 <li>What metrics indicate healthy versus speculative investment?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-05-11/we-re-alright-as-long-as-ai-is-okay-3-minutes-mliv-video" target="_blank" rel="noopener">Bloomberg</a> — AI market discussion</li>
 </ul>
 <h4 id="3-self-driving-technology-faces-urban-navigation-tests-in-european-cities">3) Self-driving technology faces urban navigation tests in European cities</h4>
 <p><strong>What happened (neutral):</strong> Autonomous vehicle operators continue real-world testing in dense city environments where dead-end streets and narrow roads present mapping challenges. Recent London incidents illustrate the difficulties of adapting systems to complex layouts. Companies are refining algorithms based on these experiences.</p>
@@ -1412,10 +1429,6 @@
 <li>How do hosts balance humor with the event's formality?</li>
 <li>What feedback channels exist for future ceremonies?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15806977/Greg-Davies-branded-BAFTA-host-never-knew-needed-viewers-praise-commanding-opening-skit-like-boss.html" target="_blank" rel="noopener">Mail Online</a> — Greg Davies hosting feedback</li>
-</ul>
 <h4 id="2-owen-cooper-returns-to-school-after-bafta-awards-sweep">2) Owen Cooper returns to school after BAFTA awards sweep</h4>
 <p><strong>What happened (neutral):</strong> 16-year-old actor Owen Cooper, star of Adolescence, attended his GCSE exams on Monday following a clean sweep of awards on Sunday night. The young performer has collected multiple honors this season. School routines resumed as normal.</p>
 <p><strong>Perspectives:</strong> Coverage emphasizes Cooper's ability to balance rising fame with ordinary teenage responsibilities. Industry observers note the rarity of such early career success. All reporting accepts the awards achievement and school return; perspectives vary on the long-term career path for young actors.</p>
@@ -1425,12 +1438,100 @@
 <li>What support systems help child actors transition after major wins?</li>
 <li>Which past young award winners maintained long careers?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li>[Mail Online](https://www</li>
-</ul>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.cnbc.com/2026/05/11/european-markets-stoxx-600-ftse-dax-cac-iran-war-oil-prices.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-11/thai-oil-taps-africa-americas-for-crude-to-cut-mideast-reliance" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/uk-news/2026/may/11/heathrow-passenger-numbers-dip-as-demand-for-international-travel-ebbs-amid-iran-war-fallout" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15806271/Trump-Iran-playing-games-peace-deal-rebuffs-offer.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/india-news-cut-fuel-use-gold-buys-and-foreign-trips-says-modi-as-no-end-in-sight-to-iran-war/live-77113618" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/may/11/body-alleged-triple-murderer-julian-ingram-found-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/live/2026/may/11/australia-politics-live-federal-budget-jim-chalmers-cost-of-living-deficit-farrer-byelection-coalition-one-nation-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15806719/Mississippi-husband-wife-murdered-Walter-Amanda-Birdsong-Kurt-land-dispute.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15807041/Plane-catches-fire-comes-land-forcing-passengers-evacuate-emergency-slide.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15806999/tributes-paid-true-gentleman-dead-garage-explosion-village.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15806235/prison-guard-invents-spike-tyre-shredder-drivers.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/money/markets/article-15807073/FTSE-100-opens-higher-borrowing-costs-rise-ahead-Starmers-reset-speech-MARKETS-LIVE.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/money/cars/article-15794817/Discounts-SUVs-Chinese-Temu-Range-Rover.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15798053/Waymo-Self-driving-car-stuck-driving-dead-end-London-street.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-05-11/we-re-alright-as-long-as-ai-is-okay-3-minutes-mliv-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15806977/Greg-Davies-branded-BAFTA-host-never-knew-needed-viewers-praise-commanding-opening-skit-like-boss.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=www&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">www</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1829,10 +1930,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Ships attacked in Strait of Hormuz amid US-Israel-Iran war, escalating global oil supply fears — Episode 12</h1>
+            <h1><span class="nn-i18n-title">Ships attacked in Strait of Hormuz amid US-Israel-Iran war, escalating global oil supply fears</span> — Episode 12</h1>
             
             <p class="blog-hero-hook">Ships attacked in Strait of Hormuz amid US-Israel-Iran war, escalating global oil supply fears.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1185,12 +1266,6 @@
 <li>What role could international diplomacy play in preventing further attacks on commercial shipping?</li>
 <li>How reliable are reports of ship attacks given the fog of war and conflicting sources?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15634775/Cargo-ship-attacked-Strait-Hormuz-Projectile-hits-vessel-forcing-crew-evacuate-US-destroyed-16-Iranian-minelaying-warships-prevent-waterway-closing.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — reports on ship attacks and US response</li>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/11/iran-war-live-updates-trump-oil-hormuz-protestors-us-israel-beirut-middle-east-latest-news" target="_blank" rel="noopener">The Guardian</a> — covers claims about Iranian supreme leader and regional impacts</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15634805/Irans-new-Supreme-Leader-safe-sound-despite-war-injury-reports-presidents-son-says-mystery-surrounds-Mojtaba-Khamenei-seen-conflict-began.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — details on new Iranian leader's injuries and public absence</li>
-</ul>
 <h4 id="2-iranian-womens-soccer-team-faces-backlash-after-anthem-protest">2) Iranian women's soccer team faces backlash after anthem protest</h4>
 <p><strong>What happened (neutral):</strong> Members of Iran's women's football team returned home after refusing to sing the national anthem during the Asia Cup in Australia, prompting warnings from Iranian officials about dealing with dissent. Seven players defected, but others boarded a plane back, with one changing her mind about seeking asylum due to personal reasons. Australian authorities granted humanitarian visas to some, but one player's contact with the Iranian embassy revealed the group's location.</p>
 <p><strong>Perspectives:</strong> Progressive outlets celebrate the players' protest as a courageous stand against oppression, drawing parallels to broader women's rights movements in Iran and praising Australia's humanitarian response. Conservative views caution that such defections could embolden anti-regime elements and destabilize the region further amid the ongoing war. Centrist and international perspectives focus on the personal risks to the athletes, noting how family ties influenced decisions and highlighting the diplomatic tensions between Iran and countries like Australia over asylum and embassy involvement.</p>
@@ -1199,13 +1274,6 @@
 <li>What personal and political factors might influence athletes' decisions in high-stakes protests?</li>
 <li>How could international sports events become platforms for political dissent?</li>
 <li>What uncertainties remain about the treatment awaiting returning players in Iran?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15634807/Iran-warns-finger-trigger-deal-dissent-female-soccer-team-returns-Australia.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — covers Iran's warnings and team return</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15633685/Iran-women-footballers-australia-horror-tehran.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — discusses defections and potential horrors awaiting returnees</li>
-<li><a href="https://www.dailymail.co.uk/sport/football/article-15634469/Iran-soccer-players-Australia-visa.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — explains one player's change of heart</li>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/11/iran-war-live-updates-trump-oil-hormuz-protestors-us-israel-beirut-middle-east-latest-news" target="_blank" rel="noopener">The Guardian</a> — reports on asylum decisions and embassy contact</li>
 </ul>
 <h4 id="3-oil-prices-surge-amid-us-iran-war-developments">3) Oil prices surge amid US-Iran war developments</h4>
 <p><strong>What happened (neutral):</strong> Oil prices rose above $92 per barrel as traders reacted to the ongoing US-Iran conflict, including attacks on ships in the Strait of Hormuz. Gas prices have surged 50 cents per gallon in the US due to the tensions. Markets shrugged off prospects of reserve releases, focusing on supply disruptions.</p>
@@ -1216,13 +1284,6 @@
 <li>What alternatives to oil reserves could stabilize prices during geopolitical conflicts?</li>
 <li>Are current price surges directly tied to the war, or influenced by other market factors?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/03/11/oil-price-today-crude-wti-us-iran-war-strait-hormuz-iea.html" target="_blank" rel="noopener">CNBC</a> — tracks oil price rise above $92</li>
-<li><a href="https://www.foxnews.com/politics/from-bidens-war-gas-prices-small-price-pay-gop-shifts-tone-iran-conflict-hits-pumps" target="_blank" rel="noopener">Fox News</a> — discusses US gas price surge and GOP tone shift</li>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/11/iran-war-live-updates-trump-oil-hormuz-protestors-us-israel-beirut-middle-east-latest-news" target="_blank" rel="noopener">The Guardian</a> — covers fuel panic buying and embassy closures</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15634775/Cargo-ship-attacked-Strait-Hormuz-Projectile-hits-vessel-forcing-crew-evacuate-US-destroyed-16-Iranian-minelaying-warships-prevent-waterway-closing.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — warns of catastrophic oil market consequences</li>
-</ul>
 <h4 id="4-zelensky-warns-of-russian-troops-aiding-iran-in-war">4) Zelensky warns of Russian troops aiding Iran in war</h4>
 <p><strong>What happened (neutral):</strong> Ukrainian President Zelensky warned that Russia could send troops to support Iran in its conflict against the US and Israel. This comes amid ongoing violence spreading across the Middle East. Live updates track developments, including speculation over the Iranian supreme leader's health.</p>
 <p><strong>Perspectives:</strong> International outlets from Europe and the US portray Zelensky's warning as evidence of a broadening alliance against Western interests, with left-leaning voices criticizing it as an extension of Russia's aggressive foreign policy that diverts attention from Ukraine. Conservative perspectives see it as validation of the need for stronger deterrence against both Russia and Iran to prevent a wider global conflict. Centrist analyses weave in concerns about regional stability, noting how such troop movements could complicate peace efforts and affect allied nations like Israel.</p>
@@ -1232,11 +1293,6 @@
 <li>How might this affect ongoing support for Ukraine?</li>
 <li>What evidence supports or refutes claims of Russian troop deployments?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15634841/us-israel-iran-war-trump-tehran-netanyahu-russia-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — live updates on war and Zelensky's warning</li>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/11/iran-war-live-updates-trump-oil-hormuz-protestors-us-israel-beirut-middle-east-latest-news" target="_blank" rel="noopener">The Guardian</a> — discusses supreme leader health speculation</li>
-</ul>
 <h4 id="5-mandelson-documents-released-amid-epstein-ties-scrutiny">5) Mandelson documents released amid Epstein ties scrutiny</h4>
 <p><strong>What happened (neutral):</strong> The UK government is releasing documents related to Peter Mandelson's 2024 appointment as US ambassador, following revelations about his ties to Jeffrey Epstein. Mandelson was sacked last September after emails showed the depth of his relationship with Epstein, who was convicted of sex offenses. He was arrested last month on suspicion of misconduct but denies wrongdoing.</p>
 <p><strong>Perspectives:</strong> Left-leaning sources criticize the initial appointment as a failure of vetting processes, highlighting how known Epstein links were overlooked and calling for greater accountability in political nominations. Right-leaning outlets focus on the broader implications for UK-US relations, framing the release as a necessary step to restore trust amid ongoing scandals. International and centrist views emphasize the ethical questions raised by Mandelson's repeated denials, weaving in discussions on how such ties reflect systemic issues in elite networks.</p>
@@ -1245,11 +1301,6 @@
 <li>What vetting processes should be in place for high-profile diplomatic appointments?</li>
 <li>How might these revelations impact UK political transparency?</li>
 <li>Are there uncertainties in the documents about the extent of Mandelson's Epstein ties?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/politics/live/2026/mar/11/peter-mandelson-documents-keir-starmer-pmqs-iran-latest-news-updates" target="_blank" rel="noopener">The Guardian</a> — details document release and background</li>
-<li><a href="https://www.cnbc.com/2026/03/11/senators-epstein-files-investigation.html" target="_blank" rel="noopener">CNBC</a> — covers calls for investigation into Epstein files handling</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-irans-new-supreme-leader-reportedly-safe-despite-war-injuries">1) Iran's new supreme leader reportedly safe despite war injuries</h4>
@@ -1261,11 +1312,6 @@
 <li>What sources could provide more clarity on Khamenei's condition?</li>
 <li>Could injuries impact Iran's domestic and foreign policy decisions?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15634805/Irans-new-Supreme-Leader-safe-sound-despite-war-injury-reports-presidents-son-says-mystery-surrounds-Mojtaba-Khamenei-seen-conflict-began.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — reports on injuries and public absence</li>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/11/iran-war-live-updates-trump-oil-hormuz-protestors-us-israel-beirut-middle-east-latest-news" target="_blank" rel="noopener">The Guardian</a> — covers health speculation and war updates</li>
-</ul>
 <h4 id="2-al-quds-day-march-banned-in-uk">2) Al Quds Day march banned in UK</h4>
 <p><strong>What happened (neutral):</strong> The UK government approved a police request to ban the Al Quds Day march, described by organizers as a peaceful pro-Palestinian event. Critics argue it represents the Iranian regime. The decision follows heightened tensions in the Middle East.</p>
 <p><strong>Perspectives:</strong> Pro-Palestinian groups view the ban as an infringement on free speech and a concession to anti-Iran sentiments amid the war, while conservative outlets support it as a measure to prevent promotion of regimes involved in global conflicts. Centrist and international perspectives debate the balance between security concerns and protest rights, noting how the event's ties to Iran complicate its framing in the current geopolitical climate.</p>
@@ -1274,10 +1320,6 @@
 <li>When should governments restrict protests based on international affiliations?</li>
 <li>How does the Iran war influence domestic policies on demonstrations?</li>
 <li>What uncertainties exist about the march's potential for unrest?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/cm28gmlvedro?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — details ban and criticisms</li>
 </ul>
 <h4 id="3-senators-demand-probe-into-epstein-files-handling">3) Senators demand probe into Epstein files handling</h4>
 <p><strong>What happened (neutral):</strong> US senators called for an investigation into the Department of Justice's release and redaction of documents related to Jeffrey Epstein. The DOJ faces criticism for its management of the files. This follows revelations about Epstein's ties to figures like Peter Mandelson.</p>
@@ -1288,11 +1330,6 @@
 <li>How could an investigation affect public trust in the DOJ?</li>
 <li>Are there conflicting reports on the extent of file mishandling?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/03/11/senators-epstein-files-investigation.html" target="_blank" rel="noopener">CNBC</a> — reports on calls for investigation</li>
-<li><a href="https://www.theguardian.com/politics/live/2026/mar/11/peter-mandelson-documents-keir-starmer-pmqs-iran-latest-news-updates" target="_blank" rel="noopener">The Guardian</a> — connects to Mandelson's Epstein ties</li>
-</ul>
 <h4 id="4-rfk-jr-reshapes-us-health-policies-with-new-guidelines">4) RFK Jr. reshapes US health policies with new guidelines</h4>
 <p><strong>What happened (neutral):</strong> Robert F. Kennedy Jr. is influencing America's health policies, including updated dietary guidelines that invert the traditional food pyramid to prioritize red meat, whole milk, proteins, and healthy fats. The changes reverse prior emphases on grains and minimized fats. Critics describe this as dismantling established policies.</p>
 <p><strong>Perspectives:</strong> Progressive critics argue the shifts undermine evidence-based nutrition science and promote industry interests, potentially harming public health amid broader policy rollbacks. Conservative supporters see it as a return to common-sense eating that challenges overregulation, praising the focus on proteins. Centrist views note the controversy over scientific backing, suggesting the changes reflect political divides in health advice.</p>
@@ -1301,10 +1338,6 @@
 <li>How might these dietary shifts affect long-term public health outcomes?</li>
 <li>What evidence supports or challenges the new guidelines?</li>
 <li>Could international health organizations respond to these US changes?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.motherjones.com/politics/2026/03/jessica-malaty-rivera-maha-food-protein/" target="_blank" rel="noopener">Mother Jones</a> — critiques RFK Jr.'s policy influence</li>
 </ul>
 <h4 id="5-tantric-guru-accused-of-exploiting-women-at-retreats">5) Tantric guru accused of exploiting women at retreats</h4>
 <p><strong>What happened (neutral):</strong> A woman who turned to yoga after a privileged life revealed she was forced into being a cam girl by tantric guru Gregorian Bivolaru, accused of raping and kidnapping women at his retreats. Bivolaru, 72, was arrested in 2023 during raids where 26 women were rescued from deplorable conditions in Paris. The case highlights exploitation in spiritual communities.</p>
@@ -1315,10 +1348,6 @@
 <li>What role does privilege play in vulnerability to such schemes?</li>
 <li>Are there uncertainties in the victims' accounts that need verification?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/lifestyle/article-15620967/woman-turned-yoga-privileged-life-forced-cam-girl-tantric-guru.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — details woman's story and guru's arrest</li>
-</ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-mortgage-rates-rise-amid-iran-war-turmoil">1) Mortgage rates rise amid Iran war turmoil</h4>
 <p><strong>What happened (neutral):</strong> Average UK mortgage rates reached their highest since last August, with deals being pulled due to economic upheaval from the Iran war. The changes mark the biggest market disruption since the mini-Budget crisis. Borrowers face increased costs and uncertainty.</p>
@@ -1328,10 +1357,6 @@
 <li>How might war-related turmoil affect long-term housing markets?</li>
 <li>What options do borrowers have in volatile rate environments?</li>
 <li>Are rate increases solely due to the war, or other factors?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/c24dm9vgrz7o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — reports on rate rises and deal pullbacks</li>
 </ul>
 <h4 id="2-zara-founder-to-receive-record-32-billion-dividend">2) Zara founder to receive record €3.2 billion dividend</h4>
 <p><strong>What happened (neutral):</strong> Amancio Ortega, billionaire founder of Zara owner Inditex SA, is set to collect about €3.2 billion in dividends this year. This is the largest payout he has received from the company he co-founded over six decades ago. The dividend reflects strong performance in retail.</p>
@@ -1344,6 +1369,88 @@
 </ul>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15634775/Cargo-ship-attacked-Strait-Hormuz-Projectile-hits-vessel-forcing-crew-evacuate-US-destroyed-16-Iranian-minelaying-warships-prevent-waterway-closing.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/mar/11/iran-war-live-updates-trump-oil-hormuz-protestors-us-israel-beirut-middle-east-latest-news" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15634805/Irans-new-Supreme-Leader-safe-sound-despite-war-injury-reports-presidents-son-says-mystery-surrounds-Mojtaba-Khamenei-seen-conflict-began.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15634807/Iran-warns-finger-trigger-deal-dissent-female-soccer-team-returns-Australia.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15633685/Iran-women-footballers-australia-horror-tehran.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/sport/football/article-15634469/Iran-soccer-players-Australia-visa.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/11/oil-price-today-crude-wti-us-iran-war-strait-hormuz-iea.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.foxnews.com/politics/from-bidens-war-gas-prices-small-price-pay-gop-shifts-tone-iran-conflict-hits-pumps" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=foxnews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">foxnews.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15634841/us-israel-iran-war-trump-tehran-netanyahu-russia-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/politics/live/2026/mar/11/peter-mandelson-documents-keir-starmer-pmqs-iran-latest-news-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/11/senators-epstein-files-investigation.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cm28gmlvedro?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.motherjones.com/politics/2026/03/jessica-malaty-rivera-maha-food-protein/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=motherjones.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">motherjones.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/lifestyle/article-15620967/woman-turned-yoga-privileged-life-forced-cam-girl-tantric-guru.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c24dm9vgrz7o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1694,10 +1801,67 @@ That's Omni View. For full source links and more context, check out today's writ
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

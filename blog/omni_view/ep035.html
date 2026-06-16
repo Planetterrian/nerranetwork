@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>US-Iran ceasefire deadline looms with JD Vance poised to lead Pakistan talks as ... — Episode 35</h1>
+            <h1><span class="nn-i18n-title">US-Iran ceasefire deadline looms with JD Vance poised to lead Pakistan talks as ...</span> — Episode 35</h1>
             
             <p class="blog-hero-hook">US-Iran ceasefire deadline looms with JD Vance poised to lead Pakistan talks as both sides issue fresh threats.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1200,15 +1281,6 @@
 <li>What economic levers, such as oil flows through the Strait of Hormuz, are likely influencing each side’s calculations?</li>
 <li>Which voices from affected communities are least represented in the dominant coverage?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/apr/21/iran-war-live-news-updates-trump-us-hormuz-oil-middle-east-talks" target="_blank" rel="noopener">Middle East crisis live: Iran weighs Pakistan talks</a> — Guardian live updates on Iranian signals and Vance travel plans</li>
-<li><a href="https://www.bloomberg.com/news/videos/2026-04-21/pakistan-s-bid-to-mediate-us-iran-talks-amid-uncertainty-video" target="_blank" rel="noopener">Pakistan’s Bid to Mediate US‑Iran Talks Amid Uncertainty</a> — Bloomberg video on Islamabad’s diplomatic positioning</li>
-<li><a href="https://www.aljazeera.com/news/2026/4/21/iran-war-forces-job-losses-reverse-migration-in-indias-ceramic-hub?traffic_source=rss" target="_blank" rel="noopener">Iran war forces job losses, reverse migration in India’s ceramic hub</a> — Al Jazeera on fuel crisis effects in Gujarat</li>
-<li><a href="https://www.theguardian.com/world/2026/apr/21/tuesday-briefing-what-it-might-take-for-lasting-peace-between-the-us-and-iran" target="_blank" rel="noopener">Tuesday briefing: What it might take for lasting peace between the US and Iran</a> — Guardian diplomatic analysis of ceasefire risks</li>
-<li><a href="https://www.cnbc.com/2026/04/21/european-markets-stoxx-600-ftse-dax-cac-iran-latest-oil-prices.html" target="_blank" rel="noopener">European stocks to open higher as U.S.-Iran ceasefire deadline looms</a> — CNBC on market reactions to threats</li>
-<li><a href="https://www.cnbc.com/2026/04/21/asia-markets-today-nikkei225-hangseng-sensex-asx-iran-us-trump-hormuz.html" target="_blank" rel="noopener">South Korea's Kospi hits record high amid mixed Asia markets as hopes linger for Mideast peace</a> — CNBC coverage of investor sentiment</li>
-</ul>
 <h4 id="2-uk-unemployment-rate-falls-unexpectedly-to-49">2) UK unemployment rate falls unexpectedly to 4.9%</h4>
 <p><strong>What happened (neutral):</strong> Britain’s unemployment rate dropped to 4.9 percent, surprising analysts who had forecast it would stay at 5.2 percent. The decline occurred in March, the first full month of the Iran conflict. Separate reports indicate UK employers simultaneously stepped up job cuts during the same period.</p>
 <p><strong>Perspectives:</strong> BBC presents the fall as a positive labor-market surprise without linking it directly to geopolitics. Bloomberg connects the broader picture of rising job cuts to turmoil caused by the Iran war, suggesting the headline rate may mask underlying weakness. The Guardian’s briefing cites analysis predicting up to a quarter of a million job losses by mid-next year as business confidence collapses, reflecting concern for recession risks. These accounts rest on the same official statistics but differ in emphasis: optimistic readings focus on the headline improvement while others highlight forward-looking indicators tied to international conflict.</p>
@@ -1218,12 +1290,6 @@
 <li>How directly is the Iran conflict affecting British hiring decisions versus other economic factors?</li>
 <li>What time lag typically exists between geopolitical shocks and measurable labor-market pain?</li>
 <li>Which sectors are most exposed according to the conflicting signals?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/cjd84pkkjgpo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">UK unemployment rate sees surprise fall to 4.9%</a> — BBC on the unexpected decline</li>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-21/uk-employers-cut-jobs-in-first-month-of-iran-conflict" target="_blank" rel="noopener">UK Employers Cut Jobs in First Month of Iran Conflict</a> — Bloomberg on simultaneous job-cutting trend</li>
-<li><a href="https://www.theguardian.com/world/2026/apr/21/tuesday-briefing-what-it-might-take-for-lasting-peace-between-the-us-and-iran" target="_blank" rel="noopener">Tuesday briefing: What it might take for lasting peace between the US and Iran</a> — Guardian analysis of potential recession impact</li>
 </ul>
 <h4 id="3-apple-names-john-ternus-as-new-ceo-to-succeed-tim-cook">3) Apple names John Ternus as new CEO to succeed Tim Cook</h4>
 <p><strong>What happened (neutral):</strong> Apple announced that hardware engineering chief John Ternus will become CEO on 1 September, ending Tim Cook’s 15-year run in the top job. Cook will transition to the role of executive chairman. The change comes amid global market attention on technology leadership.</p>
@@ -1235,12 +1301,6 @@
 <li>What role will Tim Cook continue to play as executive chairman?</li>
 <li>Which aspects of the transition have received the least media scrutiny?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/c1kr19lry18o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">New era for Apple as names new boss to replace Tim Cook after 15 years</a> — BBC announcement coverage</li>
-<li><a href="https://www.bloomberg.com/news/videos/2026-04-21/the-china-show-4-21-2026-video" target="_blank" rel="noopener">What to Expect From Apple's Incoming CEO John Ternus | The China Show 4/21/2026</a> — Bloomberg discussion of implications</li>
-<li><a href="https://www.theguardian.com/world/2026/apr/21/tuesday-briefing-what-it-might-take-for-lasting-peace-between-the-us-and-iran" target="_blank" rel="noopener">Tuesday briefing: What it might take for lasting peace between the US and Iran</a> — Guardian brief mention</li>
-</ul>
 <h4 id="4-poland-fines-luxury-car-trader-55-million-for-illegal-exports-to-russia">4) Poland fines luxury car trader $5.5 million for illegal exports to Russia</h4>
 <p><strong>What happened (neutral):</strong> Polish authorities fined a local company 20 million zloty ($5.5 million) for deliberately breaching EU sanctions by selling luxury cars to Russia. The tax authority described the violations as intentional. The case highlights ongoing enforcement challenges around sanctions on Moscow.</p>
 <p><strong>Perspectives:</strong> Bloomberg reports the penalty matter-of-factly, emphasizing the size of the fine and the company’s intentional conduct. The story receives little coverage elsewhere in the provided sources, suggesting it is viewed primarily through a sanctions-compliance lens rather than broader geopolitical debate. European officials see such enforcement as essential to maintaining credibility of the sanctions regime, while critics of the measures sometimes argue that leakage is inevitable given profit incentives.</p>
@@ -1251,10 +1311,6 @@
 <li>Are enforcement actions like this more about optics or actual supply disruption?</li>
 <li>How might similar cases in other EU countries compare?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-21/poland-fines-luxury-car-trader-for-illegal-exports-to-russia" target="_blank" rel="noopener">Poland Fines Luxury Car Trader for Illegal Exports to Russia</a> — Bloomberg on the tax authority’s action</li>
-</ul>
 <h4 id="5-us-veterans-arrested-protesting-iran-war-inside-capitol">5) US veterans arrested protesting Iran war inside Capitol</h4>
 <p><strong>What happened (neutral):</strong> American veterans were arrested while staging a protest inside the US Capitol building against the war on Iran. The demonstration occurred as diplomatic efforts to end the conflict continued. Details on the exact number arrested or specific charges remain limited in initial reports.</p>
 <p><strong>Perspectives:</strong> Al Jazeera presents the arrests as a direct expression of opposition to the conflict by those with military experience, giving voice to anti-war sentiment. Other outlets have not prominently featured the story, indicating varying judgments about newsworthiness. Veteran-led protests often carry symbolic weight because participants can speak from personal knowledge of war’s costs, contrasting with arguments that emphasize national security imperatives in the Middle East.</p>
@@ -1264,10 +1320,6 @@
 <li>How does the location inside the Capitol affect the legal and symbolic framing of the event?</li>
 <li>What specific policy changes were the protesters demanding?</li>
 <li>How might such actions influence congressional views on the conflict?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/video/newsfeed/2026/4/21/us-veterans-arrested-in-capitol-during-protest-against-the-war-on-iran?traffic_source=rss" target="_blank" rel="noopener">US veterans arrested in Capitol during protest against the war on Iran</a> — Al Jazeera video report</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-planned-ice-mega-jails-face-resistance-in-pro-trump-southern-towns">1) Planned ICE mega-jails face resistance in pro-Trump Southern towns</h4>
@@ -1280,10 +1332,6 @@
 <li>Does the pushback reflect changing attitudes or simply NIMBY dynamics?</li>
 <li>What options does the federal government have if localities continue objecting?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.csmonitor.com/USA/Society/2026/0420/trump-dhs-immigration-ice-detention-center?icid=rss" target="_blank" rel="noopener">How planned ICE mega-jails are testing the small-town Southern welcome</a> — Christian Science Monitor examination of local pushback</li>
-</ul>
 <h4 id="2-gunman-kills-canadian-tourist-wounds-13-at-mexicos-teotihuacan-pyramids">2) Gunman kills Canadian tourist, wounds 13 at Mexico’s Teotihuacan pyramids</h4>
 <p><strong>What happened (neutral):</strong> A man standing atop one of the historic Teotihuacan pyramids opened fire on tourists, killing one Canadian and injuring at least 13 others. The attack took place at one of Mexico’s most visited archaeological sites. Authorities have not yet released a full motive.</p>
 <p><strong>Perspectives:</strong> NPR reports the incident as a shocking act of violence at a major cultural heritage location popular with international visitors. Coverage focuses on immediate safety concerns for tourism, a key economic sector. Mexican authorities typically emphasize swift investigation while tourism promoters worry about reputational damage; the story touches on broader questions of public security in areas dependent on foreign visitors.</p>
@@ -1293,10 +1341,6 @@
 <li>What security measures are typically in place at major archaeological sites?</li>
 <li>Does the choice of a highly symbolic location suggest any political or ideological motive?</li>
 <li>How do such events test the balance between open public access and safety?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/04/21/g-s1-118185/gunman-pyramids-mexico" target="_blank" rel="noopener">Gunman shoots several tourists at historic pyramids in Mexico</a> — NPR report on the shooting</li>
 </ul>
 <h4 id="3-cuba-confirms-recent-meeting-with-us-officials-seeks-end-to-energy-blockade">3) Cuba confirms recent meeting with US officials, seeks end to energy blockade</h4>
 <p><strong>What happened (neutral):</strong> The Cuban government confirmed it held a recent meeting with US officials on the island. Havana reiterated its desire for the US energy blockade to be lifted. Tensions between the two countries remain elevated over long-standing sanctions.</p>
@@ -1308,10 +1352,6 @@
 <li>What domestic political constraints exist on both sides for any policy shift?</li>
 <li>How significant is the mere fact of officials meeting on Cuban soil?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/04/21/g-s1-118182/cuba-meeting-with-us-officials-on-island" target="_blank" rel="noopener">Cuba confirms meeting with US officials on island, wants energy blockade lifted</a> — NPR on the confirmed talks</li>
-</ul>
 <h4 id="4-rbi-warns-of-inflation-risks-to-india-from-prolonged-middle-east-conflict">4) RBI warns of inflation risks to India from prolonged Middle East conflict</h4>
 <p><strong>What happened (neutral):</strong> The Reserve Bank of India’s governor cautioned that the Middle East crisis could create persistent inflation if supply disruptions continue. India has deep economic ties to the region, particularly for energy. The central bank is monitoring spillover effects closely.</p>
 <p><strong>Perspectives:</strong> Bloomberg reports the RBI’s concern as a straightforward warning grounded in India’s import dependence. Indian policymakers traditionally prioritize inflation control because of its disproportionate impact on lower-income households. The statement reflects standard central-bank caution rather than alarm, yet underscores how distant conflicts can quickly translate into domestic price pressures for large emerging economies.</p>
@@ -1322,10 +1362,6 @@
 <li>What hedging strategies have Indian companies already employed?</li>
 <li>How does this risk compare with other inflation drivers currently facing India?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-21/rbi-flags-inflation-spillover-risks-from-middle-east-conflict" target="_blank" rel="noopener">RBI Flags Inflation Spillover Risks From Middle East Conflict</a> — Bloomberg on the central bank governor’s remarks</li>
-</ul>
 <h4 id="5-rare-white-park-cattle-added-to-uk-at-risk-priority-list">5) Rare white park cattle added to UK at-risk priority list</h4>
 <p><strong>What happened (neutral):</strong> The Rare Breeds Survival Trust has moved white park cattle to its highest “priority” category after calf numbers last year fell to less than two-thirds of 2022 levels. The ancient breed is thought to have accompanied Celtic peoples. Conservationists warn of urgent risk to its survival.</p>
 <p><strong>Perspectives:</strong> The Guardian covers the designation as part of the Trust’s 2026 watchlist, emphasizing cultural and genetic heritage value. British conservation groups view such breeds as living links to national history, while agricultural modernizers sometimes see limited economic justification for preserving low-productivity lines. The story connects environmental and cultural preservation arguments with practical breeding data.</p>
@@ -1335,10 +1371,6 @@
 <li>How do conservation charities decide when a breed crosses into “priority” status?</li>
 <li>What role do cultural narratives play in sustaining interest in rare livestock?</li>
 <li>Are there successful precedents for reversing declines in similar heritage breeds?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/environment/2026/apr/21/white-park-cattle-priority-at-risk-list-rare-breeds-survival-trust" target="_blank" rel="noopener">Cattle breed whose ancestors lived with Celts added to priority at-risk list</a> — Guardian report on the Rare Breeds Survival Trust watchlist</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-ab-foods-to-spin-off-budget-apparel-chain-primark">1) AB Foods to spin off budget apparel chain Primark</h4>
@@ -1351,10 +1383,6 @@
 <li>What precedent does this set for other UK conglomerates?</li>
 <li>Which shareholders stand to benefit most from the restructuring?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-21/ab-foods-to-separate-its-budget-apparel-chain-primark" target="_blank" rel="noopener">AB Foods to Separate Its Budget Apparel Chain Primark</a> — Bloomberg on the planned breakup</li>
-</ul>
 <h4 id="2-european-and-asian-markets-rise-on-hopes-for-us-iran-de-escalation">2) European and Asian markets rise on hopes for US-Iran de-escalation</h4>
 <p><strong>What happened (neutral):</strong> European stocks are expected to open higher while South Korea’s Kospi hit a record intraday high. Investors appear to be focusing on prospects for Middle East peace despite fresh threats and an imminent ceasefire deadline. Oil prices and broader risk sentiment remain in focus.</p>
 <p><strong>Perspectives:</strong> CNBC reports market movements as largely optimistic, with traders setting aside immediate Trump statements on Iran. This reflects the common investor tendency to price in best-case diplomatic outcomes until concrete evidence suggests otherwise. Energy-intensive sectors and export-oriented economies show particular sensitivity to any reduction in geopolitical risk premium.</p>
@@ -1365,11 +1393,6 @@
 <li>What role do central bank expectations play alongside geopolitical news?</li>
 <li>How do record highs in some Asian indices contrast with labor-market stress reported elsewhere?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/04/21/european-markets-stoxx-600-ftse-dax-cac-iran-latest-oil-prices.html" target="_blank" rel="noopener">European stocks to open higher as U.S.-Iran ceasefire deadline looms</a> — CNBC preview</li>
-<li><a href="https://www.cnbc.com/2026/04/21/asia-markets-today-nikkei225-hangseng-sensex-asx-iran-us-trump-hormuz.html" target="_blank" rel="noopener">South Korea's Kospi hits record high amid mixed Asia markets as hopes linger for Mideast peace</a> — CNBC on regional equity performance</li>
-</ul>
 <h4 id="3-australia-considers-25-gas-levy-that-industry-warns-could-shut-down-production">3) Australia considers 25% gas levy that industry warns could shut down production</h4>
 <p><strong>What happened (neutral):</strong> Australian opposition politician Angus Taylor stated that a proposed 25% gas levy would effectively shut down the industry. The comment came during live coverage of national policy debates that also included fines for petrol stations breaching fuel-price rules. Heat-safe rental standards and workplace safety rules for extreme temperatures were also discussed.</p>
 <p><strong>Perspectives:</strong> The Guardian’s live blog presents Taylor’s warning as part of broader cost-of-living and energy-policy arguments. Industry representatives typically stress that new levies threaten investment and jobs, while proponents argue such measures ensure resource wealth benefits citizens rather than only exporters. The debate illustrates classic tension between short-term consumer relief, long-term energy security, and climate considerations.</p>
@@ -1379,10 +1402,6 @@
 <li>How does Australia’s gas export profile shape the political incentives?</li>
 <li>What alternative revenue or regulatory tools are being proposed?</li>
 <li>How do extreme-weather housing proposals intersect with energy policy in the same debate?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/apr/21/anthony-albanese-fuel-crisis-jim-chalmers-budget-cost-of-living-supermarket-discount-rebel-wilson-court-hearing-ntwnfb" target="_blank" rel="noopener">Australia news live: Angus Taylor says 25% gas levy would shut down industry</a> — Guardian live coverage of policy statements</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-daily-mail-consolidates-digital-brands-under-single-global-domain-dailymailcom">1) Daily Mail consolidates digital brands under single global domain DailyMail.com</h4>
@@ -1395,10 +1414,6 @@
 <li>How does this compare with similar moves by other legacy news organizations?</li>
 <li>What does the timing suggest about the publisher’s view of the current media landscape?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15750027/Daily-Mail-single-global-domain-DailyMail-com.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">The Daily Mail transitions to single global domain DailyMail.com</a> — Mail Online announcement</li>
-</ul>
 <h4 id="2-us-aircraft-carrier-and-marine-tracker-for-april-2026">2) US aircraft carrier and marine tracker for April 2026</h4>
 <p><strong>What happened (neutral):</strong> A detailed community tracker updated positions and status of US aircraft carrier fleets and marine units as of April 20, 2026. Such public monitoring often focuses on deployments relevant to current international tensions, including the Middle East. The information is compiled from open sources.</p>
 <p><strong>Perspectives:</strong> The Reddit geopolitics community treats the tracker as a neutral data point for informed discussion of naval posture. Military analysts value transparency in fleet movements for understanding deterrence and readiness, while governments sometimes prefer less real-time visibility. The existence of crowdsourced trackers illustrates how open-source intelligence now supplements official statements during periods of heightened tension.</p>
@@ -1409,10 +1424,6 @@
 <li>What strategic signals might be intended by visible carrier movements near current conflict zones?</li>
 <li>How should non-experts evaluate the reliability of community-compiled military trackers?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.reddit.com/r/geopolitics/comments/1srf8df/us_aircraft_carrier_fleet_and_marine_tracker/" target="_blank" rel="noopener">US aircraft carrier fleet and marine tracker: April, 20 2026</a> — r/geopolitics community post</li>
-</ul>
 <h4 id="3-gut-microbes-could-identify-parkinsons-risk-years-before-symptoms">3) Gut microbes could identify Parkinson’s risk years before symptoms</h4>
 <p><strong>What happened (neutral):</strong> Research suggests changes in gut microbes may help identify elevated risk of Parkinson’s disease long before clinical symptoms appear. The findings also raise hopes for potential new therapies. The Guardian included the development in its daily briefing.</p>
 <p><strong>Perspectives:</strong> The Guardian presents the study as promising both for early detection and for possible future treatments, reflecting optimism about microbiome research. Medical researchers emphasize the need for further validation and larger trials, while patient advocacy groups often welcome any avenue that could shorten the diagnostic journey. Coverage balances scientific caution with the human value of earlier intervention in a progressive neurological condition.</p>
@@ -1422,10 +1433,6 @@
 <li>How might such tests affect insurance, employment, or psychological well-being if risk is identified years in advance?</li>
 <li>What historical parallels exist for microbiome-linked discoveries changing medical practice?</li>
 <li>Which next research steps seem most critical according to the reporting?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/apr/21/tuesday-briefing-what-it-might-take-for-lasting-peace-between-the-us-and-iran" target="_blank" rel="noopener">Tuesday briefing: What it might take for lasting peace between the US and Iran</a> — Guardian summary of the Parkinson’s research</li>
 </ul>
 <h3 id="top-popular-media-stories-3">Top popular media stories (3)</h3>
 <h4 id="1-jack-whitehall-and-roxy-horners-lavish-250k-wedding">1) Jack Whitehall and Roxy Horner’s lavish £250k wedding</h4>
@@ -1438,10 +1445,6 @@
 <li>Which aspects of the reporting are most likely to drive reader engagement?</li>
 <li>How do different generations tend to view this style of coverage?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15749217/All-details-Jack-Whitehall-Roxy-Horners-250k-wedding-Bride-stunned-two-designer-gowns-partying-2am-star-studded-guest-list-including-Jamie-Redknapp-Douglas-Booth-David-Gardner.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">All the details from Jack Whitehall and Roxy Horner's £250k wedding</a> — Mail Online feature</li>
-</ul>
 <h4 id="2-eden-confidential-column-on-king-charless-childhood-clue">2) Eden Confidential column on King Charles’s childhood clue</h4>
 <p><strong>What happened (neutral):</strong> The Mail’s gossip column suggests a childhood memory may explain one of the more unexpected initiatives of King Charles III’s reign. The piece reflects on the lasting power of early experiences, especially in later life. Specific details of the initiative are not elaborated in the headline.</p>
 <p><strong>Perspectives:</strong> Mail Online’s long-running Eden Confidential column traditionally blends royal insight with light speculation, appealing to readers interested in monarchy as both institution and human story. Royal coverage often splits between reverence for tradition and fascination with personal motivations; this item leans into psychological interpretation of public actions. The approach assumes readers value understanding the personal dimension behind official decisions.</p>
@@ -1451,10 +1454,6 @@
 <li>What standards of verification typically apply to “confidential” columns versus hard news?</li>
 <li>Why might childhood influences become more discussed as a monarch ages?</li>
 <li>How should readers weigh anonymous sourcing in such reporting?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15749577/EDEN-CONFIDENTIAL.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">EDEN CONFIDENTIAL: Revealed: The childhood clue behind King's Herculean task</a> — Mail Online column</li>
 </ul>
 <h4 id="3-chris-mason-on-olly-robbins-explaining-mandelson-vetting-failure">3) Chris Mason on Olly Robbins explaining Mandelson vetting failure</h4>
 <p><strong>What happened (neutral):</strong> BBC political editor Chris Mason notes that Sir Olly Robbins is expected to explain why he did not inform Prime Minister Keir Starmer that Lord Mandelson had failed vetting. The sacked official faces a high-stakes appearance before MPs. The story involves internal government processes and accountability.</p>
@@ -1469,6 +1468,128 @@
 <p>**Read more (sources</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/apr/21/iran-war-live-news-updates-trump-us-hormuz-oil-middle-east-talks" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-04-21/pakistan-s-bid-to-mediate-us-iran-talks-amid-uncertainty-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/4/21/iran-war-forces-job-losses-reverse-migration-in-indias-ceramic-hub?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/apr/21/tuesday-briefing-what-it-might-take-for-lasting-peace-between-the-us-and-iran" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/04/21/european-markets-stoxx-600-ftse-dax-cac-iran-latest-oil-prices.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/04/21/asia-markets-today-nikkei225-hangseng-sensex-asx-iran-us-trump-hormuz.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cjd84pkkjgpo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-21/uk-employers-cut-jobs-in-first-month-of-iran-conflict" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c1kr19lry18o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-04-21/the-china-show-4-21-2026-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-21/poland-fines-luxury-car-trader-for-illegal-exports-to-russia" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/video/newsfeed/2026/4/21/us-veterans-arrested-in-capitol-during-protest-against-the-war-on-iran?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.csmonitor.com/USA/Society/2026/0420/trump-dhs-immigration-ice-detention-center?icid=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=csmonitor.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">csmonitor.com</span>
+                    </a>
+                    
+                    <a href="https://www.npr.org/2026/04/21/g-s1-118185/gunman-pyramids-mexico" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.npr.org/2026/04/21/g-s1-118182/cuba-meeting-with-us-officials-on-island" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-21/rbi-flags-inflation-spillover-risks-from-middle-east-conflict" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/environment/2026/apr/21/white-park-cattle-priority-at-risk-list-rare-breeds-survival-trust" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-21/ab-foods-to-separate-its-budget-apparel-chain-primark" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/live/2026/apr/21/anthony-albanese-fuel-crisis-jim-chalmers-budget-cost-of-living-supermarket-discount-rebel-wilson-court-hearing-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15750027/Daily-Mail-single-global-domain-DailyMail-com.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/geopolitics/comments/1srf8df/us_aircraft_carrier_fleet_and_marine_tracker/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15749217/All-details-Jack-Whitehall-Roxy-Horners-250k-wedding-Bride-stunned-two-designer-gowns-partying-2am-star-studded-guest-list-including-Jamie-Redknapp-Douglas-Booth-David-Gardner.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15749577/EDEN-CONFIDENTIAL.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1887,10 +2008,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

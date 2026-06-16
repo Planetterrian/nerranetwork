@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>US military claims Iran blockade has completely halted economic trade as Trump c... — Episode 33</h1>
+            <h1><span class="nn-i18n-title">US military claims Iran blockade has completely halted economic trade as Trump c...</span> — Episode 33</h1>
             
             <p class="blog-hero-hook">US military claims Iran blockade has completely halted economic trade as Trump criticizes Pope Leo over the conflict.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1200,13 +1281,6 @@
 <li>How do economic ripple effects from the Strait of Hormuz influence global fuel prices and inflation?</li>
 <li>What incentives exist for third-party countries like Pakistan to mediate talks?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/apr/15/iran-war-live-news-us-naval-blockade-strait-hormuz-pakistan-peace-talks-middle-east-crisis-latest" target="_blank" rel="noopener">Middle East crisis live: US claims blockade has ‘completely halted economic trade’ into Iran</a> — Guardian live updates on blockade and diplomacy</li>
-<li><a href="https://www.aljazeera.com/economy/2026/4/15/us-military-says-blockade-of-iran-ports-completely-halts-economic-trade?traffic_source=rss" target="_blank" rel="noopener">US military says blockade of Iran ports ‘completely’ halts economic trade</a> — Al Jazeera report on military involvement</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15731223/JD-Vance-threatens-Iran-condemns-regimes-economic-terrorism-Strait-Hormuz-Live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Trump trashes Pope Leo's stance on Iran war during late night screed about US-born pontiff</a> — Daily Mail recap of crisis and Trump remarks</li>
-<li><a href="https://www.bbc.com/news/articles/ce8ll6pyvdzo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">Chris Mason: Iran war means government's vicious circles tighten and darken</a> — BBC analysis of economic impact on UK spending</li>
-</ul>
 <h4 id="2-trump-criticizes-pope-leos-stance-on-iran-war">2) Trump criticizes Pope Leo's stance on Iran war</h4>
 <p><strong>What happened (neutral):</strong> President Trump has again taken aim at Pope Leo, days after calling him “weak on crime,” amid a running spat between the White House and the Vatican over the US-Israel war against Iran. The criticism came during a late-night public statement about the US-born pontiff. This occurs as diplomatic efforts continue, including potential talks in Pakistan.</p>
 <p><strong>Perspectives:</strong> CNBC frames Trump’s remarks as part of an ongoing dispute between the administration and the Vatican specifically tied to the Iran conflict. Daily Mail coverage links the comments to broader live updates on the Middle East crisis, including threats from JD Vance and condemnations of Iran’s “economic terrorism.” Both outlets agree on the fact of Trump’s criticism; they differ on emphasis, with some coverage highlighting it as political rhetoric while others connect it to wider questions of moral authority in international conflicts. These framings reflect underlying values: one side may see papal commentary as inappropriate interference in geopolitics, while another may view strong presidential pushback as necessary defense of national policy.</p>
@@ -1216,11 +1290,6 @@
 <li>How does public criticism of the Pope play differently with various domestic audiences?</li>
 <li>What might be the strategic purpose of linking the Iran conflict to Vatican relations?</li>
 <li>How do personal characterizations (“weak on crime”) function in high-stakes diplomatic disputes?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/04/15/trump-pope-leo-iran-war-jesus-.html" target="_blank" rel="noopener">Trump takes aim at Pope Leo again, days after calling him 'weak on crime'</a> — CNBC report on the spat</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15731223/JD-Vance-threatens-Iran-condemns-regimes-economic-terrorism-Strait-Hormuz-Live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Trump trashes Pope Leo's stance on Iran war during late night screed about US-born pontiff</a> — Daily Mail coverage tying remarks to live crisis updates</li>
 </ul>
 <h4 id="3-imf-warns-of-global-recession-risks-including-high-inflation-and-fuel-prices-through-2027">3) IMF warns of global recession risks including high inflation and fuel prices through 2027</h4>
 <p><strong>What happened (neutral):</strong> Australian Treasurer Jim Chalmers responded to an IMF warning about potential severe global economic scenarios, including slower growth, high inflation, and elevated fuel prices persisting through 2027. He described it as “a really dangerous time for the global economy” and said the end of the current war “can’t come soon enough.” Australians are reportedly paying a “hefty price” for circumstances they did not choose.</p>
@@ -1232,10 +1301,6 @@
 <li>How should citizens weigh short-term economic pain against longer-term strategic goals?</li>
 <li>What assumptions underlie claims that ending one specific war would quickly ease global pressures?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/apr/15/anthony-albanese-brunei-jim-chalmers-washington-iran-war-fuel-prices-economy-angus-taylor-labor-coalition-political-reactions-ntwnfb" target="_blank" rel="noopener">Australia news live: Albanese and Sultan of Brunei pledge cooperation on energy and food; Uber fuel surcharge kicks in for non-EV rides</a> — Guardian live blog including Treasurer’s IMF response</li>
-</ul>
 <h4 id="4-doj-sues-connecticut-and-new-haven-over-sanctuary-policies">4) DOJ sues Connecticut and New Haven over sanctuary policies</h4>
 <p><strong>What happened (neutral):</strong> The US Department of Justice has filed a lawsuit against the state of Connecticut and the city of New Haven, arguing that their sanctuary policies constitute “open defiance” and interfere with federal immigration enforcement.</p>
 <p><strong>Perspectives:</strong> Fox News presents the lawsuit as a necessary federal response to local policies that hinder national immigration law. This reflects an emphasis on uniform enforcement and federal authority. Other perspectives, though not directly quoted here, often argue that sanctuary approaches protect community trust in policing and reflect local values about humane treatment. The factual basis is the existence of the policies and the lawsuit; disagreement centers on whether such policies unlawfully obstruct federal power or represent legitimate exercises of local discretion within a federal system.</p>
@@ -1246,10 +1311,6 @@
 <li>What are the practical effects on law enforcement cooperation?</li>
 <li>How does this lawsuit fit into longer-term debates about federalism in the US?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.foxnews.com/politics/doj-sues-connecticut-new-haven-over-sanctuary-policies-open-defiance" target="_blank" rel="noopener">DOJ sues Connecticut, New Haven over sanctuary policies: 'Open defiance'</a> — Fox News report on the lawsuit</li>
-</ul>
 <h4 id="5-joint-enterprise-convictions-in-england-and-wales-tripled-since-1980s">5) Joint enterprise convictions in England and Wales tripled since 1980s</h4>
 <p><strong>What happened (neutral):</strong> A report by the Centre for Crime and Justice Studies finds that joint enterprise convictions have tripled over the past four decades. The legal doctrine allows individuals to be convicted of crimes they did not physically carry out if they were present or associated with the main perpetrator. The charity argues the “job lot” prosecution approach is unjust and primarily targets young black men. It calls for legal changes so people are held accountable only for their own actions, noting sentences have also become harsher.</p>
 <p><strong>Perspectives:</strong> The Guardian presents the CCJS report as evidence of systemic problems with the doctrine, emphasizing concerns about fairness and disproportionate impact on certain demographic groups. This aligns with values prioritizing individual culpability and equal treatment under the law. Supporters of the current joint enterprise rules, though not directly quoted, typically argue it is a necessary tool to deter group crime and hold enablers accountable. The factual increase in convictions and harsher sentences is presented as agreed ground; the dispute lies in whether this reflects better enforcement or unjust overreach.</p>
@@ -1259,10 +1320,6 @@
 <li>How should the law balance deterring collective crime with ensuring personal responsibility?</li>
 <li>What role does prosecutorial discretion play in the observed demographic patterns?</li>
 <li>How might changing the law affect conviction rates for serious crimes?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/law/2026/apr/15/joint-enterprise-convictions-in-england-and-wales-have-tripled-since-1980s-report-finds" target="_blank" rel="noopener">Joint enterprise convictions in England and Wales have tripled since 1980s, report finds</a> — Guardian coverage of the CCJS report</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-candidate-calls-for-new-election-in-peru-claiming-fraud-without-evidence">1) Candidate calls for new election in Peru claiming fraud without evidence</h4>
@@ -1275,10 +1332,6 @@
 <li>What is the proper role of candidates once official results are announced?</li>
 <li>How should media cover such claims without amplifying unproven allegations?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/video/newsfeed/2026/4/15/candidate-calls-for-new-election-in-peru-claiming-fraud-without-evidence?traffic_source=rss" target="_blank" rel="noopener">Candidate calls for new election in Peru, claiming fraud without evidence</a> — Al Jazeera newsfeed item</li>
-</ul>
 <h4 id="2-sydney-judge-overturns-bail-conditions-for-anti-herzog-protester">2) Sydney judge overturns bail conditions for anti-Herzog protester</h4>
 <p><strong>What happened (neutral):</strong> A Sydney judge ruled it was not “reasonable” to bar Siena Hopper, a 25-year-old with no criminal history, from entering the City of Sydney except for work or court. The original police-imposed bail conditions also barred her from attending any “unlawful protests.” Lawyer Wael Skaf successfully applied to vary the conditions.</p>
 <p><strong>Perspectives:</strong> The Guardian presents the court decision as a correction of overly broad restrictions on a person with a clean record, reflecting values that protect freedom of movement and protest rights unless clear risks are demonstrated. Police and some authorities often argue that temporary geographic restrictions prevent further disruption. The factual ground is the judge’s finding that the conditions were unreasonable; disagreement centers on the appropriate balance between public order and individual liberties during contentious protests.</p>
@@ -1288,10 +1341,6 @@
 <li>How do courts weigh someone’s lack of criminal history in setting conditions?</li>
 <li>What is the line between lawful protest and conditions designed to prevent unlawful activity?</li>
 <li>How might this ruling influence future protest-related bail decisions?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/apr/15/sydney-anti-herzog-protester-nsw-police-bail-conditions-overturned-ntwnfb" target="_blank" rel="noopener">Sydney judge overturns bail conditions limiting anti-Herzog protester from entering CBD</a> — Guardian report on the court ruling</li>
 </ul>
 <h4 id="3-albanese-and-sultan-of-brunei-pledge-cooperation-on-energy-and-food">3) Albanese and Sultan of Brunei pledge cooperation on energy and food</h4>
 <p><strong>What happened (neutral):</strong> Australian Prime Minister Anthony Albanese met with the Sultan of Brunei and pledged closer cooperation on energy and food matters. The meeting occurred amid broader discussions about the global economy and regional stability.</p>
@@ -1313,10 +1362,6 @@
 <li>What safeguards exist to ensure road traffic investigations treat all parties equally?</li>
 <li>How should media report allegations of bias before official findings are released?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15732723/Police-biased-female-killed-girls-crash-Wimbledon.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Families say police showed 'unconscious bias' towards driver who killed two eight-year-olds in Wimbledon prep school crash - because she was a wealthy white woman in £70,000 car</a> — Daily Mail article on the families’ complaint</li>
-</ul>
 <h4 id="5-hospital-visits-feel-like-death-sentence-for-vulnerable-cancer-patient">5) Hospital visits feel like 'death sentence' for vulnerable cancer patient</h4>
 <p><strong>What happened (neutral):</strong> Rebecca Quayle, who has terminal cancer, described waiting in A&E with people coughing and taking Covid tests as feeling like a “death sentence” because a cold could kill her daughter or endanger her own health.</p>
 <p><strong>Perspectives:</strong> BBC News presents Quayle’s personal account to illustrate ongoing pressures and infection risks in NHS emergency departments. This reporting often reflects concern for vulnerable patients and questions about hospital infection control. Health systems face trade-offs between treating high volumes of patients and protecting those at greatest risk. The story connects to broader debates about resourcing, waiting times, and prioritization within public healthcare.</p>
@@ -1326,10 +1371,6 @@
 <li>How do hospitals balance urgent care demands with protection of vulnerable individuals?</li>
 <li>What role should public behavior (such as attending A&E with minor illnesses) play in these risks?</li>
 <li>How has the post-pandemic understanding of respiratory infection transmission changed hospital practices?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/c145ej273evo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">A cold could kill my daughter - hospital visits feel like a death sentence</a> — BBC News patient account</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-ken-henry-calls-for-100-tax-on-gas-windfall-profits">1) Ken Henry calls for 100% tax on gas windfall profits</h4>
@@ -1342,10 +1383,6 @@
 <li>What incentives does a 100% marginal tax rate create for companies?</li>
 <li>How should governments weigh short-term revenue gains against long-term investment signals?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/apr/15/ignore-self-serving-claims-from-gas-giants-and-implement-100-tax-on-windfall-profits-ken-henry-says" target="_blank" rel="noopener">Ignore ‘self-serving’ claims from gas giants and implement 100% tax on windfall profits, Ken Henry says</a> — Guardian article on Henry’s submission</li>
-</ul>
 <h4 id="2-gucci-sales-fall-as-middle-east-conflict-hurts-luxury-sector">2) Gucci sales fall as Middle East conflict hurts luxury sector</h4>
 <p><strong>What happened (neutral):</strong> Gucci parent Kering SA reported an 8% slide in comparable revenue for the brand in the first quarter, worse than analysts’ expectations of a 4.3% drop. The company cited the conflict in the Middle East as a factor hurting sales.</p>
 <p><strong>Perspectives:</strong> Bloomberg notes the revenue decline and provides analyst commentary, framing it as evidence of how geopolitical instability can quickly affect discretionary luxury spending. This connects to the broader recognition that global conflicts disrupt not only energy markets but also consumer confidence and travel patterns that support high-end retail. The reporting reflects business values focused on measurable financial outcomes and sensitivity to global risk factors.</p>
@@ -1356,10 +1393,6 @@
 <li>What strategies do global luxury groups typically use to manage geopolitical risk?</li>
 <li>How might prolonged instability in the Middle East affect full-year forecasts?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-04-15/gucci-sales-down-revenue-slides-video" target="_blank" rel="noopener">Gucci Sales Down, Revenue Slides</a> — Bloomberg video breakdown</li>
-</ul>
 <h4 id="3-european-markets-eye-mixed-open-amid-iran-war-developments">3) European markets eye mixed open amid Iran war developments</h4>
 <p><strong>What happened (neutral):</strong> European stocks are expected to open mixed as traders assess the latest trajectory of the US-Iran war, including the reported blockade of Iranian ports and its potential effects on energy prices and broader economic growth.</p>
 <p><strong>Perspectives:</strong> CNBC reports the anticipated market reaction, highlighting uncertainty created by the conflict. Business coverage tends to focus on volatility, risk premiums, and sector-specific impacts (energy, defense, travel). Some investors may see opportunities in higher oil prices while others worry about stagflation risks. The mixed open expectation reflects differing interpretations of how quickly diplomatic efforts might ease tensions versus fears of prolonged disruption.</p>
@@ -1369,10 +1402,6 @@
 <li>How do oil price movements typically influence European equities?</li>
 <li>What role do central bank expectations play when geopolitical risk rises?</li>
 <li>How useful are market reactions as a real-time gauge of economic confidence?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/04/15/european-markets-stox-600-ftse-dax-cac-iran-latest-oil-prices.html" target="_blank" rel="noopener">European markets eye mixed open as traders assess Iran war latest</a> — CNBC pre-market report</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-asml-raises-2026-guidance-on-strong-ai-semiconductor-demand">1) ASML raises 2026 guidance on strong AI semiconductor demand</h4>
@@ -1385,10 +1414,6 @@
 <li>What is the difference between cyclical chip demand and structural AI-driven demand?</li>
 <li>How should investors weigh strong company guidance against wider economic warnings?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/04/15/asml-q1-2026-earnings-report.html" target="_blank" rel="noopener">Chip giant ASML raises 2026 guidance as AI semiconductor demand stays strong</a> — CNBC earnings coverage</li>
-</ul>
 <h4 id="2-victory-giant-technology-set-to-price-hong-kong-listing-at-top-of-range">2) Victory Giant Technology set to price Hong Kong listing at top of range</h4>
 <p><strong>What happened (neutral):</strong> Victory Giant Technology Huizhou Co. is expected to price its Hong Kong initial public offering at the top of the marketed range, signaling strong investor demand for the city’s biggest share sale in seven months.</p>
 <p><strong>Perspectives:</strong> Bloomberg reports the development as evidence of renewed appetite for Hong Kong listings. This framing reflects business interest in market sentiment and the ability of certain technology or manufacturing companies to attract capital even amid global uncertainty. The strong demand may indicate investor confidence in specific growth stories or a broader search for yield in Asia, though it contrasts with caution seen in other sectors affected by the Middle East conflict.</p>
@@ -1398,10 +1423,6 @@
 <li>How does geopolitical tension usually affect Asian equity issuance calendars?</li>
 <li>What does pricing at the top of the range typically signal about aftermarket performance?</li>
 <li>How might broader economic warnings influence investor appetite for new listings?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-15/victory-giant-is-said-set-to-price-hong-kong-listing-at-top-of-range" target="_blank" rel="noopener">Victory Giant Is Said Set to Price Hong Kong Listing at Top of Range</a> — Bloomberg report on the IPO</li>
 </ul>
 <h4 id="3-uber-fuel-surcharge-begins-for-non-ev-rides-in-australia">3) Uber fuel surcharge begins for non-EV rides in Australia</h4>
 <p><strong>What happened (neutral):</strong> A new Uber fuel surcharge has taken effect for rides that do not use electric vehicles, coinciding with warnings about elevated global fuel prices.</p>
@@ -1424,10 +1445,6 @@
 <li>How much weight should creators give to real-time social media reactions?</li>
 <li>What pressures does a very large production budget place on creative decisions?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/tvshowbiz/article-15731351/Euphoria-season-three-mistake-Jacob-Elordi-Sydney-Sweeney.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Euphoria fans switch off at stomach-churning scene, accuse Jacob Elordi of 'forcing himself through every take' and claim Sydney Sweeney is subject to a 'humiliation ritual' - as season three is branded a $200M mistake</a> — Daily Mail article on viewer backlash</li>
-</ul>
 <h4 id="2-harry-says-children-should-be-an-upgrade-of-their-parents">2) Harry says children should be an 'upgrade' of their parents</h4>
 <p><strong>What happened (neutral):</strong> The Duke of Sussex combined his interests in mental health campaigning and sport on the second day of his visit to Australia, where he remarked that children should be an “upgrade” of their parents.</p>
 <p><strong>Perspectives:</strong> BBC News presents the comment in the context of Prince Harry’s public work on mental health and wellbeing. Coverage of royal remarks often examines both the substance of the message and how it is received by different audiences. Some interpret the phrasing as forward-looking encouragement for personal growth and breaking negative cycles; others may view it through the lens of family dynamics or generational commentary. The reporting reflects interest in how public figures use their platforms to discuss parenting and psychological health.</p>
@@ -1438,15 +1455,113 @@
 <li>Why do certain royal statements generate more discussion than others?</li>
 <li>How should audiences distinguish between casual remarks and formal policy positions?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/c93ee1dp93lo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">Harry says children should be an 'upgrade' of their parents</a> — BBC News report on the Australia visit</li>
-</ul>
 <h4 id="3-insight-with-haslinda-amin-april-15-2026">3) Insight with Haslinda Amin — April 15 2026</h4>
 <p><strong>What happened (neutral):</strong> Bloomberg’s daily news program featured in-depth interviews and analysis with prominent leaders from business, finance, politics, and culture.</p>
 <p><strong>Perspectives:</strong> Bloomberg presents the episode as providing viewers with “the complete picture” on important stories. Such programs often aim to cut through fragmented news cycles by offering longer-form discussion. The format reflects a belief that</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/apr/15/iran-war-live-news-us-naval-blockade-strait-hormuz-pakistan-peace-talks-middle-east-crisis-latest" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/economy/2026/4/15/us-military-says-blockade-of-iran-ports-completely-halts-economic-trade?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15731223/JD-Vance-threatens-Iran-condemns-regimes-economic-terrorism-Strait-Hormuz-Live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/ce8ll6pyvdzo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/04/15/trump-pope-leo-iran-war-jesus-.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/live/2026/apr/15/anthony-albanese-brunei-jim-chalmers-washington-iran-war-fuel-prices-economy-angus-taylor-labor-coalition-political-reactions-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.foxnews.com/politics/doj-sues-connecticut-new-haven-over-sanctuary-policies-open-defiance" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=foxnews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">foxnews.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/law/2026/apr/15/joint-enterprise-convictions-in-england-and-wales-have-tripled-since-1980s-report-finds" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/video/newsfeed/2026/4/15/candidate-calls-for-new-election-in-peru-claiming-fraud-without-evidence?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/apr/15/sydney-anti-herzog-protester-nsw-police-bail-conditions-overturned-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15732723/Police-biased-female-killed-girls-crash-Wimbledon.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c145ej273evo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/apr/15/ignore-self-serving-claims-from-gas-giants-and-implement-100-tax-on-windfall-profits-ken-henry-says" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-04-15/gucci-sales-down-revenue-slides-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/04/15/european-markets-stox-600-ftse-dax-cac-iran-latest-oil-prices.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/04/15/asml-q1-2026-earnings-report.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-15/victory-giant-is-said-set-to-price-hong-kong-listing-at-top-of-range" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/tvshowbiz/article-15731351/Euphoria-season-three-mistake-Jacob-Elordi-Sydney-Sweeney.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c93ee1dp93lo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1893,10 +2008,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

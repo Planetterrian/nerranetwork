@@ -107,7 +107,12 @@
       "url": "https://nerranetwork.com/omni-view.html"
     },
     "image": "https://nerranetwork.com/assets/covers/omni-view.jpg",
-    "transcript": "https://nerranetwork.com/blog/omni_view/ep080.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/omni_view/ep080.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://audio.nerranetwork.com/omni_view/Omni_View_Ep080_20260613.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -708,6 +713,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +818,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1181,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>The United States has directed a leading AI firm to block foreign nationals from its most advanced m… — Episode 80</h1>
+            <h1><span class="nn-i18n-title">The United States has directed a leading AI firm to block foreign nationals from its most advanced m…</span> — Episode 80</h1>
             
             <p class="blog-hero-hook">The United States has directed a leading AI firm to block foreign nationals from its most advanced models, underscoring how national security rules are reshaping global technology access.</p>
             
@@ -1129,6 +1212,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1194,11 +1280,6 @@
 <li>How might other AI developers respond to comparable directives?</li>
 <li>What precedent does this set for future technology export rules?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/anthropic-cuts-top-tier-ai-access-after-us-foreigner-ban/a-77534688?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — Details the company’s statement on the order</li>
-<li><a href="https://www.aljazeera.com/news/2026/6/13/us-orders-anthropic-to-disable-ai-models-for-all-foreign-nationals?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Reports the scope of the suspended models</li>
-</ul>
 <h4 id="2-drug-diversion-schemes-reduce-reoffending-more-effectively-than-prosecution">2) Drug diversion schemes reduce reoffending more effectively than prosecution</h4>
 <p><strong>What happened (neutral):</strong> Analysis of data from 13 English police forces covering more than 62,000 incidents found individuals routed into treatment or education programs were about one-third less likely to reoffend than those prosecuted for drug possession. The study compared outcomes over four years.</p>
 <p><strong>Perspectives:</strong> Police-led diversion programs are presented by researchers as a practical alternative that addresses underlying substance issues rather than solely applying criminal penalties. Supporters of traditional prosecution argue that formal charges maintain clear legal consequences and public accountability. Health-focused groups stress that steering people toward support services produces measurable drops in repeat offenses.</p>
@@ -1207,10 +1288,6 @@
 <li>How do the schemes define successful completion of treatment?</li>
 <li>What costs are associated with expanding diversion programs?</li>
 <li>Which types of drug offenses show the clearest benefit from this approach?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/uk-news/2026/jun/13/drug-diversion-schemes-reoffending-rates-police" target="_blank" rel="noopener">The Guardian</a> — Summarizes the four-year analysis across multiple forces</li>
 </ul>
 <h4 id="3-portion-of-us-spy-law-lapses-as-congress-and-white-house-remain-at-odds">3) Portion of US spy law lapses as Congress and White House remain at odds</h4>
 <p><strong>What happened (neutral):</strong> A section of the Foreign Intelligence Surveillance Act has not been renewed after Congress failed to complete action before the deadline. The lapse occurs amid ongoing debate between lawmakers and the administration over renewal terms.</p>
@@ -1221,10 +1298,6 @@
 <li>What temporary measures, if any, are agencies using during the lapse?</li>
 <li>How long has this provision been in place in its current form?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.csmonitor.com/USA/Politics/2026/0613/spy-law-fisa-section-702-expire?icid=rss" target="_blank" rel="noopener">The Christian Science Monitor</a> — Outlines the congressional standoff and security context</li>
-</ul>
 <h4 id="4-charity-warns-social-media-age-ban-for-under-16s-would-prove-unenforceable">4) Charity warns social media age ban for under-16s would prove unenforceable</h4>
 <p><strong>What happened (neutral):</strong> The Molly Rose Foundation stated that a proposed ban on social media use by those under 16 could not be effectively implemented. The group advocates focusing instead on removing addictive design features.</p>
 <p><strong>Perspectives:</strong> The charity emphasizes practical enforcement limits and the value of addressing platform mechanics that encourage prolonged use. Supporters of an age restriction argue it would reduce exposure for younger users and shift industry responsibility. Technology policy analysts note that verification systems face significant technical and privacy hurdles.</p>
@@ -1234,10 +1307,6 @@
 <li>How would platforms distinguish between personal and educational use?</li>
 <li>What evidence links specific design features to addictive behavior?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/cgmdy9vg9jmo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Reports the charity’s position on enforcement challenges</li>
-</ul>
 <h4 id="5-former-uk-defence-secretary-reportedly-sought-global-defence-bank-membership">5) Former UK defence secretary reportedly sought global defence bank membership</h4>
 <p><strong>What happened (neutral):</strong> Allies of the former defence secretary told the BBC that he proposed the United Kingdom join an international defence financing institution. The Treasury reportedly resisted the idea.</p>
 <p><strong>Perspectives:</strong> Proponents of joining view it as a way to pool resources for collective security projects. Treasury officials have expressed caution over new spending commitments and institutional overlap. Defence advocates argue the mechanism could strengthen long-term planning beyond annual budgets.</p>
@@ -1246,10 +1315,6 @@
 <li>What would membership entail for UK contributions?</li>
 <li>Which other countries already participate?</li>
 <li>How does the proposal differ from existing NATO funding arrangements?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/ce8jyd85ejeo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Details the reported proposal and Treasury response</li>
 </ul>
 <h3 id="top-world-stories-2">Top world stories (2)</h3>
 <h4 id="1-barcelonas-la-sagrada-familia-basilica-reaches-completion-after-144-years">1) Barcelona’s La Sagrada Familia basilica reaches completion after 144 years</h4>
@@ -1261,10 +1326,6 @@
 <li>What restoration work remains after the inauguration?</li>
 <li>How have similar completed landmarks balanced tourism and local needs?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/travel/article-15895395/Barcelona-Pope-Leo-XIV-Sagrada-Familia-tourism-locals.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Covers the inauguration and local reactions</li>
-</ul>
 <h4 id="2-gaza-residents-turn-to-molokhia-based-cigarettes-amid-tobacco-shortages">2) Gaza residents turn to molokhia-based cigarettes amid tobacco shortages</h4>
 <p><strong>What happened (neutral):</strong> Rising tobacco prices have prompted some smokers in Gaza to use cigarettes made from molokhia leaves, which carry additional health risks. The shift reflects constrained supply chains in the territory.</p>
 <p><strong>Perspectives:</strong> Health workers describe the substitution as a concerning response to economic pressure that may increase respiratory harm. Local residents cite affordability and availability as the main drivers. Observers note the practice illustrates broader supply disruptions affecting everyday goods.</p>
@@ -1273,10 +1334,6 @@
 <li>What other substitutes have appeared during previous shortages?</li>
 <li>How do health authorities track the spread of this alternative?</li>
 <li>What long-term effects are associated with molokhia inhalation?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/features/longform/2026/6/13/molokhia-cigarettes-gazas-toxic-alternative-to-tobacco?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Examines the health and supply context</li>
 </ul>
 <h3 id="top-business-stories-2">Top business stories (2)</h3>
 <h4 id="1-former-estonian-central-bank-chief-begins-volunteer-police-work">1) Former Estonian central bank chief begins volunteer police work</h4>
@@ -1287,10 +1344,6 @@
 <li>How common are such post-tenure volunteer roles among central bankers?</li>
 <li>What training is required for the new position?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-06-13/former-ecb-rate-setter-muller-reports-for-duty-as-volunteer-cop" target="_blank" rel="noopener">Bloomberg</a> — Reports the career shift</li>
-</ul>
 <h4 id="2-bundesbank-president-says-prices-likely-to-remain-elevated-even-after-conflict-ends">2) Bundesbank president says prices likely to remain elevated even after conflict ends</h4>
 <p><strong>What happened (neutral):</strong> Joachim Nagel stated in an interview that inflation pressures could persist beyond the resolution of current geopolitical tensions. The comment addresses ongoing price dynamics in the euro area.</p>
 <p><strong>Perspectives:</strong> Central bankers emphasize that supply-chain and labor-market factors can keep prices high independently of specific conflicts. Market participants watch such statements for signals on future interest-rate paths. The remark underscores the distinction between temporary shocks and longer-term price trends.</p>
@@ -1298,10 +1351,6 @@
 <li>Which price components are expected to stay sticky?</li>
 <li>How do policymakers distinguish between conflict-driven and structural inflation?</li>
 <li>What historical episodes show similar persistence after crises?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-06-13/prices-likely-to-stay-higher-even-if-conflict-ends-nagel-says" target="_blank" rel="noopener">Bloomberg</a> — Summarizes the interview remarks</li>
 </ul>
 <h3 id="top-technology-stories-1">Top technology stories (1)</h3>
 <h4 id="1-german-court-holds-google-liable-for-false-statements-in-ai-overviews">1) German court holds Google liable for false statements in AI Overviews</h4>
@@ -1313,10 +1362,6 @@
 <li>How might the ruling influence AI development practices in Europe?</li>
 <li>Does the decision distinguish between different types of AI outputs?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.wired.com/story/a-court-has-ruled-that-google-is-liable-for-false-statements-generated-by-ai-overviews/" target="_blank" rel="noopener">WIRED</a> — Explains the court’s reasoning on operator liability</li>
-</ul>
 <h3 id="top-popular-media-stories-1">Top popular media stories (1)</h3>
 <h4 id="1-meghan-markle-faces-reported-setback-as-major-partner-ends-collaboration">1) Meghan Markle faces reported setback as major partner ends collaboration</h4>
 <p><strong>What happened (neutral):</strong> Reports indicate a key partner has stepped back from a planned project involving the Duchess of Sussex’s lifestyle and philanthropy work. Insiders describe the development as a potential obstacle to broader brand ambitions.</p>
@@ -1325,10 +1370,6 @@
 <li>What other ventures remain active for the Duchess?</li>
 <li>How have similar partnership shifts affected other public figures?</li>
 <li>What timeline is associated with the affected project?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15895729/Meghans-jamaggedon-crisis-Duchess-ALISON-BOSHOFF.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Details the reported business development</li>
 </ul>
 <h3 id="top-gossip-stories-1">Top gossip stories (1)</h3>
 <h4 id="1-eamonn-holmes-and-ruth-langsford-reportedly-heading-toward-contentious-divorce">1) Eamonn Holmes and Ruth Langsford reportedly heading toward contentious divorce</h4>
@@ -1339,16 +1380,84 @@
 <li>How have similar high-profile separations been handled by UK media?</li>
 <li>What legal or financial issues commonly arise in such cases?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15895859/war-Eamonn-Holmes-Ruth-Langsford.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Reports on the reported tensions and public aspects</li>
-</ul>
 <h3 id="understanding-the-issue-how-export-controls-on-advanced-ai-are-applied">Understanding the Issue: How export controls on advanced AI are applied</h3>
 <p>Most coverage of technology restrictions treats them as simple on-off switches, yet the process involves layered licensing, technical definitions, and ongoing compliance monitoring. When the US government issues an export control directive to a company like Anthropic, officials first classify the specific models under existing regulations, then require the firm to implement user verification and access blocks that can be audited. Companies must update their systems, document compliance, and sometimes redesign features to prevent circumvention, all while continuing to serve domestic users. This mechanism draws on decades of precedent with semiconductor and encryption controls, where definitions of “sensitive” capabilities evolve with each generation of hardware or software. Knowing this, when you hear claims that a ban is either total or easily bypassed, you can evaluate whether the reporting accounts for the administrative steps companies must complete and the enforcement tools available to regulators. Next time you see a headline about AI export rules, ask: which agency issued the classification, what technical thresholds triggered it, and how the company is required to demonstrate compliance over time.</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference official government announcements with company statements when restrictions on technology are reported. Primary documents such as court rulings or regulatory directives often clarify scope more precisely than secondary summaries. Checking multiple jurisdictions’ approaches to the same technology can reveal where enforcement practices diverge.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.dw.com/en/anthropic-cuts-top-tier-ai-access-after-us-foreigner-ban/a-77534688?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/6/13/us-orders-anthropic-to-disable-ai-models-for-all-foreign-nationals?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/uk-news/2026/jun/13/drug-diversion-schemes-reoffending-rates-police" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.csmonitor.com/USA/Politics/2026/0613/spy-law-fisa-section-702-expire?icid=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=csmonitor.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">csmonitor.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cgmdy9vg9jmo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/ce8jyd85ejeo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/travel/article-15895395/Barcelona-Pope-Leo-XIV-Sagrada-Familia-tourism-locals.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/features/longform/2026/6/13/molokhia-cigarettes-gazas-toxic-alternative-to-tobacco?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-06-13/former-ecb-rate-setter-muller-reports-for-duty-as-volunteer-cop" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-06-13/prices-likely-to-stay-higher-even-if-conflict-ends-nagel-says" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.wired.com/story/a-court-has-ruled-that-google-is-liable-for-false-statements-generated-by-ai-overviews/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=wired.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">wired.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15895729/Meghans-jamaggedon-crisis-Duchess-ALISON-BOSHOFF.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15895859/war-Eamonn-Holmes-Ruth-Langsford.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1837,10 +1946,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

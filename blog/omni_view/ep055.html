@@ -107,7 +107,12 @@
       "url": "https://nerranetwork.com/omni-view.html"
     },
     "image": "https://nerranetwork.com/assets/covers/omni-view.jpg",
-    "transcript": "https://nerranetwork.com/blog/omni_view/ep055.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/omni_view/ep055.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://audio.nerranetwork.com/omni_view/Omni_View_Ep055_20260519.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -708,6 +713,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +818,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1181,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Russia and Belarus have begun joint nuclear drills while the UN Security Council meets on Ukraine, h… — Episode 55</h1>
+            <h1><span class="nn-i18n-title">Russia and Belarus have begun joint nuclear drills while the UN Security Council meets on Ukraine, h…</span> — Episode 55</h1>
             
             <p class="blog-hero-hook">Russia and Belarus have begun joint nuclear drills while the UN Security Council meets on Ukraine, highlighting how routine military exercises can quickly raise regional tensions.</p>
             
@@ -1129,6 +1212,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1194,10 +1280,6 @@
 <li>How do UN Security Council meetings influence ongoing military actions?</li>
 <li>What role do allied nations play in shaping the agenda for such sessions?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/may/19/europe-ukraine-russia-belarus-nuclear-drills-un-security-council-eu-us-hungary-peter-magyar-poland-nato-latest-news-updates" target="_blank" rel="noopener">The Guardian</a> — Live updates on the UN meeting and drills</li>
-</ul>
 <h4 id="2-european-parliament-awards-first-order-of-merit-honors">2) European Parliament awards first Order of Merit honors</h4>
 <p><strong>What happened (neutral):</strong> Germany’s Angela Merkel and Ukraine’s Volodymyr Zelenskyy are among the initial recipients of the new European Order of Merit. The awards will be presented at a ceremony in Strasbourg. The honor recognizes contributions to European unity and values.</p>
 <p><strong>Perspectives:</strong> Deutsche Welle coverage highlights the award as a symbolic recognition of long-standing leadership during crises. Some European commentators see the timing, amid ongoing conflict in Ukraine, as an effort to reinforce solidarity among member states. Others note that such honors can serve both to celebrate past achievements and to signal current political priorities within the European Parliament.</p>
@@ -1206,10 +1288,6 @@
 <li>What criteria determine recipients of new European honors?</li>
 <li>How do symbolic awards affect public perception of leaders?</li>
 <li>In what ways might these recognitions influence ongoing policy debates?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/top-european-parliament-honor-to-be-awarded-for-first-time/a-77208111?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — Details on the first laureates and ceremony</li>
 </ul>
 <h4 id="3-two-babies-among-victims-in-spanish-town-shooting">3) Two babies among victims in Spanish town shooting</h4>
 <p><strong>What happened (neutral):</strong> A gunman in the small town of El Ejido near Almería reportedly killed his parents and wounded four others, including two babies. The incident occurred around 11pm local time on Monday. Authorities are continuing to investigate the circumstances.</p>
@@ -1220,10 +1298,6 @@
 <li>What support systems exist for families affected by such events?</li>
 <li>What information do authorities release during active investigations?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15830011/Two-babies-shot-shooting-rampage-gunman-kills-parents-wounds-four-including-seven-month-old-son.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Report on the El Ejido incident</li>
-</ul>
 <h4 id="4-security-guard-identified-among-those-killed-in-san-diego-mosque-shooting">4) Security guard identified among those killed in San Diego mosque shooting</h4>
 <p><strong>What happened (neutral):</strong> Amin Abdullah, a father of eight, died while trying to protect others during a shooting at the Islamic Center of San Diego. Two teenagers opened fire at the center on Monday morning. Additional victims were wounded in the attack.</p>
 <p><strong>Perspectives:</strong> Mail Online accounts stress Abdullah’s role as a security guard and his family responsibilities. Community statements have described him as someone who acted to shield others. Local authorities continue to piece together the sequence of events from witness accounts and evidence collected at the scene.</p>
@@ -1233,10 +1307,6 @@
 <li>How do communities support families after targeted violence?</li>
 <li>What details emerge first in investigations of public attacks?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15829379/Amin-Abdullah-security-guard-killed-mosque-shooting.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Identification of the security guard</li>
-</ul>
 <h4 id="5-independent-senator-urges-cgt-reform-changes-in-australia">5) Independent senator urges CGT reform changes in Australia</h4>
 <p><strong>What happened (neutral):</strong> Independent Senator David Pocock warned that proposed capital gains tax adjustments could push tech investment offshore. Prime Minister Anthony Albanese responded by dismissing an associated AI meme campaign as flattering. The debate centers on how tax settings affect startup retention.</p>
 <p><strong>Perspectives:</strong> The Guardian reports highlight concerns from startup representatives that higher taxes may reduce incentives for founders to remain in Australia. Government statements emphasize the need for fair revenue measures while maintaining competitiveness. Independent voices in Parliament stress the importance of balancing fiscal policy with long-term innovation goals.</p>
@@ -1245,10 +1315,6 @@
 <li>How do capital gains tax rates influence business location decisions?</li>
 <li>What role do memes and social media play in policy debates?</li>
 <li>How do independent senators shape tax reform discussions?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/may/19/australia-federal-budget-responses-albanese-ai-memes-david-pocock-warning" target="_blank" rel="noopener">The Guardian</a> — Coverage of the CGT debate and meme response</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-moscow-launches-nationwide-nuclear-drills">1) Moscow launches nationwide nuclear drills</h4>
@@ -1260,10 +1326,6 @@
 <li>How do neighboring countries monitor these exercises?</li>
 <li>What historical patterns exist around nuclear signaling during conflicts?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/moscow-begins-nuclear-drills-as-russia-ukraine-drone-strikes-intensify/a-77208390?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — Report on the drills and strikes</li>
-</ul>
 <h4 id="2-report-claims-xi-jinping-discussed-putins-ukraine-decision-with-trump">2) Report claims Xi Jinping discussed Putin’s Ukraine decision with Trump</h4>
 <p><strong>What happened (neutral):</strong> A report circulating on social platforms states that Chinese leader Xi Jinping told Donald Trump that Vladimir Putin might come to regret the Ukraine invasion. The claim appears in online discussions but lacks extensive independent verification at this stage.</p>
 <p><strong>Perspectives:</strong> Reddit threads treat the report as potentially significant insight into high-level conversations. Some commentators question the sourcing and reliability of the information. Others see it as consistent with broader diplomatic efforts to manage great-power relations during the conflict.</p>
@@ -1272,10 +1334,6 @@
 <li>How reliable are reports of private diplomatic exchanges?</li>
 <li>What incentives exist for leaders to share such conversations publicly?</li>
 <li>How might such claims affect ongoing negotiations?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.reddit.com/r/worldnews/comments/1thflaj/xi_jinping_told_donald_trump_that_vladimir_putin/" target="_blank" rel="noopener">Reddit</a> — Discussion of the reported conversation</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-uk-energy-price-cap-expected-to-rise-sharply">1) UK energy price cap expected to rise sharply</h4>
@@ -1287,10 +1345,6 @@
 <li>What mechanisms exist to protect vulnerable households during price spikes?</li>
 <li>How do regulators balance supplier costs and consumer affordability?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-19/uk-energy-price-cap-seen-surging-13-in-biggest-gain-since-2023" target="_blank" rel="noopener">Bloomberg</a> — Forecast for the price cap adjustment</li>
-</ul>
 <h4 id="2-fosun-selects-banks-for-club-med-hong-kong-ipo">2) Fosun selects banks for Club Med Hong Kong IPO</h4>
 <p><strong>What happened (neutral):</strong> Fosun International has chosen banks to lead a planned Hong Kong initial public offering for its Club Med holiday resort chain. The move aims to raise capital through public markets in Asia.</p>
 <p><strong>Perspectives:</strong> Bloomberg reporting frames the IPO as part of Fosun’s strategy to unlock value from its leisure assets. Market observers may view the timing as an attempt to tap investor interest in travel recovery. Potential buyers will assess the company’s post-pandemic performance and growth outlook.</p>
@@ -1299,10 +1353,6 @@
 <li>What factors influence the choice of listing location for international companies?</li>
 <li>How do resort operators adapt to changing travel patterns?</li>
 <li>What due diligence do investors perform on leisure-sector IPOs?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-19/fosun-picks-banks-for-hong-kong-ipo-of-club-med-holiday-resort-chain" target="_blank" rel="noopener">Bloomberg</a> — Details on the planned offering</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-british-tech-founder-plans-ai-governed-island-off-philippines">1) British tech founder plans AI-governed island off Philippines</h4>
@@ -1314,10 +1364,6 @@
 <li>How might e-residency programs attract participants?</li>
 <li>What safeguards could address concerns about automated leadership?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/travel/article-15827421/Inside-worlds-AI-governed-island-leaders-inspired-Winston-Churchill-Gandhi-12-000-people-signed-e-residents.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Profile of the Sensay project</li>
-</ul>
 <h3 id="top-popular-media-stories-3">Top popular media stories (3)</h3>
 <h4 id="1-pep-guardiola-spotted-after-reported-manchester-city-exit">1) Pep Guardiola spotted after reported Manchester City exit</h4>
 <p><strong>What happened (neutral):</strong> Pep Guardiola was seen in Manchester wearing a club-branded jacket shortly after reports emerged that he plans to leave Manchester City at the end of the season. The sighting occurred hours before Arsenal could potentially claim the title.</p>
@@ -1327,10 +1373,6 @@
 <li>How do public appearances influence speculation about managerial changes?</li>
 <li>What factors typically drive decisions to leave long-term club roles?</li>
 <li>How do title races affect coverage of coaching staff movements?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/sport/football/article-15829125/pep-guardiola-breaks-cover-following-man-city-exit-news.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Report on the sighting</li>
 </ul>
 <h3 id="top-gossip-stories-3">Top gossip stories (3)</h3>
 <h4 id="1-details-emerge-from-venezuela-fury-wedding">1) Details emerge from Venezuela Fury wedding</h4>
@@ -1342,16 +1384,79 @@
 <li>What role do family disputes play in wedding coverage?</li>
 <li>How do distinctive personal style choices become focal points in reporting?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15828837/What-REALLY-happened-Venezuela-Furys-wedding.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Account of the wedding day</li>
-</ul>
 <h3 id="understanding-the-issue-how-the-un-security-council-addresses-active-conflicts">Understanding the Issue: How the UN Security Council addresses active conflicts</h3>
 <p>Most coverage of UN Security Council meetings treats them as simple diplomatic gatherings, yet the process involves specific procedural rules and veto powers that shape outcomes long before any vote occurs. When a member state or group requests a meeting, the agenda must be approved and statements are delivered in a fixed order, giving permanent members like Russia significant influence over tone and timing. Knowing this, when you hear claims that a meeting “demands” an immediate ceasefire, you can evaluate whether the language reflects enforceable action or largely symbolic pressure. Historical parallels, such as repeated sessions during earlier phases of the Ukraine conflict, show that discussions often serve to document positions for future negotiations rather than produce instant resolutions. Next time you see a headline about a UN meeting on Ukraine, ask: which permanent members are speaking, what specific proposals are on the table, and whether the session is meant to gather evidence or push for immediate votes.</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference official UN records with reporting from multiple outlets to distinguish between statements of intent and binding decisions. Primary documents such as meeting transcripts often clarify what was actually proposed versus what was interpreted in headlines. Checking the sequence of speakers and veto history provides useful context for understanding why certain resolutions advance while others stall.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/may/19/europe-ukraine-russia-belarus-nuclear-drills-un-security-council-eu-us-hungary-peter-magyar-poland-nato-latest-news-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/top-european-parliament-honor-to-be-awarded-for-first-time/a-77208111?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15830011/Two-babies-shot-shooting-rampage-gunman-kills-parents-wounds-four-including-seven-month-old-son.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15829379/Amin-Abdullah-security-guard-killed-mosque-shooting.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/may/19/australia-federal-budget-responses-albanese-ai-memes-david-pocock-warning" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/moscow-begins-nuclear-drills-as-russia-ukraine-drone-strikes-intensify/a-77208390?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/worldnews/comments/1thflaj/xi_jinping_told_donald_trump_that_vladimir_putin/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-19/uk-energy-price-cap-seen-surging-13-in-biggest-gain-since-2023" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-19/fosun-picks-banks-for-hong-kong-ipo-of-club-med-holiday-resort-chain" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/travel/article-15827421/Inside-worlds-AI-governed-island-leaders-inspired-Winston-Churchill-Gandhi-12-000-people-signed-e-residents.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/sport/football/article-15829125/pep-guardiola-breaks-cover-following-man-city-exit-news.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15828837/What-REALLY-happened-Venezuela-Furys-wedding.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1784,10 +1889,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>
