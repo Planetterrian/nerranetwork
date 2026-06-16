@@ -449,18 +449,23 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
                 ],
             },
         },
+        # June 2026 FP review: the show airs EVERY OTHER DAY (even days), but
+        # both closings said "до завтра" ("see you tomorrow") — the EI-class
+        # cadence-mismatch bug. Now cadence-neutral ("до встречи в следующем
+        # выпуске" / "до встречи"). Both variants still open with "На сегодня
+        # всё" / "Вот и всё", which the Завершение chapter pattern matches.
         "closings": [
             (
                 "На сегодня всё! Напоминаю, что мы делимся общей информацией для обучения, "
                 "а не финансовыми рекомендациями. Для важных решений поговорите с финансовым "
                 "советником. Помните, каждый финансовый эксперт когда-то начинал с нуля — "
                 "точно так же, как мы с вами сейчас. Берегите себя, берегите свои деньги, "
-                "и до завтра!"
+                "и до встречи в следующем выпуске!"
             ),
             (
                 "Вот и всё на сегодня! Если что-то из выпуска показалось полезным — "
                 "поделитесь с подругой. Вместе разбираться веселее! "
-                "Берегите себя, и до завтра!"
+                "Берегите себя, и до встречи!"
             ),
         ],
     },
@@ -869,6 +874,7 @@ def build_closing_block(
     if date is None:
         date = datetime.date.today()
 
+    _is_ru = show_slug in _RUSSIAN_SPOKEN_SHOWS
     personality = _SHOW_PERSONALITIES.get(show_slug)
     if not personality:
         logger.warning("No closing personality for show '%s' — using generic.", show_slug)
@@ -876,35 +882,58 @@ def build_closing_block(
             "Patrick: That's the show for today. Thanks for listening, "
             "and I'll see you tomorrow."
         )
-        return _maybe_append_youtube_cta(base, youtube_channel_handle)
+        return _maybe_append_youtube_cta(base, youtube_channel_handle, is_ru=_is_ru)
 
     host = personality["host"]
     closing_pool = personality.get("closings", [])
     if not closing_pool:
         return _maybe_append_youtube_cta(
             f"{host}: Thanks for listening. See you tomorrow.",
-            youtube_channel_handle,
+            youtube_channel_handle, is_ru=_is_ru,
         )
 
     closing = _pick(closing_pool, show_slug, date, salt="closing")
     return _maybe_append_youtube_cta(f"{host}: {closing}",
-                                     youtube_channel_handle)
+                                     youtube_channel_handle, is_ru=_is_ru)
 
 
-def _maybe_append_youtube_cta(closing: str, handle: str) -> str:
+# Shows whose host actually SPEAKS Russian — the YouTube call-out must be
+# localized for them (an English sentence on the Olya voice is the same wart
+# class as the spoken AI disclosure that was localized in June 2026).
+# Привет, Русский! is *taught in English* (the host narrates in English),
+# so it keeps the English call-out.
+_RUSSIAN_SPOKEN_SHOWS = frozenset({"finansy_prosto"})
+
+
+def _maybe_append_youtube_cta(closing: str, handle: str, is_ru: bool = False) -> str:
     """Append a brief "watch on YouTube" callout when a handle is set.
 
     Idempotent — won't duplicate the line if it's already present.
+
+    The leading ``@`` is stripped from the spoken handle: the TTS voices it
+    as the word "at", which collided with the "at" already in the English
+    call-out and shipped as "...find us on YouTube at at Nerra Network" in
+    49+ episodes across six shows. Channel names read cleanly without the
+    sigil. When ``is_ru`` is set the call-out itself is in Russian so a
+    Russian-speaking host doesn't switch to English for one sentence.
     """
     handle = (handle or "").strip()
     if not handle:
         return closing
     if "youtube" in closing.lower() or handle.lower() in closing.lower():
         return closing
-    cta = (
-        f" And if you'd rather watch than listen, find us on YouTube at "
-        f"{handle} — link's in the show notes."
-    )
+    spoken_handle = handle.lstrip("@").strip()
+    if is_ru:
+        cta = (
+            f" А если вам удобнее смотреть, а не только слушать — "
+            f"мы есть на YouTube, канал {spoken_handle}. "
+            f"Ссылка в описании выпуска."
+        )
+    else:
+        cta = (
+            f" And if you'd rather watch than listen, find us on YouTube at "
+            f"{spoken_handle} — link's in the show notes."
+        )
     return closing + cta
 
 

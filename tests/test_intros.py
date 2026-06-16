@@ -270,7 +270,12 @@ def test_closing_block_appends_youtube_cta_when_handle_set():
         today_str="April 30, 2026",
         youtube_channel_handle="@NerraNetwork",
     )
-    assert "@NerraNetwork" in closing
+    # The "@" is stripped from the SPOKEN handle: the TTS voices it as the
+    # word "at", which collided with the call-out's own "at" and shipped as
+    # "...find us on YouTube at at Nerra Network" in 49+ episodes.
+    assert "NerraNetwork" in closing
+    assert "@NerraNetwork" not in closing
+    assert "at at" not in closing.lower()
     assert "YouTube" in closing
     assert "show notes" in closing
 
@@ -298,8 +303,16 @@ def test_closing_block_youtube_cta_idempotent():
 def test_closing_block_supports_russian_handle():
     closing = build_closing_block(
         "finansy_prosto",
-        episode_num=1,
+        episode_num=5,
         today_str="30 апреля 2026",
         youtube_channel_handle="@NerraRU",
     )
-    assert "@NerraRU" in closing
+    # Spoken handle without the "@" sigil (voiced as "at"), and the call-out
+    # itself is in Russian — Финансы Просто's host speaks Russian, so the
+    # English "find us on YouTube" line was the same wart as the English AI
+    # disclosure localized in June 2026.
+    assert "NerraRU" in closing
+    assert "@NerraRU" not in closing
+    assert "YouTube" in closing
+    assert "show notes" not in closing  # English call-out replaced
+    assert "Ссылка" in closing          # Russian call-out present
