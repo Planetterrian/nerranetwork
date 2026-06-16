@@ -115,7 +115,9 @@ def main() -> int:
     output_dir = PROJECT_ROOT / config.episode.output_dir
     summaries_path = PROJECT_ROOT / config.publishing.summaries_json
     languages = _resolve_languages(args, config)
-    voice_env = (ml and ml.cloned_voice_env) or "GROK_CLONED_VOICE_ID"
+    # Reuses the show's existing Grok voice (tts.voice_id) by default; the
+    # GROK_CLONED_VOICE_ID env var is an optional override.
+    voice_id_resolved = multilingual.resolve_multilingual_voice(config)
 
     _wrapper, records = load_summaries(summaries_path)
     targets = _select_records(records, args.latest, args.episode)
@@ -126,7 +128,9 @@ def main() -> int:
     # ----- ZH STOP checkpoint -----------------------------------------
     if args.sample_zh:
         api_key = multilingual.grok_api_key()
-        voice_id = tts.get_cloned_voice_id(voice_env)
+        voice_id = voice_id_resolved
+        if not voice_id:
+            raise SystemExit("No voice_id: set the show's tts.voice_id or GROK_CLONED_VOICE_ID")
         ep = targets[0]["episode_num"]
         tf = multilingual.find_tts_file(output_dir, ep)
         if not tf:
@@ -154,7 +158,9 @@ def main() -> int:
 
     _log_cost_projection(targets, languages, output_dir, args.force)
     api_key = multilingual.grok_api_key()
-    voice_id = None if args.dry_run else tts.get_cloned_voice_id(voice_env)
+    if not args.dry_run and not voice_id_resolved:
+        raise SystemExit("No voice_id: set the show's tts.voice_id or GROK_CLONED_VOICE_ID")
+    voice_id = "" if args.dry_run else voice_id_resolved
 
     any_done = False
     for rec in targets:

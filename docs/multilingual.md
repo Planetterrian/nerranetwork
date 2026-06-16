@@ -9,14 +9,14 @@ The English generation pipeline is untouched — this is an additive branch.
 
 ## One-time setup
 
-1. Paste the cloned Grok voice ID into `.env`:
-   ```
-   GROK_CLONED_VOICE_ID=<your cloned voice id>
-   ```
-   The same voice is used for all four languages. The driver fails loud if it's
-   unset (it is never hardcoded or committed).
-2. Reuses existing secrets: `GROK_API_KEY`/`XAI_API_KEY` (translation +
-   TTS) and `R2_*` (track upload). No new credentials beyond the voice ID.
+Nothing required beyond what the network already has. The translated tracks
+reuse each show's **existing Grok voice** (`tts.voice_id`, `kdif6sqjcyiq`) and
+existing secrets (`GROK_API_KEY`/`XAI_API_KEY` for translation + TTS, `R2_*`
+for upload). No new credentials.
+
+**Optional:** to voice the translations with a *different* cloned voice, set
+`GROK_CLONED_VOICE_ID` (in `.env` locally, or as a GitHub secret for CI). When
+unset, the show's existing voice is used.
 
 ## Automatic generation (default)
 
@@ -27,11 +27,13 @@ for each newly published episode automatically:
 - `run_show.py` calls `engine.multilingual.auto_generate_after_publish()` right
   after the episode's summaries record is written and **before** the blog post,
   so today's post + index immediately show the language switcher and badges.
-- It is **best-effort and non-blocking** — a translation failure (or an unset
-  `GROK_CLONED_VOICE_ID`) can never break the English publish.
-- Requires the `GROK_CLONED_VOICE_ID` secret in the `run-show.yml` workflow
-  (already wired in the step env). Until that secret is set, the auto step
-  no-ops with a warning and episodes ship English-only.
+- It is **best-effort and non-blocking** — a translation failure can never
+  break the English publish.
+- **Voice:** the translated tracks reuse the show's **existing Grok voice**
+  (`tts.voice_id`, e.g. `kdif6sqjcyiq`) by default — Grok carries one voice
+  across languages, so the host sounds like the operator in every language with
+  no extra setup or secret. `GROK_CLONED_VOICE_ID` is only an **optional
+  override** to point translations at a different cloned voice.
 - Cost: ~$0.18/episode (≈4× the English TTS character volume + translation
   tokens) — roughly **$50–55/month** network-wide. See the cost note below.
 

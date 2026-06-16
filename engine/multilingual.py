@@ -36,6 +36,23 @@ def grok_api_key() -> str:
     return key
 
 
+def resolve_multilingual_voice(config) -> str:
+    """Voice ID for the translated tracks.
+
+    Grok carries a single voice identity across languages, so by default the
+    multilingual tracks reuse the show's EXISTING Grok voice (``tts.voice_id``,
+    e.g. the operator's custom ``kdif6sqjcyiq``) — the host sounds like the
+    operator in every language with no extra setup. The ``cloned_voice_env``
+    env var (default ``GROK_CLONED_VOICE_ID``) is an optional override for
+    pointing the translations at a different cloned voice; when it's unset the
+    existing show voice is used. Returns "" only if neither is configured.
+    """
+    ml = getattr(config, "multilingual", None)
+    env_name = (ml and ml.cloned_voice_env) or "GROK_CLONED_VOICE_ID"
+    override = (os.getenv(env_name) or "").strip()
+    return override or (getattr(config.tts, "voice_id", "") or "").strip()
+
+
 def ffprobe_duration(target: str) -> Optional[float]:
     """Media duration in seconds (works on a local path OR a URL); None on error."""
     try:
@@ -205,8 +222,12 @@ def auto_generate_after_publish(config, episode_num: int) -> Dict[str, str]:
     if not (ml and ml.enabled and getattr(ml, "auto", False)):
         return {}
     languages = list(ml.languages) or list(translate.supported_languages())
+    voice_id = resolve_multilingual_voice(config)
+    if not voice_id:
+        logger.warning("multilingual auto: skipping Ep%s — no voice_id (set the "
+                       "show's tts.voice_id or %s)", episode_num, ml.cloned_voice_env)
+        return {}
     try:
-        voice_id = tts.get_cloned_voice_id(ml.cloned_voice_env)
         api_key = grok_api_key()
     except RuntimeError as exc:
         logger.warning("multilingual auto: skipping Ep%s — %s", episode_num, exc)

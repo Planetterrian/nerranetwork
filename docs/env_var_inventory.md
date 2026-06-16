@@ -55,7 +55,7 @@ Nightly audience stats (June 2026; both optional — scripts no-op when unset):
 
 | Variable | Required when |
 |----------|----------------|
-| `GROK_CLONED_VOICE_ID` | FR/RU/ES/ZH audio. Required by the daily `run-show.yml` workflow (the `multilingual.auto` step, network default) **and** the manual `scripts/generate_translations.py`. The operator's cloned Grok voice ID — pasted into `.env` locally / set as a GitHub **secret** for CI, **never** committed. Same voice for all four languages. The auto step no-ops (with a warning) when unset; the manual driver fails loud. |
+| `GROK_CLONED_VOICE_ID` | **Optional** override for multilingual audio (FR/RU/ES/ZH). By default the translated tracks reuse the show's existing `tts.voice_id` (`kdif6sqjcyiq`), so this is **not required**. Set it (in `.env` locally / GitHub secret for CI, never committed) only to voice the translations with a *different* cloned Grok voice. |
 
 Reuses `GROK_API_KEY`/`XAI_API_KEY` (translation via `grok-latest` + Grok TTS)
 and the existing `R2_*` credentials (tracks upload to the same bucket as

@@ -403,9 +403,9 @@ jobs:
           # on disk, no indentation-sensitive shell hack.
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
-          # Cloned Grok voice ID for multilingual audio (multilingual.auto).
-          # When unset the auto step no-ops with a warning; the English
-          # publish is unaffected.
+          # OPTIONAL override for multilingual audio: a different cloned Grok
+          # voice for the translated tracks. Unset (the default) → the show's
+          # existing tts.voice_id (kdif6sqjcyiq) is reused across all languages.
           GROK_CLONED_VOICE_ID: ${{ secrets.GROK_CLONED_VOICE_ID }}
           X_CONSUMER_KEY: ${{ secrets.X_CONSUMER_KEY }}
           X_CONSUMER_SECRET: ${{ secrets.X_CONSUMER_SECRET }}

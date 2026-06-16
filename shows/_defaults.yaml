@@ -158,11 +158,16 @@ multilingual:
   enabled: true
   # Auto-generate the languages below for every newly published episode
   # (operator decision, June 2026 — "all English shows, all languages,
-  # automatic"). Best-effort + non-blocking in run_show.py; no-op when
-  # GROK_CLONED_VOICE_ID is unset. Russian shows set enabled:false so this
-  # never runs for them. ~$0.18/episode (≈4× English TTS chars + translation).
+  # automatic"). Best-effort + non-blocking in run_show.py. By default the
+  # translated tracks reuse the show's EXISTING Grok voice (tts.voice_id,
+  # kdif6sqjcyiq) — Grok carries one voice across languages, so the host
+  # sounds like the operator in every language with no extra setup. Russian
+  # shows set enabled:false so this never runs for them. ~$0.18/episode
+  # (≈4× English TTS chars + translation).
   auto: true
   languages: [fr, ru, es, zh]
+  # Optional override: name of an env var holding a DIFFERENT cloned voice ID
+  # for the translations. Unset → the show's tts.voice_id is used.
   cloned_voice_env: GROK_CLONED_VOICE_ID
 
 publishing:

@@ -365,13 +365,13 @@ class TestJsonLdMultilingual:
 
 
 class TestAutoGeneration:
-    def _fake_config(self, tmp_path, *, enabled=True, auto=True):
+    def _fake_config(self, tmp_path, *, enabled=True, auto=True, voice_id="kdif6sqjcyiq"):
         from types import SimpleNamespace
         return SimpleNamespace(
             slug="tshow",
             episode=SimpleNamespace(output_dir=str(tmp_path)),
             publishing=SimpleNamespace(summaries_json=str(tmp_path / "s.json")),
-            tts=SimpleNamespace(max_chars=10000),
+            tts=SimpleNamespace(max_chars=10000, voice_id=voice_id),
             storage=SimpleNamespace(
                 public_base_url="https://audio.nerranetwork.com",
                 endpoint_env="R2_ENDPOINT_URL", access_key_env="R2_ACCESS_KEY_ID",
@@ -416,12 +416,24 @@ class TestAutoGeneration:
         cfg = self._fake_config(tmp_path, enabled=False)
         assert multilingual.auto_generate_after_publish(cfg, 5) == {}
 
-    def test_auto_skips_when_voice_unset(self, tmp_path, monkeypatch):
+    def test_resolve_voice_defaults_to_show_voice(self, tmp_path, monkeypatch):
         from engine import multilingual
         monkeypatch.delenv("GROK_CLONED_VOICE_ID", raising=False)
-        monkeypatch.setenv("GROK_API_KEY", "k")
-        cfg = self._fake_config(tmp_path, enabled=True, auto=True)
-        # Voice id unset → non-blocking skip, empty result, no raise.
+        cfg = self._fake_config(tmp_path, voice_id="kdif6sqjcyiq")
+        # No env override → reuse the show's existing Grok voice.
+        assert multilingual.resolve_multilingual_voice(cfg) == "kdif6sqjcyiq"
+
+    def test_resolve_voice_env_override_wins(self, tmp_path, monkeypatch):
+        from engine import multilingual
+        monkeypatch.setenv("GROK_CLONED_VOICE_ID", "other-voice")
+        cfg = self._fake_config(tmp_path, voice_id="kdif6sqjcyiq")
+        assert multilingual.resolve_multilingual_voice(cfg) == "other-voice"
+
+    def test_auto_skips_when_no_voice_anywhere(self, tmp_path, monkeypatch):
+        from engine import multilingual
+        monkeypatch.delenv("GROK_CLONED_VOICE_ID", raising=False)
+        cfg = self._fake_config(tmp_path, enabled=True, auto=True, voice_id="")
+        # Neither a show voice nor an override → non-blocking skip.
         assert multilingual.auto_generate_after_publish(cfg, 5) == {}
 
 
