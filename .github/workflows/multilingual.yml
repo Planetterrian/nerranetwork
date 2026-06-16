@@ -1,0 +1,150 @@
+name: Generate Multilingual Audio
+
+# Decoupled multilingual (FR/RU/ES/ZH) audio generation (June 2026).
+#
+# This used to run INLINE inside run-show.yml after each episode published,
+# but four sequential Grok-TTS renders (~16 min) pushed video-heavy shows
+# (Tesla, SpaceX) past the 2400s episode-pipeline timeout — the SIGALRM fired
+# mid-render, run_show exited non-zero, and the episode's commit step was
+# skipped, leaving a partial publish (R2 + YouTube done, nothing committed).
+#
+# It now runs off the critical path here: a scheduled sweep (plus manual
+# dispatch) that runs the idempotent driver scripts/generate_translations.py
+# for each multilingual-enabled show. The driver skips (episode, language)
+# pairs already present, so re-runs are cheap and it naturally backfills any
+# tracks a prior run missed. The episode pipeline stays fast + durable.
+
+on:
+  schedule:
+    # After the morning show window (shows finish ~12-13 UTC; GitHub cron is
+    # often hours late, which is fine — the sweep is idempotent). Two passes
+    # catch stragglers + late-arriving episodes.
+    - cron: '7 14 * * *'
+    - cron: '7 18 * * *'
+  workflow_dispatch:
+    inputs:
+      show:
+        description: 'Show slug to translate (or "all" for every enabled show)'
+        required: true
+        default: all
+        type: string
+      latest:
+        description: 'How many recent episodes per show'
+        required: false
+        default: '3'
+        type: string
+
+# Serialize multilingual runs so two sweeps never fight over the same
+# summaries files / git push.
+concurrency:
+  group: multilingual
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'requirements.txt'
+          system-packages: 'ffmpeg'
+          skip-checkout: 'true'
+
+      - name: Resolve shows to translate
+        id: resolve
+        shell: python3 {0}
+        run: |
+          import json, os
+          from engine.config import discover_show_slugs, load_config
+
+          dispatch = "${{ github.event.inputs.show }}".strip()
+          if dispatch and dispatch not in ("", "all"):
+              # Explicit single-show dispatch — honor it even if auto is off.
+              shows = [dispatch]
+          else:
+              # Scheduled / "all": every show that opts into auto multilingual.
+              shows = []
+              for slug in discover_show_slugs():
+                  try:
+                      cfg = load_config(f"shows/{slug}.yaml")
+                  except Exception:
+                      continue
+                  ml = getattr(cfg, "multilingual", None)
+                  if ml and ml.enabled and getattr(ml, "auto", False):
+                      shows.append(slug)
+          print("Multilingual shows:", shows)
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"shows={json.dumps(shows)}\n")
+
+      - name: Generate translations
+        env:
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          XAI_API_KEY: ${{ secrets.GROK_API_KEY }}
+          GROK_CLONED_VOICE_ID: ${{ secrets.GROK_CLONED_VOICE_ID }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          set +e
+          LATEST="${{ github.event.inputs.latest }}"
+          [ -z "$LATEST" ] && LATEST=3
+          SHOWS='${{ steps.resolve.outputs.shows }}'
+          echo "$SHOWS" | python3 -c "import sys,json; print('\n'.join(json.load(sys.stdin)))" | while read -r slug; do
+            [ -z "$slug" ] && continue
+            echo "::group::Translating $slug (--latest $LATEST)"
+            # --zh-approved: operator approved all four languages including ZH.
+            python scripts/generate_translations.py "$slug" --latest "$LATEST" --zh-approved || echo "::warning::Translation run failed for $slug (non-fatal)"
+            echo "::endgroup::"
+          done
+          exit 0
+
+      - name: Regenerate blogs so the language switcher appears
+        run: |
+          # Translations live in summaries_*.json; regenerate blog posts +
+          # indexes so the inline switcher + badges render. Non-fatal.
+          python generate_html.py --blogs --network --sitemap || \
+            echo "::warning::HTML regen failed — switcher will appear on the next nightly regen"
+
+      - name: Commit and push translations
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+
+          # The summaries JSONs carry the new translation tracks (source of
+          # truth the site reads); the blog/index HTML render the switcher.
+          git add 'digests/**/summaries_*.json' || true
+          git add 'blog/**' || true
+          git add '*.html' || true
+          git add 'blog/index.html' || true
+          git add index.html || true
+          git add sitemap.xml || true
+
+          if git diff --cached --quiet; then
+            echo "No new translations to commit."
+            exit 0
+          fi
+          git commit -m "Multilingual: add translation tracks $(date -u +%Y-%m-%d)"
+
+          # Drop any incidental unstaged regen so the rebase isn't blocked
+          # (same guard as run-show's finalize step).
+          git checkout -- . 2>/dev/null || true
+
+          for attempt in 1 2 3 4 5; do
+            if git pull --rebase origin main && git push origin main; then
+              echo "Push succeeded on attempt $attempt"
+              exit 0
+            fi
+            [ $attempt -lt 5 ] && sleep $((attempt * 3))
+          done
+          echo "::warning::Could not push multilingual updates after 5 attempts — next sweep will retry (idempotent)."
+          exit 0

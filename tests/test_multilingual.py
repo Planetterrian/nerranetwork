@@ -508,3 +508,23 @@ class TestGlobalLanguageControl:
     def test_homepage_card_lists_languages(self):
         html = (PROJECT_ROOT / "templates" / "network_page.html.j2").read_text(encoding="utf-8")
         assert "中文" in html  # multilingual card now names the audio languages
+
+
+class TestMultilingualDecoupled:
+    """June 2026: multilingual generation was moved OUT of the inline episode
+    pipeline (it busted the 2400s timeout on video-heavy shows, leaving partial
+    publishes) into a dedicated workflow. Guard against regressing to inline."""
+
+    def test_run_show_does_not_call_auto_inline(self):
+        src = (PROJECT_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert "auto_generate_after_publish(" not in src, (
+            "multilingual must NOT run inline in run_show.py — it caused "
+            "pipeline-timeout partial publishes; use the multilingual.yml workflow"
+        )
+
+    def test_decoupled_workflow_exists_and_runs_driver(self):
+        wf = PROJECT_ROOT / ".github" / "workflows" / "multilingual.yml"
+        assert wf.exists(), "decoupled multilingual workflow missing"
+        text = wf.read_text(encoding="utf-8")
+        assert "scripts/generate_translations.py" in text
+        assert "--zh-approved" in text  # operator approved all four languages

@@ -2937,18 +2937,15 @@ def run(args: argparse.Namespace) -> None:
         rss_url=f"{config.publishing.base_url}/{config.publishing.rss_file}",
     )
 
-    # 11c. Multilingual audio (June 2026). For shows with multilingual.auto,
-    # render the configured languages for this episode now — AFTER the summaries
-    # record exists (the translation upserts into it) and BEFORE the blog post
-    # below, so today's post + index immediately show the language switcher and
-    # badges. Fully non-blocking: a failure (or an unset GROK_CLONED_VOICE_ID)
-    # can never break the English publish. Skipped in test/dry-run.
-    if not args.test and not args.dry_run:
-        try:
-            from engine.multilingual import auto_generate_after_publish
-            auto_generate_after_publish(config, episode_num)
-        except Exception as _ml_exc:  # noqa: BLE001 — translation must never block publish
-            logger.error("Multilingual auto step failed (non-fatal): %s", _ml_exc)
+    # 11c. Multilingual audio (FR/RU/ES/ZH) is generated OUT OF BAND by a
+    # separate workflow (.github/workflows/multilingual.yml) running the
+    # idempotent driver scripts/generate_translations.py. It used to run
+    # inline here, but four sequential TTS renders (~16 min) pushed
+    # video-heavy shows (e.g. Tesla) past the 2400s pipeline timeout — the
+    # SIGALRM fired mid-render, run_show exited non-zero, and the episode's
+    # git commit step was skipped, leaving a partial publish (R2 + YouTube
+    # done, nothing committed). Decoupling keeps the episode pipeline fast +
+    # durable; translations land shortly after via the dedicated workflow.
 
     # 12a. Generate blog post
     try:
