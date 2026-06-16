@@ -62,6 +62,25 @@
             background: color-mix(in srgb, var(--show-color) 20%, transparent);
             border-color: var(--show-color);
         }
+        /* Multilingual availability badges (June 2026) */
+        .blog-idx-langs {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin: var(--sp-2) 0 var(--sp-1);
+            color: var(--nn-text-muted);
+        }
+        .blog-idx-langs .lang-badge {
+            font-family: var(--font-ui);
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            padding: 1px 7px;
+            border-radius: 100px;
+            border: 1px solid color-mix(in srgb, var(--show-color) 35%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            background: color-mix(in srgb, var(--show-color) 10%, transparent);
+        }
     </style>
 {% endblock %}
 
@@ -98,6 +117,13 @@
             <h2>{{ post.title }}{% if post.title == show_name %} — Ep {{ post.episode_num }}{% endif %}</h2>
             {% if post.hook %}
             <p>{{ post.hook[:160] }}{% if post.hook|length > 160 %}&hellip;{% endif %}</p>
+            {% endif %}
+            {% if post.translations %}
+            {%- set _LANG_LABELS = {"fr": "FR", "ru": "RU", "es": "ES", "zh": "中文"} -%}
+            <span class="blog-idx-langs" aria-label="Also available in other languages">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                {% for code, t in post.translations.items() if t.audio_url %}<span class="lang-badge">{{ _LANG_LABELS.get(code, code|upper) }}</span>{% endfor %}
+            </span>
             {% endif %}
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>

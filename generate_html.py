@@ -2546,6 +2546,42 @@ def _pick_cross_show_related(slug, cross_show_posts, *, want=3):
     return related
 
 
+def _attach_translations(slug, cfg, metas):
+    """Merge each episode's summaries record (audio URL + per-language
+    translation tracks, June 2026 multilingual) into its blog metadata.
+
+    The episode ``.md`` carries neither the audio URL nor the translations;
+    they live in the show's ``summaries_<show>.json``. English stays canonical
+    — episodes with no ``translations`` key render exactly as before. Used by
+    both the blog-post and blog-index generators so language badges + the
+    inline switcher appear consistently.
+    """
+    records_by_ep: dict[int, dict] = {}
+    json_path = cfg.get("json_path")
+    if json_path:
+        try:
+            from engine.summaries_io import load_summaries
+            _, recs = load_summaries(ROOT / json_path)
+            for r in recs:
+                ep = r.get("episode_num")
+                if isinstance(ep, int):
+                    records_by_ep[ep] = r
+        except FileNotFoundError:
+            return
+        except Exception as exc:  # noqa: BLE001 — never block HTML gen
+            print(f"  Warning: could not load summaries for {slug}: {exc}")
+            return
+    for meta in metas:
+        rec = records_by_ep.get(meta.get("episode_num"))
+        if not rec:
+            continue
+        if not meta.get("audio_url"):
+            meta["audio_url"] = rec.get("audio_url", "")
+        tr = rec.get("translations")
+        if isinstance(tr, dict) and tr:
+            meta["translations"] = tr
+
+
 def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None):
     """Generate blog post HTML pages for all episodes of a show.
 
@@ -2599,33 +2635,7 @@ def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None):
     # Sort by episode number
     all_meta.sort(key=lambda m: m["episode_num"])
 
-    # Merge the summaries record's audio URL + any per-language translation
-    # tracks (June 2026 multilingual audio) into each episode's metadata, so
-    # the blog post can render an inline player + language switcher. The .md
-    # alone carries neither. English stays canonical; episodes with no
-    # ``translations`` key render exactly as before (no switcher).
-    _records_by_ep: dict[int, dict] = {}
-    _json_path = cfg.get("json_path")
-    if _json_path:
-        try:
-            from engine.summaries_io import load_summaries
-            _, _recs = load_summaries(ROOT / _json_path)
-            for _r in _recs:
-                _ep = _r.get("episode_num")
-                if isinstance(_ep, int):
-                    _records_by_ep[_ep] = _r
-        except FileNotFoundError:
-            pass
-        except Exception as _exc:  # noqa: BLE001 — never block blog gen
-            print(f"  Warning: could not load summaries for {slug}: {_exc}")
-    for meta in all_meta:
-        _rec = _records_by_ep.get(meta["episode_num"])
-        if _rec:
-            if not meta.get("audio_url"):
-                meta["audio_url"] = _rec.get("audio_url", "")
-            _tr = _rec.get("translations")
-            if isinstance(_tr, dict) and _tr:
-                meta["translations"] = _tr
+    _attach_translations(slug, cfg, all_meta)
 
     blog_dir = ROOT / "blog" / slug
     results = []
@@ -2689,6 +2699,7 @@ def generate_blog_index(slug, *, dry_run=False, posts=None):
                 else:
                     seen_eps[ep] = meta
             posts = list(seen_eps.values())
+            _attach_translations(slug, cfg, posts)
 
     # Sort newest first for index display
     posts_sorted = sorted(posts, key=lambda m: m.get("episode_num", 0), reverse=True)

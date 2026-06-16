@@ -322,3 +322,65 @@ class TestSwitcherGating:
         data = json.loads(m.group(1))
         assert set(data.keys()) == {"en", "fr"}
         assert data["fr"]["url"].endswith(".fr.mp3")
+
+
+class TestJsonLdMultilingual:
+    def _podcast_episode(self, html):
+        for raw in re.findall(
+            r'<script type="application/ld\+json">\s*(.*?)\s*</script>', html, re.DOTALL
+        ):
+            try:
+                data = json.loads(raw)
+            except Exception:
+                continue
+            for item in (data if isinstance(data, list) else [data]):
+                if item.get("@type") == "PodcastEpisode":
+                    return item
+        return None
+
+    def test_english_only_has_single_media_no_availablelanguage(self):
+        ep = self._podcast_episode(_render(None))
+        assert ep is not None
+        assert "availableLanguage" not in ep
+        # Single track stays a lone object, not a list (back-compat).
+        assert isinstance(ep.get("associatedMedia"), dict)
+
+    def test_translations_listed_in_jsonld(self):
+        tr = {
+            "fr": {"audio_url": "https://audio.nerranetwork.com/x/Ep.fr.mp3"},
+            "ru": {"audio_url": "https://audio.nerranetwork.com/x/Ep.ru.mp3"},
+        }
+        ep = self._podcast_episode(_render(tr))
+        assert set(ep["availableLanguage"]) == {"en", "fr", "ru"}
+        urls = {m["contentUrl"] for m in ep["associatedMedia"]}
+        assert any(u.endswith(".fr.mp3") for u in urls)
+        assert any(u.endswith(".ru.mp3") for u in urls)
+        langs = {m["inLanguage"] for m in ep["associatedMedia"]}
+        assert langs == {"en", "fr", "ru"}
+
+
+class TestBlogIndexBadges:
+    def _render_index(self, posts):
+        from engine.blog import generate_blog_index_html
+        from generate_html import NETWORK_SHOWS, _get_jinja_env
+        return generate_blog_index_html(posts, NETWORK_SHOWS["tesla"], _get_jinja_env())
+
+    def _post(self, ep, translations=None):
+        p = {"episode_num": ep, "date": "2026-06-15", "title": "A title",
+             "hook": "A hook.", "reading_time_min": 3, "filename": f"ep{ep}.md"}
+        if translations:
+            p["translations"] = translations
+        return p
+
+    def test_badges_shown_when_translations(self):
+        html = self._render_index([self._post(5, {"fr": {"audio_url": "a.fr.mp3"},
+                                                   "zh": {"audio_url": "a.zh.mp3"}})])
+        # The rendered badge ROW (not just the CSS rule) must be present.
+        assert '<span class="blog-idx-langs"' in html
+        assert ">FR<" in html and "中文" in html
+
+    def test_no_badges_for_english_only(self):
+        # CSS defining `.blog-idx-langs`/`.lang-badge` always ships; assert the
+        # rendered badge markup is absent for an English-only post.
+        html = self._render_index([self._post(6)])
+        assert '<span class="blog-idx-langs"' not in html
