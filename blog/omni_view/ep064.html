@@ -107,7 +107,12 @@
       "url": "https://nerranetwork.com/omni-view.html"
     },
     "image": "https://nerranetwork.com/assets/covers/omni-view.jpg",
-    "transcript": "https://nerranetwork.com/blog/omni_view/ep064.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/omni_view/ep064.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://audio.nerranetwork.com/omni_view/Omni_View_Ep064_20260529.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -708,6 +713,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +818,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1181,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Israel's order to seize 70 percent of Gaza threatens the October ceasefire and raises risks of renew… — Episode 64</h1>
+            <h1><span class="nn-i18n-title">Israel's order to seize 70 percent of Gaza threatens the October ceasefire and raises risks of renew…</span> — Episode 64</h1>
             
             <p class="blog-hero-hook">Israel's order to seize 70 percent of Gaza threatens the October ceasefire and raises risks of renewed fighting across the region.</p>
             
@@ -1129,6 +1212,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1214,11 +1300,6 @@
 <li>What verification mechanisms exist to confirm compliance with the original ceasefire line?</li>
 <li>Which regional actors could be drawn into any escalation?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/video/20260529-tightening-the-grip-israeli-army-to-take-control-of-70-percent-of-gaza-strip" target="_blank" rel="noopener">France 24</a> — Video report on the prime minister’s statement</li>
-<li><a href="https://www.france24.com/en/video/20260529-netanyahu-directs-israeli-forces-to-expand-gaza-control-to-70-percent" target="_blank" rel="noopener">France 24</a> — Additional context on current territorial control</li>
-</ul>
 <h4 id="2-russian-drone-strikes-apartment-block-in-romania">2) Russian drone strikes apartment block in Romania</h4>
 <p><strong>What happened (neutral):</strong> A Russian drone hit a residential building in NATO member Romania, injuring two people. The incident occurred near the border with Ukraine. Romanian authorities described it as the most serious security breach since the start of the Ukraine war.</p>
 <p><strong>Perspectives:</strong> Romanian officials and NATO allies view the strike as a dangerous spillover that tests alliance resolve on the eastern flank. Russian sources have not publicly claimed responsibility, while some European commentators warn that repeated boundary-testing could lead to stronger collective responses. Both sides agree the drone crossed into Romanian airspace; disagreement centers on whether the incursion was accidental or deliberate.</p>
@@ -1227,11 +1308,6 @@
 <li>What options does NATO have for responding to airspace violations?</li>
 <li>How are civilian areas being protected near the Ukraine border?</li>
 <li>What evidence would clarify whether the strike was intentional?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15857719/Russian-drone-Romania.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Details on injuries and regional reaction</li>
-<li><a href="https://www.theguardian.com/world/live/2026/may/29/romania-ukraine-russia-galati-drone-strike-europe-live-breaking-news" target="_blank" rel="noopener">The Guardian</a> — Romanian president’s statement and NATO context</li>
 </ul>
 <h4 id="3-israel-widens-strikes-to-area-near-beirut">3) Israel widens strikes to area near Beirut</h4>
 <p><strong>What happened (neutral):</strong> Israeli forces carried out airstrikes in southern Lebanon and conducted the first raid near Beirut in weeks. Lebanese authorities reported at least 14 deaths, including three children, plus additional casualties near the capital. The attacks occurred ahead of planned military talks in Washington.</p>
@@ -1242,11 +1318,6 @@
 <li>What civilian protections are in place during the current ceasefire period?</li>
 <li>Which international actors are monitoring compliance on both sides?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/video/20260529-israel-launches-deadly-strike-near-beirut-widening-lebanon-offensive" target="_blank" rel="noopener">France 24</a> — On-the-ground reporting from Lebanon</li>
-<li><a href="https://www.dw.com/en/israel-lebanon-set-for-pentagon-talks-after-heavy-strikes/live-77338255?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — Context on scheduled Washington talks</li>
-</ul>
 <h4 id="4-us-and-iran-near-agreement-on-ceasefire-extension">4) US and Iran near agreement on ceasefire extension</h4>
 <p><strong>What happened (neutral):</strong> The United States and Iran have reached a draft understanding to extend the current ceasefire, reopen shipping through the Strait of Hormuz, and ease some sanctions. The text has not been finalized, and underlying issues over Iran’s nuclear program remain for later talks. Conflicting reports from Washington and Tehran have created uncertainty about the scope of the initial deal.</p>
 <p><strong>Perspectives:</strong> Reuters sources cited by France 24 describe the draft as a practical step to reduce immediate energy-market pressure. Iranian officials stress that no final text has been confirmed and reject any implication of broader concessions. US statements indicate the parties are close but not yet at an agreement, with emphasis on verification steps still to be negotiated.</p>
@@ -1256,11 +1327,6 @@
 <li>How would an extended ceasefire affect global energy prices?</li>
 <li>Which issues are deferred to later negotiations?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/video/20260529-how-far-have-the-us-and-iran-got-towards-ending-the-iran-war" target="_blank" rel="noopener">France 24</a> — Summary of reported draft terms</li>
-<li><a href="https://www.france24.com/en/video/20260529-possible-iran-us-deal-tehran-denies-final-text-has-been-agreed" target="_blank" rel="noopener">France 24</a> — Iranian response to the reports</li>
-</ul>
 <h4 id="5-former-rt-france-chief-appears-on-major-french-outlets">5) Former RT France chief appears on major French outlets</h4>
 <p><strong>What happened (neutral):</strong> Xenia Fedorova, previously head of RT France, has begun regular appearances on prominent conservative media channels in France. Officials and analysts have expressed concern that Kremlin-aligned narratives are gaining visibility ahead of elections.</p>
 <p><strong>Perspectives:</strong> French government figures and media watchdogs argue the appearances test the boundaries of free speech while amplifying foreign influence. Conservative outlets defend the invitations as standard journalistic practice and part of open debate. Both sides agree Fedorova’s past role at RT is documented; they differ on whether her current commentary crosses into coordinated influence operations.</p>
@@ -1269,10 +1335,6 @@
 <li>What rules govern foreign-linked commentators on French television?</li>
 <li>How are election periods monitored for external messaging?</li>
 <li>Which platforms have hosted the appearances so far?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/europe/20260529-former-rt-france-chief-xenia-fedorova-fuels-concerns-over-pro-kremlin-influence-in-french-media" target="_blank" rel="noopener">France 24</a> — Analysis of media appearances</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-who-chief-visits-congo-amid-rare-ebola-outbreak">1) WHO chief visits Congo amid rare Ebola outbreak</h4>
@@ -1284,10 +1346,6 @@
 <li>How is the rare strain different from previous outbreaks?</li>
 <li>Which neighboring countries are on alert?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/05/29/nx-s1-5838635/who-chief-visits-congo-ebola-outbreak" target="_blank" rel="noopener">NPR</a> — Details on the visit and outbreak status</li>
-</ul>
 <h4 id="2-kenyan-court-suspends-us-ebola-quarantine-plan">2) Kenyan court suspends US Ebola quarantine plan</h4>
 <p><strong>What happened (neutral):</strong> A Kenyan court halted plans to establish a quarantine facility for US nationals exposed to Ebola. Kenya currently has no known cases of the virus, and the proposal drew public opposition.</p>
 <p><strong>Perspectives:</strong> Kenyan authorities cited legal and public-health concerns in suspending the facility. US officials had framed the site as a precautionary measure for citizens returning from outbreak zones. Local communities expressed worry about importing risk into a country without active cases.</p>
@@ -1296,10 +1354,6 @@
 <li>What legal standards apply to foreign quarantine proposals?</li>
 <li>How are risk assessments shared between countries during outbreaks?</li>
 <li>What alternatives exist for monitoring exposed travelers?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/news/2026/5/29/kenyan-court-suspends-us-ebola-quarantine-facility-plan?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Court ruling and public reaction</li>
 </ul>
 <h4 id="3-high-court-rules-against-housing-torture-survivors-in-army-barracks">3) High court rules against housing torture survivors in army barracks</h4>
 <p><strong>What happened (neutral):</strong> A UK high court found that forcing survivors of trafficking and torture to share rooms in former army barracks is unlawful. The judgment blocks part of a government plan to expand use of such sites for asylum seekers.</p>
@@ -1310,10 +1364,6 @@
 <li>How are vulnerability assessments conducted before placement?</li>
 <li>What timeline applies to implementing the judgment?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/uk-news/2026/may/29/housing-asylum-seekers-former-army-barracks-ruled-unlawful-victims-of-torture-uk" target="_blank" rel="noopener">The Guardian</a> — Full judgment details</li>
-</ul>
 <h4 id="4-martinique-students-face-education-related-exile">4) Martinique students face education-related exile</h4>
 <p><strong>What happened (neutral):</strong> Roughly 45 percent of university-bound students from France’s overseas territories must leave their islands for higher education. The pattern is especially pronounced in Martinique, where limited local options drive outward migration.</p>
 <p><strong>Perspectives:</strong> French officials acknowledge the structural gap in local university capacity. Students and families describe the move as a forced choice that weakens island communities over time. Demographic projections suggest Martinique could become France’s oldest department within 25 years if trends continue.</p>
@@ -1323,10 +1373,6 @@
 <li>How do similar patterns affect other overseas departments?</li>
 <li>What support exists for students who return after studying abroad?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/france/20260529-it-s-unfair-you-can-t-do-everything-here-education-comes-with-exile-in-martinique" target="_blank" rel="noopener">France 24</a> — Student and official perspectives</li>
-</ul>
 <h4 id="5-trump-administration-deported-thousands-to-high-risk-countries">5) Trump administration deported thousands to high-risk countries</h4>
 <p><strong>What happened (neutral):</strong> US authorities deported more than 21,000 people to nations the State Department considers too dangerous for travel. The majority had no criminal convictions, and at least 600 were children.</p>
 <p><strong>Perspectives:</strong> Government records show the deportations continued even as travel warnings remained in place. Advocacy organizations argue the policy places returnees at unnecessary risk. Officials maintain that immigration enforcement operates separately from travel advisories.</p>
@@ -1335,10 +1381,6 @@
 <li>What due-process steps apply before deportation to high-risk destinations?</li>
 <li>How are child welfare considerations factored into these cases?</li>
 <li>What monitoring exists for returnees after arrival?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/2026/may/29/trump-iran-war-deportations" target="_blank" rel="noopener">The Guardian</a> — Data on deportation numbers and destinations</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-fed-official-urges-clear-commitment-to-inflation-goal">1) Fed official urges clear commitment to inflation goal</h4>
@@ -1350,10 +1392,6 @@
 <li>What indicators would prompt a shift in tone from officials?</li>
 <li>How might markets react to repeated emphasis on price stability?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-29/fed-s-schmid-says-officials-must-signal-commitment-to-inflation" target="_blank" rel="noopener">Bloomberg</a> — Full statement context</li>
-</ul>
 <h4 id="2-italy-revises-first-quarter-growth-upward">2) Italy revises first-quarter growth upward</h4>
 <p><strong>What happened (neutral):</strong> Italy’s economy grew more than initially estimated in early 2026, extending momentum from the previous year before the impact of the Iran conflict.</p>
 <p><strong>Perspectives:</strong> Revised figures suggest underlying resilience in domestic demand. Economists note the data predates recent energy-market disruptions. Government officials point to the revision as evidence that structural reforms are supporting expansion.</p>
@@ -1363,10 +1401,6 @@
 <li>How might later quarters reflect the Iran-related shock?</li>
 <li>What fiscal tools remain available if momentum slows?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-29/italy-s-growth-was-robust-at-start-of-2026-in-surprise-revision" target="_blank" rel="noopener">Bloomberg</a> — Revised GDP details</li>
-</ul>
 <h4 id="3-bank-of-england-may-tolerate-above-target-inflation-temporarily">3) Bank of England may tolerate above-target inflation temporarily</h4>
 <p><strong>What happened (neutral):</strong> Governor Andrew Bailey indicated the Bank could accept inflation remaining above 2 percent for a time to support a weak economy, provided second-round price effects stay contained.</p>
 <p><strong>Perspectives:</strong> Bailey framed the approach as a pragmatic response to current softness in real activity. Business groups welcome any measure that could ease borrowing costs. Inflation hawks caution that prolonged tolerance risks entrenching higher prices.</p>
@@ -1375,10 +1409,6 @@
 <li>What specific data would trigger a return to stricter inflation targeting?</li>
 <li>How are second-round effects measured in practice?</li>
 <li>Which sectors would benefit most from a temporary policy shift?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-05-29/boe-may-bear-temporary-inflation-to-support-uk-bailey-video" target="_blank" rel="noopener">Bloomberg</a> — Bailey’s Reykjavík remarks</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-race-to-build-humanoid-robots-accelerates-with-ai-advances">1) Race to build humanoid robots accelerates with AI advances</h4>
@@ -1390,10 +1420,6 @@
 <li>How are safety standards being developed for human-robot interaction?</li>
 <li>What workforce transitions are companies anticipating?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-05-29/the-5-trillion-race-for-the-humanoid-future-video" target="_blank" rel="noopener">Bloomberg</a> — Overview of current development efforts</li>
-</ul>
 <h4 id="2-communities-push-back-against-ai-data-center-construction">2) Communities push back against AI data-center construction</h4>
 <p><strong>What happened (neutral):</strong> Residents in Utah and Georgia are calling for moratoriums on new data centers, citing concerns over water use and local infrastructure strain. The debate is moving from zoning disputes into national policy discussions.</p>
 <p><strong>Perspectives:</strong> Tech companies argue the facilities are essential for AI training and cloud services. Environmental groups highlight cumulative resource demands across multiple sites. Local officials face pressure to balance economic development with resident quality-of-life protections.</p>
@@ -1403,10 +1429,6 @@
 <li>How are communities weighing job creation against resource costs?</li>
 <li>Which states are considering statewide regulatory approaches?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://theintercept.com/2026/05/29/ai-data-centers-water/" target="_blank" rel="noopener">The Intercept</a> — Local opposition and policy context</li>
-</ul>
 <h4 id="3-legal-disputes-threaten-air-taxi-launch-timeline">3) Legal disputes threaten air-taxi launch timeline</h4>
 <p><strong>What happened (neutral):</strong> Court battles over Trump’s eVTOL pilot program have slowed investor confidence even as the initiative provides regulatory validation for the industry. Multiple lawsuits are pending.</p>
 <p><strong>Perspectives:</strong> Industry participants view the pilot program as a critical step toward commercial operations. Opponents argue safety and noise concerns require stricter oversight before widespread flights. Investors are monitoring case outcomes for signals on launch feasibility.</p>
@@ -1415,10 +1437,6 @@
 <li>What specific legal issues are under review?</li>
 <li>How do noise and safety standards compare with existing aviation rules?</li>
 <li>Which cities are positioned to host the first commercial routes?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/29/evtol-air-taxi-lawsuits-us-launch-trump.html" target="_blank" rel="noopener">CNBC</a> — Status of litigation and program</li>
 </ul>
 <h3 id="top-popular-media-stories-3">Top popular media stories (3)</h3>
 <h4 id="1-coronation-street-actor-announces-fourth-child">1) Coronation Street actor announces fourth child</h4>
@@ -1430,10 +1448,6 @@
 <li>What support systems exist for parents in the television industry?</li>
 <li>How might the pregnancy storyline intersect with Aston’s on-screen role?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15858055/Coronation-Street-star-Sam-Aston-confirms-wife-Briony-pregnant-fourth-child-reveals-unborn-babys-ultrasound.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Announcement details</li>
-</ul>
 <h4 id="2-french-open-player-criticizes-female-umpire">2) French Open player criticizes female umpire</h4>
 <p><strong>What happened (neutral):</strong> Paraguayan player Adolfo Daniel Vallejo objected to a female umpire overseeing his match against a French teenager and may face a fine of up to £75,000. The outburst occurred during a closely contested second-round match.</p>
 <p><strong>Perspectives:</strong> Tournament officials are reviewing the comments under existing codes of conduct. Some players and commentators defend the right to question officiating decisions regardless of gender. Others argue the remarks reflect broader issues of respect toward women in sports leadership roles.</p>
@@ -1443,10 +1457,6 @@
 <li>How have similar incidents been handled in past Grand Slams?</li>
 <li>What training exists for officials facing on-court challenges?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/sport/tennis/article-15858121/French-Open-sexism-storm.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Match context and potential sanctions</li>
-</ul>
 <h4 id="3-bbc-commissions-male-writer-for-sarah-everard-drama">3) BBC commissions male writer for Sarah Everard drama</h4>
 <p><strong>What happened (neutral):</strong> The BBC has hired screenwriter Jeff Pope to write a two-part factual drama about the rape and murder of Sarah Everard. The decision has drawn criticism from some viewers and campaigners.</p>
 <p><strong>Perspectives:</strong> The broadcaster states the choice was based on Pope’s experience with sensitive factual storytelling. Critics argue a female writer would bring different perspective to the subject. Supporters of the commission emphasize the importance of experienced dramatists handling difficult material.</p>
@@ -1455,10 +1465,6 @@
 <li>How are writing teams assembled for true-crime dramas?</li>
 <li>What consultation occurs with victims’ families or advocacy groups?</li>
 <li>What precedents exist for gender considerations in commissioning?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15857097/fury-BBC-hiring-male-writer-rape-murder-Sarah-Everard.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Reaction to the announcement</li>
 </ul>
 <h3 id="top-gossip-stories-3">Top gossip stories (3)</h3>
 <h4 id="1-marmite-health-benefits-examined-by-experts">1) Marmite health benefits examined by experts</h4>
@@ -1470,10 +1476,6 @@
 <li>How do similar spreads compare nutritionally?</li>
 <li>What role does marketing play in sustaining the product’s cultural status?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/health/article-15855421/Marmite-Experts-reveal-surprising-health-perks-iconic-love-hate-spread.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Expert commentary</li>
-</ul>
 <h4 id="2-solar-panel-safety-concerns-raised-after-house-fire">2) Solar-panel safety concerns raised after house fire</h4>
 <p><strong>What happened (neutral):</strong> A new-build home in Northamptonshire valued at £600,000 caught fire, prompting questions about the safety of rooftop solar installations during heatwaves. Experts are examining installation standards.</p>
 <p><strong>Perspectives:</strong> Fire investigators are assessing whether the panels contributed to the blaze. Manufacturers stress that properly installed systems meet current safety codes. Homeowners and insurers are seeking clearer guidance on maintenance and risk mitigation.</p>
@@ -1482,10 +1484,6 @@
 <li>What inspection protocols apply to residential solar arrays?</li>
 <li>How do heatwave conditions affect panel performance and safety?</li>
 <li>Which certification bodies oversee installation quality?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/sciencetech/article-15857885/solar-panels-safe-new-build-home-goes-flames.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Incident details and expert views</li>
 </ul>
 <h4 id="3-subject-of-lucian-freud-painting-comments-on-upcoming-sale">3) Subject of Lucian Freud painting comments on upcoming sale</h4>
 <p><strong>What happened (neutral):</strong> The model featured in Lucian Freud’s “Sleeping by the Lion Carpet” said the forthcoming £35 million auction shows “big girls can do well.” The work from the Lewis Collection will be offered at Sotheby’s in June.</p>
@@ -1496,16 +1494,149 @@
 <li>How do private collections influence public appreciation of an artist?</li>
 <li>What conservation considerations apply to works entering the market?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15857707/Subject-Lucian-Freud-painting-set-fetch-35million-auction-says-shows-big-girls-well.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Sale preview</li>
-</ul>
 <h3 id="understanding-the-issue-how-ceasefire-agreements-are-monitored-and-enforced">Understanding the Issue: How Ceasefire Agreements Are Monitored and Enforced</h3>
 <p>Most coverage of ceasefire announcements treats them as simple pauses in fighting, yet the actual mechanism involves layered verification, third-party monitoring, and political signaling that often continues even when violations occur. In practice, a ceasefire typically begins with a written understanding between parties, followed by deployment of observers from neutral states or international bodies who report movements across agreed lines; these reports then feed into diplomatic channels rather than automatic enforcement. Historical parallels, such as the 1973 Sinai disengagement or multiple Lebanon-related truces, show that monitoring teams document incidents but lack independent military power, so compliance ultimately rests on the parties’ own calculations of cost and benefit. Knowing this, when you hear claims that one side has “violated” a ceasefire, you can evaluate whether the statement refers to a documented crossing of a monitored line or to a broader political interpretation of intent. The same structure explains why incremental territorial directives, such as orders to expand control, can coexist with ongoing talks: they test the limits of enforcement without immediately ending diplomatic contact. Next time you see a headline about a new ceasefire or its breach, ask: who is tasked with on-the-ground verification, what constitutes a reportable incident, and what leverage exists if violations accumulate.</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference claims about military movements or diplomatic drafts against primary documents such as official statements or court filings rather than secondary summaries. Note when sources share the same original reporting chain and seek additional outlets with independent access. Primary sources often reveal the precise wording that later interpretations expand or soften.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.france24.com/en/video/20260529-tightening-the-grip-israeli-army-to-take-control-of-70-percent-of-gaza-strip" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/video/20260529-netanyahu-directs-israeli-forces-to-expand-gaza-control-to-70-percent" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15857719/Russian-drone-Romania.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/may/29/romania-ukraine-russia-galati-drone-strike-europe-live-breaking-news" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/video/20260529-israel-launches-deadly-strike-near-beirut-widening-lebanon-offensive" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/israel-lebanon-set-for-pentagon-talks-after-heavy-strikes/live-77338255?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/video/20260529-how-far-have-the-us-and-iran-got-towards-ending-the-iran-war" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/video/20260529-possible-iran-us-deal-tehran-denies-final-text-has-been-agreed" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/europe/20260529-former-rt-france-chief-xenia-fedorova-fuels-concerns-over-pro-kremlin-influence-in-french-media" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.npr.org/2026/05/29/nx-s1-5838635/who-chief-visits-congo-ebola-outbreak" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/5/29/kenyan-court-suspends-us-ebola-quarantine-facility-plan?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/uk-news/2026/may/29/housing-asylum-seekers-former-army-barracks-ruled-unlawful-victims-of-torture-uk" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/france/20260529-it-s-unfair-you-can-t-do-everything-here-education-comes-with-exile-in-martinique" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/2026/may/29/trump-iran-war-deportations" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-29/fed-s-schmid-says-officials-must-signal-commitment-to-inflation" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-29/italy-s-growth-was-robust-at-start-of-2026-in-surprise-revision" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-05-29/boe-may-bear-temporary-inflation-to-support-uk-bailey-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-05-29/the-5-trillion-race-for-the-humanoid-future-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://theintercept.com/2026/05/29/ai-data-centers-water/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theintercept.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theintercept.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/05/29/evtol-air-taxi-lawsuits-us-launch-trump.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15858055/Coronation-Street-star-Sam-Aston-confirms-wife-Briony-pregnant-fourth-child-reveals-unborn-babys-ultrasound.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/sport/tennis/article-15858121/French-Open-sexism-storm.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15857097/fury-BBC-hiring-male-writer-rape-murder-Sarah-Everard.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/health/article-15855421/Marmite-Experts-reveal-surprising-health-perks-iconic-love-hate-spread.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/sciencetech/article-15857885/solar-panels-safe-new-build-home-goes-flames.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15857707/Subject-Lucian-Freud-painting-set-fetch-35million-auction-says-shows-big-girls-well.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1902,10 +2033,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Iran's drone attack on Dubai airport escalates Middle East conflict as Israel strikes Tehran — Episode 8</h1>
+            <h1><span class="nn-i18n-title">Iran's drone attack on Dubai airport escalates Middle East conflict as Israel strikes Tehran</span> — Episode 8</h1>
             
             <p class="blog-hero-hook">Iran's drone attack on Dubai airport escalates Middle East conflict as Israel strikes Tehran.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1195,11 +1276,6 @@
 <li>What role do drone technologies play in modern conflicts?</li>
 <li>Could this prompt new international sanctions or diplomatic interventions?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15623495/Dubai-airport-evacuated-drone-attack-Israel-strikes-Tehran-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — details on the drone attack and evacuations</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15623511/Dubai-airport-hit-Iran-drone-Massive-explosion-terminals-evacuated.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — focus on stranded British travelers</li>
-</ul>
 <h4 id="2-israel-launches-strikes-on-tehran-amid-regional-tensions">2) Israel launches strikes on Tehran amid regional tensions</h4>
 <p><strong>What happened (neutral):</strong> Israel conducted fresh airstrikes on Tehran following Iranian missile and drone launches. Iran's president issued apologies to neighboring countries for attacks unless provoked. Saudi Arabia urged Iran to avoid miscalculations after intercepting missiles aimed at its sites.</p>
 <p><strong>Perspectives:</strong> Some sources portray Israel's actions as necessary self-defense against Iranian aggression, emphasizing the pounding of Tehran as a strategic response to threats, while others highlight Iran's apologies as a de-escalation signal amid civilian casualties and frame the conflict as a cycle of retaliation fueled by long-standing enmities. Broader international coverage discusses the involvement of allies like the US and Saudi Arabia, with views split between those seeing it as containing Iranian influence and critics arguing it risks pulling in more nations into a wider war.</p>
@@ -1208,11 +1284,6 @@
 <li>What factors might lead to de-escalation or further attacks?</li>
 <li>How do apologies from leaders influence public perception?</li>
 <li>Could this affect global oil prices or energy security?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/07/middle-east-crisis-live-tehran-explosions-beirut-trump-israel-iran-war-second-week" target="_blank" rel="noopener">The Guardian</a> — Iran's president apologizes and Saudi response</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15623495/Dubai-airport-evacuated-drone-attack-Israel-strikes-Tehran-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — live updates on strikes</li>
 </ul>
 <h4 id="3-air-raid-sirens-and-blasts-reported-in-jerusalem">3) Air raid sirens and blasts reported in Jerusalem</h4>
 <p><strong>What happened (neutral):</strong> Air raid sirens sounded in Jerusalem with at least three explosions heard. This follows multiple alerts across Israel in the past day. The incidents are part of the broader Middle East conflict involving Iran and its allies.</p>
@@ -1223,10 +1294,6 @@
 <li>What technologies are used for air raid warnings?</li>
 <li>Might this lead to shifts in international alliances?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/air-raid-sirens-sound-blasts-heard-in-jerusalem" target="_blank" rel="noopener">France 24</a> — reports on sirens and explosions</li>
-</ul>
 <h4 id="4-israel-strikes-lebanon-causing-deaths-and-displacements">4) Israel strikes Lebanon, causing deaths and displacements</h4>
 <p><strong>What happened (neutral):</strong> Israeli airstrikes killed at least 16 in the eastern Lebanese town of Nabi Chit and have led to over 300,000 displacements in southern Lebanon. The strikes target areas linked to Hezbollah amid ongoing cross-border fighting. Evacuation warnings preceded heavy bombardments in multiple regions.</p>
 <p><strong>Perspectives:</strong> Some coverage presents the strikes as precise operations against Hezbollah strongholds to neutralize threats, with supporters viewing them as essential for Israeli security, while humanitarian-focused reports underscore the massive displacement and civilian suffering, framing it as an overreach that exacerbates a crisis in Lebanon. International perspectives weave in the Iran-backed nature of Hezbollah, with debates on whether this expansion of the war could draw in more global powers or lead to negotiations, and critics argue it risks a full-scale regional humanitarian disaster.</p>
@@ -1236,12 +1303,6 @@
 <li>What support is available for those fleeing?</li>
 <li>Could this prompt international aid or intervention?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/humanitarian-crisis-looming-300-000-displaced-as-israeli-army-pounds-lebanon" target="_blank" rel="noopener">France 24</a> — details on displacements</li>
-<li><a href="https://www.france24.com/en/israel-strikes-eastern-lebanese-town-at-least-16-killed-in-raids-on-nabi-chit" target="_blank" rel="noopener">France 24</a> — strikes on Nabi Chit</li>
-<li><a href="https://www.france24.com/en/israel-raids-deep-into-lebanon-israeli-troops-engage-hezbollah-after-helicopter-raid" target="_blank" rel="noopener">France 24</a> — raids and engagements with Hezbollah</li>
-</ul>
 <h4 id="5-global-alliances-form-amid-fears-of-world-war-iii">5) Global alliances form amid fears of World War III</h4>
 <p><strong>What happened (neutral):</strong> Military experts warn of heightened risks of a global conflict as nations align in the Iran-Israel tensions. Governments worldwide are choosing sides, with some backing the US and others supporting Iran. Russia is reportedly sharing intelligence with Tehran to aid its defenses.</p>
 <p><strong>Perspectives:</strong> Outlets map out alliances, with some depicting the US and its partners as defenders of stability against Iranian aggression, while pro-Iran views frame Russia’s intelligence sharing as legitimate support for a sovereign nation under attack, highlighting perceived Western hypocrisy. Broader discussions explore neutral stances from other countries, weaving in expert warnings that this could escalate beyond the region, with debates on whether diplomacy can prevent a slide into worldwide war or if military buildups signal inevitable involvement.</p>
@@ -1250,11 +1311,6 @@
 <li>How reliable are reports of intelligence sharing?</li>
 <li>What motivates countries to stay neutral?</li>
 <li>Could this affect non-involved nations economically?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15621375/World-War-III-never-closer-Iran-backing-US.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — guide to global alliances</li>
-<li><a href="https://www.france24.com/en/russia-sharing-intelligence-information-to-help-tehran-officials-say" target="_blank" rel="noopener">France 24</a> — Russia’s intelligence sharing</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-gulf-states-intercept-iranian-missiles-and-drones">1) Gulf states intercept Iranian missiles and drones</h4>
@@ -1266,11 +1322,6 @@
 <li>What if interceptions fail in populated areas?</li>
 <li>Could this technology spread to other conflicts?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.wired.com/story/how-each-gulf-country-is-intercepting-iranian-missiles-and-drones/" target="_blank" rel="noopener">WIRED</a> — interception methods</li>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/07/middle-east-crisis-live-tehran-explosions-beirut-trump-israel-iran-war-second-week" target="_blank" rel="noopener">The Guardian</a> — Saudi interceptions</li>
-</ul>
 <h4 id="2-migrant-workers-face-uncertainty-due-to-middle-east-conflict">2) Migrant workers face uncertainty due to Middle East conflict</h4>
 <p><strong>What happened (neutral):</strong> Millions of migrant workers in the Gulf, from countries like the Philippines, Nepal, Pakistan, and Bangladesh, are dealing with instability as tensions rise. Governments are considering repatriation plans. Remittances from these workers are crucial to their home economies.</p>
 <p><strong>Perspectives:</strong> Reports highlight the economic ripple effects, with some viewing the situation as a humanitarian priority for worker safety and repatriation, while others emphasize the financial strain on dependent nations if workers are forced to leave. International coverage weaves in the high stakes for families relying on these incomes, contrasting calls for swift evacuations with arguments that stable Gulf jobs remain vital despite risks.</p>
@@ -1279,10 +1330,6 @@
 <li>How might repatriation affect global labor markets?</li>
 <li>What protections exist for migrant workers in crises?</li>
 <li>Could this lead to economic shifts in Asia?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/millions-of-workers-facing-uncertainty-as-tensions-escalate-in-the-middle-east" target="_blank" rel="noopener">France 24</a> — worker uncertainty and remittances</li>
 </ul>
 <h4 id="3-us-bombers-arrive-in-uk-amid-promises-of-surge-against-iran">3) US bombers arrive in UK amid promises of surge against Iran</h4>
 <p><strong>What happened (neutral):</strong> Additional US bombers have landed at a UK airbase, capable of carrying cruise missiles. This is part of a promised surge in attacks against Iran. The move signals increased military involvement in the Middle East conflict.</p>
@@ -1293,10 +1340,6 @@
 <li>How effective are such bombers in modern warfare?</li>
 <li>Might this influence public opinion on involvement?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15623611/US-bombers-fly-UK-airbase-ahead-big-one-US-promises-surge-attacks-against-Iran.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — arrival of bombers</li>
-</ul>
 <h4 id="4-protests-erupt-in-cuba-after-widespread-blackout">4) Protests erupt in Cuba after widespread blackout</h4>
 <p><strong>What happened (neutral):</strong> Thousands in Cuba remain without power following a major blackout, leading to protests in the dark. The outage has caused significant disruption. Details on the cause and restoration timeline are unclear.</p>
 <p><strong>Perspectives:</strong> Coverage portrays the protests as expressions of frustration over infrastructure failures, with some linking it to economic hardships and government mismanagement, while others note the resilience of citizens amid recurring blackouts. International reports weave in broader contexts of Cuba's energy challenges, contrasting calls for reform with defenses of the system's limitations due to external factors like sanctions.</p>
@@ -1306,10 +1349,6 @@
 <li>How do protests affect political stability?</li>
 <li>Could this prompt international assistance?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/video/newsfeed/2026/3/7/protests-in-cuba-after-thousands-without-power-following-blackout?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — protests after blackout</li>
-</ul>
 <h4 id="5-british-professor-and-pilot-killed-in-namibia-plane-crash">5) British professor and pilot killed in Namibia plane crash</h4>
 <p><strong>What happened (neutral):</strong> A British wildlife professor and a World War II Hurricane display pilot died in a light aircraft crash in Namibia's Namib Desert shortly after takeoff. Both perished instantly. The cause of the nose-dive is uncertain.</p>
 <p><strong>Perspectives:</strong> Reports focus on the tragic loss of experienced individuals, with some highlighting the professor's conservation work and the pilot's aviation legacy, framing it as a reminder of small-plane risks in remote areas. Coverage varies, blending tributes to their contributions with discussions on safety in adventure travel, and questions about whether environmental factors or mechanical issues played a role.</p>
@@ -1318,10 +1357,6 @@
 <li>What investigations will clarify the crash cause?</li>
 <li>How safe are light aircraft in desert conditions?</li>
 <li>Might this affect wildlife research in the region?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15623589/British-professor-World-War-Two-pilot-die-Namibia-plane.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — details on the crash</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-strait-of-hormuz-traffic-limited-amid-tensions">1) Strait of Hormuz traffic limited amid tensions</h4>
@@ -1333,10 +1368,6 @@
 <li>What alternatives exist for oil transport?</li>
 <li>Could diplomacy reopen the strait soon?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-03-07/hormuz-tracker-iran-linked-ships-transit-as-others-stay-away" target="_blank" rel="noopener">Bloomberg</a> — transit updates</li>
-</ul>
 <h4 id="2-fixed-income-investing-discussed-amid-market-shifts">2) Fixed income investing discussed amid market shifts</h4>
 <p><strong>What happened (neutral):</strong> Experts are highlighting fixed income strategies compared to equities, especially in volatile times. This includes portfolio approaches and the role of private credit. Details focus on income-based investments for stability.</p>
 <p><strong>Perspectives:</strong> Financial discussions position fixed income as a safer haven during uncertainties like the Middle East conflict, with some advocating its reliability over stock volatility, while others note the evolving appeal of private credit as an alternative yield source. Coverage blends optimistic views on diversification with cautions about interest rate risks, reflecting debates on whether these strategies suit all investors in a high-tension global economy.</p>
@@ -1346,10 +1377,6 @@
 <li>What risks come with private credit?</li>
 <li>Is this advice applicable to all age groups?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-03-07/fixed-income-investing-masters-in-business-video" target="_blank" rel="noopener">Bloomberg</a> — interview on strategies</li>
-</ul>
 <h4 id="3-qantas-to-launch-worlds-longest-flights">3) Qantas to launch world's longest flights</h4>
 <p><strong>What happened (neutral):</strong> Qantas plans to introduce the two longest direct commercial flights next year, lasting up to 22 hours. Passengers may witness two sunrises on these routes. A tour of the Sydney servicing base was provided.</p>
 <p><strong>Perspectives:</strong> Travel reports celebrate the innovation for connecting distant cities like Sydney to New York or London, framing it as a boon for global business and tourism, while skeptics question passenger comfort on ultra-long hauls and environmental impacts. Coverage weaves in excitement over engineering feats with discussions on how such flights could reshape airline economics amid rising fuel costs.</p>
@@ -1358,10 +1385,6 @@
 <li>What health effects might ultra-long flights have?</li>
 <li>How will this impact competing airlines?</li>
 <li>Could conflicts delay the launch?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/travel/article-15617101/world-longest-flight-qantas-22-hours.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — flight details and tour</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-data-centers-praised-amid-ai-boom">1) Data centers praised amid AI boom</h4>
@@ -1373,10 +1396,6 @@
 <li>How do data centers support AI ethically?</li>
 <li>Might regulations slow the expansion?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://reason.com/2026/03/07/the-joys-of-data-centers/" target="_blank" rel="noopener">Reason.com</a> — debunking backlash</li>
-</ul>
 <h4 id="2-ex-oxford-professor-faces-trial-in-absence-for-rape-claims">2) Ex-Oxford professor faces trial in absence for rape claims</h4>
 <p><strong>What happened (neutral):</strong> A former Oxford professor of Islamic studies will be tried in absentia in France for alleged aggravated rapes of three women between 2009 and 2016. His claim of being too ill to attend was rejected. The trial proceeds without him.</p>
 <p><strong>Perspectives:</strong> Reports detail the legal proceedings, with some framing it as a pursuit of justice for victims despite the defendant's absence, while others question the fairness of trials in absentia and highlight his academic prominence. International coverage weaves in debates on accountability for high-profile figures, blending support for the court's decision with concerns over health claims and potential biases in cross-border cases.</p>
@@ -1385,10 +1404,6 @@
 <li>How does absentia affect trial outcomes?</li>
 <li>What evidence is key in such cases?</li>
 <li>Could this influence academic institutions?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15623599/Ex-Oxford-professor-tried-absence-claims-raped-women.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — trial details</li>
 </ul>
 <h4 id="3-journalist-undergoes-total-darkness-retreat-experiment">3) Journalist undergoes total darkness retreat experiment</h4>
 <p><strong>What happened (neutral):</strong> A journalist participated in a three-day total darkness retreat promoted by a longevity expert, following a 23-day fast. He reported life-changing effects and improved health. The experience is marketed as a high-end isolation practice.</p>
@@ -1401,6 +1416,108 @@
 </ul>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15623495/Dubai-airport-evacuated-drone-attack-Israel-strikes-Tehran-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15623511/Dubai-airport-hit-Iran-drone-Massive-explosion-terminals-evacuated.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/mar/07/middle-east-crisis-live-tehran-explosions-beirut-trump-israel-iran-war-second-week" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/air-raid-sirens-sound-blasts-heard-in-jerusalem" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/humanitarian-crisis-looming-300-000-displaced-as-israeli-army-pounds-lebanon" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/israel-strikes-eastern-lebanese-town-at-least-16-killed-in-raids-on-nabi-chit" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/israel-raids-deep-into-lebanon-israeli-troops-engage-hezbollah-after-helicopter-raid" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15621375/World-War-III-never-closer-Iran-backing-US.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/russia-sharing-intelligence-information-to-help-tehran-officials-say" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.wired.com/story/how-each-gulf-country-is-intercepting-iranian-missiles-and-drones/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=wired.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">wired.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/millions-of-workers-facing-uncertainty-as-tensions-escalate-in-the-middle-east" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15623611/US-bombers-fly-UK-airbase-ahead-big-one-US-promises-surge-attacks-against-Iran.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/video/newsfeed/2026/3/7/protests-in-cuba-after-thousands-without-power-following-blackout?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15623589/British-professor-World-War-Two-pilot-die-Namibia-plane.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-03-07/hormuz-tracker-iran-linked-ships-transit-as-others-stay-away" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-03-07/fixed-income-investing-masters-in-business-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/travel/article-15617101/world-longest-flight-qantas-22-hours.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://reason.com/2026/03/07/the-joys-of-data-centers/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reason.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reason.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15623599/Ex-Oxford-professor-tried-absence-claims-raped-women.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1819,10 +1936,67 @@ That's Omni View. For full source links and more context, check out today's writ
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

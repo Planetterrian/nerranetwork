@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Pakistan bombs Kabul, declares 'open war' on Afghanistan amid escalating border clashes — Episode 3</h1>
+            <h1><span class="nn-i18n-title">Pakistan bombs Kabul, declares 'open war' on Afghanistan amid escalating border clashes</span> — Episode 3</h1>
             
             <p class="blog-hero-hook">Pakistan bombs Kabul, declares 'open war' on Afghanistan amid escalating border clashes.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1179,14 +1260,6 @@
 <li>How might this escalation affect regional stability and international relations?</li>
 <li>What role could mediated dialogue play in preventing further civilian harm?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/feb/27/pakistan-afghanistan-taliban-war-cross-border-kabul-latest-news-updates" target="_blank" rel="noopener">The Guardian</a> — Reports on airstrikes and UK calls for de-escalation.</li>
-<li><a href="https://www.bbc.com/news/articles/cj32zx48xvxo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Details the significance of the bombings in ongoing tensions.</li>
-<li><a href="https://www.france24.com/en/video/20260227-clashes-still-continuing-on-parts-of-pakistan-afghanistan-border" target="_blank" rel="noopener">France 24</a> — Covers ongoing clashes along the border.</li>
-<li><a href="https://www.france24.com/en/video/20260227-pakistan-bombs-targets-in-afghanistan-as-it-declares-open-war" target="_blank" rel="noopener">France 24</a> — Notes Pakistan's declaration of 'open war'.</li>
-<li><a href="https://www.aljazeera.com/news/2026/2/27/pakistan-bombs-kabul-why-are-afghanistan-and-pakistan-fighting?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Explains the reasons behind the fighting.</li>
-</ul>
 <h4 id="2-us-iran-nuclear-talks-end-without-deal-amid-war-threats">2) US-Iran nuclear talks end without deal amid war threats</h4>
 <p><strong>What happened (neutral):</strong> High-stakes talks between the US and Iran over Tehran's nuclear program concluded without an agreement, though mediators claimed significant progress and planned further discussions next week. Iran stated the US must drop excessive demands for a deal, while tensions rise with US military buildup in the region. No immediate military action was reported, but uncertainty persists about potential US strikes.</p>
 <p><strong>Perspectives:</strong> Coverage portrays the talks as a last-ditch effort to avert war, with some outlets emphasizing Iran's insistence on US concessions as a barrier, while others highlight the US position on curbing nuclear enrichment as non-negotiable for regional security. Reports integrate views that gradual progress offers hope, contrasted with skepticism about the talks' viability given historical distrust and recent escalations. The narrative flows between optimism from mediators and warnings of catastrophic consequences if diplomacy fails.</p>
@@ -1195,13 +1268,6 @@
 <li>How reliable are claims of 'significant progress' without a deal?</li>
 <li>What might be the regional impacts of a potential US military strike?</li>
 <li>Could extended talks prevent escalation, or are they delaying inevitable conflict?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/video/20260227-signs-of-gradual-progress-in-iran-us-talks" target="_blank" rel="noopener">France 24</a> — Notes gradual progress toward a nuclear deal.</li>
-<li><a href="https://www.theguardian.com/world/live/2026/feb/26/us-iran-nuclear-talks-middle-east-latest-news-updates" target="_blank" rel="noopener">The Guardian</a> — Covers the talks' conclusion and threat of war.</li>
-<li><a href="https://www.theguardian.com/world/2026/feb/26/trump-attack-threat-looms-as-nuclear-talks-between-us-and-iran-go-to-wire" target="_blank" rel="noopener">The Guardian</a> — Details claims of progress but no deal reached.</li>
-<li><a href="https://www.foxnews.com/politics/kennedy-warns-ayatollah-wants-drink-our-blood-out-boot-iran-tensions-escalate" target="_blank" rel="noopener">Fox News</a> — Warns of Iran's nuclear threat amid escalating tensions.</li>
 </ul>
 <h4 id="3-green-party-wins-uk-by-election-major-blow-to-labour">3) Green Party wins UK by-election, major blow to Labour</h4>
 <p><strong>What happened (neutral):</strong> The Green Party secured a historic victory in the Gorton and Denton by-election, with Hannah Spencer elected as their first MP in northern England, pushing Labour into third place behind Reform UK. Labour's vote share dropped 25.3% from 2024, amid criticism of Prime Minister Keir Starmer's leadership. Observers raised concerns about illegal 'family voting' at polling stations.</p>
@@ -1212,14 +1278,6 @@
 <li>What evidence supports claims of electoral irregularities like 'family voting'?</li>
 <li>Could this signal broader shifts in UK political alignments?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/politics/2026/feb/27/green-party-wins-gorton-and-denton-byelection-in-blow-to-keir-starmer" target="_blank" rel="noopener">The Guardian</a> — Reports on the Green's resounding victory.</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15597287/Huge-blow-Keir-Starmer-Greens-secure-historic-election-victory-Gorton-Denton-deliver-fresh-misery-embattled-PM.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Details Starmer's by-election humiliation.</li>
-<li><a href="https://www.theguardian.com/politics/2026/feb/27/labour-worst-fears-realised-greens-victory-gorton-denton-byelection" target="_blank" rel="noopener">The Guardian</a> — Analyzes Labour's realized worst fears.</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15596971/Chaos-Gorton-Denton-election-official-observers-raise-alarm-high-levels-illegal-family-voting-couples-seen-colluding-polling-booths.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Covers concerns over 'family voting'.</li>
-<li><a href="https://www.aljazeera.com/news/2026/2/27/green-party-wins-uk-by-election-in-blow-to-labour-pm-starmer?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Notes the blow to Labour and Starmer.</li>
-</ul>
 <h4 id="4-bill-clinton-to-testify-in-epstein-probe-after-hillarys-appearance">4) Bill Clinton to testify in Epstein probe after Hillary's appearance</h4>
 <p><strong>What happened (neutral):</strong> Former President Bill Clinton is scheduled to testify before a House committee investigating his links to Jeffrey Epstein, following Hillary Clinton's testimony where she denied ever meeting Epstein and called the proceedings partisan theater. The deposition comes amid scrutiny of Epstein's files revealing connections to prominent figures. No new charges were mentioned in reports.</p>
 <p><strong>Perspectives:</strong> Reports present the probe as a bipartisan effort to uncover Epstein's network, with some framing it as essential accountability for powerful individuals, while others view it as politically motivated theater exploiting past associations. Coverage interweaves Hillary Clinton's dismissal of the inquiry as an insult to Americans with expectations that Bill Clinton's session could be more extensive, reflecting ongoing debates about transparency versus partisan exploitation in such investigations.</p>
@@ -1228,12 +1286,6 @@
 <li>How might political motivations affect the credibility of the investigation?</li>
 <li>What new information could emerge from Clinton's testimony?</li>
 <li>Should historical associations alone warrant such scrutiny?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/2026/feb/27/bill-clinton-testimony-jeffrey-epstein-investigation" target="_blank" rel="noopener">The Guardian</a> — Details Bill Clinton's upcoming testimony.</li>
-<li><a href="https://www.foxnews.com/politics/bill-clinton-faces-high-stakes-house-grilling-epstein-probe-after-hillary-blasts-fishing-expedition" target="_blank" rel="noopener">Fox News</a> — Covers high-stakes grilling after Hillary's criticism.</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15592651/Grasping-Sarah-Ferguson-begged-Epstein-upgrade-business-class-flight-paid-New-York-days-jail-release-child-sex-charges-shocking-new-emails-reveal.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Reveals Epstein emails involving figures like Sarah Ferguson.</li>
 </ul>
 <h4 id="5-paramount-wins-warner-bros-takeover-after-netflix-drops-bid">5) Paramount wins Warner Bros takeover after Netflix drops bid</h4>
 <p><strong>What happened (neutral):</strong> Netflix withdrew its $83bn bid for Warner Bros Discovery, paving the way for Paramount Skydance's acquisition, which still requires shareholder and regulatory approval. Staff at CBS News and CNN expressed anxiety over potential mergers and job cuts. Some CNN employees worry about ideological changes under new ownership.</p>
@@ -1244,12 +1296,6 @@
 <li>What regulatory hurdles could still block the deal?</li>
 <li>Could ownership changes influence news bias?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/media/2026/feb/27/cbs-news-cnn-paramount-warner-bros-employees" target="_blank" rel="noopener">The Guardian</a> — Discusses staff fears of mergers and job cuts.</li>
-<li><a href="https://www.bbc.com/news/articles/c5y6p5ypgmzo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Notes Netflix's withdrawal clearing path for Paramount.</li>
-<li><a href="https://www.bloomberg.com/news/articles/2026-02-26/netflix-walks-away-from-warner-bros-discovery-bid" target="_blank" rel="noopener">Bloomberg</a> — Covers Netflix's decision to drop the bid.</li>
-</ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-russia-and-ukraine-agree-local-ceasefire-for-nuclear-plant-repairs">1) Russia and Ukraine agree local ceasefire for nuclear plant repairs</h4>
 <p><strong>What happened (neutral):</strong> Russia and Ukraine agreed to a local ceasefire to allow repairs at Europe's largest nuclear plant, which relies on external power to cool nuclear material and prevent accidents. The plant's condition remains uncertain amid ongoing conflict. The European Commission provisionally applied the Mercosur trade deal despite parliamentary concerns.</p>
@@ -1259,11 +1305,6 @@
 <li>How verifiable is the ceasefire's implementation?</li>
 <li>What are the risks if repairs are disrupted?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/feb/27/russia-europe-nuclear-plant-iaea-southern-ukraine-latest-news-updates" target="_blank" rel="noopener">The Guardian</a> — Details ceasefire for repairs.</li>
-<li><a href="https://www.bloomberg.com/news/articles/2026-02-27/eu-forges-ahead-with-mercosur-trade-deal-in-provisional-step" target="_blank" rel="noopener">Bloomberg</a> — Covers EU's provisional Mercosur application.</li>
-</ul>
 <h4 id="2-cuba-vows-defense-after-deadly-boat-attack-from-us">2) Cuba vows defense after deadly boat attack from US</h4>
 <p><strong>What happened (neutral):</strong> Cuban border guards killed four gunmen on a US-registered speedboat that attacked a patrol, injuring six others. Cuba labeled it terrorist aggression and vowed to defend itself. Associates claimed the attackers aimed to destabilize the government.</p>
 <p><strong>Perspectives:</strong> Reports depict the incident as escalating US-Cuba tensions, with some viewing it as exile extremism, while others see Cuba's response as firm sovereignty defense. Coverage contrasts Cuban claims of mercenary plots with details of the attackers' anti-government intent.</p>
@@ -1271,11 +1312,6 @@
 <ul>
 <li>What evidence links the attackers to destabilization efforts?</li>
 <li>How might this affect US-Cuba relations?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/feb/26/what-to-know-cuba-boat-attack" target="_blank" rel="noopener">The Guardian</a> — Covers Cuba's vow to defend against aggression.</li>
-<li><a href="https://www.aljazeera.com/news/2026/2/26/cuba-says-speedboat-attackers-from-florida-planned-to-destabilise-country?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Details plans to destabilize the country.</li>
 </ul>
 <h4 id="3-venezuelas-interim-leader-urges-trump-to-lift-sanctions">3) Venezuela's interim leader urges Trump to lift sanctions</h4>
 <p><strong>What happened (neutral):</strong> Venezuela's interim leader called on Trump to lift sanctions and oil blockade after Maduro's ouster and US capture. Maduro sought dismissal of charges, claiming US blocked his defense funds. The move aims to ease economic pressures.</p>
@@ -1285,11 +1321,6 @@
 <li>How might lifting sanctions impact Venezuela's recovery?</li>
 <li>Is the US blocking funds a violation of rights?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/americas/20260227-venezuela-interim-leader-trump-lift-punitive-sanctions-maduro-ouster" target="_blank" rel="noopener">France 24</a> — Urges lifting sanctions after Maduro's ouster.</li>
-<li><a href="https://www.newsmax.com/newsfront/nicolas-maduro-venezuela-criminal-case/2026/02/26/id/1247590" target="_blank" rel="noopener">Newsmax</a> — Maduro asks judge to toss indictment.</li>
-</ul>
 <h4 id="4-argentina-braces-for-labor-law-overhaul">4) Argentina braces for labor law overhaul</h4>
 <p><strong>What happened (neutral):</strong> Argentina's senate is set to approve labor reforms weakening unions and cutting business costs, amid job losses since President Milei's tenure began. Critics decry reduced rights, while supporters claim it will revive employment.</p>
 <p><strong>Perspectives:</strong> Coverage presents reforms as economic revival tools, with some framing them as necessary deregulation, others as exploitative cuts. Reports interweave Milei's anarcho-capitalist vision with worker rights concerns.</p>
@@ -1298,16 +1329,154 @@
 <li>Will reforms increase employment or exploitation?</li>
 <li>How might this affect regional labor trends?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/feb/27/argentina-labor-law-overhaul" target="_blank" rel="noopener">The Guardian</a> — Details overhaul and criticisms.</li>
-</ul>
 <h4 id="5-south-sudan-at-risk-of-full-scale-war-un-warns">5) South Sudan at risk of full-scale war, UN warns</h4>
 <p><strong>What happened (neutral):</strong> A UN report warned of escalating atrocity risks in South Sudan amid renewed fighting and impunity for abuses. The country faces a potential return to full-scale war.</p>
 <p><strong>Perspectives:</strong> Outlets highlight the urgency of UN warnings, framing it as a humanitarian crisis needing intervention, with views on impunity perpetuating violence.</p>
 <p>**</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/feb/27/pakistan-afghanistan-taliban-war-cross-border-kabul-latest-news-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cj32zx48xvxo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/video/20260227-clashes-still-continuing-on-parts-of-pakistan-afghanistan-border" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/video/20260227-pakistan-bombs-targets-in-afghanistan-as-it-declares-open-war" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/2/27/pakistan-bombs-kabul-why-are-afghanistan-and-pakistan-fighting?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/video/20260227-signs-of-gradual-progress-in-iran-us-talks" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/feb/26/us-iran-nuclear-talks-middle-east-latest-news-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/feb/26/trump-attack-threat-looms-as-nuclear-talks-between-us-and-iran-go-to-wire" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.foxnews.com/politics/kennedy-warns-ayatollah-wants-drink-our-blood-out-boot-iran-tensions-escalate" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=foxnews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">foxnews.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/politics/2026/feb/27/green-party-wins-gorton-and-denton-byelection-in-blow-to-keir-starmer" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15597287/Huge-blow-Keir-Starmer-Greens-secure-historic-election-victory-Gorton-Denton-deliver-fresh-misery-embattled-PM.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/politics/2026/feb/27/labour-worst-fears-realised-greens-victory-gorton-denton-byelection" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15596971/Chaos-Gorton-Denton-election-official-observers-raise-alarm-high-levels-illegal-family-voting-couples-seen-colluding-polling-booths.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/2/27/green-party-wins-uk-by-election-in-blow-to-labour-pm-starmer?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/2026/feb/27/bill-clinton-testimony-jeffrey-epstein-investigation" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.foxnews.com/politics/bill-clinton-faces-high-stakes-house-grilling-epstein-probe-after-hillary-blasts-fishing-expedition" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=foxnews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">foxnews.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15592651/Grasping-Sarah-Ferguson-begged-Epstein-upgrade-business-class-flight-paid-New-York-days-jail-release-child-sex-charges-shocking-new-emails-reveal.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/media/2026/feb/27/cbs-news-cnn-paramount-warner-bros-employees" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c5y6p5ypgmzo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-02-26/netflix-walks-away-from-warner-bros-discovery-bid" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/feb/27/russia-europe-nuclear-plant-iaea-southern-ukraine-latest-news-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-02-27/eu-forges-ahead-with-mercosur-trade-deal-in-provisional-step" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/feb/26/what-to-know-cuba-boat-attack" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/2/26/cuba-says-speedboat-attackers-from-florida-planned-to-destabilise-country?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/americas/20260227-venezuela-interim-leader-trump-lift-punitive-sanctions-maduro-ouster" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.newsmax.com/newsfront/nicolas-maduro-venezuela-criminal-case/2026/02/26/id/1247590" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=newsmax.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">newsmax.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/feb/27/argentina-labor-law-overhaul" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1607,10 +1776,67 @@
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

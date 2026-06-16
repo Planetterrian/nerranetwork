@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Rory McIlroy wins back-to-back Masters in thrilling Augusta finale as Trump anno... — Episode 32</h1>
+            <h1><span class="nn-i18n-title">Rory McIlroy wins back-to-back Masters in thrilling Augusta finale as Trump anno...</span> — Episode 32</h1>
             
             <p class="blog-hero-hook">Rory McIlroy wins back-to-back Masters in thrilling Augusta finale as Trump announces Strait of Hormuz blockade sending oil above $100.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1194,11 +1275,6 @@
 <li>How do major sporting events provide contrast during periods of international tension?</li>
 <li>Why might political figures publicly comment on sports achievements?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/sport/golf/article-15726783/rory-mcilroy-masters-win-augusta.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Rory McIlroy WINS the Masters!</a> — Daily Mail match report from Augusta</li>
-<li><a href="https://www.dailymail.co.uk/sport/golf/article-15727449/donald-trump-rory-mcilroy-masters-victory.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Donald Trump hails 'legend' Rory McIlroy</a> — Coverage of presidential reaction</li>
-</ul>
 <h4 id="2-us-announces-blockade-of-iranian-ports-and-strait-of-hormuz-after-peace-talks-collapse">2) US announces blockade of Iranian ports and Strait of Hormuz after peace talks collapse</h4>
 <p><strong>What happened (neutral):</strong> Following the failure of weekend peace negotiations with Iran, the US will begin blockading Iranian ports and the Strait of Hormuz at 10am ET on Monday. President Trump stated that Iran demanded a nuclear weapon during talks and that he does not care if they return to the negotiating table. Oil prices immediately spiked above $100 per barrel in response.</p>
 <p><strong>Perspectives:</strong> Mail Online reports emphasize Trump's view that Iran is "desperate" for nuclear weapons and criticizes NATO for insufficient support, framing the blockade as necessary strength after diplomacy failed. The Guardian's live coverage notes Iran's warning that the blockade would violate a ceasefire, with Iranian officials stating they "will not bow to threats," presenting the action as escalation in an already tense region. Bloomberg and BBC reports focus on the market reaction and potential deepening of a global energy crisis, highlighting economic consequences over political justifications. Both sides agree talks collapsed; they differ on whether Iran's position or the US response represents the greater threat to stability.</p>
@@ -1208,14 +1284,6 @@
 <li>How might this blockade affect global energy supplies?</li>
 <li>What role does NATO play according to the different statements?</li>
 <li>What happens next if neither side backs down?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15727861/Oil-prices-Donald-Trump-Iran-Blockade.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Oil prices spike as Trump plans his own clampdown</a> — Mail Online on market reaction and NATO criticism</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15727827/Trump-Iran-nuclear-weapon-peace-talks.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Trump reveals 'desperate' Iran wants nuclear weapon</a> — Mail Online on collapsed talks</li>
-<li><a href="https://www.theguardian.com/world/live/2026/apr/13/iran-war-live-news-ceasefire-peace-talks-us-trump-strait-hormuz-blockade-middle-east-crisis-latest-updates" target="_blank" rel="noopener">Middle East crisis live: Iran warns US blockade</a> — Guardian live updates including Iranian response</li>
-<li><a href="https://www.bbc.com/news/articles/cn781z4lgg4o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">Oil back above $100 as US to blockade Iranian ports</a> — BBC on energy crisis concerns</li>
-<li><a href="https://www.reddit.com/r/news/comments/1sk2b3y/us_to_blockade_iran_ports_after_talks_fail_to/" target="_blank" rel="noopener">US to blockade Iran ports after talks fail</a> — Reddit community discussion</li>
 </ul>
 <h4 id="3-hungary-elects-péter-magyar-ending-viktor-orbáns-16-year-rule">3) Hungary elects Péter Magyar, ending Viktor Orbán's 16-year rule</h4>
 <p><strong>What happened (neutral):</strong> Hungarian voters chose pro-EU candidate Péter Magyar and his Tisza party, defeating long-serving Prime Minister Viktor Orbán in what appears to be a decisive shift. Orbán conceded defeat shortly after polls closed, describing the result as "painful but unambiguous." The change is expected to affect Hungary's relationships with the EU, US, and Russia.</p>
@@ -1227,12 +1295,6 @@
 <li>What challenges does the new government face in implementing reforms?</li>
 <li>How do economic conditions influence European elections?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/hungary-orban-s-ouster-heralds-thaw-in-eu-ties/a-76758641?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Hungary: Orban's ouster heralds thaw in EU ties</a> — Deutsche Welle analysis</li>
-<li><a href="https://www.theguardian.com/world/2026/apr/13/monday-briefing-hungary-election-peter-magyar-viktor-orban" target="_blank" rel="noopener">Monday briefing: Hungary chooses Péter Magyar over Viktor Orbán</a> — Guardian overview of results and implications</li>
-<li><a href="https://www.france24.com/en/video/20260413-fidesz-mep-l%C3%A1szl%C3%B3-attributes-loss-to-low-turnout-of-undecided-voters-and-eu-economic-stagnation" target="_blank" rel="noopener">Fidesz MEP László attributes loss to low turnout</a> — France 24 interview with government perspective</li>
-</ul>
 <h4 id="4-jannik-sinner-defeats-carlos-alcaraz-to-win-monte-carlo-masters">4) Jannik Sinner defeats Carlos Alcaraz to win Monte Carlo Masters</h4>
 <p><strong>What happened (neutral):</strong> Jannik Sinner beat Carlos Alcaraz in straight sets (7-6(5) 6-3) to claim the Monte Carlo Masters title and reclaim the world No.1 ranking in men's tennis. The match continued Sinner's strong run of form. The victory occurred amid other major international sports stories on the same day.</p>
 <p><strong>Perspectives:</strong> Al Jazeera's reporting focuses on the athletic achievement and its significance for the ATP rankings, presenting it as a straightforward sports success story without linking to external events. This coverage values competitive excellence and the drama of top players facing off at prestigious tournaments.</p>
@@ -1243,10 +1305,6 @@
 <li>What does this suggest about the current state of men's tennis?</li>
 <li>How do tennis results compare to golf achievements on the same day?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/sports/2026/4/13/sinner-beats-alcaraz-in-straight-sets-to-win-monte-carlo-reclaim-no-1-spot?traffic_source=rss" target="_blank" rel="noopener">Sinner beats Alcaraz in straight sets to win Monte Carlo</a> — Al Jazeera match report and analysis</li>
-</ul>
 <h4 id="5-stampede-at-haitian-mountaintop-fortress-kills-at-least-25">5) Stampede at Haitian mountaintop fortress kills at least 25</h4>
 <p><strong>What happened (neutral):</strong> At least 25 people died and dozens were injured in a stampede at a popular tourist fortress in northern Haiti. The incident occurred at a historic site known for attracting visitors. Authorities have reported on the casualty figures but details about what triggered the stampede remain limited.</p>
 <p><strong>Perspectives:</strong> NPR's coverage focuses on the human tragedy at a site popular with tourists, highlighting safety concerns at major attractions in Haiti. The reporting emphasizes the immediate loss of life without extensive political context.</p>
@@ -1256,10 +1314,6 @@
 <li>How might this incident affect tourism in the region?</li>
 <li>What factors could have contributed to the stampede?</li>
 <li>How do such tragedies highlight broader challenges in the country?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/04/13/g-s1-117209/a-stampede-at-a-haitian-mountaintop-fortress-kills-at-least-25-people" target="_blank" rel="noopener">A stampede at a Haitian mountaintop fortress kills at least 25 people</a> — NPR report on the incident</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-trump-criticizes-pope-leo-xiv-following-peace-appeal-on-iran">1) Trump criticizes Pope Leo XIV following peace appeal on Iran</h4>
@@ -1272,10 +1326,6 @@
 <li>How might this exchange affect perceptions of US foreign policy?</li>
 <li>What constitutes appropriate commentary on geopolitical issues?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/news/2026/4/13/terrible-for-foreign-policy-trump-attacks-pope-leo-after-peace-appeal?traffic_source=rss" target="_blank" rel="noopener">‘Terrible for foreign policy’: Trump attacks Pope Leo after peace appeal</a> — Al Jazeera on the exchange</li>
-</ul>
 <h4 id="2-us-strikes-on-alleged-drug-boats-in-eastern-pacific-kill-5">2) US strikes on alleged drug boats in eastern Pacific kill 5</h4>
 <p><strong>What happened (neutral):</strong> The US military conducted strikes on two boats accused of drug smuggling in the eastern Pacific, resulting in five deaths. The action is part of the Trump administration's campaign against alleged traffickers in Latin America. Details about the specific targets and circumstances were provided by the military.</p>
 <p><strong>Perspectives:</strong> NPR reports the strikes as part of an ongoing effort to disrupt drug trafficking routes, reflecting a perspective that prioritizes security and law enforcement against transnational crime. Coverage focuses on the military's stated objectives rather than debating the broader policy approach.</p>
@@ -1285,10 +1335,6 @@
 <li>How does this fit into larger regional security efforts?</li>
 <li>What are the risks associated with such operations?</li>
 <li>How do different countries approach drug interdiction?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/04/13/g-s1-117217/strikes-alleged-drug-boats-kill-5" target="_blank" rel="noopener">Strikes on alleged drug boats kill 5 in eastern Pacific, U.S. military says</a> — NPR on the military action</li>
 </ul>
 <h4 id="3-australia-three-victorian-ministers-resign-barnaby-joyce-comments-on-redemption">3) Australia: Three Victorian ministers resign; Barnaby Joyce comments on redemption</h4>
 <p><strong>What happened (neutral):</strong> Three ministers in the Australian state of Victoria have resigned. Separately, Barnaby Joyce commented that criminals need "redemption" following Pauline Hanson sacking a convicted rapist. The Guardian's live blog also noted government funding for a child abuse prevention helpline.</p>
@@ -1300,10 +1346,6 @@
 <li>What role should governments play in child abuse prevention?</li>
 <li>How do these stories reflect broader Australian political dynamics?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/apr/13/australia-news-live-anthony-albanese-prime-minister-fuel-supply-diesel-oil-cost-of-living-inflation-budget-ntwnfb" target="_blank" rel="noopener">Australia news live: Barnaby Joyce says criminals need ‘redemption’</a> — Guardian live coverage of multiple developments</li>
-</ul>
 <h4 id="4-abidjan-art-week-showcases-côte-divoire-city-as-cultural-hub">4) Abidjan art week showcases Côte d'Ivoire city as cultural hub</h4>
 <p><strong>What happened (neutral):</strong> Abidjan's art week featured late-night gallery tours, new venues, and extended museum hours, signaling the city's emergence as a regional arts capital. The event included a "Night of the Galleries" bus tour that kept venues open until midnight. This marks the third edition of the art week, building on a tradition started during the Africa Cup of Nations.</p>
 <p><strong>Perspectives:</strong> The Guardian portrays these cultural developments positively, focusing on community engagement and Abidjan's ambition to become a recognized creative center in West Africa. The coverage values cultural investment and public access to the arts as important aspects of urban development.</p>
@@ -1314,10 +1356,6 @@
 <li>How might arts initiatives affect local economies and identity?</li>
 <li>What makes a city a "cultural hub"?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/apr/13/abidjan-art-week-cote-d-ivoire-culture" target="_blank" rel="noopener">‘This scene is alive’: Abidjan art week showcases city as growing cultural hub</a> — Guardian feature on the event</li>
-</ul>
 <h4 id="5-cold-sore-virus-causes-brain-damage-in-uk-woman">5) Cold sore virus causes brain damage in UK woman</h4>
 <p><strong>What happened (neutral):</strong> Helen Edwards initially thought she had flu but was diagnosed with encephalitis caused by the cold sore virus. She spent 12 weeks in hospital and suffered brain damage. The BBC reported on her experience as a cautionary medical story.</p>
 <p><strong>Perspectives:</strong> BBC coverage focuses on the personal impact and unexpected severity of a common virus, raising awareness about rare but serious complications. The reporting prioritizes health information and individual stories that illustrate medical realities.</p>
@@ -1327,10 +1365,6 @@
 <li>What symptoms should people watch for?</li>
 <li>How does public understanding of common viruses compare to their potential risks?</li>
 <li>What support exists for people with encephalitis?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/c0lenp4r70eo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">Cold sore virus left mum with brain damage</a> — BBC personal story and medical information</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-markets-react-to-us-iran-tensions-with-oil-surge-and-stock-drops">1) Markets react to US-Iran tensions with oil surge and stock drops</h4>
@@ -1343,13 +1377,6 @@
 <li>Which industries are most vulnerable to oil supply disruptions?</li>
 <li>How might prolonged tensions affect global economic stability?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-04-13/oil-surges-stocks-drop-on-us-plan-to-blockade-hormuz-video" target="_blank" rel="noopener">Oil Surges, Stocks Drop on Trump’s Plan to Block Hormuz</a> — Bloomberg video report</li>
-<li><a href="https://www.bloomberg.com/news/live-blog/2026-04-13/ftse-100-live-iran-war-trump-us-blockade-oil-prices-pound-gilts-stocks-what-s-moving-uk-markets-right-now-markets-today-mnwrvk62" target="_blank" rel="noopener">FTSE 100 Set to Fall as US-Iran Talks Fail</a> — Bloomberg market overview</li>
-<li><a href="https://www.cnbc.com/2026/04/13/markets-trump-strait-of-hormuz-blockade-gold-stocks-dollar.html" target="_blank" rel="noopener">From panic to pricing in: Are markets past 'peak fear and sell-off'?</a> — CNBC on investor behavior</li>
-<li><a href="https://www.bloomberg.com/news/articles/2026/04-13/japan-s-toto-halts-bathroom-orders-on-material-shortage-amid-war" target="_blank" rel="noopener">Toto Halts Bathroom Orders After Iran War Upends Supply Chain</a> — Bloomberg on corporate impact</li>
-</ul>
 <h4 id="2-western-australia-considers-own-diesel-reserve-after-war-disruptions">2) Western Australia considers own diesel reserve after war disruptions</h4>
 <p><strong>What happened (neutral):</strong> Western Australia is considering creating its own strategic stockpile of diesel, with the state paying for the fuel. The move comes after the Iran conflict caused shortages affecting key industries including farming and mining. This reflects localized responses to global energy supply concerns.</p>
 <p><strong>Perspectives:</strong> Bloomberg coverage examines practical responses by regional governments to international crises, highlighting how supply chain vulnerabilities affect specific economic sectors. The reporting underscores tensions between global energy markets and the need for local resilience.</p>
@@ -1360,10 +1387,6 @@
 <li>How do regional governments typically respond to global energy shocks?</li>
 <li>What precedent exists for state-level energy stockpiles?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-13/western-australia-mulls-own-diesel-reserve-after-war-disruptions" target="_blank" rel="noopener">Western Australia Mulls Own Diesel Reserve After War Disruptions</a> — Bloomberg on regional planning</li>
-</ul>
 <h4 id="3-saudi-oil-sales-to-china-expected-to-halve-amid-hormuz-crisis">3) Saudi oil sales to China expected to halve amid Hormuz crisis</h4>
 <p><strong>What happened (neutral):</strong> Saudi Arabia's crude oil sales to China, its top importer, are set to be halved next month due to the Hormuz crisis and rising prices. The changes stem from disrupted oil flows in the Middle East. Traders familiar with the situation provided the information.</p>
 <p><strong>Perspectives:</strong> Bloomberg's reporting focuses on the concrete commercial impacts of geopolitical tensions on major oil trade relationships. The coverage illustrates how conflicts can rapidly reshape global energy commerce and affect major economies.</p>
@@ -1373,10 +1396,6 @@
 <li>What alternatives exist for China to meet its energy needs?</li>
 <li>How do oil producers adjust strategies during crises?</li>
 <li>What long-term effects could this have on producer-consumer relationships?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-13/saudi-oil-sales-to-china-to-halve-as-hormuz-crisis-lifts-prices" target="_blank" rel="noopener">Saudi Oil Sales to China to Halve as Hormuz Crisis Lifts Prices</a> — Bloomberg on trade adjustments</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <p><strong>No distinct technology-focused stories were available in the provided sources that had not already been covered in other sections.</strong></p>
@@ -1393,6 +1412,128 @@
 <p>Cross-check breaking news on fast-moving stories like the Hormuz situation by reading both financial outlets (Bloomberg, BBC) and regional sources (Guardian live blogs, Al Jazeera) rather than relying on any single perspective. Primary documents such as official statements from CENTCOM or Iranian negotiators often contain important nuances that get simplified in headlines. Remember that market reactions can precede verified facts, so look for what is confirmed versus what is anticipated. When sources conflict on causation or intent, focus first on the agreed-upon timeline of events before weighing competing interpretations.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.dailymail.co.uk/sport/golf/article-15726783/rory-mcilroy-masters-win-augusta.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/sport/golf/article-15727449/donald-trump-rory-mcilroy-masters-victory.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15727861/Oil-prices-Donald-Trump-Iran-Blockade.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15727827/Trump-Iran-nuclear-weapon-peace-talks.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/apr/13/iran-war-live-news-ceasefire-peace-talks-us-trump-strait-hormuz-blockade-middle-east-crisis-latest-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cn781z4lgg4o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/news/comments/1sk2b3y/us_to_blockade_iran_ports_after_talks_fail_to/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/hungary-orban-s-ouster-heralds-thaw-in-eu-ties/a-76758641?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/apr/13/monday-briefing-hungary-election-peter-magyar-viktor-orban" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/video/20260413-fidesz-mep-l%C3%A1szl%C3%B3-attributes-loss-to-low-turnout-of-undecided-voters-and-eu-economic-stagnation" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/sports/2026/4/13/sinner-beats-alcaraz-in-straight-sets-to-win-monte-carlo-reclaim-no-1-spot?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.npr.org/2026/04/13/g-s1-117209/a-stampede-at-a-haitian-mountaintop-fortress-kills-at-least-25-people" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/4/13/terrible-for-foreign-policy-trump-attacks-pope-leo-after-peace-appeal?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.npr.org/2026/04/13/g-s1-117217/strikes-alleged-drug-boats-kill-5" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/live/2026/apr/13/australia-news-live-anthony-albanese-prime-minister-fuel-supply-diesel-oil-cost-of-living-inflation-budget-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/apr/13/abidjan-art-week-cote-d-ivoire-culture" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c0lenp4r70eo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-04-13/oil-surges-stocks-drop-on-us-plan-to-blockade-hormuz-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/live-blog/2026-04-13/ftse-100-live-iran-war-trump-us-blockade-oil-prices-pound-gilts-stocks-what-s-moving-uk-markets-right-now-markets-today-mnwrvk62" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/04/13/markets-trump-strait-of-hormuz-blockade-gold-stocks-dollar.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026/04-13/japan-s-toto-halts-bathroom-orders-on-material-shortage-amid-war" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-13/western-australia-mulls-own-diesel-reserve-after-war-disruptions" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-13/saudi-oil-sales-to-china-to-halve-as-hormuz-crisis-lifts-prices" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1889,10 +2030,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

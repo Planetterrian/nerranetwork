@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Iran escalates attacks on US assets in the Middle East as the conflict with the US and Israel enters… — Episode 7</h1>
+            <h1><span class="nn-i18n-title">Iran escalates attacks on US assets in the Middle East as the conflict with the US and Israel enters…</span> — Episode 7</h1>
             
             <p class="blog-hero-hook">Iran escalates attacks on US assets in the Middle East as the conflict with the US and Israel enters its fourth day.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1191,12 +1272,6 @@
 <li>What role could international organizations play in de-escalating the situation?</li>
 <li>Are there verified reports on civilian impacts from the strikes?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15608845/US-Iran-live-Israel-launches-fresh-dawn-strikes-Tehran-Beirut-Trump-warns-hardest-hits-come.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — live updates on the Iran war and Israeli actions</li>
-<li><a href="https://www.theguardian.com/world/2026/mar/02/war-middle-east-maps-video-photos-us-israel-iran" target="_blank" rel="noopener">The Guardian</a> — overview of how the conflict exploded into a regional war</li>
-<li><a href="https://www.france24.com/en/video/20260303-bombs-are-not-the-solution-iranians-flee-to-neighbouring-turkey" target="_blank" rel="noopener">France 24</a> — reports on Iranians fleeing to Turkey amid strikes</li>
-</ul>
 <h4 id="2-trump-criticizes-uk-prime-minister-keir-starmer-over-iran-response">2) Trump criticizes UK Prime Minister Keir Starmer over Iran response</h4>
 <p><strong>What happened (neutral):</strong> US President Trump has renewed attacks on UK Prime Minister Keir Starmer, calling him unhelpful and accusing him of pandering to certain voters. Trump expressed love for the UK but noted it feels less recognizable. This comes amid broader fury over Starmer's response to the Iran conflict.</p>
 <p><strong>Perspectives:</strong> Right-leaning outlets portray Trump's comments as a justified critique of weak international leadership, suggesting Starmer's hesitation undermines allied unity against Iran, while centrist views see it as typical Trump rhetoric aimed at domestic audiences. Left-leaning perspectives frame the remarks as divisive, potentially straining transatlantic relations at a critical time, and international coverage notes how such public spats could complicate coordinated responses to the Middle East crisis. Overall, the discourse weaves between admiration for Trump's directness and concerns over diplomatic fallout.</p>
@@ -1205,11 +1280,6 @@
 <li>How might this affect US-UK cooperation on global issues?</li>
 <li>What domestic pressures could be influencing Starmer's stance?</li>
 <li>Is there evidence of Starmer's response directly impacting the conflict?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15608923/Trump-says-Starmer-pandering-Muslim-voters-failing-attacks-against-Iran.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — details on Trump's criticism of Starmer</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15609161/Europe-likely-come-attack-Trumps-decapitation-Irans-military-leaves-missiles-hands-inexperienced-fanatics-expert-warns.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — expert warnings on Trump's military strategy effects</li>
 </ul>
 <h4 id="3-spain-denies-us-use-of-military-bases-for-iran-attacks">3) Spain denies US use of military bases for Iran attacks</h4>
 <p><strong>What happened (neutral):</strong> Spain has refused permission for the US to use its military bases in operations against Iran. Prime Minister Pedro Sanchez condemned the US and Israel for their strikes, including the killing of Ayatollah Ali Khamenei. This decision reflects Spain's socialist government's stance on the conflict.</p>
@@ -1220,10 +1290,6 @@
 <li>What are the potential impacts on NATO unity?</li>
 <li>How verifiable are claims about the strikes' targets?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15608291/Spain-denies-US-permission-use-military-bases-attack-Iran.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — report on Spain's denial and condemnation</li>
-</ul>
 <h4 id="4-expert-warns-of-european-missile-risks-from-irans-military-changes">4) Expert warns of European missile risks from Iran's military changes</h4>
 <p><strong>What happened (neutral):</strong> An expert has warned that Trump's targeted strikes on Iran's military leadership could leave missiles in the hands of inexperienced operators, increasing risks to Europe. This follows the "decapitation" strategy that eliminated key figures. The concern is that fanatics might launch attacks as a result.</p>
 <p><strong>Perspectives:</strong> Security analysts in international reports frame this as a high-stakes gamble by the US, potentially stabilizing the region long-term but risking immediate chaos, while conservative viewpoints defend it as effective deterrence against Iranian aggression. Left-leaning outlets highlight the dangers of unintended consequences, such as heightened threats to civilians in Europe, weaving in broader debates on whether such tactics prevent or provoke further violence. The discussion balances optimism about weakening Iran's command with alarms over escalating unpredictability.</p>
@@ -1233,10 +1299,6 @@
 <li>How might this affect European defense strategies?</li>
 <li>Are there conflicting expert opinions on the strategy's effectiveness?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15609161/Europe-likely-come-attack-Trumps-decapitation-Irans-military-leaves-missiles-hands-inexperienced-fanatics-expert-warns.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — expert warning on missile risks to Europe</li>
-</ul>
 <h4 id="5-iranians-flee-to-turkey-amid-ongoing-strikes">5) Iranians flee to Turkey amid ongoing strikes</h4>
 <p><strong>What happened (neutral):</strong> Hundreds of Iranians have crossed into Turkey as US and Israeli strikes continue into the fourth day. Turkish President Erdogan stated that securing a ceasefire and opening dialogue is a priority. Reports from Ankara describe the fleeing as a response to the bombings.</p>
 <p><strong>Perspectives:</strong> Humanitarian-focused coverage emphasizes the civilian desperation driving the exodus, portraying it as a tragic outcome of foreign intervention, while pro-Western sources see it as evidence of Iran's regime instability under pressure. Regional outlets highlight Turkey's mediating role, contrasting with criticisms that Erdogan's stance favors dialogue over accountability, and the overall narrative interlaces sympathy for refugees with strategic analyses of how this migration could strain neighboring countries.</p>
@@ -1245,10 +1307,6 @@
 <li>What support systems are in place for these refugees in Turkey?</li>
 <li>How might this influence Turkey's foreign policy?</li>
 <li>Are the numbers of fleeing Iranians verified by multiple sources?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/video/20260303-bombs-are-not-the-solution-iranians-flee-to-neighbouring-turkey" target="_blank" rel="noopener">France 24</a> — reports on Iranians fleeing to Turkey and Erdogan's priorities</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-war-in-middle-east-expands-with-strikes-and-invasions">1) War in Middle East expands with strikes and invasions</h4>
@@ -1260,10 +1318,6 @@
 <li>How could this affect neighboring countries not directly involved?</li>
 <li>Are there diplomatic efforts underway to contain the spread?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/mar/02/war-middle-east-maps-video-photos-us-israel-iran" target="_blank" rel="noopener">The Guardian</a> — maps, videos, and photos of the expanding conflict</li>
-</ul>
 <h4 id="2-kristi-noem-faces-senate-grilling-over-minneapolis-shootings-and-dhs-shutdown">2) Kristi Noem faces Senate grilling over Minneapolis shootings and DHS shutdown</h4>
 <p><strong>What happened (neutral):</strong> Homeland Security Secretary Kristi Noem is set for a Senate hearing amid the DHS shutdown entering its third week. This follows demands for her resignation, firing, or impeachment related to Minneapolis shootings. Lawmakers are pressing for accountability.</p>
 <p><strong>Perspectives:</strong> US political coverage splits along partisan lines, with conservatives defending Noem as a victim of bureaucratic overreach during a shutdown, while liberals push for scrutiny over perceived failures in handling domestic security incidents. Centrist outlets focus on the broader implications for government functionality, noting how the prolonged shutdown exacerbates tensions, and the discourse integrates calls for reform with debates on whether the grilling is politically motivated or substantively necessary.</p>
@@ -1272,10 +1326,6 @@
 <li>What specific actions led to demands for Noem's removal?</li>
 <li>How is the DHS shutdown impacting public services?</li>
 <li>Are there bipartisan agreements on the issues at hand?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.foxnews.com/politics/kristi-noem-face-senate-grilling-over-minneapolis-shootings-dhs-shutdown-hits-week-3" target="_blank" rel="noopener">Fox News</a> — details on Noem's hearing and shutdown</li>
 </ul>
 <h4 id="3-trump-orders-ice-to-use-all-lawful-means-for-immigrant-removals-but-arrests-exceed-limits">3) Trump orders ICE to use all lawful means for immigrant removals, but arrests exceed limits</h4>
 <p><strong>What happened (neutral):</strong> President Trump has directed ICE to employ all lawful means to remove immigrants. However, many arrests by ICE have gone beyond legal boundaries. Reports highlight federal agents operating in various settings, including snowy streets.</p>
@@ -1286,10 +1336,6 @@
 <li>How might this affect immigrant communities in the US?</li>
 <li>Are there court challenges to these arrests?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://reason.com/2026/03/03/ice-vs-the-constitution/" target="_blank" rel="noopener">Reason.com</a> — analysis of ICE arrests going beyond the law</li>
-</ul>
 <h4 id="4-north-carolina-holds-early-midterm-primaries-for-senate-and-house">4) North Carolina holds early midterm primaries for Senate and House</h4>
 <p><strong>What happened (neutral):</strong> North Carolina has kicked off some of the first midterm primaries, with Democrat Roy Cooper and Republican Michael Whatley leading polls for the Senate seat. Cooper is seen as a strong flip candidate against the retiring Republican senator. Polling shows Cooper ahead among Democrats.</p>
 <p><strong>Perspectives:</strong> Domestic election coverage portrays Cooper as a pragmatic choice for Democrats aiming to regain ground, with some highlighting his gubernatorial experience as a counter to Republican dominance, while Republican-leaning views boost Whatley as a Trump-endorsed fresh face. Progressive angles note Cooper's stances on healthcare and defense as appealing to moderates, contrasting with criticisms of the GOP's alignment with Trump-era policies, and the narrative overall reflects optimism and caution about flipping key seats in a divided political landscape.</p>
@@ -1299,11 +1345,6 @@
 <li>What are the key issues driving voter turnout?</li>
 <li>Are polling leads holding up in early returns?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/2026/mar/03/north-carolina-democratic-republican-primaries-senate" target="_blank" rel="noopener">The Guardian</a> — overview of North Carolina primaries</li>
-<li><a href="https://www.cnbc.com/2026/03/03/2026-midterm-elections-five-races-to-watch.html" target="_blank" rel="noopener">CNBC</a> — five races to watch in midterm kickoff</li>
-</ul>
 <h4 id="5-five-key-races-in-2026-midterm-elections-begin">5) Five key races in 2026 midterm elections begin</h4>
 <p><strong>What happened (neutral):</strong> The 2026 midterm elections have started with primaries in three states. Results could indicate trends for the rest of the season. Focus is on competitive Senate and House races.</p>
 <p><strong>Perspectives:</strong> Political analysts across outlets view these early races as bellwethers for party momentum, with Democrats hoping for gains in battleground states amid dissatisfaction with the administration, while Republicans emphasize retaining control through strong incumbents. Centrist reporting balances enthusiasm for potential shifts with realism about voter turnout challenges, integrating diverse takes on how economic and foreign policy issues like the Iran conflict might sway outcomes without favoring one side.</p>
@@ -1312,10 +1353,6 @@
 <li>Which races are most likely to flip party control?</li>
 <li>How are national events influencing local primaries?</li>
 <li>What turnout levels are expected compared to past elections?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/03/03/2026-midterm-elections-five-races-to-watch.html" target="_blank" rel="noopener">CNBC</a> — five races to watch on midterm kickoff day</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-oil-supertanker-rates-reach-record-high-amid-strait-of-hormuz-threat">1) Oil supertanker rates reach record high amid Strait of Hormuz threat</h4>
@@ -1327,13 +1364,6 @@
 <li>What alternatives exist for oil shipping routes?</li>
 <li>Are there conflicting predictions on conflict duration?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/03/03/middle-east-crisis-iran-us-shipping-oil-tankers-strait-of-hormuz.html" target="_blank" rel="noopener">CNBC</a> — details on supertanker rate highs</li>
-<li><a href="https://www.bloomberg.com/news/videos/2026-03-03/young-prolonged-war-will-lead-to-high-gas-prices-video" target="_blank" rel="noopener">Bloomberg</a> — expert on prolonged war's gas price effects</li>
-<li><a href="https://www.bbc.com/news/articles/cr5lz0vgy52o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — gas and oil prices soaring with shipping threats</li>
-<li><a href="https://www.bloomberg.com/news/videos/2026-03-03/svelland-s-wiggen-market-not-prepared-for-gcc-attacks-video" target="_blank" rel="noopener">Bloomberg</a> — market unpreparedness for GCC attacks</li>
-</ul>
 <h4 id="2-bonds-slump-as-inflation-risks-rise-from-iran-war">2) Bonds slump as inflation risks rise from Iran war</h4>
 <p><strong>What happened (neutral):</strong> Bond markets have slumped due to mounting inflation risks from the Iran war. The oil price surge is leading traders to reduce bets on easier monetary policy. This reflects broader economic concerns tied to the conflict.</p>
 <p><strong>Perspectives:</strong> Market analyses describe the bond drop as a rational response to energy volatility, with investors scaling back expectations for rate cuts amid war-driven inflation, while some economists see it as an overreaction if the conflict remains contained. International business views integrate warnings of high gas prices from prolonged fighting, contrasting with hopes that limited disruptions could stabilize markets, and the prose connects these to debates on how geopolitical events reshape global finance.</p>
@@ -1343,11 +1373,6 @@
 <li>What sectors beyond energy might be affected?</li>
 <li>Is the oil surge's impact on bonds uniformly reported?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/newsletters/2026-03-03/bonds-slump-as-inflation-risk-mounts-from-war-in-iran" target="_blank" rel="noopener">Bloomberg</a> — bond slump due to war inflation risks</li>
-<li><a href="https://www.bloomberg.com/news/videos/2026-03-03/young-prolonged-war-will-lead-to-high-gas-prices-video" target="_blank" rel="noopener">Bloomberg</a> — analysis of war's energy market effects</li>
-</ul>
 <h4 id="3-gas-and-oil-prices-soar-with-shares-tumbling-over-shipping-threats">3) Gas and oil prices soar with shares tumbling over shipping threats</h4>
 <p><strong>What happened (neutral):</strong> Gas and oil prices have surged, and shares have tumbled due to threats to a crucial shipping lane. An Iranian official warned of setting fire to ships in the Strait of Hormuz. This has heightened market instability.</p>
 <p><strong>Perspectives:</strong> Economic reporting frames the price jumps as direct fallout from Iranian threats, with traders anticipating short-term spikes but fearing chaos from extended disruptions, while energy specialists note low stockpiles exacerbating risks especially for LNG. Global views blend concerns over unprepared markets for attacks on Gulf countries with analyses of how this ties into broader retaliation against US and Israeli strikes, creating a narrative of interconnected financial and geopolitical tensions.</p>
@@ -1356,11 +1381,6 @@
 <li>What measures are shipping companies taking to mitigate risks?</li>
 <li>How might consumer prices be affected worldwide?</li>
 <li>Are there discrepancies in reported price changes?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/cr5lz0vgy52o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — prices soaring and shares tumbling</li>
-<li><a href="https://www.bloomberg.com/news/videos/2026-03-03/svelland-s-wiggen-market-not-prepared-for-gcc-attacks-video" target="_blank" rel="noopener">Bloomberg</a> — expert on market unpreparedness</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-scientists-create-pocket-sized-ai-using-monkey-neurons">1) Scientists create pocket-sized AI using monkey neurons</h4>
@@ -1373,6 +1393,88 @@
 </ul>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15608845/US-Iran-live-Israel-launches-fresh-dawn-strikes-Tehran-Beirut-Trump-warns-hardest-hits-come.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/mar/02/war-middle-east-maps-video-photos-us-israel-iran" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/video/20260303-bombs-are-not-the-solution-iranians-flee-to-neighbouring-turkey" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15608923/Trump-says-Starmer-pandering-Muslim-voters-failing-attacks-against-Iran.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15609161/Europe-likely-come-attack-Trumps-decapitation-Irans-military-leaves-missiles-hands-inexperienced-fanatics-expert-warns.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15608291/Spain-denies-US-permission-use-military-bases-attack-Iran.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.foxnews.com/politics/kristi-noem-face-senate-grilling-over-minneapolis-shootings-dhs-shutdown-hits-week-3" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=foxnews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">foxnews.com</span>
+                    </a>
+                    
+                    <a href="https://reason.com/2026/03/03/ice-vs-the-constitution/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reason.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reason.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/2026/mar/03/north-carolina-democratic-republican-primaries-senate" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/03/2026-midterm-elections-five-races-to-watch.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/03/middle-east-crisis-iran-us-shipping-oil-tankers-strait-of-hormuz.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-03-03/young-prolonged-war-will-lead-to-high-gas-prices-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cr5lz0vgy52o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-03-03/svelland-s-wiggen-market-not-prepared-for-gcc-attacks-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/newsletters/2026-03-03/bonds-slump-as-inflation-risk-mounts-from-war-in-iran" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1793,10 +1895,67 @@ That's Omni View. For full source links and more context, check out today's writ
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>
