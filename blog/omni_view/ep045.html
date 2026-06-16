@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>UK local elections deliver heavy losses for Labour while Reform UK and pro-independence parties adva… — Episode 45</h1>
+            <h1><span class="nn-i18n-title">UK local elections deliver heavy losses for Labour while Reform UK and pro-independence parties adva…</span> — Episode 45</h1>
             
             <p class="blog-hero-hook">UK local elections deliver heavy losses for Labour while Reform UK and pro-independence parties advance across England, Scotland and Wales.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1208,12 +1289,6 @@
 <li>How might these results influence parliamentary voting patterns in the months ahead?</li>
 <li>Which regions show the clearest shifts away from Labour?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15803641/Keir-Starmer-brink-refuses-shift-left-right.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — live results and immediate reactions</li>
-<li><a href="https://www.theguardian.com/politics/ng-interactive/2026/may/07/local-elections-2026-may-full-results-england-scotland-wales" target="_blank" rel="noopener">The Guardian</a> — full results tracker</li>
-<li><a href="https://www.theguardian.com/politics/ng-interactive/2026/may/08/2026-elections-mapped-labour-reform-uk-greens-scotland-wales-england-local" target="_blank" rel="noopener">The Guardian</a> — mapped losses by region</li>
-</ul>
 <h4 id="2-labour-mps-and-unions-call-for-starmer-to-set-departure-timetable">2) Labour MPs and unions call for Starmer to set departure timetable</h4>
 <p><strong>What happened (neutral):</strong> Several Labour MPs, ministers and union leaders have publicly urged Sir Keir Starmer to outline a timeline for stepping down. The calls follow defeats in traditional strongholds now captured by Reform UK. Party sources describe the results as a significant setback.</p>
 <p><strong>Perspectives:</strong> Daily Mail reporting presents the internal criticism as evidence that Starmer’s approach has lost support among core allies. Other accounts note that some within Labour still view the 2024 majority as a mandate that requires time to implement rather than immediate leadership change. The discussion reveals tension between short-term electoral accountability and longer-term policy delivery.</p>
@@ -1222,10 +1297,6 @@
 <li>How unified are the calls for a leadership timetable within the party?</li>
 <li>What alternative strategies are being discussed by those urging change?</li>
 <li>Which policy areas are most frequently cited in the criticism?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15803071/Sir-Keir-Starmer-MPs-resignation-Labour-local-elections.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — details on internal party reactions</li>
 </ul>
 <h4 id="3-andrew-neil-argues-multi-party-system-will-bring-instability">3) Andrew Neil argues multi-party system will bring instability</h4>
 <p><strong>What happened (neutral):</strong> Commentator Andrew Neil describes Thursday’s elections as the end of two-party dominance in Britain. He warns that the shift toward multiple competing parties risks producing weak governments and policy paralysis. The analysis points to results across England, Scotland and Wales as evidence of this transition.</p>
@@ -1236,10 +1307,6 @@
 <li>How have past periods of hung parliaments compared with current trends?</li>
 <li>What mechanisms exist for parties to cooperate after fragmented results?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15802771/ANDREW-NEIL-Britain-leadership-multi-party-mayhem.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — full commentary</li>
-</ul>
 <h4 id="4-pro-independence-parties-advance-across-britain">4) Pro-independence parties advance across Britain</h4>
 <p><strong>What happened (neutral):</strong> Parties favouring greater independence for Scotland, Wales and Northern Ireland recorded strong performances in their respective devolved elections. Analysts describe the pattern as a potential realignment that could increase pressure on the UK government. Northern Ireland’s leader called the changes seismic.</p>
 <p><strong>Perspectives:</strong> Reporting on the Reddit geopolitics thread highlights coordination possibilities among independence-focused groups. BBC coverage of the Scottish results stresses continuity for the SNP under John Swinney while noting new challenges ahead. The combined picture shows regional identities gaining electoral weight alongside national party competition.</p>
@@ -1249,11 +1316,6 @@
 <li>What cooperation between pro-independence parties is being discussed?</li>
 <li>Which policy areas show the widest gaps between regions?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/c9364lvpz2lo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Scottish results analysis</li>
-<li><a href="https://www.reddit.com/r/geopolitics/comments/1t7xhk1/a_divided_kingdom_proindependence_parties_surge/" target="_blank" rel="noopener">r/geopolitics</a> — cross-UK overview</li>
-</ul>
 <h4 id="5-snp-secures-fifth-victory-in-scottish-parliament-election">5) SNP secures fifth victory in Scottish Parliament election</h4>
 <p><strong>What happened (neutral):</strong> John Swinney will continue as first minister after the SNP won its fifth consecutive Scottish Parliament election. The party maintained its position despite national trends affecting Labour elsewhere. Results indicate both continuity and upcoming challenges for the devolved government.</p>
 <p><strong>Perspectives:</strong> BBC reporting focuses on the stability the result provides for the SNP’s policy agenda. Other coverage notes that the party must now address internal and external pressures that have grown since previous victories. The outcome illustrates how devolved elections can diverge from UK-wide patterns.</p>
@@ -1262,10 +1324,6 @@
 <li>What policy priorities has Swinney identified for the new term?</li>
 <li>How do Scottish results compare with Labour performance in England?</li>
 <li>Which opposition parties made notable gains in Holyrood?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/c9364lvpz2lo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — election outcome details</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-norway-commits-to-expanding-oil-and-gas-production">1) Norway commits to expanding oil and gas production</h4>
@@ -1277,10 +1335,6 @@
 <li>How do environmental organisations plan to respond?</li>
 <li>What timeline has been set for the reopened fields?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/may/09/norway-oil-and-gas-production-shortages-middle-east-ukraine" target="_blank" rel="noopener">The Guardian</a> — policy announcement and reactions</li>
-</ul>
 <h4 id="2-tensions-surface-in-netanyahu-trump-relationship-over-iran-policy">2) Tensions surface in Netanyahu-Trump relationship over Iran policy</h4>
 <p><strong>What happened (neutral):</strong> Israeli Prime Minister Benjamin Netanyahu released a video asserting close coordination with President Trump on Iran. Reports indicate Washington has reduced consultations with Israel in recent weeks. Observers question whether the public statement reflects the full picture.</p>
 <p><strong>Perspectives:</strong> The Guardian notes domestic Israeli scepticism about the strength of the alliance. Netanyahu’s emphasis on daily contact contrasts with earlier reporting of reduced input on US decisions. The coverage illustrates how public messaging can differ from private diplomatic dynamics.</p>
@@ -1289,10 +1343,6 @@
 <li>What specific issues have prompted reduced consultation?</li>
 <li>How have Israeli media outlets responded to the video statement?</li>
 <li>What role are third parties playing in current talks?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/may/09/tensions-emerge-bejamin-netanyahu-donald-trump-alliance" target="_blank" rel="noopener">The Guardian</a> — background on the relationship</li>
 </ul>
 <h4 id="3-large-oil-spill-detected-near-irans-kharg-island">3) Large oil spill detected near Iran’s Kharg Island</h4>
 <p><strong>What happened (neutral):</strong> Satellite imagery shows a significant oil spill spreading from the critical export terminal off Iran’s coast. The incident raises questions about the condition of Iranian energy infrastructure under current sanctions and blockades. Authorities have not yet issued an official explanation.</p>
@@ -1303,10 +1353,6 @@
 <li>How might the incident affect global oil markets?</li>
 <li>What verification methods are available for the satellite data?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/middle-east/20260509-live-oil-spill-is-detected-off-kharg-island-in-the-persian-gulf" target="_blank" rel="noopener">France 24</a> — satellite evidence and context</li>
-</ul>
 <h4 id="4-trump-announces-three-day-russia-ukraine-ceasefire-and-prisoner-swap">4) Trump announces three-day Russia-Ukraine ceasefire and prisoner swap</h4>
 <p><strong>What happened (neutral):</strong> President Trump stated that Russia and Ukraine have agreed to a three-day ceasefire and the exchange of 2,000 prisoners. The announcement came ahead of Russia’s Victory Day commemorations. Details on enforcement and monitoring remain limited.</p>
 <p><strong>Perspectives:</strong> Daily Mail coverage presents the development as a diplomatic breakthrough brokered by the US. Other outlets note that previous short-term pauses have not always held. The focus remains on whether this agreement can extend beyond the initial period.</p>
@@ -1315,10 +1361,6 @@
 <li>What verification mechanisms are planned for the ceasefire?</li>
 <li>How have Russian and Ukrainian officials responded publicly?</li>
 <li>What happens to the prisoner exchange timeline if fighting resumes?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15802575/Trump-stuns-world-brokering-shock-THREE-day-Russia-Ukraine-ceasefire-2-000-prisoner-swap-eve-Putins-Victory-Day.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — announcement details</li>
 </ul>
 <h4 id="5-germany-introduces-sugar-tax-on-soft-drinks">5) Germany introduces sugar tax on soft drinks</h4>
 <p><strong>What happened (neutral):</strong> The government led by Friedrich Merz has approved a levy on sugary beverages as part of health reforms. Critics argue the measure represents excessive state interference. Similar taxes already exist in dozens of other countries.</p>
@@ -1329,10 +1371,6 @@
 <li>What evidence from other countries is being cited by both sides?</li>
 <li>Which products fall under the new levy?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/germany-s-sugar-tax-sparks-nanny-state-debate/a-77083208?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — policy background</li>
-</ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-goldman-sachs-delays-forecast-for-next-fed-rate-cuts">1) Goldman Sachs delays forecast for next Fed rate cuts</h4>
 <p><strong>What happened (neutral):</strong> Goldman Sachs revised its expectations for the Federal Reserve’s next two interest-rate reductions, moving them to December 2026 and March 2027. The adjustment follows data showing inflation remaining higher than previously anticipated. Markets reacted to the updated timeline.</p>
@@ -1342,10 +1380,6 @@
 <li>Which inflation measures prompted the revision?</li>
 <li>How have bond markets responded to the new timeline?</li>
 <li>What other banks have issued similar updates?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-09/goldman-sees-fed-cuts-delayed-to-december-march-on-inflation" target="_blank" rel="noopener">Bloomberg</a> — full forecast details</li>
 </ul>
 <h4 id="2-rory-mcilroy-discusses-potential-return-of-liv-players-to-pga-tour">2) Rory McIlroy discusses potential return of LIV players to PGA Tour</h4>
 <p><strong>What happened (neutral):</strong> Rory McIlroy stated that reintegrating players who joined LIV Golf would represent good business for the PGA Tour. The comments come amid ongoing uncertainty about the breakaway league’s future. Discussions continue between the two organisations.</p>
@@ -1365,10 +1399,6 @@
 <li>How do safety ratings compare across the price range?</li>
 <li>What are the most common complaints from current owners?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/money/cars/article-15795305/Best-seven-seat-cars-luxury-SUVs-budget-estate-costs-19-000.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — model comparisons</li>
-</ul>
 <h3 id="top-technology-stories-0">Top technology stories (0)</h3>
 <p>No qualifying technology stories appear in today’s source list.</p>
 <h3 id="top-popular-media-stories-3">Top popular media stories (3)</h3>
@@ -1381,10 +1411,6 @@
 <li>How have followers responded to the latest video?</li>
 <li>What other projects is she currently involved in?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15802331/Amy-Childs-dance-Harry-Derbidge-weight-gain-journey.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — video and context</li>
-</ul>
 <h4 id="2-tess-daly-reflects-on-desire-for-travel-before-personal-changes">2) Tess Daly reflects on desire for travel before personal changes</h4>
 <p><strong>What happened (neutral):</strong> Former Strictly Come Dancing host Tess Daly has spoken about wanting a “grown-up gap year” focused on travel. The comments follow her decision to step back from the BBC programme after prioritising work for years. She is described as eager to explore new places.</p>
 <p><strong>Perspectives:</strong> Daily Mail reporting frames the remarks as a personal reflection on work-life balance. The account links her comments to recent life developments. Readers gain insight into how high-profile presenters navigate career transitions.</p>
@@ -1394,10 +1420,6 @@
 <li>How did her Strictly role shape her schedule in recent years?</li>
 <li>What other media projects is she pursuing?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15802481/Tess-Daly-selfish-grown-gap-year-Vernon-Kay-split-quit-Strictly.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — personal comments</li>
-</ul>
 <h4 id="3-manhattan-socialite-revisits-1996-everest-disaster-claims">3) Manhattan socialite revisits 1996 Everest disaster claims</h4>
 <p><strong>What happened (neutral):</strong> Sandy Hill has broken a 30-year silence to argue she was wrongly blamed for events during the 1996 Mount Everest tragedy that killed eight climbers. The account details her experience reaching the summit on May 10 that year. Guy Adams reports on the renewed discussion.</p>
 <p><strong>Perspectives:</strong> Daily Mail coverage gives space to Hill’s perspective on how responsibility was assigned at the time. The piece revisits competing narratives that emerged after the disaster. Readers encounter long-standing disagreements over decision-making during the expedition.</p>
@@ -1406,10 +1428,6 @@
 <li>What new details does Hill provide about the events?</li>
 <li>How have other survivors responded to her statements?</li>
 <li>What records from the expedition remain publicly available?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15802671/Manhattan-wrongly-blamed-Everest-disaster-GUY-ADAMS.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — full account</li>
 </ul>
 <h3 id="top-gossip-stories-3">Top gossip stories (3)</h3>
 <h4 id="1-hantavirus-outbreak-reported-on-antarctic-cruise-ship">1) Hantavirus outbreak reported on Antarctic cruise ship</h4>
@@ -1430,10 +1448,6 @@
 <li>How have Victory Day events changed in recent years?</li>
 <li>Which other countries face similar leadership protection challenges?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/debate/article-15802661/Putin-despot-assassinated-stay-alive-MARK-GALEOTTI.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — security analysis</li>
-</ul>
 <h4 id="3-victorian-hiker-missing-on-western-australia-trail">3) Victorian hiker missing on Western Australia trail</h4>
 <p><strong>What happened (neutral):</strong> Samuel Whitsed, 27, has not been seen since travelling from Victoria to hike the Bibbulmun Track near Perth. Police have searched dense bushland for three months without locating him. Concern for his welfare has increased.</p>
 <p><strong>Perspectives:</strong> Guardian Australia reporting outlines the timeline and scale of the search operation. Local authorities continue to appeal for information from anyone who may have seen the missing man. The case highlights challenges of locating individuals in remote areas.</p>
@@ -1443,16 +1457,114 @@
 <li>How can the public assist with information?</li>
 <li>What resources are dedicated to the ongoing effort?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/may/09/victorian-hiker-samuel-witsed-missing-near-perth" target="_blank" rel="noopener">The Guardian</a> — search details</li>
-</ul>
 <h3 id="understanding-the-issue-how-the-uks-first-past-the-post-system-produces-fragmented-results">Understanding the Issue: How the UK’s first-past-the-post system produces fragmented results</h3>
 <p>Most coverage of UK elections assumes a stable two-party contest will always deliver clear majorities, yet the latest local and devolved results show how constituency-based voting can instead amplify regional swings and allow newer parties to win seats with concentrated support. Under first-past-the-post, each area elects one representative by plurality, so a party that finishes first locally—even with well under half the vote—takes the seat while votes for all other candidates are discarded. This mechanism rewards geographic clustering: Reform UK gains in certain English wards, the SNP maintains dominance in Scottish constituencies, and the Greens pick up pockets elsewhere, even as national vote shares remain more evenly split. Historical parallels from the 1980s, when the SDP-Liberal Alliance won millions of votes but few seats, illustrate the same structural bias toward larger or regionally concentrated parties. Knowing this, when headlines declare “Labour lost to Reform,” readers can distinguish between a broad national rejection and the narrower effect of voters in specific constituencies moving together. Next time coverage emphasises dramatic seat changes, ask: which parties concentrated votes efficiently in which areas, and how might boundary reviews or turnout differences alter the picture in a future national contest?</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference official results from the Electoral Commission or devolved parliaments with multiple news outlets rather than relying on any single summary. Primary documents such as ward-by-ward tallies and turnout figures reveal patterns that interpretive articles may emphasise differently. Checking the date and scope of each report helps separate confirmed outcomes from ongoing projections.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.dailymail.com/news/article-15803641/Keir-Starmer-brink-refuses-shift-left-right.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/politics/ng-interactive/2026/may/07/local-elections-2026-may-full-results-england-scotland-wales" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/politics/ng-interactive/2026/may/08/2026-elections-mapped-labour-reform-uk-greens-scotland-wales-england-local" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15803071/Sir-Keir-Starmer-MPs-resignation-Labour-local-elections.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15802771/ANDREW-NEIL-Britain-leadership-multi-party-mayhem.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c9364lvpz2lo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/geopolitics/comments/1t7xhk1/a_divided_kingdom_proindependence_parties_surge/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/may/09/norway-oil-and-gas-production-shortages-middle-east-ukraine" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/may/09/tensions-emerge-bejamin-netanyahu-donald-trump-alliance" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/middle-east/20260509-live-oil-spill-is-detected-off-kharg-island-in-the-persian-gulf" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15802575/Trump-stuns-world-brokering-shock-THREE-day-Russia-Ukraine-ceasefire-2-000-prisoner-swap-eve-Putins-Victory-Day.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/germany-s-sugar-tax-sparks-nanny-state-debate/a-77083208?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-09/goldman-sees-fed-cuts-delayed-to-december-march-on-inflation" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/money/cars/article-15795305/Best-seven-seat-cars-luxury-SUVs-budget-estate-costs-19-000.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15802331/Amy-Childs-dance-Harry-Derbidge-weight-gain-journey.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15802481/Tess-Daly-selfish-grown-gap-year-Vernon-Kay-split-quit-Strictly.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15802671/Manhattan-wrongly-blamed-Everest-disaster-GUY-ADAMS.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/debate/article-15802661/Putin-despot-assassinated-stay-alive-MARK-GALEOTTI.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/may/09/victorian-hiker-samuel-witsed-missing-near-perth" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1879,10 +1991,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

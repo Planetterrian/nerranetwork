@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Novo Nordisk raised its 2026 outlook after strong sales of its new Wegovy pill sent shares up 6% — Episode 43</h1>
+            <h1><span class="nn-i18n-title">Novo Nordisk raised its 2026 outlook after strong sales of its new Wegovy pill sent shares up 6%</span> — Episode 43</h1>
             
             <p class="blog-hero-hook">Novo Nordisk raised its 2026 outlook after strong sales of its new Wegovy pill sent shares up 6%.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1207,10 +1288,6 @@
 <li>What changes in staffing or training might reduce the most frequent causes of dissatisfaction?</li>
 <li>Should complaint data be published more regularly to show trends at individual practices?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/health/article-15790955/GP-surgeries-breaking-NHS-rules-elderly-book-online.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Full breakdown of complaint categories and numbers</li>
-</ul>
 <h4 id="2-cruise-ship-with-hantavirus-outbreak-heads-to-canary-islands">2) Cruise ship with hantavirus outbreak heads to Canary Islands</h4>
 <p><strong>What happened (neutral):</strong> Spain’s health ministry confirmed the MV Hondius will arrive in the Canary Islands within three to four days after an outbreak on board. The vessel has been at sea while authorities monitor the situation.</p>
 <p><strong>Perspectives:</strong> Health officials are focusing on containment measures once the ship docks. Passengers and crew face uncertainty about testing and quarantine requirements. European health networks are watching the case for any wider implications for cruise travel safety.</p>
@@ -1218,10 +1295,6 @@
 <li>What protocols are in place for infectious disease outbreaks on international cruise ships?</li>
 <li>How are passengers being kept informed during the remaining voyage?</li>
 <li>What lessons from past cruise ship incidents are being applied here?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/ce8pypvjx1ko?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Official statement from Spain’s health ministry</li>
 </ul>
 <h4 id="3-australia-permanently-removes-books-by-convicted-author-from-school-curriculum">3) Australia permanently removes books by convicted author from school curriculum</h4>
 <p><strong>What happened (neutral):</strong> Western Australia’s education minister confirmed that books by an author who pleaded guilty to child exploitation offences will stay off the public school curriculum. The temporary ban has now been made permanent.</p>
@@ -1231,10 +1304,6 @@
 <li>What support is offered to teachers who must adjust lesson plans quickly?</li>
 <li>Should national guidelines exist for removing materials after criminal convictions?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/may/06/national-cabinet-fuel-crisis-anthony-albanese-labor-angus-taylor-coalition-matt-canavan-federal-budget-interest-rates-reserve-bank-inflation-fears-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — Live updates on the curriculum decision</li>
-</ul>
 <h4 id="4-rv-lifestyle-bloggers-found-dead-at-florida-campground">4) RV lifestyle bloggers found dead at Florida campground</h4>
 <p><strong>What happened (neutral):</strong> Anissa Osborne, 56, and her husband Christopher Osborne, 51, were discovered deceased in their recreational vehicle at a Florida campground. The couple had recently shared smiling family photos online.</p>
 <p><strong>Perspectives:</strong> Friends and followers expressed shock at the sudden loss of a couple known for documenting their travels. Local authorities are investigating the circumstances. The case has prompted wider conversations about safety for people living full-time on the road.</p>
@@ -1243,10 +1312,6 @@
 <li>How are online communities responding to the news?</li>
 <li>What steps can travellers take to maintain safety in remote campgrounds?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15793673/RV-lifestyle-blogger-Anissa-Christopher-Osborne-murder-suicide.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Details released by authorities and family statements</li>
-</ul>
 <h4 id="5-jp-morgan-historical-court-case-receives-new-witness-accounts">5) JP Morgan historical court case receives new witness accounts</h4>
 <p><strong>What happened (neutral):</strong> Two additional witnesses have come forward with descriptions of events in the long-running legal matter involving a former bank employee. Colleagues have also spoken in support of the female executive at the centre of the case.</p>
 <p><strong>Perspectives:</strong> The emergence of new testimony adds further layers to a case already drawing public attention. Legal observers note the difficulty of assessing historical claims decades later. Supporters of the executive argue the additional accounts help clarify the context of the original allegations.</p>
@@ -1254,10 +1319,6 @@
 <li>How do courts handle new evidence in older civil or employment cases?</li>
 <li>What protections exist for witnesses who come forward late in proceedings?</li>
 <li>How should the public weigh competing accounts when details surface over time?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15792933/She-completely-naked-asked-join-Fresh-twist-JP-Morgan-sex-slave-row-two-NEW-witnesses-come-forward-reveal-saw-colleagues-rush-defend-female-bank-boss.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Summary of the latest witness statements</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-berlin-residents-collect-signatures-for-car-free-city-centre">1) Berlin residents collect signatures for car-free city centre</h4>
@@ -1268,10 +1329,6 @@
 <li>How are businesses adapting to restrictions on vehicle access?</li>
 <li>What trade-offs do residents identify between convenience and environmental benefits?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/here-s-what-happens-when-cities-ban-cars/a-76984918?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — Examples from cities that have already made changes</li>
-</ul>
 <h4 id="2-new-book-details-sarajevo-safari-hunters-during-1990s-siege">2) New book details “Sarajevo Safari” hunters during 1990s siege</h4>
 <p><strong>What happened (neutral):</strong> A recently published book claims that foreign visitors paid to shoot civilians during the siege of Sarajevo and competed to target the most attractive women. The account draws on survivor testimonies and archival material.</p>
 <p><strong>Perspectives:</strong> Historians are reviewing the evidence presented in the book for accuracy. Survivors and their families say the revelations confirm long-held suspicions about wartime atrocities. Some commentators question whether such accounts risk sensationalising a tragic period.</p>
@@ -1279,10 +1336,6 @@
 <li>How are wartime records being re-examined decades later?</li>
 <li>What support exists for survivors who share their stories publicly?</li>
 <li>How should media outlets balance historical accountability with sensitivity to victims?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15793515/Sarajevo-Safari-hunters-paid-shoot-people-kill-women.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Key claims from the new publication</li>
 </ul>
 <h4 id="3-victoria-beckham-responds-to-estranged-son-brooklyns-public-statements">3) Victoria Beckham responds to estranged son Brooklyn’s public statements</h4>
 <p><strong>What happened (neutral):</strong> The fashion designer addressed her son’s recent comments in a new interview, stating she was never pushy and only wanted to be the best mother she could be. She also said building a family brand was never the intention.</p>
@@ -1292,10 +1345,6 @@
 <li>What support systems help parents and adult children navigate estrangement?</li>
 <li>How should audiences approach coverage of private family disputes?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15793549/Victoria-speaks-estranged-son-Brooklyns-explosive-claims-insists-never-pushy-just-wanted-best-mum-amid-family-feud-Brand-Beckham-never-intention.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Full interview excerpts</li>
-</ul>
 <h4 id="4-simon-cowell-describes-personal-struggle-after-liam-paynes-death">4) Simon Cowell describes personal struggle after Liam Payne’s death</h4>
 <p><strong>What happened (neutral):</strong> The music executive told a new podcast that he “really, really struggled” following the death of the former One Direction singer and felt he had to step back from public view for a time.</p>
 <p><strong>Perspectives:</strong> Colleagues in the entertainment industry have spoken about the impact of sudden loss on those close to performers. Listeners to the podcast have shared their own experiences of grief. Some commentators note the additional pressures of public mourning.</p>
@@ -1304,10 +1353,6 @@
 <li>What resources are available for people working in high-pressure creative industries?</li>
 <li>How has the music community supported one another since the loss?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15791667/simon-cowell-liam-payne-death-one-direction-tales-celebrity-trenches-podcast.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Podcast interview highlights</li>
-</ul>
 <h4 id="5-dame-joan-collins-92-attends-london-charity-gala-with-husband">5) Dame Joan Collins, 92, attends London charity gala with husband</h4>
 <p><strong>What happened (neutral):</strong> The actress and her husband Percy Gibson, 61, joined other guests at a star-studded event raising funds for terminally ill children in London and Surrey.</p>
 <p><strong>Perspectives:</strong> Attendees praised the couple’s continued involvement in charitable causes. Observers noted the event’s focus on supporting local children’s services. Some coverage highlighted the actress’s long career alongside her present-day activities.</p>
@@ -1315,10 +1360,6 @@
 <li>How do long-married couples maintain public visibility while protecting privacy?</li>
 <li>What role do celebrity galas play in funding children’s health services?</li>
 <li>How has the actress’s approach to public life changed over the decades?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15793281/Dame-Joan-Collins-92-looks-younger-enjoys-night-husband-Percy-Gibson-61-star-studded-charity-gala-London.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Event details and guest list</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-novo-nordisk-raises-2026-outlook-after-wegovy-pill-success">1) Novo Nordisk raises 2026 outlook after Wegovy pill success</h4>
@@ -1329,10 +1370,6 @@
 <li>How are competing weight-loss treatments responding to the new pill data?</li>
 <li>What long-term supply and pricing questions remain for the broader class of drugs?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/06/wegovy-glp1-weight-loss-novo-nordisk-earnings-stock-nvo-ozempic.html" target="_blank" rel="noopener">CNBC</a> — Earnings release and stock reaction</li>
-</ul>
 <h4 id="2-watchdog-warns-on-risks-from-2-trillion-private-credit-boom">2) Watchdog warns on risks from $2 trillion private credit boom</h4>
 <p><strong>What happened (neutral):</strong> The Financial Stability Board called for tighter regulatory oversight of the private credit sector amid concerns about growing stress in the market. The sector has expanded rapidly in recent years.</p>
 <p><strong>Perspectives:</strong> Regulators are concerned that limited transparency could hide vulnerabilities during economic downturns. Industry participants argue that private credit fills an important gap left by traditional banks. Some investors view the higher yields as appropriate compensation for the additional risk.</p>
@@ -1340,10 +1377,6 @@
 <li>How does private credit differ from bank lending in terms of oversight?</li>
 <li>What early warning signs are regulators monitoring in this sector?</li>
 <li>How might stress in private credit affect ordinary savers and pension funds?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/06/private-credit-stress-risks-financial-stability-markets.html" target="_blank" rel="noopener">CNBC</a> — Board recommendations and market size data</li>
 </ul>
 <h4 id="3-next-plans-price-rises-of-up-to-8-outside-europe">3) Next plans price rises of up to 8% outside Europe</h4>
 <p><strong>What happened (neutral):</strong> The UK retailer said it will increase prices in some markets outside Europe because of higher costs linked to the Iran conflict. No additional price rises are planned for the UK, where first-quarter sales exceeded expectations.</p>
@@ -1371,10 +1404,6 @@
 <li>What impact do such absences have on programme continuity for regular listeners?</li>
 <li>How are other presenters covering the additional workload?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15793977/Amol-Rajans-Celebrity-Traitors-role-leaves-Today-programme.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Details of the temporary arrangement</li>
-</ul>
 <h4 id="2-simone-ashleys-career-trajectory-after-bridgerton-lead-role">2) Simone Ashley’s career trajectory after Bridgerton lead role</h4>
 <p><strong>What happened (neutral):</strong> The actress has secured new projects including a role alongside Meryl Streep and returned to the Met Gala after several years away. Her profile has risen significantly since taking a lead part in the period drama.</p>
 <p><strong>Perspectives:</strong> Industry observers credit the Bridgerton casting with opening doors to higher-profile work. Some commentators note the importance of diverse casting in expanding opportunities for actors from varied backgrounds. Others focus on the practical challenges of maintaining momentum between major projects.</p>
@@ -1382,10 +1411,6 @@
 <li>How do breakout roles in popular series affect long-term career planning for actors?</li>
 <li>What factors influence casting decisions for ensemble projects with established stars?</li>
 <li>How are performers navigating increased public attention after major successes?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15791185/Simone-Ashleys-career-sky-rocketed-cultural-barriers-Bridgerton-Meryl-Streep-Met-Gala.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Career milestones and recent projects</li>
 </ul>
 <h3 id="top-gossip-stories-3">Top gossip stories (3)</h3>
 <h4 id="1-victoria-beckham-discusses-family-tensions-in-new-interview">1) Victoria Beckham discusses family tensions in new interview</h4>
@@ -1418,6 +1443,83 @@
 <p>Cross-reference company announcements with regulatory filings rather than relying solely on stock-movement headlines. When a single outlet dominates coverage of a legal case or family dispute, seek the underlying court documents or official statements. Primary sources often reveal details that summaries omit or frame differently.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.dailymail.com/health/article-15790955/GP-surgeries-breaking-NHS-rules-elderly-book-online.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/ce8pypvjx1ko?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/live/2026/may/06/national-cabinet-fuel-crisis-anthony-albanese-labor-angus-taylor-coalition-matt-canavan-federal-budget-interest-rates-reserve-bank-inflation-fears-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15793673/RV-lifestyle-blogger-Anissa-Christopher-Osborne-murder-suicide.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15792933/She-completely-naked-asked-join-Fresh-twist-JP-Morgan-sex-slave-row-two-NEW-witnesses-come-forward-reveal-saw-colleagues-rush-defend-female-bank-boss.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/here-s-what-happens-when-cities-ban-cars/a-76984918?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15793515/Sarajevo-Safari-hunters-paid-shoot-people-kill-women.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15793549/Victoria-speaks-estranged-son-Brooklyns-explosive-claims-insists-never-pushy-just-wanted-best-mum-amid-family-feud-Brand-Beckham-never-intention.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15791667/simon-cowell-liam-payne-death-one-direction-tales-celebrity-trenches-podcast.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15793281/Dame-Joan-Collins-92-looks-younger-enjoys-night-husband-Percy-Gibson-61-star-studded-charity-gala-London.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/05/06/wegovy-glp1-weight-loss-novo-nordisk-earnings-stock-nvo-ozempic.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/05/06/private-credit-stress-risks-financial-stability-markets.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15793977/Amol-Rajans-Celebrity-Traitors-role-leaves-Today-programme.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15791185/Simone-Ashleys-career-sky-rocketed-cultural-barriers-Bridgerton-Meryl-Streep-Met-Gala.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1818,10 +1920,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

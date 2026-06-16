@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>UK Prime Minister Keir Starmer faces open revolt as a Labour MP calls for his re... — Episode 36</h1>
+            <h1><span class="nn-i18n-title">UK Prime Minister Keir Starmer faces open revolt as a Labour MP calls for his re...</span> — Episode 36</h1>
             
             <p class="blog-hero-hook">UK Prime Minister Keir Starmer faces open revolt as a Labour MP calls for his resignation amid a growing Cabinet rift.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1182,12 +1263,6 @@
 <li>What role do unelected officials like Robbins play in such controversies?</li>
 <li>How might upcoming local elections influence the intensity of this leadership challenge?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15756923/Support-PM-drains-away-Labour-MP-calls-Starmer-resign-challenged-colleagues-Cabinet-McSweeney-hauled-Commons-grilling.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Support for the PM drains away</a> — Daily Mail report on Labour revolt</li>
-<li><a href="https://www.theguardian.com/politics/ng-interactive/2026/apr/23/mapped-local-elections-labour-may-unprecedented-losses" target="_blank" rel="noopener">Mapped: the elections that could deliver ‘unprecedented’ losses for Labour</a> — Guardian analysis of May elections</li>
-<li><a href="https://www.theguardian.com/world/2026/apr/23/thursday-briefing-why-the-us-president-is-losing-support-from-crucial-allies" target="_blank" rel="noopener">Thursday briefing: Why the US president is losing support from crucial allies</a> — Guardian context on Starmer's isolation</li>
-</ul>
 <h4 id="2-us-removes-top-navy-official-amid-ongoing-iran-military-shake-up">2) US removes top Navy official amid ongoing Iran military shake-up</h4>
 <p><strong>What happened (neutral):</strong> The Pentagon announced that US Secretary of the Navy John Phelan has left his post with immediate effect. No explanation was provided for his departure. The move forms part of a broader clear-out of senior military figures under President Donald Trump. It occurs while the United States remains in an unresolved conflict with Iran involving blockades and the Strait of Hormuz.</p>
 <p><strong>Perspectives:</strong> France 24 reports the removal as part of Trump's wider military restructuring during the Iran standoff, noting the lack of stated reasons. The Guardian's Middle East crisis coverage describes a stalemate between the US and Iran over blockades, with Iran claiming two seized ships have been transferred to its coast and stating it is "impossible" to reopen the Strait of Hormuz amid alleged ceasefire breaches. White House statements cited by the Guardian characterise Tehran as being in a "very weak position." These accounts reflect differing emphases on whether the US is successfully pressuring Iran or whether the situation is spiralling with mutual escalations. The Navy secretary's exit adds uncertainty about command continuity during a sensitive naval confrontation.</p>
@@ -1197,12 +1272,6 @@
 <li>How do blockades in the Strait of Hormuz affect global energy flows?</li>
 <li>What constitutes a ceasefire breach according to each side?</li>
 <li>How might personnel changes at the top of the Navy affect operational decisions?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/americas/20260423-pentagon-removes-top-navy-official-amid-military-shake-up" target="_blank" rel="noopener">Pentagon removes top Navy official amid military shake-up</a> — France 24 report</li>
-<li><a href="https://www.theguardian.com/world/live/2026/apr/23/middle-east-crisis-live-news-us-iran-ceasefire-strait-of-hormuz-blockade-ships-latest-updates" target="_blank" rel="noopener">Middle East crisis live: US and Iran in blockade stalemate</a> — Guardian live updates</li>
-<li><a href="https://www.dailymail.com/news/article-15756845/trump-iran-peace-deal-obama-nuclear-agreement-philip-nieto-deep-dive-podcast.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Trump faces the humiliation of signing an Iran peace deal 'awfully similar' to the 2015 Obama nuclear agreement</a> — Daily Mail analysis of potential deal outcomes</li>
 </ul>
 <h4 id="3-prince-harry-makes-surprise-visit-to-ukraine">3) Prince Harry makes surprise visit to Ukraine</h4>
 <p><strong>What happened (neutral):</strong> Prince Harry, the Duke of Sussex, made an unannounced trip to Ukraine. He is scheduled to speak at a security conference. During the visit he plans to tell Ukrainians that the world sees them and respects their struggle. The trip comes as he urges the international community not to forget what Ukraine is facing.</p>
@@ -1214,10 +1283,6 @@
 <li>What specific Ukrainian security concerns is the conference likely to address?</li>
 <li>How might this visit be received differently by various Ukrainian political and military groups?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15757829/Prince-Harry-makes-surprise-visit-Ukraine-urges-world-not-forget-country-against.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Prince Harry makes surprise visit to Ukraine as he urges the world not to forget what the country is up against</a> — Daily Mail coverage of the trip</li>
-</ul>
 <h4 id="4-california-governor-candidates-debate-homelessness-and-cost-of-living">4) California governor candidates debate homelessness and cost of living</h4>
 <p><strong>What happened (neutral):</strong> Six candidates for California governor clashed in their first debate since Eric Swalwell exited the race following sexual assault and misconduct allegations. The discussion focused heavily on homelessness and the cost of living crisis. No clear frontrunner has emerged, and nearly a quarter of voters remain undecided ahead of the June 2 primary. The race is described as unusually wide-open in the heavily Democratic state.</p>
 <p><strong>Perspectives:</strong> The Guardian portrays the debate as reflecting a topsy-turvy contest where traditional party advantages have been disrupted, with candidates sparring over practical governance challenges. Coverage highlights the large number of undecided voters as a sign of voter dissatisfaction or uncertainty. This perspective connects to values prioritising substantive policy discussion over personality politics in a state facing visible crises in housing and affordability. The sudden withdrawal of a prominent candidate adds a layer of unpredictability that different outlets may interpret as either healthy competition or instability.</p>
@@ -1228,10 +1293,6 @@
 <li>How does California's primary system influence outcomes in a crowded field?</li>
 <li>What historical precedents exist for wide-open gubernatorial races in the state?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/2026/apr/23/leading-california-governor-candidates-spar-in-first-debate-as-topsy-turvy-race-heats-up" target="_blank" rel="noopener">Leading California governor candidates spar in first debate as topsy-turvy race heats up</a> — Guardian report on the debate</li>
-</ul>
 <h4 id="5-queensland-police-recall-all-service-issued-glock-handguns-after-fault-discovered">5) Queensland police recall all service-issued Glock handguns after fault discovered</h4>
 <p><strong>What happened (neutral):</strong> Queensland Police have recalled all service-issued Glock handguns after routine testing revealed a malfunction that could cause the weapon to fire multiple shots unintentionally. The 40-calibre Glock has been the standard-issue sidearm for officers since the 1990s. Police are retesting the firearms. The discovery has prompted an immediate safety review.</p>
 <p><strong>Perspectives:</strong> The Guardian reports the recall as a precautionary measure following the identification of a technical fault during standard testing. Coverage focuses on public safety and operational reliability for law enforcement. This framing reflects institutional values that place officer and community safety above immediate operational continuity. No conflicting factual claims appear in available reporting; the core facts of the malfunction and recall are presented consistently.</p>
@@ -1241,10 +1302,6 @@
 <li>How will police maintain operational readiness during the recall period?</li>
 <li>What liability and procurement implications arise from widespread use of a faulty model?</li>
 <li>How does this incident compare to past firearm safety issues in Australian policing?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/apr/23/queensland-police-gun-recall-qps-glock" target="_blank" rel="noopener">Queensland police recall all service-issued Glock handguns after discovery of fault causing multiple shots to fire</a> — Guardian coverage of the recall</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-two-trains-collide-in-denmark-injuring-several-people">1) Two trains collide in Denmark injuring several people</h4>
@@ -1257,10 +1314,6 @@
 <li>What support is being provided to those injured?</li>
 <li>What preliminary steps are authorities taking to prevent similar incidents?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/denmark-two-trains-collide-injuring-several/a-76904246?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Denmark: Two trains collide injuring several</a> — Deutsche Welle initial report</li>
-</ul>
 <h4 id="2-iranian-embassy-account-claims-bombing-a-uae-facility-changed-the-regions-weather">2) Iranian embassy account claims bombing a UAE facility changed the region's weather</h4>
 <p><strong>What happened (neutral):</strong> Iran's embassy account posted a claim that bombing a facility in the UAE altered weather patterns in the region. The statement has circulated on social media. It links military action to environmental consequences. The scientific basis for the specific claim has not been independently verified in available reporting.</p>
 <p><strong>Perspectives:</strong> Discussion on platforms such as Reddit's r/geopolitics treats the claim with skepticism, viewing it as potentially propagandistic rather than evidence-based. Some observers see it as an attempt to frame military actions in environmental terms to garner international sympathy or deflect attention. Others note the difficulty of establishing causal links between specific strikes and weather events. The episode highlights tensions between official narratives from involved states and the demand for verifiable evidence in conflict reporting.</p>
@@ -1270,10 +1323,6 @@
 <li>How do embassies use social media to shape international perceptions during conflicts?</li>
 <li>What role does scientific consensus play when governments make environmental claims about warfare?</li>
 <li>How should readers evaluate extraordinary claims made by official accounts?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.reddit.com/r/geopolitics/comments/1st9ykv/irans_embassy_account_claims_bombing_a_uae/" target="_blank" rel="noopener">Iran's embassy account claims bombing a UAE facility changed the region's weather</a> — Geopolitics community discussion</li>
 </ul>
 <h4 id="3-palantirs-political-manifesto-sparks-debate-over-technofascism">3) Palantir's political manifesto sparks debate over "technofascism"</h4>
 <p><strong>What happened (neutral):</strong> The US tech company Palantir posted a 22-point political manifesto on X that extends beyond typical corporate communications. Critics have labelled elements of it as evidence of "technofascism." The document has generated significant online and media discussion. It coincides with reports of the Metropolitan Police holding talks with Palantir about potential AI use in criminal intelligence analysis.</p>
@@ -1285,10 +1334,6 @@
 <li>What historical parallels exist for private companies publishing ideological documents?</li>
 <li>How should governments balance innovation with oversight of powerful tech firms?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/palantir-why-its-political-manifesto-is-causing-a-stir/a-76895480?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Palantir: Why its political manifesto is causing a stir</a> — Deutsche Welle analysis</li>
-</ul>
 <h4 id="4-uk-high-military-dependence-on-us-called-no-longer-tenable">4) UK high military dependence on US called "no longer tenable"</h4>
 <p><strong>What happened (neutral):</strong> A former Nato chief has stated that Britain's high level of military dependence on the United States is no longer sustainable. The comment comes amid ongoing global tensions. It suggests the UK needs to pursue greater independence in its defence posture. The remarks appear in broader coverage of international security relationships.</p>
 <p><strong>Perspectives:</strong> The Guardian includes the former Nato chief's assessment within its Thursday briefing, framing it as a call for strategic reassessment rather than an immediate policy shift. This perspective connects to longstanding debates in UK foreign policy circles about the balance between the "special relationship" with the US and European strategic autonomy. Some voices may see the statement as pragmatic realism given current global conditions, while others might view it as risking traditional alliances. The timing during Middle East tensions adds weight to questions about reliable partner capabilities.</p>
@@ -1299,10 +1344,6 @@
 <li>What role does Nato play in mitigating bilateral dependencies?</li>
 <li>How do recent conflicts influence assessments of alliance reliability?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/apr/23/thursday-briefing-why-the-us-president-is-losing-support-from-crucial-allies" target="_blank" rel="noopener">Thursday briefing: Why the US president is losing support from crucial allies</a> — Guardian briefing including UK defence comments</li>
-</ul>
 <h4 id="5-eu-leaders-to-discuss-mutual-defence-obligations-amid-regional-crises">5) EU leaders to discuss mutual defence obligations amid regional crises</h4>
 <p><strong>What happened (neutral):</strong> The president of Cyprus has said EU leaders meeting in Cyprus on Thursday need to prepare a playbook for situations where a member country facing attack requests help from partners. This relates to Article 42.7 of the EU treaties, which obliges member states to assist each other. The discussion comes against the backdrop of multiple international security challenges. It reflects ongoing efforts to give concrete meaning to existing treaty commitments.</p>
 <p><strong>Perspectives:</strong> The Guardian reports Nikos Christodoulides' comments as a call for practical implementation of mutual defence clauses rather than purely theoretical ones. Coverage links this to current Middle East tensions and the possibility of escalation affecting EU members. Different member states may prioritise varying levels of commitment based on their geographic positions and historical experiences. The debate illustrates the tension between collective European security aspirations and the practical political and military realities of delivering on treaty obligations.</p>
@@ -1312,10 +1353,6 @@
 <li>How have previous invocations of mutual defence clauses been handled?</li>
 <li>What practical barriers exist to rapid EU-wide military assistance?</li>
 <li>How might current global conflicts accelerate or hinder EU defence integration?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/apr/23/middle-east-crisis-live-news-us-iran-ceasefire-strait-of-hormuz-blockade-ships-latest-updates" target="_blank" rel="noopener">Middle East crisis live: US and Iran in blockade stalemate as Washington’s navy secretary leaves office ‘immediately’</a> — Guardian live blog referencing EU discussions</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-stock-futures-fall-and-pound-weakens-amid-talks-uncertainty">1) Stock futures fall and pound weakens amid talks uncertainty</h4>
@@ -1328,10 +1365,6 @@
 <li>What sectors are likely most exposed to current uncertainties?</li>
 <li>How reliable are futures markets as predictors of longer-term trends?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/live-blog/2026-04-23/ftse-100-live-iran-trump-pound-usd-bonds-hormuz-what-s-moving-uk-markets-right-now-markets-today-mob25p9e" target="_blank" rel="noopener">Stock Futures Fall, Pound Weakens on Talks Uncertainty</a> — Bloomberg market update</li>
-</ul>
 <h4 id="2-thailands-set-president-says-ipo-pipeline-faces-difficult-situation">2) Thailand's SET President says IPO pipeline faces difficult situation</h4>
 <p><strong>What happened (neutral):</strong> The President of the Stock Exchange of Thailand stated that the IPO pipeline is in a difficult situation. He also noted plans to introduce “mini-gold” futures. The comments were made during an interview discussing current market conditions. They reflect challenges in bringing new companies to public markets.</p>
 <p><strong>Perspectives:</strong> Bloomberg presents the remarks as a straightforward assessment from exchange leadership rather than alarmist commentary. Thai market officials appear focused on both acknowledging headwinds and introducing new products to maintain investor interest. This perspective connects to the incentives facing emerging market exchanges to innovate while navigating global uncertainty. The "difficult situation" language suggests external factors are constraining normal IPO activity without specifying single causes.</p>
@@ -1342,12 +1375,85 @@
 <li>What role do regional exchanges play when global conditions are volatile?</li>
 <li>How do IPO trends reflect broader economic confidence?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li>[SET President: IPO Pipeline Faces a Difficult Situation](https://www.bloomberg.com/news/videos/</li>
-</ul>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.dailymail.com/news/article-15756923/Support-PM-drains-away-Labour-MP-calls-Starmer-resign-challenged-colleagues-Cabinet-McSweeney-hauled-Commons-grilling.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/politics/ng-interactive/2026/apr/23/mapped-local-elections-labour-may-unprecedented-losses" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/apr/23/thursday-briefing-why-the-us-president-is-losing-support-from-crucial-allies" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/americas/20260423-pentagon-removes-top-navy-official-amid-military-shake-up" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/apr/23/middle-east-crisis-live-news-us-iran-ceasefire-strait-of-hormuz-blockade-ships-latest-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15756845/trump-iran-peace-deal-obama-nuclear-agreement-philip-nieto-deep-dive-podcast.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15757829/Prince-Harry-makes-surprise-visit-Ukraine-urges-world-not-forget-country-against.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/2026/apr/23/leading-california-governor-candidates-spar-in-first-debate-as-topsy-turvy-race-heats-up" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/apr/23/queensland-police-gun-recall-qps-glock" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/denmark-two-trains-collide-injuring-several/a-76904246?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/geopolitics/comments/1st9ykv/irans_embassy_account_claims_bombing_a_uae/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/palantir-why-its-political-manifesto-is-causing-a-stir/a-76895480?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/live-blog/2026-04-23/ftse-100-live-iran-trump-pound-usd-bonds-hormuz-what-s-moving-uk-markets-right-now-markets-today-mob25p9e" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1814,10 +1920,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

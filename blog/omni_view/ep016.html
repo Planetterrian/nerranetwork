@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Iran denies its supreme leader's death amid escalating US-Israel strikes and global oil disruptions — Episode 16</h1>
+            <h1><span class="nn-i18n-title">Iran denies its supreme leader's death amid escalating US-Israel strikes and global oil disruptions</span> — Episode 16</h1>
             
             <p class="blog-hero-hook">Iran denies its supreme leader's death amid escalating US-Israel strikes and global oil disruptions.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1184,13 +1265,6 @@
 <li>Could public denials indicate broader internal challenges in Iran?</li>
 <li>How do these rumors affect global oil markets?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15645711/Iran-strikes-UAE-port-threatens-abduct-US-militar-Tehran-Trumps-Kharg-Island-Live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Live updates on Iran's rebuttal and war developments.</li>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/15/iran-war-news-live-updates-us-israel-middle-east-crisis-latest-kharg-island" target="_blank" rel="noopener">The Guardian</a> — Reports on Israel's strikes and Trump's comments on deal-making.</li>
-<li><a href="https://www.aljazeera.com/news/2026/3/15/trump-says-us-may-hit-irans-kharg-island-again-just-for-fun?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Trump's statements on potential further strikes.</li>
-<li><a href="https://www.france24.com/en/donald-trump-says-will-open-strait-of-hormuz-one-way-or-another" target="_blank" rel="noopener">France 24</a> — Trump's threats to reopen the Strait of Hormuz.</li>
-</ul>
 <h4 id="2-trump-criticized-for-focusing-on-personal-matters-during-iran-war">2) Trump criticized for focusing on personal matters during Iran war</h4>
 <p><strong>What happened (neutral):</strong> As the US-Israel war with Iran continues, with mounting death tolls, President Trump has been accused of fixating on trivial issues like golf outings, old photos, and personal feuds. Experts have questioned his priorities amid the escalating conflict. The war, now over two weeks old, risks further instability.</p>
 <p><strong>Perspectives:</strong> Progressive outlets like The Guardian depict Trump's behavior as chaotic and unbecoming of a wartime leader, suggesting it reflects a mix-up in priorities that could undermine US strategy and public confidence. Conservative views might downplay the criticism, framing it as media bias against Trump and emphasizing his decisive actions in the conflict. Broader international commentary weaves in concerns that such distractions could embolden adversaries, while some analysts see it as a deliberate tactic to project normalcy and strength amid crisis.</p>
@@ -1199,12 +1273,6 @@
 <li>Does a leader's personal conduct affect public perception of war management?</li>
 <li>How might domestic distractions influence international alliances?</li>
 <li>What role do media portrayals play in shaping views of leadership?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/2026/mar/15/trump-iran-war-truth-social-pictures" target="_blank" rel="noopener">The Guardian</a> — Analysis of Trump's behavior during the conflict.</li>
-<li><a href="https://www.theguardian.com/world/2026/mar/15/us-iran-war-terrorist-attack" target="_blank" rel="noopener">The Guardian</a> — Discussion of potential war escalations.</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15647627/UK-intensively-looking-help-Donald-Trump-reopen-Strait-Hormuz-send-minehunter-drones-says-Ed-Miliband-claims-Iran-war-shows-hes-right-Net-Zero.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — UK's response to Trump's war efforts.</li>
 </ul>
 <h4 id="3-israel-reports-low-stock-of-missile-interceptors-amid-iranian-attacks">3) Israel reports low stock of missile interceptors amid Iranian attacks</h4>
 <p><strong>What happened (neutral):</strong> A report claims Israel is critically low on ballistic missile interceptors due to ongoing Iranian bombardments, following depletion from a previous conflict last June. US officials have noted the shortage as the current war intensifies. This could affect Israel's defensive capabilities in the protracted engagement.</p>
@@ -1215,12 +1283,6 @@
 <li>What role should allies play in resupplying during wars?</li>
 <li>Could this lead to escalations or negotiations?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15647591/Israel-running-low-missile-interceptors-amid-Iranian-attacks.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Details on Israel's interceptor shortage.</li>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/15/iran-war-news-live-updates-us-israel-middle-east-crisis-latest-kharg-island" target="_blank" rel="noopener">The Guardian</a> — Live updates on Israel's strikes in Iran.</li>
-<li><a href="https://www.france24.com/en/israel-pounds-beirut-deepening-the-humanitarian-crisis-in-lebanon" target="_blank" rel="noopener">France 24</a> — Related strikes and humanitarian impacts.</li>
-</ul>
 <h4 id="4-trump-vows-to-reopen-strait-of-hormuz-amid-oil-blockade">4) Trump vows to reopen Strait of Hormuz amid oil blockade</h4>
 <p><strong>What happened (neutral):</strong> President Trump has stated the US will reopen the Strait of Hormuz "one way or another," calling on allies like the UK, France, and China to assist, as Iran's blockade disrupts global oil supplies. This follows US strikes on Iranian targets. Energy prices are surging due to the ongoing conflict.</p>
 <p><strong>Perspectives:</strong> US-focused coverage often supports Trump's assertive stance, viewing it as necessary leadership to counter Iran's aggression and stabilize energy markets. European outlets like France 24 present it as a call for multilateral action, though with caution about escalation risks. Critics from various sides argue it could provoke wider conflict, while proponents see it as a strategic move to pressure Iran, blending economic and military viewpoints into debates on global trade security.</p>
@@ -1230,12 +1292,6 @@
 <li>How might ally involvement affect the war's outcome?</li>
 <li>Could this lead to broader economic fallout?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/donald-trump-says-will-open-strait-of-hormuz-one-way-or-another" target="_blank" rel="noopener">France 24</a> — Trump's statements on the strait.</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15647627/UK-intensively-looking-help-Donald-Trump-reopen-Strait-Hormuz-send-minehunter-drones-says-Ed-Miliband-claims-Iran-war-shows-hes-right-Net-Zero.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — UK's potential aid with drones.</li>
-<li><a href="https://www.aljazeera.com/news/2026/3/15/trump-says-us-may-hit-irans-kharg-island-again-just-for-fun?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Trump's comments on further strikes.</li>
-</ul>
 <h4 id="5-war-with-iran-raises-us-terrorism-risk-experts-warn">5) War with Iran raises US terrorism risk, experts warn</h4>
 <p><strong>What happened (neutral):</strong> Experts suggest the US-Israel war on Iran could provoke terrorist attacks on American soil, potentially the highest risk since 9/11, due to Iran's history of supporting proxies. Some analysts speculate this escalation might align with strategic goals. The conflict has already seen retaliatory actions in the region.</p>
 <p><strong>Perspectives:</strong> Outlets like The Guardian explore how the war revives long-standing fears of Iranian-backed terrorism, with some viewing it as an inevitable backlash that Trump might exploit for domestic support. Security-focused perspectives emphasize preparedness, contrasting with those who argue the US narrative exaggerates threats to justify aggression. International voices weave in concerns that such risks could deter allies, while others see it as part of a cycle where military actions invite retaliation, highlighting divides in threat assessment.</p>
@@ -1244,12 +1300,6 @@
 <li>How credible is the risk of attacks on US soil?</li>
 <li>Might provoking retaliation serve political purposes?</li>
 <li>What preventive measures could mitigate these threats?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/mar/15/us-iran-war-terrorist-attack" target="_blank" rel="noopener">The Guardian</a> — Analysis of potential terrorist risks.</li>
-<li><a href="https://www.newsmax.com/newsfront/US-military-aircraft-down-Iran-Iraq/2026/03/15/id/1249537" target="_blank" rel="noopener">Newsmax</a> — Related US military crash in Iraq.</li>
-<li><a href="https://www.france24.com/en/undercover-in-iran-how-french-spies-gather-intelligence-in-the-middle-east" target="_blank" rel="noopener">France 24</a> — Intelligence gathering in the region.</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-uk-considers-aiding-us-in-strait-of-hormuz-with-drones">1) UK considers aiding US in Strait of Hormuz with drones</h4>
@@ -1261,12 +1311,6 @@
 <li>How does the war validate or challenge net zero goals?</li>
 <li>What are the risks of drone deployment in contested waters?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15647627/UK-intensively-looking-help-Donald-Trump-reopen-Strait-Hormuz-send-minehunter-drones-says-Ed-Miliband-claims-Iran-war-shows-hes-right-Net-Zero.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — UK's potential drone assistance.</li>
-<li><a href="https://www.bbc.com/news/articles/cy0dz1k0rr4o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC</a> — Related UK push for independent nuclear deterrent.</li>
-<li><a href="https://www.theguardian.com/business/2026/mar/15/energy-price-surge-britain-chemical-plant-risk-huntsman" target="_blank" rel="noopener">The Guardian</a> — Energy price impacts from the war.</li>
-</ul>
 <h4 id="2-israel-strikes-beirut-worsening-lebanon-crisis">2) Israel strikes Beirut, worsening Lebanon crisis</h4>
 <p><strong>What happened (neutral):</strong> Israeli forces conducted overnight strikes in southern Lebanon, killing at least four in Beirut areas, amid fighting with Hezbollah on a second front. This deepens the humanitarian situation in Lebanon during the broader Middle East war. Lebanon's state media reported fires and casualties from the attacks.</p>
 <p><strong>Perspectives:</strong> Coverage from France 24 highlights the humanitarian toll, portraying Israel's actions as intensifying regional suffering and drawing criticism for civilian impacts. Supporters of Israel frame it as necessary defense against Hezbollah threats, linked to the Iran war. International outlets weave in views that this could expand the conflict, with some analysts arguing it strains alliances, while others see it as Iran's proxies forcing a multi-front response.</p>
@@ -1275,12 +1319,6 @@
 <li>How might strikes in Lebanon affect the overall war?</li>
 <li>What humanitarian aid is needed in affected areas?</li>
 <li>Could this draw in more regional actors?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/israel-pounds-beirut-deepening-the-humanitarian-crisis-in-lebanon" target="_blank" rel="noopener">France 24</a> — Details on strikes and casualties.</li>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/15/iran-war-news-live-updates-us-israel-middle-east-crisis-latest-kharg-island" target="_blank" rel="noopener">The Guardian</a> — Broader Middle East crisis updates.</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15647591/Israel-running-low-missile-interceptors-amid-Iranian-attacks.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Israel's defensive challenges.</li>
 </ul>
 <h4 id="3-french-spies-active-in-iran-for-intelligence-gathering">3) French spies active in Iran for intelligence gathering</h4>
 <p><strong>What happened (neutral):</strong> Amid the war, French intelligence agents are operating undercover in Iran and the Middle East to gather human intelligence, complementing advanced weaponry. This highlights the continued importance of on-ground spies in modern conflicts. Details remain limited due to operational secrecy.</p>
@@ -1291,12 +1329,6 @@
 <li>What risks do spies face in hostile territories?</li>
 <li>Could this intelligence lead to de-escalation?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/undercover-in-iran-how-french-spies-gather-intelligence-in-the-middle-east" target="_blank" rel="noopener">France 24</a> — Role of French spies in the conflict.</li>
-<li><a href="https://www.theguardian.com/world/2026/mar/15/us-iran-war-terrorist-attack" target="_blank" rel="noopener">The Guardian</a> — Related terrorism risks from the war.</li>
-<li><a href="https://www.aljazeera.com/news/2026/3/15/trump-says-us-may-hit-irans-kharg-island-again-just-for-fun?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — US strikes in the region.</li>
-</ul>
 <h4 id="4-uk-lib-dems-push-for-independent-nuclear-missiles">4) UK Lib Dems push for independent nuclear missiles</h4>
 <p><strong>What happened (neutral):</strong> The UK's Liberal Democrats are urging the government to develop fully independent nuclear missiles to reduce reliance on the US. Party leader Sir Ed Davey highlighted this as key to a sovereign deterrent. The call comes amid global tensions, including the Iran war.</p>
 <p><strong>Perspectives:</strong> BBC reports present this as a bid for strategic autonomy, with Lib Dems arguing it strengthens UK security in an uncertain world. Critics from pacifist groups see it as unnecessary escalation, while conservative outlets might frame it as weakening alliances. International views tie it to broader debates on nuclear proliferation, suggesting it reflects shifting power dynamics post-Brexit.</p>
@@ -1306,12 +1338,6 @@
 <li>How might this affect NATO alliances?</li>
 <li>What are the costs of developing independent nukes?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/cy0dz1k0rr4o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC</a> — Lib Dems' call for independent deterrent.</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15647627/UK-intensively-looking-help-Donald-Trump-reopen-Strait-Hormuz-send-minehunter-drones-says-Ed-Miliband-claims-Iran-war-shows-hes-right-Net-Zero.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — UK's war involvement.</li>
-<li><a href="https://www.france24.com/en/donald-trump-says-will-open-strait-of-hormuz-one-way-or-another" target="_blank" rel="noopener">France 24</a> — Allied responses to US calls.</li>
-</ul>
 <h4 id="5-french-municipal-elections-test-parties-ahead-of-2027-presidential-race">5) French municipal elections test parties ahead of 2027 presidential race</h4>
 <p><strong>What happened (neutral):</strong> France is holding the first round of municipal elections, seen as a trial for political parties' strategies before the 2027 presidential vote to succeed Emmanuel Macron. Voters are choosing local leaders across the country. This occurs against the backdrop of international events like the Iran war.</p>
 <p><strong>Perspectives:</strong> France 24 coverage frames the elections as a barometer for national sentiment, with centrist parties testing Macron's legacy against rising populists. Left-leaning views highlight opportunities for progressive gains in local issues, while right-wing perspectives see it as a chance to build momentum. Overall, analysts weave in how global crises might influence voter priorities, blending domestic politics with international context.</p>
@@ -1320,12 +1346,6 @@
 <li>How do local elections predict national trends?</li>
 <li>What issues are dominating voter concerns?</li>
 <li>Could global events sway outcomes?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/french-parties-test-strategies-in-municipal-elections-ahead-of-2027-presidential-poll" target="_blank" rel="noopener">France 24</a> — Election details and implications.</li>
-<li><a href="https://www.france24.com/en/undercover-in-iran-how-french-spies-gather-intelligence-in-the-middle-east" target="_blank" rel="noopener">France 24</a> — France's role in Middle East.</li>
-<li><a href="https://www.theguardian.com/business/2026/mar/15/energy-price-surge-britain-chemical-plant-risk-huntsman" target="_blank" rel="noopener">The Guardian</a> — Related energy issues affecting Europe.</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-uk-chemical-plant-at-risk-of-closure-due-to-energy-price-surge">1) UK chemical plant at risk of closure due to energy price surge</h4>
@@ -1337,13 +1357,90 @@
 <li>What alternatives exist for affected industries?</li>
 <li>Might this spur innovation in energy?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/business/2026/mar/15/energy-price-surge-britain-chemical-plant-risk-huntsman" target="_blank" rel="noopener">The Guardian</a> — Details on plant closure risk.</li>
-<li>[Daily Mail](https://www.dailymail.co.uk/news/article-15647627/UK-intensively-looking-help-Donald-Trump-reopen-Strait-Hormuz-send-minehunter-drones-says-Ed-Miliband-claims-Iran-war-shows-hes-right-Net-Zero</li>
-</ul>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15645711/Iran-strikes-UAE-port-threatens-abduct-US-militar-Tehran-Trumps-Kharg-Island-Live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/mar/15/iran-war-news-live-updates-us-israel-middle-east-crisis-latest-kharg-island" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/3/15/trump-says-us-may-hit-irans-kharg-island-again-just-for-fun?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/donald-trump-says-will-open-strait-of-hormuz-one-way-or-another" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/2026/mar/15/trump-iran-war-truth-social-pictures" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/mar/15/us-iran-war-terrorist-attack" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15647627/UK-intensively-looking-help-Donald-Trump-reopen-Strait-Hormuz-send-minehunter-drones-says-Ed-Miliband-claims-Iran-war-shows-hes-right-Net-Zero.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15647591/Israel-running-low-missile-interceptors-amid-Iranian-attacks.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/israel-pounds-beirut-deepening-the-humanitarian-crisis-in-lebanon" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.newsmax.com/newsfront/US-military-aircraft-down-Iran-Iraq/2026/03/15/id/1249537" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=newsmax.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">newsmax.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/undercover-in-iran-how-french-spies-gather-intelligence-in-the-middle-east" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cy0dz1k0rr4o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/business/2026/mar/15/energy-price-surge-britain-chemical-plant-risk-huntsman" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/french-parties-test-strategies-in-municipal-elections-ahead-of-2027-presidential-poll" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15647627/UK-intensively-looking-help-Donald-Trump-reopen-Strait-Hormuz-send-minehunter-drones-says-Ed-Miliband-claims-Iran-war-shows-hes-right-Net-Zero" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1696,10 +1793,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

@@ -121,6 +121,25 @@
             background: color-mix(in srgb, var(--show-color) 20%, transparent);
             border-color: var(--show-color);
         }
+        /* Multilingual availability badges (June 2026) */
+        .blog-idx-langs {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin: var(--sp-2) 0 var(--sp-1);
+            color: var(--nn-text-muted);
+        }
+        .blog-idx-langs .lang-badge {
+            font-family: var(--font-ui);
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            padding: 1px 7px;
+            border-radius: 100px;
+            border: 1px solid color-mix(in srgb, var(--show-color) 35%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            background: color-mix(in srgb, var(--show-color) 10%, transparent);
+        }
     </style>
 
 
@@ -172,6 +191,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -516,6 +559,24 @@
     
     <div class="blog-idx-grid">
         
+        <a href="ep103.html" class="blog-idx-card">
+            <div class="blog-idx-card-top">
+                <span class="blog-idx-date">June 16, 2026</span>
+                <span class="blog-idx-ep">Ep 103</span>
+                <span class="blog-idx-reading">7 min</span>
+            </div>
+            <h2>China's Tianwen-2 probe is executing a string of fine burns to reach its target asteroid next month</h2>
+            
+            <p>China's Tianwen-2 probe is executing a string of fine burns to reach its target asteroid next month.</p>
+            
+            <span class="blog-idx-langs" aria-label="Also available in other languages">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <span class="lang-badge">FR</span><span class="lang-badge">RU</span><span class="lang-badge">ES</span><span class="lang-badge">中文</span>
+            </span>
+            
+            <span class="blog-idx-read-more">Read article &rarr;</span>
+        </a>
+        
         <a href="ep102.html" class="blog-idx-card">
             <div class="blog-idx-card-top">
                 <span class="blog-idx-date">June 15, 2026</span>
@@ -525,6 +586,7 @@
             <h2>Tiny red dots scattered across the early universe have turned out to be black holes cloaked in dense…</h2>
             
             <p>Tiny red dots scattered across the early universe have turned out to be black holes cloaked in dense gas.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -539,6 +601,7 @@
             
             <p>Good to have you on Fascinating Frontiers, episode 101, coming to you on June 14, 2026. The universe has been busy — let's get into it.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -551,6 +614,7 @@
             <h2>NASA's X-59 jet just broke the sound barrier for the first time while aiming to replace thunderous s…</h2>
             
             <p>NASA's X-59 jet just broke the sound barrier for the first time while aiming to replace thunderous sonic booms with a quiet thump.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -565,6 +629,7 @@
             
             <p>A lunar meteorite recovered from the Sahara carries chemical traces of a 3.5-billion-year-old impact that struck the Moon, Earth, and asteroids at the same time&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -577,6 +642,7 @@
             <h2>Webb has now reached the era when the universe's very first stars and galaxies formed</h2>
             
             <p>Webb has now reached the era when the universe's very first stars and galaxies formed.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -591,6 +657,7 @@
             
             <p>A galactic wind driven by early-universe collisions is stripping star-forming fuel so fast it may explain why so many massive galaxies went dead.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -603,6 +670,7 @@
             <h2>European startup Isar Aerospace just raised 270 million euros to scale its rocket program worldwide</h2>
             
             <p>European startup Isar Aerospace just raised 270 million euros to scale its rocket program worldwide.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -617,6 +685,7 @@
             
             <p>NASA will name the crew for Artemis III, the mission that will test docking with commercial landers ahead of crewed lunar landings.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -629,6 +698,7 @@
             <h2>Looking back at 7 episodes from 2026-06-01 to 2026-06-07 — the stories that mattered, what we learne…</h2>
             
             <p>Looking back at 7 episodes from 2026-06-01 to 2026-06-07 — the stories that mattered, what we learned, and what to watch next.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -643,6 +713,7 @@
             
             <p>Astronomers have finally detected winds streaming from the Milky Way’s central black hole after a fifty-year search.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -655,6 +726,7 @@
             <h2>An interstellar comet is venting methane at levels never seen in solar-system comets, hinting at a w…</h2>
             
             <p>An interstellar comet is venting methane at levels never seen in solar-system comets, hinting at a wildly different formation history.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -669,6 +741,7 @@
             
             <p>A meteorite from the Sahara holds the first direct traces of a lost moon-size world that formed just after the solar system began.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -681,6 +754,7 @@
             <h2>A meteorite has delivered the first direct evidence that a Mars-sized world once orbited the young s…</h2>
             
             <p>A meteorite has delivered the first direct evidence that a Mars-sized world once orbited the young sun before shattering in a collision.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -695,6 +769,7 @@
             
             <p>Blue Origin plans to fly its New Glenn rocket again before year’s end after a launch-pad incident damaged the gantry but spared key tanks.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -707,6 +782,7 @@
             <h2>Seven scorching hot Jupiters are showing the strongest signs yet of magnetic fields through their bi…</h2>
             
             <p>Seven scorching hot Jupiters are showing the strongest signs yet of magnetic fields through their bizarre wind patterns.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -721,6 +797,7 @@
             
             <p>A rare pair-instability supernova may have erased one of the universe's most massive stars without leaving any remnant behind.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -733,6 +810,7 @@
             <h2>Looking back at 6 episodes from 2026-05-25 to 2026-05-31 — the stories that mattered, what we learne…</h2>
             
             <p>Looking back at 6 episodes from 2026-05-25 to 2026-05-31 — the stories that mattered, what we learned, and what to watch next.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -747,6 +825,7 @@
             
             <p>Blue Origin’s New Glenn test failure at Cape Canaveral now threatens to push back NASA’s Artemis crewed lunar landing schedule.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -759,6 +838,7 @@
             <h2>A lost ice giant may explain how Jupiter and Uranus acquired their moons</h2>
             
             <p>A lost ice giant may explain how Jupiter and Uranus acquired their moons.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -773,6 +853,7 @@
             
             <p>A neutrino carrying record energy may have been hurled across the cosmos by a black hole-powered blazar.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -785,6 +866,7 @@
             <h2>NASA is ordering the first rovers, landers and drones to build a Moon base spanning hundreds of squa…</h2>
             
             <p>NASA is ordering the first rovers, landers and drones to build a Moon base spanning hundreds of square miles.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -799,6 +881,7 @@
             
             <p>NASA's Psyche spacecraft is using Mars gravity to reach a metal asteroid never visited before.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -811,6 +894,7 @@
             <h2>NASA’s new directive targets a nuclear reactor on the Moon by 2030 to support sustained surface oper…</h2>
             
             <p>NASA’s new directive targets a nuclear reactor on the Moon by 2030 to support sustained surface operations.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -825,6 +909,7 @@
             
             <p>Looking back at 6 episodes from 2026-05-18 to 2026-05-24 — the stories that mattered, what we learned, and what to watch next.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -837,6 +922,7 @@
             <h2>SpaceX just flew its largest Starship yet on a test that ended with a controlled splashdown halfway…</h2>
             
             <p>SpaceX just flew its largest Starship yet on a test that ended with a controlled splashdown halfway around the world.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -851,6 +937,7 @@
             
             <p>SpaceX halted the first flight of its heavily redesigned Starship V3 vehicle after a last-minute ground equipment problem.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -863,6 +950,7 @@
             <h2>NASA is shifting its Moon strategy from the Lunar Gateway toward a permanent surface base</h2>
             
             <p>NASA is shifting its Moon strategy from the Lunar Gateway toward a permanent surface base.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -877,6 +965,7 @@
             
             <p>A single Falcon 9 just added two dozen more nodes to a growing web of satellites that now blankets the planet in broadband.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -889,6 +978,7 @@
             <h2>A joint European-Chinese spacecraft is now heading out to capture the first X-ray views of the invis…</h2>
             
             <p>A joint European-Chinese spacecraft is now heading out to capture the first X-ray views of the invisible boundary where the solar wind slams into our planet’s m&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -903,6 +993,7 @@
             
             <p>A faint crescent Moon is sliding past Venus tonight, offering a rare chance to watch two worlds share the same patch of sky.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -915,6 +1006,7 @@
             <h2>Looking back at 4 episodes from 2026-05-11 to 2026-05-17 — the stories that mattered, what we learne…</h2>
             
             <p>Looking back at 4 episodes from 2026-05-11 to 2026-05-17 — the stories that mattered, what we learned, and what to watch next.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -929,6 +1021,7 @@
             
             <p>A NASA probe is borrowing Mars’ gravity to reach a metal asteroid no spacecraft has ever visited.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -941,6 +1034,7 @@
             <h2>A faint halo surrounds the eclipsed Sun in Orion spacecraft images, hinting at light behavior no one…</h2>
             
             <p>A faint halo surrounds the eclipsed Sun in Orion spacecraft images, hinting at light behavior no one fully expected in the vacuum of space.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -955,6 +1049,7 @@
             
             <p>A supernova caught mid-explosion in a spiral galaxy offers a rare window into stellar death at 50 million light-years away.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -967,6 +1062,7 @@
             <h2>Two space agencies just finalized plans to study an asteroid that will skim Earth in 2029, offering…</h2>
             
             <p>Two space agencies just finalized plans to study an asteroid that will skim Earth in 2029, offering a rare close-up of a potentially hazardous object.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -981,6 +1077,7 @@
             
             <p>A commercial spacecraft has completed final tests for NASA’s first satellite-rescue mission in a crowded orbital environment.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -993,6 +1090,7 @@
             <h2>ESA and JAXA have formalized a joint mission to study asteroid Apophis ahead of its close 2029 flyby…</h2>
             
             <p>ESA and JAXA have formalized a joint mission to study asteroid Apophis ahead of its close 2029 flyby.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1007,6 +1105,7 @@
             
             <p>NASA and SpaceX are preparing a new cargo launch to restock the International Space Station.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1019,6 +1118,7 @@
             <h2>JWST has directly examined the surface of a distant exoplanet for the first time</h2>
             
             <p>JWST has directly examined the surface of a distant exoplanet for the first time.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1033,6 +1133,7 @@
             
             <p>Firefly Aerospace plans to debut its upgraded Alpha Block 2 rocket late this summer amid rising demand.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1045,6 +1146,7 @@
             <h2>Astronomers identify 27 candidate planets orbiting binary stars in distant solar systems</h2>
             
             <p>Astronomers identify 27 candidate planets orbiting binary stars in distant solar systems.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1059,6 +1161,7 @@
             
             <p>NASA's lithium-fed nuclear thruster has been tested for the first time, advancing options for Mars missions.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1071,6 +1174,7 @@
             <h2>A Falcon Heavy is rolling toward the pad for its first launch in 18 months while...</h2>
             
             <p>A Falcon Heavy is rolling toward the pad for its first launch in 18 months while Europe prepares Ariane 6’s second flight with four boosters.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1085,6 +1189,7 @@
             
             <p>NASA's Artemis III crewed lunar landing slips to no earlier than late 2027 as planners refine the timeline.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1097,6 +1202,7 @@
             <h2>NASA's Webb telescope has directly imaged water-ice clouds in the atmosphere of a nearby super-Jupit…</h2>
             
             <p>NASA's Webb telescope has directly imaged water-ice clouds in the atmosphere of a nearby super-Jupiter exoplanet.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1111,6 +1217,7 @@
             
             <p>NASA has released a fresh batch of images from Artemis II operations showing Earth, the Moon, and the Sun captured across multiple mission phases.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1123,6 +1230,7 @@
             <h2>NASA’s Nancy Grace Roman Space Telescope has completed final assembly and is on ...</h2>
             
             <p>NASA’s Nancy Grace Roman Space Telescope has completed final assembly and is on track for September launch.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1137,6 +1245,7 @@
             
             <p>Vera C. Rubin Observatory has already discovered 11,000 new asteroids before its main survey even begins.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1149,6 +1258,7 @@
             <h2>NASA picks Falcon Heavy for ESA’s Rosalind Franklin Mars rover despite its own proposed budget cut</h2>
             
             <p>NASA picks Falcon Heavy for ESA’s Rosalind Franklin Mars rover despite its own proposed budget cut.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1163,6 +1273,7 @@
             
             <p>NASA's SPHEREx has mapped vast "interstellar glaciers" of ice stretching more than 600 light-years across the Milky Way.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1175,6 +1286,7 @@
             <h2>Theoretical models now link core magnetism in red giants to fossil fields on white dwarfs, illuminat…</h2>
             
             <p>Theoretical models now link core magnetism in red giants to fossil fields on white dwarfs, illuminating our Sun’s eventual fate.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1189,6 +1301,7 @@
             
             <p>Artemis II crew prepares for high-stakes re-entry and Pacific splashdown after journey beyond the Moon.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1201,6 +1314,7 @@
             <h2>Artemis II has broken the Apollo-era human distance record from Earth while loop...</h2>
             
             <p>Artemis II has broken the Apollo-era human distance record from Earth while looping around the Moon’s far side.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1215,6 +1329,7 @@
             
             <p>Artemis II astronauts have entered the Moon's sphere of influence, marking humanity's return to lunar space.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1227,6 +1342,7 @@
             <h2>Artemis 2 astronauts have successfully repaired their toilet during the first cr...</h2>
             
             <p>Artemis 2 astronauts have successfully repaired their toilet during the first crewed lunar mission in over 50 years.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1241,6 +1357,7 @@
             
             <p>SpaceX is preparing to loft 119 small satellites in one rideshare launch from California this morning.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1253,6 +1370,7 @@
             <h2>Mars-like exoplanets orbiting M-dwarfs could lose their atmospheres in just mill...</h2>
             
             <p>Mars-like exoplanets orbiting M-dwarfs could lose their atmospheres in just millions of years.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1267,6 +1385,7 @@
             
             <p>Hubble has caught a tiny comet slowing its spin and then reversing direction entirely.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1279,6 +1398,7 @@
             <h2>Giant craters on metallic asteroid Psyche could finally confirm if it's the expo...</h2>
             
             <p>Giant craters on metallic asteroid Psyche could finally confirm if it's the exposed core of a destroyed protoplanet.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1293,6 +1413,7 @@
             
             <p>Researchers are investigating how Mars gravity will change astronauts' skeletal muscle.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1305,6 +1426,7 @@
             <h2>ESA will charter its own dedicated SpaceX Crew Dragon flight to the ISS to expand astronaut flight o…</h2>
             
             <p>ESA will charter its own dedicated SpaceX Crew Dragon flight to the ISS to expand astronaut flight opportunities.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1319,6 +1441,7 @@
             
             <p>The vernal equinox arrives today at 10:46 A.M. EDT, marking astronomical spring as the Sun crosses directly over Earth’s equator.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1331,6 +1454,7 @@
             <h2>Blue Origin has filed plans for a massive constellation of up to 51,600 satellites to host data cent…</h2>
             
             <p>Blue Origin has filed plans for a massive constellation of up to 51,600 satellites to host data centers in orbit.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1345,6 +1469,7 @@
             
             <p>NASA confirms readiness for Artemis 2, targeting a crewed lunar orbit no earlier than April 1.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1357,6 +1482,7 @@
             <h2>Scientists traced the most energetic neutrino ever detected to blazars powered by supermassive black…</h2>
             
             <p>Scientists traced the most energetic neutrino ever detected to blazars powered by supermassive black holes.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1371,6 +1497,7 @@
             
             <p>NASA's DART mission successfully altered an asteroid's solar orbit, proving deflection potential for planetary defense.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1383,6 +1510,7 @@
             <h2>A new study proposes space weather scrambles alien radio signals, evading SETI detectors</h2>
             
             <p>A new study proposes space weather scrambles alien radio signals, evading SETI detectors.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1397,6 +1525,7 @@
             
             <p>China's new economic plan elevates space as a pillar industry with deep space goals.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1409,6 +1538,7 @@
             <h2>A total lunar eclipse tonight will turn the full moon blood red, visible to over 3 billion people</h2>
             
             <p>A total lunar eclipse tonight will turn the full moon blood red, visible to over 3 billion people.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1423,6 +1553,7 @@
             
             <p>NASA has overhauled its Artemis program, canceling the Artemis 3 moon landing and adding a preparatory mission in 2027.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1435,6 +1566,7 @@
             <h2>NASA shakes up human spaceflight leadership after critical Starliner report</h2>
             
             <p>NASA shakes up human spaceflight leadership after critical Starliner report.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1639,5 +1771,6 @@
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

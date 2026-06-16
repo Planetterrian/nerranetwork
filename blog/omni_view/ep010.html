@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Iran's new supreme leader vows escalated attacks as oil surges past $120 amid Gulf strikes — Episode 10</h1>
+            <h1><span class="nn-i18n-title">Iran's new supreme leader vows escalated attacks as oil surges past $120 amid Gulf strikes</span> — Episode 10</h1>
             
             <p class="blog-hero-hook">Iran's new supreme leader vows escalated attacks as oil surges past $120 amid Gulf strikes.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1179,13 +1260,6 @@
 <li>What role could international diplomacy play in influencing Iran's new leadership direction?</li>
 <li>How do successor selection processes in Iran compare to those in other authoritarian regimes?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15627149/Iran-Khamenei-son-supreme-missile-infrastructure.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Coverage of hardliners rejoicing and vows for more attacks.</li>
-<li><a href="https://www.france24.com/en/with-new-supreme-leader-iran-says-business-back-as-usual" target="_blank" rel="noopener">France 24</a> — Details on Mojtaba as a hardliner pursuing his father's policies.</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15628045/Irans-new-Supreme-Leader-wounded-Ayatollah-Khameneis-son-sustained-mystery-injury-claims-state-TV.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Report on the mystery injury claimed by state TV.</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15625701/Iran-flames-Trump-US-troops-read-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Context on US predictions of Iran's surrender amid leadership change.</li>
-</ul>
 <h4 id="2-iran-attacks-gulf-states-surging-oil-prices-and-prompting-us-evacuations">2) Iran attacks Gulf states, surging oil prices and prompting US evacuations</h4>
 <p><strong>What happened (neutral):</strong> Iran conducted overnight drone and missile attacks on Gulf states, including a refinery hit in Bahrain that injured 32 people, marking the highest casualties there since the war began. This has driven oil prices above $120 per barrel, rattling global markets. The US ordered non-emergency staff to leave Saudi Arabia as the conflict widens, with no immediate ceasefire in sight.</p>
 <p><strong>Perspectives:</strong> Right-leaning reports emphasize the attacks as aggressive Iranian escalation, praising US leadership under Trump for setting terms of defeat and viewing rising energy costs as a necessary price for security, while highlighting panic in affected regions. International outlets underscore the human toll, such as injuries in Bahrain and broader market disruptions, framing the conflict as a regional crisis that disproportionately affects Gulf stability and global energy supplies. Centrist business perspectives note the prospect of governments releasing oil reserves to mitigate price spikes, portraying the situation as an economic uncertainty that could lead to stock recoveries but warns of prolonged inflation risks if the war persists.</p>
@@ -1194,14 +1268,6 @@
 <li>How might oil reserve releases by governments impact long-term energy prices?</li>
 <li>What are the potential humanitarian consequences of continued attacks on Gulf infrastructure?</li>
 <li>How could this escalation affect non-combatant nations in the region?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15627959/Iran-unleashes-huge-overnight-attack-Gulf-states-Bahrain-seeing-highest-number-casualties-war-began-refinery-hit-oil-prices-surge.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Details on the Bahrain refinery hit and casualties.</li>
-<li><a href="https://www.cnbc.com/2026/03/09/iran-war-updates-oil-brent-wti-crude-110-gulf-gcc-uae-iraq-saudi-arabia-kurds.html" target="_blank" rel="noopener">CNBC</a> — Coverage of US staff evacuation from Saudi Arabia.</li>
-<li><a href="https://www.bloomberg.com/news/newsletters/2026-03-09/oil-near-120-sparks-stampede-to-sell-in-stocks-and-bonds" target="_blank" rel="noopener">Bloomberg</a> — Analysis of oil price surge and stock market reactions.</li>
-<li><a href="https://www.france24.com/en/iran-related-oil-price-surge-impacts-united-states" target="_blank" rel="noopener">France 24</a> — Impact on US despite its oil production status.</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15627715/Panic-pumps-feared-crude-oil-prices-leap-barrel-day-UKs-gas-store-vulnerabilty-exposed.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Warnings of record UK petrol prices.</li>
 </ul>
 <h4 id="3-us-defense-secretary-guarantees-irans-surrender-as-oil-hits-100">3) US Defense Secretary guarantees Iran's surrender as oil hits $100+</h4>
 <p><strong>What happened (neutral):</strong> US Defense Secretary Pete Hegseth stated that Iran will surrender, with President Trump to dictate terms, amid soaring oil prices past $100 per barrel driven by the war. This comes as global markets react to the conflict's expansion. Trump described the energy bill increases as a small price for taming Iran.</p>
@@ -1212,13 +1278,6 @@
 <li>What economic trade-offs might nations face in supporting the war effort?</li>
 <li>Could Trump's terms for surrender influence allied strategies?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15625701/Iran-flames-Trump-US-troops-read-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Hegseth's guarantee and Trump's terms.</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15627715/Panic-pumps-feared-crude-oil-prices-leap-barrel-day-UKs-gas-store-vulnerabilty-exposed.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Trump's comments on energy costs as a small price.</li>
-<li><a href="https://www.france24.com/en/iran-related-oil-price-surge-impacts-united-states" target="_blank" rel="noopener">France 24</a> — Broader oil price impacts on the US.</li>
-<li><a href="https://www.bloomberg.com/news/newsletters/2026-03-09/oil-near-120-sparks-stampede-to-sell-in-stocks-and-bonds" target="_blank" rel="noopener">Bloomberg</a> — Market reactions to surging prices.</li>
-</ul>
 <h4 id="4-kremlin-warns-of-end-of-the-world-amid-iran-conflict">4) Kremlin warns of 'end of the world' amid Iran conflict</h4>
 <p><strong>What happened (neutral):</strong> The Kremlin issued a stark warning that 'the end of the world is upon us' in relation to the escalating war involving Iran. This statement comes as the conflict disrupts global energy markets and draws international involvement. Details on the context or specific triggers for the warning remain vague in reports.</p>
 <p><strong>Perspectives:</strong> Russian-aligned views amplify the apocalyptic tone, framing the war as a catastrophic Western provocation that risks global catastrophe and urging de-escalation to avoid broader involvement. International outlets treat it as hyperbolic rhetoric, connecting it to oil disruptions and suggesting it reflects Moscow's concerns over energy security rather than literal doom. Centrist perspectives see this as strategic posturing, potentially aimed at influencing negotiations or highlighting how the conflict could spill over into other regions like Europe.</p>
@@ -1228,12 +1287,6 @@
 <li>How could this rhetoric affect public perception of the war's risks?</li>
 <li>Is there evidence of direct Russian involvement in the conflict?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15627737/The-end-world-Kremlin-warns.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Direct report on the Kremlin's warning.</li>
-<li><a href="https://www.france24.com/en/iran-related-oil-price-surge-impacts-united-states" target="_blank" rel="noopener">France 24</a> — Context of global energy disruptions.</li>
-<li><a href="https://www.bloomberg.com/news/newsletters/2026-03-09/oil-near-120-sparks-stampede-to-sell-in-stocks-and-bonds" target="_blank" rel="noopener">Bloomberg</a> — Broader market instability tied to the war.</li>
-</ul>
 <h4 id="5-half-a-million-displaced-in-lebanon-from-israeli-strikes">5) Half a million displaced in Lebanon from Israeli strikes</h4>
 <p><strong>What happened (neutral):</strong> Intensifying Israeli strikes in Lebanon, targeting areas linked to Hezbollah, have displaced around 500,000 people. Nearly 400 deaths were reported in the past week by Lebanese authorities. An airstrike hit Beirut's southern suburbs after warnings about a firm connected to the group.</p>
 <p><strong>Perspectives:</strong> Middle Eastern sources emphasize the humanitarian crisis, portraying the displacements as a severe consequence of Israeli aggression that exacerbates regional suffering and calls for international intervention. Western views often frame the strikes as defensive measures against Hezbollah threats amid the wider Iran war, highlighting the need for precision to minimize civilian harm. International perspectives balance these by noting the daily disruptions like air raid sirens, suggesting divided opinions within Israel itself on the war's expansion and its long-term viability.</p>
@@ -1242,12 +1295,6 @@
 <li>How effective are warnings before strikes in reducing civilian casualties?</li>
 <li>What support systems are in place for the displaced populations?</li>
 <li>Could this displacement lead to broader refugee crises?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/half-a-million-displaced-in-lebanon-amid-intensifying-israeli-strikes" target="_blank" rel="noopener">France 24</a> — Details on displacements and recent deaths.</li>
-<li><a href="https://www.france24.com/en/israelis-divided-over-war-with-iran-as-conflict-expands" target="_blank" rel="noopener">France 24</a> — Context of air raid sirens and divided Israeli opinions.</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15627959/Iran-unleashes-huge-overnight-attack-Gulf-states-Bahrain-seeing-highest-number-casualties-war-began-refinery-hit-oil-prices-surge.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Related attacks in the region.</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-israelis-divided-on-expanding-war-with-iran">1) Israelis divided on expanding war with Iran</h4>
@@ -1259,12 +1306,6 @@
 <li>What factors might unify or further divide opinions on the war?</li>
 <li>Could internal divisions influence Israel's military strategy?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/israelis-divided-over-war-with-iran-as-conflict-expands" target="_blank" rel="noopener">France 24</a> — Reports on divided opinions and daily life adaptations.</li>
-<li><a href="https://www.france24.com/en/half-a-million-displaced-in-lebanon-amid-intensifying-israeli-strikes" target="_blank" rel="noopener">France 24</a> — Related strikes in neighboring Lebanon.</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15625701/Iran-flames-Trump-US-troops-read-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — US involvement in the wider conflict.</li>
-</ul>
 <h4 id="2-iranian-womens-football-team-protests-national-anthem-signals-sos">2) Iranian women's football team protests national anthem, signals SOS</h4>
 <p><strong>What happened (neutral):</strong> Iran's women's football team stood silent during the national anthem at an Asian Cup match against South Korea, leading to them being branded traitors by the regime. They signaled 'SOS' from their bus afterward, drawing crowd chants of support. This defiant act sparked a furious response from authorities.</p>
 <p><strong>Perspectives:</strong> Progressive international sources celebrate the protest as a brave stand for women's rights and against oppression, linking it to broader dissent within Iran amid the war. Conservative outlets in the region criticize it as disloyalty during national crisis, framing it as undermining unity against external threats. Centrist views contextualize it within global sports activism, noting how such gestures can amplify calls for change but also risk severe repercussions under the new leadership.</p>
@@ -1273,12 +1314,6 @@
 <li>What risks do athletes face when protesting in authoritarian regimes?</li>
 <li>How might this incident affect Iran's international sports participation?</li>
 <li>Could similar protests spread to other sectors in Iran?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15627011/Moment-crowd-chants-save-girls-Iran-womens-football-team-branded-traitors-Islamic-Regime-refused-sing-national-anthem-Asian-Cup-match.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Details on the anthem silence and SOS signal.</li>
-<li><a href="https://www.france24.com/en/with-new-supreme-leader-iran-says-business-back-as-usual" target="_blank" rel="noopener">France 24</a> — Context of hardline policies under new leader.</li>
-<li><a href="https://www.aljazeera.com/sports/2026/3/9/iraq-coach-urges-fifa-to-delay-world-cup-playoff-amid-us-israel-war-on-iran?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Related sports disruptions in the region.</li>
 </ul>
 <h4 id="3-iraq-coach-calls-for-fifa-delay-of-world-cup-playoff-due-to-war">3) Iraq coach calls for FIFA delay of World Cup playoff due to war</h4>
 <p><strong>What happened (neutral):</strong> Iraq's football coach Graham Arnold urged FIFA to postpone a World Cup playoff scheduled for March 31, citing the ongoing US-Israel war with Iran. The delay would allow scattered team members to prepare amid the conflict. No decision from FIFA is mentioned in reports.</p>
@@ -1289,12 +1324,6 @@
 <li>What criteria should FIFA use for delay decisions?</li>
 <li>Could this affect Iraq's team performance if delayed?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/sports/2026/3/9/iraq-coach-urges-fifa-to-delay-world-cup-playoff-amid-us-israel-war-on-iran?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Coach's urging for delay and team preparation issues.</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15627011/Moment-crowd-chants-save-girls-Iran-womens-football-team-branded-traitors-Islamic-Regime-refused-sing-national-anthem-Asian-Cup-match.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Related football protest in the region.</li>
-<li><a href="https://www.france24.com/en/israelis-divided-over-war-with-iran-as-conflict-expands" target="_blank" rel="noopener">France 24</a> — Broader war context affecting the area.</li>
-</ul>
 <h4 id="4-frances-macron-visits-cyprus-for-security-talks-amid-iran-drone-strikes">4) France's Macron visits Cyprus for security talks amid Iran drone strikes</h4>
 <p><strong>What happened (neutral):</strong> French President Macron traveled to Cyprus for talks with Cypriot and Greek leaders on security amid Iran drone strikes. An EU carrier strike group is heading to the Eastern Mediterranean. This occurs while UK warships remain in port, highlighting differing European responses.</p>
 <p><strong>Perspectives:</strong> European sources like the Guardian portray Macron's visit as proactive EU leadership in regional stability, contrasting it with perceived UK inaction and framing it as a unified front against escalation. Conservative UK outlets rub salt in political wounds, suggesting it exposes weaknesses in British strategy under Starmer. International views see this as part of broader alliance-building, potentially strengthening collective defense but raising questions about coordination among allies.</p>
@@ -1304,17 +1333,98 @@
 <li>What factors might explain differences in EU and UK responses?</li>
 <li>Could this lead to increased EU military involvement?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15626355/President-Macron-Cyprus-France-warships-Starmer-home.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Details on Macron's visit and EU warships.</li>
-<li><a href="https://www.theguardian.com/politics/live/2026/mar/09/keir-starmer-uk-gas-oil-prices-100-petrol-energy-inflation-latest-news-live-updates" target="_blank" rel="noopener">The Guardian</a> — UK political context and Starmer's reassurances.</li>
-<li><a href="https://www.france24.com/en/half-a-million-displaced-in-lebanon-amid-intensifying-israeli-strikes" target="_blank" rel="noopener">France 24</a> — Related strikes in the Mediterranean region.</li>
-</ul>
 <h4 id="5-uk-pm-starmer-addresses-cost-of-living-amid-oil-surge">5) UK PM Starmer addresses cost of living amid oil surge</h4>
 <p><strong>What happened (neutral):</strong> UK Prime Minister Keir Starmer acknowledged potential economic impacts from the prolonged Iran war, including rising oil and gas prices above $100 per barrel. He emphasized government efforts to mitigate effects on households and businesses through monitoring and international talks. Unions and backbenchers are pressuring for a support package.</p>
 <p><strong>Perspectives:</strong> Left-leaning outlets like the Guardian highlight Starmer's proactive stance, framing it as essential preparation for inflation risks and criticizing any delay in aid as neglectful of working families. Conservative views portray it as insufficient leadership, contrasting with bolder US approaches and suggesting higher energy bills are an inevitable war cost</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15627149/Iran-Khamenei-son-supreme-missile-infrastructure.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/with-new-supreme-leader-iran-says-business-back-as-usual" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15628045/Irans-new-Supreme-Leader-wounded-Ayatollah-Khameneis-son-sustained-mystery-injury-claims-state-TV.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15625701/Iran-flames-Trump-US-troops-read-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15627959/Iran-unleashes-huge-overnight-attack-Gulf-states-Bahrain-seeing-highest-number-casualties-war-began-refinery-hit-oil-prices-surge.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/09/iran-war-updates-oil-brent-wti-crude-110-gulf-gcc-uae-iraq-saudi-arabia-kurds.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/newsletters/2026-03-09/oil-near-120-sparks-stampede-to-sell-in-stocks-and-bonds" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/iran-related-oil-price-surge-impacts-united-states" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15627715/Panic-pumps-feared-crude-oil-prices-leap-barrel-day-UKs-gas-store-vulnerabilty-exposed.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15627737/The-end-world-Kremlin-warns.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/half-a-million-displaced-in-lebanon-amid-intensifying-israeli-strikes" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/israelis-divided-over-war-with-iran-as-conflict-expands" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15627011/Moment-crowd-chants-save-girls-Iran-womens-football-team-branded-traitors-Islamic-Regime-refused-sing-national-anthem-Asian-Cup-match.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/sports/2026/3/9/iraq-coach-urges-fifa-to-delay-world-cup-playoff-amid-us-israel-war-on-iran?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15626355/President-Macron-Cyprus-France-warships-Starmer-home.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/politics/live/2026/mar/09/keir-starmer-uk-gas-oil-prices-100-petrol-energy-inflation-latest-news-live-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1723,10 +1833,67 @@ That's Omni View. For full source links and more context, check out today's writ
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>
