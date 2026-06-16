@@ -107,7 +107,12 @@
       "url": "https://nerranetwork.com/omni-view.html"
     },
     "image": "https://nerranetwork.com/assets/covers/omni-view.jpg",
-    "transcript": "https://nerranetwork.com/blog/omni_view/ep056.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/omni_view/ep056.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://audio.nerranetwork.com/omni_view/Omni_View_Ep056_20260520.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -708,6 +713,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +818,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1181,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Putin and Xi’s energy pipeline talks amid Middle East tensions could reshape global supply routes an… — Episode 56</h1>
+            <h1><span class="nn-i18n-title">Putin and Xi’s energy pipeline talks amid Middle East tensions could reshape global supply routes an…</span> — Episode 56</h1>
             
             <p class="blog-hero-hook">Putin and Xi’s energy pipeline talks amid Middle East tensions could reshape global supply routes and alliances that affect everyday energy costs worldwide.</p>
             
@@ -1129,6 +1212,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1212,10 +1298,6 @@
 <li>What verification steps would confirm whether a deal is genuinely under discussion?</li>
 <li>Which countries have the greatest leverage to influence the pace of talks?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/may/20/us-iran-israel-lebanon-gaza-trump-oil-hormuz-latest-news-updates" target="_blank" rel="noopener">The Guardian</a> — Live updates on diplomatic statements and tanker movement</li>
-</ul>
 <h4 id="2-xi-takes-a-veiled-swipe-at-trump-during-putins-visit-days-after-he-issued-ominous-warning-about-risk-of-war">2) Xi takes a veiled swipe at Trump during Putin's visit days after he issued ominous warning about risk of war</h4>
 <p><strong>What happened (neutral):</strong> Chinese President Xi Jinping made comments interpreted as indirect criticism of US policy during Russian President Putin’s visit to Beijing. The two leaders emphasized past praise for each other and ongoing cooperation.</p>
 <p><strong>Perspectives:</strong> Mail Online presents the remarks as part of China’s effort to position itself as a counterweight to US influence, while Bloomberg reports Putin’s praise for expanding trade and energy links as evidence of a shared vision for international relations. Both outlets note the timing follows recent US warnings; they differ on whether the language signals stronger alignment or routine diplomatic posturing.</p>
@@ -1224,11 +1306,6 @@
 <li>What specific trade volumes are currently at stake in Russia-China energy deals?</li>
 <li>How do such visits typically shape subsequent policy announcements?</li>
 <li>Which third countries monitor these exchanges most closely for security implications?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15833195/Putin-lavishes-praise-President-Xi-arriving-Beijing-just-days-Trump-China-attempts-position-major-global-superpower.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Details on the leaders’ public statements</li>
-<li><a href="https://www.bloomberg.com/news/videos/2026-05-20/putin-russia-china-back-democratic-world-order-video" target="_blank" rel="noopener">Bloomberg</a> — Video summary of economic cooperation remarks</li>
 </ul>
 <h4 id="3-stocks-under-pressure-as-correction-fears-grow-and-record-rally-defies-geopolitical-turmoil">3) Stocks under pressure as correction fears grow and record rally defies geopolitical turmoil</h4>
 <p><strong>What happened (neutral):</strong> Equity markets showed signs of strain as analysts warned that recent gains may reverse amid elevated bond yields and ongoing international conflicts. Warnings focused on the sustainability of the rally given inflation and geopolitical factors.</p>
@@ -1239,10 +1316,6 @@
 <li>How do investors typically adjust portfolios during periods of geopolitical uncertainty?</li>
 <li>What indicators would signal that a correction has begun?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/20/market-correction-equities-stocks-bonds-iran-inflation.html" target="_blank" rel="noopener">CNBC</a> — Market analysis and analyst commentary</li>
-</ul>
 <h4 id="4-europe-delivers-best-earnings-in-three-years-but-hurdles-loom">4) Europe Delivers Best Earnings in Three Years But Hurdles Loom</h4>
 <p><strong>What happened (neutral):</strong> European companies reported their strongest first-quarter results in three years, driven by energy and technology sectors. Analysts caution that sustaining the performance may prove difficult given the broader economic outlook and ongoing conflicts.</p>
 <p><strong>Perspectives:</strong> Bloomberg emphasizes the role of major energy and tech firms in delivering the gains while noting potential challenges from slower growth and persistent geopolitical pressures. Coverage frames the results as a temporary bright spot rather than a guaranteed trend.</p>
@@ -1252,10 +1325,6 @@
 <li>How might continued conflict affect corporate guidance for the rest of the year?</li>
 <li>What metrics would indicate whether the earnings momentum is fading?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-20/europe-delivers-best-earnings-in-three-years-as-hurdles-loom" target="_blank" rel="noopener">Bloomberg</a> — Earnings breakdown and forward-looking assessment</li>
-</ul>
 <h4 id="5-japan-trade-minister-to-attend-apec-in-china-amid-strained-ties">5) Japan Trade Minister to Attend APEC in China Amid Strained Ties</h4>
 <p><strong>What happened (neutral):</strong> Japan’s trade minister will participate in a China-hosted gathering of trade officials this week. The move is described as an effort to maintain dialogue despite ongoing tensions between Tokyo and Beijing.</p>
 <p><strong>Perspectives:</strong> Bloomberg portrays the attendance as a pragmatic step to keep communication channels open on economic matters. Coverage notes that strained political relations have not halted all practical cooperation on trade issues.</p>
@@ -1264,10 +1333,6 @@
 <li>What specific trade topics are likely to feature on the APEC agenda?</li>
 <li>How do past ministerial meetings between the two countries compare in outcomes?</li>
 <li>Which domestic industries in Japan stand to gain most from continued engagement?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-20/japan-trade-minister-to-attend-apec-in-china-amid-strained-ties" target="_blank" rel="noopener">Bloomberg</a> — Details on the minister’s participation and context</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-news-live-dfat-to-meet-with-11-australians-from-flotilla-detained-by-israel">1) News live: Dfat to meet with 11 Australians from flotilla detained by Israel</h4>
@@ -1279,10 +1344,6 @@
 <li>How do governments typically coordinate with international partners in such cases?</li>
 <li>What information will be needed to assess the conditions of the detainees?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/may/20/federal-budget-tim-wilson-reply-national-press-club-coalition-liberal-national-angus-taylor-labor-anthony-albanese-jim-chalmers-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — Live updates on the Australians’ situation</li>
-</ul>
 <h4 id="2-britains-second-most-senior-diplomat-in-washington-abruptly-leaves-post">2) Britain’s second most senior diplomat in Washington abruptly leaves post</h4>
 <p><strong>What happened (neutral):</strong> James Roscoe, who had served as deputy ambassador and interim ambassador, left his post suddenly. The UK government provided no official reason, and the departure coincides with an investigation into a leak from a national security council meeting.</p>
 <p><strong>Perspectives:</strong> The Guardian presents the exit as unexpected and tied to ongoing internal inquiries, without confirming any direct connection. Coverage notes the timing raises questions about continuity in diplomatic staffing.</p>
@@ -1291,10 +1352,6 @@
 <li>What typical procedures apply when a senior diplomat departs mid-term?</li>
 <li>How might the leak investigation influence future security protocols?</li>
 <li>Which responsibilities will now shift to other staff members?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/politics/2026/may/20/british-diplomat-james-roscoe-abruptly-leaves-washington-embassy-post" target="_blank" rel="noopener">The Guardian</a> — Report on the departure and context</li>
 </ul>
 <h4 id="3-nrl-star-arrow-retires-at-30-after-mnd-diagnosis">3) NRL star Arrow retires at 30 after MND diagnosis</h4>
 <p><strong>What happened (neutral):</strong> South Sydney Rabbitohs forward Jai Arrow announced his immediate retirement following a diagnosis of Motor Neurone Disease at age 30.</p>
@@ -1305,10 +1362,6 @@
 <li>How do teams typically handle roster changes after unexpected retirements?</li>
 <li>What awareness efforts often follow high-profile cases of MND in sport?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/sport/rugby-league/articles/cgqpey71devo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Announcement and background</li>
-</ul>
 <h4 id="4-lax-rules-and-rise-in-for-profit-childcare-allow-predators-to-abuse-children-nsw-inquiry-finds">4) Lax rules and rise in for-profit childcare allow predators to abuse children, NSW inquiry finds</h4>
 <p><strong>What happened (neutral):</strong> A New South Wales upper house inquiry concluded that weak regulations and the growth of for-profit providers have enabled predators to enter the childcare sector and harm children.</p>
 <p><strong>Perspectives:</strong> The Guardian reports the inquiry’s findings that systemic gaps created opportunities for abuse, with the Greens MLC who chaired the review describing the system as failing many families. Coverage stresses the need for stronger oversight.</p>
@@ -1318,10 +1371,6 @@
 <li>How do for-profit models differ from not-for-profit ones in accountability structures?</li>
 <li>Which safeguards have proven effective in other jurisdictions?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/may/20/lax-rules-and-rise-in-for-profit-childcare-allow-predators-to-abuse-children-nsw-inquiry-finds-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — Full inquiry findings</li>
-</ul>
 <h4 id="5-andy-burnham-said-that-men-who-identify-as-women-should-be-able-to-use-female-toilets-and-only-a-small-minority-object-he-claimed">5) Andy Burnham said that men who identify as women should be able to use female toilets - and only a 'small minority' object, he claimed</h4>
 <p><strong>What happened (neutral):</strong> Greater Manchester mayor Andy Burnham stated that men who identify as women should access female toilets and described objections to single-sex spaces as a minority view.</p>
 <p><strong>Perspectives:</strong> Mail Online presents the comments as part of ongoing public debate over access rules, noting the mayor’s characterization of opposing opinions. Coverage places the remarks within wider discussions on facilities policy.</p>
@@ -1330,10 +1379,6 @@
 <li>What data exists on public opinion regarding single-sex spaces?</li>
 <li>How have other local authorities approached similar policy questions?</li>
 <li>What legal frameworks currently govern toilet access in public buildings?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15830845/Andy-Burnham-men-identify-women-use-female-toilets.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Statement and reaction summary</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-european-stocks-open-lower-uk-inflation-and-elevated-bond-yields-in-focus">1) European stocks open lower: UK inflation and elevated bond yields in focus</h4>
@@ -1345,10 +1390,6 @@
 <li>What components of UK inflation data are drawing the most scrutiny?</li>
 <li>Which sectors tend to react first to shifts in these indicators?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/20/european-markets-stoxx-uk-inflation-ftse-dax-cac-iran-latest.html" target="_blank" rel="noopener">CNBC</a> — Market opening summary</li>
-</ul>
 <h4 id="2-retail-ignoring-risk-from-samsung-strike-3-minutes-mliv">2) Retail Ignoring Risk From Samsung Strike: 3-Minutes MLIV</h4>
 <p><strong>What happened (neutral):</strong> Analysts discussed the potential supply-chain implications of an ongoing strike at Samsung, noting that retail sectors appear not to have fully priced in the risks.</p>
 <p><strong>Perspectives:</strong> Bloomberg’s market segment highlights the disconnect between the strike’s possible effects and current retail positioning. Coverage suggests investors may be underestimating exposure.</p>
@@ -1357,10 +1398,6 @@
 <li>Which product categories would be most affected by prolonged Samsung production disruptions?</li>
 <li>How do strikes at major manufacturers usually influence global supply timelines?</li>
 <li>What signals would indicate that retailers are beginning to adjust inventories?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-05-20/retail-ignoring-risk-from-samsung-strike-3-minutes-mliv-video" target="_blank" rel="noopener">Bloomberg</a> — Analyst discussion segment</li>
 </ul>
 <h4 id="3-lower-gas-and-electricity-bills-behind-uk-inflation-fall-to-28">3) Lower gas and electricity bills behind UK inflation fall to 2.8%</h4>
 <p><strong>What happened (neutral):</strong> UK inflation eased to 2.8 percent, aided by lower household energy costs from government support measures and reduced wholesale prices prior to recent international developments.</p>
@@ -1371,10 +1408,6 @@
 <li>What other components of the inflation basket are showing movement?</li>
 <li>Which households benefit most directly from the observed bill reductions?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/c4g0e0p4p2go?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Inflation data explanation</li>
-</ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-enhanced-games-pushing-human-potential-or-lethal-circus">1) Enhanced Games: Pushing human potential or lethal circus?</h4>
 <p><strong>What happened (neutral):</strong> Investors including Peter Thiel and Donald Trump Jr. are backing the Enhanced Games, an event that permits performance-enhancing substances. Doping experts warn of significant health risks associated with the format.</p>
@@ -1384,10 +1417,6 @@
 <li>What regulatory frameworks currently govern substance use in traditional sports?</li>
 <li>How do proponents of the Enhanced Games propose to monitor participant health?</li>
 <li>Which historical examples of unregulated athletic events inform current debates?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/enhanced-games-pushing-human-potential-or-lethal-circus/a-77201096?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — Overview of the event and expert reactions</li>
 </ul>
 <h4 id="2-retail-ignoring-risk-from-samsung-strike-3-minutes-mliv">2) Retail Ignoring Risk From Samsung Strike: 3-Minutes MLIV</h4>
 <p><strong>What happened (neutral):</strong> Market analysts examined how a strike at Samsung could affect technology supply chains, observing that many retailers have not yet adjusted strategies in response.</p>
@@ -1417,10 +1446,6 @@
 <li>How do retailers use such independent reviews in their marketing?</li>
 <li>Which product categories showed the widest quality variation in the tests?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/lifestyle/article-15830449/The-best-BBQ-food-2026-revealed-Good-Housekeeping-blind-taste-tests-233-supermarket-products-Tesco-triumphing-5-categories.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Full test results and category winners</li>
-</ul>
 <h4 id="2-arsenals-all-nighter-premier-league-winning-stars-led-by-declan-rice-stay-out-until-5am-after-ending-22-year-title-wait-and-mock-rivals-man-city-with-a-water-bottle-in-a-nightclub">2) Arsenal's all-nighter! Premier League-winning stars, led by Declan Rice, stay out until 5am after ending 22-year title wait - and mock rivals Man City with a water bottle in a nightclub</h4>
 <p><strong>What happened (neutral):</strong> Arsenal players celebrated their first Premier League title in 22 years by remaining at a nightclub until early morning. The group was seen using a water bottle to reference rivals Manchester City.</p>
 <p><strong>Perspectives:</strong> Mail Online describes the extended celebration and the light-hearted gestures toward competitors. BBC coverage focuses on the club and fans savoring the long-awaited achievement.</p>
@@ -1430,11 +1455,6 @@
 <li>What role do social media images play in shaping public perception of such events?</li>
 <li>Which historical title wins have featured similarly extended public festivities?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/sport/football/article-15833199/Arsenals-nighter-Premier-League-winning-stars-led-Declan-Rice-stay-5am-ending-22-year-title-wait-mock-rivals-Man-City-water-bottles-nightclub.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Celebration details</li>
-<li><a href="https://www.bbc.com/sport/football/articles/ce3pwrrnvd6o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Club perspective on the win</li>
-</ul>
 <h4 id="3-brad-pitt-62-packs-on-pda-with-girlfriend-ines-de-ramon-33-at-la-event-after-his-daughters-heartbreaking-move">3) Brad Pitt, 62, packs on PDA with girlfriend Ines de Ramon, 33, at LA event... after his daughter's heartbreaking move</h4>
 <p><strong>What happened (neutral):</strong> Brad Pitt attended a Los Angeles event with girlfriend Ines de Ramon, where the pair held hands on the red carpet. The appearance followed recent family developments involving his daughter.</p>
 <p><strong>Perspectives:</strong> Mail Online frames the outing as a public display of the relationship amid personal family matters. Coverage notes the contrast between the event setting and private circumstances.</p>
@@ -1443,10 +1463,6 @@
 <li>How do celebrities typically balance public appearances with private family matters?</li>
 <li>What patterns emerge in media coverage of high-profile relationships after family changes?</li>
 <li>Which aspects of such events receive the most public attention?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15833157/brad-pitt-girlfriend-ines-ramon-mercedes-event-los-angeles.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Event coverage and context</li>
 </ul>
 <h3 id="top-gossip-stories-3">Top gossip stories (3)</h3>
 <h4 id="1-heir-to-thailands-singha-beer-empire-is-sacked-after-his-british-brother-posts-tearful-video-claiming-his-sibling-sexually-assaulted-him-for-years">1) Heir to Thailand's Singha beer empire is sacked after his British brother posts tearful video claiming his sibling sexually assaulted him for years</h4>
@@ -1458,17 +1474,6 @@
 <li>How do companies manage succession when leadership changes occur under controversy?</li>
 <li>Which legal jurisdictions may become involved in cross-border family allegations?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15831613/thailand-singha-beer-brother-video-sibling-sexually-assaulted.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Details of the accusations and company response</li>
-</ul>
-<p><strong>Perspectives:</strong> Mail Online situates the statement within continuing policy discussions on access rules. Coverage notes the mayor’s framing of public opinion on the issue.</p>
-<p><strong>Questions to consider:</strong></p>
-<ul>
-<li>How do local leaders gather input when shaping facility access policies?</li>
-<li>What precedents exist for similar statements by elected officials in other regions?</li>
-<li>Which groups most actively engage with these policy debates?</li>
-</ul>
 <h4 id="3-how-to-tell-if-youre-one-of-half-a-million-people-being-underpaid-on-your-state-pension-bombshell-figures-reveal-1-in-20-arent-getting-what-theyre-owed-heres-the-easy-way-to-check-yours">3) How to tell if you're one of half a MILLION people being UNDERPAID on your state pension: Bombshell figures reveal 1 in 20 aren't getting what they're owed. Here's the easy way to check yours</h4>
 <p><strong>What happened (neutral):</strong> More than half a million state pension recipients are reportedly underpaid, according to figures indicating roughly one in twenty are not receiving their full entitlement. Guidance was offered on how individuals can verify their payments.</p>
 <p><strong>Perspectives:</strong> Mail Online presents the statistics as a widespread issue affecting a significant portion of pensioners and provides practical steps for checking records. Coverage emphasizes the scale of potential underpayments.</p>
@@ -1478,16 +1483,124 @@
 <li>How can individuals request a review of their pension calculations?</li>
 <li>Which demographic groups appear most affected by these discrepancies?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/money/mailplus/article-15833309/How-hundreds-thousands-people-owed-8-400-extra-state-pension-taking-time-raise-children.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Figures and verification guidance</li>
-</ul>
 <h3 id="understanding-the-issue-how-russia-and-china-negotiate-major-energy-pipeline-projects-amid-geopolitical-tensions">Understanding the Issue: How Russia and China negotiate major energy pipeline projects amid geopolitical tensions</h3>
 <p>Most coverage of Russia-China energy talks treats announcements as simple bilateral deals, yet the process involves layered approvals, financing structures, and long-term pricing formulas that can take years to finalize. When politicians say a pipeline is “revived,” the actual work often includes renegotiating transit fees, securing export licenses, and aligning regulatory standards across borders. Knowing this, when you hear claims of an imminent breakthrough, you can evaluate whether the statement refers to a signed memorandum or merely renewed discussions. Next time you see a headline about a revived pipeline, ask: who benefits from the timing of the announcement, what financing mechanisms are proposed, and what historical precedents exist for similar projects stalling after initial fanfare.</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference official statements from the governments involved with data from energy market trackers and regulatory filings. Primary documents such as trade ministry releases often contain more precise language than initial news summaries. Checking multiple jurisdictions’ records helps clarify what has been formally agreed versus what remains under discussion.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/may/20/us-iran-israel-lebanon-gaza-trump-oil-hormuz-latest-news-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15833195/Putin-lavishes-praise-President-Xi-arriving-Beijing-just-days-Trump-China-attempts-position-major-global-superpower.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-05-20/putin-russia-china-back-democratic-world-order-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/05/20/market-correction-equities-stocks-bonds-iran-inflation.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-20/europe-delivers-best-earnings-in-three-years-as-hurdles-loom" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-20/japan-trade-minister-to-attend-apec-in-china-amid-strained-ties" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/live/2026/may/20/federal-budget-tim-wilson-reply-national-press-club-coalition-liberal-national-angus-taylor-labor-anthony-albanese-jim-chalmers-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/politics/2026/may/20/british-diplomat-james-roscoe-abruptly-leaves-washington-embassy-post" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/sport/rugby-league/articles/cgqpey71devo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/may/20/lax-rules-and-rise-in-for-profit-childcare-allow-predators-to-abuse-children-nsw-inquiry-finds-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15830845/Andy-Burnham-men-identify-women-use-female-toilets.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/05/20/european-markets-stoxx-uk-inflation-ftse-dax-cac-iran-latest.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-05-20/retail-ignoring-risk-from-samsung-strike-3-minutes-mliv-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c4g0e0p4p2go?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/enhanced-games-pushing-human-potential-or-lethal-circus/a-77201096?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/lifestyle/article-15830449/The-best-BBQ-food-2026-revealed-Good-Housekeeping-blind-taste-tests-233-supermarket-products-Tesco-triumphing-5-categories.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/sport/football/article-15833199/Arsenals-nighter-Premier-League-winning-stars-led-Declan-Rice-stay-5am-ending-22-year-title-wait-mock-rivals-Man-City-water-bottles-nightclub.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/sport/football/articles/ce3pwrrnvd6o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15833157/brad-pitt-girlfriend-ines-ramon-mercedes-event-los-angeles.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15831613/thailand-singha-beer-brother-video-sibling-sexually-assaulted.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/money/mailplus/article-15833309/How-hundreds-thousands-people-owed-8-400-extra-state-pension-taking-time-raise-children.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1866,10 +1979,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

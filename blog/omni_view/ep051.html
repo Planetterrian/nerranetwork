@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>British Gas will pay £20 million after agents broke into vulnerable homes to install prepayment mete… — Episode 51</h1>
+            <h1><span class="nn-i18n-title">British Gas will pay £20 million after agents broke into vulnerable homes to install prepayment mete…</span> — Episode 51</h1>
             
             <p class="blog-hero-hook">British Gas will pay £20 million after agents broke into vulnerable homes to install prepayment meters, raising fresh questions about how energy firms treat customers in debt.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1204,10 +1285,6 @@
 <li>What checks exist to prevent similar practices by other energy suppliers?</li>
 <li>How might this settlement affect future debt-recovery policies?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/cq8p7l1y59lo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Details the settlement amount and the nature of the agent misconduct.</li>
-</ul>
 <h4 id="2-uae-plans-to-double-oil-exports-bypassing-strait-of-hormuz-by-2027">2) UAE plans to double oil exports bypassing Strait of Hormuz by 2027</h4>
 <p><strong>What happened (neutral):</strong> The United Arab Emirates announced plans to complete a new pipeline that will double its capacity to ship crude oil without passing through the Strait of Hormuz. The project aims to reduce reliance on the narrow waterway whose security has been disrupted during regional tensions. Construction is scheduled for completion within two years.</p>
 <p><strong>Perspectives:</strong> Bloomberg reporting frames the move as a practical step to protect export revenues amid shipping risks. Regional analysts see it as part of longer-term efforts by Gulf states to diversify export routes. Both perspectives accept that the strait remains a chokepoint; they differ on how quickly alternative infrastructure can fully offset potential disruptions.</p>
@@ -1216,10 +1293,6 @@
 <li>What volume of global oil supply currently moves through the strait?</li>
 <li>How do pipeline projects alter the strategic calculations of neighboring countries?</li>
 <li>What timelines are realistic for similar bypass routes elsewhere?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-15/uae-to-complete-new-hormuz-bypass-oil-pipeline-by-2027" target="_blank" rel="noopener">Bloomberg</a> — Outlines the capacity increase and strategic rationale.</li>
 </ul>
 <h4 id="3-pakistan-secures-second-lng-shipment-from-persian-gulf-in-a-week">3) Pakistan secures second LNG shipment from Persian Gulf in a week</h4>
 <p><strong>What happened (neutral):</strong> Pakistan has taken delivery of another cargo of liquefied natural gas from the Persian Gulf, marking the second such import within days. Officials credit improved diplomatic ties for easing previous supply constraints. The shipments aim to address domestic energy shortages.</p>
@@ -1230,10 +1303,6 @@
 <li>What storage and distribution challenges remain once the LNG arrives?</li>
 <li>How might future price volatility affect these new supply lines?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-15/pakistan-uses-newfound-diplomatic-clout-to-get-persian-gulf-lng" target="_blank" rel="noopener">Bloomberg</a> — Reports the timing and diplomatic context of the deliveries.</li>
-</ul>
 <h4 id="4-colossal-new-dinosaur-species-discovered-in-thailand">4) Colossal new dinosaur species discovered in Thailand</h4>
 <p><strong>What happened (neutral):</strong> Scientists have identified the remains of a previously unknown dinosaur species in Thailand, estimated to have weighed as much as nine adult Asian elephants. The long-necked herbivore, named Nagatitan chaiyaphumensis, is the largest dinosaur found in Southeast Asia to date. The find was detailed in a study published in Scientific Reports.</p>
 <p><strong>Perspectives:</strong> France 24 presents the discovery as a major addition to understanding prehistoric life in the region. Paleontologists stress that the specimen expands the known range and size of sauropods in Asia. Both views accept the fossil’s scale; they differ on how much it revises existing models of dinosaur distribution across continents.</p>
@@ -1243,10 +1312,6 @@
 <li>How do new species finds influence theories about ancient ecosystems?</li>
 <li>What further research is planned at the Thai site?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/science/20260515-colossal-dinosaur-unearthed-in-thailand-weighs-as-much-as-nine-elephants" target="_blank" rel="noopener">France 24</a> — Summarizes the study findings and estimated size.</li>
-</ul>
 <h4 id="5-bank-of-korea-board-member-highlights-inflation-and-housing-risks">5) Bank of Korea board member highlights inflation and housing risks</h4>
 <p><strong>What happened (neutral):</strong> A newly appointed member of the Bank of Korea’s board warned of rising inflation pressures and financial-stability concerns linked to housing prices and capital flows. The remarks, made in the member’s first public comments, reinforced expectations of a more cautious monetary stance. Markets interpreted the statement as signaling a hawkish tilt.</p>
 <p><strong>Perspectives:</strong> Bloomberg coverage focuses on the immediate market reaction and the specific risks cited. Central-bank watchers note that board members often use early statements to set the tone for upcoming policy discussions. Both accounts treat the comments as deliberate signals; they differ on how quickly any policy shift might follow.</p>
@@ -1255,10 +1320,6 @@
 <li>How do individual board-member speeches shape expectations ahead of formal rate decisions?</li>
 <li>What data points would prompt the Bank of Korea to adjust its stance?</li>
 <li>How do housing-market concerns interact with broader inflation targets?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-15/bank-of-korea-s-new-board-member-flags-inflation-housing-risks" target="_blank" rel="noopener">Bloomberg</a> — Covers the inaugural remarks and market implications.</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-indian-navy-escorts-15th-lpg-carrier-through-strait-of-hormuz">1) Indian Navy escorts 15th LPG carrier through Strait of Hormuz</h4>
@@ -1270,10 +1331,6 @@
 <li>How do frequent escorts affect insurance costs for shipping companies?</li>
 <li>What alternatives exist if the strait becomes less reliable?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.reddit.com/r/geopolitics/comments/1tdohmb/indian_navy_escorts_15th_lpg_carrier_from_strait/" target="_blank" rel="noopener">Reddit r/geopolitics</a> — Notes the count of escorted vessels and operational context.</li>
-</ul>
 <h4 id="2-mbappé-describes-himself-as-fourth-choice-forward-at-real-madrid">2) Mbappé describes himself as fourth-choice forward at Real Madrid</h4>
 <p><strong>What happened (neutral):</strong> Kylian Mbappé stated he feels like the fourth-choice striker under new coach Arbeloa after being jeered by fans during a substitute appearance. Real Madrid won the match 2-0, but Mbappé’s limited role drew attention. The comments came after his return from injury.</p>
 <p><strong>Perspectives:</strong> Al Jazeera sports coverage highlights the unusual public admission by a high-profile player. Supporters’ reactions show frustration with squad rotation decisions. Both accounts accept the on-field result; they differ on whether the remarks signal deeper dressing-room tensions.</p>
@@ -1282,10 +1339,6 @@
 <li>How do coaches manage expectations for star players returning from injury?</li>
 <li>What effect do fan reactions have on team selection?</li>
 <li>How common are public comments like Mbappé’s in top clubs?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/sports/2026/5/15/benched-mbappe-says-hes-fourth-choice-forward-at-real-madrid-under-arbeloa?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Reports the post-match remarks and match outcome.</li>
 </ul>
 <h4 id="3-eurovision-viewers-react-to-uk-entry-and-australias-semi-final-performance">3) Eurovision viewers react to UK entry and Australia’s semi-final performance</h4>
 <p><strong>What happened (neutral):</strong> UK viewers expressed embarrassment over the performance by Look Mum No Computer, predicting another low points tally. Australia’s Delta Goodrem advanced to the final and became a popular choice among fans. The second semi-final featured contrasting reactions to the two acts.</p>
@@ -1296,10 +1349,6 @@
 <li>What factors influence viewer voting patterns across countries?</li>
 <li>How has the contest’s format changed in recent editions?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15819365/Eurovision-UK-entry-Look-Mum-No-Computer-Delta-Goodrem-semi-final.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Summarizes viewer reactions and qualification results.</li>
-</ul>
 <h4 id="4-man-dies-after-falling-from-phone-mast-near-his-21st-birthday">4) Man dies after falling from phone mast near his 21st birthday</h4>
 <p><strong>What happened (neutral):</strong> A 20-year-old man slipped and fell approximately 150 feet from a phone mast known locally as Newton Tower, one day before his birthday. Wet weather conditions are believed to have contributed to the accident. Emergency services attended but he was pronounced dead at the scene.</p>
 <p><strong>Perspectives:</strong> Mail Online reporting focuses on the tragic timing and local recognition of the mast. Community members have called for better security around such structures. Both accounts accept the accidental nature of the fall; they differ on whether additional safety measures could have prevented access.</p>
@@ -1309,10 +1358,6 @@
 <li>How do local authorities manage public access to industrial sites?</li>
 <li>What support is available for families after such incidents?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15820191/Man-dies-50ft-phone-mast-birthday.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Provides details of the location and circumstances.</li>
-</ul>
 <h4 id="5-driverless-waymo-vehicle-runs-red-light-after-being-struck-by-rock">5) Driverless Waymo vehicle runs red light after being struck by rock</h4>
 <p><strong>What happened (neutral):</strong> A witness recorded a man throwing a rock at a Waymo autonomous vehicle multiple times before the car accelerated through a red light to escape. The incident occurred while a taxi driver was taking a passenger to Heathrow Airport. No injuries were reported.</p>
 <p><strong>Perspectives:</strong> Mail Online presents the video as an example of public interaction with driverless technology. Observers note that autonomous systems must handle unpredictable human behavior. Both views accept the sequence shown on camera; they differ on whether current sensor responses are adequate for urban environments.</p>
@@ -1321,10 +1366,6 @@
 <li>How do autonomous vehicles prioritize safety when facing physical attacks?</li>
 <li>What legal responsibility falls on operators when vehicles react to vandalism?</li>
 <li>How are such incidents used to improve future software updates?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15816359/Moment-man-hurls-rock-Waymo-car.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Includes witness account and video description.</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-gotyme-bank-invites-all-employees-to-become-shareholders">1) GoTyme Bank invites all employees to become shareholders</h4>
@@ -1336,10 +1377,6 @@
 <li>How do equity grants affect company culture in fast-growing firms?</li>
 <li>What benchmarks will determine if the program succeeds?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-15/billionaire-motsepe-backed-bank-makes-all-employees-shareholders" target="_blank" rel="noopener">Bloomberg</a> — Details the ownership invitation and strategic goals.</li>
-</ul>
 <h4 id="2-bhajan-clubbing-draws-gen-z-crowds-to-devotional-music-events-in-india">2) “Bhajan clubbing” draws Gen Z crowds to devotional music events in India</h4>
 <p><strong>What happened (neutral):</strong> A trend called “bhajan clubbing” is attracting young people to events featuring Hindu devotional songs set to bass-heavy beats without alcohol or traditional DJs. The format is spreading across cities and reflects shifting expressions of faith among younger generations. Organizers report strong attendance at the gatherings.</p>
 <p><strong>Perspectives:</strong> Bloomberg coverage frames the events as a cultural adaptation that blends tradition with contemporary social habits. Observers see it as part of a wider re-engagement with religious practice among urban youth. Both perspectives accept the popularity of the format; they differ on whether it represents a lasting change or a passing trend.</p>
@@ -1349,10 +1386,6 @@
 <li>What role do social media platforms play in spreading these gatherings?</li>
 <li>How might similar adaptations appear in other faith communities?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-05-15/-bhajan-clubbing-reshapes-gen-z-faith-in-india-video" target="_blank" rel="noopener">Bloomberg</a> — Shows examples of the events and participant reactions.</li>
-</ul>
 <h4 id="3-gilts-fall-as-investors-watch-potential-uk-leadership-challenge">3) Gilts fall as investors watch potential UK leadership challenge</h4>
 <p><strong>What happened (neutral):</strong> UK government bonds declined after reports that Manchester Mayor Andy Burnham had secured a route to contest a by-election, raising the possibility of a challenge to Prime Minister Keir Starmer. Traders cited concerns over potential shifts in fiscal policy. The market movement occurred during a broader period of political uncertainty.</p>
 <p><strong>Perspectives:</strong> Bloomberg reporting links the gilt sell-off directly to the political speculation. Market participants view any leadership contest as a source of policy unpredictability. Both accounts accept the timing of the price drop; they differ on how much long-term fiscal risk is actually implied.</p>
@@ -1361,10 +1394,6 @@
 <li>How do bond markets typically react to domestic political uncertainty?</li>
 <li>What fiscal policy differences are associated with potential leadership contenders?</li>
 <li>How long do such market reactions usually persist?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-15/gilts-slump-as-investors-brace-for-burnham-challenge-to-starmer" target="_blank" rel="noopener">Bloomberg</a> — Connects the price movement to the political development.</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-waymo-vehicle-accelerates-through-red-light-after-rock-attack">1) Waymo vehicle accelerates through red light after rock attack</h4>
@@ -1395,10 +1424,6 @@
 <li>What distribution methods are used for high-profile event invitations?</li>
 <li>How does repeated coverage affect public perception of private events?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15819787/taylor-swift-bridal-white-unusual-wedding-invites-travis-kelce.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Reports the sightings and invitation details.</li>
-</ul>
 <h3 id="top-gossip-stories-3">Top gossip stories (3)</h3>
 <h4 id="1-tyson-fury-family-tensions-surface-ahead-of-relatives-wedding">1) Tyson Fury family tensions surface ahead of relative’s wedding</h4>
 <p><strong>What happened (neutral):</strong> John Fury publicly questioned his 16-year-old granddaughter’s readiness for marriage and described his relationship with son Tyson as “completely destroyed.” The comments risk overshadowing the upcoming family wedding in Venezuela. The remarks follow earlier public disagreements within the family.</p>
@@ -1409,16 +1434,94 @@
 <li>What boundaries exist around discussing minors in media coverage?</li>
 <li>How might the family manage media attention during the wedding?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15817267/Fury-family-fallout-overshadow-Venezuela-wedding-day-John-Tyson.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Details the public remarks and context.</li>
-</ul>
 <h3 id="understanding-the-issue-how-energy-regulators-enforce-consumer-protections-during-debt-collection">Understanding the Issue: How energy regulators enforce consumer protections during debt collection</h3>
 <p>Most coverage of utility billing disputes treats penalties as simple punishment, yet the process involves layered oversight that balances company revenue needs against legal safeguards for customers. Regulators typically require suppliers to follow documented procedures before any home entry or meter change, including multiple contact attempts and vulnerability assessments. When those steps are skipped, fines are calculated using evidence of harm and prior compliance history rather than headline amounts alone. Knowing this, when you hear claims that “the company was just recovering debts,” you can check whether the firm documented the required customer contacts and vulnerability checks before enforcement. Next time you see a headline about an energy penalty, ask: what specific rule was breached, how many customers were affected, and whether the regulator published the full compliance report.</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference penalty announcements with the original regulatory decision documents rather than secondary summaries. Compare the stated number of affected customers against any independent audits mentioned. Primary sources often reveal the exact timeline of violations that news reports condense.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.bbc.com/news/articles/cq8p7l1y59lo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-15/uae-to-complete-new-hormuz-bypass-oil-pipeline-by-2027" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-15/pakistan-uses-newfound-diplomatic-clout-to-get-persian-gulf-lng" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/science/20260515-colossal-dinosaur-unearthed-in-thailand-weighs-as-much-as-nine-elephants" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-15/bank-of-korea-s-new-board-member-flags-inflation-housing-risks" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/geopolitics/comments/1tdohmb/indian_navy_escorts_15th_lpg_carrier_from_strait/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/sports/2026/5/15/benched-mbappe-says-hes-fourth-choice-forward-at-real-madrid-under-arbeloa?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15819365/Eurovision-UK-entry-Look-Mum-No-Computer-Delta-Goodrem-semi-final.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15820191/Man-dies-50ft-phone-mast-birthday.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15816359/Moment-man-hurls-rock-Waymo-car.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-15/billionaire-motsepe-backed-bank-makes-all-employees-shareholders" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-05-15/-bhajan-clubbing-reshapes-gen-z-faith-in-india-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-15/gilts-slump-as-investors-brace-for-burnham-challenge-to-starmer" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15819787/taylor-swift-bridal-white-unusual-wedding-invites-travis-kelce.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15817267/Fury-family-fallout-overshadow-Venezuela-wedding-day-John-Tyson.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1833,10 +1936,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

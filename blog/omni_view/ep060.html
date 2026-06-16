@@ -107,7 +107,12 @@
       "url": "https://nerranetwork.com/omni-view.html"
     },
     "image": "https://nerranetwork.com/assets/covers/omni-view.jpg",
-    "transcript": "https://nerranetwork.com/blog/omni_view/ep060.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/omni_view/ep060.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://audio.nerranetwork.com/omni_view/Omni_View_Ep060_20260525.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -708,6 +713,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +818,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1181,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Britain faces a potential record bank holiday as forecasters warn temperatures could reach 35C, test… — Episode 60</h1>
+            <h1><span class="nn-i18n-title">Britain faces a potential record bank holiday as forecasters warn temperatures could reach 35C, test…</span> — Episode 60</h1>
             
             <p class="blog-hero-hook">Britain faces a potential record bank holiday as forecasters warn temperatures could reach 35C, testing public health and infrastructure.</p>
             
@@ -1129,6 +1212,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1214,10 +1300,6 @@
 <li>What infrastructure adjustments become necessary during extreme heat?</li>
 <li>How do different regions balance tourism gains against health risks?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15846147/Britain-braces-hottest-bank-holiday-Monday-Temperatures-set-hit-historic-35C-warmest-day-record.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Details on temperature records and regional impacts</li>
-</ul>
 <h4 id="2-police-chief-suspended-after-ai-flags-content-on-work-phone">2) Police chief suspended after AI flags content on work phone</h4>
 <p><strong>What happened (neutral):</strong> Special Chief Officer James Deller was suspended following an AI monitoring program that identified what it classified as sexual content on his device. More than 100 officers were flagged after the US-developed software was rolled out.</p>
 <p><strong>Perspectives:</strong> The Mail Online highlights concerns over the software’s accuracy and reach within police forces. Civil liberties groups often question the balance between workplace monitoring and individual privacy rights. Law enforcement agencies typically defend such tools as necessary for maintaining professional standards.</p>
@@ -1226,10 +1308,6 @@
 <li>What safeguards exist when AI tools are used for employee monitoring?</li>
 <li>How transparent should agencies be about the criteria used by such software?</li>
 <li>What precedent does this set for other public sector workplaces?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15846027/Police-chief-suspended-AI-sexual-content.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Account of the suspension and software rollout</li>
 </ul>
 <h4 id="3-nhs-outsources-record-amount-of-scan-analysis">3) NHS outsources record amount of scan analysis</h4>
 <p><strong>What happened (neutral):</strong> The NHS spent £241 million on private firms to interpret CT and MRI scans last year. Radiologists note that staffing shortages have driven reliance on external providers.</p>
@@ -1240,10 +1318,6 @@
 <li>What training pipelines are needed to reduce external dependence?</li>
 <li>How do budget pressures shape decisions between public and private provision?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/society/2026/may/25/nhs-spends-record-241m-outsourcing-scan-analysis-to-private-firms" target="_blank" rel="noopener">The Guardian</a> — Figures on spending and staffing concerns</li>
-</ul>
 <h4 id="4-hajj-pilgrimage-begins-amid-regional-tensions">4) Hajj pilgrimage begins amid regional tensions</h4>
 <p><strong>What happened (neutral):</strong> More than 1.5 million pilgrims have arrived in Saudi Arabia for the annual Hajj, one of the Five Pillars of Islam. The gathering occurs against a backdrop of a tenuous ceasefire and related regional tensions.</p>
 <p><strong>Perspectives:</strong> NPR frames the event as a demonstration of religious continuity despite geopolitical uncertainty. Saudi authorities typically emphasize logistical preparations and crowd management. Pilgrims and religious scholars often stress the spiritual significance that draws participants regardless of external conditions.</p>
@@ -1253,10 +1327,6 @@
 <li>What security measures are standard during the Hajj?</li>
 <li>How do host nations balance religious obligations with public safety?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/05/25/nx-s1-5833671/muslims-begin-annual-hajj" target="_blank" rel="noopener">NPR</a> — Context on pilgrim numbers and regional backdrop</li>
-</ul>
 <h4 id="5-armenia-positions-itself-as-potential-east-west-crossroads">5) Armenia positions itself as potential East-West crossroads</h4>
 <p><strong>What happened (neutral):</strong> Armenia heads into national elections on 7 June while navigating competing interests from Russia, the US, Turkey, Europe, and Azerbaijan. Officials promote the country as a future link in trade routes connecting western China and Europe.</p>
 <p><strong>Perspectives:</strong> The Guardian describes Armenia’s strategic location as increasingly relevant if regional conflicts ease. Government statements often highlight opportunities to reduce physical isolation through new corridors. Neighbouring states typically view any shift in alliances through the lens of their own security and economic priorities.</p>
@@ -1265,10 +1335,6 @@
 <li>How do small nations leverage geography in great-power competition?</li>
 <li>What economic benefits might arise from new trade corridors?</li>
 <li>How do elections reflect external influences versus domestic priorities?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/may/25/armenia-election-crossroads-between-east-west" target="_blank" rel="noopener">The Guardian</a> — Analysis of Armenia’s strategic positioning</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-australian-mp-suspended-after-refusing-to-withdraw-remarks">1) Australian MP suspended after refusing to withdraw remarks</h4>
@@ -1280,10 +1346,6 @@
 <li>How do suspensions affect ongoing legislative work?</li>
 <li>What role do independent members play in such disputes?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/may/25/teals-new-party-gaza-flotilla-activists-anthony-albanese-jim-chalmers-labor-angus-taylor-coalition-one-nation-budget-capital-gains-tax-estimates-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — Live coverage of the suspension</li>
-</ul>
 <h4 id="2-spanish-police-clash-with-gaza-flotilla-supporters-at-airport">2) Spanish police clash with Gaza flotilla supporters at airport</h4>
 <p><strong>What happened (neutral):</strong> Officers used truncheons on protesters gathered to welcome activists returning from Turkey after detention by Israeli forces. The incident followed recent government criticism of an Israeli minister’s remarks.</p>
 <p><strong>Perspectives:</strong> The Mail Online reports the timing relative to official statements condemning treatment of the activists. Human rights organisations often highlight the right to peaceful assembly. Police forces typically cite crowd control needs during arrivals.</p>
@@ -1292,10 +1354,6 @@
 <li>How do governments manage protests involving returning citizens from conflict zones?</li>
 <li>What accountability mechanisms exist for police conduct at airports?</li>
 <li>How do diplomatic statements influence domestic protest dynamics?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15846093/Spanish-police-beat-Gaza-flotilla-protesters-truncheons-airport-days-government-condemned-Israeli-minister-taunting-captivity.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Details of the airport incident</li>
 </ul>
 <h4 id="3-plane-collides-with-paraglider-in-austria">3) Plane collides with paraglider in Austria</h4>
 <p><strong>What happened (neutral):</strong> Footage shows a small aircraft striking a paraglider over the Kitzbühel Alps, sending the pilot spiralling before an emergency parachute deployed successfully.</p>
@@ -1306,10 +1364,6 @@
 <li>How do emergency systems mitigate risks in adventure sports?</li>
 <li>How are near-miss events used to improve training standards?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15846061/Terrifying-moment-plane-crashes-paraglider-sending-spiralling-air-emergency-parachute-saves-her.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Video description and outcome</li>
-</ul>
 <h4 id="4-gaza-flotilla-activists-return-to-australia">4) Gaza flotilla activists return to Australia</h4>
 <p><strong>What happened (neutral):</strong> Activists from a Gaza-bound aid flotilla arrived back in Sydney and described their experiences after detention.</p>
 <p><strong>Perspectives:</strong> Al Jazeera focuses on personal accounts of the journey and return. Supporters often frame the voyage as humanitarian advocacy. Critics typically question the effectiveness and safety of such flotillas.</p>
@@ -1319,10 +1373,6 @@
 <li>What consular support is provided in such cases?</li>
 <li>How do media outlets balance individual testimony with broader context?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/video/newsfeed/2026/5/25/gaza-flotilla-activists-return-to-australia-describing-abuse?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Return coverage and statements</li>
-</ul>
 <h4 id="5-boy-15-missing-after-entering-lake">5) Boy, 15, missing after entering lake</h4>
 <p><strong>What happened (neutral):</strong> A 15-year-old was seen in difficulty at Swanholme Lakes in Lincoln; a body was later recovered.</p>
 <p><strong>Perspectives:</strong> BBC News reports the sequence of events and police response. Local authorities typically issue water safety reminders after such incidents. Community members often reflect on supervision and access to recreational sites.</p>
@@ -1331,10 +1381,6 @@
 <li>What preventive measures reduce drowning risks at public lakes?</li>
 <li>How do emergency services coordinate responses in rural areas?</li>
 <li>How are families supported following water-related incidents?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/cp8pdd4833po?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Incident report and recovery</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-london-pubs-face-rising-closures-amid-economic-pressures">1) London pubs face rising closures amid economic pressures</h4>
@@ -1346,10 +1392,6 @@
 <li>What role do pubs play in local economies beyond sales figures?</li>
 <li>How might changing consumer habits accelerate or slow closures?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/audio/2026-05-25/odd-lots-how-to-run-one-of-london-s-most-popular-pubs-podcast" target="_blank" rel="noopener">Bloomberg</a> — Discussion of pub economics and trends</li>
-</ul>
 <h4 id="2-memory-chip-stocks-face-boom-bust-warnings-amid-ai-demand">2) Memory chip stocks face boom-bust warnings amid AI demand</h4>
 <p><strong>What happened (neutral):</strong> Investors caution that memory stocks tied to AI growth may experience sharp cycles. Analysts describe the sector as historically prone to oversupply and price swings.</p>
 <p><strong>Perspectives:</strong> CNBC reports investor concerns that long-term fundamentals remain weak despite current demand. Technology firms often pursue capacity expansion during upswings. Fund managers typically advise caution given past industry patterns.</p>
@@ -1359,10 +1401,6 @@
 <li>What strategies help investors navigate volatile tech sub-sectors?</li>
 <li>How do supply decisions by major manufacturers influence market stability?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/25/memory-stocks-cyclical-boom-bust-samsung-sk-hynix.html" target="_blank" rel="noopener">CNBC</a> — Analyst commentary on sector risks</li>
-</ul>
 <h4 id="3-singapore-revises-growth-outlook-higher-while-inflation-stays-low">3) Singapore revises growth outlook higher while inflation stays low</h4>
 <p><strong>What happened (neutral):</strong> Singapore reported 1.8% inflation for April, below expectations, and raised its economic growth forecast. Core inflation came in at 1.4%.</p>
 <p><strong>Perspectives:</strong> CNBC notes the contrast between subdued price pressures and stronger growth estimates. Government statements often link performance to external demand factors. Economists typically monitor how global energy prices interact with domestic figures.</p>
@@ -1371,10 +1409,6 @@
 <li>How do small open economies balance inflation control with growth targets?</li>
 <li>What indicators signal resilience during global uncertainty?</li>
 <li>How might revised forecasts influence regional investment decisions?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/25/singapore-inflation-gdp-iran-war-energy.html" target="_blank" rel="noopener">CNBC</a> — Data release and revisions</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-german-cosmetics-firm-adopts-ai-across-operations">1) German cosmetics firm adopts AI across operations</h4>
@@ -1386,10 +1420,6 @@
 <li>What training approaches prove effective for non-technical staff?</li>
 <li>How might AI integration affect product development timelines?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/germany-s-dr-wolff-cosmetics-company-is-going-all-in-on-ai/a-77268215?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — Company approach to AI rollout</li>
-</ul>
 <h4 id="2-china-tightens-rules-on-cross-border-stock-trading">2) China tightens rules on cross-border stock trading</h4>
 <p><strong>What happened (neutral):</strong> Beijing launched stricter enforcement against illicit overseas equity trading, prompting Chinese investors to seek alternative channels.</p>
 <p><strong>Perspectives:</strong> Bloomberg reports accelerated efforts to curb capital outflows through tighter monitoring. Regulators typically frame the measures as protecting financial stability. Market participants often explore compliant routes or domestic alternatives.</p>
@@ -1398,10 +1428,6 @@
 <li>How do capital control policies evolve in response to outflow pressures?</li>
 <li>What alternatives remain available for international portfolio diversification?</li>
 <li>How do enforcement changes affect retail investor behaviour?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-25/china-traders-rush-for-exit-after-cross-border-flow-crackdown" target="_blank" rel="noopener">Bloomberg</a> — Details on policy enforcement</li>
 </ul>
 <h4 id="3-first-hong-kong-astronaut-joins-chinese-space-mission">3) First Hong Kong astronaut joins Chinese space mission</h4>
 <p><strong>What happened (neutral):</strong> A 43-year-old police officer and mother of three from Hong Kong launched as payload scientist on a Chinese crewed flight.</p>
@@ -1422,10 +1448,6 @@
 <li>What factors influence decisions between commercial and artistic projects?</li>
 <li>How do public discussions shape perceptions of performers’ career strategies?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15846085/Sydney-Sweeneys-racy-scenes-risk-derailing-career-experts-fear-make-nudity-entire-brand-making-character-choices.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Expert commentary on career risks</li>
-</ul>
 <h4 id="2-meghan-markle-shares-family-jam-preferences">2) Meghan Markle shares family jam preferences</h4>
 <p><strong>What happened (neutral):</strong> In an Instagram post promoting her As Ever brand, Meghan Markle noted that each family member favours a different flavour of her jams.</p>
 <p><strong>Perspectives:</strong> The Mail Online covers the post as part of ongoing brand promotion. Lifestyle outlets often examine how personal anecdotes support product marketing. Audiences frequently engage with glimpses of family life shared through commercial channels.</p>
@@ -1435,10 +1457,6 @@
 <li>What role does social media play in direct-to-consumer product launches?</li>
 <li>How do audiences respond to personal versus polished promotional content?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/royals/article-15845615/Meghan-Markle-says-family-likes-different-one-jams-reveals-Harry-Lil-Archs-favourites.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Post content and context</li>
-</ul>
 <h4 id="3-jeremy-clarksons-farm-fest-ends-early-amid-trader-complaints">3) Jeremy Clarkson’s Farm Fest ends early amid trader complaints</h4>
 <p><strong>What happened (neutral):</strong> Several stallholders left the event ahead of schedule, citing blocked access and disappointing sales, with some describing the outcome as a “shambles.”</p>
 <p><strong>Perspectives:</strong> The Mail Online reports social media reactions from vendors who struggled to operate. Event organisers typically review logistics after attendee and trader feedback. Local businesses often weigh participation costs against potential returns.</p>
@@ -1447,10 +1465,6 @@
 <li>How do organisers balance scale with operational flow at large festivals?</li>
 <li>What support mechanisms exist for vendors facing access or sales issues?</li>
 <li>How do early exits affect future participation decisions?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15844753/clarkson-farm-fest-traders-leave-early.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Vendor accounts and event outcome</li>
 </ul>
 <h3 id="top-gossip-stories-3">Top gossip stories (3)</h3>
 <h4 id="1-venezuela-fury-honeymoon-details-emerge">1) Venezuela Fury honeymoon details emerge</h4>
@@ -1462,10 +1476,6 @@
 <li>What expectations surround celebrity honeymoons versus everyday life?</li>
 <li>How do family proximity considerations appear in coverage of young couples?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15841185/Hotel-Venezuela-Fury-honeymoon-married-life.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Hotel and future housing details</li>
-</ul>
 <h4 id="2-declan-rice-celebrates-premier-league-title-with-family">2) Declan Rice celebrates Premier League title with family</h4>
 <p><strong>What happened (neutral):</strong> Lauren Fryer joined Arsenal players’ relatives on the pitch after the trophy presentation following the club’s title win.</p>
 <p><strong>Perspectives:</strong> The Mail Online presents the appearance as a rare public moment for the couple. Sports coverage often includes family elements during championship celebrations. Fans typically value glimpses of personal support networks around athletes.</p>
@@ -1474,10 +1484,6 @@
 <li>How do clubs manage family access during major trophy events?</li>
 <li>What role do partners play in public narratives around player achievements?</li>
 <li>How does media balance athletic success with personal life coverage?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/sport/football/article-15845967/Declan-Rice-girlfriend-Lauren-Fryer-family-photos-celebrate-winning-Premier-League-title-Arsenal.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Pitch photos and context</li>
 </ul>
 <h4 id="3-king-charles-avoids-meeting-prince-andrew-during-sandringham-stay">3) King Charles avoids meeting Prince Andrew during Sandringham stay</h4>
 <p><strong>What happened (neutral):</strong> Charles visited Wood Farm on the Norfolk estate while the main house remained open to tourists, resulting in no reported interaction with his brother.</p>
@@ -1488,16 +1494,124 @@
 <li>What significance do observers attach to public versus private royal movements?</li>
 <li>How do media reports interpret absences from scheduled family settings?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/royals/article-15845533/King-Charles-snubs-brother-Andrew-staying-Sandringham.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Details of the visit arrangements</li>
-</ul>
 <h3 id="understanding-the-issue-how-workplace-ai-monitoring-systems-operate">Understanding the Issue: How workplace AI monitoring systems operate</h3>
 <p>Most coverage of AI tools in offices presents them as simple productivity aids, yet the underlying mechanism involves continuous scanning of devices against evolving classification models that can flag content without human review at the first stage. These systems, often developed by external vendors, compare files and activity logs against training data sets that label categories such as “sexual content,” then generate alerts for administrators who decide next steps. Because the models are updated remotely and may reflect the vendor’s priorities rather than an organisation’s specific policies, flagged material can include personal files stored on work devices even when no policy violation occurred. Knowing this, when you hear claims that AI simply “found” prohibited material, you can evaluate whether the process included human verification, appeal options, or transparency about the model’s training data. Next time you see a headline about workplace AI enforcement, ask: who trained the model, what counts as a match, and what recourse exists for those flagged before any suspension decision.</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference official statements with primary documents such as policy guidelines or regulatory filings when available. Compare how different outlets select which details to emphasise in the same event. Check whether later updates revise initial figures or interpretations.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.dailymail.com/news/article-15846147/Britain-braces-hottest-bank-holiday-Monday-Temperatures-set-hit-historic-35C-warmest-day-record.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15846027/Police-chief-suspended-AI-sexual-content.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/society/2026/may/25/nhs-spends-record-241m-outsourcing-scan-analysis-to-private-firms" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.npr.org/2026/05/25/nx-s1-5833671/muslims-begin-annual-hajj" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/may/25/armenia-election-crossroads-between-east-west" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/live/2026/may/25/teals-new-party-gaza-flotilla-activists-anthony-albanese-jim-chalmers-labor-angus-taylor-coalition-one-nation-budget-capital-gains-tax-estimates-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15846093/Spanish-police-beat-Gaza-flotilla-protesters-truncheons-airport-days-government-condemned-Israeli-minister-taunting-captivity.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15846061/Terrifying-moment-plane-crashes-paraglider-sending-spiralling-air-emergency-parachute-saves-her.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/video/newsfeed/2026/5/25/gaza-flotilla-activists-return-to-australia-describing-abuse?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cp8pdd4833po?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/audio/2026-05-25/odd-lots-how-to-run-one-of-london-s-most-popular-pubs-podcast" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/05/25/memory-stocks-cyclical-boom-bust-samsung-sk-hynix.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/05/25/singapore-inflation-gdp-iran-war-energy.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/germany-s-dr-wolff-cosmetics-company-is-going-all-in-on-ai/a-77268215?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-25/china-traders-rush-for-exit-after-cross-border-flow-crackdown" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15846085/Sydney-Sweeneys-racy-scenes-risk-derailing-career-experts-fear-make-nudity-entire-brand-making-character-choices.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/royals/article-15845615/Meghan-Markle-says-family-likes-different-one-jams-reveals-Harry-Lil-Archs-favourites.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15844753/clarkson-farm-fest-traders-leave-early.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15841185/Hotel-Venezuela-Fury-honeymoon-married-life.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/sport/football/article-15845967/Declan-Rice-girlfriend-Lauren-Fryer-family-photos-celebrate-winning-Premier-League-title-Arsenal.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/royals/article-15845533/King-Charles-snubs-brother-Andrew-staying-Sandringham.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1916,10 +2030,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

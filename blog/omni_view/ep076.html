@@ -107,7 +107,12 @@
       "url": "https://nerranetwork.com/omni-view.html"
     },
     "image": "https://nerranetwork.com/assets/covers/omni-view.jpg",
-    "transcript": "https://nerranetwork.com/blog/omni_view/ep076.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/omni_view/ep076.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://audio.nerranetwork.com/omni_view/Omni_View_Ep076_20260609.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -708,6 +713,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +818,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1181,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>A potential Iran nuclear deal in days could reopen the Strait of Hormuz and ease global oil pressure… — Episode 76</h1>
+            <h1><span class="nn-i18n-title">A potential Iran nuclear deal in days could reopen the Strait of Hormuz and ease global oil pressure…</span> — Episode 76</h1>
             
             <p class="blog-hero-hook">A potential Iran nuclear deal in days could reopen the Strait of Hormuz and ease global oil pressure, while a U.S. Army helicopter incident near the waterway highlights ongoing risks.</p>
             
@@ -1129,6 +1212,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1194,11 +1280,6 @@
 <li>How do energy price swings affect household budgets in import-dependent countries?</li>
 <li>Which regional actors gain or lose leverage if the Strait reopens quickly?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/06/09/trump-iran-war-deal-days.html" target="_blank" rel="noopener">CNBC</a> — Trump comments on timeline for Iran agreement</li>
-<li><a href="https://www.foxnews.com/politics/us-army-helicopter-goes-president-donald-trump-says-pilots-fine" target="_blank" rel="noopener">Fox News</a> — Report on helicopter incident near Strait of Hormuz</li>
-</ul>
 <h4 id="2-us-army-helicopter-goes-down-near-strait-of-hormuz">2) US Army helicopter goes down near Strait of Hormuz</h4>
 <p><strong>What happened (neutral):</strong> A U.S. Army helicopter went down in the area of the Strait of Hormuz. President Trump said the pilots are fine. The New York Times first reported the incident.</p>
 <p><strong>Perspectives:</strong> The strongest case for transparency here rests on the need for clear public information about military movements in a tense waterway that carries a large share of global oil. Some argue prompt statements from the White House reduce speculation that could escalate tensions. Others note that limited details leave open questions about operational context and any broader pattern of incidents.</p>
@@ -1206,10 +1287,6 @@
 <ul>
 <li>How do statements from officials shape public understanding of regional security?</li>
 <li>What role does the Strait play in daily energy prices?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.foxnews.com/politics/us-army-helicopter-goes-president-donald-trump-says-pilots-fine" target="_blank" rel="noopener">Fox News</a> — Details on helicopter incident and presidential response</li>
 </ul>
 <h4 id="3-gsk-agrees-to-acquire-nuvalent-for-106-billion">3) GSK agrees to acquire Nuvalent for $10.6 billion</h4>
 <p><strong>What happened (neutral):</strong> GSK reached an agreement to buy the drugmaker Nuvalent. Nuvalent shares rose sharply after the announcement. The transaction occurs during a period of increased biotech deal activity tied to patent expirations and pipeline needs.</p>
@@ -1219,10 +1296,6 @@
 <li>How do patent timelines influence when companies pursue acquisitions?</li>
 <li>What signals do share-price reactions send about investor views of deal value?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/06/09/gsk-in-talks-to-acquire-nuvalent-for-more-than-9-billion.html" target="_blank" rel="noopener">CNBC</a> — Terms and market reaction to the GSK-Nuvalent deal</li>
-</ul>
 <h4 id="4-us-small-business-optimism-falls-to-lowest-level-since-october-2024">4) US small-business optimism falls to lowest level since October 2024</h4>
 <p><strong>What happened (neutral):</strong> An index tracking U.S. small-business sentiment declined in May, wiping out nearly all gains recorded since the presidential election. The drop brings readings to the weakest point in roughly seven months.</p>
 <p><strong>Perspectives:</strong> The strongest case for viewing the decline as significant rests on small firms' role as early indicators of hiring and investment plans that affect local employment. Some interpret the reversal as evidence that earlier post-election gains were not sustained. Others note that single-month readings can reflect temporary factors rather than structural shifts.</p>
@@ -1231,10 +1304,6 @@
 <li>Which components of the index moved most and why?</li>
 <li>How do small-business trends connect to broader employment data?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-06-09/us-small-business-optimism-falls-to-lowest-since-october-2024" target="_blank" rel="noopener">Bloomberg</a> — Index details and historical comparison</li>
-</ul>
 <h4 id="5-man-seriously-injured-in-belfast-stabbing">5) Man seriously injured in Belfast stabbing</h4>
 <p><strong>What happened (neutral):</strong> Police responded to a knife attack on Kinnaird Avenue in north Belfast late Monday. A man in his 30s, reported as Somali, was arrested on suspicion of attempted murder. The victim sustained serious injuries and was hospitalized.</p>
 <p><strong>Perspectives:</strong> The strongest case for treating the incident as a priority public-safety matter rests on the need to maintain confidence that streets remain safe for residents regardless of background. Some emphasize rapid arrests as evidence the justice system functions. Others stress the importance of context around community relations to prevent wider tensions.</p>
@@ -1242,11 +1311,6 @@
 <ul>
 <li>What resources do police services allocate after such attacks?</li>
 <li>How do political leaders' statements shape public reaction?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/cdejnjdg08eo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Police account of the Belfast incident</li>
-<li><a href="https://www.theguardian.com/uk-news/2026/jun/09/man-seriously-injured-in-belfast-stabbing-starmer-describes-as-sickening" target="_blank" rel="noopener">The Guardian</a> — Prime minister's response and timeline</li>
 </ul>
 <h3 id="top-world-stories-2">Top world stories (2)</h3>
 <h4 id="1-taliban-reportedly-fire-on-protesters-supporting-detained-women-and-girls">1) Taliban reportedly fire on protesters supporting detained women and girls</h4>
@@ -1257,10 +1321,6 @@
 <li>What forms of documentation are available from on-the-ground observers?</li>
 <li>How have similar protests evolved in the past?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15885063/Taliban-SHOOT-beat-protesters-supporting-women-girls-arrested-violating-dress-code.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Description of the protest and reported response</li>
-</ul>
 <h4 id="2-kuwait-offers-crude-to-asian-buyers-for-first-time-since-war-began">2) Kuwait offers crude to Asian buyers for first time since war began</h4>
 <p><strong>What happened (neutral):</strong> Kuwait resumed offering oil sales to Asian refiners, the first such move since the Iran conflict started. The step signals gradual reopening of supply routes despite earlier threats to shipping.</p>
 <p><strong>Perspectives:</strong> The strongest case for monitoring these offers rests on their direct link to global supply balances that influence prices paid by consumers. Some see the move as evidence that alternative channels can mitigate disruption. Others note that sustained flows still depend on security conditions in key waterways.</p>
@@ -1268,10 +1328,6 @@
 <ul>
 <li>Which buyers are receiving the new offers and why?</li>
 <li>How quickly can additional supply reach markets?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-06-09/kuwait-offers-oil-to-asian-buyers-for-first-time-since-war-began" target="_blank" rel="noopener">Bloomberg</a> — Details on Kuwait's sales resumption</li>
 </ul>
 <h3 id="top-business-stories-2">Top business stories (2)</h3>
 <h4 id="1-chinas-imports-from-eu-drop-widening-trade-imbalance">1) China’s imports from EU drop, widening trade imbalance</h4>
@@ -1282,10 +1338,6 @@
 <li>Which product categories drove the import decline?</li>
 <li>What policy tools are available to address persistent gaps?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-06-09/china-s-trade-imbalance-with-eu-swells-with-imports-in-new-slump" target="_blank" rel="noopener">Bloomberg</a> — Latest trade figures and context</li>
-</ul>
 <h4 id="2-stonex-plans-to-expand-commodities-trading-presence-in-india">2) StoneX plans to expand commodities trading presence in India</h4>
 <p><strong>What happened (neutral):</strong> StoneX Group intends to add base metals and agricultural commodities desks in India after opening a precious-metals operation in June. The move deepens the firm’s footprint in a fast-growing market.</p>
 <p><strong>Perspectives:</strong> The strongest case for tracking such expansions rests on the connection between commodity trading infrastructure and price discovery for producers and consumers. Some view the step as a natural response to rising economic activity. Others note that new desks can also shift where risk is managed and reported.</p>
@@ -1293,10 +1345,6 @@
 <ul>
 <li>How do new trading desks affect local market liquidity?</li>
 <li>What regulatory approvals are typically required for such expansions?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-06-09/stonex-plans-to-deepen-india-presence-beyond-first-trading-desk" target="_blank" rel="noopener">Bloomberg</a> — Expansion plans and timeline</li>
 </ul>
 <h3 id="top-technology-stories-1">Top technology stories (1)</h3>
 <h4 id="1-wayve-considers-allowing-share-sales-on-uks-new-private-market">1) Wayve considers allowing share sales on UK’s new private market</h4>
@@ -1307,10 +1355,6 @@
 <li>How does the new platform differ from traditional secondary markets?</li>
 <li>What safeguards are built into the system for smaller investors?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-06-09/uber-backed-wayve-eyes-stake-sale-on-the-uk-s-new-private-market" target="_blank" rel="noopener">Bloomberg</a> — Details on Wayve’s planned use of the platform</li>
-</ul>
 <h3 id="top-popular-media-stories-1">Top popular media stories (1)</h3>
 <h4 id="1-telemundo-and-fox-prepare-for-record-world-cup-viewership-in-the-us">1) Telemundo and Fox prepare for record World Cup viewership in the US</h4>
 <p><strong>What happened (neutral):</strong> Broadcasters are finalizing years of planning ahead of the FIFA World Cup opening in two days. Telemundo has focused on Spanish-language presentation to attract wider audiences.</p>
@@ -1319,10 +1363,6 @@
 <ul>
 <li>How do language choices affect advertising strategies?</li>
 <li>What metrics will determine whether viewership records are set?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-06-09/telemundo-fox-aim-for-viewer-records-with-world-cup-in-the-us" target="_blank" rel="noopener">Bloomberg</a> — Preparation details from the networks</li>
 </ul>
 <h3 id="top-gossip-stories-1">Top gossip stories (1)</h3>
 <h4 id="1-kates-choice-of-pale-colors-at-weddings-draws-attention">1) Kate’s choice of pale colors at weddings draws attention</h4>
@@ -1333,16 +1373,84 @@
 <li>What historical precedents exist for color choices at royal weddings?</li>
 <li>How do media outlets decide which details merit coverage?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/royals/article-15883517/Kate-Middleton-white-wedding-dress-Peter-Phillips.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Context on the dress and etiquette discussion</li>
-</ul>
 <h3 id="understanding-the-issue-how-strait-of-hormuz-closures-affect-global-oil-pricing">Understanding the Issue: How Strait of Hormuz closures affect global oil pricing</h3>
 <p>Most coverage of potential Hormuz disruptions assumes that any closure immediately spikes prices worldwide, yet the actual mechanism involves layered responses from strategic reserves, alternative pipelines, and rerouting that can blunt short-term effects. When tensions rise, traders first price in the probability and duration of interruption rather than a total cutoff, because roughly 20 percent of global oil normally transits the strait while spare capacity elsewhere and government stockpiles provide buffers. Knowing this, when you hear claims of an “instant crisis,” you can check whether reports account for these offsets or treat the strait as an on-off switch. Next time you see a headline about Hormuz, ask: which alternative supply routes are already quantified, how large are current reserve releases, and what historical precedent exists for rapid rerouting during past tensions?</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference official statements from governments and companies with shipping and inventory data released by agencies such as the EIA. Primary documents such as trade statistics and regulatory filings often reveal the scale of any disruption more precisely than initial commentary.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.cnbc.com/2026/06/09/trump-iran-war-deal-days.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.foxnews.com/politics/us-army-helicopter-goes-president-donald-trump-says-pilots-fine" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=foxnews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">foxnews.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/06/09/gsk-in-talks-to-acquire-nuvalent-for-more-than-9-billion.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-06-09/us-small-business-optimism-falls-to-lowest-since-october-2024" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cdejnjdg08eo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/uk-news/2026/jun/09/man-seriously-injured-in-belfast-stabbing-starmer-describes-as-sickening" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15885063/Taliban-SHOOT-beat-protesters-supporting-women-girls-arrested-violating-dress-code.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-06-09/kuwait-offers-oil-to-asian-buyers-for-first-time-since-war-began" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-06-09/china-s-trade-imbalance-with-eu-swells-with-imports-in-new-slump" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-06-09/stonex-plans-to-deepen-india-presence-beyond-first-trading-desk" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-06-09/uber-backed-wayve-eyes-stake-sale-on-the-uk-s-new-private-market" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-06-09/telemundo-fox-aim-for-viewer-records-with-world-cup-in-the-us" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/royals/article-15883517/Kate-Middleton-white-wedding-dress-Peter-Phillips.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1755,10 +1863,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>
