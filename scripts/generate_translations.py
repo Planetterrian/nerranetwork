@@ -134,6 +134,38 @@ def _render_track(
     )
 
 
+# Grok TTS list price (per CLAUDE.md / engine.tracking): ~$4.20 per 1M chars.
+_TTS_USD_PER_MILLION = 4.20
+
+
+def _log_cost_projection(targets, languages, output_dir, force) -> None:
+    """Log a rough projected character + $ footprint before generating."""
+    total_chars = 0
+    tracks = 0
+    for rec in targets:
+        ep = rec.get("episode_num")
+        tf = _find_episode_file(output_dir, ep, "*_tts.txt")
+        if not tf:
+            continue
+        n = len(tf.read_text(encoding="utf-8"))
+        existing = rec.get("translations", {}) or {}
+        for lang in languages:
+            if lang in existing and not force:
+                continue
+            total_chars += n
+            tracks += 1
+    if not tracks:
+        return
+    # TTS bills the translated text (~English length); translation LLM adds
+    # roughly the same character volume on input. Report the TTS line only.
+    tts_cost = total_chars / 1_000_000 * _TTS_USD_PER_MILLION
+    logger.info(
+        "Projection: %d track(s), ~%s TTS chars, ~$%.2f Grok TTS "
+        "(+ translation LLM tokens). Use --dry-run to preview without spending.",
+        tracks, f"{total_chars:,}", tts_cost,
+    )
+
+
 def _resolve_languages(args, config) -> List[str]:
     if args.languages:
         langs = [s.strip() for s in args.languages.split(",") if s.strip()]
@@ -226,6 +258,10 @@ def main() -> int:
     reported_langs: set = set()
     changed = False
 
+    # Cost / volume projection (rough, informational) — translation + TTS both
+    # bill per character; a 4-language batch across several shows adds up.
+    _log_cost_projection(targets, languages, output_dir, args.force)
+
     for rec in targets:
         ep = rec["episode_num"]
         english_url = rec.get("audio_url", "")
@@ -237,14 +273,20 @@ def main() -> int:
         en_title = rec.get("episode_title", "") or ""
         en_desc = _english_hook(output_dir, ep) or en_title
         translations: Dict[str, dict] = rec.setdefault("translations", {})
+        ep_changed = False
 
         for lang in languages:
             if lang in translations and not args.force:
                 logger.info("Ep%s [%s]: already present — skipping (use --force)", ep, lang)
                 continue
             logger.info("Ep%s [%s]: translating script…", ep, lang)
-            translated = translate.translate_script(english_script, lang)
-            t_title, t_desc = translate.translate_metadata(en_title, en_desc, lang)
+            try:
+                translated = translate.translate_script(english_script, lang)
+                t_title, t_desc = translate.translate_metadata(en_title, en_desc, lang)
+            except translate.TranslationError as exc:
+                # Bad/refused translation: skip THIS track, keep the batch going.
+                logger.error("Ep%s [%s]: translation rejected — %s", ep, lang, exc)
+                continue
 
             if args.dry_run:
                 logger.info("Ep%s [%s]: DRY-RUN — %d chars, title=%r",
@@ -296,11 +338,17 @@ def main() -> int:
                 "generated_at": datetime.now(timezone.utc).isoformat(),
             }
             changed = True
+            ep_changed = True
             logger.info("Ep%s [%s]: done → %s", ep, lang, public_url)
 
+        # Persist after each EPISODE so a crash mid-batch keeps finished work
+        # (the R2 object is already up; the record is what makes it idempotent).
+        if ep_changed and not args.dry_run:
+            save_summaries(summaries_path, wrapper, records)
+            logger.info("Ep%s: summaries checkpointed", ep)
+
     if changed and not args.dry_run:
-        save_summaries(summaries_path, wrapper, records)
-        logger.info("Updated summaries: %s", summaries_path)
+        logger.info("Done. Updated summaries: %s", summaries_path)
     elif not changed:
         logger.info("Nothing to do (all requested tracks already present).")
     return 0
