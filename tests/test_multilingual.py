@@ -483,3 +483,28 @@ class TestLanguageSwitcherUX:
         assert "renderLatestLangs" in html
         # Shares the same site-wide preference key as the blog switcher.
         assert "nn-pref-lang" in html
+
+
+class TestGlobalLanguageControl:
+    def test_nav_control_in_base_and_script_loaded(self):
+        base = (PROJECT_ROOT / "templates" / "base.html.j2").read_text(encoding="utf-8")
+        assert 'id="nn-lang-toggle"' in base
+        assert 'id="nn-lang-menu"' in base
+        assert "assets/js/language-control.js" in base
+        # Clearly an AUDIO control, not a page-translation control.
+        assert "Audio language" in base
+
+    def test_language_control_js_contract(self):
+        js = (PROJECT_ROOT / "assets" / "js" / "language-control.js").read_text(encoding="utf-8")
+        assert "nn-pref-lang" in js
+        assert "localStorage" in js
+        assert "nn-langchange" in js  # dispatches the live-switch event
+
+    def test_players_listen_for_langchange(self):
+        for tpl in ("blog_post.html.j2", "show_page.html.j2"):
+            html = (PROJECT_ROOT / "templates" / tpl).read_text(encoding="utf-8")
+            assert "nn-langchange" in html, tpl
+
+    def test_homepage_card_lists_languages(self):
+        html = (PROJECT_ROOT / "templates" / "network_page.html.j2").read_text(encoding="utf-8")
+        assert "中文" in html  # multilingual card now names the audio languages

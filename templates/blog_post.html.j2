@@ -995,6 +995,12 @@
     pills.forEach(function(p) {
         p.addEventListener('click', function() { apply(p.dataset.lang, true); });
     });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
     apply(preferred(), false);
 })();
 </script>

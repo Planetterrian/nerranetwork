@@ -925,6 +925,11 @@
                 b.addEventListener('click', () => apply(code, true));
                 box.appendChild(b);
             });
+            // Live-switch when the global header language control changes.
+            document.addEventListener('nn-langchange', (e) => {
+                const lang = (e.detail && e.detail.lang) || 'en';
+                apply((lang === 'en' || tr[lang]) ? lang : 'en', false);
+            });
             const pref = savedPref();
             apply((pref && (pref === 'en' || tr[pref])) ? pref : 'en', false);
         }
