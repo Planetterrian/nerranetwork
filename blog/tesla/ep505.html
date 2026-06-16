@@ -107,7 +107,12 @@
       "url": "https://nerranetwork.com/tesla.html"
     },
     "image": "https://nerranetwork.com/assets/covers/tesla-shorts-time.jpg",
-    "transcript": "https://nerranetwork.com/blog/tesla/ep505.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/tesla/ep505.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep505_20260609.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -708,6 +713,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +818,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1181,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time" width="40" height="40"></picture>
                 Tesla Shorts Time Blog
             </a>
-            <h1>Multiple Cybercabs at an Atlanta service center show Tesla is moving physical hardware into real-wor… — Episode 505</h1>
+            <h1><span class="nn-i18n-title">Multiple Cybercabs at an Atlanta service center show Tesla is moving physical hardware into real-wor…</span> — Episode 505</h1>
             
             <p class="blog-hero-hook">Multiple Cybercabs at an Atlanta service center show Tesla is moving physical hardware into real-world preparation ahead of any unsupervised launch.</p>
             
@@ -1129,6 +1212,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1219,7 +1305,32 @@
                         <span class="source-domain">x.com</span>
                     </a>
                     
+                    <a href="https://x.com/Teslarati/status/2064324737862430753" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=x.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">x.com</span>
+                    </a>
+                    
+                    <a href="https://x.com/Tesla/status/2064062706538385660" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=x.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">x.com</span>
+                    </a>
+                    
                     <a href="https://news.google.com/rss/articles/CBMiogFBVV95cUxNdnlOWE1lSmRNenZrdzhNUXRpcWVjS2ozV3lfYW1vY3BjaGl6ZUNMWkFSRmNhOEZ6djVZQU1YOE93UDJpWUdtd2pXd2x0RTdTeUdQRC0tdEhhSkhUM2hiSmE3cW9KRnVaVFR3YjdzX3k0d0JDQW1oeTdoS3ZST3RUSE4tTWRjRFludGNIWS12eUk4OEE3N3V1TzZEcnBPMGYyMkHSAacBQVVfeXFMT3lDQm5iR2hveEdCTTRzQ1dhU2JLTVBUcEI0dkN5d19jR2ozMGI3U011cnNWSTVWQ3dmcWJERzVCSjdoT1NPQnN3cks4b1JTN0NoR2JxSm93ek9VYVV4endGU2JtOElyNDFlYjBNMFNrTm5EMFVxRkVjZnNXMmprUlNIdTY4bEpJZWVyZmJxaW5Nb2xDTjVTNTI4eVVMZEJOQm5LRHo0cjQ" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMifEFVX3lxTE9adW9tbVpaWHI4M1dWelVsUUlTRWdBR0JGbDV4Y1lQU19FTThDWmVwQzBSOFNZaTc1T3pUZHdrRHppQVU3d2hTY0RVVGJVSEU1elFXWFpCdW5hdFJibnBwYWFTN1pFVjd0UzZsVVphRUhZZ2FESENkNFRMZjM" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMilwFBVV95cUxPczE3WjFFa3FIRF9PU2pDMFhyS1BKcEw2UDJOM1NlSEtxSjhtR3JrbUEtWDk1T09ZTF9BSHRrTWtVYzdFREd6NWpVR2xZNUItQ0pNb3hRVTlna2k5eVFIMVk2UmpPM25MOTRzNXNHWHdvdmJ6VFFWMlk5WEt0YTFSTE01ZFR0QUkxTl93T3J6cUhLNkwtbkVJ" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMitAFBVV95cUxNY3NXOHlIT2o2Mjk2Q1hYWkJKUGt1N056ZFdNZG1QVmN2R3djMU8xNENjOFcwVjlfU3dldHd1TFg3aGhTbHZjeFFEa0ZsQ1ZzYjE1a2U4ajNnUU9PLWZJVUpTajBqc3AtMEpZSEc3YXNaaFJwdWxfN3V6SFMwUTNLMHZsc2N2U3E3bFZGSklGTjR4eHQyUEZ2aWF3MXkwT3lFaEVmR0R1dDRxR2F0MUVFLVRVeEY" target="_blank" rel="noopener" class="blog-source-card">
                         <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
                         <span class="source-domain">news.google.com</span>
                     </a>
@@ -1232,6 +1343,36 @@
                     <a href="https://insideevs.com/reviews/798129/rivian-r2-first-drive-review/" target="_blank" rel="noopener" class="blog-source-card">
                         <img src="https://www.google.com/s2/favicons?domain=insideevs.com&sz=32" alt="" class="source-icon" loading="lazy">
                         <span class="source-domain">insideevs.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMirAFBVV95cUxNU19aVWw0Q1NUSFZjWlV0Nk9CYmRxTU05N1pqVlBDVldCejZIYlpVNGgzbjJQSGgxa2RqNVpCbVF1Zk93WEdkYWIxTTNZV0R5M0FUaFZ6aFNtQ1FlaFNBbVBVdXh4MDUyQllqN0VOOVZDc0ZHM2lUZjJjZEs4aGZ3N19OWHB6eDFGbWk5eFoxLUY2UkMzM0tkMEhER21pdzVKbHQyeHF3N2l3ZzBl" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMiowFBVV95cUxPZTA2N3NxclBrMEg3UVdyQnBCOG45X21acUZtODRwNTM5SW50amNVUlhvSjhvakJnNWxtTEpySXNXSzh3eFpmOGJsUEdEMjVaY0lzM29ZMzlVZVlqWXZpclF6ajhTZ3BINV9seXlkWjdRMEdpY3Z1dXhwMGExcjMxdXJua2xWb3pReElfSC1JczEwTlZXS1FqS01qdzMwbXVYSVNF" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMigwFBVV95cUxOS0lrcHBNcm9sTmU2QzgxZ2hlaWY4eXZwT0JGOGRrQ1pMQ21GZnZpUEF4Y1FxbmczRDR2S01fUWxHeWN4WE9hY0JqejJQZ0U4NmFnTlA4ZnV5VkZLWV9WN1NZc0NTeF83LURqaVo3dnNMSUsxakRDNG5Gbm9MWlR6Qk5Paw" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMitgFBVV95cUxNNUtYRGduU2RPYnZMY0d3eklwMU55SDJjRDNfZUh1S09ZcU93bXIxb2lnQ1hZd0dzQWhrMDlPRGE0QkV0S081bHo0TEdFTDh0M2VVX2wydlhzZnFCZEE0QUloakVnbWlQNU50ZDN4UTJKNlkxX2xMRnJZdmF2SmtPRDlJanZWbjlxV2YxVDd6dTlBaFVqaVpsQVl5MkszMDhlYm5iREQ3RjZsX0hsWkc0NFloblFJUQ" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMitwFBVV95cUxNaDJFTkVvdjdjSk5VaVZwOVd6VTdXc29Xc1lIU0JCX0ozOUdHeFZlQWUzd2YzcFNSLV9fNDdka2hORlNGMnkxd2VMQjM2V1pER3g1dHkxTFk0OFRTb2g2Z2tzVTFVc2FUaUtmUVNyc190VGtrOE9vOTVPai0zZmxnS1hoTy14T1BzSHVKNk9GSEJseVNkRkpFNHZKUUdQVWNrVDZEUTFEbWJfR251N0xzUWFlTEZENDQ" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
+                    </a>
+                    
+                    <a href="https://news.google.com/rss/articles/CBMiqgFBVV95cUxPaktYeGhmRW84Qy1ia1k3NnNTYTcyZldZSU12a3E4Vktnckg4THg0VmJxNVh1RjZGU0lVcjlDTnU0YldDWUJ3SUY5cWtGQ3lpcWRpSktIeGF3UGxfaFY2emVTc1dWZ1hqcmItQU85Skp1M1JzMzl4dzBIWlFIaWFIYTVuUDFiTjZqLTFlbWJNX0pTRzNUcG4wQmU1Wk5mSWNyZk1zTUszOWZZUQ" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=news.google.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">news.google.com</span>
                     </a>
                     
                 </div>
@@ -1664,10 +1805,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,220 @@
+It's that time again.
+Welcome to Tesla Short's Time, daily episode 512,
+coming to you from Vancouver, it's June 16th, 2026.
+Let's dive into today's Tesla news.
+Tesla's Dojo networking patents move packet recovery
+into hardware so the training fabric keeps running
+even when Ethernet drops frames.
+Goldman Sachs raised its second quarter delivery forecast
+for Tesla to 420,000 vehicles.
+The firm reviewed registration data
+from the United States, Europe, China, South Korea,
+and Australia before making the change.
+The new projection sits above both the earlier 405,000 estimate
+and the street consensus of 400,000.
+Full year 2026 deliveries now stand at 1.73 million.
+The 2026 earnings per share forecast moved to $1.35
+from $1.30.
+The price target stayed at $375, and the rating remained neutral.
+The adjustment signals stronger near-term order trends
+without altering longer-term assumptions.
+From Wall Street's view of vehicle demand,
+we turned to the infrastructure Tesla is building
+to train the autonomy that could change those economics.
+Two new patents describe hardware that stores recent packets
+locally and replays only lost segments
+without software intervention.
+Patent W0204-039-8000, and patent W0204-039-794
+cover the TTPOE approach.
+The design uses on-chip cash or SRAM as small as 256 kilobytes
+and linked lists to track transmission order.
+Four pipeline stages handle stream selection,
+link identification, replay or retire decisions,
+and pointer updates entirely in hardware.
+A hardware link timer working with fiffle memory
+checks multiple links in round robin fashion
+and adapts its tick period.
+The system accepts controlled packet loss on Ethernet
+while keeping training jobs from stalling.
+Hardware designers usually treat packet loss
+as a problem to eliminate through credits, pauses,
+and lossless fabrics.
+Tesla's recent patents instead treat loss
+as an expected event inside a controlled AI cluster
+and move recovery into silicon.
+The approach stores recent packets locally,
+tracks order with linked lists and replays
+only the uncertain segment when a timer
+or negative acknowledgement arrives.
+Because the decision logic lives in the chip
+rather than the kernel, training jobs avoid the latency spikes
+that software retransmission would introduce.
+Every extra millisecond of stall time across thousands
+of GPUs compounds into loss training throughput
+and higher electricity cost per model iteration.
+By keeping recovery inside the TTP Mac block
+and adapting the hardware timer to the number of active links,
+Tesla reduces that overhead without requiring
+a perfect physical layer.
+The trade-off is that the system must still
+guarantee bounded loss rates.
+This design choice also reveals a broader pattern
+in Tesla's AI stack.
+Rather than buying the most expensive lossless switches,
+the company is optimizing the entire path
+from silicon to software for the specific workload
+of large-scale model training.
+While the patents focus on training efficiency,
+Tesla is also preparing the vehicles
+those models will eventually power.
+Remember, we covered CyberCab developments yesterday.
+EPA filings show the CyberCab carries
+a 48 kilowatt hour battery pack
+and a single front-mounted motor.
+The documents list estimated range and charging specifications
+that align with a purpose-built robot taxi.
+Drone footage captured more than 100 CyberCab vehicles
+parked in formation at Gigafactory, Texas.
+The vehicles appear complete and ready for deployment
+rather than in various build stages.
+The front-drive layout and modest battery size
+point to lower production cost targets
+than earlier robot taxi concepts.
+Production timing and regulatory clearance
+remain the next milestone to watch.
+Tesla posted a reminder that its vehicles
+can execute parallel parking autonomously.
+The feature uses ultrasonic sensors
+and cameras already present on current models
+to measure the space and steer into it
+without driver input on the wheel.
+Owners activate the maneuver through the screen or app.
+Once the car has identified a suitable spot,
+the post underscores that this capability has been available
+for years yet still surprises some drivers.
+As the CyberCab hardware takes shape,
+charging infrastructure for the semi is also being simplified.
+Tesla is adapting its plug-and-play supercharger model
+to 1.2 megawatt megacharger sites.
+Preassembled units would reduce on-site construction time
+and allow faster expansion of high-power depots.
+The move treats charging depots
+as a parallel constraint to vehicle production.
+Details on deployment locations and timelines
+are still pending.
+While Tesla refines its own hardware and infrastructure,
+a competitor is signaling it will enter the same software lane.
+Rivians CEO stated the company plans to launch
+a driver assistance system comparable to Tesla's
+full self-driving before the end of 2026.
+The announcement positions Rivian as a direct software competitor
+in the same regulatory environment.
+No technical specifications or naming for the system were provided.
+The timeline places Rivian roughly alongside
+Tesla's push toward unsupervised operation.
+As more players enter assisted driving,
+real-world safety data from Tesla's limited
+Robotaxi operations becomes relevant.
+Tesla's limited Robotaxi operations recorded no
+at fault collisions over four months of supervised
+and unsupervised testing.
+External vehicles struck the test fleet multiple times
+during the same period.
+The data covers a small number of vehicles operating
+in controlled conditions.
+Regulators will still require larger-scale evidence
+before approving broader unsupervised deployment.
+While the fleet itself performs cleanly,
+questions are servicing about how regulators
+describe vehicles without traditional controls.
+Current EPA and NHTSA terminology
+does not yet address vehicles built
+without steering wheels or pedals.
+Tesla's CyberCab and similar programs
+will require new definitions around driver,
+operator, and responsibility allocation.
+Updated terminology could affect
+how future safety standards are written and enforced.
+The observation comes from an account
+that tracks regulatory filings closely.
+Regulatory gaps are one issue.
+Another is whether current vision systems
+can handle unexpected cabin conditions.
+Researchers showed that low-cost doll heads placed
+in the cabin can cause Tesla's occupant detection system
+to misclassify the interior.
+The test raises questions about edge-case robustness
+in cabin monitoring cameras and software.
+Tesla has not yet commented on whether
+the finding affects current production vehicles
+or future hardware iterations.
+The finding highlights a potential gap
+in current vision-based monitoring
+that could affect both safety features
+and regulatory scrutiny.
+SpaceX completed its first Falcon 9 mission
+since the IPO on June 15.
+The launch sent 24 Starlink version
+two mini satellites from Vandenberg.
+Booster B1093 flew its 14th mission
+and lifted off an approximately 834 AM Pacific Daylight time.
+The flight was described as routine
+yet symbolically significant for the newly public company.
+Starlink deployment cadence continues unchanged.
+Elon Musk stated that government incentives
+represent less than 2% of the combined enterprise value
+of Tesla and SpaceX.
+The remark came during a discussion
+of long-term business economics.
+It was framed as evidence that both companies
+have moved beyond early-stage reliance on policy support.
+It offers a direct counterpoint to narratives
+that treat subsidies as a primary valuation driver.
+The Tesla Rauti Editor stated a preference
+for a gold-finished cybercab
+once the vehicle reaches customers.
+The comment reflects growing anticipation
+around the RoboTaxi's eventual availability
+and customization options.
+It also highlights how the vehicle's distinctive design
+is already generating personal ownership interest
+beyond fleet use.
+Insider Monkey aggregates recent institutional
+filings and sentiment indicators around TSLA.
+The report compiles data from multiple large holders
+without issuing its own price target or rating.
+It serves as a snapshot of how professional investors
+have adjusted exposure in the most recent quarter.
+An analysis examines how Tesla's
+capital allocation has shifted
+from a lower-priced vehicle program
+toward AI and autonomy investments.
+It quantifies the implied valuation trade-off
+between near-term vehicle margins
+and longer-term RoboTaxi economics.
+The piece notes that current share pricing
+already embeds significant success
+in the autonomy roadmap.
+Investors will watch upcoming earnings
+for any updated capital expenditure guidance tied to that shift.
+Before we go, keep an eye on whether the
+stronger order trends noted by Goldman Sachs
+hold through the end of the quarter in earnings reports.
+And that's everything worth knowing about Tesla today.
+TSLA closed at $411.15, up $2.17, 0.5%.
+If the show saves you time,
+a quick rating on Apple Podcast
+or Spotify goes a long way.
+You can also find us on X at Tesla Short's Time.
+I'm Patrick and Vancouver.
+I'll see you tomorrow.
+And before you go,
+this show is part of the NARA network,
+a family of daily podcasts covering tech,
+science, markets, and more.
+If you enjoyed today's episode,
+give fascinating frontiers a listen,
+the most fascinating news from space and science.
+You can explore the whole lineup at naranetwork.com.
+This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.

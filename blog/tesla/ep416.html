@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/tesla-shorts-time-400.webp"><img src="../../assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time" width="40" height="40"></picture>
                 Tesla Shorts Time Blog
             </a>
-            <h1>Tesla is developing a new family vehicle that Elon Musk calls way cooler than a minivan as the compa… — Episode 416</h1>
+            <h1><span class="nn-i18n-title">Tesla is developing a new family vehicle that Elon Musk calls way cooler than a minivan as the compa…</span> — Episode 416</h1>
             
             <p class="blog-hero-hook">Tesla is developing a new family vehicle that Elon Musk calls way cooler than a minivan as the company begins phasing out the Model S and X.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1235,9 +1316,24 @@
                         <span class="source-domain">driveteslacanada.ca</span>
                     </a>
                     
+                    <a href="https://www.teslarati.com/tesla-officially-begins-sunset-model-s-model-x/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=teslarati.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">teslarati.com</span>
+                    </a>
+                    
+                    <a href="https://www.teslarati.com/tesla-optimus-job-listings/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=teslarati.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">teslarati.com</span>
+                    </a>
+                    
                     <a href="https://whatsuptesla.com/2026/03/24/deaf-driver-shows-how-teslas-self-driving-system-hears-sirens-he-cant/" target="_blank" rel="noopener" class="blog-source-card">
                         <img src="https://www.google.com/s2/favicons?domain=whatsuptesla.com&sz=32" alt="" class="source-icon" loading="lazy">
                         <span class="source-domain">whatsuptesla.com</span>
+                    </a>
+                    
+                    <a href="https://driveteslacanada.ca/news/tesla-opens-supercharger-in-comox-british-columbia/?utm_source=rss&utm_medium=rss&utm_campaign=tesla-opens-supercharger-in-comox-british-columbia" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=driveteslacanada.ca&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">driveteslacanada.ca</span>
                     </a>
                     
                     <a href="https://cleantechnica.com/2026/03/24/jay-leno-takes-a-spin-in-the-tesla-semi-video/" target="_blank" rel="noopener" class="blog-source-card">
@@ -1245,9 +1341,44 @@
                         <span class="source-domain">cleantechnica.com</span>
                     </a>
                     
+                    <a href="https://www.teslarati.com/tesla-shows-off-mysterious-vehicle-giga-texas/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=teslarati.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">teslarati.com</span>
+                    </a>
+                    
                     <a href="https://insideevs.com/news/790975/tesla-door-handles-cybercab-look/" target="_blank" rel="noopener" class="blog-source-card">
                         <img src="https://www.google.com/s2/favicons?domain=insideevs.com&sz=32" alt="" class="source-icon" loading="lazy">
                         <span class="source-domain">insideevs.com</span>
+                    </a>
+                    
+                    <a href="https://driveteslacanada.ca/news/honda-and-sony-scrap-afeela-ev-program/?utm_source=rss&utm_medium=rss&utm_campaign=honda-and-sony-scrap-afeela-ev-program" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=driveteslacanada.ca&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">driveteslacanada.ca</span>
+                    </a>
+                    
+                    <a href="https://driveteslacanada.ca/news/wattsapp-celebrates-2-million-charging-points-with-tesla-universal-wall-connector-giveaway/?utm_source=rss&utm_medium=rss&utm_campaign=wattsapp-celebrates-2-million-charging-points-with-tesla-universal-wall-connector-giveaway" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=driveteslacanada.ca&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">driveteslacanada.ca</span>
+                    </a>
+                    
+                    <a href="https://driveteslacanada.ca/news/byd-targets-toronto-first-in-push-to-launch-up-to-20-canadian-dealerships/?utm_source=rss&utm_medium=rss&utm_campaign=byd-targets-toronto-first-in-push-to-launch-up-to-20-canadian-dealerships" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=driveteslacanada.ca&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">driveteslacanada.ca</span>
+                    </a>
+                    
+                    <a href="https://driveteslacanada.ca/news/the-boring-company-selects-three-winners-for-tunnel-vision-challenge-plans-multiple-free-tunnel-projects/?utm_source=rss&utm_medium=rss&utm_campaign=the-boring-company-selects-three-winners-for-tunnel-vision-challenge-plans-multiple-free-tunnel-projects" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=driveteslacanada.ca&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">driveteslacanada.ca</span>
+                    </a>
+                    
+                    <a href="https://insideevs.com/news/791024/zoox-robotaxi-expansion-austin-miami/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=insideevs.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">insideevs.com</span>
+                    </a>
+                    
+                    <a href="https://driveteslacanada.ca/news/spacex-file-ipo-this-week-report/?utm_source=rss&utm_medium=rss&utm_campaign=spacex-file-ipo-this-week-report" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=driveteslacanada.ca&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">driveteslacanada.ca</span>
                     </a>
                     
                 </div>
@@ -1696,10 +1827,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

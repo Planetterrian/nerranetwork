@@ -121,6 +121,25 @@
             background: color-mix(in srgb, var(--show-color) 20%, transparent);
             border-color: var(--show-color);
         }
+        /* Multilingual availability badges (June 2026) */
+        .blog-idx-langs {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin: var(--sp-2) 0 var(--sp-1);
+            color: var(--nn-text-muted);
+        }
+        .blog-idx-langs .lang-badge {
+            font-family: var(--font-ui);
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            padding: 1px 7px;
+            border-radius: 100px;
+            border: 1px solid color-mix(in srgb, var(--show-color) 35%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            background: color-mix(in srgb, var(--show-color) 10%, transparent);
+        }
     </style>
 
 
@@ -172,6 +191,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -516,6 +559,20 @@
     
     <div class="blog-idx-grid">
         
+        <a href="ep512.html" class="blog-idx-card">
+            <div class="blog-idx-card-top">
+                <span class="blog-idx-date">June 16, 2026</span>
+                <span class="blog-idx-ep">Ep 512</span>
+                <span class="blog-idx-reading">8 min</span>
+            </div>
+            <h2>Tesla’s Dojo networking patents move packet recovery into hardware so the training fabric keeps runn…</h2>
+            
+            <p>Tesla’s Dojo networking patents move packet recovery into hardware so the training fabric keeps running even when Ethernet drops frames.</p>
+            
+            
+            <span class="blog-idx-read-more">Read article &rarr;</span>
+        </a>
+        
         <a href="ep511.html" class="blog-idx-card">
             <div class="blog-idx-card-top">
                 <span class="blog-idx-date">June 15, 2026</span>
@@ -525,6 +582,7 @@
             <h2>ABF Freight's order of two Tesla Semis puts the first long-range electric trucks into California lin…</h2>
             
             <p>ABF Freight's order of two Tesla Semis puts the first long-range electric trucks into California linehaul service with routes extending to Reno.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -539,6 +597,7 @@
             
             <p>Good to have you on Tesla Shorts Time Daily, episode 510 for June 14, 2026. I'm Patrick, coming to you from Vancouver. Here's what's happening with Tesla today.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -551,6 +610,7 @@
             <h2>Tesla's foldable Superchargers heading to Europe could cut installation time for new sites</h2>
             
             <p>Tesla's foldable Superchargers heading to Europe could cut installation time for new sites.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -565,6 +625,7 @@
             
             <p>Tesla Model Y just topped all foreign vehicle registrations in Japan for May.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -577,6 +638,7 @@
             <h2>ABF Freight's order of two Tesla Semis for California routes moves the electric truck from prototype…</h2>
             
             <p>ABF Freight's order of two Tesla Semis for California routes moves the electric truck from prototype to paid freight work.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -591,6 +653,7 @@
             
             <p>Denmark's FSD Supervised approval extends the system to four European countries and shows how regulatory progress can outpace fleet deployment elsewhere.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -603,6 +666,7 @@
             <h2>Multiple Cybercabs at an Atlanta service center show Tesla is moving physical hardware into real-wor…</h2>
             
             <p>Multiple Cybercabs at an Atlanta service center show Tesla is moving physical hardware into real-world preparation ahead of any unsupervised launch.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -617,6 +681,7 @@
             
             <p>China's 22% Tesla sales rebound in May signals demand recovery after a two-month slump.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -629,6 +694,7 @@
             <h2>Looking back at 8 episodes from 2026-06-01 to 2026-06-07 — the stories that mattered, what we learne…</h2>
             
             <p>Looking back at 8 episodes from 2026-06-01 to 2026-06-07 — the stories that mattered, what we learned, and what to watch next.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -643,6 +709,7 @@
             
             <p>Tesla's import of a Chinese-built Premium AWD Model 3 into Canada for under $50,000 tests whether cross-border sourcing can offset domestic production constrain&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -655,6 +722,7 @@
             <h2>Tesla ending free Supercharging for new Model 3s on June 15 removes a key ownership perk just as buy…</h2>
             
             <p>Tesla ending free Supercharging for new Model 3s on June 15 removes a key ownership perk just as buyers weigh total costs against rivals.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -669,6 +737,7 @@
             
             <p>Tokyo's new EV incentives could nearly halve Tesla prices in the capital region.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -681,6 +750,7 @@
             <h2>Tesla's new interior accent lights now turn red to warn of blind-spot vehicles, giving drivers a dir…</h2>
             
             <p>Tesla's new interior accent lights now turn red to warn of blind-spot vehicles, giving drivers a direct visual cue without glancing at mirrors.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -695,6 +765,7 @@
             
             <p>Halifax gets its first Supercharger site under construction, extending the network into Atlantic Canada for the first time.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -707,6 +778,7 @@
             <h2>China's 39% jump in Tesla wholesale volume signals resilient demand amid intensifying EV rivalry</h2>
             
             <p>China's 39% jump in Tesla wholesale volume signals resilient demand amid intensifying EV rivalry.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -721,6 +793,7 @@
             
             <p>Tesla's FSD approval in Estonia opens public roads in a third European country after Lithuania and the Netherlands.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -733,6 +806,7 @@
             <h2>Tesla's May registrations more than doubled in Spain and surged across other European markets, signa…</h2>
             
             <p>Tesla's May registrations more than doubled in Spain and surged across other European markets, signaling a clear demand rebound.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -747,6 +821,7 @@
             
             <p>Looking back at 11 episodes from 2026-05-25 to 2026-05-31 — the stories that mattered, what we learned, and what to watch next.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -759,6 +834,7 @@
             <h2>Cybercab navigating Giga Texas unaided tests autonomy in a live factory before any public deployment…</h2>
             
             <p>Cybercab navigating Giga Texas unaided tests autonomy in a live factory before any public deployment.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -773,6 +849,7 @@
             
             <p>Texas granting Tesla commercial driverless rights shifts its robotaxi plans from supervised testing into paid operation.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -785,6 +862,7 @@
             <h2>The 2026 Model Y became the first vehicle ever to pass the US government's new advanced driver assis…</h2>
             
             <p>The 2026 Model Y became the first vehicle ever to pass the US government's new advanced driver assistance safety tests.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -799,6 +877,7 @@
             
             <p>A Teslarati editor is running FSD v14.3.3 hands-free across 122 miles of turnpike without touching the wheel once.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -811,6 +890,7 @@
             <h2>Tesla's Roadster now has a confirmed Austin Gigafactory production site, yet no release date has bee…</h2>
             
             <p>Tesla's Roadster now has a confirmed Austin Gigafactory production site, yet no release date has been set.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -825,6 +905,7 @@
             
             <p>Tesla's scrapped India factory hands local EV rivals an open runway in a market it once targeted for growth.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -837,6 +918,7 @@
             <h2>Construction of Tesla’s dedicated Optimus factory at Giga Texas marks the first physical step toward…</h2>
             
             <p>Construction of Tesla’s dedicated Optimus factory at Giga Texas marks the first physical step toward scaling humanoid robot production at volume.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -851,6 +933,7 @@
             
             <p>Tesla's dry cathode process could slash battery production costs as Elon confirms the tech's potential.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -863,6 +946,7 @@
             <h2>Tesla’s quiet charging zones at Superchargers force volume reductions to cut neighborhood noise comp…</h2>
             
             <p>Tesla’s quiet charging zones at Superchargers force volume reductions to cut neighborhood noise complaints.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -877,6 +961,7 @@
             
             <p>Tesla's rebrand of FSD to "Assisted Driving" in China shows how local regulators are forcing clearer limits on autonomy claims.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -889,6 +974,7 @@
             <h2>Franz von Holzhausen confirmed the Tesla Roadster will be built at Gigafactory Texas, locking in the…</h2>
             
             <p>Franz von Holzhausen confirmed the Tesla Roadster will be built at Gigafactory Texas, locking in the long-delayed halo car's manufacturing location.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -903,6 +989,7 @@
             
             <p>Looking back at 6 episodes from 2026-05-18 to 2026-05-24 — the stories that mattered, what we learned, and what to watch next.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -915,6 +1002,7 @@
             <h2>Tesla’s new magnet patent cuts rare-earth content below one percent by weight while keeping the part…</h2>
             
             <p>Tesla’s new magnet patent cuts rare-earth content below one percent by weight while keeping the part structurally intact.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -929,6 +1017,7 @@
             
             <p>Tesla's first Model Y price increase in two years tests whether buyers will absorb higher costs amid softening demand.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -941,6 +1030,7 @@
             <h2>Xiaomi's YU7 undercuts the Model Y by $4,350 with extra range, raising the stakes for Tesla in China…</h2>
             
             <p>Xiaomi's YU7 undercuts the Model Y by $4,350 with extra range, raising the stakes for Tesla in China and beyond.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -955,6 +1045,7 @@
             
             <p>Tesla's decision to spotlight Signature Edition Model S and X comes as production focus shifts elsewhere in the lineup.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -967,6 +1058,7 @@
             <h2>Tesla's scrapped India factory plans expose how regulatory and infrastructure hurdles can derail eve…</h2>
             
             <p>Tesla's scrapped India factory plans expose how regulatory and infrastructure hurdles can derail even aggressive global expansion goals.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -981,6 +1073,7 @@
             
             <p>Tesla lost its top spot in Hungary to a Chinese rival, underscoring how quickly local market leadership can shift.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -993,6 +1086,7 @@
             <h2>Looking back at 6 episodes from 2026-05-11 to 2026-05-17 — the stories that mattered, what we learne…</h2>
             
             <p>Looking back at 6 episodes from 2026-05-11 to 2026-05-17 — the stories that mattered, what we learned, and what to watch next.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1007,6 +1101,7 @@
             
             <p>Tesla's 70 Cybercabs now sitting at Giga Texas show the robotaxi program shifting from prototypes to volume preparation.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1019,6 +1114,7 @@
             <h2>Kazakhstan's first official use of Cybertrucks for state security shows how the vehicle's off-road a…</h2>
             
             <p>Kazakhstan's first official use of Cybertrucks for state security shows how the vehicle's off-road and power capabilities are moving into government operations.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1033,6 +1129,7 @@
             
             <p>Tesla's new Bengaluru experience centre puts Model Y and refreshed variants in front of Indian buyers for the first time, testing whether the brand can translat&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1045,6 +1142,7 @@
             <h2>Tesla's first use of Canada's new China EV tariff deal brings Shanghai Model 3s to market at half th…</h2>
             
             <p>Tesla's first use of Canada's new China EV tariff deal brings Shanghai Model 3s to market at half the price of US-built versions.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1059,6 +1157,7 @@
             
             <p>Tesla's robotaxi rollout in Texas is hitting long wait times that expose real-world limits in scaling unsupervised FSD today.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1071,6 +1170,7 @@
             <h2>Tesla's final Model S and Model X have left the Fremont line, freeing factory space for higher-volum…</h2>
             
             <p>Tesla's final Model S and Model X have left the Fremont line, freeing factory space for higher-volume production as the company moves on from its oldest platfor&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1085,6 +1185,7 @@
             
             <p>Tesla's drive to hire specialized Korean chip engineers in Seoul shows it's building its own silicon stack for future AI hardware rather than relying on outside&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1097,6 +1198,7 @@
             <h2>Tesla Vision now deploys airbags up to 70 milliseconds earlier in unavoidable collisions</h2>
             
             <p>Tesla Vision now deploys airbags up to 70 milliseconds earlier in unavoidable collisions.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1111,6 +1213,7 @@
             
             <p>California regulators just disclosed the Tesla Semi's battery sizes at 822 kWh and 548 kWh.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1123,6 +1226,7 @@
             <h2>California has opened its roads to autonomous semi trucks, clearing a regulatory path for Tesla's el…</h2>
             
             <p>California has opened its roads to autonomous semi trucks, clearing a regulatory path for Tesla's electric hauler.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1137,6 +1241,7 @@
             
             <p>WattEV ordered 370 Tesla Semis in a roughly $100 million deal, the largest yet for the electric truck.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1149,6 +1254,7 @@
             <h2>Tesla’s Spring Update now links the car’s accent lights directly to blind spot monitoring</h2>
             
             <p>Tesla’s Spring Update now links the car’s accent lights directly to blind spot monitoring.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1163,6 +1269,7 @@
             
             <p>Tesla has started producing its Semi electric trucks at a dedicated factory in Nevada.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1175,6 +1282,7 @@
             <h2>A new Tesla Semi with three cameras per side mirror was spotted at the Las Vegas Convention Center a…</h2>
             
             <p>A new Tesla Semi with three cameras per side mirror was spotted at the Las Vegas Convention Center ahead of the ACT Expo.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1189,6 +1297,7 @@
             
             <p>Tesla has started high-volume production of the Semi with the first unit off the line at its giant factory.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1201,6 +1310,7 @@
             <h2>Tesla Shorts Time — Ep 459</h2>
             
             <p>The final Model X to roll off the line carries a hidden tribute with factory signatures under its Garnet Red paint.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1215,6 +1325,7 @@
             
             <p>California has closed a loophole that blocked permits for driverless vehicles under new autonomous legislation.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1227,6 +1338,7 @@
             <h2>Tesla has introduced its cheapest Model 3 in Canada at a record low while planning a Roadster unveil…</h2>
             
             <p>Tesla has introduced its cheapest Model 3 in Canada at a record low while planning a Roadster unveil this month.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1241,6 +1353,7 @@
             
             <p>The first production Tesla Cybercab has rolled off the line with a VIN assigned.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1253,6 +1366,7 @@
             <h2>Tesla has started mass production of the Semi in Nevada</h2>
             
             <p>Tesla has started mass production of the Semi in Nevada.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1267,6 +1381,7 @@
             
             <p>Tesla has filed to begin vehicle sales and service in Bulgaria, expanding its footprint into Eastern Europe.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1279,6 +1394,7 @@
             <h2>Tesla is hiring engineers to build a wireless Battery Management System for Cybercab that removes he…</h2>
             
             <p>Tesla is hiring engineers to build a wireless Battery Management System for Cybercab that removes heavy wiring harnesses across its vehicles.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1293,6 +1409,7 @@
             
             <p>Tesla is rolling out a Virtual Queue for Superchargers to end the fights over who charges next.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1305,6 +1422,7 @@
             <h2>Tesla filed an S-8 registering shares for Musk’s 2018 performance award, lifting his stake back over…</h2>
             
             <p>Tesla filed an S-8 registering shares for Musk’s 2018 performance award, lifting his stake back over 20%.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1319,6 +1437,7 @@
             
             <p>Tesla has begun production of its CyberCab robotaxi in Texas, with revenue targeted after 2027.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1331,6 +1450,7 @@
             <h2>Giga Berlin is ramping up output by 20% and adding 1,000 new hires after a record first quarter</h2>
             
             <p>Giga Berlin is ramping up output by 20% and adding 1,000 new hires after a record first quarter.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1345,6 +1465,7 @@
             
             <p>Tesla patented an acid-free lithium extraction method that yields ultra-pure liquid while locking waste in dry clay.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1357,6 +1478,7 @@
             <h2>Tesla patented a Lane Language Model that predicts road geometry like a chatbot predicts the next wo…</h2>
             
             <p>Tesla patented a Lane Language Model that predicts road geometry like a chatbot predicts the next word.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1371,6 +1493,7 @@
             
             <p>Tesla has started production of the Cybercab at Giga Texas.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1383,6 +1506,7 @@
             <h2>Hey, it's April 23, 2026.</h2>
             
             <p>Hey, it's April 23, 2026.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1397,6 +1521,7 @@
             
             <p>Hey, how's it going?</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1409,6 +1534,7 @@
             <h2>Tesla is developing a smaller, cheaper electric SUV to reach more everyday buyers</h2>
             
             <p>Tesla is developing a smaller, cheaper electric SUV to reach more everyday buyers.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1423,6 +1549,7 @@
             
             <p>Full Self-Driving is now live on Teslas in Europe, with first-hand test drives starting to surface.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1435,6 +1562,7 @@
             <h2>Tesla has expanded its unsupervised Robotaxi service into Dallas and Houston right before earnings</h2>
             
             <p>Tesla has expanded its unsupervised Robotaxi service into Dallas and Houston right before earnings.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1449,6 +1577,7 @@
             
             <p>Hey, it's me catching you up on Tesla today.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1461,6 +1590,7 @@
             <h2>SECTION 1: NEWS</h2>
             
             <p>Hey, it's been an interesting 24 hours in the Tesla world. Let's walk through what's actually moving the needle today.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1475,6 +1605,7 @@
             
             <p>A Tesla owner's camera caught the moment a Mercedes EV owner escaped just before their vehicle caught fire.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1487,6 +1618,7 @@
             <h2>Netherlands has approved Tesla's Full Self-Driving software in a first for Europe, opening the door…</h2>
             
             <p>Netherlands has approved Tesla's Full Self-Driving software in a first for Europe, opening the door to wider AI regulatory progress.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1501,6 +1633,7 @@
             
             <p>Tesla's Spring 2026 software update is rolling out with a voice-activated Grok assistant and a redesigned Self-Driving app for AI4 hardware.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1513,6 +1646,7 @@
             <h2>Tesla secured its first European approval for FSD Supervised in the Netherlands, four years after th…</h2>
             
             <p>Tesla secured its first European approval for FSD Supervised in the Netherlands, four years after the initial push, though the system arrives with restrictions.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1527,6 +1661,7 @@
             
             <p>Tesla’s Full Self-Driving software just received its first European regulatory approval in the Netherlands, opening a key regulatory door but leaving broader EU&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1539,6 +1674,7 @@
             <h2>Tesla’s dedicated Semi factory in Nevada is now open and aiming for 50,000 trucks a year as fleet in…</h2>
             
             <p>Tesla’s dedicated Semi factory in Nevada is now open and aiming for 50,000 trucks a year as fleet interest picks up.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1553,6 +1689,7 @@
             
             <p>Tesla deliveries missed expectations again amid rising inventory while the company appears to be restarting work on affordable compact EVs.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1565,6 +1702,7 @@
             <h2>Tesla's Supercharger-for-Business tool reveals massive ROI differences between prime and poor locati…</h2>
             
             <p>Tesla's Supercharger-for-Business tool reveals massive ROI differences between prime and poor locations while Polestar launches direct discounts targeting its o&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1579,6 +1717,7 @@
             
             <p>Tesla's European registrations more than quadrupled in Germany last month, signalling a sharp rebound in one of its key markets.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1591,6 +1730,7 @@
             <h2>Tesla reclaims the global EV sales crown in Q1 by overtaking BYD despite a modest 6% vehicle deliver…</h2>
             
             <p>Tesla reclaims the global EV sales crown in Q1 by overtaking BYD despite a modest 6% vehicle delivery increase and softer energy growth.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1605,6 +1745,7 @@
             
             <p>US regulator closes its investigation into Tesla's Actually Smart Summon after the company rolled out software fixes.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1617,6 +1758,7 @@
             <h2>BYD has now outsold Tesla for the second straight month as the Chinese EV maker continues gaining gr…</h2>
             
             <p>BYD has now outsold Tesla for the second straight month as the Chinese EV maker continues gaining ground in global markets.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1631,6 +1773,7 @@
             
             <p>A Tesla in Israel took a direct hit from Iranian missile debris yet its glass roof held firm, while the company also overtook BYD in global EV sales for Q1.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1643,6 +1786,7 @@
             <h2>Tesla regained the top spot in global pure EV sales by outpacing BYD while expanding the long-wheelb…</h2>
             
             <p>Tesla regained the top spot in global pure EV sales by outpacing BYD while expanding the long-wheelbase Model Y across Asia.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1657,6 +1801,7 @@
             
             <p>Tesla Shorts Time – Special Educational Episode</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1669,6 +1814,7 @@
             <h2>Tesla Shorts Time – Special Educational Episode</h2>
             
             <p>Tesla Shorts Time – Special Educational Episode</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1683,6 +1829,7 @@
             
             <p>Tesla Shorts Time – Special Educational Episode</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1695,6 +1842,7 @@
             <h2>Tesla Shorts Time – Special Educational Episode</h2>
             
             <p>Tesla Shorts Time – Special Educational Episode</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1709,6 +1857,7 @@
             
             <p>Tesla Shorts Time – Special Educational Episode</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1721,6 +1870,7 @@
             <h2>Tesla has started delivering the refreshed Model Y Performance and RWD in British Columbia after wee…</h2>
             
             <p>Tesla has started delivering the refreshed Model Y Performance and RWD in British Columbia after weeks of shifting timelines.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1735,6 +1885,7 @@
             
             <p>A Tesla on FSD Supervised avoided a potential collision with a school bus that nearly ran a red light, with the viral video showing the system braking sharply t&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1747,6 +1898,7 @@
             <h2>Tesla makes Fortune’s 2026 Most Innovative Companies list thanks to the Cybercab as production begin…</h2>
             
             <p>Tesla makes Fortune’s 2026 Most Innovative Companies list thanks to the Cybercab as production begins this year.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1761,6 +1913,7 @@
             
             <p>Tesla is developing a new family vehicle that Elon Musk calls way cooler than a minivan as the company begins phasing out the Model S and X.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1773,6 +1926,7 @@
             <h2>Cybertruck earns IIHS Top Safety Pick+ while Tesla patents a fresh trailer-style range extender</h2>
             
             <p>Cybertruck earns IIHS Top Safety Pick+ while Tesla patents a fresh trailer-style range extender.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1787,6 +1941,7 @@
             
             <p>NHTSA has escalated its investigation into Tesla's Full Self-Driving software to the engineering analysis phase.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1799,6 +1954,7 @@
             <h2>Tesla and SpaceX launched the Terafab project to build vertically integrated AI chip production on a…</h2>
             
             <p>Tesla and SpaceX launched the Terafab project to build vertically integrated AI chip production on a massive scale.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1813,6 +1969,7 @@
             
             <p>Canada is investing $200 million in its own Spaceport Nova Scotia to cut reliance on SpaceX for future launches.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1825,6 +1982,7 @@
             <h2>Elon Musk confirms Tesla's Terafab AI chip plant starts production in just seven days</h2>
             
             <p>Elon Musk confirms Tesla's Terafab AI chip plant starts production in just seven days.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1839,6 +1997,7 @@
             
             <p>Tesla's latest software update brings Comfort Braking to Model Y, enhancing smoother stops for owners.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1851,6 +2010,7 @@
             <h2>Tesla gains a stake in SpaceX by converting its $2B xAI investment, deepening ties between Musk's co…</h2>
             
             <p>Tesla gains a stake in SpaceX by converting its $2B xAI investment, deepening ties between Musk's companies.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1865,6 +2025,7 @@
             
             <p>Tesla is ramping up Cybercab production to hundreds weekly at its Austin factory ahead of launch.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1877,6 +2038,7 @@
             <h2>Tesla ramps up Cybercab testing on public roads as it queues for mass production</h2>
             
             <p>Tesla ramps up Cybercab testing on public roads as it queues for mass production.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1891,6 +2053,7 @@
             
             <p>Tesla loses two long-time executives, including finance VP Sendil Palani after 17 years and OTA director Thomas Dmytryk after 11 years.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1903,6 +2066,7 @@
             <h2>Tesla's FSD tech is now called more revolutionary than the iPhone by experts, sparking major buzz</h2>
             
             <p>Tesla's FSD tech is now called more revolutionary than the iPhone by experts, sparking major buzz.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1917,6 +2081,7 @@
             
             <p>Tesla patents breakthrough dry electrode process for cheaper, cleaner battery production.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1929,6 +2094,7 @@
             <h2>Tesla's patent for a one-piece composite seat signals the next-gen Roadster is nearing its debut</h2>
             
             <p>Tesla's patent for a one-piece composite seat signals the next-gen Roadster is nearing its debut.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1943,6 +2109,7 @@
             
             <p>Tesla's Giga Berlin workers elect 'Giga United' majority, signaling a shift away from union influence.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1955,6 +2122,7 @@
             <h2>Automakers are exiting Tesla's EU carbon credit pool, which could squeeze a key revenue stream worth…</h2>
             
             <p>Automakers are exiting Tesla's EU carbon credit pool, which could squeeze a key revenue stream worth billions.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1969,6 +2137,7 @@
             
             <p>Tesla raised the Cybertruck's entry price to $69,990 just 10 days after its $59,990 launch, signaling strong initial demand.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1981,6 +2150,7 @@
             <h2>Tesla raised the Cybertruck AWD price by $10K to $69,990 after strong initial demand</h2>
             
             <p>Tesla raised the Cybertruck AWD price by $10K to $69,990 after strong initial demand.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1995,6 +2165,7 @@
             
             <p>Tesla's FSD (Supervised) fleet hits 8.4 billion cumulative miles, closing in on the 10 billion needed for unsupervised autonomy.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -2008,6 +2179,7 @@
             
             <p>Tesla confirms upgraded black headliner and 16-inch screen for new Model Y orders in Canada, enhancing customer appeal.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -2020,6 +2192,7 @@
             <h2>Tesla's new affordable Cybertruck variant sees delivery estimates pushed to April 2027 amid surging…</h2>
             
             <p>Tesla's new affordable Cybertruck variant sees delivery estimates pushed to April 2027 amid surging demand.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -2224,5 +2397,6 @@
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>
