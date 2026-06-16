@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Trump extends deadline for Iran to reopen Strait of Hormuz to April 6, pausing strikes on energy sit… — Episode 24</h1>
+            <h1><span class="nn-i18n-title">Trump extends deadline for Iran to reopen Strait of Hormuz to April 6, pausing strikes on energy sit…</span> — Episode 24</h1>
             
             <p class="blog-hero-hook">Trump extends deadline for Iran to reopen Strait of Hormuz to April 6, pausing strikes on energy sites as oil markets fluctuate.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1208,14 +1289,6 @@
 <li>How might prolonged uncertainty impact countries that import over 85% of their oil?</li>
 <li>What historical precedents exist for de-escalation around this waterway?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/27/iran-war-live-updates-trump-negotiations-bombing-hormuz-energy-oil-prices-middle-east" target="_blank" rel="noopener">Middle East crisis live: Trump pausing strikes on Iran energy sites</a> — Guardian live updates</li>
-<li><a href="https://www.theguardian.com/world/2026/mar/26/donald-trump-urges-iran-end-war-or-face-assassinations" target="_blank" rel="noopener">Trump extends deadline for Iran to open strait of Hormuz by 10 days</a> — Full Guardian report</li>
-<li><a href="https://www.cnbc.com/2026/03/27/oil-price-wti-brent-crude-trump-strait-hormuz-tensions-iran-ships.html" target="_blank" rel="noopener">Oil prices fall as Trump says Iran let 10 tankers through Hormuz</a> — CNBC coverage</li>
-<li><a href="https://www.aljazeera.com/opinions/2026/3/27/the-strait-of-hormuz-is-not-just-an-oil-chokepoint?traffic_source=rss" target="_blank" rel="noopener">The Strait of Hormuz is not just an oil chokepoint</a> — Al Jazeera opinion</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15682869/Trump-Iran-strike-deadline-pause.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Trump backs off Iran strike deadline with new 10-day pause</a> — Daily Mail report</li>
-</ul>
 <h4 id="2-global-energy-disruption-triggers-fuel-measures-in-india-australia-sri-lanka">2) Global Energy Disruption Triggers Fuel Measures in India, Australia, Sri Lanka</h4>
 <p><strong>What happened (neutral):</strong> India slashed taxes on diesel and petrol to shield consumers from rising prices caused by the Middle East conflict. Australia is experiencing panic buying and fuel supply concerns, prompting the prime minister to reassure citizens that supplies remain secure. Sri Lanka is bracing for a new economic crisis reminiscent of 2022 as fuel shortages emerge.</p>
 <p><strong>Perspectives:</strong> The Guardian reports India’s finance minister stating the tax cuts will “provide protection to consumers from rise in prices,” noting the country relies on foreign suppliers for more than 85% of its oil. BBC notes Australian Prime Minister Albanese saying the nation’s fuel supply is “same, if not higher” in coming weeks while the opposition calls for halving excise. Al Jazeera describes Sri Lankans seeing echoes of the 2022 crisis, with the current fuel shortage carrying an additional twist due to the distant conflict. Outlets agree the war is disrupting supplies; they differ on whether domestic policy responses like tax cuts and public reassurances sufficiently address underlying import dependence and global price volatility.</p>
@@ -1225,13 +1298,6 @@
 <li>What distinguishes current fuel concerns from previous energy crises?</li>
 <li>How quickly can alternative supply routes adjust to strait disruptions?</li>
 <li>What role does public communication play in preventing panic buying?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/27/iran-war-live-updates-trump-negotiations-bombing-hormuz-energy-oil-prices-middle-east" target="_blank" rel="noopener">Middle East crisis live: Trump pausing strikes on Iran energy sites</a> — Guardian live blog on India tax cuts</li>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/mar/27/tropical-cyclone-narelle-fuel-crisis-petrol-cost-of-living-inflation-iran-war-storm-anthony-albanese-angus-taylor-ntwnfb" target="_blank" rel="noopener">Australia news live: One Nation wins second seat in South Australia</a> — Guardian Australia fuel coverage</li>
-<li><a href="https://www.aljazeera.com/features/2026/3/27/sri-lanka-braces-for-new-economic-crisis-as-war-on-iran-continues?traffic_source=rss" target="_blank" rel="noopener">Sri Lanka braces for new economic crisis as war on Iran continues</a> — Al Jazeera feature</li>
-<li><a href="https://www.bbc.com/news/articles/cg73znr1vj7o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">Panic buying prompts PM to reassure Australians over fuel supply</a> — BBC report</li>
 </ul>
 <h4 id="3-europes-economy-feeling-pain-from-trumps-iran-war">3) Europe’s Economy Feeling Pain from Trump’s Iran War</h4>
 <p><strong>What happened (neutral):</strong> The economic effects of the Iran conflict are beginning to appear in Europe, with more muted growth and faster inflation reported. The situation risks deepening industrial, fiscal, and political pressures across the region.</p>
@@ -1243,11 +1309,6 @@
 <li>How might inflation risks interact with existing economic pressures?</li>
 <li>What early indicators should observers watch?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-03-27/europe-s-economy-is-starting-to-feel-pain-from-trump-s-iran-war" target="_blank" rel="noopener">Europe’s Economy Is Starting to Feel Pain From Trump’s Iran War</a> — Bloomberg analysis</li>
-<li><a href="https://www.bloomberg.com/news/videos/2026-03-27/the-china-show-3-27-2026-video" target="_blank" rel="noopener">Markets Fall on Gap Between Trump's Talk and Actions</a> — Bloomberg video on market reaction</li>
-</ul>
 <h4 id="4-e-waste-from-rich-nations-floods-nigerian-markets">4) E-waste from Rich Nations Floods Nigerian Markets</h4>
 <p><strong>What happened (neutral):</strong> Discarded, near-end-of-life electronics from developed countries are being shipped to Nigeria, adding to the country’s growing e-waste burden. The material is described as “truly junk” in local markets.</p>
 <p><strong>Perspectives:</strong> Al Jazeera highlights how this practice shifts environmental and health burdens from wealthy nations to developing ones. The coverage connects to broader conversations about global consumption patterns and waste management responsibility. Nigerian perspectives focus on the local impacts, while the story implicitly raises questions about accountability in international trade.</p>
@@ -1258,10 +1319,6 @@
 <li>What local capacities exist to handle such waste safely?</li>
 <li>What longer-term environmental costs are involved?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/features/2026/3/27/truly-junk-e-waste-from-rich-nations-floods-local-markets-in-nigeria?traffic_source=rss" target="_blank" rel="noopener">‘Truly junk’: E-waste from rich nations floods local markets in Nigeria</a> — Al Jazeera feature</li>
-</ul>
 <h4 id="5-lawyers-criticise-extreme-arrest-of-anti-herzog-protester-in-australia">5) Lawyers Criticise ‘Extreme’ Arrest of Anti-Herzog Protester in Australia</h4>
 <p><strong>What happened (neutral):</strong> A 42-year-old protester from a February rally against Israeli President Isaac Herzog has been arrested at home by tactical police. Lawyers have raised concerns about the tactics used, describing them as heavy-handed. This is the 26th person charged in connection with the event, which involved violent clashes.</p>
 <p><strong>Perspectives:</strong> The Guardian reports lawyers criticising the early-morning raid involving eight officers who “smashed the door open.” The outlet notes the police response on the night of the protest is already under investigation for alleged brutality. Coverage reflects tensions between maintaining public order and protecting protest rights, with differing emphases on the severity of the original demonstration versus the arrest methods.</p>
@@ -1271,10 +1328,6 @@
 <li>How do investigations into earlier events influence later arrests?</li>
 <li>What rights do individuals have during such operations?</li>
 <li>How does video evidence shape public understanding?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/mar/27/isaac-herzog-protester-extreme-arrest-police-video-ntwnfb" target="_blank" rel="noopener">Lawyers criticise ‘extreme’ arrest of Isaac Herzog protester after NSW police release video</a> — Guardian report</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-malaysias-ships-allowed-through-strait-of-hormuz">1) Malaysia’s Ships Allowed Through Strait of Hormuz</h4>
@@ -1287,10 +1340,6 @@
 <li>How does this compare with other nations’ experiences?</li>
 <li>What does this reveal about negotiation dynamics?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/economy/2026/3/27/malaysias-ships-allowed-to-pass-strait-hormuz-pm-anwar-says?traffic_source=rss" target="_blank" rel="noopener">Malaysia’s ships allowed to pass Strait of Hormuz, PM Anwar says</a> — Al Jazeera report</li>
-</ul>
 <h4 id="2-houthis-say-no-reason-to-halt-red-sea-shipping">2) Houthis Say ‘No Reason’ to Halt Red Sea Shipping</h4>
 <p><strong>What happened (neutral):</strong> Houthis told Lloyd’s List there is “no reason” to prevent Saudi oil from using the Red Sea route amid the broader Middle East crisis.</p>
 <p><strong>Perspectives:</strong> The Guardian includes this in its live coverage, contrasting it with diplomatic efforts around the Strait of Hormuz. It illustrates how multiple maritime routes and non-state actors complicate energy security.</p>
@@ -1300,10 +1349,6 @@
 <li>What is the relationship between Red Sea and Hormuz disruptions?</li>
 <li>How do commercial interests intersect with political ones?</li>
 <li>What remains uncertain about enforcement?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/27/iran-war-live-updates-trump-negotiations-bombing-hormuz-energy-oil-prices-middle-east" target="_blank" rel="noopener">Middle East crisis live: Trump pausing strikes on Iran energy sites; Houthis say ‘no reason’ to halt Red Sea shipping</a> — Guardian live updates</li>
 </ul>
 <h4 id="3-china-industrial-profits-surge-but-oil-shock-threatens-outlook">3) China Industrial Profits Surge but Oil Shock Threatens Outlook</h4>
 <p><strong>What happened (neutral):</strong> China’s industrial profits rose 15% at the start of the year, though soaring energy prices from the Middle East conflict are expected to impact the economy.</p>
@@ -1315,10 +1360,6 @@
 <li>How might this affect China’s position relative to other economies?</li>
 <li>What data should be monitored going forward?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/03/27/china-industrial-profits-jan-feb-surge-oil-price-shock-threatens-outlook.html" target="_blank" rel="noopener">China industrial profits surge 15% to start year, but oil price shock threatens outlook</a> — CNBC report</li>
-</ul>
 <h4 id="4-markets-underpricing-inflation-risks-from-middle-east-conflict">4) Markets Underpricing Inflation Risks from Middle East Conflict</h4>
 <p><strong>What happened (neutral):</strong> Franklin Templeton’s Rich Nuzum stated that markets are underestimating the inflationary effects of the Middle East conflict.</p>
 <p><strong>Perspectives:</strong> Bloomberg coverage highlights this view alongside reports of falling oil prices after Trump’s deadline extension, showing differing assessments of short-term versus longer-term risks.</p>
@@ -1329,10 +1370,6 @@
 <li>What historical parallels exist for conflict-driven inflation?</li>
 <li>Whose analysis has proven more accurate in past crises?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-03-27/market-underpricing-inflation-impact-franklin-templeton-video" target="_blank" rel="noopener">Markets Underpricing Inflation Risks, Franklin Templeton Says</a> — Bloomberg video</li>
-</ul>
 <h4 id="5-henderson-land-keeping-liquidity-amid-middle-east-war">5) Henderson Land Keeping Liquidity Amid Middle East War</h4>
 <p><strong>What happened (neutral):</strong> The CFO of Henderson Land said the developer is taking a “more careful approach” to maintain liquidity amid current market conditions caused by the Middle East conflict.</p>
 <p><strong>Perspectives:</strong> Bloomberg’s China Show coverage reflects business caution in the region, consistent with wider reports of economic uncertainty tied to the conflict.</p>
@@ -1342,10 +1379,6 @@
 <li>What does “liquidity” focus reveal about perceived risks?</li>
 <li>How might this approach affect future investment?</li>
 <li>What parallels exist in other uncertain periods?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-03-27/henderson-land-keeping-liquidity-amid-middle-east-war-video" target="_blank" rel="noopener">Henderson Land Keeping Liquidity Amid Middle East War</a> — Bloomberg interview</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-brace-for-200-oil-if-war-lasts-till-june-macquarie-warns">1) Brace for $200 Oil If War Lasts Till June, Macquarie Warns</h4>
@@ -1358,10 +1391,6 @@
 <li>What hedging or policy responses might mitigate extreme scenarios?</li>
 <li>How should readers weigh short-term price drops against longer warnings?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-03-27/brace-for-200-oil-if-the-war-lasts-till-june-macquarie-warns" target="_blank" rel="noopener">Brace for $200 Oil If War Lasts Till June, Macquarie Warns</a> — Bloomberg report</li>
-</ul>
 <h4 id="2-oil-falls-as-trump-extends-deadline-again-for-iran-to-make-a-deal">2) Oil Falls as Trump Extends Deadline Again for Iran to Make a Deal</h4>
 <p><strong>What happened (neutral):</strong> Oil prices fell after President Trump extended the deadline for Iran and stated that Iran had allowed tankers through the Strait of Hormuz.</p>
 <p><strong>Perspectives:</strong> Bloomberg and CNBC both report the price decline linked to the diplomatic pause. Coverage notes the sensitivity of markets to statements from the U.S. president and Iranian responses.</p>
@@ -1372,11 +1401,6 @@
 <li>How quickly can prices reverse on new developments?</li>
 <li>What remains uncertain about actual supply flows?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/live-blog/2026-03-27/live-iran-war-updates-trump-oil-markets" target="_blank" rel="noopener">Oil Falls as Trump Extends Deadline Again for Iran to Make a Deal</a> — Bloomberg live blog</li>
-<li><a href="https://www.cnbc.com/2026/03/27/oil-price-wti-brent-crude-trump-strait-hormuz-tensions-iran-ships.html" target="_blank" rel="noopener">Oil prices fall as Trump says Iran let 10 tankers through Hormuz</a> — CNBC report</li>
-</ul>
 <h4 id="3-private-credit-cracks-open-door-for-wall-street-banks-comeback">3) Private Credit Cracks Open Door for Wall Street Banks’ Comeback</h4>
 <p><strong>What happened (neutral):</strong> Wall Street banks may be gaining an opening to reclaim market share from private credit lenders in the leveraged loan space.</p>
 <p><strong>Perspectives:</strong> CNBC describes a “tug of war” that is just starting. This story stands apart from conflict-related coverage but reflects broader financial market dynamics in an uncertain environment.</p>
@@ -1386,10 +1410,6 @@
 <li>How might geopolitical uncertainty influence lending markets?</li>
 <li>What does this suggest about cycles in financial intermediation?</li>
 <li>How should borrowers evaluate shifting sources of capital?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/03/27/wall-street-banks-private-credit-market-share-leveraged-loans.html" target="_blank" rel="noopener">Private credit cracks open door for Wall Street banks' comeback: 'The tug of war is just starting'</a> — CNBC analysis</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <p><strong>No distinct technology stories appear in today’s provided sources. The available coverage focuses primarily on geopolitical, energy, and economic impacts rather than specific technology developments.</strong></p>
@@ -1404,10 +1424,6 @@
 <li>How does this coverage differ from stories about non-celebrity athletes?</li>
 <li>What aspects remain personal versus newsworthy?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/tvshowbiz/article-15682433/Arnold-Schwarzenegger-train-nepo-son-Joseph-Baena-bodybuilding-competition.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Arnold Schwarzenegger helps train love child Joseph Baena for his first bodybuilding competition</a> — Daily Mail article</li>
-</ul>
 <h4 id="2-brian-viner-on-the-magic-faraway-tree-film-adaptation">2) Brian Viner on The Magic Faraway Tree Film Adaptation</h4>
 <p><strong>What happened (neutral):</strong> A new adaptation of Enid Blyton’s The Magic Faraway Tree features a cast including Claire Foy and Andrew Garfield and is described as a “ripping treat for Easter.”</p>
 <p><strong>Perspectives:</strong> The Daily Mail’s review focuses on the film’s entertainment value and casting as a positive update of a classic children’s tale.</p>
@@ -1418,10 +1434,6 @@
 <li>How does star casting influence coverage of family films?</li>
 <li>What elements of the original story are highlighted or downplayed?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/tvshowbiz/article-15683367/BRIAN-VINER-Magic-Faraway-Tree.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">BRIAN VINER on The Magic Faraway Tree: Blyton's magical tale is a ripping treat for Easter</a> — Daily Mail review</li>
-</ul>
 <h4 id="3-lindsey-vonn-admits-she-nearly-went-insane-in-italian-hospital-after-olympics-crash">3) Lindsey Vonn Admits She Nearly Went ‘Insane’ in Italian Hospital After Olympics Crash</h4>
 <p><strong>What happened (neutral):</strong> The skier described in detail the pain she endured after a Winter Olympics crash and the surgery that spared her leg, performed by a Team USA doctor.</p>
 <p><strong>Perspectives:</strong> The Daily Mail presents Vonn’s interview with Vanity Fair as a harrowing personal account of recovery and resilience.</p>
@@ -1431,10 +1443,6 @@
 <li>What role does medical intervention play in high-profile recovery stories?</li>
 <li>How does timing of such revelations affect their reception?</li>
 <li>What aspects of elite sport remain hidden from typical coverage?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/sport/winterolympics/article-15681379/lindsey-vonn-italy-hospital-crash.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Lindsey Vonn admits she nearly went 'insane' in Italian hospital after Winter Olympics crash</a> — Daily Mail feature</li>
 </ul>
 <h3 id="top-gossip-stories-3">Top gossip stories (3)</h3>
 <h4 id="1-david-and-victoria-beckham-in-hot-water-with-neighbours-over-cotswolds-home-plans">1) David and Victoria Beckham in Hot Water with Neighbours Over Cotswolds Home Plans</h4>
@@ -1447,10 +1455,6 @@
 <li>How does wealth influence planning and media coverage?</li>
 <li>What details are typically omitted in such stories?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/tvshowbiz/article-15683393/David-Victoria-Beckham-hot-water-neighbours-plans-12M-Cotswolds-home.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">David and Victoria Beckham in hot water with neighbours AGAIN for plans at their £12M Cotswolds home</a> — Daily Mail report</li>
-</ul>
 <h4 id="2-eden-confidential-getty-curse-strikes-again-in-tholstrup-plane-crash">2) Eden Confidential: Getty Curse Strikes Again in Tholstrup Plane Crash</h4>
 <p><strong>What happened (neutral):</strong> The story revisits the long-running narrative around the wealthy Getty family following a plane crash involving someone connected to them.</p>
 <p><strong>Perspectives:</strong> The Daily Mail presents it through the lens of an alleged “curse” tied to the family’s history and vast fortune.</p>
@@ -1460,10 +1464,6 @@
 <li>What factual events underpin such storytelling?</li>
 <li>How does historical wealth shape contemporary coverage?</li>
 <li>What function do these stories serve for readers?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/tvshowbiz/article-15682687/EDEN-CONFIDENTIAL-Getty-curse-strikes-Tholstrup-plane-crash.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">EDEN CONFIDENTIAL: Getty curse strikes again in Tholstrup plane crash</a> — Daily Mail column</li>
 </ul>
 <h4 id="3-dan-hodges-column-on-uk-prime-minister-and-missing-phone-controversy">3) Dan Hodges Column on UK Prime Minister and Missing Phone Controversy</h4>
 <p><strong>What happened (neutral):</strong> The column claims Prime Minister Keir Starmer is being deceptive regarding the disappearance of an aide’s phone.</p>
@@ -1475,10 +1475,6 @@
 <li>How do partisan outlets frame similar stories differently?</li>
 <li>What should readers check before forming conclusions?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/debate/article-15683051/DAN-HODGES-dont-know-happened-Morgan-McSweeneys-missing-phone-day-deflection-deceit-know-certain-Prime-Minister-lying-posterior-it.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">DAN HODGES: I don't know what happened to Morgan McSweeney's missing phone...</a> — Daily Mail opinion</li>
-</ul>
 <h3 id="understanding-the-issue-how-maritime-chokepoints-shape-global-energy-security">Understanding the Issue: How Maritime Chokepoints Shape Global Energy Security</h3>
 <p>Most coverage of the current Iran crisis treats the Strait of Hormuz as simply “an oil chokepoint,” but this skips over a crucial detail: these narrow waterways function as single points of failure in a highly leveraged global production system that has very little spare capacity.</p>
 <p>When politicians or analysts say “the strait must stay open,” here’s what is actually happening behind the scenes. Roughly one-fifth of global seaborne oil trade passes through this 21-mile-wide channel at its narrowest point. Tankers carrying crude, liquefied natural gas, and refined products move in coordinated patterns dictated by long-term contracts, just-in-time inventory strategies, and insurance markets that become skittish when threats emerge. A credible threat of closure does not merely raise today’s price; it forces immediate rerouting decisions, spikes insurance premiums, and triggers precautionary buying that can amplify volatility even before physical supplies are interrupted. Historical parallels include the 1973 oil embargo and the 1980s Tanker War, both of which showed how quickly market psychology can outrun actual supply disruptions.</p>
@@ -1488,6 +1484,138 @@
 <p>Cross-check claims about tanker movements, price forecasts, and diplomatic “progress” against primary shipping data, insurance market reports, and statements from multiple governments rather than relying on any single outlet’s live blog. Notice which outlets emphasize immediate market reactions versus longer-term systemic risks, and ask what incentives or access shape those choices. Primary documents such as official government statements, Lloyd’s List shipping updates, and commodity exchange data often provide clearer grounding than synthesized news summaries. When sources conflict on basic facts like whether tankers are moving, seek the most direct evidence available rather than averaging competing narratives.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/mar/27/iran-war-live-updates-trump-negotiations-bombing-hormuz-energy-oil-prices-middle-east" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/mar/26/donald-trump-urges-iran-end-war-or-face-assassinations" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/27/oil-price-wti-brent-crude-trump-strait-hormuz-tensions-iran-ships.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/opinions/2026/3/27/the-strait-of-hormuz-is-not-just-an-oil-chokepoint?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15682869/Trump-Iran-strike-deadline-pause.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/live/2026/mar/27/tropical-cyclone-narelle-fuel-crisis-petrol-cost-of-living-inflation-iran-war-storm-anthony-albanese-angus-taylor-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/features/2026/3/27/sri-lanka-braces-for-new-economic-crisis-as-war-on-iran-continues?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cg73znr1vj7o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-03-27/europe-s-economy-is-starting-to-feel-pain-from-trump-s-iran-war" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-03-27/the-china-show-3-27-2026-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/features/2026/3/27/truly-junk-e-waste-from-rich-nations-floods-local-markets-in-nigeria?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/mar/27/isaac-herzog-protester-extreme-arrest-police-video-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/economy/2026/3/27/malaysias-ships-allowed-to-pass-strait-hormuz-pm-anwar-says?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/27/china-industrial-profits-jan-feb-surge-oil-price-shock-threatens-outlook.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-03-27/market-underpricing-inflation-impact-franklin-templeton-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-03-27/henderson-land-keeping-liquidity-amid-middle-east-war-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-03-27/brace-for-200-oil-if-the-war-lasts-till-june-macquarie-warns" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/live-blog/2026-03-27/live-iran-war-updates-trump-oil-markets" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/27/wall-street-banks-private-credit-market-share-leveraged-loans.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/tvshowbiz/article-15682433/Arnold-Schwarzenegger-train-nepo-son-Joseph-Baena-bodybuilding-competition.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/tvshowbiz/article-15683367/BRIAN-VINER-Magic-Faraway-Tree.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/sport/winterolympics/article-15681379/lindsey-vonn-italy-hospital-crash.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/tvshowbiz/article-15683393/David-Victoria-Beckham-hot-water-neighbours-plans-12M-Cotswolds-home.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/tvshowbiz/article-15682687/EDEN-CONFIDENTIAL-Getty-curse-strikes-Tholstrup-plane-crash.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/debate/article-15683051/DAN-HODGES-dont-know-happened-Morgan-McSweeneys-missing-phone-day-deflection-deceit-know-certain-Prime-Minister-lying-posterior-it.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1948,10 +2076,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

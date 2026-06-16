@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Iran warns the US that it 'has not even begun' as violence escalates in the Strait of Hormuz — Episode 42</h1>
+            <h1><span class="nn-i18n-title">Iran warns the US that it 'has not even begun' as violence escalates in the Strait of Hormuz</span> — Episode 42</h1>
             
             <p class="blog-hero-hook">Iran warns the US that it 'has not even begun' as violence escalates in the Strait of Hormuz.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1210,10 +1291,6 @@
 <li>How do these warnings align with ongoing efforts to maintain the ceasefire?</li>
 <li>What impact might the escalation have on commercial vessels transiting the area?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/may/05/iran-us-israel-lebanon-strait-of-hormuz-ships-oil-uae-latest-news-updates" target="_blank" rel="noopener">The Guardian</a> — Live coverage of the Middle East crisis including Iranian parliamentary statements.</li>
-</ul>
 <h4 id="2-eu-has-tools-ready-if-us-threatens-strategic-industries">2) EU has tools ready if US threatens strategic industries</h4>
 <p><strong>What happened (neutral):</strong> French Trade Minister Nicolas Forissier stated that the European Union possesses tools it can deploy if Donald Trump makes excessive threats to strategic industries such as steel. The comments come as European officials prepare responses to potential US trade actions. The minister's remarks highlight the EU's capacity to protect its economic interests.</p>
 <p><strong>Perspectives:</strong> Bloomberg presents the minister's statement as a signal of EU readiness to counter US pressure, framing it as a defensive measure to safeguard key sectors. This coverage underscores the minister's role in trade policy and the bloc's interest in maintaining leverage in negotiations. Other reporting may emphasize the broader context of transatlantic trade relations, noting how such tools could affect industries on both sides. The factual basis is the minister's public assertion of available measures; interpretations vary on whether this represents routine posturing or a more assertive stance in response to specific threats.</p>
@@ -1222,10 +1299,6 @@
 <li>Which specific EU tools might be activated in response to US actions?</li>
 <li>How could these measures influence industries like steel production?</li>
 <li>What role does the French minister play in shaping the EU's overall trade strategy?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-05/eu-has-tools-if-us-threatens-industries-french-minister-says" target="_blank" rel="noopener">Bloomberg</a> — Report on the French trade minister's comments regarding EU capabilities.</li>
 </ul>
 <h4 id="3-keir-starmer-faces-london-election-challenges-as-labour-support-drops">3) Keir Starmer faces London election challenges as Labour support drops</h4>
 <p><strong>What happened (neutral):</strong> A new mega-poll indicates that Labour is under siege from multiple directions ahead of London elections, with the party's support having collapsed significantly since the general election. The findings point to potential difficulties for Keir Starmer and suggest the Greens could see strong results. The poll results are expected to create concern in Downing Street.</p>
@@ -1236,10 +1309,6 @@
 <li>How might the Greens' potential performance alter the election landscape?</li>
 <li>What implications could these poll results have for national politics?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15789321/Keir-Starmer-London-election-nightmare-mega-poll-reveals-Labour-siege-Greens.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Coverage of the poll findings and their potential impact on Labour.</li>
-</ul>
 <h4 id="4-explosion-at-fireworks-plant-in-china-kills-at-least-26">4) Explosion at fireworks plant in China kills at least 26</h4>
 <p><strong>What happened (neutral):</strong> An explosion occurred at a fireworks plant in a central Chinese province. Authorities reported that search and rescue operations have largely been completed, though verification of the full casualty count and identification of victims remain ongoing. State media confirmed the death toll.</p>
 <p><strong>Perspectives:</strong> NPR reports the incident through official channels, focusing on the completion of rescue efforts and the ongoing process of confirming details. This approach highlights the challenges in obtaining precise information in the immediate aftermath. Other coverage may connect the event to broader questions about industrial safety standards in the region. The confirmed elements include the occurrence of the explosion and the initial casualty figures; uncertainty remains around the exact total and causes.</p>
@@ -1249,10 +1318,6 @@
 <li>How are authorities handling the identification of victims?</li>
 <li>What lessons might be drawn for similar industrial operations?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/05/05/g-s1-120137/explosion-fireworks-plant-china" target="_blank" rel="noopener">NPR</a> — Report on the explosion and official responses.</li>
-</ul>
 <h4 id="5-nine-workers-killed-in-colombia-coal-mine-explosion">5) Nine workers killed in Colombia coal mine explosion</h4>
 <p><strong>What happened (neutral):</strong> An explosion took place at a coal mine in Colombia, resulting in the deaths of nine workers. The national mining agency had issued warnings weeks earlier about a dangerous buildup of gases at the site. Rescue and investigation efforts are underway.</p>
 <p><strong>Perspectives:</strong> Al Jazeera presents the incident alongside the prior warnings from the mining agency, framing it as a case where known risks materialized. This coverage draws attention to regulatory oversight in the mining sector. Other reporting may examine the conditions that allowed the gas buildup to occur despite the alerts. The shared facts include the explosion, the fatalities, and the earlier warnings; perspectives differ on the adequacy of preventive actions taken after the alerts.</p>
@@ -1261,10 +1326,6 @@
 <li>What specific gas buildup risks had been identified before the explosion?</li>
 <li>How do such incidents reflect on safety protocols in the mining industry?</li>
 <li>What support is being provided to the affected families and communities?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/news/2026/5/5/nine-workers-killed-in-colombia-coal-mine-explosion?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Details on the mine explosion and prior warnings.</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-taiwans-president-returns-from-eswatini-amid-china-objections">1) Taiwan's president returns from Eswatini amid China objections</h4>
@@ -1276,10 +1337,6 @@
 <li>How might this trip influence Taiwan's international standing?</li>
 <li>What responses have come from China regarding the visit?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/taiwan-s-lai-returns-from-eswatini-trip-amid-china-objection/a-77046190?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — Report on the president's return and related diplomatic issues.</li>
-</ul>
 <h4 id="2-anger-over-traffic-lights-planned-for-scotlands-bridge-over-the-atlantic">2) Anger over traffic lights planned for Scotland's 'Bridge over the Atlantic'</h4>
 <p><strong>What happened (neutral):</strong> Plans have been approved to install traffic lights on the Clachan Bridge in Argyll, Scotland, despite concerns from critics. The 233-year-old bridge, known as the 'Bridge over the Atlantic,' connects the mainland to the Isle of Seil and attracts tourists. Opponents argue the lights will ruin the heritage site and endanger pedestrians.</p>
 <p><strong>Perspectives:</strong> The Guardian presents the decision as a point of local controversy, quoting critics who describe the installation as a desecration of a nationally significant landmark. This framing emphasizes the tension between modern safety needs and preservation of historic character. Other reporting may highlight the practical reasons for the lights, such as managing traffic flow on the narrow crossing. The approval of the plans and the existence of public opposition are the shared facts; views differ on whether the change prioritizes safety or disrupts the site's appeal.</p>
@@ -1288,10 +1345,6 @@
 <li>How might the traffic lights alter the experience for visitors to the bridge?</li>
 <li>What alternatives to traffic lights were considered during planning?</li>
 <li>How do local residents view the balance between heritage and safety?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/uk-news/2026/may/05/anger-over-green-light-for-traffic-lights-on-argylls-bridge-over-the-atlantic" target="_blank" rel="noopener">The Guardian</a> — Coverage of the controversy surrounding the bridge plans.</li>
 </ul>
 <h4 id="3-nine-workers-killed-in-colombia-coal-mine-explosion">3) Nine workers killed in Colombia coal mine explosion</h4>
 <p><strong>What happened (neutral):</strong> An explosion at a coal mine in Colombia resulted in nine worker deaths. The national mining agency had warned weeks earlier about a buildup of gases that could become dangerous. Efforts to investigate the cause are continuing.</p>
@@ -1311,10 +1364,6 @@
 <li>How could tourists make more informed choices about animal rides?</li>
 <li>What alternatives might reduce demand for these services?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15787065/The-torment-Egypts-emaciated-horses-shame-Western-tourists-enable-cycle-abuse-ends-animals-drop-dead-ELEANOR-HARMSWORTH.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Investigation into the treatment of horses and tourist involvement.</li>
-</ul>
 <h4 id="5-81-year-old-in-land-dispute-with-neighbour-over-tiny-plot">5) 81-year-old in land dispute with neighbour over tiny plot</h4>
 <p><strong>What happened (neutral):</strong> An 81-year-old individual is involved in a dispute with a neighbour over a small area of land believed to belong to them through adverse possession. The situation has become a source of significant stress. Legal options for claiming the land are being considered.</p>
 <p><strong>Perspectives:</strong> The Daily Mail presents the case as a personal nightmare for the older resident, emphasizing the emotional toll of the ongoing conflict. This framing draws attention to the complexities of property law for individuals. Other coverage may focus on the legal principles of adverse possession and how they apply in neighbour disputes. The existence of the dispute and the claim of adverse possession are the core facts; perspectives differ on the strength of the claim and the best resolution.</p>
@@ -1323,10 +1372,6 @@
 <li>What evidence is typically required to establish adverse possession?</li>
 <li>How common are such neighbour disputes in property law?</li>
 <li>What steps can individuals take to resolve boundary conflicts amicably?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/money/mortgageshome/article-15779479/Im-embroiled-dispute-neighbour-tiny-plot-land-claim-adverse-possession.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Personal account of the land dispute and legal considerations.</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-eqt-raises-bid-for-intertek-to-89-billion">1) EQT raises bid for Intertek to £8.9 billion</h4>
@@ -1338,10 +1383,6 @@
 <li>How might the acquisition impact Intertek's employees and clients?</li>
 <li>What does this deal reveal about trends in the testing and inspection sector?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-05/eqt-raises-bid-for-product-testing-firm-intertek-to-8-9-billion" target="_blank" rel="noopener">Bloomberg</a> — Details on the updated acquisition offer.</li>
-</ul>
 <h4 id="2-audi-pledges-cost-cuts-amid-tariff-and-sales-pressures">2) Audi pledges cost cuts amid tariff and sales pressures</h4>
 <p><strong>What happened (neutral):</strong> Volkswagen AG’s Audi division is implementing cost-cutting measures to address waning sales in China and the rising costs associated with global trade hurdles. The company is seeking to become leaner in response to these challenges. The tariff plans from the US are cited as a contributing factor.</p>
 <p><strong>Perspectives:</strong> Bloomberg presents the cost-cutting pledge as a necessary adaptation by Audi to protect its financial outlook. This approach connects the measures to specific pressures from China sales and international trade policies. Other coverage may discuss the wider effects on the automotive industry and supply chains. The company's stated plans and the cited pressures form the factual basis; interpretations vary on the long-term effectiveness of the cuts.</p>
@@ -1351,10 +1392,6 @@
 <li>How could US tariff plans specifically affect German carmakers?</li>
 <li>What strategies are other automakers using in similar situations?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-05/audi-pledges-cost-cuts-as-trump-s-tariff-plan-threatens-outlook" target="_blank" rel="noopener">Bloomberg</a> — Report on Audi's response to market and trade challenges.</li>
-</ul>
 <h4 id="3-japan-limited-to-two-more-yen-intervention-windows-by-imf-rules">3) Japan limited to two more yen intervention windows by IMF rules</h4>
 <p><strong>What happened (neutral):</strong> Japan can conduct only two more sessions of three-day interventions by November to maintain its status as having a freely floating exchange rate under International Monetary Fund guidelines. The restriction comes as authorities monitor currency movements. The rules aim to preserve market-determined exchange rates.</p>
 <p><strong>Perspectives:</strong> Bloomberg frames the limitation as a constraint on Japan's policy options, noting the specific timeline and session limits set by the IMF. This coverage emphasizes the technical aspects of maintaining floating rate status. Other reporting may explore the economic conditions that prompt interventions and their potential market effects. The IMF guidelines and the remaining windows are the shared facts; views differ on how Japan might navigate the restrictions.</p>
@@ -1363,10 +1400,6 @@
 <li>What triggers typically lead Japan to intervene in the yen market?</li>
 <li>How do IMF rules influence national currency policies?</li>
 <li>What alternatives exist if intervention windows are exhausted?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-05/japan-has-two-more-key-windows-for-yen-intervention-by-imf-rules" target="_blank" rel="noopener">Bloomberg</a> — Explanation of the IMF guidelines and Japan's remaining options.</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-poverty-and-technology-driving-record-slavery-levels-in-uk">1) Poverty and technology driving record slavery levels in UK</h4>
@@ -1378,10 +1411,6 @@
 <li>What sectors are most affected by these trends?</li>
 <li>How can individuals and communities help identify and report signs of modern slavery?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/c1j2gd8yr6go?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Summary of the independent report on slavery levels.</li>
-</ul>
 <h4 id="2-tony-blair-scheme-proposes-using-health-data-for-pension-decisions">2) Tony Blair scheme proposes using health data for pension decisions</h4>
 <p><strong>What happened (neutral):</strong> A plan linked to Tony Blair would use individuals' private health data to determine pension payout timing through a state-run smartphone app. The system would estimate when the government believes a person is likely to die. Critics describe the approach as dystopian.</p>
 <p><strong>Perspectives:</strong> The Daily Mail frames the proposal as an intrusive use of personal data, highlighting the idea of an app that predicts lifespan for financial purposes. This coverage raises concerns about privacy and government overreach. Other reporting may discuss the potential efficiency gains in pension administration while noting the ethical questions involved. The core elements of data usage and the app concept are consistent; views differ on whether this represents innovation or an unacceptable intrusion.</p>
@@ -1391,10 +1420,6 @@
 <li>How accurate can predictions of lifespan be for pension purposes?</li>
 <li>What alternatives exist for managing pension sustainability?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/money/mailplus/article-15788291/Tony-Blair-state-pensions-health-data-payout-RACHEL-RICKARD-STRAUS.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Details on the proposed health data scheme.</li>
-</ul>
 <h4 id="3-apple-exploring-us-based-chip-production-options">3) Apple exploring US-based chip production options</h4>
 <p><strong>What happened (neutral):</strong> Apple is exploring the use of Intel and Samsung to produce main processors for its devices in the US. This would provide a secondary manufacturing option beyond its longtime partner TSMC. The move aims to diversify supply chains.</p>
 <p><strong>Perspectives:</strong> Bloomberg reports the exploration as a strategic step by Apple to reduce reliance on a single supplier. This framing connects the decision to broader efforts in reshoring technology production. Other coverage may examine the challenges of scaling US manufacturing for advanced chips and the role of government incentives. The interest in alternative producers is the factual element; perspectives differ on the feasibility and timeline for such shifts.</p>
@@ -1403,10 +1428,6 @@
 <li>What advantages might domestic chip production offer Apple?</li>
 <li>How could this affect existing partnerships with TSMC?</li>
 <li>What role do trade policies play in encouraging US-based manufacturing?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-05-05/daybreak-europe-5-05-2026-video" target="_blank" rel="noopener">Bloomberg</a> — Discussion of Apple's supply chain considerations.</li>
 </ul>
 <h3 id="top-popular-media-stories-3">Top popular media stories (3)</h3>
 <h4 id="1-blake-lively-returns-to-met-gala-after-settling-legal-battle">1) Blake Lively returns to Met Gala after settling legal battle</h4>
@@ -1418,10 +1439,6 @@
 <li>What role does the Met Gala play in celebrity public relations?</li>
 <li>How do media outlets typically cover high-profile legal resolutions?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15790257/Blake-Lively-Met-Gala-settling-Justin-Baldoni-lawsuit.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Account of Lively's Met Gala appearance and legal context.</li>
-</ul>
 <h4 id="2-traitors-stars-seek-to-influence-bbc-coverage-ahead-of-character-reveals">2) Traitors stars seek to influence BBC coverage ahead of character reveals</h4>
 <p><strong>What happened (neutral):</strong> Stars from The Traitors are attempting to shape BBC narratives to avoid a potential PR issue when their true personalities are shown. They are described as being in the competition for personal gain and concerned about public perception. The show is noted for encouraging deception and betrayal.</p>
 <p><strong>Perspectives:</strong> The Daily Mail frames the efforts as a calculated move by contestants to manage their image, drawing on comments from insiders about self-interest and fear of negative exposure. This approach highlights the psychological dynamics of the reality format. Other coverage may explore how participants navigate the tension between game strategy and long-term reputation. The contestants' actions and the show's format are the factual elements; perspectives differ on whether such manipulation attempts are typical or concerning.</p>
@@ -1431,10 +1448,6 @@
 <li>How do reality show participants typically prepare for post-show scrutiny?</li>
 <li>What ethical questions arise when contestants try to influence media coverage?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15789641/Traitors-stars-manipulate-BBC-PR-nightmare.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Insights into the contestants' strategies and concerns.</li>
-</ul>
 <h4 id="3-met-gala-2026-features-strong-showings-from-kim-kardashian-and-beyonce">3) Met Gala 2026 features strong showings from Kim Kardashian and Beyonce</h4>
 <p><strong>What happened (neutral):</strong> Kim Kardashian, Beyonce, Nicole Kidman, and Hailey Bieber were among the prominent figures on the red carpet at the 2026 Met Gala. The event showcased high-profile celebrity fashion choices. The gathering drew significant media attention for its guest list and presentations.</p>
 <p><strong>Perspectives:</strong> The Daily Mail highlights the glamour and standout appearances, presenting the red carpet as a showcase of celebrity style leadership. This framing focuses on the positive visual elements and attendee prominence. Other reporting may discuss the event's cultural significance and how it reflects current fashion trends. The attendance of the named celebrities and the event's scale are the core facts; views differ on the balance between artistic expression and commercial aspects.</p>
@@ -1443,10 +1456,6 @@
 <li>What themes or dress codes defined the 2026 Met Gala?</li>
 <li>How do celebrity appearances at such events influence public fashion trends?</li>
 <li>What behind-the-scenes elements contribute to the event's media coverage?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/lifestyle/fashion/article-15789715/Met-Gala-2026-best-dressed-Celebrities-NYC.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Highlights of the red carpet and notable attendees.</li>
 </ul>
 <h3 id="top-gossip-stories-3">Top gossip stories (3)</h3>
 <h4 id="1-jeff-bezos-and-lauren-sanchez-face-backlash-over-met-gala">1) Jeff Bezos and Lauren Sanchez face backlash over Met Gala</h4>
@@ -1458,10 +1467,6 @@
 <li>How do host choices influence the event's reputation?</li>
 <li>What alternatives exist for celebrities seeking high-fashion exposure?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/lifestyle/article-15790321/met-gala-jeff-bezos-lauren-sanchez-slammed-guest-list-outfits.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Fan reactions and descriptions of the event.</li>
-</ul>
 <h4 id="2-met-gala-2026-called-amazon-prime-gala-over-entertainment-style">2) Met Gala 2026 called 'Amazon Prime Gala' over entertainment style</h4>
 <p><strong>What happened (neutral):</strong> The 2026 Met Gala has been dubbed the 'Amazon Prime Gala' by critics after videos showed host Lauren Sanchez 'mom dancing' with Anna Wintour to cruise ship-style entertainment. The label reflects disappointment with the event's tone and production. The dancing moment was cited as a final indicator of the shift.</p>
 <p><strong>Perspectives:</strong> The Daily Mail frames the nickname as a pointed critique of the event's perceived decline in sophistication, using the dancing footage to illustrate the change. This approach emphasizes the contrast with traditional expectations. Other reporting may discuss the challenges of maintaining an event's prestige amid evolving celebrity culture. The specific entertainment elements and the resulting label are the shared facts; views differ on the fairness of the comparison to past galas.</p>
@@ -1470,10 +1475,6 @@
 <li>How does entertainment at the Met Gala compare to previous years?</li>
 <li>What role do hosts play in setting the event's overall atmosphere?</li>
 <li>How do social media reactions shape perceptions of such events?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15790745/Met-Gala-dubbed-Amazon-Prime-Gala-host-Lauren-Sanchez-seen-mom-dancing-Anna-Wintour-cruise-ship-style-entertainment.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Details on the entertainment and resulting criticism.</li>
 </ul>
 <h4 id="3-christopher-trybus-cleared-in-trial-over-wifes-suicide">3) Christopher Trybus cleared in trial over wife's suicide</h4>
 <p><strong>What happened (neutral):</strong> Christopher Trybus was acquitted last month of the manslaughter of his wife Tarryn Baird following an eight-week trial. He has since spoken about the sense of relief after the verdict. The case involved accusations that he drove her to suicide.</p>
@@ -1484,12 +1485,120 @@
 <li>How do trials involving suicide allegations affect public understanding of mental health?</li>
 <li>What support systems exist for families navigating similar legal proceedings?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li>[Mail Online](https://www.dailymail.com/news</li>
-</ul>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/may/05/iran-us-israel-lebanon-strait-of-hormuz-ships-oil-uae-latest-news-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-05/eu-has-tools-if-us-threatens-industries-french-minister-says" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15789321/Keir-Starmer-London-election-nightmare-mega-poll-reveals-Labour-siege-Greens.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.npr.org/2026/05/05/g-s1-120137/explosion-fireworks-plant-china" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/5/5/nine-workers-killed-in-colombia-coal-mine-explosion?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/taiwan-s-lai-returns-from-eswatini-trip-amid-china-objection/a-77046190?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/uk-news/2026/may/05/anger-over-green-light-for-traffic-lights-on-argylls-bridge-over-the-atlantic" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15787065/The-torment-Egypts-emaciated-horses-shame-Western-tourists-enable-cycle-abuse-ends-animals-drop-dead-ELEANOR-HARMSWORTH.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/money/mortgageshome/article-15779479/Im-embroiled-dispute-neighbour-tiny-plot-land-claim-adverse-possession.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-05/eqt-raises-bid-for-product-testing-firm-intertek-to-8-9-billion" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-05/audi-pledges-cost-cuts-as-trump-s-tariff-plan-threatens-outlook" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-05/japan-has-two-more-key-windows-for-yen-intervention-by-imf-rules" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c1j2gd8yr6go?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/money/mailplus/article-15788291/Tony-Blair-state-pensions-health-data-payout-RACHEL-RICKARD-STRAUS.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-05-05/daybreak-europe-5-05-2026-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15790257/Blake-Lively-Met-Gala-settling-Justin-Baldoni-lawsuit.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15789641/Traitors-stars-manipulate-BBC-PR-nightmare.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/lifestyle/fashion/article-15789715/Met-Gala-2026-best-dressed-Celebrities-NYC.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/lifestyle/article-15790321/met-gala-jeff-bezos-lauren-sanchez-slammed-guest-list-outfits.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15790745/Met-Gala-dubbed-Amazon-Prime-Gala-host-Lauren-Sanchez-seen-mom-dancing-Anna-Wintour-cruise-ship-style-entertainment.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1954,10 +2063,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

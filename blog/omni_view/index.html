@@ -121,6 +121,25 @@
             background: color-mix(in srgb, var(--show-color) 20%, transparent);
             border-color: var(--show-color);
         }
+        /* Multilingual availability badges (June 2026) */
+        .blog-idx-langs {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin: var(--sp-2) 0 var(--sp-1);
+            color: var(--nn-text-muted);
+        }
+        .blog-idx-langs .lang-badge {
+            font-family: var(--font-ui);
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            padding: 1px 7px;
+            border-radius: 100px;
+            border: 1px solid color-mix(in srgb, var(--show-color) 35%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            background: color-mix(in srgb, var(--show-color) 10%, transparent);
+        }
     </style>
 
 
@@ -172,6 +191,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -516,6 +559,24 @@
     
     <div class="blog-idx-grid">
         
+        <a href="ep083.html" class="blog-idx-card">
+            <div class="blog-idx-card-top">
+                <span class="blog-idx-date">June 16, 2026</span>
+                <span class="blog-idx-ep">Ep 83</span>
+                <span class="blog-idx-reading">10 min</span>
+            </div>
+            <h2>A nine-year-old Australian girl’s death during a police operation in Pakistan has renewed scrutiny o…</h2>
+            
+            <p>A nine-year-old Australian girl’s death during a police operation in Pakistan has renewed scrutiny of security tactics and cross-border accountability.</p>
+            
+            <span class="blog-idx-langs" aria-label="Also available in other languages">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <span class="lang-badge">FR</span><span class="lang-badge">RU</span><span class="lang-badge">ES</span><span class="lang-badge">中文</span>
+            </span>
+            
+            <span class="blog-idx-read-more">Read article &rarr;</span>
+        </a>
+        
         <a href="ep082.html" class="blog-idx-card">
             <div class="blog-idx-card-top">
                 <span class="blog-idx-date">June 15, 2026</span>
@@ -525,6 +586,7 @@
             <h2>Russia's missile strike on Kyiv's historic Pechersk Lavra monastery has killed 11 people and set a U…</h2>
             
             <p>Russia's missile strike on Kyiv's historic Pechersk Lavra monastery has killed 11 people and set a UNESCO site ablaze, raising fresh alarms over cultural destru&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -539,6 +601,7 @@
             
             <p>Thanks for joining us. This is Omni View, episode 81 — balanced news perspectives. Today is June 14, 2026. Let's look at the day's news from every angle.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -551,6 +614,7 @@
             <h2>The United States has directed a leading AI firm to block foreign nationals from its most advanced m…</h2>
             
             <p>The United States has directed a leading AI firm to block foreign nationals from its most advanced models, underscoring how national security rules are reshapin&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -565,6 +629,7 @@
             
             <p>A potential US-Iran peace deal could reopen the Strait of Hormuz and ease global oil pressures if finalized in coming days.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -577,6 +642,7 @@
             <h2>US airstrikes on Iran have entered a second day, raising the risk of broader regional conflict and h…</h2>
             
             <p>US airstrikes on Iran have entered a second day, raising the risk of broader regional conflict and higher global energy costs.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -591,6 +657,7 @@
             
             <p>Escalating US-Iran strikes and Pakistan’s renewed attacks on Afghanistan are testing fragile ceasefires and raising risks to shipping lanes and civilian safety &hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -603,6 +670,7 @@
             <h2>A potential Iran nuclear deal in days could reopen the Strait of Hormuz and ease global oil pressure…</h2>
             
             <p>A potential Iran nuclear deal in days could reopen the Strait of Hormuz and ease global oil pressure, while a U.S. Army helicopter incident near the waterway hi&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -617,6 +685,7 @@
             
             <p>Renewed strikes between Israel and Iran risk breaking the recent ceasefire and pushing global oil prices higher for drivers and businesses everywhere.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -629,6 +698,7 @@
             <h2>Looking back at 7 episodes from 2026-06-01 to 2026-06-07 — the stories that mattered, what we learne…</h2>
             
             <p>Looking back at 7 episodes from 2026-06-01 to 2026-06-07 — the stories that mattered, what we learned, and what to watch next.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -643,6 +713,7 @@
             
             <p>Ukraine’s drone strikes on St Petersburg escalate the Russia conflict, threatening civilian safety and energy supplies far beyond the battlefield.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -655,6 +726,7 @@
             <h2>Britain's defence investment plan, long delayed, now faces a 2030 Russia threat timeline as Starmer…</h2>
             
             <p>Britain's defence investment plan, long delayed, now faces a 2030 Russia threat timeline as Starmer prepares to meet Trump at NATO.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -669,6 +741,7 @@
             
             <p>A new Israel-Lebanon ceasefire takes hold even as Israel continues operations in southern Lebanon, testing whether the agreement can hold amid broader regional &hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -681,6 +754,7 @@
             <h2>Six states are suing the Trump administration over a nearly $1 billion payout to cancel a major offs…</h2>
             
             <p>Six states are suing the Trump administration over a nearly $1 billion payout to cancel a major offshore wind lease, testing the reach of federal energy decisio&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -695,6 +769,7 @@
             
             <p>New US tariffs on 60 economies over forced-labor practices could raise prices for British shoppers and slow already-fragile global growth.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -707,6 +782,7 @@
             <h2>Escalating Russian drone and missile barrages on Ukrainian cities are testing the limits of civilian…</h2>
             
             <p>Escalating Russian drone and missile barrages on Ukrainian cities are testing the limits of civilian protection and Western support as casualty counts rise.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -721,6 +797,7 @@
             
             <p>A UK court ruling frees the government from Rwanda deal payments while Labour navigates leadership moves and health policy adjustments.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -733,6 +810,7 @@
             <h2>Looking back at 6 episodes from 2026-05-25 to 2026-05-31 — the stories that mattered, what we learne…</h2>
             
             <p>Looking back at 6 episodes from 2026-05-25 to 2026-05-31 — the stories that mattered, what we learned, and what to watch next.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -747,6 +825,7 @@
             
             <p>Escalating drone exchanges between Ukraine and Russia are disrupting energy supplies and raising risks for civilians on both sides of the border.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -759,6 +838,7 @@
             <h2>Israel's order to seize 70 percent of Gaza threatens the October ceasefire and raises risks of renew…</h2>
             
             <p>Israel's order to seize 70 percent of Gaza threatens the October ceasefire and raises risks of renewed fighting across the region.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -773,6 +853,7 @@
             
             <p>US core inflation rose to 3.3% in April while consumer spending edged higher, shaping expectations for interest-rate decisions that affect household costs natio&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -785,6 +866,7 @@
             <h2>Escalating Israeli strikes in Lebanon and the killing of a militant leader are intensifying Middle E…</h2>
             
             <p>Escalating Israeli strikes in Lebanon and the killing of a militant leader are intensifying Middle East fighting, threatening civilian safety and pushing energy&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -799,6 +881,7 @@
             
             <p>An exam leak scandal in India has triggered suicides and protests among millions of aspiring doctors, exposing deep flaws in a high-stakes system that shapes fu&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -811,6 +894,7 @@
             <h2>Britain faces a potential record bank holiday as forecasters warn temperatures could reach 35C, test…</h2>
             
             <p>Britain faces a potential record bank holiday as forecasters warn temperatures could reach 35C, testing public health and infrastructure.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -825,6 +909,7 @@
             
             <p>Looking back at 5 episodes from 2026-05-18 to 2026-05-24 — the stories that mattered, what we learned, and what to watch next.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -837,6 +922,7 @@
             <h2>US-Iran talks show tentative progress toward ending conflict, yet disagreements over uranium stockpi…</h2>
             
             <p>US-Iran talks show tentative progress toward ending conflict, yet disagreements over uranium stockpiles and Hormuz access keep energy markets and regional secur&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -851,6 +937,7 @@
             
             <p>Iran's expanded claim over the Strait of Hormuz raises risks for global oil supplies that millions depend on for energy and transport costs.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -863,6 +950,7 @@
             <h2>Putin and Xi’s energy pipeline talks amid Middle East tensions could reshape global supply routes an…</h2>
             
             <p>Putin and Xi’s energy pipeline talks amid Middle East tensions could reshape global supply routes and alliances that affect everyday energy costs worldwide.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -877,6 +965,7 @@
             
             <p>Russia and Belarus have begun joint nuclear drills while the UN Security Council meets on Ukraine, highlighting how routine military exercises can quickly raise&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -889,6 +978,7 @@
             <h2>Trump's warning that "the clock is ticking" for Iran raises risks to global oil supplies and regiona…</h2>
             
             <p>Trump's warning that "the clock is ticking" for Iran raises risks to global oil supplies and regional stability as peace talks stall.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -903,6 +993,7 @@
             
             <p>Looking back at 6 episodes from 2026-05-11 to 2026-05-17 — the stories that mattered, what we learned, and what to watch next.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -915,6 +1006,7 @@
             <h2>A teacher’s sudden death during GCSE exams and a fatal shark attack in Australia show how sudden cri…</h2>
             
             <p>A teacher’s sudden death during GCSE exams and a fatal shark attack in Australia show how sudden crises can upend ordinary routines for families and communities&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -929,6 +1021,7 @@
             
             <p>British Gas will pay £20 million after agents broke into vulnerable homes to install prepayment meters, raising fresh questions about how energy firms treat cus&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -941,6 +1034,7 @@
             <h2>Trump's meeting with Xi in Beijing carries direct stakes for global trade rules, AI development, and…</h2>
             
             <p>Trump's meeting with Xi in Beijing carries direct stakes for global trade rules, AI development, and the path of ongoing conflicts in Iran and Ukraine.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -955,6 +1049,7 @@
             
             <p>Britain's Labour government faces a direct test of authority as Prime Minister Starmer meets a leading rival while pledging to continue governing ahead of the K&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -967,6 +1062,7 @@
             <h2>Pakistan’s airstrike on an Afghan rehabilitation centre has left families demanding answers and rais…</h2>
             
             <p>Pakistan’s airstrike on an Afghan rehabilitation centre has left families demanding answers and raised fresh questions about accountability in cross-border conf&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -981,6 +1077,7 @@
             
             <p>Stalled Iran peace talks are pushing up energy costs and cutting international travel demand, directly affecting household bills and holiday plans worldwide.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -993,6 +1090,7 @@
             <h2>Iran's Revolutionary Guards have threatened US sites in the Middle East if its tankers face attack…</h2>
             
             <p>Iran's Revolutionary Guards have threatened US sites in the Middle East if its tankers face attack, as Washington awaits Tehran's reply on a proposed peace deal&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1007,6 +1105,7 @@
             
             <p>UK local elections deliver heavy losses for Labour while Reform UK and pro-independence parties advance across England, Scotland and Wales.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1019,6 +1118,7 @@
             <h2>Reform UK secures its first council and hundreds of seats in UK local elections while Labour suffers…</h2>
             
             <p>Reform UK secures its first council and hundreds of seats in UK local elections while Labour suffers notable losses.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1033,6 +1133,7 @@
             
             <p>Novo Nordisk raised its 2026 outlook after strong sales of its new Wegovy pill sent shares up 6%.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1045,6 +1146,7 @@
             <h2>Iran warns the US that it 'has not even begun' as violence escalates in the Strait of Hormuz</h2>
             
             <p>Iran warns the US that it 'has not even begun' as violence escalates in the Strait of Hormuz.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1059,6 +1161,7 @@
             
             <p>President Trump is reviewing a new peace proposal from Iran but doubts it will be acceptable since Tehran has not paid a big enough price.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1071,6 +1174,7 @@
             <h2>UK raises terror threat level to 'severe' after stabbings of two Jewish men in Golders Green</h2>
             
             <p>UK raises terror threat level to 'severe' after stabbings of two Jewish men in Golders Green.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1085,6 +1189,7 @@
             
             <p>King Charles addresses Congress and shares laughs with Trump at White House state dinner during historic royal visit.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1097,6 +1202,7 @@
             <h2>King Charles begins US state visit amid heightened security fears following the ...</h2>
             
             <p>King Charles begins US state visit amid heightened security fears following the White House Correspondents' Dinner shooting.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1111,6 +1217,7 @@
             
             <p>King Charles faces US pressure over Falklands sovereignty as Trump envoys head to Iran peace talks in Pakistan.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1123,6 +1230,7 @@
             <h2>UK Prime Minister Keir Starmer faces open revolt as a Labour MP calls for his re...</h2>
             
             <p>UK Prime Minister Keir Starmer faces open revolt as a Labour MP calls for his resignation amid a growing Cabinet rift.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1137,6 +1245,7 @@
             
             <p>US-Iran ceasefire deadline looms with JD Vance poised to lead Pakistan talks as both sides issue fresh threats.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1149,6 +1258,7 @@
             <h2>Israel and Lebanon ceasefire takes effect as Trump hails 'historic' peace effort...</h2>
             
             <p>Israel and Lebanon ceasefire takes effect as Trump hails 'historic' peace effort amid ongoing Iran war tensions.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1163,6 +1273,7 @@
             
             <p>US military claims Iran blockade has completely halted economic trade as Trump criticizes Pope Leo over the conflict.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1175,6 +1286,7 @@
             <h2>Rory McIlroy wins back-to-back Masters in thrilling Augusta finale as Trump anno...</h2>
             
             <p>Rory McIlroy wins back-to-back Masters in thrilling Augusta finale as Trump announces Strait of Hormuz blockade sending oil above $100.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1189,6 +1301,7 @@
             
             <p>US and Iranian officials begin highest-level direct talks in 40 years in Pakistan as Trump warns of military buildup if diplomacy fails.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1201,6 +1314,7 @@
             <h2>Fragile US-Iran ceasefire faces immediate test as Israel strikes Lebanon, Iran h...</h2>
             
             <p>Fragile US-Iran ceasefire faces immediate test as Israel strikes Lebanon, Iran halts tankers in the Strait of Hormuz, and both sides dispute what was actually a&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1215,6 +1329,7 @@
             
             <p>Trump issues Tuesday deadline threatening to strike Iranian infrastructure if the Strait of Hormuz remains closed, driving up oil prices and rattling markets.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1227,6 +1342,7 @@
             <h2>U.S. forces rescue both crew members of an F-15E fighter jet shot down over Iran, with President Tru…</h2>
             
             <p>U.S. forces rescue both crew members of an F-15E fighter jet shot down over Iran, with President Trump calling it one of the most daring search-and-rescue opera&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1241,6 +1357,7 @@
             
             <p>Trump warns Iran of further strikes after US-Israeli attack destroys Iran's largest bridge, as Tehran vows continued resistance.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1253,6 +1370,7 @@
             <h2>Oil prices fell after reports President Trump is willing to end the Iran conflict even if the Strait…</h2>
             
             <p>Oil prices fell after reports President Trump is willing to end the Iran conflict even if the Strait of Hormuz stays largely closed.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1267,6 +1385,7 @@
             
             <p>OMNI VIEW SPECIAL EDUCATIONAL EPISODE</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1279,6 +1398,7 @@
             <h2>Trump extends deadline for Iran to reopen Strait of Hormuz to April 6, pausing strikes on energy sit…</h2>
             
             <p>Trump extends deadline for Iran to reopen Strait of Hormuz to April 6, pausing strikes on energy sites as oil markets fluctuate.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1293,6 +1413,7 @@
             
             <p>Iran has rejected President Trump’s proposed peace plan as a pretext for invasion, while Israel claims it killed Iran’s naval chief amid escalating Middle East &hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1305,6 +1426,7 @@
             <h2>Trump administration shares 15-point plan to end Iran war as Tehran launches new strikes on US and I…</h2>
             
             <p>Trump administration shares 15-point plan to end Iran war as Tehran launches new strikes on US and Israeli targets.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1319,6 +1441,7 @@
             
             <p>Escalating Iran conflict triggers global energy crisis warnings, market turmoil, and emergency government meetings.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1331,6 +1454,7 @@
             <h2>Trump considers winding down Iran war while easing sanctions on Iranian oil as I...</h2>
             
             <p>Trump considers winding down Iran war while easing sanctions on Iranian oil as Israel strikes Tehran targets and global energy prices surge.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1345,6 +1469,7 @@
             
             <p>Special Educational Episode</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1357,6 +1482,7 @@
             <h2>Oil prices fall as U.S. considers releasing sanctioned Iranian crude while Israel-Iran conflict disr…</h2>
             
             <p>Oil prices fall as U.S. considers releasing sanctioned Iranian crude while Israel-Iran conflict disrupts global energy markets.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1371,6 +1497,7 @@
             
             <p>Iran war escalates with US embassy attack in Baghdad and global inflation fears prompting rate hikes.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1383,6 +1510,7 @@
             <h2>Iran denies its supreme leader's death amid escalating US-Israel strikes and global oil disruptions</h2>
             
             <p>Iran denies its supreme leader's death amid escalating US-Israel strikes and global oil disruptions.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1397,6 +1525,7 @@
             
             <p>US bombs Iran's Kharg Island oil hub as Middle East conflict escalates.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1409,6 +1538,7 @@
             <h2>Four US service members killed in Iraq plane crash as Middle East war escalates with Iranian drone s…</h2>
             
             <p>Four US service members killed in Iraq plane crash as Middle East war escalates with Iranian drone strikes.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1423,6 +1553,7 @@
             
             <p>Iran strikes oil tankers in the Gulf, surging prices to $100 a barrel amid escalating US-Israel conflict.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1435,6 +1566,7 @@
             <h2>Ships attacked in Strait of Hormuz amid US-Israel-Iran war, escalating global oil supply fears</h2>
             
             <p>Ships attacked in Strait of Hormuz amid US-Israel-Iran war, escalating global oil supply fears.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1449,6 +1581,7 @@
             
             <p>Trump claims Iran war could end soon but threatens escalation if oil supplies are disrupted.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1461,6 +1594,7 @@
             <h2>Iran's new supreme leader vows escalated attacks as oil surges past $120 amid Gulf strikes</h2>
             
             <p>Iran's new supreme leader vows escalated attacks as oil surges past $120 amid Gulf strikes.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1475,6 +1609,7 @@
             
             <p>US and Israeli strikes ignite oil depots in Tehran, escalating the Middle East war into its second week.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1487,6 +1622,7 @@
             <h2>Iran's drone attack on Dubai airport escalates Middle East conflict as Israel strikes Tehran</h2>
             
             <p>Iran's drone attack on Dubai airport escalates Middle East conflict as Israel strikes Tehran.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1501,6 +1637,7 @@
             
             <p>Iran escalates attacks on US assets in the Middle East as the conflict with the US and Israel enters its fourth day.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1513,6 +1650,7 @@
             <h2>Iran escalates Middle East attacks, hitting Saudi oil refinery and downing US F-15 jets in Kuwait fr…</h2>
             
             <p>Iran escalates Middle East attacks, hitting Saudi oil refinery and downing US F-15 jets in Kuwait friendly fire blunder.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1527,6 +1665,7 @@
             
             <p>US and Israel kill Iran's Supreme Leader Khamenei in airstrikes, igniting retaliatory attacks across the Middle East.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1540,6 +1679,7 @@
             
             <p>Bill Clinton testified before Congress on his ties to Jeffrey Epstein, denying any wrongdoing amid ongoing scrutiny.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1552,6 +1692,7 @@
             <h2>Pakistan bombs Kabul, declares 'open war' on Afghanistan amid escalating border clashes</h2>
             
             <p>Pakistan bombs Kabul, declares 'open war' on Afghanistan amid escalating border clashes.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1756,5 +1897,6 @@
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

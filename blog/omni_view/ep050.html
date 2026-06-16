@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Trump's meeting with Xi in Beijing carries direct stakes for global trade rules, AI development, and… — Episode 50</h1>
+            <h1><span class="nn-i18n-title">Trump's meeting with Xi in Beijing carries direct stakes for global trade rules, AI development, and…</span> — Episode 50</h1>
             
             <p class="blog-hero-hook">Trump's meeting with Xi in Beijing carries direct stakes for global trade rules, AI development, and the path of ongoing conflicts in Iran and Ukraine.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1198,12 +1279,6 @@
 <li>How do statements from each capital align with actions taken in the following weeks?</li>
 <li>What role do third countries play in shaping the final communiqués?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/may/14/trump-xi-jinping-meet-beijing-ahead-of-summit-trade-iran-war-ai-talks" target="_blank" rel="noopener">The Guardian</a> — live updates on the opening session</li>
-<li><a href="https://www.theguardian.com/us-news/live/2026/may/14/donald-trump-china-xi-jinping-live-updates-talks-meeting-summit-visit-beijing-latest-news" target="_blank" rel="noopener">The Guardian</a> — additional context on Taiwan and pollution measures</li>
-<li><a href="https://www.bloomberg.com/news/videos/2026-05-14/wyne-trump-has-little-interest-in-taiwan-security-video" target="_blank" rel="noopener">Bloomberg</a> — analyst view on Taiwan security priorities</li>
-</ul>
 <h4 id="2-angela-rayner-settles-tax-dispute-and-signals-possible-labour-leadership-move">2) Angela Rayner settles tax dispute and signals possible Labour leadership move</h4>
 <p><strong>What happened (neutral):</strong> Angela Rayner announced she had paid £40,000 to resolve an HMRC inquiry over unpaid stamp duty. She stated she had been cleared and suggested the prime minister should consider stepping aside. The announcement came amid reports that Wes Streeting is preparing a challenge.</p>
 <p><strong>Perspectives:</strong> The Daily Mail presents the episode as evidence of deepening internal disorder within the governing party, linking it to broader questions about mandate and stability. Labour-aligned voices describe the payment as closure of a personal matter that should not distract from policy delivery. Commentators outside the party note that any leadership change would still require a general election to secure a fresh public mandate. All accounts agree the tax issue has been settled; disagreement centers on whether it strengthens or weakens Rayner’s position inside the party.</p>
@@ -1212,10 +1287,6 @@
 <li>What procedural steps would follow if a leadership contest were formally triggered?</li>
 <li>How have similar tax disclosures affected other senior politicians in recent years?</li>
 <li>Which policy areas might shift under a different leader?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15816913/Angela-Rayner-CLEARED-HMRC-tax-affairs-leaving-way-clear-Labour-leadership-bid-says-no-deal-Andy-Burnham.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — details of the settlement and reactions</li>
 </ul>
 <h4 id="3-russian-strikes-hit-ukrainian-cities-overnight-leaving-one-dead">3) Russian strikes hit Ukrainian cities overnight, leaving one dead</h4>
 <p><strong>What happened (neutral):</strong> Russian forces launched strikes across multiple Ukrainian regions, striking a residential building in Kyiv. Rescue teams are searching the rubble for survivors. Officials confirmed one fatality from the attacks.</p>
@@ -1226,10 +1297,6 @@
 <li>What verification methods are used to confirm strike locations and casualties?</li>
 <li>Which diplomatic channels remain active despite the escalation?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/cq5p8yygq94o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — on-the-ground account from Kyiv</li>
-</ul>
 <h4 id="4-us-vice-president-reports-progress-in-iran-talks-on-day-76-of-conflict">4) US vice president reports progress in Iran talks on day 76 of conflict</h4>
 <p><strong>What happened (neutral):</strong> Vice President Vance stated that talks with Iran have advanced while Israel conducted further strikes in Lebanon. The comments came as President Trump began his separate visit to China. The conflict has now passed 75 days.</p>
 <p><strong>Perspectives:</strong> Al Jazeera coverage links the diplomatic movement to the parallel US-China summit, suggesting possible coordination. Israeli officials emphasize continued operations against Hezbollah-linked targets. Iranian representatives, quoted in regional reporting, stress that any agreement must address core security concerns. All parties acknowledge ongoing negotiations; they diverge on the timeline and scope of any ceasefire.</p>
@@ -1239,10 +1306,6 @@
 <li>How are regional actors outside the direct talks influencing the agenda?</li>
 <li>Which economic sanctions remain in place during the current round of discussions?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/news/2026/5/14/iran-war-day-76-vance-says-progress-made-in-talks-israel-pounds-lebanon?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — daily war update</li>
-</ul>
 <h4 id="5-european-stocks-rise-as-investors-watch-uk-and-us-china-developments">5) European stocks rise as investors watch UK and US-China developments</h4>
 <p><strong>What happened (neutral):</strong> Major European indices opened higher on Thursday. Traders cited political developments in Britain and the Trump-Xi meeting as key factors. Markets are also monitoring bond movements tied to UK leadership speculation.</p>
 <p><strong>Perspectives:</strong> CNBC reporting ties the gains to hopes that clearer political signals in London and Beijing could reduce uncertainty. Bond traders, according to the same coverage, remain cautious about potential leadership changes in the UK. Equity analysts note that any extension of trade calm between Washington and Beijing would support risk assets. Observers agree volatility stems from political news flow; they differ on whether the moves represent short-term positioning or longer-term conviction.</p>
@@ -1251,10 +1314,6 @@
 <li>Which sectors are most sensitive to UK political stability?</li>
 <li>How quickly do equity markets price in summit outcomes?</li>
 <li>What bond-market signals would indicate rising or falling confidence?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/14/europe-markets-stoxx-600-ftse-dax-iran-news-uk-starmer-latest.html" target="_blank" rel="noopener">CNBC</a> — opening market summary</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-uae-denies-reports-of-secret-netanyahu-visit-during-iran-conflict">1) UAE denies reports of secret Netanyahu visit during Iran conflict</h4>
@@ -1266,10 +1325,6 @@
 <li>How do Gulf states balance public messaging with private security cooperation?</li>
 <li>Which other regional actors might have been informed regardless of public denials?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/05/14/nx-s1-5822156/uae-netanyahu-visit" target="_blank" rel="noopener">NPR</a> — statement from both governments</li>
-</ul>
 <h4 id="2-victorian-government-signals-tougher-approach-after-charges-dropped-against-teenager">2) Victorian government signals tougher approach after charges dropped against teenager</h4>
 <p><strong>What happened (neutral):</strong> Police withdrew 109 charges against a 14-year-old girl accused of a two-month crime spree. The Victorian opposition called the outcome proof the justice system is broken. The state government said it would strengthen consequences for young offenders.</p>
 <p><strong>Perspectives:</strong> The Guardian reports the case as an example of prosecutorial limits when dealing with minors. Opposition figures argue the dropped charges show inadequate tools for repeat offending. Government statements focus on planned legislative changes to close perceived gaps. All sides accept the charges were withdrawn; disagreement centers on whether the law or its application needs reform.</p>
@@ -1278,10 +1333,6 @@
 <li>What age-specific rules currently govern charging decisions in Victoria?</li>
 <li>How do other Australian states handle similar volumes of charges against juveniles?</li>
 <li>Which data would demonstrate whether new measures reduce reoffending?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/may/14/109-charges-dropped-14-year-old-girl-victoria-labor-jacinta-allan-tougher-consequences-young-offenders-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — case details and political responses</li>
 </ul>
 <h4 id="3-australia-coalition-accused-of-moving-from-dogwhistling-to-demonising">3) Australia Coalition accused of moving from dogwhistling to demonising</h4>
 <p><strong>What happened (neutral):</strong> A Labor MP claimed the opposition has crossed into demonising language ahead of the budget reply speech. The comment came during ongoing debate over tax reform and housing policy.</p>
@@ -1292,10 +1343,6 @@
 <li>How do parliamentary rules address language during budget debates?</li>
 <li>Which voters appear most responsive to the current tone?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/may/14/budget-reply-angus-taylor-anthony-albanese-jim-chalmers-tax-reform-property-investment-negative-gearing-capital-gains-housing-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — live political updates</li>
-</ul>
 <h4 id="4-cruise-ship-with-british-passengers-remains-stranded-after-norovirus-outbreak">4) Cruise ship with British passengers remains stranded after norovirus outbreak</h4>
 <p><strong>What happened (neutral):</strong> French authorities confined more than 1,700 passengers and crew on the Ambition off Bordeaux after a norovirus outbreak. Passengers described scenes of illness on deck and in public areas. The vessel has been held in place while health measures continue.</p>
 <p><strong>Perspectives:</strong> Mail Online reporting centers on passenger accounts of the conditions and the length of the confinement. Cruise-line statements emphasize compliance with local health orders. Health officials stress standard isolation protocols for norovirus on ships. All accounts confirm the outbreak and the lockdown; they differ on the adequacy of onboard facilities during extended stays.</p>
@@ -1305,10 +1352,6 @@
 <li>How are compensation claims typically handled in such cases?</li>
 <li>Which health metrics determine when a ship is cleared to dock?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15816983/Someone-sick-threw-deck-Passengers-grim-scenes-board-norovirus-hit-cruise-ship-packed-Brits-remains-stranded-Bordeaux.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — passenger descriptions</li>
-</ul>
 <h4 id="5-michigan-couple-charged-with-abusing-adopted-children-using-restraints">5) Michigan couple charged with abusing adopted children using restraints</h4>
 <p><strong>What happened (neutral):</strong> Police found a homemade straitjacket, door alarms, and dog cages used to confine adopted children during a search of a Michigan home. The couple faces charges related to the alleged abuse.</p>
 <p><strong>Perspectives:</strong> Mail Online coverage highlights the physical evidence recovered and the ages of the children involved. Child-protection advocates describe the case as an extreme example of failed oversight. Local authorities note that the investigation began after reports from outside the home. The record shows the items discovered; discussion focuses on how such conditions went undetected for so long.</p>
@@ -1317,10 +1360,6 @@
 <li>What inspection requirements apply to adoptive homes in Michigan?</li>
 <li>How do similar cases elsewhere inform current child-welfare training?</li>
 <li>Which community reporting channels proved effective here?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15814881/Michigan-couple-abused-children.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — search details</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-block-trades-signal-possible-revival-in-india-equity-markets">1) Block trades signal possible revival in India equity markets</h4>
@@ -1332,10 +1371,6 @@
 <li>How do foreign and domestic investor flows compare in these deals?</li>
 <li>What historical patterns followed similar spikes in block activity?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-14/block-deal-surge-signals-revival-in-india-equity-capital-market" target="_blank" rel="noopener">Bloomberg</a> — market analysis</li>
-</ul>
 <h4 id="2-uk-bond-markets-prepare-for-possible-labour-leadership-challenges">2) UK bond markets prepare for possible Labour leadership challenges</h4>
 <p><strong>What happened (neutral):</strong> Traders are positioning for announcements from potential rivals to Prime Minister Starmer, with leadership speculation expected to intensify. Bond yields have moved in response to the political uncertainty.</p>
 <p><strong>Perspectives:</strong> CNBC coverage connects the bond-market reaction to the possibility of rapid political change in London. Fixed-income investors focus on the fiscal implications of any new leadership. Political commentators note that markets have priced similar episodes in the past. The factual movement in yields is clear; interpretations center on how durable any new government would be.</p>
@@ -1345,10 +1380,6 @@
 <li>How do credit-default swaps on UK debt compare with peers?</li>
 <li>What timeline do traders assign to any leadership transition?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/14/uk-labour-leadership-challenge-starmer-rivals.html" target="_blank" rel="noopener">CNBC</a> — bond-market reaction</li>
-</ul>
 <h4 id="3-analysts-warn-bond-selloff-still-has-further-to-run-in-2026">3) Analysts warn bond selloff still has further to run in 2026</h4>
 <p><strong>What happened (neutral):</strong> Bloomberg’s Opening Trade panel discussed the likelihood that bond markets will see additional selling pressure through the rest of the year. The conversation focused on inflation persistence and fiscal trajectories.</p>
 <p><strong>Perspectives:</strong> The panel highlighted data points that continue to support higher yields. Some participants argued that central-bank policy remains behind the curve. Others pointed to technical factors that could accelerate the move. All agreed the selloff is not complete; disagreement centers on its speed and final extent.</p>
@@ -1357,10 +1388,6 @@
 <li>Which inflation measures are most closely watched by bond traders?</li>
 <li>How have previous multi-year selloffs ended?</li>
 <li>What portfolio adjustments are funds making in response?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-05-14/bonds-have-much-more-to-selloff-in-2026-3-minutes-mliv-video" target="_blank" rel="noopener">Bloomberg</a> — panel discussion</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-hopes-rise-for-china-tech-rally-after-us-clears-nvidia-chip-sales">1) Hopes rise for China tech rally after US clears Nvidia chip sales</h4>
@@ -1372,10 +1399,6 @@
 <li>How quickly could Chinese firms incorporate the new chips into products?</li>
 <li>What market reaction would follow if approvals were later narrowed?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/14/trump-xi-meeting-china-stocks-ai-rally.html" target="_blank" rel="noopener">CNBC</a> — chip-sales and market impact</li>
-</ul>
 <h4 id="2-neanderthal-tools-show-early-dental-treatment-techniques">2) Neanderthal tools show early dental treatment techniques</h4>
 <p><strong>What happened (neutral):</strong> A study found that Neanderthals used stone drills to treat cavities roughly 60,000 years ago without modern pain relief. The findings challenge long-held views of their technological capabilities.</p>
 <p><strong>Perspectives:</strong> Mail Online science coverage presents the discovery as evidence of sophisticated prehistoric medical knowledge. Researchers emphasize the precision required for the observed drilling patterns. Skeptics note that the sample size is small and further finds are needed. The physical evidence of drilled teeth is documented; debate focuses on the intent and frequency of such treatments.</p>
@@ -1384,10 +1407,6 @@
 <li>What other medical practices have been identified in Neanderthal remains?</li>
 <li>How do the tools compare with later human dental instruments?</li>
 <li>Which preservation conditions allow such fine details to survive?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/sciencetech/article-15814099/Neanderthals-dentists-stone-drills-treat-cavities.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — study findings</li>
 </ul>
 <h4 id="3-cannes-film-festival-sees-technical-mishap-with-palme-dor">3) Cannes Film Festival sees technical mishap with Palme d’Or</h4>
 <p><strong>What happened (neutral):</strong> The Palme d’Or trophy was dropped on stage during the Cannes Film Festival, prompting quick recovery by staff. The incident occurred in front of attendees and was later discussed by Chopard co-president Caroline Scheufele.</p>
@@ -1398,16 +1417,109 @@
 <li>How often have similar incidents occurred at major film events?</li>
 <li>What backup procedures exist for damaged trophies?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/video/20260514-the-night-the-palme-d-or-fell-on-stage" target="_blank" rel="noopener">France 24</a> — behind-the-scenes account</li>
-</ul>
 <h3 id="top-popular-media-stories-3">Top popular media stories (3)</h3>
 <h4 id="1-joan-collins-reveals-daily-habits-behind-her-appearance-at-92">1) Joan Collins reveals daily habits behind her appearance at 92</h4>
 <p><strong>What happened (neutral):</strong> Dame Joan Collins appeared on the Cannes red carpet and later shared that she eats an avocado daily, can still perform splits, and has never used Botox. She first gained international fame in the 1981 series Dynasty.</p>
 <p><strong>Perspectives:</strong> Mail Online lifestyle reporting highlights her consistent routines as the key to her public image. Fans view the disclosure as encouraging</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.theguardian.com/world/2026/may/14/trump-xi-jinping-meet-beijing-ahead-of-summit-trade-iran-war-ai-talks" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/live/2026/may/14/donald-trump-china-xi-jinping-live-updates-talks-meeting-summit-visit-beijing-latest-news" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-05-14/wyne-trump-has-little-interest-in-taiwan-security-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15816913/Angela-Rayner-CLEARED-HMRC-tax-affairs-leaving-way-clear-Labour-leadership-bid-says-no-deal-Andy-Burnham.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cq5p8yygq94o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/5/14/iran-war-day-76-vance-says-progress-made-in-talks-israel-pounds-lebanon?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/05/14/europe-markets-stoxx-600-ftse-dax-iran-news-uk-starmer-latest.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.npr.org/2026/05/14/nx-s1-5822156/uae-netanyahu-visit" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/may/14/109-charges-dropped-14-year-old-girl-victoria-labor-jacinta-allan-tougher-consequences-young-offenders-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/live/2026/may/14/budget-reply-angus-taylor-anthony-albanese-jim-chalmers-tax-reform-property-investment-negative-gearing-capital-gains-housing-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15816983/Someone-sick-threw-deck-Passengers-grim-scenes-board-norovirus-hit-cruise-ship-packed-Brits-remains-stranded-Bordeaux.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15814881/Michigan-couple-abused-children.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-14/block-deal-surge-signals-revival-in-india-equity-capital-market" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/05/14/uk-labour-leadership-challenge-starmer-rivals.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-05-14/bonds-have-much-more-to-selloff-in-2026-3-minutes-mliv-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/05/14/trump-xi-meeting-china-stocks-ai-rally.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/sciencetech/article-15814099/Neanderthals-dentists-stone-drills-treat-cavities.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/video/20260514-the-night-the-palme-d-or-fell-on-stage" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1802,10 +1914,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

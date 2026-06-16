@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>UK raises terror threat level to 'severe' after stabbings of two Jewish men in Golders Green — Episode 40</h1>
+            <h1><span class="nn-i18n-title">UK raises terror threat level to 'severe' after stabbings of two Jewish men in Golders Green</span> — Episode 40</h1>
             
             <p class="blog-hero-hook">UK raises terror threat level to 'severe' after stabbings of two Jewish men in Golders Green.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1200,12 +1281,6 @@
 <li>What additional protections are being considered for at-risk communities?</li>
 <li>How has the UK adjusted responses during past threat level shifts?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15780171/UK-threat-level-raised-severe-wake-Golders-Green-stabbings-meaning-terror-attack-highly-likely.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Full details on the threat level announcement</li>
-<li><a href="https://www.dailymail.com/news/article-15780171/UK-threat-level-raised-severe-wake-Golders-Green-stabbings-meaning-terror-attack-highly-likely.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Information on the suspect and upcoming court appearance</li>
-<li><a href="https://www.dailymail.com/news/article-15780171/UK-threat-level-raised-severe-wake-Golders-Green-stabbings-meaning-terror-attack-highly-likely.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Background on recent antisemitic incidents</li>
-</ul>
 <h4 id="2-iran-war-truce-stops-clock-on-us-congress-approval">2) Iran war truce stops clock on US Congress approval</h4>
 <p><strong>What happened (neutral):</strong> The White House announced that a truce in the Iran war has terminated the conflict, removing the immediate need for President Trump to seek congressional approval by Friday under war powers rules. The development follows ongoing US involvement in the Middle East conflict. Officials described the ceasefire as having ended the active phase requiring legislative action.</p>
 <p><strong>Perspectives:</strong> Deutsche Welle reports the White House view that the truce has effectively paused the war powers timeline and avoided an urgent congressional vote. Other outlets note continued regional volatility and question how lasting the pause will prove amid broader tensions. Both sides agree on the existence of the truce and the statutory deadline; they differ on whether this marks genuine de-escalation or a temporary lull before further decisions.</p>
@@ -1215,12 +1290,6 @@
 <li>How might Congress respond if fighting resumes?</li>
 <li>What impact could this have on US foreign policy timelines?</li>
 <li>How are international partners viewing the announcement?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/iran-war-truce-stops-clock-on-congress-approval-says-trump-s-white-house/live-77007473?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — White House statement on the truce and timeline</li>
-<li><a href="https://www.dw.com/en/iran-war-truce-stops-clock-on-congress-approval-says-trump-s-white-house/live-77007473?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — Context on war powers legislation</li>
-<li><a href="https://www.dw.com/en/iran-war-truce-stops-clock-on-congress-approval-says-trump-s-white-house/live-77007473?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — Updates on Middle East developments</li>
 </ul>
 <h4 id="3-record-number-of-deaths-in-custody-reported-in-new-south-wales">3) Record number of deaths in custody reported in New South Wales</h4>
 <p><strong>What happened (neutral):</strong> A coroners court report shows 66 deaths in custody and police operations in New South Wales during 2025, an increase of 18 from the previous year. Almost a quarter of prisoner deaths were recorded as self-harm, mostly by hanging. The figures come despite investments to remove ligature points in facilities.</p>
@@ -1232,12 +1301,6 @@
 <li>What changes have been proposed to reduce self-harm incidents?</li>
 <li>How do these figures compare with other Australian states?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/may/01/nsw-deaths-custody-record-number-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — Full coroners court report findings</li>
-<li><a href="https://www.theguardian.com/australia-news/2026/may/01/nsw-deaths-custody-record-number-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — Details on self-harm cases and prevention efforts</li>
-<li><a href="https://www.theguardian.com/australia-news/2026/may/01/nsw-deaths-custody-record-number-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — Context on Indigenous deaths in custody</li>
-</ul>
 <h4 id="4-workers-march-worldwide-for-peace-and-better-pay-on-may-day">4) Workers march worldwide for peace and better pay on May Day</h4>
 <p><strong>What happened (neutral):</strong> May Day rallies took place across many countries as workers protested rising energy prices linked to the US-Israeli conflict with Iran. Demonstrations occurred from Islamabad to Istanbul, with participants calling for peace and improved wages. The events highlighted economic pressures from ongoing geopolitical tensions.</p>
 <p><strong>Perspectives:</strong> France 24 reports the rallies as a global expression of worker frustration with energy costs and conflict-related instability. Some outlets frame the protests as focused on immediate economic relief, while others connect them to longer-term calls for policy shifts on international relations. Both sides agree on the timing of the rallies and the role of energy prices; they differ on the extent to which conflict resolution should be prioritized over domestic wage demands.</p>
@@ -1248,12 +1311,6 @@
 <li>How might ongoing conflicts influence future labor actions?</li>
 <li>What role do international organizations play in addressing these concerns?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/culture/20260501-workers-across-the-world-march-for-peace-and-better-pay-in-may-day-rallies" target="_blank" rel="noopener">France 24</a> — Overview of global rally locations and themes</li>
-<li><a href="https://www.france24.com/en/culture/20260501-workers-across-the-world-march-for-peace-and-better-pay-in-may-day-rallies" target="_blank" rel="noopener">France 24</a> — Details on protests in key cities</li>
-<li><a href="https://www.france24.com/en/culture/20260501-workers-across-the-world-march-for-peace-and-better-pay-in-may-day-rallies" target="_blank" rel="noopener">France 24</a> — Analysis of economic impacts from the Iran conflict</li>
-</ul>
 <h4 id="5-rising-antisemitism-strikes-fear-into-everyday-lives-of-british-jews">5) Rising antisemitism strikes fear into everyday lives of British Jews</h4>
 <p><strong>What happened (neutral):</strong> Recent attacks, including the Golders Green stabbings, have intensified concerns among British Jews about safety in daily life. Government adviser John Mann stated that many in the community feel at breaking point and question whether the UK remains a safe place to live. The incidents form part of a string of antisemitic attacks on people and property in recent years.</p>
 <p><strong>Perspectives:</strong> The Guardian emphasizes personal accounts of fear and the cumulative effect of repeated incidents on community confidence. Official statements highlight government efforts to combat extremism while acknowledging the scale of the problem. Both sides agree on the pattern of attacks and the adviser's assessment; they differ on the balance between immediate policing and longer-term education initiatives.</p>
@@ -1263,12 +1320,6 @@
 <li>How are authorities tracking and responding to antisemitic incidents?</li>
 <li>What role does online content play in these attacks?</li>
 <li>How do similar trends appear in other countries?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/may/01/friday-briefing-how-rising-antisemitism-is-striking-fear-into-the-everyday-lives-of-british-jews" target="_blank" rel="noopener">The Guardian</a> — Accounts from British Jewish communities</li>
-<li><a href="https://www.theguardian.com/world/2026/may/01/friday-briefing-how-rising-antisemitism-is-striking-fear-into-the-everyday-lives-of-british-jews" target="_blank" rel="noopener">The Guardian</a> — Adviser comments and government response</li>
-<li><a href="https://www.theguardian.com/world/2026/may/01/friday-briefing-how-rising-antisemitism-is-striking-fear-into-the-everyday-lives-of-british-jews" target="_blank" rel="noopener">The Guardian</a> — Timeline of recent incidents</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-gaza-workers-seek-any-available-income-on-may-day-amid-economic-collapse">1) Gaza workers seek any available income on May Day amid economic collapse</h4>
@@ -1281,12 +1332,6 @@
 <li>What long-term effects might this have on the population?</li>
 <li>How are humanitarian organizations responding?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/features/2026/5/1/on-may-day-gazas-workers-find-whatever-source-of-income-they-can?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Profiles of workers in Gaza</li>
-<li><a href="https://www.aljazeera.com/features/2026/5/1/on-may-day-gazas-workers-find-whatever-source-of-income-they-can?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Economic data on unemployment</li>
-<li><a href="https://www.aljazeera.com/features/2026/5/1/on-may-day-gazas-workers-find-whatever-source-of-income-they-can?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Impact of ongoing devastation</li>
-</ul>
 <h4 id="2-piracy-incidents-rise-off-somalia-with-possible-iran-war-links">2) Piracy incidents rise off Somalia with possible Iran war links</h4>
 <p><strong>What happened (neutral):</strong> At least four vessels have been hijacked off Somalia in recent weeks, raising fears of a resurgence in piracy. Some reports connect the increase to disruptions from the Iran war affecting regional shipping and security. The trend has prompted renewed international attention to the area.</p>
 <p><strong>Perspectives:</strong> Al Jazeera examines whether reduced naval presence due to the Iran conflict has created opportunities for pirates. Shipping industry voices stress the need for stronger protections on key routes. Both sides agree on the recent hijackings and the historical context of Somali piracy; they differ on the degree to which the Iran war is directly responsible versus other local factors.</p>
@@ -1296,12 +1341,6 @@
 <li>How does this compare to previous piracy waves in the region?</li>
 <li>What international cooperation exists to combat the issue?</li>
 <li>How might continued conflict affect global trade routes?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/news/2026/5/1/why-is-piracy-rising-off-somalia-again-and-is-the-iran-war?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Details on recent hijackings</li>
-<li><a href="https://www.aljazeera.com/news/2026/5/1/why-is-piracy-rising-off-somalia-again-and-is-the-iran-war?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Analysis of possible Iran war connections</li>
-<li><a href="https://www.aljazeera.com/news/2026/5/1/why-is-piracy-rising-off-somalia-again-and-is-the-iran-war?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Historical background on Somali piracy</li>
 </ul>
 <h4 id="3-bae-systems-faces-120m-lawsuit-over-aid-aircraft-support-decision">3) BAE Systems faces £120m lawsuit over aid aircraft support decision</h4>
 <p><strong>What happened (neutral):</strong> BAE Systems is being sued for £120 million after ending support for aircraft used to deliver humanitarian aid to countries including South Sudan, Somalia, and the Democratic Republic of the Congo. The Kenya-based operator EnComm Aviation claims the move forced cancellation of contracts and reduced supplies to famine-threatened areas. The case highlights tensions between defense manufacturing and aid logistics.</p>
@@ -1313,12 +1352,6 @@
 <li>What precedents exist for defense firms and humanitarian contracts?</li>
 <li>How are aid organizations adapting to the change?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/global-development/2026/may/01/bae-lawsuit-scrap-support-aid-aircraft-encomm-aviation" target="_blank" rel="noopener">The Guardian</a> — Lawsuit details and company response</li>
-<li><a href="https://www.theguardian.com/global-development/2026/may/01/bae-lawsuit-scrap-support-aid-aircraft-encomm-aviation" target="_blank" rel="noopener">The Guardian</a> — Impact on aid to South Sudan and other countries</li>
-<li><a href="https://www.theguardian.com/global-development/2026/may/01/bae-lawsuit-scrap-support-aid-aircraft-encomm-aviation" target="_blank" rel="noopener">The Guardian</a> — Background on EnComm Aviation operations</li>
-</ul>
 <h4 id="4-opening-strait-of-hormuz-tied-to-global-food-system-stability">4) Opening Strait of Hormuz tied to global food system stability</h4>
 <p><strong>What happened (neutral):</strong> The Strait of Hormuz is described as essential not only for oil but for maintaining access to fertilizer and preventing a global food security crisis. Experts warn that disruptions could lead to cataclysmic risks for food systems amid existing geopolitical volatility. The issue extends beyond energy to agricultural supply chains.</p>
 <p><strong>Perspectives:</strong> France 24 highlights the link between Hormuz access and fertilizer availability, stressing the need for stable shipping routes. Industry groups emphasize that headlines often overlook the food security dimension. Both sides agree on the strait's role in oil and gas transport; they differ on the urgency of treating fertilizer access as a parallel priority.</p>
@@ -1329,12 +1362,6 @@
 <li>How are countries preparing for potential disruptions?</li>
 <li>What diplomatic efforts are underway to keep the route open?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/tv-shows/spotlight/20260501-opening-hormuz-not-a-humanitarian-gesture-essential-to-keeping-global-food-system-operating" target="_blank" rel="noopener">France 24</a> — Expert comments on food security risks</li>
-<li><a href="https://www.france24.com/en/tv-shows/spotlight/20260501-opening-hormuz-not-a-humanitarian-gesture-essential-to-keeping-global-food-system-operating" target="_blank" rel="noopener">France 24</a> — Details on fertilizer access issues</li>
-<li><a href="https://www.france24.com/en/tv-shows/spotlight/20260501-opening-hormuz-not-a-humanitarian-gesture-essential-to-keeping-global-food-system-operating" target="_blank" rel="noopener">France 24</a> — Broader geopolitical context</li>
-</ul>
 <h4 id="5-six-detained-australians-to-be-moved-from-israel-to-crete">5) Six detained Australians to be moved from Israel to Crete</h4>
 <p><strong>What happened (neutral):</strong> Israel has confirmed that six Australians who were detained will be moved to Crete. The update appears in ongoing news coverage that also includes Australian political developments on capital gains tax. The move follows their detention in the region.</p>
 <p><strong>Perspectives:</strong> The Guardian presents the transfer as part of diplomatic handling of the detentions amid wider regional tensions. Official statements focus on the logistics of the move without detailing the reasons for detention. Both sides agree on the planned transfer and the individuals' status; they differ on the level of transparency provided about the original detention circumstances.</p>
@@ -1344,12 +1371,6 @@
 <li>How are Australian authorities assisting the individuals?</li>
 <li>What does this indicate about regional travel and security?</li>
 <li>How might this affect future diplomatic relations?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/may/01/alice-springs-anthony-albanese-labor-angus-taylor-coalition-gaza-flotilla-politics-updates-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — Update on the Australians' movement</li>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/may/01/alice-springs-anthony-albanese-labor-angus-taylor-coalition-gaza-flotilla-politics-updates-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — Context on related political discussions</li>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/may/01/alice-springs-anthony-albanese-labor-angus-taylor-coalition-gaza-flotilla-politics-updates-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — Broader regional updates</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-yen-oil-correlation-reaches-2021-high-before-intervention">1) Yen-oil correlation reaches 2021 high before intervention</h4>
@@ -1362,12 +1383,6 @@
 <li>What does this mean for Japanese exporters and importers?</li>
 <li>How might future oil price changes influence the yen?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-01/yen-s-correlation-with-oil-hit-2021-high-before-intervention" target="_blank" rel="noopener">Bloomberg</a> — Data on the correlation levels</li>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-01/yen-s-correlation-with-oil-hit-2021-high-before-intervention" target="_blank" rel="noopener">Bloomberg</a> — Details on the Japanese intervention</li>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-01/yen-s-correlation-with-oil-hit-2021-high-before-intervention" target="_blank" rel="noopener">Bloomberg</a> — Market reaction analysis</li>
-</ul>
 <h4 id="2-renters-rights-act-leads-to-unexpected-eviction-for-train-driver">2) Renters' Rights Act leads to unexpected eviction for train driver</h4>
 <p><strong>What happened (neutral):</strong> Train driver Daniel Franklin-Smith, 33, faces eviction from his home despite believing the Renters' Rights Act would protect him. He attributes the outcome to the legislation rather than his landlord. The case illustrates how new rental rules can produce unintended consequences for tenants.</p>
 <p><strong>Perspectives:</strong> Daily Mail coverage presents the story as an example of the Act creating new vulnerabilities for renters in certain situations. The tenant's account stresses personal hardship and calls for clearer protections. Both sides agree on the eviction notice and the tenant's prior understanding of the law; they differ on whether the Act overall benefits or harms tenants in practice.</p>
@@ -1378,12 +1393,6 @@
 <li>What advice are tenants receiving about their rights?</li>
 <li>How might landlords adjust their practices?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/money/buytolet/article-15762827/The-Renters-Rights-Act-means-Im-evicted-home-blame-Government-not-landlord.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Tenant interview and case details</li>
-<li><a href="https://www.dailymail.com/money/buytolet/article-15762827/The-Renters-Rights-Act-means-Im-evicted-home-blame-Government-not-landlord.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Explanation of the Renters' Rights Act provisions</li>
-<li><a href="https://www.dailymail.com/money/buytolet/article-15762827/The-Renters-Rights-Act-means-Im-evicted-home-blame-Government-not-landlord.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Broader implications for UK renters</li>
-</ul>
 <h4 id="3-horizons-middle-east-africa-covers-regional-markets">3) Horizons Middle East & Africa covers regional markets</h4>
 <p><strong>What happened (neutral):</strong> Bloomberg's daily program Horizons Middle East & Africa provides updates on global markets with a focus on the Middle East and Africa region. The broadcast includes news-making interviews and analysis for viewers in various time zones. It serves as a snapshot of economic developments in a fast-growing area.</p>
 <p><strong>Perspectives:</strong> Bloomberg frames the program as essential viewing for understanding market movements and regional opportunities. Viewers in Gulf, Asian, and European time zones receive tailored insights. Both sides agree on the program's focus on markets and interviews; they differ on the depth of analysis provided versus other financial news sources.</p>
@@ -1393,12 +1402,6 @@
 <li>How does the Middle East and Africa region factor into global economics?</li>
 <li>What interviews are featured and why?</li>
 <li>How might viewers use this information for decision-making?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-05-01/horizons-middle-east-africa-5-1-2026-video" target="_blank" rel="noopener">Bloomberg</a> — Full video broadcast</li>
-<li><a href="https://www.bloomberg.com/news/videos/2026-05-01/horizons-middle-east-africa-5-1-2026-video" target="_blank" rel="noopener">Bloomberg</a> — Market analysis segments</li>
-<li><a href="https://www.bloomberg.com/news/videos/2026-05-01/horizons-middle-east-africa-5-1-2026-video" target="_blank" rel="noopener">Bloomberg</a> — Interview highlights</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-six-fare-dodgers-push-through-barriers-at-elizabeth-line-station">1) Six fare dodgers push through barriers at Elizabeth line station</h4>
@@ -1411,12 +1414,6 @@
 <li>What penalties apply to fare dodgers?</li>
 <li>How might rail operators improve barrier systems?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15779179/Fare-dodgers-Elizabeth-line-station-Romford.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Video and councillor comments</li>
-<li><a href="https://www.dailymail.com/news/article-15779179/Fare-dodgers-Elizabeth-line-station-Romford.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Details on the Elizabeth line barriers</li>
-<li><a href="https://www.dailymail.com/news/article-15779179/Fare-dodgers-Elizabeth-line-station-Romford.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Context on fare evasion trends</li>
-</ul>
 <h4 id="2-video-of-baby-bouncing-to-nursery-rhyme-shown-in-murder-trial">2) Video of baby bouncing to nursery rhyme shown in murder trial</h4>
 <p><strong>What happened (neutral):</strong> A video of baby Preston Davey bouncing to 'Wheels on the Bus' just days after his adoption was presented in court. The footage shows the child enjoying television shortly before allegations of abuse and murder by his adoptive teacher. The evidence forms part of the ongoing case.</p>
 <p><strong>Perspectives:</strong> Daily Mail reports the video as a poignant contrast to the serious charges, emphasizing the timeline of events. Court proceedings focus on establishing the facts of the adoption and subsequent incidents. Both sides agree on the existence of the video and its presentation in court; they differ on how such personal footage should be weighed in determining outcomes.</p>
@@ -1426,12 +1423,6 @@
 <li>What other evidence is being presented in the case?</li>
 <li>How do courts handle video evidence in child protection matters?</li>
 <li>What support is available for families in similar situations?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15779877/First-video-murdered-baby-Preston-Davey-bouncing-Wheels-Bus-days-adopted-teacher-accused-murder.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Description of the video evidence</li>
-<li><a href="https://www.dailymail.com/news/article-15779877/First-video-murdered-baby-Preston-Davey-bouncing-Wheels-Bus-days-adopted-teacher-accused-murder.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Timeline of the adoption and allegations</li>
-<li><a href="https://www.dailymail.com/news/article-15779877/First-video-murdered-baby-Preston-Davey-bouncing-Wheels-Bus-days-adopted-teacher-accused-murder.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Court proceedings update</li>
 </ul>
 <h4 id="3-olivia-wildes-changing-appearance-sparks-online-discussion">3) Olivia Wilde's changing appearance sparks online discussion</h4>
 <p><strong>What happened (neutral):</strong> A clip from Olivia Wilde's interview at the San Francisco International Film Festival went viral, showing changes in her appearance that surprised fans. The 42-year-old actress's look prompted widespread social media conversation. The moment highlighted public interest in celebrity transformations.</p>
@@ -1443,17 +1434,98 @@
 <li>What role does social media play in shaping these conversations?</li>
 <li>How might public figures respond to such attention?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15778819/Olivia-Wilde-42-surprises-fans-changing-appearance-interview-clip-goes-viral.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Details on the viral clip</li>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15778819/Olivia-Wilde-42-surprises-fans-changing-appearance-interview-clip-goes-viral.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Fan reactions and comments</li>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15778819/Olivia-Wilde-42-surprises-fans-changing-appearance-interview-clip-goes-viral.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Context on the film festival appearance</li>
-</ul>
 <h3 id="top-popular-media-stories-3">Top popular media stories (3)</h3>
 <h4 id="1-devil-wears-prada-stars-receive-hollywood-walk-of-fame-stars">1) Devil Wears Prada stars receive Hollywood Walk of Fame stars</h4>
 <p><strong>What happened (neutral):</strong> Emily Blunt and Stanley Tucci, stars of The Devil Wears Prada, were honored with stars on the Hollywood Walk</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.dailymail.com/news/article-15780171/UK-threat-level-raised-severe-wake-Golders-Green-stabbings-meaning-terror-attack-highly-likely.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/iran-war-truce-stops-clock-on-congress-approval-says-trump-s-white-house/live-77007473?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/may/01/nsw-deaths-custody-record-number-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/culture/20260501-workers-across-the-world-march-for-peace-and-better-pay-in-may-day-rallies" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/may/01/friday-briefing-how-rising-antisemitism-is-striking-fear-into-the-everyday-lives-of-british-jews" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/features/2026/5/1/on-may-day-gazas-workers-find-whatever-source-of-income-they-can?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/5/1/why-is-piracy-rising-off-somalia-again-and-is-the-iran-war?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/global-development/2026/may/01/bae-lawsuit-scrap-support-aid-aircraft-encomm-aviation" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/tv-shows/spotlight/20260501-opening-hormuz-not-a-humanitarian-gesture-essential-to-keeping-global-food-system-operating" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/live/2026/may/01/alice-springs-anthony-albanese-labor-angus-taylor-coalition-gaza-flotilla-politics-updates-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-01/yen-s-correlation-with-oil-hit-2021-high-before-intervention" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/money/buytolet/article-15762827/The-Renters-Rights-Act-means-Im-evicted-home-blame-Government-not-landlord.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-05-01/horizons-middle-east-africa-5-1-2026-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15779179/Fare-dodgers-Elizabeth-line-station-Romford.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15779877/First-video-murdered-baby-Preston-Davey-bouncing-Wheels-Bus-days-adopted-teacher-accused-murder.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15778819/Olivia-Wilde-42-surprises-fans-changing-appearance-interview-clip-goes-viral.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1896,10 +1968,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>
