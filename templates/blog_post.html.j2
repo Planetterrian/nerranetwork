@@ -611,6 +611,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 {% endblock %}
 
@@ -637,7 +691,7 @@
                 <picture><source type="image/webp" srcset="{{ path_prefix }}{{ podcast_image[:-4] if podcast_image.endswith('.jpg') else podcast_image }}-400.webp"><img src="{{ path_prefix }}{{ podcast_image }}" alt="{{ show_name }}" width="40" height="40"></picture>
                 {{ show_name }} Blog
             </a>
-            <h1>{{ episode_title }} — Episode {{ episode_num }}</h1>
+            <h1><span class="nn-i18n-title">{{ episode_title }}</span> — Episode {{ episode_num }}</h1>
             {% if hook %}
             <p class="blog-hero-hook">{{ hook }}</p>
             {% endif %}
@@ -678,6 +732,35 @@
             </div>
         </div>
     </header>
+
+    {# Multilingual audio player + language switcher (June 2026).
+       Only rendered when this episode actually has alternate-language
+       tracks AND an English audio URL — English-only episodes show
+       nothing here (no empty/disabled control). #}
+    {% if translations and audio_url %}
+    {%- set _LANG_LABELS = {"en": "English", "fr": "Français", "ru": "Русский", "es": "Español", "zh": "中文"} -%}
+    <section class="nn-i18n" aria-label="Listen in another language">
+        <div class="nn-i18n-inner">
+            <div class="nn-i18n-row">
+                <span class="nn-i18n-label">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    Listen in
+                </span>
+                <button type="button" class="nn-i18n-pill" data-lang="en" aria-pressed="true">English</button>
+                {% for code, t in translations.items() if t.audio_url %}
+                <button type="button" class="nn-i18n-pill" data-lang="{{ code }}" aria-pressed="false">{{ _LANG_LABELS.get(code, code) }}</button>
+                {% endfor %}
+            </div>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="{{ audio_url }}"></audio>
+        </div>
+        <script type="application/json" id="nn-i18n-tracks">
+{
+  "en": {"url": {{ audio_url | tojson }}, "title": {{ episode_title | tojson }}, "desc": {{ hook | tojson }}}{% for code, t in translations.items() if t.audio_url %},
+  {{ code | tojson }}: {"url": {{ t.audio_url | tojson }}, "title": {{ (t.title or episode_title) | tojson }}, "desc": {{ (t.description or hook) | tojson }}}{% endfor %}
+}
+        </script>
+    </section>
+    {% endif %}
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -863,6 +946,50 @@
     }
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
+})();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    var key = 'nn-i18n-lang:' + location.pathname;
+
+    function preferred() {
+        try {
+            var saved = sessionStorage.getItem(key);
+            if (saved && tracks[saved]) return saved;
+        } catch (e) {}
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { sessionStorage.setItem(key, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    apply(preferred(), false);
 })();
 </script>
 {% endblock %}

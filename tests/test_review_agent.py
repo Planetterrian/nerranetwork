@@ -21,7 +21,8 @@ PLAYBOOK_PATH = ROOT / ".claude" / "commands" / "review-show.md"
 WORKFLOW_PATH = ROOT / ".github" / "workflows" / "show-review.yml"
 
 # shows/*.yaml files that are not show configs.
-NON_SHOW_YAMLS = {"network_meta", "pronunciation_map", "scaffold_pending"}
+NON_SHOW_YAMLS = {"network_meta", "pronunciation_map", "scaffold_pending",
+                  "translation_overrides"}
 
 
 def _load_picker():

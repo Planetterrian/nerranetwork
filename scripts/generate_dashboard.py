@@ -79,7 +79,7 @@ HEAD_TIMEOUT = 5
 # state on the management dashboard workflow.
 _NON_SHOW_YAMLS = {
     "_defaults", "_blocked_sources", "pronunciation_map",
-    "network_meta", "scaffold_pending",
+    "network_meta", "scaffold_pending", "translation_overrides",
 }
 
 # Canonical Russian voice id (pulled from CLAUDE.md; shows/_defaults.yaml ships

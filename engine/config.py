@@ -254,6 +254,30 @@ class StorageConfig:
 
 
 @dataclass
+class MultilingualConfig:
+    """Opt-in multilingual *audio* settings for a show (June 2026).
+
+    When ``enabled``, the post-hoc translation stage
+    (``scripts/generate_translations.py`` + ``engine/translate.py``) can
+    render alternate-language audio tracks of an already-finalized English
+    episode, voiced by the operator's cloned Grok voice. English remains
+    the canonical master + site fallback; translations are derived
+    artifacts surfaced on the website (never in the canonical podcast RSS).
+
+    Fields are declared here (not read via getattr on the raw dict) so
+    ``_build_nested`` doesn't silently drop them — see landmine #20.
+    """
+    enabled: bool = False
+    # BCP-47 codes to render. Default empty; the driver also accepts a
+    # ``--languages`` override so a show with no block can still be run.
+    languages: List[str] = field(default_factory=list)
+    # Name of the env var holding the cloned Grok voice ID. The ID itself
+    # is NEVER stored in YAML/git — it's pasted into ``.env``. The TTS
+    # call reads it at runtime and fails loud if unset.
+    cloned_voice_env: str = "GROK_CLONED_VOICE_ID"
+
+
+@dataclass
 class AnalyticsConfig:
     enabled: bool = False
     prefix_url: str = "https://op3.dev/e/"
@@ -555,6 +579,7 @@ class ShowConfig:
     slow_news: SlowNewsConfig = field(default_factory=SlowNewsConfig)
     content_freshness: ContentFreshnessConfig = field(default_factory=ContentFreshnessConfig)
     youtube: YouTubeConfig = field(default_factory=YouTubeConfig)
+    multilingual: MultilingualConfig = field(default_factory=MultilingualConfig)
     # Sunday weekly-recap mode. When ``true`` and the runner ticks on
     # a Sunday, the show skips the daily news fetch and instead
     # synthesises a recap from the past 7 days of episodes pulled
@@ -680,7 +705,8 @@ def discover_show_slugs(shows_dir: Path | None = None) -> list[str]:
     if shows_dir is None:
         shows_dir = Path(__file__).resolve().parent.parent / "shows"
 
-    NON_SHOW = {"pronunciation_map", "network_meta", "scaffold_pending"}
+    NON_SHOW = {"pronunciation_map", "network_meta", "scaffold_pending",
+                "translation_overrides"}
     slugs: list[str] = []
     for p in sorted(shows_dir.glob("*.yaml")):
         stem = p.stem
@@ -763,6 +789,7 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         slow_news=_build_nested(SlowNewsConfig, data.get("slow_news")),
         content_freshness=_build_nested(ContentFreshnessConfig, data.get("content_freshness")),
         youtube=_build_nested(YouTubeConfig, data.get("youtube")),
+        multilingual=_build_nested(MultilingualConfig, data.get("multilingual")),
         weekly_recap_on_sunday=bool(data.get("weekly_recap_on_sunday", False)),
         narrative_mode=bool(data.get("narrative_mode", False)),
         topic_queue_file=str(data.get("topic_queue_file", "") or ""),

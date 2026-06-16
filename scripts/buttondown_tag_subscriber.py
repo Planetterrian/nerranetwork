@@ -63,7 +63,7 @@ def _load_show_tags() -> Dict[str, str]:
     """Return ``{slug: tag}`` for every show that has a newsletter tag."""
     tags: Dict[str, str] = {}
     for yaml_path in sorted(SHOWS_DIR.glob("*.yaml")):
-        if yaml_path.stem.startswith("_") or yaml_path.stem == "pronunciation_map":
+        if yaml_path.stem.startswith("_") or yaml_path.stem in ("pronunciation_map", "translation_overrides"):
             continue
         try:
             data = yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}

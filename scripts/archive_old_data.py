@@ -40,7 +40,8 @@ _SHOW_DIR_OVERRIDES = {
     "tesla": "tesla_shorts_time",
 }
 
-_NON_SHOW_YAMLS = {"_defaults", "_blocked_sources", "pronunciation_map"}
+_NON_SHOW_YAMLS = {"_defaults", "_blocked_sources", "pronunciation_map",
+                   "translation_overrides"}
 
 
 def _discover_shows() -> List[str]:

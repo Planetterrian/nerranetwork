@@ -742,7 +742,7 @@ def test_contrast_failure_blocks_send_and_logs_error(monkeypatch, caplog):
 
 _NON_SHOW_YAML_STEMS = {
     "_defaults", "_blocked_sources", "pronunciation_map",
-    "network_meta", "scaffold_pending",
+    "network_meta", "scaffold_pending", "translation_overrides",
 }
 
 
