@@ -168,6 +168,35 @@ class TestCadenceAccurateCopy:
         assert "tomorrow" not in copy
 
 
+class TestDeepDiveOpenerNotTic:
+    """June 15 2026 pass. The Practitioner Deep Dive opened with the
+    verbatim "You arrive at a…" scenario in 9/10 recent episodes (the
+    digest prompt seeded that exact example at line 173) and the podcast
+    prompt seeded the transition "here's something I wish someone had told
+    me early in my career" (verbatim in 5/10). Both are the boilerplate-tic
+    class the Omni View / MAB / Tesla passes fixed by removing the seeded
+    literal phrase and requiring rotation. The seed example string itself
+    is the root cause — the podcast faithfully echoes the digest's deep
+    dive, so the fix lives primarily in the digest prompt."""
+
+    def test_digest_prompt_does_not_seed_you_arrive_opener(self):
+        # The literal seed example "You arrive at a former gas station
+        # site" must be gone (it produced "You arrive at a…" every episode).
+        prompt = _DIGEST_PROMPT.read_text(encoding="utf-8")
+        assert "You arrive at a former gas station" not in prompt
+
+    def test_digest_prompt_requires_varied_deep_dive_opener(self):
+        prompt = _DIGEST_PROMPT.read_text(encoding="utf-8").lower()
+        assert "you arrive at a" in prompt  # named explicitly as the tic to avoid
+        assert "rotate the entry point" in prompt
+
+    def test_podcast_prompt_bans_repetitive_deep_dive_lead_in(self):
+        prompt = _PODCAST_PROMPT.read_text(encoding="utf-8").lower()
+        # the old verbatim transition must no longer be the sole seeded option
+        assert "vary the lead-in" in prompt
+        assert "avoid starting every deep dive" in prompt
+
+
 class TestUnifiedLengthTarget:
     def test_yaml_target_and_prompt_target_aligned(self):
         cfg = yaml.safe_load(_YAML.read_text(encoding="utf-8"))
