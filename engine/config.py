@@ -268,6 +268,11 @@ class MultilingualConfig:
     ``_build_nested`` doesn't silently drop them — see landmine #20.
     """
     enabled: bool = False
+    # When True, the daily pipeline (run_show.py) auto-generates the
+    # configured languages for each newly published episode — best-effort
+    # and non-blocking (a failure never breaks the English publish). When
+    # False, translations are produced only via the manual driver.
+    auto: bool = False
     # BCP-47 codes to render. Default empty; the driver also accepts a
     # ``--languages`` override so a show with no block can still be run.
     languages: List[str] = field(default_factory=list)

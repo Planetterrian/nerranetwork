@@ -18,7 +18,28 @@ The English generation pipeline is untouched — this is an additive branch.
 2. Reuses existing secrets: `GROK_API_KEY`/`XAI_API_KEY` (translation +
    TTS) and `R2_*` (track upload). No new credentials beyond the voice ID.
 
-## Generate
+## Automatic generation (default)
+
+As of June 2026 every English show has `multilingual.auto: true` in
+`shows/_defaults.yaml`, so the daily pipeline generates **all four languages**
+for each newly published episode automatically:
+
+- `run_show.py` calls `engine.multilingual.auto_generate_after_publish()` right
+  after the episode's summaries record is written and **before** the blog post,
+  so today's post + index immediately show the language switcher and badges.
+- It is **best-effort and non-blocking** — a translation failure (or an unset
+  `GROK_CLONED_VOICE_ID`) can never break the English publish.
+- Requires the `GROK_CLONED_VOICE_ID` secret in the `run-show.yml` workflow
+  (already wired in the step env). Until that secret is set, the auto step
+  no-ops with a warning and episodes ship English-only.
+- Cost: ~$0.18/episode (≈4× the English TTS character volume + translation
+  tokens) — roughly **$50–55/month** network-wide. See the cost note below.
+
+Disable for a single show by setting `multilingual.auto: false` (or
+`enabled: false`) in its YAML. The manual driver below still works regardless,
+for back-fill or one-offs.
+
+## Generate (manual / back-fill)
 
 ```bash
 # 1) STOP-and-listen: one short Chinese sample, then it stops.

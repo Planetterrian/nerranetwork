@@ -156,6 +156,12 @@ storage:
 # in git.
 multilingual:
   enabled: true
+  # Auto-generate the languages below for every newly published episode
+  # (operator decision, June 2026 — "all English shows, all languages,
+  # automatic"). Best-effort + non-blocking in run_show.py; no-op when
+  # GROK_CLONED_VOICE_ID is unset. Russian shows set enabled:false so this
+  # never runs for them. ~$0.18/episode (≈4× English TTS chars + translation).
+  auto: true
   languages: [fr, ru, es, zh]
   cloned_voice_env: GROK_CLONED_VOICE_ID
 

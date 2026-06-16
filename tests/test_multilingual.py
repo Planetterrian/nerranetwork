@@ -40,6 +40,16 @@ class TestMultilingualConfig:
             cfg = load_config(f"shows/{slug}.yaml")
             assert cfg.multilingual.enabled is False, slug
 
+    def test_auto_enabled_for_english_shows(self):
+        from engine.config import load_config
+        assert load_config("shows/tesla.yaml").multilingual.auto is True
+
+    def test_russian_shows_have_auto_off_via_disabled(self):
+        # Russian shows opt out of multilingual entirely, so auto never runs.
+        from engine.config import load_config
+        cfg = load_config("shows/finansy_prosto.yaml")
+        assert cfg.multilingual.enabled is False
+
     def test_no_silent_key_drop(self):
         # Every field set in YAML must be DECLARED on the dataclass
         # (landmine #20) — loading without a warning-only fallback means
@@ -142,13 +152,8 @@ class TestTranslationValidation:
 
 class TestTrackKeyDerivation:
     def _fn(self):
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "generate_translations", PROJECT_ROOT / "scripts" / "generate_translations.py"
-        )
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        return mod._derive_track_key_url
+        from engine.multilingual import derive_track_key_url
+        return derive_track_key_url
 
     def test_suffix_before_extension(self):
         fn = self._fn()
@@ -357,6 +362,67 @@ class TestJsonLdMultilingual:
         assert any(u.endswith(".ru.mp3") for u in urls)
         langs = {m["inLanguage"] for m in ep["associatedMedia"]}
         assert langs == {"en", "fr", "ru"}
+
+
+class TestAutoGeneration:
+    def _fake_config(self, tmp_path, *, enabled=True, auto=True):
+        from types import SimpleNamespace
+        return SimpleNamespace(
+            slug="tshow",
+            episode=SimpleNamespace(output_dir=str(tmp_path)),
+            publishing=SimpleNamespace(summaries_json=str(tmp_path / "s.json")),
+            tts=SimpleNamespace(max_chars=10000),
+            storage=SimpleNamespace(
+                public_base_url="https://audio.nerranetwork.com",
+                endpoint_env="R2_ENDPOINT_URL", access_key_env="R2_ACCESS_KEY_ID",
+                secret_key_env="R2_SECRET_ACCESS_KEY", bucket="b"),
+            multilingual=SimpleNamespace(
+                enabled=enabled, auto=auto, languages=["fr", "ru"],
+                cloned_voice_env="GROK_CLONED_VOICE_ID"),
+        )
+
+    def _lay_episode(self, tmp_path):
+        (tmp_path / "X_Ep005_20260101_tts.txt").write_text("English script.", encoding="utf-8")
+        (tmp_path / "s.json").write_text(json.dumps({"podcast": "t", "summaries": [
+            {"episode_num": 5,
+             "audio_url": "https://audio.nerranetwork.com/tshow/X_Ep005_20260101.mp3",
+             "episode_title": "Title"}]}), encoding="utf-8")
+
+    def test_generate_for_episode_records_tracks(self, tmp_path, monkeypatch):
+        from engine import multilingual, translate
+        self._lay_episode(tmp_path)
+        cfg = self._fake_config(tmp_path)
+        # Mock out the network/heavy calls.
+        monkeypatch.setattr(translate, "translate_script", lambda s, lang, **k: f"[{lang}]script")
+        monkeypatch.setattr(translate, "translate_metadata", lambda t, d, lang, **k: (f"T{lang}", f"D{lang}"))
+        monkeypatch.setattr(multilingual, "render_track",
+                            lambda *a, **k: Path(a[4]).write_bytes(b"x"))
+        monkeypatch.setattr(multilingual, "ffprobe_duration", lambda *a, **k: 120.0)
+        # No R2 creds → upload skipped, but record still written with derived URL.
+        monkeypatch.setattr(multilingual, "PROJECT_ROOT", Path("/"))
+        for v in ("R2_ENDPOINT_URL", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY"):
+            monkeypatch.delenv(v, raising=False)
+
+        res = multilingual.generate_for_episode(
+            cfg, 5, ["fr", "ru"], voice_id="vid", api_key="k")
+        assert res == {"fr": "done", "ru": "done"}
+        data = json.loads((tmp_path / "s.json").read_text(encoding="utf-8"))
+        tr = data["summaries"][0]["translations"]
+        assert tr["fr"]["audio_url"].endswith("X_Ep005_20260101.fr.mp3")
+        assert tr["ru"]["title"] == "Tru"
+
+    def test_auto_skips_when_disabled(self, tmp_path):
+        from engine import multilingual
+        cfg = self._fake_config(tmp_path, enabled=False)
+        assert multilingual.auto_generate_after_publish(cfg, 5) == {}
+
+    def test_auto_skips_when_voice_unset(self, tmp_path, monkeypatch):
+        from engine import multilingual
+        monkeypatch.delenv("GROK_CLONED_VOICE_ID", raising=False)
+        monkeypatch.setenv("GROK_API_KEY", "k")
+        cfg = self._fake_config(tmp_path, enabled=True, auto=True)
+        # Voice id unset → non-blocking skip, empty result, no raise.
+        assert multilingual.auto_generate_after_publish(cfg, 5) == {}
 
 
 class TestBlogIndexBadges:
