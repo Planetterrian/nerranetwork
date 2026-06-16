@@ -107,7 +107,12 @@
       "url": "https://nerranetwork.com/omni-view.html"
     },
     "image": "https://nerranetwork.com/assets/covers/omni-view.jpg",
-    "transcript": "https://nerranetwork.com/blog/omni_view/ep069.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/omni_view/ep069.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://audio.nerranetwork.com/omni_view/Omni_View_Ep069_20260603.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -708,6 +713,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +818,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1181,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>New US tariffs on 60 economies over forced-labor practices could raise prices for British shoppers a… — Episode 69</h1>
+            <h1><span class="nn-i18n-title">New US tariffs on 60 economies over forced-labor practices could raise prices for British shoppers a…</span> — Episode 69</h1>
             
             <p class="blog-hero-hook">New US tariffs on 60 economies over forced-labor practices could raise prices for British shoppers and slow already-fragile global growth.</p>
             
@@ -1129,6 +1212,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1192,11 +1278,6 @@
 <li>What verification methods will determine which countries face the higher rate?</li>
 <li>How have similar past tariffs altered trade patterns?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/cq6pe7nvldmo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Details on UK inclusion and Supreme Court context</li>
-<li><a href="https://www.cnbc.com/2026/06/03/us-tariffs-60-economies-dection-301-forced-labor-trade-practices-.html" target="_blank" rel="noopener">CNBC</a> — Exact proposed duty rates and scope</li>
-</ul>
 <h4 id="2-ukrainian-drones-strike-st-petersburg-oil-terminal">2) Ukrainian drones strike St. Petersburg oil terminal</h4>
 <p><strong>What happened (neutral):</strong> Ukrainian drones hit an oil terminal in St. Petersburg, setting part of the facility ablaze hours before an economic forum hosted by President Putin. Ukrainian President Zelenskyy confirmed the strike, which targeted infrastructure in Putin’s birthplace. Russian authorities have not yet issued a detailed public response.</p>
 <p><strong>Perspectives:</strong> The strongest case for the operation rests on Ukraine’s need to demonstrate that it can reach deep into Russian territory and disrupt energy exports that fund the war effort. Advocates note that striking an oil port ahead of a high-profile forum carries symbolic weight and may complicate Russia’s ability to project economic stability. Opponents highlight the risk of escalation and potential civilian or economic fallout beyond the immediate military target, arguing that such strikes could harden Russian public resolve rather than weaken it. Both sides agree the attack occurred near a major Russian city hosting an international event; they differ on whether the military benefit outweighs the danger of broader retaliation.</p>
@@ -1206,11 +1287,6 @@
 <li>How might Russia respond in the coming days?</li>
 <li>How are energy markets reacting to the strike?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/06/03/nx-s1-5844793/ukrainian-drones-hit-st-petersburg" target="_blank" rel="noopener">NPR</a> — Zelenskyy statement and forum context</li>
-<li><a href="https://www.dailymail.com/news/article-15869727/Ukraine-blitzes-St-Petersburg-oil-port-ahead-economic-forum-hosted-Putin-city-today-tide-war-continues-turn-Kyivs-way.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Additional details on timing and location</li>
-</ul>
 <h4 id="3-oecd-warns-of-global-slowdown-tied-to-us-iran-conflict">3) OECD warns of global slowdown tied to US-Iran conflict</h4>
 <p><strong>What happened (neutral):</strong> The OECD lowered its global growth forecast, citing damage from the ongoing US-Iran conflict as a key factor. The organization said the fighting is already producing lasting effects on trade, energy prices, and investor confidence. Economists expect the drag to continue into the second half of the year.</p>
 <p><strong>Perspectives:</strong> The strongest case for viewing the conflict as the dominant drag rests on its direct impact on energy routes and investor sentiment across multiple regions simultaneously. The OECD’s revision reflects measurable declines in projected output rather than speculation. Others emphasize that domestic policy choices in major economies, including tariff plans and fiscal measures, are compounding the external shock and may prove more decisive over time. Both sides agree the conflict has introduced new uncertainty; they differ on the relative weight of geopolitical versus policy-driven factors.</p>
@@ -1218,10 +1294,6 @@
 <ul>
 <li>Which sectors are most exposed to prolonged Middle East instability?</li>
 <li>How quickly can forecasts be revised again if fighting eases?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/06/03/oecd-warns-of-global-slowdown-as-iran-war-stymies-growth-prospects-.html" target="_blank" rel="noopener">CNBC</a> — Forecast revision details</li>
 </ul>
 <h4 id="4-iranian-drones-damage-kuwait-airport-amid-stalled-us-iran-talks">4) Iranian drones damage Kuwait airport amid stalled US-Iran talks</h4>
 <p><strong>What happened (neutral):</strong> Iranian drones and missiles struck Kuwait’s international airport, causing significant damage according to Kuwaiti authorities. The US responded with strikes on an Iranian military site on Qeshm Island. Negotiations between Washington and Tehran appear to have stalled following the exchange.</p>
@@ -1231,10 +1303,6 @@
 <li>How are neighboring Gulf states adjusting security measures?</li>
 <li>What signals would indicate talks are resuming?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/kuwait-airport-hit-by-iranian-drones-as-us-iran-talks-stall" target="_blank" rel="noopener">France 24</a> — Timeline of strikes and negotiations</li>
-</ul>
 <h4 id="5-uk-workless-households-reach-highest-share-in-two-years">5) UK workless households reach highest share in two years</h4>
 <p><strong>What happened (neutral):</strong> Office for National Statistics data show 14.4% of UK households had no one in employment in the first quarter of the year. The figure is the highest since 2017 and marks a two-year peak. The rise coincides with broader economic pressures including tax changes and inflation.</p>
 <p><strong>Perspectives:</strong> The strongest case linking the rise to recent policy rests on the timing of tax increases and their reported effects on hiring and hours worked, particularly in retail and hospitality. The ONS numbers provide a clear household-level measure rather than an individual unemployment rate. Others point to longer-term structural shifts, such as an aging population and changing participation patterns, that predate the latest fiscal measures. Both sides agree the household employment rate has deteriorated; they differ on how much of the change is cyclical versus policy-driven.</p>
@@ -1242,10 +1310,6 @@
 <ul>
 <li>Which regions or age groups show the largest increases?</li>
 <li>How do these figures compare with pre-pandemic levels?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15870101/Labours-not-working-One-seven-households-Britain-jobless-percentage-workless-households-reaches-highest-level-two-years-not-higher-2017.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — ONS data breakdown</li>
 </ul>
 <h3 id="top-world-stories-2">Top world stories (2)</h3>
 <h4 id="1-nato-chief-makes-unannounced-visit-to-kyiv">1) NATO chief makes unannounced visit to Kyiv</h4>
@@ -1256,10 +1320,6 @@
 <li>What specific requests might Ukrainian officials have made during the visit?</li>
 <li>How has Russia reacted to the NATO presence?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/nato-chief-on-unannounced-visit-to-kyiv-after-deadly-russian-attacks" target="_blank" rel="noopener">France 24</a> — Details on timing and context</li>
-</ul>
 <h4 id="2-israel-and-lebanon-open-new-round-of-talks-after-strikes">2) Israel and Lebanon open new round of talks after strikes</h4>
 <p><strong>What happened (neutral):</strong> Ambassadors from Israel and Lebanon began direct talks in Washington following US-brokered commitments to de-escalation. The fourth round comes after recent Israeli drone strikes in southern Lebanon that killed eight people.</p>
 <p><strong>Perspectives:</strong> The strongest case for continued talks rests on the shared interest in preventing wider regional spillover while core disputes remain unresolved. Participants have kept the channel open despite fresh violence, suggesting both sides see value in maintaining communication. Critics argue that repeated meetings without concrete agreements risk becoming performative. Both sides agree the talks are occurring under US auspices; they differ on whether incremental diplomacy can address underlying security concerns.</p>
@@ -1267,10 +1327,6 @@
 <ul>
 <li>What issues are on the current agenda?</li>
 <li>How do recent casualties affect the atmosphere of the talks?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/new-round-of-israel-lebanon-talks-opens-after-israeli-strikes" target="_blank" rel="noopener">France 24</a> — Meeting schedule and recent context</li>
 </ul>
 <h3 id="top-business-stories-2">Top business stories (2)</h3>
 <h4 id="1-akzo-nobel-shares-fall-19-after-takeover-talks-end">1) Akzo Nobel shares fall 19% after takeover talks end</h4>
@@ -1281,10 +1337,6 @@
 <li>How does the drop compare with recent sector movements?</li>
 <li>Are other potential bidders still active?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/06/03/europe-markets-trump-eu-tariffs-zara-inditex.html" target="_blank" rel="noopener">CNBC</a> — Market reaction and context</li>
-</ul>
 <h4 id="2-novo-nordisk-launches-wegovy-pill-in-uae">2) Novo Nordisk launches Wegovy pill in UAE</h4>
 <p><strong>What happened (neutral):</strong> Novo Nordisk began rolling out its oral Wegovy weight-loss pill in the United Arab Emirates, marking the first global launch outside the US. The company described the move as a major opportunity to expand beyond American demand.</p>
 <p><strong>Perspectives:</strong> The strongest case for prioritizing overseas markets rests on the large and growing global demand for effective weight-loss treatments and the company’s stated goal of broadening access. Executives have signaled they are “all in” on international expansion. Others caution that regulatory, pricing, and cultural differences could slow adoption compared with the US experience. Both sides agree the UAE launch is the first step in a wider rollout; they differ on the speed and scale of future uptake.</p>
@@ -1292,10 +1344,6 @@
 <ul>
 <li>How will pricing differ from the US market?</li>
 <li>What regulatory hurdles remain in other countries?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/06/03/novo-nordisk-wegovy-pill-uae-weight-loss-lilly.html" target="_blank" rel="noopener">CNBC</a> — Launch details and company comments</li>
 </ul>
 <h3 id="top-technology-stories-1">Top technology stories (1)</h3>
 <h4 id="1-data-center-operators-seek-to-reduce-water-consumption">1) Data center operators seek to reduce water consumption</h4>
@@ -1306,10 +1354,6 @@
 <li>Which regions are seeing the strongest pushback on water use?</li>
 <li>What alternative cooling methods are under active testing?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.wired.com/story/data-center-operators-fix-water-use-problems/" target="_blank" rel="noopener">WIRED</a> — Industry efforts and scrutiny details</li>
-</ul>
 <h3 id="top-popular-media-stories-1">Top popular media stories (1)</h3>
 <h4 id="1-good-morning-britain-apologizes-after-c-word-broadcast">1) Good Morning Britain apologizes after C-word broadcast</h4>
 <p><strong>What happened (neutral):</strong> The ITV program issued an on-air apology after the C-word was accidentally broadcast live during Tuesday’s show. Producers described the incident as a technical error.</p>
@@ -1318,10 +1362,6 @@
 <ul>
 <li>How common are such slips on live daytime television?</li>
 <li>What internal review processes typically follow?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15869807/Good-Morning-Britain-issues-apology-C-word-accidentally-broadcast-live-air.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Incident description</li>
 </ul>
 <h3 id="top-gossip-stories-1">Top gossip stories (1)</h3>
 <h4 id="1-jennifer-lopez-experiences-wardrobe-malfunction-at-premiere">1) Jennifer Lopez experiences wardrobe malfunction at premiere</h4>
@@ -1332,14 +1372,87 @@
 <li>How do publicists typically manage such moments?</li>
 <li>Does coverage of wardrobe issues overshadow film promotion?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15869787/Jennifer-Lopez-wardrobe-malfunction-gown-stuck-premiere.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Event details</li>
-</ul>
 <h3 id="understanding-the-issue-how-the-us-proposes-and-adjusts-tariffs">Understanding the Issue: How the US proposes and adjusts tariffs</h3>
 <p>Most coverage of new tariffs treats them as sudden presidential decisions, yet the process involves a structured review by the Office of the US Trade Representative under statutes such as Section 301. The USTR first identifies practices it deems unfair, invites public comment, holds hearings, and then recommends duty rates that can later be modified or challenged in court. This administrative path explains why the current proposal distinguishes between economies with full versus partial forced-labor bans and why earlier tariffs were struck down by the Supreme Court. Knowing the sequence shows that proposed rates are not final policy but starting points subject to negotiation, litigation, and congressional oversight. Next time you see a headline announcing “new tariffs,” ask: which statute authorizes them, what comment period has occurred, and which countries have already signaled they will challenge the duties at the WTO or in US courts.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.bbc.com/news/articles/cq6pe7nvldmo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/06/03/us-tariffs-60-economies-dection-301-forced-labor-trade-practices-.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.npr.org/2026/06/03/nx-s1-5844793/ukrainian-drones-hit-st-petersburg" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15869727/Ukraine-blitzes-St-Petersburg-oil-port-ahead-economic-forum-hosted-Putin-city-today-tide-war-continues-turn-Kyivs-way.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/06/03/oecd-warns-of-global-slowdown-as-iran-war-stymies-growth-prospects-.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/kuwait-airport-hit-by-iranian-drones-as-us-iran-talks-stall" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15870101/Labours-not-working-One-seven-households-Britain-jobless-percentage-workless-households-reaches-highest-level-two-years-not-higher-2017.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/nato-chief-on-unannounced-visit-to-kyiv-after-deadly-russian-attacks" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/new-round-of-israel-lebanon-talks-opens-after-israeli-strikes" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/06/03/europe-markets-trump-eu-tariffs-zara-inditex.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/06/03/novo-nordisk-wegovy-pill-uae-weight-loss-lilly.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.wired.com/story/data-center-operators-fix-water-use-problems/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=wired.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">wired.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15869807/Good-Morning-Britain-issues-apology-C-word-accidentally-broadcast-live-air.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15869787/Jennifer-Lopez-wardrobe-malfunction-gown-stuck-premiere.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1770,10 +1883,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

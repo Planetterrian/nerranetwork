@@ -107,7 +107,12 @@
       "url": "https://nerranetwork.com/omni-view.html"
     },
     "image": "https://nerranetwork.com/assets/covers/omni-view.jpg",
-    "transcript": "https://nerranetwork.com/blog/omni_view/ep061.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/omni_view/ep061.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://audio.nerranetwork.com/omni_view/Omni_View_Ep061_20260526.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -708,6 +713,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +818,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1181,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>An exam leak scandal in India has triggered suicides and protests among millions of aspiring doctors… — Episode 61</h1>
+            <h1><span class="nn-i18n-title">An exam leak scandal in India has triggered suicides and protests among millions of aspiring doctors…</span> — Episode 61</h1>
             
             <p class="blog-hero-hook">An exam leak scandal in India has triggered suicides and protests among millions of aspiring doctors, exposing deep flaws in a high-stakes system that shapes futures for an entire generation.</p>
             
@@ -1129,6 +1212,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1210,11 +1296,6 @@
 <li>What safeguards distinguish national exams that maintain integrity from those that do not?</li>
 <li>Who bears responsibility when a single compromised test affects millions of futures?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/news/2026/5/26/come-back-my-son-indian-exam-leak-leaves-trail-of-death-despair-anger?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Detailed account of the human cost and protests</li>
-<li><a href="https://www.bbc.com/sport/tennis/articles/c8d886738g2o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Separate coverage of related education pressures</li>
-</ul>
 <h4 id="2-quad-grouping-drifts-as-trump-woos-china">2) Quad grouping drifts as Trump woos China</h4>
 <p><strong>What happened (neutral):</strong> Analysts note the Quad security dialogue among the US, India, Japan and Australia has lost momentum as Washington shifts focus. The grouping now struggles to articulate a clear purpose amid changing US priorities in Asia.</p>
 <p><strong>Perspectives:</strong> Al Jazeera reports that the drift reflects broader US efforts to engage Beijing directly, prompting partners to reassess their own regional strategies. Some regional governments see the reduced emphasis as an opportunity to pursue independent diplomacy, while others worry about diminished collective leverage on issues such as maritime security.</p>
@@ -1222,10 +1303,6 @@
 <ul>
 <li>What concrete activities keep alliances operational when high-level attention fades?</li>
 <li>How do smaller partners adjust when a leading member reorders its foreign policy goals?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/news/2026/5/26/as-trump-woos-china-the-quad-alliance-drifts-toward-irrelevance?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Analysis of alliance relevance</li>
 </ul>
 <h4 id="3-bolivian-presidents-salary-cut-fails-to-end-protests">3) Bolivian president’s salary cut fails to end protests</h4>
 <p><strong>What happened (neutral):</strong> President Rodrigo Paz announced a 50 percent reduction in his own salary and those of cabinet ministers to address weeks of demonstrations. Protesters in La Paz rejected the move and continued blocking roads while clashing with police.</p>
@@ -1235,10 +1312,6 @@
 <li>When do symbolic salary reductions alter public perception of government priorities?</li>
 <li>What additional steps would be required to de-escalate sustained street protests?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/americas/20260526-bolivian-leader-slash-own-salary-fails-appease-protesters-la-paz" target="_blank" rel="noopener">France 24</a> — On-the-ground reporting from La Paz</li>
-</ul>
 <h4 id="4-wes-streeting-urges-social-media-ban-for-under-16s">4) Wes Streeting urges social media ban for under-16s</h4>
 <p><strong>What happened (neutral):</strong> Former health secretary Wes Streeting called for treating social media companies like the tobacco industry and pressed Prime Minister Keir Starmer to introduce an age restriction. He argued the step would help restore childhood experiences currently eroded by constant connectivity.</p>
 <p><strong>Perspectives:</strong> The Mail frames the proposal as a necessary public-health intervention backed by growing evidence of mental-health harms. Supporters of regulation emphasise child protection, while industry voices and some civil-liberties groups question whether outright bans would simply drive usage underground without addressing underlying design incentives.</p>
@@ -1247,10 +1320,6 @@
 <li>What enforcement mechanisms would make an age limit effective across devices and platforms?</li>
 <li>How do different countries balance child safety with free expression online?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15848349/Wes-Streeting-says-social-media-firms-treated-like-tobacco-industry-piles-pressure-Keir-Starmer-introduce-ban-16s.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Full statement and political context</li>
-</ul>
 <h4 id="5-next-boss-warns-of-sharp-drop-in-entry-level-jobs">5) Next boss warns of sharp drop in entry-level jobs</h4>
 <p><strong>What happened (neutral):</strong> Lord Wolfson of Next told the BBC that the retailer now receives roughly twice as many applications per vacancy as it did two years ago. He described a “dramatic” contraction in roles traditionally taken by younger workers.</p>
 <p><strong>Perspectives:</strong> BBC coverage highlights employer concerns about labour-market softening and automation. Labour-market analysts note that reduced entry-level hiring can delay career starts for school leavers, while business groups argue that regulatory and cost pressures are limiting expansion.</p>
@@ -1258,10 +1327,6 @@
 <ul>
 <li>How do retailers decide when to shrink entry-level recruitment versus investing in training?</li>
 <li>What signals would indicate whether the current slowdown is cyclical or structural?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/c2024r6lzyro?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Interview with Lord Wolfson</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-gisèle-pelicot-shocked-by-decision-not-to-jail-boys-in-rape-case">1) Gisèle Pelicot shocked by decision not to jail boys in rape case</h4>
@@ -1280,10 +1345,6 @@
 <li>What information do police rely on when advising victims about travel during ongoing investigations?</li>
 <li>How do different jurisdictions coordinate when abuse crosses borders?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15847739/newlywed-killed-husband-alive-police-stay-UK-family.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Family statement and misconduct details</li>
-</ul>
 <h4 id="3-chaos-outside-ice-detention-centre-during-hunger-strike">3) Chaos outside ICE detention centre during hunger strike</h4>
 <p><strong>What happened (neutral):</strong> Protesters stormed the Delaney Hall facility in Newark where hundreds of migrants are refusing food. A senator was pepper-sprayed amid clashes; the centre has faced prior criticism over conditions.</p>
 <p><strong>Perspectives:</strong> The Mail reports the confrontation as part of ongoing political disputes about immigration enforcement. Advocacy groups describe the hunger strike as a response to prolonged detention and limited medical access, while authorities emphasise security requirements at the site.</p>
@@ -1291,10 +1352,6 @@
 <ul>
 <li>What oversight mechanisms exist for privately operated immigration facilities?</li>
 <li>How do hunger strikes alter negotiation dynamics between detainees and officials?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15846803/Chaos-outside-ICE-detention-center.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Eyewitness accounts and background</li>
 </ul>
 <h4 id="4-millions-of-salmon-deaths-revealed-at-scottish-farms">4) Millions of salmon deaths revealed at Scottish farms</h4>
 <p><strong>What happened (neutral):</strong> Inspection reports released after a watchdog ruling show large-scale fish deaths from poisoning and suffocation at salmon farms. The Animal and Plant Health Agency had initially resisted disclosure on commercial grounds.</p>
@@ -1304,10 +1361,6 @@
 <li>What reporting thresholds trigger public disclosure of farm mortality data?</li>
 <li>How do consumers weigh welfare standards when purchasing farmed fish?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/environment/2026/may/26/millions-of-salmon-deaths-scottish-farms-apha-ico" target="_blank" rel="noopener">The Guardian</a> — Details of the released reports</li>
-</ul>
 <h4 id="5-berlin-hauptbahnhof-marks-20-years-as-symbolic-rail-hub">5) Berlin Hauptbahnhof marks 20 years as symbolic rail hub</h4>
 <p><strong>What happened (neutral):</strong> Berlin’s central station, opened in 2006, continues to serve as both a functional transport node and a physical emblem of reunified Germany. The glass-and-steel structure was designed to connect eastern and western rail networks.</p>
 <p><strong>Perspectives:</strong> Deutsche Welle emphasises the station’s role in daily commuting and long-distance travel. Historians note its architectural intent to project openness after division, while some commuters focus on practical issues of capacity and maintenance.</p>
@@ -1315,10 +1368,6 @@
 <ul>
 <li>How do major infrastructure projects acquire lasting symbolic meaning beyond their original engineering purpose?</li>
 <li>What upgrades keep historic transport hubs relevant decades after opening?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/berlin-hauptbahnhof-at-20-a-rail-hub-with-symbolic-power/a-77248293?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — Anniversary coverage and design history</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-muthoot-finance-eyes-overseas-borrowings">1) Muthoot Finance eyes overseas borrowings</h4>
@@ -1329,10 +1378,6 @@
 <li>How do gold-finance companies adjust lending when import costs rise?</li>
 <li>What factors determine whether external commercial borrowings are cheaper than domestic alternatives?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-05-26/muthoot-finance-eyes-overseas-borrowings-in-fy27-video" target="_blank" rel="noopener">Bloomberg</a> — Exclusive interview</li>
-</ul>
 <h4 id="2-malaysia-imposes-10-import-duty-on-gold-bars">2) Malaysia imposes 10% import duty on gold bars</h4>
 <p><strong>What happened (neutral):</strong> Malaysia introduced a 10 percent duty on certain gold bar shipments, disrupting local bullion trading according to traders. The change affects cross-border flows that previously operated without the levy.</p>
 <p><strong>Perspectives:</strong> Bloomberg reports immediate market adjustments as importers seek alternative routes or absorb the added cost. Traders note that sudden duty changes can shift activity to neighbouring jurisdictions with lower barriers.</p>
@@ -1341,10 +1386,6 @@
 <li>How quickly can bullion markets reroute when one country alters import rules?</li>
 <li>What signals do governments monitor before adjusting gold duties?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-26/malaysia-jolts-bullion-trade-with-10-import-duty-on-gold-bars" target="_blank" rel="noopener">Bloomberg</a> — Trader reactions</li>
-</ul>
 <h4 id="3-china-lowers-policy-loan-rate-to-record-low">3) China lowers policy loan rate to record low</h4>
 <p><strong>What happened (neutral):</strong> Beijing allowed the one-year policy loan rate to banks to fall to a new low, signalling intensified efforts to support an economy showing signs of losing momentum.</p>
 <p><strong>Perspectives:</strong> Bloomberg frames the cut as part of a broader stimulus toolkit aimed at credit expansion. Some analysts expect further easing if growth data remain soft, while others caution that lower rates alone may not revive demand if confidence stays subdued.</p>
@@ -1352,10 +1393,6 @@
 <ul>
 <li>What transmission channels link policy loan rates to household and business borrowing?</li>
 <li>How do markets interpret successive rate reductions versus one-off moves?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-26/china-lets-policy-loan-rate-fall-to-record-low-to-boost-economy" target="_blank" rel="noopener">Bloomberg</a> — Policy details</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-china-chip-stocks-jump-on-huawei-hopes">1) China chip stocks jump on Huawei hopes</h4>
@@ -1366,10 +1403,6 @@
 <li>How do investors distinguish between short-term sentiment and durable technological gains?</li>
 <li>What supply-chain adaptations occur when flagship firms face sustained external pressure?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-05-26/bloomberg-the-china-show-5-26-2026-video" target="_blank" rel="noopener">Bloomberg</a> — Market analysis</li>
-</ul>
 <h3 id="top-popular-media-stories-3">Top popular media stories (3)</h3>
 <h4 id="1-pussycat-dolls-lead-american-music-awards-performances">1) Pussycat Dolls lead American Music Awards performances</h4>
 <p><strong>What happened (neutral):</strong> The Pussycat Dolls staged a reunion in matching latex outfits at the 2026 AMAs, joined by Karol G in a high-energy set that opened the show.</p>
@@ -1379,10 +1412,6 @@
 <li>What production choices keep reunion performances visually striking across decades?</li>
 <li>How do awards shows balance new releases with legacy acts to maintain broad viewership?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15848095/Pussycat-Dolls-Karol-G-2026-AMAs-performances.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Performance recap</li>
-</ul>
 <h4 id="2-fergie-joins-black-eyed-peas-at-amas">2) Fergie joins Black Eyed Peas at AMAs</h4>
 <p><strong>What happened (neutral):</strong> Fergie made a surprise appearance with the Black Eyed Peas at the 2026 American Music Awards, performing their hit “Rock That Body” which won best throwback song.</p>
 <p><strong>Perspectives:</strong> Mail coverage emphasises the emotional reunion for fans of the group’s earlier era. Some commentators see throwback awards as a way to bridge generational audiences at major televised events.</p>
@@ -1390,10 +1419,6 @@
 <ul>
 <li>How do throwback categories influence which older tracks regain prominence on streaming platforms?</li>
 <li>What factors prompt former members to return for one-off performances?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15848189/fergie-black-eyed-peas-william-taboo-apldeap-american-music-awards-amas-2026.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Reunion details</li>
 </ul>
 <h4 id="3-gael-monfils-exits-french-open-in-first-round">3) Gael Monfils exits French Open in first round</h4>
 <p><strong>What happened (neutral):</strong> Gael Monfils lost in five sets to compatriot Hugo Gaston in what he has indicated will be his final appearance at Roland Garros. Tributes highlighted his entertaining style over a long career.</p>
@@ -1412,10 +1437,6 @@
 <li>How do public figures calibrate responses when crowds gather unexpectedly?</li>
 <li>What role do short video clips play in amplifying minor celebrity encounters?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15847691/russell-crowe-scolds-fans-autograph-paris-hotel.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Video and eyewitness quotes</li>
-</ul>
 <h4 id="2-katie-price-plans-search-for-missing-husband">2) Katie Price plans search for missing husband</h4>
 <p><strong>What happened (neutral):</strong> The former glamour model said she is prepared to fly to Dubai and launch a televised appeal to locate her husband Lee Andrews, who vanished earlier this month. She fears he may have chosen to cut contact.</p>
 <p><strong>Perspectives:</strong> Mail reporting presents the situation as a mix of concern and uncertainty about whether the disappearance was voluntary. Friends and family weigh the merits of public appeals versus private efforts when relationships involve high public profiles.</p>
@@ -1423,10 +1444,6 @@
 <ul>
 <li>What legal and practical steps follow when a spouse goes missing abroad?</li>
 <li>How do media outlets decide how much detail to publish in ongoing personal searches?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15847547/Katie-Price-desperate-fly-Dubai-missing-husband-Lee-Andrews-manhunt-ghosted.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Statement details</li>
 </ul>
 <h4 id="3-tom-hardys-past-struggles-revisited-after-firing">3) Tom Hardy’s past struggles revisited after firing</h4>
 <p><strong>What happened (neutral):</strong> Reports resurfaced about the actor’s expulsion from private school for theft and a period of crack cocaine addiction before he rebuilt his career. He was recently let go from the series MobLand.</p>
@@ -1436,16 +1453,114 @@
 <li>How do media profiles balance early-life difficulties with later achievements when reporting on firings?</li>
 <li>What support structures help performers navigate substance issues while maintaining public careers?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15846095/Inside-Tom-Hardys-brutal-past-expelled-private-school-stealing-going-entirely-rails-crack-cocaine-addiction-actor-fired-MobLand.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Background timeline</li>
-</ul>
 <h3 id="understanding-the-issue-how-national-entrance-exams-maintain-integrity-at-massive-scale">Understanding the Issue: How national entrance exams maintain integrity at massive scale</h3>
 <p>Most coverage of exam leaks treats them as simple failures of security, yet the real mechanism involves layers of paper handling, printing, transport, and local administration that create multiple points of vulnerability. In systems like India’s NEET, question papers must be produced under strict controls, sealed, and distributed to thousands of centres, each requiring trusted personnel who may face intense local pressure or financial incentives to breach protocols. Historical parallels in other large countries show that even modest leaks at a single printing facility or transport leg can compromise an entire cohort when digital backups or alternate versions are not immediately available. Knowing this, when you hear claims that “the system worked” after a cancellation, you can evaluate whether the response addressed root distribution weaknesses or merely postponed the next sitting. Next time you see a headline about exam integrity, ask: where exactly did the chain break, who controlled each segment, and what independent verification exists beyond the organising body’s own assurances?</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference official statements from exam boards or government regulators with independent reporting on the ground. Primary documents such as court filings or regulatory rulings often contain details omitted from initial news summaries. Checking multiple outlets with differing editorial priorities helps surface which facts are undisputed versus those still under investigation.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.aljazeera.com/news/2026/5/26/come-back-my-son-indian-exam-leak-leaves-trail-of-death-despair-anger?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/sport/tennis/articles/c8d886738g2o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/5/26/as-trump-woos-china-the-quad-alliance-drifts-toward-irrelevance?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/americas/20260526-bolivian-leader-slash-own-salary-fails-appease-protesters-la-paz" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15848349/Wes-Streeting-says-social-media-firms-treated-like-tobacco-industry-piles-pressure-Keir-Starmer-introduce-ban-16s.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c2024r6lzyro?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15847739/newlywed-killed-husband-alive-police-stay-UK-family.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15846803/Chaos-outside-ICE-detention-center.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/environment/2026/may/26/millions-of-salmon-deaths-scottish-farms-apha-ico" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/berlin-hauptbahnhof-at-20-a-rail-hub-with-symbolic-power/a-77248293?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-05-26/muthoot-finance-eyes-overseas-borrowings-in-fy27-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-26/malaysia-jolts-bullion-trade-with-10-import-duty-on-gold-bars" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-26/china-lets-policy-loan-rate-fall-to-record-low-to-boost-economy" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-05-26/bloomberg-the-china-show-5-26-2026-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15848095/Pussycat-Dolls-Karol-G-2026-AMAs-performances.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15848189/fergie-black-eyed-peas-william-taboo-apldeap-american-music-awards-amas-2026.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15847691/russell-crowe-scolds-fans-autograph-paris-hotel.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15847547/Katie-Price-desperate-fly-Dubai-missing-husband-Lee-Andrews-manhunt-ghosted.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15846095/Inside-Tom-Hardys-brutal-past-expelled-private-school-stealing-going-entirely-rails-crack-cocaine-addiction-actor-fired-MobLand.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1840,10 +1955,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

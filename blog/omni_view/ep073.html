@@ -107,7 +107,12 @@
       "url": "https://nerranetwork.com/omni-view.html"
     },
     "image": "https://nerranetwork.com/assets/covers/omni-view.jpg",
-    "transcript": "https://nerranetwork.com/blog/omni_view/ep073.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/omni_view/ep073.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://audio.nerranetwork.com/omni_view/Omni_View_Ep073_20260606.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -708,6 +713,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +818,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1181,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Ukraine’s drone strikes on St Petersburg escalate the Russia conflict, threatening civilian safety a… — Episode 73</h1>
+            <h1><span class="nn-i18n-title">Ukraine’s drone strikes on St Petersburg escalate the Russia conflict, threatening civilian safety a…</span> — Episode 73</h1>
             
             <p class="blog-hero-hook">Ukraine’s drone strikes on St Petersburg escalate the Russia conflict, threatening civilian safety and energy supplies far beyond the battlefield.</p>
             
@@ -1129,6 +1212,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1195,11 +1281,6 @@
 <li>How are civilian protection rules being applied to drone operations?</li>
 <li>Which international actors are positioned to mediate if both sides increase long-range attacks?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15879035/Ukraine-drone-blitz-St-Petersburg-Putin-snubs-Zelenskys-talks-end-war.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Detailed account of the strikes and local warnings</li>
-<li><a href="https://www.reddit.com/r/worldnews/comments/1tybizs/ukraine_launches_drone_assault_against_russian/" target="_blank" rel="noopener">Reddit worldnews</a> — Broader discussion of Ukrainian operations on Russian targets</li>
-</ul>
 <h4 id="2-us-intercepts-iranian-attacks-as-israel-continues-strikes-on-lebanon">2) US intercepts Iranian attacks as Israel continues strikes on Lebanon</h4>
 <p><strong>What happened (neutral):</strong> US forces reported intercepting ballistic missiles fired toward Kuwait and Bahrain, while Israeli strikes in southern Lebanon killed several soldiers according to Lebanese military statements.</p>
 <p><strong>Perspectives:</strong> Reporting frames the US action as defensive protection of regional partners, while Israeli operations are presented as responses to prior threats. Some coverage emphasizes the conditional truce announced days earlier, noting that fresh incidents test whether that understanding holds. Others highlight the involvement of multiple countries and the potential for wider spillover.</p>
@@ -1209,11 +1290,6 @@
 <li>What specific conditions were attached to the recent truce announcement?</li>
 <li>How are interception systems shared among the US and its partners?</li>
 <li>What indicators would show whether the latest incidents are isolated or part of a renewed pattern?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/news/2026/6/6/us-intercepts-iranian-attacks-as-israel-continues-to-bomb-lebanon?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Details on missile interceptions and Lebanese casualties</li>
-<li><a href="https://www.france24.com/en/several-soldiers-killed-in-israeli-strike-on-lebanon" target="_blank" rel="noopener">France 24</a> — On-the-ground reporting from Beirut</li>
 </ul>
 <h4 id="3-armenia-prepares-for-parliamentary-vote-amid-russia-west-tensions">3) Armenia prepares for parliamentary vote amid Russia-West tensions</h4>
 <p><strong>What happened (neutral):</strong> Voters in Armenia head to the polls on Sunday in elections that will test support for Prime Minister Nikol Pashinyan’s push for closer ties with the European Union and United States.</p>
@@ -1225,10 +1301,6 @@
 <li>How have recent regional conflicts altered public attitudes toward alliances?</li>
 <li>Which economic factors are most likely to influence voter priorities?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/armenia-prepares-for-vote-amid-shifting-relations-with-russia-and-the-west" target="_blank" rel="noopener">France 24</a> — Background on geopolitical stakes</li>
-</ul>
 <h4 id="4-simpsons-writer-launches-presidential-campaign-bid">4) Simpsons writer launches presidential campaign bid</h4>
 <p><strong>What happened (neutral):</strong> Dan Greaney, a longtime writer for The Simpsons, held his first campaign rally in Los Angeles and stated he could no longer remain silent about threats to American democracy.</p>
 <p><strong>Perspectives:</strong> The event is covered as an unusual entry into politics by an entertainment-industry figure, with some outlets focusing on the symbolic nature of the candidacy and others examining the specific concerns Greaney raised about institutional erosion. Reporting notes the small scale of the kickoff while acknowledging the writer’s long public platform.</p>
@@ -1239,10 +1311,6 @@
 <li>How have previous entertainment figures performed in electoral politics?</li>
 <li>What threshold of support would make this candidacy more than symbolic?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.wired.com/story/simpsons-writer-dan-greaney-holds-his-first-presidential-campaign-rally/" target="_blank" rel="noopener">WIRED</a> — Account of the Los Angeles event</li>
-</ul>
 <h4 id="5-iran-weighs-transition-from-wartime-conditions-to-peace">5) Iran weighs transition from wartime conditions to peace</h4>
 <p><strong>What happened (neutral):</strong> Iranian commentators are discussing the challenges of moving from wartime unity to a period marked by economic contraction, power shortages, and renewed domestic debate.</p>
 <p><strong>Perspectives:</strong> Reporting highlights that wartime controls have suppressed some forms of dissent, yet the prospect of peace is already prompting questions about governance priorities and economic management. Some analysts stress the risk of hyperinflation and infrastructure strain, while others note the regime’s focus on maintaining control during any transition.</p>
@@ -1252,10 +1320,6 @@
 <li>What economic indicators are most closely watched during this period?</li>
 <li>How have previous post-conflict transitions in the region unfolded?</li>
 <li>Which domestic groups are positioned to influence the direction of any peace dividend?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/jun/06/blackouts-hyperinflation-dissent-iran-considers-perilous-prospect-of-peace" target="_blank" rel="noopener">The Guardian</a> — Analysis of postwar economic and political pressures</li>
 </ul>
 <h3 id="top-world-stories-2">Top world stories (2)</h3>
 <h4 id="1-germany-reports-sharp-rise-in-politically-motivated-crime">1) Germany reports sharp rise in politically motivated crime</h4>
@@ -1268,10 +1332,6 @@
 <li>How do reporting changes affect year-to-year comparisons?</li>
 <li>What prevention programs are currently funded at the federal level?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/germany-news-politically-motivated-crimes-double-in-decade/live-77443232?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — Summary of the latest statistics</li>
-</ul>
 <h4 id="2-shark-attack-kills-man-in-western-australia">2) Shark attack kills man in Western Australia</h4>
 <p><strong>What happened (neutral):</strong> A man fishing in Western Australia died after being bitten by a shark, according to police.</p>
 <p><strong>Perspectives:</strong> Local reporting treats the incident as a rare but recurring risk in coastal areas, while broader coverage notes ongoing debates about beach safety measures and marine conservation. Authorities have not released further details on the location or response protocols.</p>
@@ -1281,10 +1341,6 @@
 <li>What local warning systems were in place at the time?</li>
 <li>How do authorities balance tourism with marine protection?</li>
 <li>What data exists on attack frequency in the region?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/news/2026/6/6/man-dies-in-western-australia-after-shark-attack?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Initial police statement</li>
 </ul>
 <h3 id="top-business-stories-2">Top business stories (2)</h3>
 <h4 id="1-chris-davis-discusses-investment-approach-and-lessons-from-mentors">1) Chris Davis discusses investment approach and lessons from mentors</h4>
@@ -1297,10 +1353,6 @@
 <li>How has the family business structure influenced fund management?</li>
 <li>What limits exist on applying historical lessons to today’s markets?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-06-06/chris-davis-on-his-biggest-investing-mistakes-video" target="_blank" rel="noopener">Bloomberg</a> — Full interview</li>
-</ul>
 <h4 id="2-susquehanna-expands-into-prediction-market-operations">2) Susquehanna expands into prediction market operations</h4>
 <p><strong>What happened (neutral):</strong> Trading firm Susquehanna International Group is building market-making capabilities for prediction markets, including work with Kalshi, to improve liquidity for larger participants.</p>
 <p><strong>Perspectives:</strong> The move is presented as an attempt to turn event contracts into a more institutional asset class, with discussion of hedging challenges and potential client flows. Reporting notes that many existing contracts remain thinly traded.</p>
@@ -1310,11 +1362,6 @@
 <li>What types of contracts show the strongest institutional interest?</li>
 <li>How do market makers hedge exposure on event-based trades?</li>
 <li>What regulatory developments would most affect growth?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-06-06/how-susquehanna-is-expanding-into-prediction-markets" target="_blank" rel="noopener">Bloomberg</a> — Overview of the business strategy</li>
-<li><a href="https://www.bloomberg.com/news/audio/2026-06-06/odd-lots-why-susquehanna-builds-prediction-markets-podcast" target="_blank" rel="noopener">Bloomberg</a> — Extended discussion with firm executive</li>
 </ul>
 <h3 id="top-technology-stories-1">Top technology stories (1)</h3>
 <h4 id="1-ai-agents-now-generate-more-web-traffic-than-humans">1) AI agents now generate more web traffic than humans</h4>
@@ -1327,10 +1374,6 @@
 <li>How are content platforms adapting their systems?</li>
 <li>What verification methods distinguish automated from human activity?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.reddit.com/r/news/comments/1tyb0jc/ai_agents_now_generate_more_web_traffic_than_human/" target="_blank" rel="noopener">Reddit news</a> — Community discussion of the data</li>
-</ul>
 <h3 id="top-popular-media-stories-1">Top popular media stories (1)</h3>
 <h4 id="1-alexander-zverev-reaches-french-open-final">1) Alexander Zverev reaches French Open final</h4>
 <p><strong>What happened (neutral):</strong> The German player defeated first-time semifinalist Jakub Menšík in four sets to advance to the championship match.</p>
@@ -1341,10 +1384,6 @@
 <li>What patterns have characterized Zverev’s previous major final appearances?</li>
 <li>How has Menšík’s performance altered expectations for younger players?</li>
 <li>What surface-specific adjustments are typically required at Roland Garros?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/tv-shows/sports/20260606-alexander-zverev-closes-in-first-major-title-after-reaching-french-open-final" target="_blank" rel="noopener">France 24</a> — Match summary</li>
 </ul>
 <h3 id="top-gossip-stories-1">Top gossip stories (1)</h3>
 <h4 id="1-prince-george-set-to-attend-eton-this-autumn">1) Prince George set to attend Eton this autumn</h4>
@@ -1357,16 +1396,94 @@
 <li>How has Eton’s role in elite education evolved in recent decades?</li>
 <li>What privacy considerations apply to coverage of minors in this context?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/royals/article-15878223/EDEN-CONFIDENTIAL-Prince-George-boys-Eton-autumn.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Details on the reported plans</li>
-</ul>
 <h3 id="understanding-the-issue-how-prediction-markets-are-structured-and-scaled">Understanding the Issue: How prediction markets are structured and scaled</h3>
 <p>Most coverage of prediction markets treats them as simple betting on events, yet the actual mechanism involves designated market makers who provide continuous bids and offers to reduce the wide spreads that otherwise limit trading. Susquehanna’s expansion shows how professional firms hedge their inventory risk across many contracts while earning from the spread, a process that requires substantial capital and technology to manage exposure when volumes remain low. This structure differs from traditional exchanges because contracts often expire worthless or pay a fixed amount, creating different incentive dynamics than equities or futures. Knowing this, when you hear claims that prediction markets instantly reveal true probabilities, you can evaluate whether the quoted prices reflect broad participation or simply the views of a few active traders and market makers. Next time you see headlines about prediction market odds moving sharply, ask: who is providing liquidity, what is the daily volume, and how are large positions being hedged?</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference claims across multiple outlets rather than relying on any single source. Primary documents such as official statements or regulatory filings often contain details omitted in summary reporting. Checking original data sources helps distinguish between reported facts and interpretive framing.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.dailymail.com/news/article-15879035/Ukraine-drone-blitz-St-Petersburg-Putin-snubs-Zelenskys-talks-end-war.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/worldnews/comments/1tybizs/ukraine_launches_drone_assault_against_russian/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/6/6/us-intercepts-iranian-attacks-as-israel-continues-to-bomb-lebanon?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/several-soldiers-killed-in-israeli-strike-on-lebanon" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/armenia-prepares-for-vote-amid-shifting-relations-with-russia-and-the-west" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.wired.com/story/simpsons-writer-dan-greaney-holds-his-first-presidential-campaign-rally/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=wired.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">wired.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/jun/06/blackouts-hyperinflation-dissent-iran-considers-perilous-prospect-of-peace" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/germany-news-politically-motivated-crimes-double-in-decade/live-77443232?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/6/6/man-dies-in-western-australia-after-shark-attack?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-06-06/chris-davis-on-his-biggest-investing-mistakes-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-06-06/how-susquehanna-is-expanding-into-prediction-markets" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/audio/2026-06-06/odd-lots-why-susquehanna-builds-prediction-markets-podcast" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/news/comments/1tyb0jc/ai_agents_now_generate_more_web_traffic_than_human/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/tv-shows/sports/20260606-alexander-zverev-closes-in-first-major-title-after-reaching-french-open-final" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/royals/article-15878223/EDEN-CONFIDENTIAL-Prince-George-boys-Eton-autumn.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1779,10 +1896,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

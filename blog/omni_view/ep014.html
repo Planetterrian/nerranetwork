@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Four US service members killed in Iraq plane crash as Middle East war escalates with Iranian drone s… — Episode 14</h1>
+            <h1><span class="nn-i18n-title">Four US service members killed in Iraq plane crash as Middle East war escalates with Iranian drone s…</span> — Episode 14</h1>
             
             <p class="blog-hero-hook">Four US service members killed in Iraq plane crash as Middle East war escalates with Iranian drone strikes.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1193,12 +1274,6 @@
 <li>What uncertainties remain about the crash cause, and how can they be verified?</li>
 <li>Could regional drone activities indicate a pattern of escalation?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.foxnews.com/politics/us-kc135-crash-iraq-us-service-members-killed" target="_blank" rel="noopener">Fox News</a> — details on the crash and official statements</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15641415/US-refuelling-plane-Iraq-collision-Putin-drone-British.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — coverage of related drone attacks in Iraq</li>
-<li><a href="https://www.bbc.com/news/articles/cy0dz5ql17vo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — confirmation of deaths and rescue efforts</li>
-</ul>
 <h4 id="2-iranian-drone-strikes-hit-dubai-financial-center-amid-ongoing-war">2) Iranian drone strikes hit Dubai financial center amid ongoing war</h4>
 <p><strong>What happened (neutral):</strong> An Iranian kamikaze drone targeted the International Financial Centre in Dubai, causing buildings to shake but with unclear details on casualties or damage. This strike is part of the broader US-Israel war with Iran, including reports of an Iranian drone killing a French soldier in Iraq. Live updates indicate ongoing developments in the conflict, with explosions reported in the city's financial district.</p>
 <p><strong>Perspectives:</strong> British tabloid-style reporting sensationalizes the immediate chaos and building tremors in Dubai, portraying it as a bold escalation by Iran that disrupts global finance and heightens fears of wider economic fallout. US political coverage ties this to statements from former leaders like Trump, who emphasize America's readiness for prolonged conflict, framing the strikes as a test of resolve. International observers might view these actions as Iran's defensive response to airstrikes, while conservative angles criticize perceived weaknesses in Western alliances, and centrist takes highlight the humanitarian and infrastructural risks without assigning blame.</p>
@@ -1207,11 +1282,6 @@
 <li>What verification is needed for the extent of damage in Dubai?</li>
 <li>How could this affect international alliances in the Middle East?</li>
 <li>Are there conflicting reports on Iran's motivations?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15642169/Explosions-rock-Dubai-Iranian-drone-strikes-causes-buildings-shake-citys-financial-centre-Live-update.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — live updates on the Dubai strike</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15641415/US-refuelling-plane-Iraq-collision-Putin-drone-British.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — context on related strikes killing a French soldier</li>
 </ul>
 <h4 id="3-irans-new-supreme-leader-reportedly-in-coma-unaware-of-war">3) Iran's new supreme leader reportedly in coma unaware of war</h4>
 <p><strong>What happened (neutral):</strong> Mojtaba Khamenei, reportedly the new supreme leader of Iran, is said to be in a coma at a Tehran hospital following an airstrike, unaware of the ongoing war or his position. Despite this, the regime has issued what it claims is his first statement. Details remain unverified, with a source in Tehran providing the information.</p>
@@ -1222,10 +1292,6 @@
 <li>What impact might this have on Iran's war strategy?</li>
 <li>Are there discrepancies in regime communications?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15642237/Mojtaba-Khamenei-UNAWARE-war-coma.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — details on the coma and regime statement</li>
-</ul>
 <h4 id="4-truck-attack-on-michigan-synagogue-linked-to-airstrike-revenge">4) Truck attack on Michigan synagogue linked to airstrike revenge</h4>
 <p><strong>What happened (neutral):</strong> A Lebanese-born man, Ayman Mohamad Ghazali, allegedly drove a truck filled with explosives into Temple Israel in West Bloomfield, Michigan, and opened fire, reportedly motivated by his family's deaths in an airstrike. The FBI later stormed his home. Details on casualties or further outcomes are unclear from available information.</p>
 <p><strong>Perspectives:</strong> US media reports focus on the domestic security implications, portraying the attack as a spillover from Middle East conflicts and emphasizing law enforcement's swift response to prevent further violence. Some outlets frame it through the lens of rising antisemitism, calling for stronger protections for religious sites, while others highlight the attacker's personal grievances as a symptom of broader war trauma. International coverage might connect it to global tensions, with progressive views advocating for addressing root causes like civilian casualties abroad, and conservative takes stressing the need for enhanced border security.</p>
@@ -1235,10 +1301,6 @@
 <li>How does this relate to broader US security alerts?</li>
 <li>Could this indicate a pattern of retaliatory attacks?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15641577/Ayman-Mohamad-Ghazali-suspect-Michigan-synagogue-Lebanon.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — identification of suspect and FBI actions</li>
-</ul>
 <h4 id="5-fbi-alerts-on-unverified-iranian-drone-threat-off-california-coast">5) FBI alerts on unverified Iranian drone threat off California coast</h4>
 <p><strong>What happened (neutral):</strong> The FBI issued advisories to California law enforcement about an unverified tip regarding potential Iranian drone activity off the coast. White House officials described the intelligence as aspirational rather than imminent. This comes amid heightened tensions from the Middle East conflict.</p>
 <p><strong>Perspectives:</strong> Conservative US reporting underscores the alert as a serious national security concern, critiquing any downplaying by the administration and linking it to broader Iranian aggression. Government pushback in the coverage frames it as precautionary rather than alarming, aiming to reassure the public while maintaining vigilance. Broader media discussions weave in debates over intelligence reliability, with some seeing it as evidence of Iran's expanding reach, while others view it as potentially overhyped amid wartime paranoia.</p>
@@ -1247,10 +1309,6 @@
 <li>How can the tip's credibility be assessed?</li>
 <li>What broader implications for US coastal security?</li>
 <li>Are there similar alerts in other regions?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.foxnews.com/politics/why-unverified-iran-drone-tip-prompted-fbi-alerts-california-law-enforcement" target="_blank" rel="noopener">Fox News</a> — details on the advisory and White House response</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-uk-economy-flatlines-amid-middle-east-crisis-and-inflation-fears">1) UK economy flatlines amid Middle East crisis and inflation fears</h4>
@@ -1262,11 +1320,6 @@
 <li>How might energy price interventions affect consumers?</li>
 <li>Are there conflicting data on growth sources?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15642195/UK-economy-flatlining-Middle-East-crisis-erupted-amid-alarm-looming-inflation-spike.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — figures on GDP and inflation concerns</li>
-<li><a href="https://www.theguardian.com/politics/live/2026/mar/13/reeves-vows-to-crack-down-on-energy-and-fuel-bosses-exploiting-britons-through-rip-off-prices-uk-politics-live" target="_blank" rel="noopener">The Guardian</a> — chancellor's plans and political context</li>
-</ul>
 <h4 id="2-wars-in-middle-east-and-russia-add-hours-to-global-flight-times">2) Wars in Middle East and Russia add hours to global flight times</h4>
 <p><strong>What happened (neutral):</strong> Ongoing conflicts in the Middle East and Russia have led to flight diversions and alternate routes, adding up to three hours to journey times worldwide. This is due to airspace restrictions and safety concerns. Specific impacts on airlines and passengers remain broad without detailed breakdowns.</p>
 <p><strong>Perspectives:</strong> Travel-focused reporting emphasizes the practical disruptions for everyday flyers, framing it as an unintended consequence of geopolitical tensions that burdens global connectivity. Some outlets connect it to economic ripple effects, with business perspectives highlighting increased costs for international trade. Broader views might criticize the wars for their far-reaching civilian impacts, while others see route changes as necessary precautions in volatile regions.</p>
@@ -1275,10 +1328,6 @@
 <li>Which routes are most affected and why?</li>
 <li>How long might these diversions last?</li>
 <li>What alternatives could mitigate delays?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/travel/article-15642363/How-wars-Middle-East-Russia-adding-three-hours-flight-times.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — overview of added flight times</li>
 </ul>
 <h4 id="3-uk-plans-deregulation-to-accelerate-nuclear-power-development">3) UK plans deregulation to accelerate nuclear power development</h4>
 <p><strong>What happened (neutral):</strong> The UK government announced plans to reduce regulations, costs, and bureaucracy by year's end to speed up nuclear power generation. This follows a review criticizing the sector for being too risk-averse. Critics accuse the move of irresponsible deregulation, while the government calls it a win for clean energy and infrastructure.</p>
@@ -1289,11 +1338,6 @@
 <li>How might this balance energy needs with safety?</li>
 <li>Are there international models for comparison?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/environment/2026/mar/13/nuclear-power-generation-uk-deregulation-plans-ed-miliband" target="_blank" rel="noopener">The Guardian</a> — details on plans and accusations</li>
-<li><a href="https://www.bloomberg.com/news/articles/2026-03-13/uk-plans-to-overhaul-nuclear-regulation-to-speed-up-projects" target="_blank" rel="noopener">Bloomberg</a> — overview of regulatory overhaul</li>
-</ul>
 <h4 id="4-south-koreas-forgotten-jeju-uprising-revisited-after-80-years">4) South Korea's forgotten Jeju uprising revisited after 80 years</h4>
 <p><strong>What happened (neutral):</strong> Nearly 80 years ago, a brutal crackdown on Jeju Island killed tens of thousands amid post-World War II divisions on the Korean peninsula. Residents resisted the North-South split, leading the South Korean government to label the island a communist stronghold. The event is being revisited in international reporting.</p>
 <p><strong>Perspectives:</strong> Historical features emphasize the human cost and long-suppressed narratives, with some framing it as a cautionary tale of Cold War repression that echoes modern divisions. International outlets highlight the US-backed South's role, prompting reflections on accountability and reconciliation. Local perspectives might focus on healing generational trauma, while global views connect it to ongoing Korean tensions.</p>
@@ -1303,10 +1347,6 @@
 <li>What lessons for current global conflicts?</li>
 <li>How accurate are casualty estimates?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/tv-shows/revisited/20260313-south-korea-the-forgotten-jeju-uprising-and-massacre" target="_blank" rel="noopener">France 24</a> — background on the uprising and massacre</li>
-</ul>
 <h4 id="5-trans-woman-jailed-for-stalking-gender-reassignment-surgeon">5) Trans woman jailed for stalking gender reassignment surgeon</h4>
 <p><strong>What happened (neutral):</strong> A 28-year-old trans woman, Vivienne Taylor, was jailed for stalking and threatening to harm Tina Rashid, the surgeon who performed her gender reassignment surgery. The actions spanned four years and affected the surgeon's work, family, and social life. Taylor admitted to the stalking.</p>
 <p><strong>Perspectives:</strong> Tabloid reporting details the personal threats and emotional toll, portraying it as a rare but disturbing case of post-surgery fallout that raises questions about patient support. Some coverage weaves in broader discussions on transgender healthcare, with advocates emphasizing mental health resources, while critics might highlight accountability. Legal angles focus on the sentencing as a deterrent, balancing victim protection with understanding underlying issues.</p>
@@ -1315,10 +1355,6 @@
 <li>What support systems exist for post-surgery patients?</li>
 <li>How did the stalking impact the surgeon's life?</li>
 <li>Are there similar cases elsewhere?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15640605/Trans-woman-stalked-surgeon-jailed.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — details on the stalking and jailing</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-oil-prices-hold-above-100-amid-us-iran-war-statements">1) Oil prices hold above $100 amid US-Iran war statements</h4>
@@ -1330,10 +1366,6 @@
 <li>What factors could lead to fluctuations?</li>
 <li>Are statements influencing market sentiment?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/03/13/oil-100-price-brent-wti-trump-iran-war-surrender-khamenei.html" target="_blank" rel="noopener">CNBC</a> — price details and Trump statements</li>
-</ul>
 <h4 id="2-south-african-stocks-face-10-correction-amid-middle-east-conflict">2) South African stocks face 10% correction amid Middle East conflict</h4>
 <p><strong>What happened (neutral):</strong> South Africa's stock benchmark has dropped 10% since its late February peak, with investors withdrawing from overheated markets as the Middle East war persists. Losses are deepening without signs of immediate recovery. The correction is linked to global uncertainty.</p>
 <p><strong>Perspectives:</strong> Business analysis frames the decline as a natural pullback from overvaluation, exacerbated by war-related drags on emerging markets, with some seeing opportunities for bargain hunting. International investors might view it as part of a broader flight to safety, criticizing exposure to geopolitical risks. Local takes emphasize the need for diversification, while optimistic views predict a rebound if conflicts ease.</p>
@@ -1343,10 +1375,6 @@
 <li>How does this compare to other emerging markets?</li>
 <li>Could war resolutions reverse the trend?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-03-13/south-african-stocks-set-for-a-10-correction-as-losses-deepen" target="_blank" rel="noopener">Bloomberg</a> — details on the stock correction</li>
-</ul>
 <h4 id="3-hong-kong-hedge-fund-raided-after-big-bets-and-failed-tests">3) Hong Kong hedge fund raided after big bets and failed tests</h4>
 <p><strong>What happened (neutral):</strong> Infini Capital Management Ltd., a Hong Kong hedge fund, was raided in the city's biggest financial-industry action since 2017. The firm was known for taking big bets and had failed a Goldman test, drawing intrigue in financial circles. Specific reasons for the raid remain unclear.</p>
 <p><strong>Perspectives:</strong> Financial reporting highlights the raid's scale, portraying it as a crackdown on risky practices that could signal tighter oversight in Asian markets. Industry insiders might see it as tied to failed compliance, with some framing it as a caution against aggressive strategies. Broader views connect it to global regulatory trends, balancing innovation with stability concerns.</p>
@@ -1355,10 +1383,6 @@
 <li>What prompted the raid specifically?</li>
 <li>How might this affect Hong Kong's financial reputation?</li>
 <li>Are there links to wider market issues?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-03-13/hedge-fund-in-hong-kong-raid-took-big-bets-failed-goldman-test" target="_blank" rel="noopener">Bloomberg</a> — background on the fund and raid</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-palantir-demos-ai-chatbots-for-military-war-planning">1) Palantir demos AI chatbots for military war planning</h4>
@@ -1370,13 +1394,106 @@
 <li>How accurate are these chatbots in real scenarios?</li>
 <li>Could this expand to non-military applications?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.wired.com/story/palantir-demos-show-how-the-military-can-use-ai-chatbots-to-generate-war-plans/" target="_blank" rel="noopener">WIRED</a> — details on demos and Pentagon records</li>
-</ul>
 <h4 id="2">2)</h4>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.foxnews.com/politics/us-kc135-crash-iraq-us-service-members-killed" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=foxnews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">foxnews.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15641415/US-refuelling-plane-Iraq-collision-Putin-drone-British.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cy0dz5ql17vo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15642169/Explosions-rock-Dubai-Iranian-drone-strikes-causes-buildings-shake-citys-financial-centre-Live-update.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15642237/Mojtaba-Khamenei-UNAWARE-war-coma.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15641577/Ayman-Mohamad-Ghazali-suspect-Michigan-synagogue-Lebanon.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.foxnews.com/politics/why-unverified-iran-drone-tip-prompted-fbi-alerts-california-law-enforcement" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=foxnews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">foxnews.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15642195/UK-economy-flatlining-Middle-East-crisis-erupted-amid-alarm-looming-inflation-spike.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/politics/live/2026/mar/13/reeves-vows-to-crack-down-on-energy-and-fuel-bosses-exploiting-britons-through-rip-off-prices-uk-politics-live" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/travel/article-15642363/How-wars-Middle-East-Russia-adding-three-hours-flight-times.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/environment/2026/mar/13/nuclear-power-generation-uk-deregulation-plans-ed-miliband" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-03-13/uk-plans-to-overhaul-nuclear-regulation-to-speed-up-projects" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/tv-shows/revisited/20260313-south-korea-the-forgotten-jeju-uprising-and-massacre" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15640605/Trans-woman-stalked-surgeon-jailed.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/13/oil-100-price-brent-wti-trump-iran-war-surrender-khamenei.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-03-13/south-african-stocks-set-for-a-10-correction-as-losses-deepen" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-03-13/hedge-fund-in-hong-kong-raid-took-big-bets-failed-goldman-test" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.wired.com/story/palantir-demos-show-how-the-military-can-use-ai-chatbots-to-generate-war-plans/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=wired.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">wired.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1727,10 +1844,67 @@ That's Omni View. For full source links and more context, check out today's writ
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

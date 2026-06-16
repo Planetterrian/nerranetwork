@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>US bombs Iran's Kharg Island oil hub as Middle East conflict escalates — Episode 15</h1>
+            <h1><span class="nn-i18n-title">US bombs Iran's Kharg Island oil hub as Middle East conflict escalates</span> — Episode 15</h1>
             
             <p class="blog-hero-hook">US bombs Iran's Kharg Island oil hub as Middle East conflict escalates.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1193,12 +1274,6 @@
 <li>What evidence supports or contradicts claims about the damage to Kharg Island?</li>
 <li>Could this lead to direct negotiations or further military actions?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15645355/US-Iran-Donald-Trump-Kharg-Island.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Trump's claims of total obliteration and threats to oil infrastructure.</li>
-<li><a href="https://www.france24.com/en/us-military-bombs-military-sites-on-kharg-island-iranian-media-reports-no-damage" target="_blank" rel="noopener">France 24</a> — Reports of no damage to oil facilities per Iranian sources.</li>
-<li><a href="https://www.npr.org/2026/03/14/nx-s1-5747838/trump-kharg-island-iran-war" target="_blank" rel="noopener">NPR</a> — Details on the strikes and related US military losses in Iraq.</li>
-</ul>
 <h4 id="2-missile-strikes-hit-us-embassy-compound-in-baghdad">2) Missile strikes hit US embassy compound in Baghdad</h4>
 <p><strong>What happened (neutral):</strong> Explosions from Iranian drone strikes rocked buildings in Baghdad, including the US embassy compound, amid the spiraling US-Iran war. The attacks are part of ongoing live developments in the conflict, with reports of shaking in the city's financial center. Details on casualties or full extent of damage remain unclear from available information.</p>
 <p><strong>Perspectives:</strong> US-focused media portray the strikes as aggressive Iranian retaliation that underscores the need for continued military resolve, with some outlets linking it to Trump's successful war strategy despite setbacks. International coverage emphasizes the chaos and risks to civilians in Iraq, framing it as evidence of the war's uncontrolled spread beyond borders. Critics from various sides debate whether these incidents signal Iranian desperation or a calculated escalation, while allies in the region express frustration over the instability affecting Gulf states.</p>
@@ -1207,10 +1282,6 @@
 <li>What immediate security measures might the US take in response to embassy attacks?</li>
 <li>How do these strikes impact civilian life in Baghdad?</li>
 <li>Is there verified information on who launched the missiles?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15642169/Explosions-rock-Dubai-Iranian-drone-strikes-causes-buildings-shake-citys-financial-centre-Live-update.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Live updates on strikes in Baghdad and Dubai financial areas.</li>
 </ul>
 <h4 id="3-us-deploys-amphibious-assault-ship-to-middle-east">3) US deploys amphibious assault ship to Middle East</h4>
 <p><strong>What happened (neutral):</strong> The US is sending the USS Tripoli, an amphibious assault ship with Marines, F-35 jets, and supporting warships, to the Middle East. This deployment comes as President Trump and Defense Secretary Pete Hegseth describe the war against Iran as progressing well. Specific operational details or exact timelines are not provided.</p>
@@ -1221,10 +1292,6 @@
 <li>What role could the F-35 jets play in future operations?</li>
 <li>Are there risks of miscalculation with other regional actors?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/us-deploys-uss-tripoli-amphibious-assault-ship-to-middle-east" target="_blank" rel="noopener">France 24</a> — Details on the ship, personnel, and official statements.</li>
-</ul>
 <h4 id="4-french-soldier-killed-by-iranian-drone-in-iraq">4) French soldier killed by Iranian drone in Iraq</h4>
 <p><strong>What happened (neutral):</strong> A French chief warrant officer, Arnaud Frion, was killed by an Iranian-made drone while on an anti-jihadist mission in Iraqi Kurdistan. This marks France's first military death in the Middle East war. He was part of a Western contingent combating potential jihadists in the area.</p>
 <p><strong>Perspectives:</strong> French and European media frame the incident as a tragic loss highlighting the dangers of involvement in the broader US-led conflict, urging greater caution in anti-jihad operations. Conservative US views integrate it into narratives of Iranian aggression justifying escalated responses, while international reports note it as evidence of the war's spillover effects on allied forces. Some perspectives question the effectiveness of Western missions in Iraq amid rising drone threats, blending sympathy for the loss with calls for strategic reassessment.</p>
@@ -1234,10 +1301,6 @@
 <li>What does this reveal about the reach of Iranian drone technology?</li>
 <li>Could it lead to changes in anti-jihadist strategies?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/middle-east/20260314-french-soldier-killed-by-iran-made-drone-was-in-iraq-on-anti-jihad-operation" target="_blank" rel="noopener">France 24</a> — Background on the mission and the soldier's role.</li>
-</ul>
 <h4 id="5-fbi-warns-of-iranian-drone-plots-against-california">5) FBI warns of Iranian drone plots against California</h4>
 <p><strong>What happened (neutral):</strong> The FBI alerted California law enforcement to potential Iranian drone strikes on the West Coast as retaliation for the US war. Reports detail the long-range capabilities of these drones, which could reach deep into Europe as well. Specific targets or timelines remain uncertain.</p>
 <p><strong>Perspectives:</strong> US security-focused outlets emphasize the threat as a direct extension of Iran's capabilities, urging heightened vigilance and framing it as validation for aggressive US policies. International coverage discusses the broader implications for global security, with some European voices expressing alarm over vulnerability to similar attacks. Debates arise on whether this represents genuine intent or propaganda, while critics argue it underscores the risks of escalation without diplomatic off-ramps.</p>
@@ -1246,10 +1309,6 @@
 <li>How prepared are US coastal defenses against such drone threats?</li>
 <li>What verification is needed for the reported drone ranges?</li>
 <li>Could this expand the conflict beyond the Middle East?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15638643/How-long-range-Iranian-drones-strike-deep-European-mainland-plot-attack-Californian-coast-emerges.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Details on drone capabilities and FBI alerts.</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-tyre-residents-defy-evacuation-amid-israeli-strikes">1) Tyre residents defy evacuation amid Israeli strikes</h4>
@@ -1261,10 +1320,6 @@
 <li>How does this fit into the larger Lebanon-Israel tensions?</li>
 <li>Are there independent verifications of civilian impacts?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/middle-east/20260314-tyre-residents-refuse-to-evacuate-lebanon-s-hezbollah-bastion-despite-israeli-strikes" target="_blank" rel="noopener">France 24</a> — Accounts of residents' refusal and dangers.</li>
-</ul>
 <h4 id="2-hamas-calls-for-iran-to-stop-gulf-attacks">2) Hamas calls for Iran to stop Gulf attacks</h4>
 <p><strong>What happened (neutral):</strong> Hamas urged Iran to halt attacks on neighboring Gulf states while supporting Tehran's right to defend against the US and Israel. The statement slams aggression on Iran but calls for an end to regional strikes. Context ties to the ongoing Middle East war.</p>
 <p><strong>Perspectives:</strong> Palestinian and pro-Iran sources view the statement as balanced solidarity, emphasizing self-defense rights amid US-led actions while advocating de-escalation to protect Arab unity. Western media interpret it as a pragmatic move by Hamas to avoid broader fallout, potentially isolating Iran. Discussions weave in criticisms of all sides, with some seeing it as an attempt to refocus on Palestinian issues without alienating Gulf allies.</p>
@@ -1273,10 +1328,6 @@
 <li>How might this influence Iran's strategy in the Gulf?</li>
 <li>What does it reveal about Hamas-Iran relations?</li>
 <li>Could it lead to reduced attacks in the region?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/news/2026/3/14/hamas-urges-iran-to-halt-attacks-on-neighbouring-gulf-states?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Hamas's full statement and context.</li>
 </ul>
 <h4 id="3-shark-nets-at-south-african-resort-threaten-endangered-species">3) Shark nets at South African resort threaten endangered species</h4>
 <p><strong>What happened (neutral):</strong> Scientists warn that proposed shark nets for a new €100 million Club Med resort in South Africa could harm endangered marine species. They call for a full environmental impact assessment before the July opening. The nets aim to protect swimmers, but risks to wildlife are highlighted.</p>
@@ -1287,10 +1338,6 @@
 <li>How thorough is the planned environmental assessment?</li>
 <li>Might this affect tourism in the region?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/africa/20260314-shark-nets-%E2%82%AC100-million-club-med-resort-threaten-south-african-endangered-species-scientists-warn" target="_blank" rel="noopener">France 24</a> — Warnings from scientists and resort details.</li>
-</ul>
 <h4 id="4-european-leaders-fume-over-trumps-iran-war-approach">4) European leaders fume over Trump's Iran war approach</h4>
 <p><strong>What happened (neutral):</strong> Reports indicate European and Gulf leaders are privately criticizing Trump's handling of the Iran war as folly, amid ongoing missile and drone attacks. Allies in Moscow and Beijing are reportedly pleased with the developments. The war continues with US claims of success.</p>
 <p><strong>Perspectives:</strong> Conservative commentators defend Trump's strategy as effective against Iran, dismissing foreign criticism as envy or weakness. International and progressive outlets amplify the private fuming, portraying it as evidence of isolated US policy that empowers rivals like Russia and China. Discussions often contrast the "victory" narrative with on-ground chaos, weaving in concerns over global alliances and the war's long-term costs.</p>
@@ -1300,10 +1347,6 @@
 <li>What evidence supports claims of Moscow and Beijing's satisfaction?</li>
 <li>Could it lead to diplomatic shifts?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/debate/article-15644477/ANDREW-NEIL-Iran-Moscow-Beijing-Gulf-Trump-folly.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Analysis of leader reactions and rival benefits.</li>
-</ul>
 <h4 id="5-uk-opinion-piece-warns-of-national-decline-due-to-elite-policies">5) UK opinion piece warns of national decline due to elite policies</h4>
 <p><strong>What happened (neutral):</strong> A columnist argues that Britain is being undermined by the "suicidal empathy" of its ruling elite, leading to a loss of national confidence. The piece describes this as a quiet, creeping change without dramatic events. Specific policies or examples are not detailed.</p>
 <p><strong>Perspectives:</strong> Right-leaning views echo the piece as a wake-up call to cultural and immigration issues, framing elite policies as detached from public concerns. Centrist and left perspectives critique it as alarmist rhetoric that oversimplifies complex social changes, potentially stoking division. Broader discussions explore national identity, with some seeing it as reflective of post-Brexit anxieties while others call for evidence-based policy debates.</p>
@@ -1312,10 +1355,6 @@
 <li>What specific policies does the author imply are problematic?</li>
 <li>How does this view align with public opinion polls?</li>
 <li>Could it influence upcoming elections?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/debate/article-15644561/MATT-GOODWIN-Britain-danger-replaced-suicide.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — The full opinion on national changes.</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-uk-promises-aid-for-rising-heating-oil-bills-amid-iran-war">1) UK promises aid for rising heating oil bills amid Iran war</h4>
@@ -1327,10 +1366,6 @@
 <li>What long-term impacts could war have on global energy prices?</li>
 <li>Are similar measures needed in other countries?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15645555/Rachel-Reeves-help-families-rises-heating-oil-bills-Iran-war.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Details on price rises and government response.</li>
-</ul>
 <h4 id="2-prediction-markets-boom-raises-congressional-ethics-concerns">2) Prediction markets boom raises congressional ethics concerns</h4>
 <p><strong>What happened (neutral):</strong> The growth in prediction markets, including event contracts, lacks ethics guidance for House and Senate members, unlike rules for stocks or cryptocurrencies. Committees provide no disclosure requirements. This comes amid a broader boom in such markets.</p>
 <p><strong>Perspectives:</strong> Financial innovators see the lack of rules as an opportunity for market growth, arguing prediction tools enhance forecasting without needing heavy regulation. Ethics watchdogs and lawmakers express worry over potential conflicts of interest, framing it as a gap that could lead to insider advantages. Broader views debate balancing innovation with transparency, with some comparing it to gambling regulations while others push for updated disclosures to maintain public trust.</p>
@@ -1340,10 +1375,6 @@
 <li>How do they differ from traditional investments?</li>
 <li>Should new rules be implemented soon?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/03/14/nx-s1-5744006/congress-prediction-markets-disclosure-rules" target="_blank" rel="noopener">NPR</a> — Overview of ethics gaps and market boom.</li>
-</ul>
 <h4 id="3-key-senate-races-eyed-for-2026-midterms-control">3) Key Senate races eyed for 2026 midterms control</h4>
 <p><strong>What happened (neutral):</strong> Analysts highlight 10 Senate races that could decide chamber control in 2026, including vulnerable Republican seats in Maine and Texas, plus Democratic retirements. Primary battles are noted as key factors. Specific candidates or polls are not detailed.</p>
 <p><strong>Perspectives:</strong> Republican-leaning sources focus on defending holds as opportunities to maintain power, portraying the races as tests of conservative policies. Democratic views emphasize flipping seats through retirements, framing it as a chance to counter recent shifts. Nonpartisan analyses weave in the impact on business and policy, with discussions on how outcomes could affect economic legislation amid global uncertainties like the Iran war.</p>
@@ -1352,10 +1383,6 @@
 <li>Which races have the most unpredictable primaries?</li>
 <li>How might national issues influence voter turnout?</li>
 <li>What verification is needed for vulnerability assessments?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.foxnews.com/politics/10-senate-races-could-decide-control-chamber-2026-midterms" target="_blank" rel="noopener">Fox News</a> — List of top races and key factors.</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-long-range-iranian-drones-highlight-advanced-capabilities">1) Long-range Iranian drones highlight advanced capabilities</h4>
@@ -1367,10 +1394,6 @@
 <li>How can defenses evolve against such drones?</li>
 <li>Might this spur innovation in counter-drone systems?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15638643/How-long-range-Iranian-drones-strike-deep-European-mainland-plot-attack-Californian-coast-emerges.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Capabilities and potential targets.</li>
-</ul>
 <h4 id="2-norda-001a-trail-running-shoe-reviewed-for-high-cost">2) Norda 001A trail running shoe reviewed for high cost</h4>
 <p><strong>What happened (neutral):</strong> A review tests the Norda 001A G+ trail running shoe, priced at $300, evaluating its treads and overall credentials. It questions if the expense is justified for users. No broader market trends are specified.</p>
 <p><strong>Perspectives:</strong> Tech and fitness enthusiasts debate the shoe's premium features as worth the cost for serious runners, highlighting innovative materials in a competitive market. Critics argue it's overpriced compared to alternatives, framing it as luxury branding over necessity. Reviews weave in consumer trends, with some seeing it as part of a boom in high-end gear while others call for affordability in outdoor tech.</p>
@@ -1380,12 +1403,95 @@
 <li>What materials make it stand out?</li>
 <li>How does it compare to cheaper options?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.wired.com/review/norda-001a-g-trail-shoe/" target="_blank" rel="noopener">WIRED</a> — Testing of treads and value</li>
-</ul>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15645355/US-Iran-Donald-Trump-Kharg-Island.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/us-military-bombs-military-sites-on-kharg-island-iranian-media-reports-no-damage" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.npr.org/2026/03/14/nx-s1-5747838/trump-kharg-island-iran-war" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15642169/Explosions-rock-Dubai-Iranian-drone-strikes-causes-buildings-shake-citys-financial-centre-Live-update.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/us-deploys-uss-tripoli-amphibious-assault-ship-to-middle-east" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/middle-east/20260314-french-soldier-killed-by-iran-made-drone-was-in-iraq-on-anti-jihad-operation" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15638643/How-long-range-Iranian-drones-strike-deep-European-mainland-plot-attack-Californian-coast-emerges.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/middle-east/20260314-tyre-residents-refuse-to-evacuate-lebanon-s-hezbollah-bastion-despite-israeli-strikes" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/3/14/hamas-urges-iran-to-halt-attacks-on-neighbouring-gulf-states?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/africa/20260314-shark-nets-%E2%82%AC100-million-club-med-resort-threaten-south-african-endangered-species-scientists-warn" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/debate/article-15644477/ANDREW-NEIL-Iran-Moscow-Beijing-Gulf-Trump-folly.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/debate/article-15644561/MATT-GOODWIN-Britain-danger-replaced-suicide.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15645555/Rachel-Reeves-help-families-rises-heating-oil-bills-Iran-war.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.npr.org/2026/03/14/nx-s1-5744006/congress-prediction-markets-disclosure-rules" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.foxnews.com/politics/10-senate-races-could-decide-control-chamber-2026-midterms" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=foxnews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">foxnews.com</span>
+                    </a>
+                    
+                    <a href="https://www.wired.com/review/norda-001a-g-trail-shoe/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=wired.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">wired.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1748,10 +1854,67 @@ That's Omni View. For full source links and more context, check out today's writ
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

@@ -56,9 +56,60 @@ _EPISODE_RE = re.compile(r"Ep(\d+)")
 # Date from filename: ..._20260322.md → (2026, 03, 22)
 _FILENAME_DATE_RE = re.compile(r"(\d{4})(\d{2})(\d{2})\.md$")
 
-# Source URLs in digest text
-# Supports both bare URLs and Markdown links: Source: https://... or Source: [text](https://...)
-_SOURCE_URL_RE = re.compile(r"Source:\s*(?:\[.*?\]\()?(https?://[^\s\)]+)")
+# Source URLs in digest text.
+# Two formats are used across the network and BOTH must be captured so every
+# blog post's "Sources" section is populated (June 2026 fix — Models & Agents,
+# MAB, Planetterrian and Omni View list sources as a trailing "## Sources"
+# markdown list with NO "Source:" prefix, so the prefix-only regex missed them
+# and their Sources section rendered empty):
+#   1. inline per-story:   ... Source: https://...   /   Source: [domain](url)
+#   2. a trailing section: "## Sources" (or "Read more" / "References")
+#                          followed by "- [domain](url)" / bare-URL bullets.
+_SOURCE_URL_RE = re.compile(r"(?:Source/Post|Source):\s*(?:\[.*?\]\()?(https?://[^\s\)]+)")
+# A heading that introduces the trailing sources list — matched WHOLE-LINE so a
+# mid-article "## Sources of funding" story heading is never mistaken for it.
+_SOURCES_HEADING_RE = re.compile(
+    r"^\s*(?:#{1,6}\s*|\*\*\s*)?(?:sources?|references?|read\s*more(?:\s*\(sources?\))?)\s*:?\s*\**\s*$",
+    re.IGNORECASE,
+)
+_ANY_HEADING_RE = re.compile(r"^\s*#{1,6}\s+\S")
+# URL inside a markdown link target, or a bare URL.
+_URL_IN_LINE_RE = re.compile(r"\[[^\]]*\]\((https?://[^)\s]+)\)|(https?://[^\s)\]]+)")
+
+
+def _extract_source_urls(md_text: str) -> list[str]:
+    """Collect every source URL from a digest, deduped, in document order.
+
+    Captures both the inline ``Source:`` form and the trailing ``## Sources``
+    (markdown-link or bare) list, so the blog "Sources" section is consistent
+    across all shows regardless of which format the show's prompt emits.
+    """
+    seen: set[str] = set()
+    out: list[str] = []
+
+    def add(url: str) -> None:
+        url = (url or "").rstrip(").,;")
+        if url and url not in seen:
+            seen.add(url)
+            out.append(url)
+
+    # 1. Inline "Source:" / "Source/Post:" links.
+    for m in _SOURCE_URL_RE.finditer(md_text):
+        add(m.group(1))
+
+    # 2. Trailing sources section (until the next heading or EOF).
+    in_sources = False
+    for line in md_text.split("\n"):
+        if _SOURCES_HEADING_RE.match(line):
+            in_sources = True
+            continue
+        if in_sources:
+            if _ANY_HEADING_RE.match(line):  # a new section ends the list
+                in_sources = False
+                continue
+            for mm in _URL_IN_LINE_RE.finditer(line):
+                add(mm.group(1) or mm.group(2))
+    return out
 
 # Date string → datetime
 _DATE_FORMATS = [
@@ -228,8 +279,8 @@ def extract_blog_metadata(
             hook = clean[:200] + ("..." if len(clean) > 200 else "")
             break
 
-    # Source URLs
-    source_urls = _SOURCE_URL_RE.findall(md_text)
+    # Source URLs — both inline "Source:" and trailing "## Sources" formats.
+    source_urls = _extract_source_urls(md_text)
 
     # Word count and reading time
     word_count = len(md_text.split())
@@ -268,9 +319,25 @@ def clean_digest_for_blog(md_text: str) -> str:
     lines = md_text.split("\n")
     cleaned = []
     skip_hook_line = False
+    in_sources = False
 
     for line in lines:
         stripped = line.strip()
+
+        # Drop the trailing "## Sources" / "Read more" / "References" list from
+        # the article body — the favicon "Sources" section below the article
+        # now displays those links (built from the same URLs), so keeping the
+        # raw list here would duplicate the heading and dump a long bullet list
+        # of URLs into the prose. Ends at the next heading (defensive; the list
+        # is normally the final block).
+        if _SOURCES_HEADING_RE.match(line):
+            in_sources = True
+            continue
+        if in_sources:
+            if _ANY_HEADING_RE.match(line):
+                in_sources = False  # fall through to emit this new heading
+            else:
+                continue
 
         # Remove unicode box-drawing separators
         if stripped and all(c in "━─═" for c in stripped):
@@ -683,14 +750,18 @@ def generate_blog_post_html(
     elif not _extracted:
         metadata["title"] = _show
 
-    # Source domains for display
+    # Source cards for the "Sources" section. Dedupe by URL (not by domain) so
+    # every DISTINCT article is linked — shows that cite many articles from one
+    # publisher (e.g. several reddit.com threads) keep all of them instead of
+    # collapsing to a single card. Same URL cited by multiple stories still
+    # shows once.
     source_domains = []
-    seen_domains = set()
+    seen_urls = set()
     for url in metadata.get("source_urls", []):
-        domain = _domain_from_url(url)
-        if domain not in seen_domains:
-            seen_domains.add(domain)
-            source_domains.append({"url": url, "domain": domain})
+        if url in seen_urls:
+            continue
+        seen_urls.add(url)
+        source_domains.append({"url": url, "domain": _domain_from_url(url)})
 
     # Load transcript (TTS script) if available — scan digest dir for
     # a *_Ep{NNN}_*_tts.txt file matching this episode number. The TTS

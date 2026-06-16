@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Trump warns Iran of further strikes after US-Israeli attack destroys Iran's largest bridge, as Tehra… — Episode 27</h1>
+            <h1><span class="nn-i18n-title">Trump warns Iran of further strikes after US-Israeli attack destroys Iran's largest bridge, as Tehra…</span> — Episode 27</h1>
             
             <p class="blog-hero-hook">Trump warns Iran of further strikes after US-Israeli attack destroys Iran's largest bridge, as Tehran vows continued resistance.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1214,14 +1295,6 @@
 <li>What are the stated goals of each side regarding regime change or negotiations?</li>
 <li>How are regional allies being drawn into the conflict?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/apr/03/middle-east-crisis-live-trump-urges-iran-to-make-deal-after-bridge-strike" target="_blank" rel="noopener">Middle East crisis live: Trump urges Iran to make deal after bridge strike</a> — Guardian live coverage</li>
-<li><a href="https://www.france24.com/en/disturbing-trend-of-us-israeli-strikes-hitting-non-military-targets-in-iran" target="_blank" rel="noopener">‘Disturbing trend’ of US-Israeli strikes hitting non-military targets in Iran</a> — France 24 reporting from Tehran</li>
-<li><a href="https://www.aljazeera.com/news/liveblog/2026/4/3/iran-war-live-trump-warns-assault-on-infrastructure-hasnt-even-started?traffic_source=rss" target="_blank" rel="noopener">Iran war live: Trump warns assault on infrastructure ‘hasn’t even started’</a> — Al Jazeera live updates</li>
-<li><a href="https://www.dailymail.co.uk/debate/article-15702689/RICHARD-SHIRREFF-Trump-choose-peace-bloody-escalation.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">RICHARD SHIRREFF: Will Trump choose peace - or a bloody escalation?</a> — Daily Mail commentary</li>
-<li><a href="https://www.reddit.com/r/geopolitics/comments/1sb5atu/irans_irgc_says_it_struck_oracle_data_center_in/" target="_blank" rel="noopener">Iran’s IRGC says it struck Oracle data center in Dubai</a> — r/geopolitics discussion</li>
-</ul>
 <h4 id="2-trump-fires-loyalist-attorney-general-pam-bondi">2) Trump fires loyalist Attorney General Pam Bondi</h4>
 <p><strong>What happened (neutral):</strong> President Trump has fired Attorney General Pam Bondi, described as a loyalist and tenacious defender of the president. Reports indicate Trump is considering firing additional Cabinet members, with Pete Hegseth having axed two Army officers. The move comes amid other administration personnel changes.</p>
 <p><strong>Perspectives:</strong> Al Jazeera frames the firing as the removal of a key Trump loyalist from a critical position. The Daily Mail reports that Trump was considering additional Cabinet firings on Thursday night following Bondi's ouster. Some coverage connects this to broader tensions within the administration and Trump's approach to personnel.</p>
@@ -1231,11 +1304,6 @@
 <li>How might this affect ongoing legal or policy priorities?</li>
 <li>What does this signal about stability within the current administration?</li>
 <li>How are different outlets characterizing Bondi's tenure?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/video/newsfeed/2026/4/3/donald-trump-fires-loyalist-attorney-general-pam-bondi?traffic_source=rss" target="_blank" rel="noopener">Donald Trump fires loyalist Attorney General Pam Bondi</a> — Al Jazeera report</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15703041/Trump-Hegseth-cabinet-firings.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Trump puts more Cabinet members on chopping block as Pete Hegseth axes two additional Army officers</a> — Daily Mail coverage</li>
 </ul>
 <h4 id="3-westpac-ceo-warns-iran-war-may-spark-recession-in-australia">3) Westpac CEO warns Iran war may spark recession in Australia</h4>
 <p><strong>What happened (neutral):</strong> Westpac Banking Corp.’s CEO Anthony Miller warned that the Middle East conflict has raised the risk of a recession in Australia. He cited uncertainty about how long supply chain disruptions from the Iran war could impact the economy.</p>
@@ -1247,10 +1315,6 @@
 <li>How might different countries be impacted differently?</li>
 <li>What measures could mitigate these risks?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-03/westpac-ceo-warns-iran-war-may-spark-recession-in-australia" target="_blank" rel="noopener">Westpac CEO Warns Iran War May Spark Recession in Australia</a> — Bloomberg report</li>
-</ul>
 <h4 id="4-europe-must-prepare-for-long-lasting-energy-shock-brussels-warns">4) Europe must prepare for ‘long-lasting’ energy shock, Brussels warns</h4>
 <p><strong>What happened (neutral):</strong> European officials have warned that the region must prepare for a long-lasting energy shock connected to current Middle East developments. This comes amid disruptions affecting global energy flows.</p>
 <p><strong>Perspectives:</strong> Discussion on r/geopolitics highlights concerns about sustained impacts on European energy supplies stemming from the Iran conflict.</p>
@@ -1261,10 +1325,6 @@
 <li>How does this compare to previous energy crises?</li>
 <li>What role might alternative suppliers play?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.reddit.com/r/geopolitics/comments/1sb4h7h/europe_must_prepare_for_longlasting_energy_shock/" target="_blank" rel="noopener">Europe must prepare for ‘long-lasting’ energy shock, Brussels warns</a> — r/geopolitics thread</li>
-</ul>
 <h4 id="5-trumps-rage-at-nato-allies-is-binding-them-together-against-him">5) Trump’s rage at NATO allies is binding them together — against him</h4>
 <p><strong>What happened (neutral):</strong> Reports indicate that President Trump's criticism of NATO allies is having the effect of uniting those allies more closely, in opposition to his stance.</p>
 <p><strong>Perspectives:</strong> Coverage on r/geopolitics suggests that rather than dividing NATO, Trump's approach is strengthening cohesion among member states against his position.</p>
@@ -1274,10 +1334,6 @@
 <li>How has alliance dynamics shifted in response?</li>
 <li>What historical parallels exist for alliance tensions?</li>
 <li>What might be the long-term effects on transatlantic relations?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.reddit.com/r/geopolitics/comments/1sb573e/trumps_rage_at_nato_allies_is_binding_them/" target="_blank" rel="noopener">Trump’s rage at NATO allies is binding them together — against him</a> — r/geopolitics discussion</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-pakistan-holding-new-peace-talks-with-afghanistan-in-china">1) Pakistan holding new peace talks with Afghanistan in China</h4>
@@ -1290,10 +1346,6 @@
 <li>What has caused the recent fighting between the neighbors?</li>
 <li>What would a successful ceasefire look like?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/04/03/g-s1-116299/pakistan-says-a-new-round-of-peace-talks-with-afghanistan-is-underway-in-china" target="_blank" rel="noopener">Pakistan says a new round of peace talks with Afghanistan is underway in China</a> — NPR report</li>
-</ul>
 <h4 id="2-cuba-releasing-2010-prisoners-amid-us-pressure">2) Cuba releasing 2,010 prisoners amid US pressure</h4>
 <p><strong>What happened (neutral):</strong> The Cuban government is releasing 2,010 prisoners, describing the pardons as a "humanitarian gesture" connected to Holy Week. The US has been applying pressure to the island's government.</p>
 <p><strong>Perspectives:</strong> NPR notes that while Cuba framed the releases as humanitarian, they occur in the context of mounting US pressures, though the government did not explicitly link the two.</p>
@@ -1303,10 +1355,6 @@
 <li>How significant is this number of releases?</li>
 <li>What criteria determine who is pardoned?</li>
 <li>How might this affect bilateral relations?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/04/03/g-s1-116297/cuba-releasing-2-010-prisoners-as-the-us-pressures-the-islands-government" target="_blank" rel="noopener">Cuba releasing 2,010 prisoners as the US pressures the island's government</a> — NPR coverage</li>
 </ul>
 <h4 id="3-nhs-rehabilitation-care-staff-shortage-fails-stroke-patients">3) NHS rehabilitation care staff shortage fails stroke patients</h4>
 <p><strong>What happened (neutral):</strong> Health leaders say the NHS is failing stroke patients due to a shortage of rehabilitation care staff. People reportedly receive rehab only three to four days a week in hospital and one to two days after discharge.</p>
@@ -1318,10 +1366,6 @@
 <li>What solutions have been proposed?</li>
 <li>How does the UK situation compare internationally?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/society/2026/apr/03/nhs-rehabiliation-care-staff-shortage-stroke-patients" target="_blank" rel="noopener">NHS rehabilitation care staff shortage fails stroke patients, say health leaders</a> — Guardian investigation</li>
-</ul>
 <h4 id="4-ms-boss-calls-for-more-action-on-crime-and-abuse-of-staff">4) M&S boss calls for more action on crime and abuse of staff</h4>
 <p><strong>What happened (neutral):</strong> The boss of Marks & Spencer has called for stronger action on crime and abuse of retail staff. The comments come days after an M&S store was targeted during disorder in south London.</p>
 <p><strong>Perspectives:</strong> BBC News covers the retail leader's call for better protection following recent incidents affecting staff.</p>
@@ -1332,10 +1376,6 @@
 <li>What responsibilities do retailers versus authorities have?</li>
 <li>What measures could improve staff safety?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/crk16j2j1ygo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">M&S boss calls for more action on crime and abuse of staff</a> — BBC News report</li>
-</ul>
 <h4 id="5-ice-detention-deaths-on-record-pace-at-texas-facility">5) ICE detention deaths on record pace at Texas facility</h4>
 <p><strong>What happened (neutral):</strong> ICE detention deaths are occurring at a record pace, with one Texas facility identified as bearing the brunt. Inspectors found 49 violations there in February, including failures to properly document checks to prevent self-harm and suicide.</p>
 <p><strong>Perspectives:</strong> NPR reports on the elevated death rate and specific problems documented by inspectors at the Camp East Montana facility.</p>
@@ -1345,10 +1385,6 @@
 <li>How do current conditions compare to previous years?</li>
 <li>What oversight mechanisms exist for these facilities?</li>
 <li>What reforms have been proposed or implemented?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/04/03/nx-s1-5754749/ice-detention-deaths-are-on-a-record-pace-one-texas-facility-bears-the-brunt" target="_blank" rel="noopener">ICE detention deaths are on a record pace. One Texas facility bears the brunt</a> — NPR investigation</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-japans-sakura-internet-jumps-20-as-microsoft-plans-10-billion-ai-push">1) Japan's Sakura Internet jumps 20% as Microsoft plans $10 billion AI push</h4>
@@ -1361,10 +1397,6 @@
 <li>Who are the main beneficiaries of such projects?</li>
 <li>How might this affect competition in the industry?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/04/03/sakura-internet-microsoft-ai-japan-softbank-investment.html" target="_blank" rel="noopener">Japan's Sakura Internet jumps 20% as Microsoft plans $10 billion AI push with SoftBank</a> — CNBC market report</li>
-</ul>
 <h4 id="2-tokyo-steel-shares-soar-as-activist-fund-takes-stake">2) Tokyo Steel shares soar as activist fund takes stake</h4>
 <p><strong>What happened (neutral):</strong> Tokyo Steel Manufacturing Co.’s stock surged as much as 21% after activist fund Oasis Management Co. disclosed a stake and indicated it may make restructuring proposals.</p>
 <p><strong>Perspectives:</strong> Bloomberg covers the sharp market movement following the activist investor's involvement.</p>
@@ -1375,10 +1407,6 @@
 <li>What does this suggest about investor confidence?</li>
 <li>How might restructuring affect employees and operations?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-03/tokyo-steel-shares-soar-as-oasis-stake-sparks-restructuring-hope-mnidp7i2" target="_blank" rel="noopener">Tokyo Steel Shares Soar as Oasis Stake Sparks Restructuring Hope</a> — Bloomberg report</li>
-</ul>
 <h4 id="3-yuan-fees-for-ships-to-pass-hormuz-boost-chinese-payment-stocks">3) Yuan fees for ships to pass Hormuz boost Chinese payment stocks</h4>
 <p><strong>What happened (neutral):</strong> Shares of Chinese companies offering cross-border payments rose after the commerce ministry noted that the yuan is being used to pay tolls for passage through the Strait of Hormuz.</p>
 <p><strong>Perspectives:</strong> Bloomberg reports on the market reaction to increased use of the yuan in international shipping payments amid regional tensions.</p>
@@ -1388,10 +1416,6 @@
 <li>How might conflict affect international payment systems?</li>
 <li>What are the broader implications for currency competition?</li>
 <li>How significant is the Strait of Hormuz for global shipping?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-03/yuan-fees-for-ships-to-pass-hormuz-boost-chinese-payment-stocks" target="_blank" rel="noopener">Yuan Fees for Ships to Pass Hormuz Boost Chinese Payment Stocks</a> — Bloomberg coverage</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-nasa-astronauts-share-first-interview-from-orion-spacecraft">1) NASA astronauts share first interview from Orion spacecraft</h4>
@@ -1404,10 +1428,6 @@
 <li>What challenges do astronauts face on such journeys?</li>
 <li>What might be the next steps following this mission?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15702975/passenger-view-artemis-launch-plane-southwest.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">NASA astronauts reveal highs and unexpected moments on their journey to the moon in first interview from Orion spacecraft</a> — Daily Mail report</li>
-</ul>
 <h4 id="2-irans-irgc-claims-strike-on-oracle-data-center-in-dubai">2) Iran’s IRGC claims strike on Oracle data center in Dubai</h4>
 <p><strong>What happened (neutral):</strong> Iran's Islamic Revolutionary Guard Corps (IRGC) claims it struck an Oracle data center in Dubai as part of regional actions connected to the broader conflict.</p>
 <p><strong>Perspectives:</strong> Discussion on r/geopolitics examines the claim and its potential implications for technology infrastructure in the Middle East.</p>
@@ -1418,10 +1438,6 @@
 <li>What are the technical and legal implications of such actions?</li>
 <li>How might companies respond to such threats?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.reddit.com/r/geopolitics/comments/1sb5atu/irans_irgc_says_it_struck_oracle_data_center_in/" target="_blank" rel="noopener">Iran’s IRGC says it struck Oracle data center in Dubai</a> — r/geopolitics discussion</li>
-</ul>
 <h4 id="3-how-war-on-iran-turned-pakistans-lng-surplus-into-a-looming-shortage">3) How war on Iran turned Pakistan’s LNG surplus into a looming shortage</h4>
 <p><strong>What happened (neutral):</strong> Pakistan is facing a potential gas shortage as LNG supplies collapse amid the escalating regional conflict involving Iran.</p>
 <p><strong>Perspectives:</strong> Al Jazeera examines how the war has disrupted Pakistan's previously surplus LNG situation, creating new energy challenges.</p>
@@ -1431,10 +1447,6 @@
 <li>What alternatives does Pakistan have for gas supplies?</li>
 <li>How might this affect Pakistani consumers and industry?</li>
 <li>What longer-term energy security lessons emerge?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/news/2026/4/3/how-war-on-iran-turned-pakistans-lng-surplus-into-a-looming-shortage?traffic_source=rss" target="_blank" rel="noopener">How war on Iran turned Pakistan’s LNG surplus into a looming shortage</a> — Al Jazeera analysis</li>
 </ul>
 <h3 id="top-popular-media-stories-3">Top popular media stories (3)</h3>
 <h4 id="1-mother-clanger-puppet-returned-after-50-years">1) Mother Clanger puppet returned after 50 years</h4>
@@ -1447,10 +1459,6 @@
 <li>How has the show Clangers influenced generations?</li>
 <li>What other lost cultural artifacts have similar stories?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/tv/article-15702917/deathbed-confession-Mother-Clanger.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mother Clanger returns to her family after 50 years! Deathbed confession from thief who stole the children's TV puppet when he was a tearaway teen gives happiest of endings to enduring mystery</a> — Daily Mail feature</li>
-</ul>
 <h4 id="2-new-tottenham-boss-de-zerbi-apologises-for-greenwood-comments">2) New Tottenham boss De Zerbi apologises for Greenwood comments</h4>
 <p><strong>What happened (neutral):</strong> New Tottenham boss Roberto De Zerbi has apologised to fans for comments regarding Mason Greenwood. He stated he has never wanted to downplay issues of violence against women or anyone.</p>
 <p><strong>Perspectives:</strong> France 24 reports on the apology issued by the football manager to address concerns about his earlier remarks.</p>
@@ -1461,10 +1469,6 @@
 <li>What expectations do fans have regarding managers' public statements?</li>
 <li>How does this reflect broader societal discussions?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/tv-shows/sports/20260403-new-tottenham-boss-de-zerbi-apologises-fans-for-greenwood-comments" target="_blank" rel="noopener">New Tottenham boss De Zerbi apologises to fans for Greenwood comments</a> — France 24 sports coverage</li>
-</ul>
 <h4 id="3-castlery-promo-code-save-up-to-15-in-april-2026">3) Castlery Promo Code: Save Up to 15% in April 2026</h4>
 <p><strong>What happened (neutral):</strong> Various verified discount offers are available for Castlery furniture, including up to 15% off and free shipping promotions during April 2026.</p>
 <p><strong>Perspectives:</strong> WIRED provides details on current promotional codes for home furnishings.</p>
@@ -1474,10 +1478,6 @@
 <li>What should shoppers verify before using discount codes?</li>
 <li>How does this fit into broader retail trends?</li>
 <li>What factors determine the value of such offers?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.wired.com/story/castlery-promo-code/" target="_blank" rel="noopener">Castlery Promo Code: Save Up to 15% in April 2026</a> — WIRED guide</li>
 </ul>
 <h3 id="top-gossip-stories-3">Top gossip stories (3)</h3>
 <h4 id="1-25-off-dyson-promo-code-april-2026">1) 25% Off Dyson Promo Code | April 2026</h4>
@@ -1490,10 +1490,6 @@
 <li>How do limited-time offers influence buying decisions?</li>
 <li>What should consumers research before purchasing?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.wired.com/story/dyson-cordless-vacuum-promo-code/" target="_blank" rel="noopener">25% Off Dyson Promo Code | April 2026</a> — WIRED discount guide</li>
-</ul>
 <h4 id="2-new-tottenham-boss-de-zerbi-apologises-to-fans-for-greenwood-comments">2) New Tottenham boss De Zerbi apologises to fans for Greenwood comments</h4>
 <p><strong>What happened (neutral):</strong> The newly appointed Tottenham manager has issued an apology regarding his comments about Mason Greenwood and violence against women.</p>
 <p><strong>Perspectives:</strong> France 24 covered the football manager's statement addressing fan concerns.</p>
@@ -1503,10 +1499,6 @@
 <li>How do sports figures navigate public statements on sensitive topics?</li>
 <li>What role does fan opinion play in club decisions?</li>
 <li>How quickly do such stories spread in sports media?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/tv-shows/sports/20260403-new-tottenham-boss-de-zerbi-apologises-fans-for-greenwood-comments" target="_blank" rel="noopener">New Tottenham boss De Zerbi apologises to fans for Greenwood comments</a> — France 24 report</li>
 </ul>
 <h4 id="3-mother-clanger-returns-after-50-years">3) Mother Clanger returns after 50 years</h4>
 <p><strong>What happened (neutral):</strong> A stolen puppet from the classic children's TV series has been returned following a deathbed confession from the original thief.</p>
@@ -1518,10 +1510,6 @@
 <li>How do such stories reflect on the enduring appeal of certain programs?</li>
 <li>What other nostalgic items have similar return stories?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/tv/article-15702917/deathbed-confession-Mother-Clanger.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mother Clanger returns to her family after 50 years! Deathbed confession from thief who stole the children's TV puppet when he was a tearaway teen gives happiest of endings to enduring mystery</a> — Daily Mail story</li>
-</ul>
 <h3 id="understanding-the-issue-how-the-strait-of-hormuz-shapes-global-energy-vulnerability">Understanding the Issue: How the Strait of Hormuz Shapes Global Energy Vulnerability</h3>
 <p>Most coverage of the current Iran conflict focuses on immediate military moves and political statements, skipping over a crucial detail: the Strait of Hormuz is one of the world's most critical maritime chokepoints, where roughly one-fifth of global oil consumption passes through a narrow shipping lane at the mouth of the Persian Gulf.</p>
 <p>Here's how it actually works: The strait is only about 21 miles wide at its narrowest point, with shipping confined to two-mile-wide channels for traffic in each direction. Tankers from major producers like Saudi Arabia, Iraq, UAE, Kuwait and Iran itself must pass through this single vulnerable corridor. There are no practical short-term alternatives — pipelines can only carry a fraction of the volume, and rerouting around Africa would add thousands of miles and weeks of transit time. This creates a structural vulnerability where even the threat of disruption can spike global oil prices before a single tanker is affected.</p>
@@ -1531,6 +1519,133 @@
 <p>Cross-check claims about targets hit, casualty figures, and economic impacts across multiple outlets rather than relying on any single source. Pay attention to which details different organizations emphasize or omit. When possible, review primary statements from governments and international bodies directly. Remember that in fast-moving conflicts, initial reports often contain uncertainties that become clearer over time.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/apr/03/middle-east-crisis-live-trump-urges-iran-to-make-deal-after-bridge-strike" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/disturbing-trend-of-us-israeli-strikes-hitting-non-military-targets-in-iran" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/liveblog/2026/4/3/iran-war-live-trump-warns-assault-on-infrastructure-hasnt-even-started?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/debate/article-15702689/RICHARD-SHIRREFF-Trump-choose-peace-bloody-escalation.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/geopolitics/comments/1sb5atu/irans_irgc_says_it_struck_oracle_data_center_in/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/video/newsfeed/2026/4/3/donald-trump-fires-loyalist-attorney-general-pam-bondi?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15703041/Trump-Hegseth-cabinet-firings.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-03/westpac-ceo-warns-iran-war-may-spark-recession-in-australia" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/geopolitics/comments/1sb4h7h/europe_must_prepare_for_longlasting_energy_shock/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/geopolitics/comments/1sb573e/trumps_rage_at_nato_allies_is_binding_them/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.npr.org/2026/04/03/g-s1-116299/pakistan-says-a-new-round-of-peace-talks-with-afghanistan-is-underway-in-china" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.npr.org/2026/04/03/g-s1-116297/cuba-releasing-2-010-prisoners-as-the-us-pressures-the-islands-government" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/society/2026/apr/03/nhs-rehabiliation-care-staff-shortage-stroke-patients" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/crk16j2j1ygo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.npr.org/2026/04/03/nx-s1-5754749/ice-detention-deaths-are-on-a-record-pace-one-texas-facility-bears-the-brunt" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/04/03/sakura-internet-microsoft-ai-japan-softbank-investment.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-03/tokyo-steel-shares-soar-as-oasis-stake-sparks-restructuring-hope-mnidp7i2" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-03/yuan-fees-for-ships-to-pass-hormuz-boost-chinese-payment-stocks" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15702975/passenger-view-artemis-launch-plane-southwest.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/4/3/how-war-on-iran-turned-pakistans-lng-surplus-into-a-looming-shortage?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/tv/article-15702917/deathbed-confession-Mother-Clanger.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/tv-shows/sports/20260403-new-tottenham-boss-de-zerbi-apologises-fans-for-greenwood-comments" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.wired.com/story/castlery-promo-code/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=wired.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">wired.com</span>
+                    </a>
+                    
+                    <a href="https://www.wired.com/story/dyson-cordless-vacuum-promo-code/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=wired.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">wired.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1935,10 +2050,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

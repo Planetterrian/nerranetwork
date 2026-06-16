@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Fragile US-Iran ceasefire faces immediate test as Israel strikes Lebanon, Iran h... — Episode 30</h1>
+            <h1><span class="nn-i18n-title">Fragile US-Iran ceasefire faces immediate test as Israel strikes Lebanon, Iran h...</span> — Episode 30</h1>
             
             <p class="blog-hero-hook">Fragile US-Iran ceasefire faces immediate test as Israel strikes Lebanon, Iran halts tankers in the Strait of Hormuz, and both sides dispute what was actually agreed.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1198,15 +1279,6 @@
 <li>What incentives does each party have for presenting their own version of the agreement?</li>
 <li>How might continued strikes and blocked shipping lanes influence oil prices and global energy security?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/apr/09/iran-war-ceasefire-live-strait-of-hormuz-israel-strikes-middle-east-crisis-latest-news" target="_blank" rel="noopener">Middle East crisis live: Red Cross ‘outraged’ as Israeli strikes on Lebanon kill 254 people</a> — Guardian live coverage of strikes, Hormuz disputes and reactions</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15714929/Iran-US-Israel-Middle-East-live.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Trump says US military is 'loading up...'</a> — Daily Mail live updates on Trump's statements and ceasefire developments</li>
-<li><a href="https://www.france24.com/en/netanyahu-fails-to-address-israel-s-failure-to-achieve-war-goals-in-iran" target="_blank" rel="noopener">Netanyahu fails to address Israel’s failure to achieve war goals in Iran</a> — France 24 reporting from Jerusalem</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15717403/World-mocks-victory-White-House-declares-triumph-Iran-tolls-closed-Strait-attacks-Gulf-states-Lebanon.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">World mocks bizarre kind of victory...</a> — Daily Mail on international reaction to White House claims</li>
-<li><a href="https://www.bloomberg.com/news/videos/2026-04-09/iran-us-truce-in-doubt-as-israel-strikes-lebanon-video" target="_blank" rel="noopener">Iran-US Truce in Doubt as Israel Strikes Lebanon</a> — Bloomberg video report</li>
-<li><a href="https://www.theguardian.com/world/2026/apr/09/thursday-briefing-what-difference-will-the-ceasefire-in-the-middle-east-make-and-will-it-hold" target="_blank" rel="noopener">Thursday briefing: What difference will the ceasefire in the Middle East make?</a> — Guardian analysis of truce fragility</li>
-</ul>
 <h4 id="2-cooper-to-urge-full-and-toll-free-reopening-of-strait-of-hormuz">2) Cooper to urge full and toll-free reopening of Strait of Hormuz</h4>
 <p><strong>What happened (neutral):</strong> UK Foreign Secretary Yvette Cooper is calling for shipping through the Strait of Hormuz to resume without fees or hindrance following the ceasefire announcement. Iran has proposed charging vessels — reportedly seeking significant sums per ship — to help rebuild infrastructure damaged in the conflict, while the US has signaled interest in potential joint toll arrangements but prioritizes unrestricted reopening.</p>
 <p><strong>Perspectives:</strong> The Guardian reports Cooper stating that Lebanon must be included in any ceasefire and that shipping must be toll-free, while noting Iran's proposal for fees and Trump's suggestion of a possible US-Iran joint venture. BBC News states Cooper will urge that shipping be toll-free and unhindered. France 24 explains Tehran's position that charging ships would help rebuild bombed infrastructure and maintain control over this strategic waterway as part of its 10-point proposal. Daily Mail coverage ties the dispute to the broader perception that the White House is claiming victory while the strait remains closed. These views connect to differing interests: Western governments emphasize freedom of navigation and lower energy costs for consumers, while Iran focuses on recovering war damages and asserting sovereignty over a critical chokepoint.</p>
@@ -1216,13 +1288,6 @@
 <li>How do economic pressures from the conflict influence Iran's demands?</li>
 <li>What role can third parties like the UK play in resolving these disagreements?</li>
 <li>How might toll disputes affect global oil prices and supply chains?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/c93enywd10ro?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">Cooper to urge full and toll-free reopening of Strait of Hormuz</a> — BBC News report on UK position</li>
-<li><a href="https://www.theguardian.com/world/live/2026/apr/09/iran-war-ceasefire-live-strait-of-hormuz-israel-strikes-middle-east-crisis-latest-news" target="_blank" rel="noopener">Middle East crisis live: Red Cross ‘outraged’...</a> — Guardian coverage including Cooper and Hormuz updates</li>
-<li><a href="https://www.france24.com/en/middle-east/20260409-us-iran-ceasefire-why-tehran-wants-charge-ships-for-crossing-strait-of-hormuz" target="_blank" rel="noopener">US-Iran ceasefire: Why Tehran wants to charge ships for crossing the Strait of Hormuz</a> — France 24 explanation of Iran's proposal</li>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/apr/09/anthony-albanese-singapore-visit-fuel-crisis-middle-east-ceasefire-lebanon-strikes-politics-labor-coalition-reactions-ntwnfb" target="_blank" rel="noopener">Australia news live: diesel surges...</a> — Guardian live blog referencing Hormuz and Lebanon ceasefire disputes</li>
 </ul>
 <h4 id="3-cost-of-iran-war-to-drivers-at-the-pumps-set-to-hit-1billion">3) Cost of Iran war to drivers at the pumps set to hit £1billion</h4>
 <p><strong>What happened (neutral):</strong> Fuel prices have risen sharply due to the Middle East conflict, with analysis showing UK motorists have paid out hundreds of millions in extra costs. The Chancellor is reportedly receiving additional VAT revenue from these higher prices as diesel and petrol costs surge.</p>
@@ -1234,12 +1299,6 @@
 <li>How do conflicts in oil transit regions translate so quickly into domestic pump prices?</li>
 <li>What long-term energy policies might reduce vulnerability to these shocks?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15716371/Cost-Iran-war-drivers-pumps-set-hit-eye-watering-1billion.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Cost of Iran war to drivers at the pumps set to hit eye-watering £1billion</a> — Daily Mail analysis of UK motorist costs and VAT windfall</li>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/apr/09/anthony-albanese-singapore-visit-fuel-crisis-middle-east-ceasefire-lebanon-strikes-politics-labor-coalition-reactions-ntwnfb" target="_blank" rel="noopener">Australia news live: diesel surges 20 cents a litre...</a> — Guardian coverage of Australian fuel price impacts</li>
-<li><a href="https://www.theguardian.com/australia-news/2026/apr/09/australia-eyes-new-fuel-supply-from-us-mexico-and-asia-as-diesel-prices-spike-to-record-high" target="_blank" rel="noopener">Australia eyes new fuel supply from US, Mexico and Asia...</a> — Guardian report on Australian government response to price spikes</li>
-</ul>
 <h4 id="4-george-clooney-criticises-trump-over-iran-comments-and-acting-jabs">4) George Clooney criticises Trump over Iran comments and acting jabs</h4>
 <p><strong>What happened (neutral):</strong> Actor George Clooney told Italian students that President Trump committed a war crime by threatening that "a whole civilization would die" in Iran. Trump has since mocked Clooney's acting skills, prompting the actor to respond by calling the president "infantile."</p>
 <p><strong>Perspectives:</strong> Daily Mail coverage presents Clooney's strong criticism of Trump's rhetoric and the subsequent personal exchange, reflecting ongoing cultural and political tensions between Hollywood figures and the Trump administration. This story illustrates how foreign policy disputes quickly become entangled with domestic celebrity and personal animosities, with some viewing Clooney's comments as legitimate moral critique and others seeing them as celebrity overreach into complex geopolitical matters.</p>
@@ -1250,10 +1309,6 @@
 <li>What role should celebrities play in commenting on international conflicts?</li>
 <li>How does media coverage of such exchanges influence public understanding of the underlying issues?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/tvshowbiz/article-15717803/George-Clooney-blasts-Trump-mocking-acting-skills.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">George Clooney lashes out at 'infantile' Trump for mocking his acting skills amid Iran war</a> — Daily Mail report on the exchange</li>
-</ul>
 <h4 id="5-andrew-neil-why-iran-was-personal-for-trump">5) ANDREW NEIL: Why Iran was personal for Trump</h4>
 <p><strong>What happened (neutral):</strong> Columnist Andrew Neil argues that the Iran conflict became deeply personal for President Trump and suggests the US involvement carries hallmarks of what could become the defining — and disastrous — act of his presidency.</p>
 <p><strong>Perspectives:</strong> In the Daily Mail, Neil connects Trump's approach to his self-image as a "stable genius" and frames the "little excursion" as likely to haunt him long-term. This contrasts with White House statements claiming success. The piece reflects broader debates about presidential decision-making, personal motivations in foreign policy, and how leaders' legacies are shaped by military engagements.</p>
@@ -1263,10 +1318,6 @@
 <li>What metrics should be used to evaluate the success or failure of such interventions?</li>
 <li>How do columnists' perspectives shape public memory of political events?</li>
 <li>What historical parallels exist for conflicts that became defining for a presidency?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/debate/article-15716945/ANDREW-NEIL-Iran-personal-Trump-little-excursion-hallmarks-disastrous-defining-act-presidency-one-haunt-rest-life.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">ANDREW NEIL: Why Iran was personal for Trump...</a> — Daily Mail opinion column</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-red-cross-outraged-as-israeli-strikes-on-lebanon-kill-254-ceasefire-doubts-grow">1) Red Cross ‘outraged’ as Israeli strikes on Lebanon kill 254; ceasefire doubts grow</h4>
@@ -1279,12 +1330,6 @@
 <li>What role do humanitarian organizations play in shaping international responses?</li>
 <li>How reliable are casualty figures reported during active conflicts?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/apr/09/iran-war-ceasefire-live-strait-of-hormuz-israel-strikes-middle-east-crisis-latest-news" target="_blank" rel="noopener">Middle East crisis live: Red Cross ‘outraged’ as Israeli strikes on Lebanon kill 254 people</a> — Guardian live updates</li>
-<li><a href="https://www.france24.com/en/netanyahu-fails-to-address-israel-s-failure-to-achieve-war-goals-in-iran" target="_blank" rel="noopener">Netanyahu fails to address Israel’s failure to achieve war goals in Iran</a> — France 24 reporting</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15717403/World-mocks-victory-White-House-declares-triumph-Iran-tolls-closed-Strait-attacks-Gulf-states-Lebanon.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">World mocks bizarre kind of victory...</a> — Daily Mail synthesis of international views</li>
-</ul>
 <h4 id="2-uk-foreign-secretary-pushes-for-toll-free-strait-of-hormuz-access">2) UK Foreign Secretary pushes for toll-free Strait of Hormuz access</h4>
 <p><strong>What happened (neutral):</strong> Yvette Cooper has emphasized the need for unrestricted, fee-free shipping through the Strait of Hormuz as part of efforts to stabilize the region following the ceasefire announcement. Iran continues to seek charges on vessels to offset war damages.</p>
 <p><strong>Perspectives:</strong> Both the BBC and Guardian report Cooper's position that shipping must be toll-free. France 24 provides context on why Tehran wants to impose charges. This coverage reflects tensions between principles of free navigation, practical needs for postwar reconstruction, and the strategic importance of the waterway for global energy flows.</p>
@@ -1294,12 +1339,6 @@
 <li>How do economic recovery needs conflict with demands for open shipping lanes?</li>
 <li>What leverage do different nations have in these negotiations?</li>
 <li>How might climate and energy transition goals interact with these immediate disputes?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/c93enywd10ro?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">Cooper to urge full and toll-free reopening of Strait of Hormuz</a> — BBC News on UK stance</li>
-<li><a href="https://www.france24.com/en/middle-east/20260409-us-iran-ceasefire-why-tehran-wants-charge-ships-for-crossing-strait-of-hormuz" target="_blank" rel="noopener">US-Iran ceasefire: Why Tehran wants to charge ships...</a> — France 24 background on Iranian position</li>
-<li><a href="https://www.theguardian.com/world/2026/apr/09/thursday-briefing-what-difference-will-the-ceasefire-in-the-middle-east-make-and-will-it-hold" target="_blank" rel="noopener">Thursday briefing: What difference will the ceasefire make?</a> — Guardian overview of outstanding questions</li>
 </ul>
 <h4 id="3-australia-seeks-alternative-fuel-supplies-as-diesel-hits-record-highs">3) Australia seeks alternative fuel supplies as diesel hits record highs</h4>
 <p><strong>What happened (neutral):</strong> Rising fuel prices linked to Middle East instability have prompted Australia to explore new sources from the US, Mexico, and Asia. The government is taking steps to secure shipments for domestic refineries.</p>
@@ -1311,11 +1350,6 @@
 <li>How do domestic political considerations influence government responses to price spikes?</li>
 <li>What lessons from past energy crises apply to the current situation?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/apr/09/australia-eyes-new-fuel-supply-from-us-mexico-and-asia-as-diesel-prices-spike-to-record-high" target="_blank" rel="noopener">Australia eyes new fuel supply from US, Mexico and Asia as diesel prices spike</a> — Guardian report on government actions</li>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/apr/09/anthony-albanese-singapore-visit-fuel-crisis-middle-east-ceasefire-lebanon-strikes-politics-labor-coalition-reactions-ntwnfb" target="_blank" rel="noopener">Australia news live: diesel surges 20 cents a litre...</a> — Guardian live blog with political reactions</li>
-</ul>
 <h4 id="4-north-korea-tests-missiles-with-cluster-bomb-warheads">4) North Korea tests missiles with cluster-bomb warheads</h4>
 <p><strong>What happened (neutral):</strong> North Korea announced that its recent weapons tests included ballistic missiles equipped with cluster-bomb warheads as it continues to expand its nuclear-capable forces.</p>
 <p><strong>Perspectives:</strong> NPR coverage focuses on the technical details and North Korea's stated goal of strengthening its arsenal. This development occurs against the backdrop of global tensions, raising questions about proliferation risks, regional security dynamics in East Asia, and how attention on the Middle East might affect responses to North Korean activities.</p>
@@ -1326,10 +1360,6 @@
 <li>How might current Middle East focus affect diplomatic bandwidth for other global issues?</li>
 <li>What role do alliances and deterrence play in managing such programs?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/04/09/g-s1-116848/north-korea-says-its-latest-weapons-tests-included-missiles-with-cluster-bomb-warheads" target="_blank" rel="noopener">North Korea says its latest weapons tests included missiles with cluster-bomb warheads</a> — NPR report on the tests</li>
-</ul>
 <h4 id="5-jim-whittaker-first-american-to-summit-mount-everest-dies-at-97">5) Jim Whittaker, first American to summit Mount Everest, dies at 97</h4>
 <p><strong>What happened (neutral):</strong> Celebrated mountaineer Jim Whittaker, who was the first American to reach the summit of Mount Everest and later led REI as president and CEO, has died at his home in Washington state.</p>
 <p><strong>Perspectives:</strong> NPR's obituary highlights his mountaineering achievements, business leadership, and contributions to the outdoor industry. The story serves as a moment of reflection on exploration, conservation values, and the history of adventure sports amid dominant headlines about conflict and geopolitics.</p>
@@ -1339,10 +1369,6 @@
 <li>What connections exist between outdoor recreation industries and environmental advocacy?</li>
 <li>How does media coverage balance somber milestones with ongoing crisis reporting?</li>
 <li>What lessons from past generations of adventurers remain relevant today?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/04/09/g-s1-116847/mountaineer-jim-whittaker-dies" target="_blank" rel="noopener">Jim Whittaker, the first American to summit Mount Everest, dies at 97</a> — NPR obituary and family statement</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-ftse-100-to-extend-gains-as-relief-rally-halts-elsewhere">1) FTSE 100 to extend gains as relief rally halts elsewhere</h4>
@@ -1355,10 +1381,6 @@
 <li>How do oil price movements influence broader equity indices?</li>
 <li>What role does investor sentiment play relative to underlying economic fundamentals?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/live-blog/2026-04-09/ftse-100-live-iran-war-trump-pound-bonds-oil-gold-prices-usd-what-s-moving-uk-markets-right-now-markets-today" target="_blank" rel="noopener">FTSE 100 to Extend Gains as Relief Rally Halts Elsewhere</a> — Bloomberg live market blog</li>
-</ul>
 <h4 id="2-foreign-selling-streak-in-indian-stocks-hits-record-on-oil-spike">2) Foreign selling streak in Indian stocks hits record on oil spike</h4>
 <p><strong>What happened (neutral):</strong> Overseas investors have sold Indian equities for a record 23 consecutive sessions, with the trend linked to rising oil prices stemming from the Iran conflict.</p>
 <p><strong>Perspectives:</strong> Bloomberg reporting ties the sustained foreign exodus directly to energy price concerns. This illustrates how emerging markets can be particularly sensitive to global energy shocks and how prolonged selling streaks can reflect deeper worries about inflation, currency stability, and growth prospects.</p>
@@ -1369,10 +1391,6 @@
 <li>What diversification strategies could reduce vulnerability to energy-driven market swings?</li>
 <li>How do global conflicts create asymmetric impacts across different economies?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-09/foreign-selling-streak-in-indian-stocks-hits-record-on-oil-spike" target="_blank" rel="noopener">Foreign Selling Streak in Indian Stocks Hits Record on Oil Spike</a> — Bloomberg analysis</li>
-</ul>
 <h4 id="3-cost-of-iran-war-to-uk-drivers-projected-to-exceed-1-billion">3) Cost of Iran war to UK drivers projected to exceed £1 billion</h4>
 <p><strong>What happened (neutral):</strong> Higher fuel prices resulting from the Middle East crisis have cost UK motorists nearly £1 billion in extra spending, according to analysis, while generating additional VAT revenue for the government.</p>
 <p><strong>Perspectives:</strong> Daily Mail coverage emphasizes the burden on drivers and the fiscal benefit to the Treasury. This story highlights the complex ways conflict costs are distributed across society — through direct consumer expenses, government revenues, and business impacts — and raises questions about who ultimately bears the economic weight of international instability.</p>
@@ -1382,10 +1400,6 @@
 <li>What policy tools exist to cushion consumers from such externally-driven price shocks?</li>
 <li>How does government taxation of fuel create mixed incentives during crises?</li>
 <li>What long-term economic adjustments might result from repeated energy volatility?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15716371/Cost-Iran-war-drivers-pumps-set-hit-eye-watering-1billion.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Cost of Iran war to drivers at the pumps set to hit eye-watering £1billion</a> — Daily Mail breakdown of costs and VAT impact</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-artemis-crew-returning-to-earth-with-moon-discoveries">1) Artemis crew returning to Earth with Moon discoveries</h4>
@@ -1398,10 +1412,6 @@
 <li>How do space programs serve as both competitive and cooperative arenas for nations?</li>
 <li>What communication strategies do astronauts use to maintain public engagement?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/c70dr45dj1lo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">Artemis crew returning to Earth with 'all the good stuff' from Moon discoveries</a> — BBC News feature on the crew's return</li>
-</ul>
 <h4 id="2-north-koreas-latest-weapons-tests-include-advanced-missile-systems">2) North Korea's latest weapons tests include advanced missile systems</h4>
 <p><strong>What happened (neutral):</strong> North Korea stated that this week's testing spree involved multiple new weapons systems, including ballistic missiles fitted with cluster-bomb warheads, as part of efforts to expand its nuclear-capable arsenal.</p>
 <p><strong>Perspectives:</strong> NPR coverage focuses on the technical claims and the broader context of North Korea's push for more sophisticated delivery systems. The story underscores ongoing challenges in managing technology proliferation, the dual-use nature of many missile technologies, and how authoritarian regimes use weapons demonstrations to project strength and deter adversaries.</p>
@@ -1411,10 +1421,6 @@
 <li>How does the spread of advanced weaponry affect regional power balances?</li>
 <li>What verification challenges exist when countries announce their own test results?</li>
 <li>How might current global distractions affect monitoring of North Korean programs?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/04/09/g-s1-116848/north-korea-says-its-latest-weapons-tests-included-missiles-with-cluster-bomb-warheads" target="_blank" rel="noopener">North Korea says its latest weapons tests included missiles with cluster-bomb warheads</a> — NPR report detailing the tests</li>
 </ul>
 <h4 id="3-universities-warned-over-risky-borrowing-and-expansion">3) Universities warned over risky borrowing and expansion</h4>
 <p><strong>What happened (neutral):</strong> A UK thinktank has cautioned that many English universities are taking on excessive financial risks through borrowing and rapid expansion of student numbers, potentially threatening institutional stability.</p>
@@ -1426,10 +1432,6 @@
 <li>What regulatory mechanisms exist to prevent systemic failure in higher education?</li>
 <li>How might technological changes in learning further disrupt traditional university models?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/apr/09/thursday-briefing-what-difference-will-the-ceasefire-in-the-middle-east-make-and-will-it-hold" target="_blank" rel="noopener">Thursday briefing: What difference will the ceasefire in the Middle East make?</a> — Guardian briefing that includes the Hepi warning</li>
-</ul>
 <h3 id="top-popular-media-stories-3">Top popular media stories (3)</h3>
 <h4 id="1-kyle-sandilands-claims-humiliation-after-being-sacked-by-kiis-fm">1) Kyle Sandilands claims ‘humiliation’ after being sacked by KIIS FM</h4>
 <p><strong>What happened (neutral):</strong> Radio shock jock Kyle Sandilands and co-host Jackie O Henderson have taken legal action against their employer after being terminated from their long-term contract. Sandilands alleges serious reputational harm from the dismissal following an on-air incident.</p>
@@ -1440,10 +1442,6 @@
 <li>What factors determine whether a single incident justifies terminating a long-term contract?</li>
 <li>How has the media landscape changed the power dynamics between talent and employers?</li>
 <li>What role should public complaints or internal policies play in such disputes?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/media/2026/apr/09/kyle-sandilands-humiliation-sacked-kiis-fm-jackie-o-ntwnfb" target="_blank" rel="noopener">Kyle Sandilands claims he ‘suffered humiliation’ after he was sacked by Kiis FM</a> — Guardian coverage of the court documents</li>
 </ul>
 <h4 id="2-george-clooney-lashes-out-at-trump-for-mocking-his-acting-skills">2) George Clooney lashes out at Trump for mocking his acting skills</h4>
 <p><strong>What happened (neutral):</strong> Following comments about Trump committing a war crime in his Iran rhetoric, George Clooney has responded to the president's criticism of his acting by calling him "infantile."</p>
@@ -1457,6 +1455,108 @@
 </ul>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/apr/09/iran-war-ceasefire-live-strait-of-hormuz-israel-strikes-middle-east-crisis-latest-news" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15714929/Iran-US-Israel-Middle-East-live.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/netanyahu-fails-to-address-israel-s-failure-to-achieve-war-goals-in-iran" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15717403/World-mocks-victory-White-House-declares-triumph-Iran-tolls-closed-Strait-attacks-Gulf-states-Lebanon.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-04-09/iran-us-truce-in-doubt-as-israel-strikes-lebanon-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/apr/09/thursday-briefing-what-difference-will-the-ceasefire-in-the-middle-east-make-and-will-it-hold" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c93enywd10ro?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/middle-east/20260409-us-iran-ceasefire-why-tehran-wants-charge-ships-for-crossing-strait-of-hormuz" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/live/2026/apr/09/anthony-albanese-singapore-visit-fuel-crisis-middle-east-ceasefire-lebanon-strikes-politics-labor-coalition-reactions-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15716371/Cost-Iran-war-drivers-pumps-set-hit-eye-watering-1billion.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/apr/09/australia-eyes-new-fuel-supply-from-us-mexico-and-asia-as-diesel-prices-spike-to-record-high" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/tvshowbiz/article-15717803/George-Clooney-blasts-Trump-mocking-acting-skills.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/debate/article-15716945/ANDREW-NEIL-Iran-personal-Trump-little-excursion-hallmarks-disastrous-defining-act-presidency-one-haunt-rest-life.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.npr.org/2026/04/09/g-s1-116848/north-korea-says-its-latest-weapons-tests-included-missiles-with-cluster-bomb-warheads" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.npr.org/2026/04/09/g-s1-116847/mountaineer-jim-whittaker-dies" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/live-blog/2026-04-09/ftse-100-live-iran-war-trump-pound-bonds-oil-gold-prices-usd-what-s-moving-uk-markets-right-now-markets-today" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-09/foreign-selling-streak-in-indian-stocks-hits-record-on-oil-spike" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c70dr45dj1lo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/media/2026/apr/09/kyle-sandilands-humiliation-sacked-kiis-fm-jackie-o-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1917,10 +2017,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

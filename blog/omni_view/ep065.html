@@ -107,7 +107,12 @@
       "url": "https://nerranetwork.com/omni-view.html"
     },
     "image": "https://nerranetwork.com/assets/covers/omni-view.jpg",
-    "transcript": "https://nerranetwork.com/blog/omni_view/ep065.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/omni_view/ep065.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://audio.nerranetwork.com/omni_view/Omni_View_Ep065_20260530.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -708,6 +713,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +818,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1181,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Escalating drone exchanges between Ukraine and Russia are disrupting energy supplies and raising ris… — Episode 65</h1>
+            <h1><span class="nn-i18n-title">Escalating drone exchanges between Ukraine and Russia are disrupting energy supplies and raising ris…</span> — Episode 65</h1>
             
             <p class="blog-hero-hook">Escalating drone exchanges between Ukraine and Russia are disrupting energy supplies and raising risks for civilians on both sides of the border.</p>
             
@@ -1129,6 +1212,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1211,11 +1297,6 @@
 <li>How do energy disruptions affect daily life for residents in the impacted zones?</li>
 <li>Which international monitoring bodies are tracking the pattern of attacks?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/news/2026/5/30/ukraine-drones-strike-russian-oil-facility-as-kyiv-and-moscow-trade-blows?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Details on power outages and strike locations</li>
-<li><a href="https://www.reddit.com/r/worldnews/comments/1truffm/ukraine_knocks_out_two_russian_tu142_submarine/" target="_blank" rel="noopener">Reddit worldnews</a> — Reports on specific aircraft losses</li>
-</ul>
 <h4 id="2-malta-holds-snap-parliamentary-election-with-ruling-party-favored">2) Malta holds snap parliamentary election with ruling party favored</h4>
 <p><strong>What happened (neutral):</strong> Voters in Malta are casting ballots in a snap election called amid debates over housing costs and infrastructure. Polls indicate the governing Labour Party is positioned to secure another term. Results are expected shortly after polls close.</p>
 <p><strong>Perspectives:</strong> The governing party highlights economic stability as its core achievement. Opposition voices stress concerns about rapid development and living costs. European partners watch the outcome for signals on Malta’s alignment during regional tensions.</p>
@@ -1224,12 +1305,6 @@
 <ul>
 <li>How do infrastructure pressures shape voter priorities in small island states?</li>
 <li>What role do external regional events play in domestic campaign messaging?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/malta-votes-in-snap-parliamentary-election/a-77353620?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — Overview of polling and timing</li>
-<li><a href="https://www.aljazeera.com/news/2026/5/30/voting-ongoing-in-snap-elections-in-malta-governing-party-expected-to-win?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Focus on economic issues in the campaign</li>
-<li><a href="https://www.france24.com/en/europe/20260530-malta-parliamentary-elections-begin-as-ruling-party-set-to-win" target="_blank" rel="noopener">France 24</a> — Background on expected outcome</li>
 </ul>
 <h4 id="3-white-house-releases-results-of-president-trumps-annual-physical">3) White House releases results of President Trump’s annual physical</h4>
 <p><strong>What happened (neutral):</strong> The White House published the findings from Donald Trump’s latest medical examination. The report describes him as fully fit for duties. The release follows ongoing public discussion about his health.</p>
@@ -1240,11 +1315,6 @@
 <li>What level of medical information has historically been shared about sitting presidents?</li>
 <li>How do competing demands for privacy and accountability interact in these releases?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/cx21v0ezv14o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Summary of the doctor’s statement</li>
-<li><a href="https://www.dailymail.com/news/article-15859523/donald-trump-physical-released.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Context on timing and speculation</li>
-</ul>
 <h4 id="4-nato-military-leadership-reports-stable-relations-with-the-united-states">4) NATO military leadership reports stable relations with the United States</h4>
 <p><strong>What happened (neutral):</strong> The chair of NATO’s Military Committee stated that cooperation with the Pentagon remains steady and without major friction. The remarks came during a regional security dialogue in Asia. European members have increased defense spending in recent periods.</p>
 <p><strong>Perspectives:</strong> Alliance officials emphasize continuity in operational coordination. Some European governments highlight their spending increases as evidence of responsiveness. U.S. voices continue to stress the importance of equitable contributions.</p>
@@ -1254,10 +1324,6 @@
 <li>How do public statements from military leaders differ from political messaging on alliance issues?</li>
 <li>What mechanisms exist for resolving disagreements within NATO structures?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-05-30/nato-military-head-says-no-drama-with-us-video" target="_blank" rel="noopener">Bloomberg</a> — Interview at the Shangri-La Dialogue</li>
-</ul>
 <h4 id="5-us-congressional-members-reaffirm-support-for-taiwan-despite-earlier-comments">5) U.S. congressional members reaffirm support for Taiwan despite earlier comments</h4>
 <p><strong>What happened (neutral):</strong> Members of Congress reiterated backing for Taiwan following remarks by President Trump that described arms sales as a potential negotiating point with China. Approved sales total around $14 billion. The statements aim to clarify the legislative position.</p>
 <p><strong>Perspectives:</strong> Congressional supporters frame the reaffirmation as consistent with long-term policy. Administration officials treat the sales within broader diplomatic calculations. Taiwanese authorities monitor the exchange for signs of continuity.</p>
@@ -1266,10 +1332,6 @@
 <ul>
 <li>How do congressional actions interact with executive branch diplomacy on arms issues?</li>
 <li>What signals do repeated public reaffirmations send to regional actors?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/30/us-support-taiwan-reaffirmed-members-congress.html" target="_blank" rel="noopener">CNBC</a> — Details on the sales figure and statements</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-rwanda-signs-nuclear-training-agreement-with-russia">1) Rwanda signs nuclear training agreement with Russia</h4>
@@ -1281,10 +1343,6 @@
 <li>What safeguards typically accompany nuclear cooperation agreements?</li>
 <li>How do such deals influence diplomatic alignments in Africa?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/news/2026/5/30/rwanda-russia-nuclear-deal-underscores-africas-shifting-power-balance?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Context on regional power dynamics</li>
-</ul>
 <h4 id="2-truck-crash-in-eastern-afghanistan-kills-18-including-10-children">2) Truck crash in eastern Afghanistan kills 18, including 10 children</h4>
 <p><strong>What happened (neutral):</strong> A truck carrying families returning from Pakistan overturned, resulting in 18 deaths. Poor road conditions and limited regulation contribute to frequent incidents in the area. Officials confirmed the casualty figures.</p>
 <p><strong>Perspectives:</strong> Local authorities describe the crash as part of ongoing safety challenges. Aid organizations note the added strain on communities already facing displacement. Residents point to infrastructure needs after years of conflict.</p>
@@ -1294,10 +1352,6 @@
 <li>What factors make traffic fatalities particularly high in post-conflict settings?</li>
 <li>How do returning populations affect local services?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/may/30/eighteen-people-killed-in-afghanistan-truck-crash-in-including-10-children" target="_blank" rel="noopener">The Guardian</a> — Official statements and background</li>
-</ul>
 <h4 id="3-qatar-signals-openness-to-temporary-transit-fees-in-strait-of-hormuz">3) Qatar signals openness to temporary transit fees in Strait of Hormuz</h4>
 <p><strong>What happened (neutral):</strong> Qatar indicated that a temporary toll for passage through the Strait of Hormuz could be discussed, while opposing permanent charges. The waterway remains a critical route for global energy shipments. The comments came amid ongoing regional tensions.</p>
 <p><strong>Perspectives:</strong> Qatari officials seek to balance revenue considerations with freedom of navigation. Shipping nations emphasize uninterrupted access. Energy markets watch for any effect on supply routes.</p>
@@ -1306,10 +1360,6 @@
 <ul>
 <li>How do proposals for transit fees interact with existing maritime law?</li>
 <li>What alternatives exist if passage becomes restricted?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-30/qatar-says-temporary-toll-at-strait-of-hormuz-is-negotiable" target="_blank" rel="noopener">Bloomberg</a> — Official remarks on negotiability</li>
 </ul>
 <h4 id="4-australias-defense-minister-discusses-hormuz-security-concerns">4) Australia’s defense minister discusses Hormuz security concerns</h4>
 <p><strong>What happened (neutral):</strong> Australia’s defense minister addressed uncertainties around the Strait of Hormuz during a regional security forum. The comments highlighted the importance of open sea lanes for trade and energy. The discussion occurred alongside other Asia-Pacific defense topics.</p>
@@ -1329,10 +1379,6 @@
 <li>What specific sectors are typically prioritized in India-Myanmar discussions?</li>
 <li>How do such visits influence wider regional diplomacy?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/india-news-myanmar-president-arrives-in-delhi-to-boost-ties/live-77353482?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — Visit schedule and context</li>
-</ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-france-reports-economic-contraction-as-gdp-declines">1) France reports economic contraction as GDP declines</h4>
 <p><strong>What happened (neutral):</strong> French GDP contracted in the latest period, driven by falling exports and reduced household spending. Global factors including trade tensions and regional conflicts are cited as contributors. The reading marks a shift from earlier growth.</p>
@@ -1343,10 +1389,6 @@
 <li>How quickly can export sectors adjust to shifting global demand?</li>
 <li>What indicators would signal whether the contraction is temporary?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/money/markets/article-15859463/France-slides-recession-GDP-goes-backwards.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Breakdown of contributing factors</li>
-</ul>
 <h4 id="2-marks-spencer-positioned-to-weather-inflation-pressures">2) Marks & Spencer positioned to weather inflation pressures</h4>
 <p><strong>What happened (neutral):</strong> Analysts expect Marks & Spencer to manage ongoing inflation better than some peers. Other retailers face downside risks from cautious consumer spending on larger items. The assessment focuses on differing exposure across the sector.</p>
 <p><strong>Perspectives:</strong> Market observers highlight the company’s product mix as a buffer. Lower-income households show restraint on discretionary purchases. Sector reports track how inflation affects various retail categories differently.</p>
@@ -1356,10 +1398,6 @@
 <li>Which retail segments are most sensitive to shifts in consumer confidence?</li>
 <li>How do inflation effects vary between essential and discretionary goods?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/money/markets/article-15859271/Marks-Spencer-tipped-conquer-inflation-storm.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Sector comparison details</li>
-</ul>
 <h4 id="3-on-street-ev-charging-faces-uneven-rollout-across-uk-councils">3) On-street EV charging faces uneven rollout across UK councils</h4>
 <p><strong>What happened (neutral):</strong> More than twenty local authorities continue to restrict pavement-crossing cables for home EV charging despite national pledges to reduce barriers. Safety and legal concerns are cited by the councils. The result creates differing access depending on location.</p>
 <p><strong>Perspectives:</strong> Government ministers promote the technology as a cost-saving measure for drivers. Some councils maintain objections based on pavement safety and liability. Residents in restricted areas note practical limitations on adopting electric vehicles.</p>
@@ -1368,10 +1406,6 @@
 <ul>
 <li>How do local decisions interact with national climate targets?</li>
 <li>What alternatives exist for households without off-street parking?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/environment/2026/may/30/on-street-ev-charging-uk-postcode-lottery-council-objections-gullies-safety-legal-parking" target="_blank" rel="noopener">The Guardian</a> — Details on council positions</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-podcast-explores-the-historical-development-and-modern-uses-of-rope">1) Podcast explores the historical development and modern uses of rope</h4>
@@ -1383,11 +1417,6 @@
 <li>What other everyday materials have similarly long and underappreciated histories?</li>
 <li>How do material constraints shape the scale of human construction projects?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-05-30/how-the-invention-of-rope-gave-us-modern-civilization-video" target="_blank" rel="noopener">Bloomberg video</a> — Episode overview and guest</li>
-<li><a href="https://www.bloomberg.com/news/audio/2026-05-30/odd-lots-how-rope-gave-us-modern-civilization-podcast" target="_blank" rel="noopener">Bloomberg audio</a> — Full discussion recording</li>
-</ul>
 <h3 id="top-popular-media-stories-3">Top popular media stories (3)</h3>
 <h4 id="1-senegal-prepares-for-2026-world-cup-as-one-of-africas-strongest-sides">1) Senegal prepares for 2026 World Cup as one of Africa’s strongest sides</h4>
 <p><strong>What happened (neutral):</strong> Senegal enters its third consecutive World Cup with ambitions to claim the trophy. The squad features experienced players and aims to build on prior performances. Group stage details and key athletes are highlighted in previews.</p>
@@ -1398,10 +1427,6 @@
 <li>How do national teams balance experience with emerging talent?</li>
 <li>What factors influence expectations for African sides at major tournaments?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/sports/2026/5/30/senegals-world-cup-2026-team-preview-players-to-watch-group-squad-list?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Squad and player analysis</li>
-</ul>
 <h4 id="2-barcelona-unveils-new-signing-anthony-gordon-who-addresses-fans-in-spanish">2) Barcelona unveils new signing Anthony Gordon who addresses fans in Spanish</h4>
 <p><strong>What happened (neutral):</strong> Barcelona completed the signing of Anthony Gordon for a reported £70 million fee. The English forward spoke fluent Spanish during his unveiling and has been included in England’s World Cup squad. Medical checks were finalized prior to the announcement.</p>
 <p><strong>Perspectives:</strong> Club officials highlight the player’s integration potential. Supporters note the linguistic preparation as a positive signal. Media coverage focuses on the transfer fee and immediate squad impact.</p>
@@ -1411,10 +1436,6 @@
 <li>How does language proficiency affect a player’s transition to a new league?</li>
 <li>What role do national team selections play in transfer timing?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/sport/football/article-15859315/Barcelona-signing-Anthony-Gordon-Newcastle.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Transfer and unveiling details</li>
-</ul>
 <h4 id="3-review-examines-long-term-outcomes-for-britains-got-talent-winners">3) Review examines long-term outcomes for Britain’s Got Talent winners</h4>
 <p><strong>What happened (neutral):</strong> A retrospective looks at the careers of every winner since the show began in 2007. Outcomes range from ongoing cruise work to periods described as difficult by some participants. The piece catalogs varied paths after the initial exposure.</p>
 <p><strong>Perspectives:</strong> Producers point to the platform’s role in launching new acts. Former contestants describe the range of post-show experiences. Media analysts discuss the sustainability of fame generated by talent competitions.</p>
@@ -1423,10 +1444,6 @@
 <ul>
 <li>What support structures exist for winners after the competition ends?</li>
 <li>How do audience expectations shape post-show opportunities?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15592099/Where-winners-Britains-Got-Talent-fates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Career summaries for past winners</li>
 </ul>
 <h3 id="top-gossip-stories-3">Top gossip stories (3)</h3>
 <h4 id="1-prince-william-maintains-private-social-circle-with-disguises-and-low-key-outings">1) Prince William maintains private social circle with disguises and low-key outings</h4>
@@ -1438,10 +1455,6 @@
 <li>How do public figures manage boundaries between official and personal spheres?</li>
 <li>What precedents exist for royals seeking ordinary social experiences?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/royals/article-15859469/Williams-secret-life-Disguises-accents-pints-loyal-friends-BARBARA-DAVIES.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Details on the reported activities</li>
-</ul>
 <h4 id="2-new-film-explores-the-later-years-of-wallis-simpson-with-focus-on-her-lawyer">2) New film explores the later years of Wallis Simpson with focus on her lawyer</h4>
 <p><strong>What happened (neutral):</strong> A movie featuring Joan Collins and Isabella Rossellini examines the relationship between Wallis Simpson and her French lawyer in her final period. The lawyer is portrayed as having monitored the Duchess on behalf of external interests. The production draws on historical claims about surveillance.</p>
 <p><strong>Perspectives:</strong> Filmmakers present the story as a window into lesser-known aspects of a public figure’s life. Historians debate the extent of documented involvement by intelligence services. Audiences are drawn to the intersection of celebrity and geopolitics.</p>
@@ -1450,10 +1463,6 @@
 <ul>
 <li>How do dramatizations balance historical evidence with narrative requirements?</li>
 <li>What ethical considerations arise when portraying private individuals connected to public figures?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/royals/article-15846861/As-Joan-Collins-Isabella-Rossellini-star-film-lawyer-kept-Wallis-Simpson-prisoner-final-years-CHRISTOPHER-WILSON-reveals-ferocious-Frenchwoman-SPIED-Duchess-CIA.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Background on the lawyer’s alleged role</li>
 </ul>
 <h4 id="3-palace-received-controversial-emails-involving-prince-andrew-six-years-ago">3) Palace received controversial emails involving Prince Andrew six years ago</h4>
 <p><strong>What happened (neutral):</strong> Reports indicate that Buckingham Palace was provided with emails related to Prince Andrew’s activities several years earlier than previously stated. The timing has prompted renewed discussion about internal handling of the matter. Details emerged through public records requests.</p>
@@ -1464,16 +1473,139 @@
 <li>What standards govern the release of internal royal correspondence?</li>
 <li>How do staggered disclosures affect public trust in institutions?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.reddit.com/r/news/comments/1trsw5k/palace_handed_andrews_controversial_envoy_emails/" target="_blank" rel="noopener">Reddit news</a> — Summary of the reported timeline</li>
-</ul>
 <h3 id="understanding-the-issue-how-snap-elections-are-triggered-and-conducted-in-parliamentary-systems">Understanding the Issue: How snap elections are triggered and conducted in parliamentary systems</h3>
 <p>Most coverage of snap elections treats them as simple popularity contests, yet the decision to dissolve parliament early follows specific constitutional and political rules that vary by country. In Malta’s case, the prime minister can advise the president to dissolve parliament when the government believes it holds an advantage or needs a fresh mandate on pressing issues such as housing and infrastructure. This mechanism allows the ruling party to choose timing that maximizes its prospects while opposition parties must respond within a compressed campaign window. Knowing this, when you hear claims that an election was called purely for democratic renewal, you can evaluate whether the timing aligns with polling data or external pressures instead. Next time you see a headline about a snap vote, ask: who benefits from the chosen date, what constitutional threshold must be met, and how have similar decisions played out in past cycles?</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference official election commission statements with multiple independent outlets before drawing conclusions about likely outcomes. Primary documents such as candidate manifestos and government statistical releases provide clearer grounding than secondary commentary. Consistent patterns across left-leaning, right-leaning, and international sources strengthen confidence in reported facts.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.aljazeera.com/news/2026/5/30/ukraine-drones-strike-russian-oil-facility-as-kyiv-and-moscow-trade-blows?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/worldnews/comments/1truffm/ukraine_knocks_out_two_russian_tu142_submarine/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/malta-votes-in-snap-parliamentary-election/a-77353620?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/5/30/voting-ongoing-in-snap-elections-in-malta-governing-party-expected-to-win?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/europe/20260530-malta-parliamentary-elections-begin-as-ruling-party-set-to-win" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cx21v0ezv14o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15859523/donald-trump-physical-released.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-05-30/nato-military-head-says-no-drama-with-us-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/05/30/us-support-taiwan-reaffirmed-members-congress.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/5/30/rwanda-russia-nuclear-deal-underscores-africas-shifting-power-balance?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/may/30/eighteen-people-killed-in-afghanistan-truck-crash-in-including-10-children" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-30/qatar-says-temporary-toll-at-strait-of-hormuz-is-negotiable" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/india-news-myanmar-president-arrives-in-delhi-to-boost-ties/live-77353482?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/money/markets/article-15859463/France-slides-recession-GDP-goes-backwards.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/money/markets/article-15859271/Marks-Spencer-tipped-conquer-inflation-storm.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/environment/2026/may/30/on-street-ev-charging-uk-postcode-lottery-council-objections-gullies-safety-legal-parking" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-05-30/how-the-invention-of-rope-gave-us-modern-civilization-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/audio/2026-05-30/odd-lots-how-rope-gave-us-modern-civilization-podcast" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/sports/2026/5/30/senegals-world-cup-2026-team-preview-players-to-watch-group-squad-list?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/sport/football/article-15859315/Barcelona-signing-Anthony-Gordon-Newcastle.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15592099/Where-winners-Britains-Got-Talent-fates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/royals/article-15859469/Williams-secret-life-Disguises-accents-pints-loyal-friends-BARBARA-DAVIES.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/royals/article-15846861/As-Joan-Collins-Isabella-Rossellini-star-film-lawyer-kept-Wallis-Simpson-prisoner-final-years-CHRISTOPHER-WILSON-reveals-ferocious-Frenchwoman-SPIED-Duchess-CIA.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/news/comments/1trsw5k/palace_handed_andrews_controversial_envoy_emails/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1878,10 +2010,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

@@ -107,7 +107,12 @@
       "url": "https://nerranetwork.com/omni-view.html"
     },
     "image": "https://nerranetwork.com/assets/covers/omni-view.jpg",
-    "transcript": "https://nerranetwork.com/blog/omni_view/ep077.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/omni_view/ep077.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://audio.nerranetwork.com/omni_view/Omni_View_Ep077_20260610.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -708,6 +713,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +818,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1181,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Escalating US-Iran strikes and Pakistan’s renewed attacks on Afghanistan are testing fragile ceasefi… — Episode 77</h1>
+            <h1><span class="nn-i18n-title">Escalating US-Iran strikes and Pakistan’s renewed attacks on Afghanistan are testing fragile ceasefi…</span> — Episode 77</h1>
             
             <p class="blog-hero-hook">Escalating US-Iran strikes and Pakistan’s renewed attacks on Afghanistan are testing fragile ceasefires and raising risks to shipping lanes and civilian safety across two continents.</p>
             
@@ -1129,6 +1212,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1195,12 +1281,6 @@
 <li>How do different outlets describe the targets chosen by each side?</li>
 <li>Which shipping routes are mentioned as most exposed?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/jun/10/iran-war-updates-missile-strikes-trump-us-retaliation-middle-east-crisis-war-live" target="_blank" rel="noopener">The Guardian</a> — Live updates on strikes and statements</li>
-<li><a href="https://www.cnbc.com/2026/06/10/oil-price-us-completes-iran-strikes-after-apache-helicopter-attack.html" target="_blank" rel="noopener">CNBC</a> — Market and oil price coverage</li>
-<li><a href="https://www.theguardian.com/business/live/2026/jun/10/asian-stocks-fall-us-iran-exchange-fire-middle-east-strait-of-hormuz-oil-prices-latest-news-updates" target="_blank" rel="noopener">The Guardian</a> — Business-market reaction</li>
-</ul>
 <h4 id="2-pakistan-conducts-new-air-strikes-inside-afghanistan">2) Pakistan conducts new air strikes inside Afghanistan</h4>
 <p><strong>What happened (neutral):</strong> Pakistan launched air strikes on Afghan border areas, killing several people including children according to local accounts. The action follows weeks of relative calm after earlier fighting this year.</p>
 <p><strong>Perspectives:</strong> BBC reporting presents the strikes as a renewal of pressure along the contested border. France 24 notes civilian casualties reported by residents in the affected provinces. Both sides agree strikes occurred after a period of lower activity; they differ on whether the targets were militants or whether the action risks broader civilian harm.</p>
@@ -1210,11 +1290,6 @@
 <li>Which provinces are named in the reports?</li>
 <li>What prior period of calm is referenced?</li>
 <li>How do local accounts differ from official statements?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/cvg57nk373lo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Details on the strikes</li>
-<li><a href="https://www.france24.com/en/asia-pacific/20260610-pakistan-renews-air-strikes-on-afghanistan-killing-several" target="_blank" rel="noopener">France 24</a> — Local casualty reports</li>
 </ul>
 <h4 id="3-belfast-stabbing-suspect-appears-in-court-as-protests-spread">3) Belfast stabbing suspect appears in court as protests spread</h4>
 <p><strong>What happened (neutral):</strong> Hadi Alodid, 30, appeared in Belfast Magistrates’ Court charged with attempted murder and threats to kill after a knife attack that left the victim without his left eye. The incident triggered protests and violence in several parts of the city.</p>
@@ -1226,12 +1301,6 @@
 <li>Which neighborhoods saw protests?</li>
 <li>What entry route is described for the suspect?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/politics/live/2026/jun/10/belfast-riots-knife-attack-northern-ireland-sdlp-keir-starmer-kemi-badenoch-pmqs-uk-politics-latest-news-updates" target="_blank" rel="noopener">The Guardian</a> — Court and protest coverage</li>
-<li><a href="https://www.dailymail.com/news/article-15888263/Belfast-knife-attack-named-appears-court.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Suspect court appearance</li>
-<li><a href="https://www.france24.com/en/video/20260610-anti-immigrant-violence-erupts-across-belfast-after-knife-attack" target="_blank" rel="noopener">France 24</a> — Video report on unrest</li>
-</ul>
 <h4 id="4-graham-platner-wins-maine-democratic-primary">4) Graham Platner wins Maine Democratic primary</h4>
 <p><strong>What happened (neutral):</strong> Graham Platner secured the Democratic nomination in Maine’s primary election. Results in several other states, including losses for some Republican incumbents, were also reported.</p>
 <p><strong>Perspectives:</strong> Al Jazeera presents the outcome as part of a wider set of primary results across multiple states. Coverage notes both the winner’s success and concurrent races.</p>
@@ -1241,10 +1310,6 @@
 <li>Which other states held primaries the same day?</li>
 <li>What is stated about turnout or margins?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/news/2026/6/10/graham-platner-wins-maine-primary-election-results-and-key-takeaways?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Primary results summary</li>
-</ul>
 <h4 id="5-britain-to-help-ukraine-produce-its-own-patriot-missiles">5) Britain to help Ukraine produce its own Patriot missiles</h4>
 <p><strong>What happened (neutral):</strong> The UK announced plans to assist Ukraine in manufacturing Patriot missile systems domestically. The move is linked to reduced US supplies amid other commitments.</p>
 <p><strong>Perspectives:</strong> Daily Mail reporting frames the decision as a response to shifting US priorities. Coverage notes the goal of lowering Ukraine’s reliance on external suppliers.</p>
@@ -1253,10 +1318,6 @@
 <ul>
 <li>Which system is named for local production?</li>
 <li>What reason is given for changing supply patterns?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15888021/Britain-Ukraine-Patriot-missile.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Announcement details</li>
 </ul>
 <h3 id="top-world-stories-2">Top world stories (2)</h3>
 <h4 id="1-japan-city-ends-bear-search-after-capture">1) Japan city ends bear search after capture</h4>
@@ -1268,10 +1329,6 @@
 <li>How long did the search last?</li>
 <li>What public facilities were affected?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/video/20260610-japan-city-relieved-as-bear-caught-after-roaming-streets-for-days" target="_blank" rel="noopener">France 24</a> — Capture report</li>
-</ul>
 <h4 id="2-hong-kong-charges-laid-in-deadly-apartment-fire">2) Hong Kong charges laid in deadly apartment fire</h4>
 <p><strong>What happened (neutral):</strong> Manslaughter charges were filed in connection with last year’s Wang Fuk Court fire, the deadliest in Hong Kong in 70 years, which killed 168 people.</p>
 <p><strong>Perspectives:</strong> BBC reporting notes the legal steps taken nearly a year after the blaze.</p>
@@ -1280,10 +1337,6 @@
 <ul>
 <li>When did the fire occur?</li>
 <li>What is the legal status of the charges?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/c04yldyezyeo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Charge announcement</li>
 </ul>
 <h3 id="top-business-stories-2">Top business stories (2)</h3>
 <h4 id="1-byd-sets-goal-to-become-worlds-largest-automaker">1) BYD sets goal to become world’s largest automaker</h4>
@@ -1295,10 +1348,6 @@
 <li>Which rival is named as the target to surpass?</li>
 <li>What technology areas are highlighted?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/business/2026/jun/10/china-byd-car-firm-ev-maker-toyota" target="_blank" rel="noopener">The Guardian</a> — Company ambitions</li>
-</ul>
 <h4 id="2-dp-world-meets-investors-amid-conflict-concerns">2) DP World meets investors amid conflict concerns</h4>
 <p><strong>What happened (neutral):</strong> DP World held discussions with bond investors to address performance questions since the start of US-Iran fighting and to consider options for an upcoming bond repayment.</p>
 <p><strong>Perspectives:</strong> Bloomberg reporting focuses on the company’s outreach to fixed-income holders during regional uncertainty.</p>
@@ -1307,10 +1356,6 @@
 <ul>
 <li>What upcoming financial obligation is mentioned?</li>
 <li>Which region’s conflict is cited as the backdrop?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-06-10/dp-world-meets-bond-investors-to-allay-worries-over-war-s-impact" target="_blank" rel="noopener">Bloomberg</a> — Investor meetings</li>
 </ul>
 <h3 id="top-technology-stories-1">Top technology stories (1)</h3>
 <h4 id="1-byd-plans-300-ultra-fast-ev-chargers-in-britain">1) BYD plans 300 ultra-fast EV chargers in Britain</h4>
@@ -1321,10 +1366,6 @@
 <ul>
 <li>How many stations are planned?</li>
 <li>What charging time is targeted?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/sciencetech/article-15887987/Five-minute-EV-chargers-Britain.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Charger rollout plans</li>
 </ul>
 <h3 id="top-popular-media-stories-1">Top popular media stories (1)</h3>
 <h4 id="1-vets-warn-scooby-doo-trailer-may-boost-great-dane-demand">1) Vets warn Scooby-Doo trailer may boost Great Dane demand</h4>
@@ -1346,16 +1387,99 @@
 <li>What aspects of the experience did she highlight?</li>
 <li>How did she describe the impact on later pregnancies?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15887921/Perrie-Edwards-tears-two-miscarriages-impact-losses-future-pregnancies.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — Interview details</li>
-</ul>
 <h3 id="understanding-the-issue-how-us-primary-elections-select-party-nominees">Understanding the Issue: How US primary elections select party nominees</h3>
 <p>Most coverage of primary results treats them as simple popularity contests, yet the actual mechanism involves state-by-state rules that allocate delegates rather than a single national vote. Each state sets its own date, voting method, and delegate-allocation formula, which can be winner-take-all or proportional; candidates accumulate delegates across these separate contests until one reaches the required majority at the party convention. This structure means early states exert disproportionate influence because momentum and media attention compound after the first few results. Knowing this, when you hear claims that a single primary “decides” a nomination, you can check whether the delegate math actually supports that conclusion or whether later contests remain decisive. Next time you see a headline about primary night, ask: which state’s rules determined the delegate split, how many delegates are still unallocated, and what historical precedent exists for comebacks after early losses.</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Compare the same event across at least two outlets with different ownership structures. Check whether primary documents such as court filings or company statements are linked or quoted directly. Note which facts are agreed upon and which remain attributed to one side only.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/jun/10/iran-war-updates-missile-strikes-trump-us-retaliation-middle-east-crisis-war-live" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/06/10/oil-price-us-completes-iran-strikes-after-apache-helicopter-attack.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/business/live/2026/jun/10/asian-stocks-fall-us-iran-exchange-fire-middle-east-strait-of-hormuz-oil-prices-latest-news-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cvg57nk373lo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/asia-pacific/20260610-pakistan-renews-air-strikes-on-afghanistan-killing-several" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/politics/live/2026/jun/10/belfast-riots-knife-attack-northern-ireland-sdlp-keir-starmer-kemi-badenoch-pmqs-uk-politics-latest-news-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15888263/Belfast-knife-attack-named-appears-court.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/video/20260610-anti-immigrant-violence-erupts-across-belfast-after-knife-attack" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/6/10/graham-platner-wins-maine-primary-election-results-and-key-takeaways?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15888021/Britain-Ukraine-Patriot-missile.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/video/20260610-japan-city-relieved-as-bear-caught-after-roaming-streets-for-days" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c04yldyezyeo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/business/2026/jun/10/china-byd-car-firm-ev-maker-toyota" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-06-10/dp-world-meets-bond-investors-to-allay-worries-over-war-s-impact" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/sciencetech/article-15887987/Five-minute-EV-chargers-Britain.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15887921/Perrie-Edwards-tears-two-miscarriages-impact-losses-future-pregnancies.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1790,10 +1914,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>
