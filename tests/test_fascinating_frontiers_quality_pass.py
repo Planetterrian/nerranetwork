@@ -69,3 +69,72 @@ class TestThemeSelfReferenceFilter:
             "show-name echo re-accumulated in FF recurring_themes — "
             "the self-reference filter regressed"
         )
+
+
+class TestStockMarketTitleFilter:
+    """June 16 2026 review: since the SPCX IPO (June 12) the Google News
+    "SpaceX" queries flood FF with pure stock-market items. FF Ep103 shipped
+    FOUR of fifteen stories as market action. ``exclude_title_patterns`` now
+    drops market-action titles at fetch time while keeping mission/science.
+    """
+
+    @staticmethod
+    def _ff_patterns():
+        import yaml
+        cfg = yaml.safe_load(
+            (REPO / "shows/fascinating_frontiers.yaml").read_text()
+        )
+        return cfg.get("exclude_title_patterns", []) or []
+
+    # The exact titles FF Ep103 shipped (digest Top-15 #3/#13/#14/#15).
+    STOCK_TITLES = [
+        "SpaceX Raises Record $85.7 Billion in Funding Round",
+        "Space Exploration Files for $60 Billion Merger",
+        "SPCX Added to NASDAQ Telecom Index",
+        "SPCX Shares Rise 20 Percent After Funding News",
+    ]
+
+    # Real FF mission/science titles that MUST survive the filter.
+    KEEP_TITLES = [
+        "Dragon Cargo Capsule Begins Return from ISS",
+        "Tianwen-2 Executes Series of Approach Burns",
+        "JWST Maps Extreme Weather on Ruby-Raining Exoplanet",
+        "Astrobotic Readies Griffin-1 Lander for Testing",
+        "NASA Releases Image of Nebraska Sandhills",
+        # money in the title, but a mission contract — not market action
+        "NASA Awards SpaceX $2.9 Billion Artemis Lander Contract",
+        # "merger" in an astronomy sense must not be dropped
+        "Galaxy Merger Captured by Hubble in Stunning Detail",
+        # "shares" used as a verb (NASA shares imagery) must survive
+        "NASA Shares Stunning New View of Jupiter's Aurora",
+        # the legitimate "goes public" milestone (no market-action keyword)
+        "SpaceX is Now a Public Company Valued for its AI Potential",
+        # REGRESSION: a bare nasdaq/nyse pattern dropped this launch story
+        # (live FF feed, June 16 2026). A Falcon 9 launch is core FF content.
+        "SpaceX launches its first Falcon 9 rocket since Nasdaq debut",
+    ]
+
+    def test_drops_ep103_stock_titles(self):
+        from engine.utils import drop_excluded_titles
+        pats = self._ff_patterns()
+        arts = [{"title": t} for t in self.STOCK_TITLES]
+        kept, dropped = drop_excluded_titles(arts, pats)
+        assert dropped == len(self.STOCK_TITLES), (
+            f"expected all {len(self.STOCK_TITLES)} stock titles dropped, "
+            f"got {dropped}; survivors: {[a['title'] for a in kept]}"
+        )
+
+    def test_keeps_mission_and_science_titles(self):
+        from engine.utils import drop_excluded_titles
+        pats = self._ff_patterns()
+        arts = [{"title": t} for t in self.KEEP_TITLES]
+        kept, dropped = drop_excluded_titles(arts, pats)
+        survivors = [a["title"] for a in kept]
+        assert dropped == 0, (
+            "filter over-dropped legitimate mission/science titles: "
+            f"{[t for t in self.KEEP_TITLES if t not in survivors]}"
+        )
+
+    def test_digest_prompt_excludes_stock_items(self):
+        txt = (REPO / "shows/prompts/fascinating_frontiers_digest.txt").read_text()
+        assert "NO STOCK / MARKET ITEMS" in txt

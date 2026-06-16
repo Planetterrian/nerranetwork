@@ -362,6 +362,24 @@ TST received a full recursive improvement architecture (analogous to MIT):
   ("fascinating frontiers") had been mined as a top "recurring theme"
   every episode (Ep97/98/99 led their top_themes with it); only the full
   show-name bigram is filtered, never component tokens.
+- **FF June 16 2026 quality pass** (review:
+  [`docs/reviews/fascinating_frontiers_review_2026_06_16.md`](docs/reviews/fascinating_frontiers_review_2026_06_16.md);
+  drift guards: `tests/test_fascinating_frontiers_quality_pass.py::TestStockMarketTitleFilter`):
+  both June-12 predictions HIT (garbles gone, show-name no longer a top
+  theme). New finding: since the SpaceX/SPCX IPO (June 12) the Google-News
+  "SpaceX" queries flood FF — a *science* show — with pure stock-market
+  items; Ep103 shipped FOUR of fifteen stories as market action (an $85.7B
+  funding round told twice, a "$60B merger with Cursor", NASDAQ index
+  inclusion, a 20% share move), off-brand and overlapping SpaceX Daily /
+  Modern Investing. Fixed at fetch time via stock/market
+  `exclude_title_patterns` (same accepted class as the almanac filter —
+  deterministic, no A/B) + a digest-prompt `NO STOCK / MARKET ITEMS` scope
+  bullet (A/B-listen). Live-verified on today's feeds: 7 SPCX items dropped,
+  Falcon 9 *launch* kept (a bare `nasdaq/nyse` pattern was tried and removed
+  after it dropped that launch story). The chronic under-length / Cosmic Deep
+  Dive lever stays deferred pending the four-show length A/B. The `@`→"at at"
+  YouTube-CTA wart in Ep103 was already fixed upstream by the June-16 FP pass.
+  Prompt edit changes output — A/B-listen per landmine #17.
 - **PR** (Привет, Русский!) runs via `run_show.py` +
   `shows/privet_russian.yaml`; bilingual Russian language learning podcast
   for English speakers. Even days only. Uses **ElevenLabs TTS**

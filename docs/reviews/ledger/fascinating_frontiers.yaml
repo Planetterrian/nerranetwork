@@ -55,12 +55,64 @@ reviews:
           "En-sell-uh-dus" / "Tee-en-wen" occurrences in new _tts.txt files
         baseline: "Enceladus garble in Ep048/088/094, Tianwen in Ep090"
         expected: "0 in every episode after this PR merges (deterministic repair)"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: >-
+          grep of Ep100/101/102/103 _tts.txt — zero phonetic-garble hits
+          (en-sell|tee-en-wen|nassa|nay-toe|en-vidia|open-ay|chwen|star-mer).
       - metric: >-
           top theme of FF theme_evolution entries for new episodes
         baseline: "Ep097/098/099 all led top_themes with 'fascinating frontiers'"
         expected: "'fascinating frontiers' never appears in any new top_themes list"
+        verdict: hit
+        evidence: >-
+          theme_history.json Ep100/101/102/103 top_themes all lead with
+          'dark matter'; show-name bigram absent from every new entry.
+
+  - date: 2026-06-16
+    pr: null
+    doc: docs/reviews/fascinating_frontiers_review_2026_06_16.md
+    summary: >-
+      Second scheduled-agent FF pass. Both June-12 predictions HIT. Headline
+      new finding: SPCX stock-market intrusion since the June-12 IPO — Ep103
+      shipped 4/15 stories as market action (funding round told twice, "$60B
+      merger with Cursor", NASDAQ index inclusion, share move), off-brand for
+      a science show and overlapping SpaceX Daily / Modern Investing. Shipped a
+      deterministic fetch-time stock/market title filter (+ a digest-prompt
+      scope backstop). Live-verified against today's feeds: 7 SPCX items
+      dropped, Falcon 9 launch kept (a bare nasdaq/nyse pattern was tried and
+      removed after it dropped that launch story).
+    shipped:
+      - stock/market exclude_title_patterns on FF (deterministic, no A/B)
+      - digest-prompt "NO STOCK / MARKET ITEMS" scope bullet (A/B-listen)
+    deferred:
+      - >-
+        Cosmic Deep Dive length lever (carried from June 12) — still deferred
+        pending the operator's four-show length A/B; no June-10 floor revert
+        observed. Shipping a second length-oriented audio change would confound.
+      - >-
+        min_podcast_words realignment to the ~1500 ceiling (carried) — reverses
+        a recent floor; operator's call.
+      - >-
+        Theme residual "science nasa" (still top-6 every episode) — carried;
+        generic adjacency / bare science.nasa.gov domain, low harm.
+      - >-
+        Curated narrative-tracker status pass (carried) — operator task via
+        scripts/update_tesla_narrative.py --slug fascinating_frontiers.
+    predictions:
+      - metric: >-
+          count of stock-market stories in FF digest Top-15 (share price,
+          market cap, funding round, IPO, index inclusion, M&A valuation)
+        baseline: "Ep103 had 4 of 15 (7 market-action title hits at fetch)"
+        expected: >-
+          0 market-action items in any FF digest after merge; the fetch filter
+          drops them (live test: 7 dropped today). SpaceX mission/launch/Dragon
+          stories still appear.
+        verdict: pending
+        evidence: null
+      - metric: >-
+          false-positive drops of SpaceX mission/launch titles by the filter
+        baseline: "the bare nasdaq pattern dropped a Falcon 9 launch (now removed)"
+        expected: "0 launch/mission/Dragon/contract titles dropped on any episode"
         verdict: pending
         evidence: null
 
