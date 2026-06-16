@@ -2937,6 +2937,19 @@ def run(args: argparse.Namespace) -> None:
         rss_url=f"{config.publishing.base_url}/{config.publishing.rss_file}",
     )
 
+    # 11c. Multilingual audio (June 2026). For shows with multilingual.auto,
+    # render the configured languages for this episode now — AFTER the summaries
+    # record exists (the translation upserts into it) and BEFORE the blog post
+    # below, so today's post + index immediately show the language switcher and
+    # badges. Fully non-blocking: a failure (or an unset GROK_CLONED_VOICE_ID)
+    # can never break the English publish. Skipped in test/dry-run.
+    if not args.test and not args.dry_run:
+        try:
+            from engine.multilingual import auto_generate_after_publish
+            auto_generate_after_publish(config, episode_num)
+        except Exception as _ml_exc:  # noqa: BLE001 — translation must never block publish
+            logger.error("Multilingual auto step failed (non-fatal): %s", _ml_exc)
+
     # 12a. Generate blog post
     try:
         from engine.blog import extract_blog_metadata, generate_blog_post_html
@@ -2946,6 +2959,13 @@ def run(args: argparse.Namespace) -> None:
             _blog_env = _get_jinja_env()
             _blog_meta = extract_blog_metadata(x_thread, config.slug, digest_md.name if digest_md else "", file_path=digest_md)
             _blog_meta["episode_num"] = episode_num
+            # Merge any just-generated translation tracks so the switcher +
+            # badges render on today's post (the .md/x_thread carry neither).
+            try:
+                from generate_html import _attach_translations
+                _attach_translations(config.slug, _NS[config.slug], [_blog_meta])
+            except Exception:  # noqa: BLE001 — non-fatal SEO/UX enhancement
+                pass
             _blog_html = generate_blog_post_html(
                 x_thread, _blog_meta, _NS[config.slug], _blog_env,
                 youtube_url=youtube_long_url,
