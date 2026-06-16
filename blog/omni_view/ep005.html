@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>US and Israel kill Iran's Supreme Leader Khamenei in airstrikes, igniting retaliatory attacks across… — Episode 5</h1>
+            <h1><span class="nn-i18n-title">US and Israel kill Iran's Supreme Leader Khamenei in airstrikes, igniting retaliatory attacks across…</span> — Episode 5</h1>
             
             <p class="blog-hero-hook">US and Israel kill Iran's Supreme Leader Khamenei in airstrikes, igniting retaliatory attacks across the Middle East.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1195,13 +1276,6 @@
 <li>What role could allied nations play in de-escalating or supporting the ongoing conflict?</li>
 <li>Are there verified reports of civilian casualties from these strikes?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/live/2026/mar/01/us-israel-war-on-iran-ayatollah-ali-khamenei-i-dead-latest-reports" target="_blank" rel="noopener">The Guardian</a> — live updates on strikes and retaliations</li>
-<li><a href="https://www.theguardian.com/world/2026/mar/01/tell-us-affected-by-latest-events-in-the-middle-east-strikes-iran-us-israel-dubai" target="_blank" rel="noopener">The Guardian</a> — reader stories on Middle East impacts</li>
-<li><a href="https://www.theguardian.com/world/2026/feb/28/us-israel-strikes-iran-tehran-response-visual-guide" target="_blank" rel="noopener">The Guardian</a> — visual guide to the strikes</li>
-<li><a href="https://www.theguardian.com/us-news/2026/feb/28/war-on-iran-how-the-us-israeli-bid-for-regime-change-unfolded" target="_blank" rel="noopener">The Guardian</a> — overview of regime change efforts</li>
-</ul>
 <h4 id="2-israel-releases-video-of-tehran-bombardment-linked-to-khameneis-death">2) Israel releases video of Tehran bombardment linked to Khamenei's death</h4>
 <p><strong>What happened (neutral):</strong> Israel shared footage of a massive airstrike on what it described as Iranian regime headquarters in Tehran. The strike is believed to have killed Supreme Leader Ayatollah Ali Khamenei, though exact confirmation of the moment remains unclear. This follows a series of attacks amid escalating tensions in the region.</p>
 <p><strong>Perspectives:</strong> Conservative media portray the video as evidence of a decisive blow against Iran's leadership, praising Israel's actions as a bold move to dismantle a threatening regime and highlighting the precision of the bombardment. Progressive outlets express concern over the potential for civilian harm and question the ethics of targeted assassinations, viewing it as part of a larger pattern of aggressive foreign policy that could inflame regional conflicts. Broader international coverage debates the video's authenticity and implications, with some seeing it as propaganda to justify escalation while others note it underscores the high stakes of the US-Israel alliance against Iran.</p>
@@ -1210,10 +1284,6 @@
 <li>How reliable is the video as evidence of Khamenei's death?</li>
 <li>Could this release influence public opinion or diplomatic responses globally?</li>
 <li>What verification steps should be taken for such military footage?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15603591/Israel-headquarters-Iranian-airstrike-Tehran.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — details on the video and bombardment</li>
 </ul>
 <h4 id="3-missiles-target-cyprus-and-narrowly-miss-british-troops-amid-iran-retaliation">3) Missiles target Cyprus and narrowly miss British troops amid Iran retaliation</h4>
 <p><strong>What happened (neutral):</strong> Iran launched missiles at Cyprus and strikes that came close to British troops in Bahrain following US and Israeli attacks that killed Supreme Leader Khamenei. The UK's terror threat level is under review in response. Explosions were also reported in Saudi Arabia's capital as part of the wider retaliatory actions.</p>
@@ -1224,10 +1294,6 @@
 <li>What protections are in place for international troops in the region?</li>
 <li>Could these strikes expand the conflict beyond current participants?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15603563/Missiles-fired-Cyprus-strikes-narrowly-miss-British-troops-Bahrain-Iran-lashes-wake-Donald-Trumps-assault-UK-terror-threat-level-review.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — coverage of missiles and troop risks</li>
-</ul>
 <h4 id="4-questions-arise-over-regime-change-in-iran-after-khameneis-killing">4) Questions arise over regime change in Iran after Khamenei's killing</h4>
 <p><strong>What happened (neutral):</strong> The joint US-Israeli strike that killed Iran's Supreme Leader Ayatollah Ali Khamenei has raised uncertainties about the Islamic Republic's future. Analysts are debating if this could lead to regime change or further instability. Fears of wider regional conflict have intensified following the development.</p>
 <p><strong>Perspectives:</strong> European media explore the limits of American influence, questioning whether assassinating Khamenei will achieve lasting change or merely provoke more chaos, with some experts drawing parallels to past interventions. Conservative US outlets view it as a strategic victory against a regime with a long history of anti-American actions, from hostage crises to assassination plots. Centrist analyses balance these views by noting the potential for internal Iranian upheaval while highlighting the risks of escalation without clear paths to stability.</p>
@@ -1237,10 +1303,6 @@
 <li>How effective have similar targeted strikes been in past regime change efforts?</li>
 <li>What international monitoring is needed to verify outcomes?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/asia-pacific/20260301-limits-american-power-will-killing-khamenei-bring-regime-change-iran" target="_blank" rel="noopener">France 24</a> — analysis of regime change prospects</li>
-</ul>
 <h4 id="5-uk-defence-secretary-comments-on-khameneis-death-and-iranian-threats">5) UK defence secretary comments on Khamenei's death and Iranian threats</h4>
 <p><strong>What happened (neutral):</strong> UK's defence secretary stated that few will mourn Iran's Supreme Leader Ali Khamenei, describing the regime as "evil" due to its involvement in terrorist plots and proxy wars. This comes amid US and Israeli military actions that killed Khamenei. Healey emphasized the rising threat from Iran to the West.</p>
 <p><strong>Perspectives:</strong> British coverage aligns with government views portraying Khamenei as a leader of a menacing regime, with support for the strikes as a response to ongoing threats like sponsored attacks on the UK. Left-leaning perspectives critique the strikes as divisive, potentially heightening global tensions without addressing root causes. International outlets weave in divided political opinions, noting how the actions have split views on whether they represent justified defense or aggressive overreach.</p>
@@ -1249,10 +1311,6 @@
 <li>How does this statement reflect UK alignment with US-Israel actions?</li>
 <li>What evidence supports claims of Iranian-sponsored plots?</li>
 <li>Could such rhetoric escalate diplomatic tensions?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/politics/2026/mar/01/uk-defence-secretary-john-healey-few-will-mourn-ali-khamenei-iran-us-israel" target="_blank" rel="noopener">The Guardian</a> — defence secretary's statements on threats</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-uk-troops-endangered-by-iranian-strikes-in-bahrain">1) UK troops endangered by Iranian strikes in Bahrain</h4>
@@ -1264,10 +1322,6 @@
 <li>How might this influence UK involvement in the conflict?</li>
 <li>Are there conflicting reports on the strike's proximity?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/crrxkjxg1zpo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — details on troop risks and strikes</li>
-</ul>
 <h4 id="2-us-contractors-report-inadequate-safety-amid-iranian-attacks-in-kuwait">2) US contractors report inadequate safety amid Iranian attacks in Kuwait</h4>
 <p><strong>What happened (neutral):</strong> Employees of defense contractor V2X Inc. at US bases in Kuwait described lacking proper bunkers and pay cuts during Iranian missile strikes. They noted limited communication on safety and evacuation. Strikes affected multiple Gulf countries including Kuwait and Bahrain.</p>
 <p><strong>Perspectives:</strong> Progressive outlets highlight the workers' sense of being expendable, criticizing corporate and military oversight for failing to prioritize safety amid regional attacks. Centrist coverage focuses on the human impact, interviewing employees about their experiences and the broader context of US presence in the area. Right-leaning views connect this to the necessities of confronting Iranian aggression, while acknowledging the need for better support for contractors.</p>
@@ -1276,10 +1330,6 @@
 <li>What responsibilities do contractors like V2X have for employee safety?</li>
 <li>How verified are reports of pay cuts during the crisis?</li>
 <li>Could this lead to changes in US base operations?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/2026/mar/01/us-contractors-stranded-kuwait" target="_blank" rel="noopener">The Guardian</a> — interviews with contractors on safety issues</li>
 </ul>
 <h4 id="3-irans-history-of-attacks-on-americans-spans-decades">3) Iran's history of attacks on Americans spans decades</h4>
 <p><strong>What happened (neutral):</strong> Reports outline Iran's involvement in direct and indirect attacks on Americans over nearly half a century, under leaders like Khomeini and Khamenei. This includes hostage crises and assassination plots. The summary comes amid current US strikes on Iran.</p>
@@ -1290,10 +1340,6 @@
 <li>What impact does this history have on current diplomacy?</li>
 <li>Are there primary sources to verify these incidents?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.foxnews.com/politics/from-hostage-crisis-assassination-plots-irans-44-year-war-americans" target="_blank" rel="noopener">Fox News</a> — overview of historical attacks</li>
-</ul>
 <h4 id="4-outcry-over-trumps-cabinet-selections-amid-ongoing-controversies">4) Outcry over Trump's cabinet selections amid ongoing controversies</h4>
 <p><strong>What happened (neutral):</strong> Criticism is growing over Donald Trump's cabinet picks, including figures like RFK Jr. and Kristi Noem, due to their reported erratic behaviors. Democrats view this as a "clown car" cabinet potentially undermining the president. Incidents include drug boasts and misuse of resources.</p>
 <p><strong>Perspectives:</strong> Left-leaning media deride the appointments as chaotic, pointing to specific antics like beer-chugging at taxpayer expense and questioning if they could lead to Trump's undoing. Conservative defenses downplay the outcry, focusing on the appointees' loyalty and policy alignments. Centrist takes weave in the spectacle of events like prayer circles before addresses, noting how they divide opinion on governance effectiveness.</p>
@@ -1303,10 +1349,6 @@
 <li>What checks exist for cabinet confirmations?</li>
 <li>Are reports of specific incidents fully verified?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/2026/mar/01/trump-cabinet-rfjk-jr" target="_blank" rel="noopener">The Guardian</a> — analysis of cabinet controversies</li>
-</ul>
 <h4 id="5-texas-progressives-criticize-democratic-approach-in-rio-grande-valley">5) Texas progressives criticize Democratic approach in Rio Grande Valley</h4>
 <p><strong>What happened (neutral):</strong> Local progressives in Texas argue the Democratic establishment is mishandling the Rio Grande Valley by overreacting to Trump's past gains. They suggest the party should step back. This comes ahead of primaries in the region.</p>
 <p><strong>Perspectives:</strong> Progressive outlets like The Intercept advocate for less interference, viewing the establishment's tactics as misguided and potentially alienating voters. Centrist views discuss the lessons from Trump's surprising performance, balancing calls for strategic adjustments. Right-leaning perspectives might see this internal discord as a Democratic weakness, highlighting regional shifts in voter sentiment.</p>
@@ -1315,10 +1357,6 @@
 <li>How have Trump's gains influenced Democratic strategies?</li>
 <li>What local factors are driving these criticisms?</li>
 <li>Could this affect upcoming election outcomes?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://theintercept.com/2026/03/01/texas-cuellar-progressives-democrats-primaries/" target="_blank" rel="noopener">The Intercept</a> — progressive views on party tactics</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-oil-prices-could-hit-100-amid-strait-of-hormuz-disruption-fears">1) Oil prices could hit $100 amid Strait of Hormuz disruption fears</h4>
@@ -1330,10 +1368,6 @@
 <li>How might this affect global energy markets?</li>
 <li>Are price predictions based on verified data?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/03/01/experts-weigh-potential-scenarios-for-oil-if-strait-of-hormuz-closes.html" target="_blank" rel="noopener">CNBC</a> — analysis of oil shock scenarios</li>
-</ul>
 <h4 id="2-opec-plans-oil-production-increase-despite-conflict">2) OPEC+ plans oil production increase despite conflict</h4>
 <p><strong>What happened (neutral):</strong> OPEC+ has agreed in principle to hike oil production by 206,000 barrels per day in April. This decision comes as US-Israeli strikes on Iran threaten to rally crude prices. Delegates noted the conflict's potential impact on markets.</p>
 <p><strong>Perspectives:</strong> Business reporting highlights the group's strategy to stabilize supply amid geopolitical tensions, with some seeing it as a counter to price spikes. International perspectives debate the timing, questioning if it underestimates disruption risks. Balanced views note the agreement's tentative nature, linking it to ongoing Middle East events.</p>
@@ -1343,10 +1377,6 @@
 <li>What delegates' inputs shaped the decision?</li>
 <li>Could this stabilize or inflate prices?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-03-01/opec-agrees-in-principle-to-206k-b-d-hike-for-april-delegates" target="_blank" rel="noopener">Bloomberg</a> — details on OPEC+ agreement</li>
-</ul>
 <h4 id="3-stock-market-bull-run-continues-but-caution-advised">3) Stock market bull run continues but caution advised</h4>
 <p><strong>What happened (neutral):</strong> Analysts urge enjoying the ongoing stock market bull run while watching for signs of an impending shift. This reflects awareness of global economic cycles. The advice comes amid various international events influencing markets.</p>
 <p><strong>Perspectives:</strong> Financial commentators like those in the Daily Mail emphasize the inevitability of cycles, encouraging caution without panic. Optimistic views celebrate the run's duration, attributing it to resilient economies. Broader perspectives warn of external shocks, such as regional conflicts, that could signal an end.</p>
@@ -1355,10 +1385,6 @@
 <li>What specific signs indicate a market shift?</li>
 <li>How do global events factor into this cycle?</li>
 <li>Is the bull run data consistent across sources?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/money/markets/article-15601677/HAMISH-MCRAE-Enjoy-bull-run-lasts.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — commentary on market cycles</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-iran-deploys-hundreds-of-drones-and-missiles-in-dubai-attacks">1) Iran deploys hundreds of drones and missiles in Dubai attacks</h4>
@@ -1370,10 +1396,6 @@
 <li>What tech advancements enabled this scale of attack?</li>
 <li>Are casualty figures from these strikes verified?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15603485/Dubai-airport-hit-Iranian-air-strike-suicide-drone-attacks-famous-Burj-Al-Arab-hotel-Palm-Jumeirah.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — reports on drone and missile launches</li>
-</ul>
 <h4 id="2-iran-vows-unprecedented-force-with-missiles-after-raising-revenge-flag">2) Iran vows unprecedented force with missiles after raising revenge flag</h4>
 <p><strong>What happened (neutral):</strong> Iran raised a "red flag of revenge" and promised attacks of unprecedented force following US and Israeli strikes. Black smoke rose from a US airbase in Erbil after explosions. This is part of live updates on the escalating conflict.</p>
 <p><strong>Perspectives:</strong> Right-leaning media emphasize Iran's threats and the ferocity of their missile responses, portraying it as a historic counterattack justifying preemptive actions. International coverage discusses the symbolism of the red flag, integrating views on how such rhetoric escalates tensions. Centrist takes focus on the technology of missiles and drones involved, balancing fears of wider war with calls for de-escalation.</p>
@@ -1383,14 +1405,107 @@
 <li>How do missile capabilities compare to defenses?</li>
 <li>Could this lead to cyber or other tech escalations?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15601019/Iran-attacks-LIVE-Israel-US-launch-pre-emptive-strikes-Iran-explosions-heard-downtown-Iran.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Daily Mail</a> — live updates on threats and attacks</li>
-</ul>
 <h4 id="3-sustained-iran-conflict-could-deplete-us-missile-reserves">3) Sustained Iran conflict could deplete US missile reserves</h4>
 <p><strong>What happened (neutral):</strong> US officials note that a prolonged war with</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.theguardian.com/us-news/live/2026/mar/01/us-israel-war-on-iran-ayatollah-ali-khamenei-i-dead-latest-reports" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/mar/01/tell-us-affected-by-latest-events-in-the-middle-east-strikes-iran-us-israel-dubai" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/feb/28/us-israel-strikes-iran-tehran-response-visual-guide" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/2026/feb/28/war-on-iran-how-the-us-israeli-bid-for-regime-change-unfolded" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15603591/Israel-headquarters-Iranian-airstrike-Tehran.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15603563/Missiles-fired-Cyprus-strikes-narrowly-miss-British-troops-Bahrain-Iran-lashes-wake-Donald-Trumps-assault-UK-terror-threat-level-review.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/asia-pacific/20260301-limits-american-power-will-killing-khamenei-bring-regime-change-iran" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/politics/2026/mar/01/uk-defence-secretary-john-healey-few-will-mourn-ali-khamenei-iran-us-israel" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/crrxkjxg1zpo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/2026/mar/01/us-contractors-stranded-kuwait" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.foxnews.com/politics/from-hostage-crisis-assassination-plots-irans-44-year-war-americans" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=foxnews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">foxnews.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/2026/mar/01/trump-cabinet-rfjk-jr" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://theintercept.com/2026/03/01/texas-cuellar-progressives-democrats-primaries/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theintercept.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theintercept.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/01/experts-weigh-potential-scenarios-for-oil-if-strait-of-hormuz-closes.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-03-01/opec-agrees-in-principle-to-206k-b-d-hike-for-april-delegates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/money/markets/article-15601677/HAMISH-MCRAE-Enjoy-bull-run-lasts.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15603485/Dubai-airport-hit-Iranian-air-strike-suicide-drone-attacks-famous-Burj-Al-Arab-hotel-Palm-Jumeirah.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15601019/Iran-attacks-LIVE-Israel-US-launch-pre-emptive-strikes-Iran-explosions-heard-downtown-Iran.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1797,10 +1912,67 @@ That's Omni View. For full source links and more context, check out today's writ
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

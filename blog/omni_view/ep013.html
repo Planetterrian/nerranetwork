@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Iran strikes oil tankers in the Gulf, surging prices to $100 a barrel amid escalating US-Israel conf… — Episode 13</h1>
+            <h1><span class="nn-i18n-title">Iran strikes oil tankers in the Gulf, surging prices to $100 a barrel amid escalating US-Israel conf…</span> — Episode 13</h1>
             
             <p class="blog-hero-hook">Iran strikes oil tankers in the Gulf, surging prices to $100 a barrel amid escalating US-Israel conflict.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1183,13 +1264,6 @@
 <li>What role could international mediation play in de-escalating these maritime attacks?</li>
 <li>Are there verified reports of casualties from the tanker incidents?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.foxnews.com/politics/irans-drone-swarms-challenge-us-air-defenses-troops-middle-east-face-rising-threats" target="_blank" rel="noopener">Fox News</a> — coverage of US defense challenges in the region</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15638345/us-israel-iran-war-oil-prices-trump-gulf-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — live updates on attacks and oil surges</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15637837/Moment-oil-tankers-flames-struck-explosive-Iranian.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — details on the tanker explosions</li>
-<li><a href="https://www.npr.org/2026/03/12/nx-s1-5745689/oil-price-surges-as-iran-steps-up-attacks-on-ships-in-the-persian-gulf" target="_blank" rel="noopener">NPR</a> — market reactions and regional intensification</li>
-</ul>
 <h4 id="2-iranian-heritage-sites-damaged-in-us-israel-bombings">2) Iranian heritage sites damaged in US-Israel bombings</h4>
 <p><strong>What happened (neutral):</strong> Bombing campaigns by the US and Israel have caused damage to ancient sites in Iran, including Tehran's Golestan palace and Isfahan's Chehel Sotoon palace. The governor of Isfahan described it as a "declaration of war on a civilization," despite UNESCO providing coordinates to avoid such targets. Details on the extent of damage remain uncertain without independent verification.</p>
 <p><strong>Perspectives:</strong> Left-leaning sources decry the bombings as cultural vandalism that undermines global heritage preservation efforts, pointing to UNESCO's involvement as evidence of disregard for international norms and calling for accountability to protect civilian and historical sites. Conservative perspectives downplay the incidents as unfortunate but necessary collateral in a defensive war against Iranian aggression, framing the strikes as targeted at military threats rather than intentional destruction. International outlets weave in concerns from cultural experts, highlighting how such damage fuels anti-Western sentiment and complicates post-conflict reconciliation in the region.</p>
@@ -1198,12 +1272,6 @@
 <li>How can heritage sites be better protected during active conflicts?</li>
 <li>What evidence supports claims of intentional versus accidental damage?</li>
 <li>Could this impact long-term diplomatic relations with Iran?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/mar/12/dismay-as-ancient-heritage-sites-across-iran-damaged-in-us-israel-bombing" target="_blank" rel="noopener">The Guardian</a> — reports on specific sites and accusations</li>
-<li><a href="https://www.theguardian.com/us-news/2026/mar/12/pete-hegseth-antipathy-iran" target="_blank" rel="noopener">The Guardian</a> — context on US figures' views toward Iran</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15638577/Irans-new-supreme-leader-obsessed-end-days-humanity.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — background on Iran's leadership amid the war</li>
 </ul>
 <h4 id="3-irans-new-supreme-leader-reportedly-seeks-regional-control">3) Iran's new supreme leader reportedly seeks regional control</h4>
 <p><strong>What happened (neutral):</strong> Mojtaba Khamenei, son of the former Supreme Leader, has taken over and is described as obsessed with apocalyptic scenarios, potentially willing to escalate conflicts to control the region. Reports suggest he is unafraid of causing mass casualties. Verification of his exact policies and influence remains unclear without official confirmations.</p>
@@ -1214,12 +1282,6 @@
 <li>What sources can verify claims about the leader's personal beliefs?</li>
 <li>Could this shift lead to alliances with other regional powers?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15638577/Irans-new-supreme-leader-obsessed-end-days-humanity.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — details on the leader's reported mindset</li>
-<li><a href="https://www.theguardian.com/us-news/2026/mar/12/pete-hegseth-antipathy-iran" target="_blank" rel="noopener">The Guardian</a> — US perspectives on Iran as an enemy</li>
-<li><a href="https://www.foxnews.com/politics/irans-drone-swarms-challenge-us-air-defenses-troops-middle-east-face-rising-threats" target="_blank" rel="noopener">Fox News</a> — related threats from Iranian tactics</li>
-</ul>
 <h4 id="4-iranian-drone-swarms-test-us-defenses-in-middle-east">4) Iranian drone swarms test US defenses in Middle East</h4>
 <p><strong>What happened (neutral):</strong> Cheap Iranian drones are increasingly used in attacks, prompting the Pentagon to enhance air defenses with interceptor drones and laser systems for US troops. This comes amid rising threats in the region. Specific outcomes of recent drone engagements are not detailed in available reports.</p>
 <p><strong>Perspectives:</strong> Conservative sources emphasize the need for advanced US military technology to counter what they see as Iran's asymmetric warfare tactics, praising innovations like lasers as essential for protecting American interests abroad. Broader media discussions highlight the cost-effectiveness of drones for Iran, framing it as a challenge to Western superiority and a sign of evolving warfare that could prolong conflicts. International views raise ethical concerns about escalating arms races, suggesting that such defenses might deter attacks but also provoke more sophisticated Iranian responses.</p>
@@ -1229,12 +1291,6 @@
 <li>What risks do these technologies pose to civilians in conflict zones?</li>
 <li>Could this lead to broader arms proliferation?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.foxnews.com/politics/irans-drone-swarms-challenge-us-air-defenses-troops-middle-east-face-rising-threats" target="_blank" rel="noopener">Fox News</a> — Pentagon responses to drone threats</li>
-<li><a href="https://www.npr.org/2026/03/12/nx-s1-5745689/oil-price-surges-as-iran-steps-up-attacks-on-ships-in-the-persian-gulf" target="_blank" rel="noopener">NPR</a> — context of regional attacks</li>
-<li><a href="https://www.theguardian.com/world/2026/mar/12/dismay-as-ancient-heritage-sites-across-iran-damaged-in-us-israel-bombing" target="_blank" rel="noopener">The Guardian</a> — broader war impacts</li>
-</ul>
 <h4 id="5-pete-hegseth-expresses-strong-anti-iran-views">5) Pete Hegseth expresses strong anti-Iran views</h4>
 <p><strong>What happened (neutral):</strong> US Defense Secretary Pete Hegseth has long described Iran as America's "mortal enemy" in books, speeches, and videos, warning of its nuclear ambitions. This reflects his personal commitment to confronting Iran. No new actions tied to these views are specified.</p>
 <p><strong>Perspectives:</strong> Right-leaning outlets present Hegseth's stance as a principled defense against Iranian threats, aligning with his calls for military readiness to prevent Tehran from dominating the region. Centrist coverage explores how his rhetoric influences US policy, noting it as part of a hawkish approach that could unify allies but risk miscalculations. Left-leaning perspectives critique it as inflammatory, potentially fueling unnecessary wars and overlooking opportunities for negotiation with Iran's leadership.</p>
@@ -1243,12 +1299,6 @@
 <li>How do personal views of officials shape foreign policy?</li>
 <li>What evidence supports claims of Iran's nuclear intentions?</li>
 <li>Could this rhetoric affect US-Iran talks?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/2026/mar/12/pete-hegseth-antipathy-iran" target="_blank" rel="noopener">The Guardian</a> — Hegseth's comments and books</li>
-<li><a href="https://www.foxnews.com/politics/irans-drone-swarms-challenge-us-air-defenses-troops-middle-east-face-rising-threats" target="_blank" rel="noopener">Fox News</a> — related US military context</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15638577/Irans-new-supreme-leader-obsessed-end-days-humanity.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — Iranian leadership views</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-expats-flee-dubai-amid-war-and-prosecutions">1) Expats flee Dubai amid war and prosecutions</h4>
@@ -1260,12 +1310,6 @@
 <li>What protections exist for foreigners filming public events?</li>
 <li>Could similar issues arise in other Gulf states?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15638471/Dubai-finished-Expats-say-leave-never-come-tax-free-dream-shattered-war-officials-begin-prosecuting-people-posting-videos-missiles.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — expat reactions and departures</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15638665/British-tourist-60-filmed-Iranian-missiles-Dubai-facing-two-years-prison-charged-cybercrime-offence.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — specific tourist arrest case</li>
-<li><a href="https://www.theguardian.com/world/2026/mar/12/dismay-as-ancient-heritage-sites-across-iran-damaged-in-us-israel-bombing" target="_blank" rel="noopener">The Guardian</a> — related regional war context</li>
-</ul>
 <h4 id="2-british-tourist-faces-prison-in-dubai-for-filming-missiles">2) British tourist faces prison in Dubai for filming missiles</h4>
 <p><strong>What happened (neutral):</strong> A 60-year-old British man was arrested in Dubai for filming Iranian missiles, charged with a cybercrime, and could face two years in prison despite deleting the video. He insists it was unintentional. Verification of the video's content is unclear.</p>
 <p><strong>Perspectives:</strong> UK-focused media express outrage at the harsh penalty for what seems like innocent tourism, framing it as a clash between free expression and strict local laws amid wartime sensitivities. International reports connect it to broader crackdowns on social media during conflicts, suggesting Dubai's actions protect national security but risk alienating visitors. Conservative views might defend the UAE's right to enforce rules, while left-leaning ones criticize it as authoritarian overreach that stifles information flow.</p>
@@ -1274,12 +1318,6 @@
 <li>What are the cybercrime laws in Dubai regarding filming?</li>
 <li>How can tourists avoid similar legal issues abroad?</li>
 <li>Does this reflect wider censorship trends?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15638665/British-tourist-60-filmed-Iranian-missiles-Dubai-facing-two-years-prison-charged-cybercrime-offence.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — details of the arrest</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15638471/Dubai-finished-Expats-say-leave-never-come-tax-free-dream-shattered-war-officials-begin-prosecuting-people-posting-videos-missiles.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — broader expat context</li>
-<li><a href="https://www.npr.org/2026/03/12/nx-s1-5745689/oil-price-surges-as-iran-steps-up-attacks-on-ships-in-the-persian-gulf" target="_blank" rel="noopener">NPR</a> — regional conflict background</li>
 </ul>
 <h4 id="3-afghan-judge-rejects-divorce-despite-abuse">3) Afghan judge rejects divorce despite abuse</h4>
 <p><strong>What happened (neutral):</strong> Under Taliban laws, a judge denied a woman's divorce request after her husband beat her with a cable, stating that minor beatings are acceptable unless proven obscene. The woman endured humiliation due to a disability. Details of the case's outcome remain limited.</p>
@@ -1290,12 +1328,6 @@
 <li>What international recourse exists for such cases?</li>
 <li>Could this influence global views on Afghanistan?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/global-development/2026/mar/12/a-few-beatings-wont-kill-you-judge-rejects-divorce-request-of-woman-abused-by-husband-in-afghanistan" target="_blank" rel="noopener">The Guardian</a> — details of the case and laws</li>
-<li><a href="https://www.theguardian.com/world/2026/mar/12/dismay-as-ancient-heritage-sites-across-iran-damaged-in-us-israel-bombing" target="_blank" rel="noopener">The Guardian</a> — regional context in Middle East</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15638577/Irans-new-supreme-leader-obsessed-end-days-humanity.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — related leadership ideologies</li>
-</ul>
 <h4 id="4-uk-labour-faces-funding-cuts-from-unions">4) UK Labour faces funding cuts from unions</h4>
 <p><strong>What happened (neutral):</strong> Militant unions like Unite reduced donations to Labour by 40%, or £580,000, demanding PM Keir Starmer shift leftward, sparking fears of a cash crisis. Party warnings suggest alarm bells are ringing. The full impact on Labour's finances is uncertain.</p>
 <p><strong>Perspectives:</strong> Left-wing union supporters view the cuts as necessary leverage to push Starmer toward progressive policies, framing it as a stand against centrist drift that alienates the base. Centrist party insiders express dismay at the internal division, seeing it as a threat to electoral stability and effective governance. Right-leaning coverage portrays this as evidence of Labour's vulnerability to extremist influences, potentially weakening the government's position amid economic challenges.</p>
@@ -1304,12 +1336,6 @@
 <li>How dependent is Labour on union funding?</li>
 <li>What policy changes might unions demand?</li>
 <li>Could this lead to broader party splits?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15638827/Labour-cash-crisis-unions-funding-Starmer-lurch-Left.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — union decisions and warnings</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15638551/Labour-Starmer-Mandelson-PM-Epstein-ambassador.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — related Labour controversies</li>
-<li><a href="https://www.theguardian.com/business/2026/mar/12/dwr-cymru-welsh-water-apologises-ofwat-enforcement-plan-regulator" target="_blank" rel="noopener">The Guardian</a> — UK business context</li>
 </ul>
 <h4 id="5-starmer-grilled-over-mandelsons-epstein-links">5) Starmer grilled over Mandelson's Epstein links</h4>
 <p><strong>What happened (neutral):</strong> Keir Starmer faces questions on ignoring warnings about Peter Mandelson's Epstein ties when appointing him ambassador, amid Labour backlash calling it a "gutter" issue. Junior ministers handled initial responses. Specific documents and outcomes are not fully detailed.</p>
@@ -1320,18 +1346,89 @@
 <li>How might this affect Labour's credibility?</li>
 <li>Are there calls for Mandelson's removal?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15638551/Labour-Starmer-Mandelson-PM-Epstein-ambassador.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — grilling and backlash details</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15633067/ghislaine-maxwell-prison-classes.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — related Epstein network</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15638827/Labour-cash-crisis-unions-funding-Starmer-lurch-Left.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — Labour internal issues</li>
-</ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-welsh-water-fined-for-sewage-failures">1) Welsh Water fined for sewage failures</h4>
 <p><strong>What happened (neutral):</strong> Regulator Ofwat proposed a £44.7m enforcement package against Welsh Water for inadequate wastewater management and oversight breaches. The company apologized for the failures. Long-term fixes and customer impacts are unclear.</p>
 <p><strong>Perspectives:</strong> Consumer advocacy groups welcome the fine as accountability for environmental neglect, pushing for stricter regulations to prevent pollution. Business-oriented views see it as</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.foxnews.com/politics/irans-drone-swarms-challenge-us-air-defenses-troops-middle-east-face-rising-threats" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=foxnews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">foxnews.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15638345/us-israel-iran-war-oil-prices-trump-gulf-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15637837/Moment-oil-tankers-flames-struck-explosive-Iranian.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.npr.org/2026/03/12/nx-s1-5745689/oil-price-surges-as-iran-steps-up-attacks-on-ships-in-the-persian-gulf" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/mar/12/dismay-as-ancient-heritage-sites-across-iran-damaged-in-us-israel-bombing" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/2026/mar/12/pete-hegseth-antipathy-iran" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15638577/Irans-new-supreme-leader-obsessed-end-days-humanity.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15638471/Dubai-finished-Expats-say-leave-never-come-tax-free-dream-shattered-war-officials-begin-prosecuting-people-posting-videos-missiles.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15638665/British-tourist-60-filmed-Iranian-missiles-Dubai-facing-two-years-prison-charged-cybercrime-offence.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/global-development/2026/mar/12/a-few-beatings-wont-kill-you-judge-rejects-divorce-request-of-woman-abused-by-husband-in-afghanistan" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15638827/Labour-cash-crisis-unions-funding-Starmer-lurch-Left.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15638551/Labour-Starmer-Mandelson-PM-Epstein-ambassador.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/business/2026/mar/12/dwr-cymru-welsh-water-apologises-ofwat-enforcement-plan-regulator" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15633067/ghislaine-maxwell-prison-classes.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1682,10 +1779,67 @@ That's Omni View. For full source links and more context, check out today's writ
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

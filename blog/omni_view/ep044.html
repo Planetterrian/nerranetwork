@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Reform UK secures its first council and hundreds of seats in UK local elections while Labour suffers… — Episode 44</h1>
+            <h1><span class="nn-i18n-title">Reform UK secures its first council and hundreds of seats in UK local elections while Labour suffers…</span> — Episode 44</h1>
             
             <p class="blog-hero-hook">Reform UK secures its first council and hundreds of seats in UK local elections while Labour suffers notable losses.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1202,11 +1283,6 @@
 <li>What turnout levels were recorded in the affected areas?</li>
 <li>Which policy areas appear to have driven the shifts?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15797643/uk-local-elections-results-labour-green-reform-conservatives-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Live seat-by-seat updates</li>
-<li><a href="https://www.dailymail.com/news/article-15598725/UK-2026-local-election-results-Live-maps-charts.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Interactive maps and charts</li>
-</ul>
 <h4 id="2-trump-expresses-concern-over-spreading-hantavirus">2) Trump expresses concern over spreading hantavirus</h4>
 <p><strong>What happened (neutral):</strong> President Trump stated he is worried about a hantavirus outbreak after two British nationals were confirmed infected and a third case is suspected. The UK Health Security Agency has been monitoring the situation.</p>
 <p><strong>Perspectives:</strong> Daily Mail coverage emphasizes the potential cross-border health risk and Trump’s direct comments. Public health authorities focus on containment measures rather than political statements. The facts on confirmed cases are consistent across reports; interpretations center on how seriously governments should treat the spread.</p>
@@ -1215,10 +1291,6 @@
 <li>What transmission routes are health agencies prioritizing?</li>
 <li>How are travel advisories being updated?</li>
 <li>What symptoms should the public watch for?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15800661/Trump-says-hes-worried-Hantavirus-outbreak-virus-spreads-Brit-feared-infected.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Details on confirmed cases</li>
 </ul>
 <h4 id="3-missing-air-force-general-linked-to-ufo-whistleblower-claims">3) Missing Air Force general linked to UFO whistleblower claims</h4>
 <p><strong>What happened (neutral):</strong> A UFO whistleblower alleges that a missing U.S. Air Force general was set to testify before Congress about secret programs but disappeared shortly after an order to release related files.</p>
@@ -1229,10 +1301,6 @@
 <li>How are missing-person cases involving senior officers typically handled?</li>
 <li>What public records exist on prior UFO-related disclosures?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/sciencetech/article-15798899/missing-air-force-general-ufo-programs-mccasland.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Whistleblower allegations</li>
-</ul>
 <h4 id="4-nintendo-raises-switch-2-price-amid-memory-shortages">4) Nintendo raises Switch 2 price amid memory shortages</h4>
 <p><strong>What happened (neutral):</strong> Nintendo announced it will increase the U.S. price of the Switch 2 from $449.99 to $499.99 and raise the Japanese price from 49,980 yen to 59,980 yen, citing a memory chip shortage that is also expected to reduce overall sales.</p>
 <p><strong>Perspectives:</strong> CNBC coverage stresses supply-chain constraints affecting consumer electronics broadly. Nintendo’s statement centers on maintaining product quality despite higher component costs. Both reports agree on the price change and sales forecast; they differ on how long the memory crunch may last.</p>
@@ -1242,10 +1310,6 @@
 <li>What alternatives are consumers considering?</li>
 <li>How have previous Nintendo price adjustments performed?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/08/nintendo-switch-2-price-hike-sales-fall-memory-crunch.html" target="_blank" rel="noopener">CNBC</a> — Company statement and market context</li>
-</ul>
 <h4 id="5-tech-stocks-seen-as-offering-strong-value-after-earnings">5) Tech stocks seen as offering strong value after earnings</h4>
 <p><strong>What happened (neutral):</strong> Analysts note that a series of strong corporate earnings has allowed many technology stocks to “grow into” their valuations, potentially making them more attractive than in recent years.</p>
 <p><strong>Perspectives:</strong> CNBC reporting highlights improved fundamentals supporting current prices. Market observers caution that valuations remain sensitive to interest-rate movements. The earnings data itself is not disputed; views diverge on whether the sector’s growth can continue at the same pace.</p>
@@ -1254,10 +1318,6 @@
 <li>Which earnings metrics are most influential for tech valuations?</li>
 <li>How do interest-rate expectations interact with stock prices?</li>
 <li>What historical periods show similar “catch-up” valuation shifts?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/08/us-tech-stocks-cheap-stellar-earnings-where-next.html" target="_blank" rel="noopener">CNBC</a> — Analyst commentary</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-australian-woman-charged-with-joining-islamic-state-refused-bail">1) Australian woman charged with joining Islamic State refused bail</h4>
@@ -1269,10 +1329,6 @@
 <li>How are returned foreign fighters typically monitored?</li>
 <li>What support services exist for families involved in these cases?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/may/08/woman-charged-with-joining-islamic-state-syria-sydney-royal-commission-antisemitism-hearings-anthony-albanese-labor-angus-taylor-coalition-farrer-byelection-nsw-victoria-queensland-politics-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — Court and security updates</li>
-</ul>
 <h4 id="2-prince-harry-marks-david-attenboroughs-100th-birthday">2) Prince Harry marks David Attenborough’s 100th birthday</h4>
 <p><strong>What happened (neutral):</strong> Prince Harry described Sir David Attenborough as “a secular saint” and “as essential to the national fabric as a cup of tea,” praising his environmental advocacy and connection with younger audiences.</p>
 <p><strong>Perspectives:</strong> Daily Mail coverage presents the tribute as a personal reflection on climate messaging. Broader commentary notes Attenborough’s long-standing role in public education. The content of the tribute is not contested; interpretations vary on its timing relative to ongoing environmental debates.</p>
@@ -1281,10 +1337,6 @@
 <li>How has Attenborough’s messaging evolved over decades?</li>
 <li>What role do public figures play in environmental awareness?</li>
 <li>How do different generations respond to his programs?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/royals/article-15800669/Prince-Harry-David-Attenborough-tribute-secular-saint.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Full tribute text</li>
 </ul>
 <h4 id="3-david-attenborough-turns-100-with-reflections-on-career">3) David Attenborough turns 100 with reflections on career</h4>
 <p><strong>What happened (neutral):</strong> Sir David Attenborough said he had expected to celebrate his 100th birthday quietly but expressed gratitude for widespread well-wishes while reflecting on his broadcasting life.</p>
@@ -1295,10 +1347,6 @@
 <li>How has public interest in nature documentaries shifted?</li>
 <li>Which of Attenborough’s series remain most referenced today?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15797543/David-Attenborough-best-moments-camera-wolf-howls-capercaillie.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Career highlights</li>
-</ul>
 <h4 id="4-chelsea-residents-protest-whole-foods-delivery-traffic">4) Chelsea residents protest Whole Foods delivery traffic</h4>
 <p><strong>What happened (neutral):</strong> Wealthy Chelsea residents claim an “army” of heavy goods vehicles delivering to Whole Foods has damaged walls, trees, and pavements, turning their street into an industrial zone.</p>
 <p><strong>Perspectives:</strong> Daily Mail reporting gives voice to local complaints about noise and property damage. Company representatives have not issued a detailed public response in available coverage. The volume of truck movements is documented in resident accounts; disagreement centers on acceptable commercial activity in residential areas.</p>
@@ -1308,10 +1356,6 @@
 <li>How do other cities balance retail logistics with resident quality of life?</li>
 <li>What mitigation measures have been proposed?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15795345/Whole-Foods-turned-Chelsea-street-industrial-estate-Wealthy-residents-say-army-HGV-delivery-trucks-demolishing-walls-ripping-trees-ruining-pavements.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Resident statements</li>
-</ul>
 <h4 id="5-boxing-promoter-frank-warren-discusses-split-loyalties">5) Boxing promoter Frank Warren discusses split loyalties</h4>
 <p><strong>What happened (neutral):</strong> Promoter Frank Warren wrote about the difficulty of supporting both Fabio Wardley and Daniel Dubois ahead of their heavyweight title fight.</p>
 <p><strong>Perspectives:</strong> BBC Sport coverage presents Warren’s column as an insider view of promotional conflicts. The piece acknowledges the commercial and personal tensions involved. The factual existence of the upcoming bout is undisputed; commentary focuses on the promoter’s divided role.</p>
@@ -1320,10 +1364,6 @@
 <li>How common are promoter conflicts in combat sports?</li>
 <li>What rules govern a promoter’s public statements before a fight?</li>
 <li>How do fighters typically navigate divided promotional loyalties?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/sport/boxing/articles/cn4p8y4xe32o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Warren’s column</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-ecbs-lagarde-warns-on-euro-denominated-stablecoins">1) ECB’s Lagarde warns on euro-denominated stablecoins</h4>
@@ -1335,10 +1375,6 @@
 <li>How do central banks currently monitor monetary-policy transmission?</li>
 <li>What precedents exist for regulating new payment technologies?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-08/lagarde-sees-euro-stablecoin-risks-for-banking-monetary-policy" target="_blank" rel="noopener">Bloomberg</a> — Lagarde remarks</li>
-</ul>
 <h4 id="2-vale-cfo-notes-resilient-iron-ore-demand-from-china">2) Vale CFO notes resilient iron-ore demand from China</h4>
 <p><strong>What happened (neutral):</strong> Vale’s chief financial officer Marcelo Bacci said strong Chinese demand continues to support the iron-ore market despite disappointing first-quarter results and potential inflationary effects from Middle East tensions.</p>
 <p><strong>Perspectives:</strong> Bloomberg coverage highlights the contrast between current demand strength and longer-term risks. The company’s results are presented as mixed. The demand data is accepted; interpretations focus on how prolonged conflict could eventually affect prices.</p>
@@ -1347,10 +1383,6 @@
 <li>How does Chinese steel production influence global iron-ore prices?</li>
 <li>What hedging strategies do mining firms use against geopolitical risk?</li>
 <li>How have past Middle East tensions affected commodity markets?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-05-08/vale-cfo-on-china-iron-ore-outlook-video" target="_blank" rel="noopener">Bloomberg</a> — Interview summary</li>
 </ul>
 <h4 id="3-analysts-see-renewed-value-in-tech-stocks-post-earnings">3) Analysts see renewed value in tech stocks post-earnings</h4>
 <p><strong>What happened (neutral):</strong> Following a strong earnings season, analysts suggest technology stocks may now represent better value than they have in several years as companies have grown into prior valuations.</p>
@@ -1399,10 +1431,6 @@
 <li>What role do fashion and media outlets play in awards season?</li>
 <li>How are nominees typically selected for such events?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15800015/Chloe-Kelly-puts-racy-display-sheer-black-gown-joins-nominees-Rose-Ayling-Ellis-Jodie-Whittaker-British-Vogue-Netflixs-BAFTA-TV-Awards-party.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Red-carpet details</li>
-</ul>
 <h4 id="2-amanda-abbington-and-fiancé-reach-settlement-with-americas-got-talent">2) Amanda Abbington and fiancé reach settlement with America’s Got Talent</h4>
 <p><strong>What happened (neutral):</strong> Amanda Abbington’s fiancé, former stuntman Jonathan Goodwin, has settled his legal action against the producers of America’s Got Talent, bringing a positive resolution after earlier difficulties.</p>
 <p><strong>Perspectives:</strong> Daily Mail columnist Alison Boshoff frames the outcome as a happy ending for the couple. Coverage notes the financial and emotional relief provided by the settlement. The fact of the settlement is clear; interpretations focus on closure after a challenging period.</p>
@@ -1411,10 +1439,6 @@
 <li>What typical legal pathways exist for performers injured on set?</li>
 <li>How do settlements affect public perception of television productions?</li>
 <li>What support systems are available for stunt professionals?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15800061/ALISON-BOSHOFF-Amanda-Abbington-payout-stuntman-fiance.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Settlement announcement</li>
 </ul>
 <h4 id="3-blake-lively-reportedly-sought-settlement-in-ongoing-dispute">3) Blake Lively reportedly sought settlement in ongoing dispute</h4>
 <p><strong>What happened (neutral):</strong> Reports indicate Blake Lively was eager to reach a settlement in her legal matter involving Justin Baldoni, with commentary suggesting both parties sought to move past public conflict.</p>
@@ -1427,6 +1451,88 @@
 </ul>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.dailymail.com/news/article-15797643/uk-local-elections-results-labour-green-reform-conservatives-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15598725/UK-2026-local-election-results-Live-maps-charts.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15800661/Trump-says-hes-worried-Hantavirus-outbreak-virus-spreads-Brit-feared-infected.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/sciencetech/article-15798899/missing-air-force-general-ufo-programs-mccasland.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/05/08/nintendo-switch-2-price-hike-sales-fall-memory-crunch.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/05/08/us-tech-stocks-cheap-stellar-earnings-where-next.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/live/2026/may/08/woman-charged-with-joining-islamic-state-syria-sydney-royal-commission-antisemitism-hearings-anthony-albanese-labor-angus-taylor-coalition-farrer-byelection-nsw-victoria-queensland-politics-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/royals/article-15800669/Prince-Harry-David-Attenborough-tribute-secular-saint.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15797543/David-Attenborough-best-moments-camera-wolf-howls-capercaillie.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15795345/Whole-Foods-turned-Chelsea-street-industrial-estate-Wealthy-residents-say-army-HGV-delivery-trucks-demolishing-walls-ripping-trees-ruining-pavements.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/sport/boxing/articles/cn4p8y4xe32o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-08/lagarde-sees-euro-stablecoin-risks-for-banking-monetary-policy" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-05-08/vale-cfo-on-china-iron-ore-outlook-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15800015/Chloe-Kelly-puts-racy-display-sheer-black-gown-joins-nominees-Rose-Ayling-Ellis-Jodie-Whittaker-British-Vogue-Netflixs-BAFTA-TV-Awards-party.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15800061/ALISON-BOSHOFF-Amanda-Abbington-payout-stuntman-fiance.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1843,10 +1949,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

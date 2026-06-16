@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Iran's Revolutionary Guards have threatened US sites in the Middle East if its tankers face attack… — Episode 46</h1>
+            <h1><span class="nn-i18n-title">Iran's Revolutionary Guards have threatened US sites in the Middle East if its tankers face attack…</span> — Episode 46</h1>
             
             <p class="blog-hero-hook">Iran's Revolutionary Guards have threatened US sites in the Middle East if its tankers face attack, as Washington awaits Tehran's reply on a proposed peace deal.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1210,11 +1291,6 @@
 <li>How do past similar warnings from the Guards align with actual military movements?</li>
 <li>Which regional actors could be most affected if shipping routes face disruption?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/may/10/iran-threatens-us-sites-in-middle-east-if-tankers-come-under-fire" target="_blank" rel="noopener">The Guardian</a> — Details the Guards' exact wording and context of US-Iran exchanges</li>
-<li><a href="https://www.france24.com/en/middle-east/20260510-live-iran-s-guards-threaten-us-sites-in-the-region-if-its-tankers-come-under-fire" target="_blank" rel="noopener">France 24</a> — Live updates on the threat and waiting period for Iran's reply</li>
-</ul>
 <h4 id="2-prague-football-derby-abandoned-after-fans-invade-pitch">2) Prague football derby abandoned after fans invade pitch</h4>
 <p><strong>What happened (neutral):</strong> The Czech league match between Slavia Prague and Sparta Prague was halted in stoppage time when hundreds of home supporters stormed the field while Slavia led 3-2 and were close to securing the title. Fans breached barriers, carried flares, and threw pyrotechnics toward the away section, forcing players from both teams to leave the pitch. Slavia's chairman called the incident a disgrace, and the visiting goalkeeper announced plans to pursue legal action.</p>
 <p><strong>Perspectives:</strong> The Guardian frames the event as a failure of stadium security at a high-stakes title-deciding match, stressing the danger to players and officials. Club statements from Slavia focus on condemning the small group responsible while defending the majority of fans, whereas Sparta representatives highlight the threat to their players. Both clubs agree the match cannot continue under current conditions; they differ on assigning primary responsibility between security arrangements and supporter behavior.</p>
@@ -1223,10 +1299,6 @@
 <li>What measures were in place to prevent pitch invasions at this venue?</li>
 <li>How have similar incidents in other European leagues been handled by authorities?</li>
 <li>What impact could this have on the league title race and future fixtures?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/football/2026/may/10/slavia-sparta-prague-derby-abandoned-fans-storm-pitch-title" target="_blank" rel="noopener">The Guardian</a> — Full match report and statements from players and officials</li>
 </ul>
 <h4 id="3-london-rally-calls-on-silent-majority-to-oppose-antisemitism">3) London rally calls on silent majority to oppose antisemitism</h4>
 <p><strong>What happened (neutral):</strong> Organizers invited political leaders to a central London rally described as a "million mensch march" to stand against antisemitism, backed by more than 30 Jewish groups. Prime Minister Keir Starmer is considering attendance, Conservative leader Kemi Badenoch is expected to speak, and Liberal Democrat leader Ed Davey has also been invited. An open letter has criticized the inclusion of Nigel Farage, warning of associations with inflammatory rhetoric.</p>
@@ -1237,10 +1309,6 @@
 <li>How do organizers plan to maintain focus on antisemitism amid political disagreements?</li>
 <li>Which groups are coordinating security and logistics for the march?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/uk-news/2026/may/10/downing-street-rally-asks-silent-majority-to-fight-antisemitism" target="_blank" rel="noopener">The Guardian</a> — Details on invitations, the open letter, and expected speakers</li>
-</ul>
 <h4 id="4-jihadist-attacks-kill-dozens-in-central-mali">4) Jihadist attacks kill dozens in central Mali</h4>
 <p><strong>What happened (neutral):</strong> Armed groups launched coordinated assaults on villages in central Mali, killing dozens according to local and security sources. One official stated the recent wave has pushed the death toll above 70 in recent days as Islamist fighters target multiple communities. The attacks reflect an intensification of activity by armed groups in the region.</p>
 <p><strong>Perspectives:</strong> France 24 presents the violence as part of a broader pattern of expanding insurgent control in central Mali, drawing on local accounts of repeated village raids. Security sources emphasize the challenge of protecting dispersed rural populations, while community leaders call for increased external support. Both local officials and international observers agree casualties are rising; they differ on the most effective mix of military and development responses.</p>
@@ -1250,10 +1318,6 @@
 <li>What previous international missions have operated in central Mali?</li>
 <li>How are neighboring countries responding to the cross-border risks?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/africa/20260510-dozens-killed-in-jihadist-attacks-in-central-mali" target="_blank" rel="noopener">France 24</a> — Reports on casualty figures and regional context</li>
-</ul>
 <h4 id="5-macron-begins-east-africa-tour-to-reset-frances-regional-role">5) Macron begins East Africa tour to reset France's regional role</h4>
 <p><strong>What happened (neutral):</strong> French President Emmanuel Macron started a tour of East African nations aimed at strengthening economic and security partnerships. The visit seeks to counter growing anti-French sentiment while exploring new cooperation models after years of strained relations in parts of the continent. Paris has signaled willingness to adapt its approach to local priorities.</p>
 <p><strong>Perspectives:</strong> Al Jazeera describes the tour as an attempt by France to reposition itself amid shifting African alliances and reduced military footprints. African governments involved have welcomed dialogue on trade but remain cautious about security arrangements. Both French officials and regional partners agree past cooperation needs updating; they differ on the pace and depth of any new framework.</p>
@@ -1262,10 +1326,6 @@
 <li>Which countries are included in the current itinerary?</li>
 <li>What economic projects are under discussion during the stops?</li>
 <li>How have recent security incidents influenced the agenda?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/news/2026/5/10/macron-tours-east-africa-amid-push-to-redefine-frances-role-in-africa?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Overview of goals and stops on the tour</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-bafta-tv-awards-prepare-for-sunday-ceremony-after-earlier-slur-incident">1) Bafta TV awards prepare for Sunday ceremony after earlier slur incident</h4>
@@ -1277,10 +1337,6 @@
 <li>How have nominees and presenters responded to the updated guidelines?</li>
 <li>What lessons from February are being applied to live production?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/film/2026/may/10/bafta-doubles-down-on-preparations-for-sunday-tv-awards-after-n-word-fallout" target="_blank" rel="noopener">The Guardian</a> — Details on preparations and previous fallout</li>
-</ul>
 <h4 id="2-woman-charged-over-alleged-antisemitic-comments-at-sydney-childrens-netball-game">2) Woman charged over alleged antisemitic comments at Sydney children's netball game</h4>
 <p><strong>What happened (neutral):</strong> Police in New South Wales charged a woman with using offensive language after reports of antisemitic remarks directed at participants during an under-12s netball match in Maroubra. The incident involved a Jewish-led team and occurred at Heffron Park on Saturday morning. Officers responded to complaints from those present at the game.</p>
 <p><strong>Perspectives:</strong> The Guardian reports the event as part of wider concerns about antisemitism appearing in everyday community settings, including youth sports. Local police emphasize swift response to reported abuse, while community representatives stress the impact on children. Both authorities and affected families agree offensive language has no place at junior events; they differ on the most effective prevention strategies in public spaces.</p>
@@ -1289,10 +1345,6 @@
 <li>What exact language was reported to police?</li>
 <li>How are sports clubs in the area reviewing their safeguarding policies?</li>
 <li>What support is available for the young players involved?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/may/10/police-investigate-alleged-antisemitic-abuse-at-childrens-netball-game-in-sydney-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — Account of the incident and police action</li>
 </ul>
 <h4 id="3-alex-fitzpatrick-takes-lead-at-truist-championship">3) Alex Fitzpatrick takes lead at Truist Championship</h4>
 <p><strong>What happened (neutral):</strong> Alex Fitzpatrick carded a seven-under-par 64 to move one shot ahead of the field heading into the final round of the Truist Championship at Quail Hollow. Rory McIlroy, who had been in contention, slipped back after a weaker third round. The tournament concludes on Sunday.</p>
@@ -1303,10 +1355,6 @@
 <li>How has Fitzpatrick performed in previous PGA Tour events this season?</li>
 <li>What is the prize and ranking significance of this tournament?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/sport/golf/articles/cx21qev2w0ko?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Live leaderboard and round analysis</li>
-</ul>
 <h4 id="4-sean-strickland-defeats-khamzat-chimaev-by-split-decision-at-ufc-328">4) Sean Strickland defeats Khamzat Chimaev by split decision at UFC 328</h4>
 <p><strong>What happened (neutral):</strong> Sean Strickland won a split decision victory over Khamzat Chimaev at UFC 328, with two judges scoring 48-47 for Strickland and one giving 47-48 to Chimaev. The fight did not meet pre-event expectations for excitement or decisive action. Both fighters remained standing throughout most of the contest.</p>
 <p><strong>Perspectives:</strong> Al Jazeera reports the outcome as a tactical but low-output bout that disappointed many viewers expecting a more aggressive clash. Strickland's team highlighted defensive discipline, while Chimaev's camp pointed to moments of control that they believe warranted a different result. Both sides agree the scoring was close; they differ on which fighter dictated the pace more effectively.</p>
@@ -1316,10 +1364,6 @@
 <li>How does this result affect both athletes' rankings in the middleweight division?</li>
 <li>What adjustments might each camp make for future matchups?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/sports/2026/5/10/strickland-vs-chimaev-ufc-328-strickland-downs-chimaev-on-split?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Fight breakdown and judge scores</li>
-</ul>
 <h4 id="5-daniel-dubois-stops-fabio-wardley-to-claim-wbo-heavyweight-title">5) Daniel Dubois stops Fabio Wardley to claim WBO heavyweight title</h4>
 <p><strong>What happened (neutral):</strong> Daniel Dubois recovered from two early knockdowns to stop Fabio Wardley in the 11th round and capture the WBO heavyweight championship. The fight took place under intense pressure after the initial setbacks. Dubois improved his record with the victory.</p>
 <p><strong>Perspectives:</strong> Al Jazeera frames the win as a demonstration of resilience, noting Dubois's ability to turn the contest around after being hurt. Wardley's team acknowledges the stoppage while highlighting the competitiveness of the first half. Both fighters agree the title changed hands on merit; they differ on whether Wardley could have pressed his early advantage further.</p>
@@ -1328,10 +1372,6 @@
 <li>What punch sequence led to the stoppage in the 11th round?</li>
 <li>How does this result position Dubois for potential unification bouts?</li>
 <li>What recovery timeline is expected for Wardley?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/sports/2026/5/10/dubois-stops-wardley-in-11th-round-to-take-wbo-heavyweight-boxing-title?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Round-by-round summary and post-fight comments</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-six-used-cars-dealers-avoid-due-to-high-repair-costs">1) Six used cars dealers avoid due to high repair costs</h4>
@@ -1343,10 +1383,6 @@
 <li>What common repair issues drive dealers to avoid these cars?</li>
 <li>How can buyers verify a vehicle's service history before purchase?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/money/cars/article-15798483/The-six-used-cars-dealers-wont-touch-theyre-expensive-fix-you-one.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Full list and cost examples</li>
-</ul>
 <h4 id="2-pension-scam-warnings-issued-over-new-inheritance-tax-rules">2) Pension scam warnings issued over new inheritance tax rules</h4>
 <p><strong>What happened (neutral):</strong> Fraudsters are contacting pension holders with offers to move savings overseas to avoid upcoming UK inheritance tax changes effective next April. Regulators warn that such schemes often involve high-risk or nonexistent investments. Savers are urged to verify any advice through official channels.</p>
 <p><strong>Perspectives:</strong> The Guardian reports the scam tactics as exploiting anxiety about the new rules that will bring defined contribution pensions into the IHT net. Financial advisers stress the importance of regulated guidance, while authorities highlight patterns seen in previous pension fraud waves. Both regulators and consumer groups agree legitimate advice exists; they differ on how quickly individuals should act on unsolicited offers.</p>
@@ -1356,10 +1392,6 @@
 <li>Which organizations are best placed to provide verified pension advice?</li>
 <li>What red flags indicate a potential scam in these calls?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/money/2026/may/10/pension-scams-inheritance-tax-loopholes-iht-rules-savings" target="_blank" rel="noopener">The Guardian</a> — Explanation of the tax change and typical scam approaches</li>
-</ul>
 <h4 id="3-data-centers-expand-rapidly-with-energy-and-security-concerns">3) Data centers expand rapidly with energy and security concerns</h4>
 <p><strong>What happened (neutral):</strong> Thousands of new data centers are being constructed worldwide to support digital growth, yet their high energy use and infrastructure vulnerabilities have drawn attention. Recent conflicts have illustrated how dependent modern societies are on these facilities remaining operational. Operators face pressure to balance expansion with sustainability and resilience.</p>
 <p><strong>Perspectives:</strong> Deutsche Welle describes the boom as essential for digitalization while noting the environmental and strategic costs. Industry reports emphasize economic benefits, whereas security analysts focus on exposure to physical and cyber risks. Both developers and critics agree demand is rising sharply; they differ on acceptable trade-offs for energy consumption and site protection.</p>
@@ -1368,10 +1400,6 @@
 <li>What is the typical power demand of a large-scale data center?</li>
 <li>How are governments regulating new facility locations and energy sourcing?</li>
 <li>What backup systems exist for critical data infrastructure?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dw.com/en/data-centers-tech-boom-with-downsides/a-77106191?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener">Deutsche Welle</a> — Analysis of growth trends and vulnerabilities</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-data-centers-face-scrutiny-over-energy-use-and-resilience">1) Data centers face scrutiny over energy use and resilience</h4>
@@ -1402,10 +1430,6 @@
 <li>How has Cumberbatch responded publicly since the video emerged?</li>
 <li>What broader debates about cyclist behavior does this incident reflect?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15798479/Benedict-Cumberbatch-branded-deluded-liar-accused-repeatedly-breaking-law-gets-blazing-row-fellow-cyclist.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Description of the argument and video evidence</li>
-</ul>
 <h4 id="3-amanda-holden-wears-sheer-dress-at-britains-got-talent-semi-final">3) Amanda Holden wears sheer dress at Britain's Got Talent semi-final</h4>
 <p><strong>What happened (neutral):</strong> Amanda Holden appeared in a shimmering sheer outfit during the live semi-final of Britain's Got Talent on Saturday evening. The look drew attention for its bold design while remaining within broadcast guidelines. The show continued its regular format with performances and judging.</p>
 <p><strong>Perspectives:</strong> Mail Online focuses on the visual impact of the dress and Holden's confidence in wearing it on live television. Fashion commentary notes the trend of statement outfits on talent shows, while some viewers expressed surprise at the level of transparency. Both the production and Holden appear comfortable with the choice; they differ from more conservative audience members on appropriate red-carpet and stage attire.</p>
@@ -1414,10 +1438,6 @@
 <li>What other outfits were worn by presenters and judges that evening?</li>
 <li>How do talent shows typically set dress codes for live broadcasts?</li>
 <li>What audience reactions have been recorded on social media?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15804427/Amanda-Holden-flashes-underwear-Britains-Got-Talent.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Details of the appearance and show context</li>
 </ul>
 <h3 id="top-gossip-stories-3">Top gossip stories (3)</h3>
 <h4 id="1-david-morrissey-credits-late-night-call-with-saving-him-from-alcoholism">1) David Morrissey credits late-night call with saving him from alcoholism</h4>
@@ -1428,10 +1448,6 @@
 <li>What specific circumstances prompted the late-night call?</li>
 <li>How has Morrissey described his father's influence on his own habits?</li>
 <li>What resources does he recommend for others in similar situations?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15804401/David-Morrissey-says-late-night-call-friend-saved-depths-alcoholism.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Full interview excerpts</li>
 </ul>
 <h4 id="2-amanda-holden-stuns-in-sheer-dress-at-britains-got-talent">2) Amanda Holden stuns in sheer dress at Britain's Got Talent</h4>
 <p><strong>What happened (neutral):</strong> Presenter Amanda Holden, aged 55, wore a daring sheer gown that revealed underwear during the live semi-final of Britain's Got Talent. The choice generated immediate online discussion while the show proceeded with its scheduled acts. Holden has a history of bold fashion statements on the program.</p>
@@ -1457,6 +1473,98 @@
 <p>Cross-reference claims about international threats against official government releases and multiple independent wire services rather than relying on any single outlet. Primary documents such as statements from the Revolutionary Guards or US State Department briefings provide clearer context than secondary interpretations. Checking timelines of confirmed incidents against reported warnings helps distinguish between rhetoric and documented developments.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.theguardian.com/world/2026/may/10/iran-threatens-us-sites-in-middle-east-if-tankers-come-under-fire" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/middle-east/20260510-live-iran-s-guards-threaten-us-sites-in-the-region-if-its-tankers-come-under-fire" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/football/2026/may/10/slavia-sparta-prague-derby-abandoned-fans-storm-pitch-title" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/uk-news/2026/may/10/downing-street-rally-asks-silent-majority-to-fight-antisemitism" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/africa/20260510-dozens-killed-in-jihadist-attacks-in-central-mali" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/5/10/macron-tours-east-africa-amid-push-to-redefine-frances-role-in-africa?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/film/2026/may/10/bafta-doubles-down-on-preparations-for-sunday-tv-awards-after-n-word-fallout" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/may/10/police-investigate-alleged-antisemitic-abuse-at-childrens-netball-game-in-sydney-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/sport/golf/articles/cx21qev2w0ko?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/sports/2026/5/10/strickland-vs-chimaev-ufc-328-strickland-downs-chimaev-on-split?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/sports/2026/5/10/dubois-stops-wardley-in-11th-round-to-take-wbo-heavyweight-boxing-title?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/money/cars/article-15798483/The-six-used-cars-dealers-wont-touch-theyre-expensive-fix-you-one.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/money/2026/may/10/pension-scams-inheritance-tax-loopholes-iht-rules-savings" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dw.com/en/data-centers-tech-boom-with-downsides/a-77106191?maca=en-rss-en-top-1022-xml-mrss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dw.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dw.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15798479/Benedict-Cumberbatch-branded-deluded-liar-accused-repeatedly-breaking-law-gets-blazing-row-fellow-cyclist.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15804427/Amanda-Holden-flashes-underwear-Britains-Got-Talent.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15804401/David-Morrissey-says-late-night-call-friend-saved-depths-alcoholism.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1853,10 +1961,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

@@ -107,7 +107,12 @@
       "url": "https://nerranetwork.com/omni-view.html"
     },
     "image": "https://nerranetwork.com/assets/covers/omni-view.jpg",
-    "transcript": "https://nerranetwork.com/blog/omni_view/ep078.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/omni_view/ep078.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://audio.nerranetwork.com/omni_view/Omni_View_Ep078_20260611.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -708,6 +713,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +818,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1181,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>US airstrikes on Iran have entered a second day, raising the risk of broader regional conflict and h… — Episode 78</h1>
+            <h1><span class="nn-i18n-title">US airstrikes on Iran have entered a second day, raising the risk of broader regional conflict and h…</span> — Episode 78</h1>
             
             <p class="blog-hero-hook">US airstrikes on Iran have entered a second day, raising the risk of broader regional conflict and higher global energy costs.</p>
             
@@ -1129,6 +1212,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1194,11 +1280,6 @@
 <li>How are neutral shipping lanes being affected?</li>
 <li>Which diplomatic channels remain open?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/06/11/g-s1-127423/up-first-newsletter-us-iran-war-inflation-rates-world-cup" target="_blank" rel="noopener">NPR</a> — Daily newsletter summary of strikes and context</li>
-<li><a href="https://www.theguardian.com/world/live/2026/jun/11/iran-war-news-us-strikes-donald-trump-stalled-peace-talks-middle-east-crisis" target="_blank" rel="noopener">The Guardian</a> — Live updates on regional responses</li>
-</ul>
 <h4 id="2-asylum-seeker-jailed-for-rape-of-teenager">2) Asylum seeker jailed for rape of teenager</h4>
 <p><strong>What happened (neutral):</strong> Sheraz Malik, 28, a Pakistani national, was sentenced to 14 years after a jury convicted him of two counts of rape. The attack occurred last summer in Sutton-in-Ashfield against a vulnerable 18-year-old victim. Malik’s immigration status became public after the conviction.</p>
 <p><strong>Perspectives:</strong> BBC reporting centers on the court outcome and jury verdict without broader commentary. The Mail Online highlights the perpetrator’s asylum claim and questions how entry was granted. Both outlets agree on the conviction and sentence; they differ on whether the case primarily illustrates failures in the justice system or in border screening processes.</p>
@@ -1207,11 +1288,6 @@
 <li>What details of the trial were presented to the jury?</li>
 <li>How was the victim’s vulnerability established in court?</li>
 <li>What steps followed the disclosure of immigration status?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/c8e2wrre87wo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Court reporting on conviction and sentence</li>
-<li><a href="https://www.dailymail.com/news/article-15891441/Asylum-seeker-raped-vulnerable-teenager-park-asking-did-you-enjoy-sentenced-x.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Additional background on the case</li>
 </ul>
 <h4 id="3-andy-burnham-reverses-course-on-waspi-compensation-pledge">3) Andy Burnham reverses course on WASPI compensation pledge</h4>
 <p><strong>What happened (neutral):</strong> Greater Manchester mayor Andy Burnham stated hours after a hustings event that he does not support national payouts to women affected by state pension age changes. The clarification followed an earlier indication of backing a £10 billion compensation package.</p>
@@ -1222,10 +1298,6 @@
 <li>Which groups are tracking the compensation campaign?</li>
 <li>How might this affect similar pension disputes?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15891141/Labour-Andy-Burnham-pensions-compensation-WASPI-women-student-loans-relief.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Timeline of the statements</li>
-</ul>
 <h4 id="4-democrats-prepare-messaging-on-potential-midterm-interference">4) Democrats prepare messaging on potential midterm interference</h4>
 <p><strong>What happened (neutral):</strong> Democratic strategists are developing responses to concerns that Donald Trump or foreign actors could attempt to disrupt the 2026 midterms. Discussions include legal options and public messaging around election certification rules.</p>
 <p><strong>Perspectives:</strong> The Guardian reports that party officials are treating Trump’s past statements about election processes as a serious planning factor. Trump allies argue that local officials retain discretion in certification and that scrutiny protects election integrity. Both sides accept that certification follows established state procedures; they differ on whether additional public discussion of those rules constitutes preparation or alarmism.</p>
@@ -1235,10 +1307,6 @@
 <li>Which states are considered most contested?</li>
 <li>How are legal teams preparing challenges?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/live/2026/jun/11/democrats-republicans-midterms-tech-laws-scotus-latest-news-updates" target="_blank" rel="noopener">The Guardian</a> — Live blog on Democratic planning</li>
-</ul>
 <h4 id="5-water-cannons-used-against-belfast-protesters">5) Water cannons used against Belfast protesters</h4>
 <p><strong>What happened (neutral):</strong> Police deployed water cannons after unrest flared for a second night, injuring twelve officers. The disturbances followed a stabbing incident and involved groups targeting individuals based on ethnicity.</p>
 <p><strong>Perspectives:</strong> The Guardian quotes Northern Ireland’s secretary describing the violence as racist thuggery. Local community representatives stress the need to protect residents from intimidation. Police statements focus on maintaining order and preventing further injury. All accounts agree on the use of water cannons and officer injuries; they differ on whether the root cause lies in recent crime or longer-standing community tensions.</p>
@@ -1247,10 +1315,6 @@
 <li>Which neighborhoods saw the most activity?</li>
 <li>What charges have been filed so far?</li>
 <li>How are community leaders responding?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/politics/live/2026/jun/11/belfast-riots-hilary-benn-anti-immigrant-injured-police-latest-news-updates" target="_blank" rel="noopener">The Guardian</a> — Updates on policing and political reaction</li>
 </ul>
 <h3 id="top-world-stories-2">Top world stories (2)</h3>
 <h4 id="1-un-report-details-hamas-control-methods-in-gaza">1) UN report details Hamas control methods in Gaza</h4>
@@ -1262,10 +1326,6 @@
 <li>What verification methods were used?</li>
 <li>Which other organizations have reviewed the findings?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15891589/Brutal-methods-Hamas-use-strike-fear-Palestinians-including-public-executions-kneecappings-bone-breaking-concrete-bricks-outlined-report.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Summary of the UN documentation</li>
-</ul>
 <h4 id="2-mexico-prepares-to-host-troubled-world-cup">2) Mexico prepares to host troubled World Cup</h4>
 <p><strong>What happened (neutral):</strong> Organizers face protests, poverty concerns, and questions over missing persons as the tournament approaches. Local passion for football remains strong despite these pressures.</p>
 <p><strong>Perspectives:</strong> The Mail Online highlights corruption jokes and social strains that could affect the event. Mexican officials emphasize national pride and economic benefits. Both coverage and local commentary accept that protests and inequality exist; they differ on whether these factors will significantly disrupt matches or remain background issues.</p>
@@ -1274,10 +1334,6 @@
 <li>Which cities are hosting matches?</li>
 <li>What security measures are planned?</li>
 <li>How are ticket sales and tourism projections holding up?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/sport/football/article-15889523/Mexico-2026-World-Cup.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Overview of host-country challenges</li>
 </ul>
 <h3 id="top-business-stories-2">Top business stories (2)</h3>
 <h4 id="1-ecb-prepares-first-interest-rate-increase-since-2023">1) ECB prepares first interest-rate increase since 2023</h4>
@@ -1289,10 +1345,6 @@
 <li>Which sectors are most sensitive to rate changes?</li>
 <li>How have bond markets reacted so far?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/live-blog/2026-06-11/ecb-interest-rate-decision-euro-lagarde-press-conference-live-updates" target="_blank" rel="noopener">Bloomberg</a> — Live policy coverage</li>
-</ul>
 <h4 id="2-spacex-ipo-viewed-as-referendum-on-musk-leadership">2) SpaceX IPO viewed as referendum on Musk leadership</h4>
 <p><strong>What happened (neutral):</strong> SpaceX is preparing to go public in a debut that analysts say will test investor confidence in Elon Musk’s management across multiple companies.</p>
 <p><strong>Perspectives:</strong> CNBC reporting stresses the valuation implications and market scrutiny. Supporters of the listing argue it rewards innovation and long-term risk-taking. Skeptics point to governance concerns at other Musk-led firms. All sides agree the IPO will provide a direct market valuation; they differ on whether that valuation primarily reflects technological achievement or leadership style.</p>
@@ -1301,10 +1353,6 @@
 <li>What valuation range is being discussed?</li>
 <li>Which funds have signaled interest?</li>
 <li>How might the listing affect Tesla shares?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/06/11/spacex-ipo-elon-musk-valuation.html" target="_blank" rel="noopener">CNBC</a> — Market reaction analysis</li>
 </ul>
 <h3 id="top-technology-stories-1">Top technology stories (1)</h3>
 <h4 id="1-macos-27-beta-introduces-incremental-improvements">1) macOS 27 beta introduces incremental improvements</h4>
@@ -1316,10 +1364,6 @@
 <li>How does the beta compare with previous releases?</li>
 <li>When is the public launch expected?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://arstechnica.com/gadgets/2026/06/five-things-i-like-and-one-thing-i-still-want-in-the-macos-27-golden-gate-beta/" target="_blank" rel="noopener">Ars Technica</a> — Hands-on beta assessment</li>
-</ul>
 <h3 id="top-popular-media-stories-1">Top popular media stories (1)</h3>
 <h4 id="1-serena-williams-exits-queens-doubles-after-partner-withdrawal">1) Serena Williams exits Queen’s doubles after partner withdrawal</h4>
 <p><strong>What happened (neutral):</strong> Serena Williams’ doubles campaign at the Queen’s Club ended when her partner Victoria Mboko withdrew with a knee injury.</p>
@@ -1329,10 +1373,6 @@
 <li>What was the original pairing’s goal for the event?</li>
 <li>How has Williams discussed her post-retirement activity?</li>
 <li>What is Mboko’s injury timeline?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/sport/tennis/articles/c0lyg82kl31o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Match update</li>
 </ul>
 <h3 id="top-gossip-stories-1">Top gossip stories (1)</h3>
 <h4 id="1-taylor-swift-courtside-while-scooter-braun-sits-rows-back">1) Taylor Swift courtside while Scooter Braun sits rows back</h4>
@@ -1344,16 +1384,89 @@
 <li>How have fans documented the moment?</li>
 <li>Have either party addressed the seating publicly?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15891171/Taylor-Swift-exacts-ultimate-revenge-time-life-courtside-seats-longtime-nemesis-Knicks-superfan-Scooter-Braun-seated-five-rows-girlfriend-Sydney-Sweeney.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Event description</li>
-</ul>
 <h3 id="understanding-the-issue-how-us-presidents-authorize-military-action-abroad">Understanding the Issue: How US presidents authorize military action abroad</h3>
 <p>Most coverage of US strikes on Iran assumes each new round of bombing requires fresh congressional approval, yet the actual process often rests on older authorizations and executive interpretations of Article II powers. Presidents since the 1970s have relied on the 2001 and 2002 Authorizations for Use of Military Force, plus claims of inherent commander-in-chief authority, to conduct operations without new votes. This structure means limited strikes can continue for weeks or months while Congress receives only after-the-fact briefings. Knowing this, when you hear claims that “Congress must approve any further action,” you can check whether the administration is citing an existing statute or asserting unilateral power. Next time you see a headline about escalation, ask: which specific legal text is being invoked, what reporting requirements apply, and how previous administrations used the same authorities.</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-check official statements from the Department of Defense and Iranian state media against independent reporting. Primary documents such as congressional authorizations and UN reports provide clearer grounding than secondary commentary. Verify casualty figures and target lists through multiple verified sources before drawing conclusions.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.npr.org/2026/06/11/g-s1-127423/up-first-newsletter-us-iran-war-inflation-rates-world-cup" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/jun/11/iran-war-news-us-strikes-donald-trump-stalled-peace-talks-middle-east-crisis" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/c8e2wrre87wo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15891441/Asylum-seeker-raped-vulnerable-teenager-park-asking-did-you-enjoy-sentenced-x.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15891141/Labour-Andy-Burnham-pensions-compensation-WASPI-women-student-loans-relief.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/live/2026/jun/11/democrats-republicans-midterms-tech-laws-scotus-latest-news-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/politics/live/2026/jun/11/belfast-riots-hilary-benn-anti-immigrant-injured-police-latest-news-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15891589/Brutal-methods-Hamas-use-strike-fear-Palestinians-including-public-executions-kneecappings-bone-breaking-concrete-bricks-outlined-report.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/sport/football/article-15889523/Mexico-2026-World-Cup.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/live-blog/2026-06-11/ecb-interest-rate-decision-euro-lagarde-press-conference-live-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/06/11/spacex-ipo-elon-musk-valuation.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://arstechnica.com/gadgets/2026/06/five-things-i-like-and-one-thing-i-still-want-in-the-macos-27-golden-gate-beta/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=arstechnica.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">arstechnica.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/sport/tennis/articles/c0lyg82kl31o?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15891171/Taylor-Swift-exacts-ultimate-revenge-time-life-courtside-seats-longtime-nemesis-Knicks-superfan-Scooter-Braun-seated-five-rows-girlfriend-Sydney-Sweeney.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1792,10 +1905,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

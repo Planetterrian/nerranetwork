@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>U.S. forces rescue both crew members of an F-15E fighter jet shot down over Iran, with President Tru… — Episode 28</h1>
+            <h1><span class="nn-i18n-title">U.S. forces rescue both crew members of an F-15E fighter jet shot down over Iran, with President Tru…</span> — Episode 28</h1>
             
             <p class="blog-hero-hook">U.S. forces rescue both crew members of an F-15E fighter jet shot down over Iran, with President Trump calling it one of the most daring search-and-rescue operations in American history.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1214,15 +1295,6 @@
 <li>What remains unverified in Iranian versus U.S. reporting of the incident?</li>
 <li>How might this event influence diplomatic efforts regarding the Strait of Hormuz?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.npr.org/2026/04/05/nx-s1-5774368/u-s-military-rescue-airman-iran" target="_blank" rel="noopener">Trump says U.S. military has rescued airman shot down over Iran</a> — NPR report on the announcement</li>
-<li><a href="https://www.theguardian.com/world/live/2026/apr/05/middle-east-crisis-live-iran-israel-us-war-trump-strait-hormuz-missing-pilot-downed" target="_blank" rel="noopener">Middle East crisis live: Trump says F-15 crew member missing in Iran is ‘safe’</a> — The Guardian live updates including Iranian claims</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15707345/Iran-pilot-rescued-second-US-forces-firefight.html" target="_blank" rel="noopener">Second US airman is injured but SAFE after 'miraculous' rescue mission</a> — Daily Mail coverage</li>
-<li><a href="https://www.cnbc.com/2026/04/05/us-trump-confirms-missing-us-pilot-rescued.html" target="_blank" rel="noopener">Trump confirms both military officers missing in Iran have been rescued</a> — CNBC report</li>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-05/missing-us-airman-rescued-after-jet-downed-in-iran-axios" target="_blank" rel="noopener">Missing US Airman Rescued as Iran Steps Up Attacks on Neighbors</a> — Bloomberg summary</li>
-<li><a href="https://www.theguardian.com/world/2026/apr/04/iran-search-missing-us-crew-member-downed-fighter-jet-second-day" target="_blank" rel="noopener">US rescues second crew member of downed F-15E fighter jet from Iran</a> — Guardian follow-up</li>
-</ul>
 <h4 id="2-fuel-supply-concerns-grow-as-middle-east-conflict-disrupts-global-oil-flows">2) Fuel Supply Concerns Grow as Middle East Conflict Disrupts Global Oil Flows</h4>
 <p><strong>What happened (neutral):</strong> The ongoing conflict in the Middle East, including the closure of the Strait of Hormuz, is causing fuel shortages and price increases in multiple countries. Italy has set jet fuel limits at some airports. Australia is seeking supply assurances from Asian trading partners. New South Wales has fined nearly 100 service stations for misleading petrol prices during the shortage. UK voters are expressing frustration over fuel prices and energy policy.</p>
 <p><strong>Perspectives:</strong> The Guardian reports on practical responses in Australia and NSW, focusing on government efforts to secure supplies from Singapore, South Korea, Malaysia, and Japan while cracking down on misleading pricing. Bloomberg notes the direct impact on European aviation with Italy imposing jet fuel limits. The Daily Mail highlights public pressure on UK politicians, particularly Energy Secretary Ed Miliband, urging a shift away from net zero policies and lifting the ban on North Sea oil and gas. These perspectives reflect differing priorities: some emphasize immediate consumer protection and supply diversification, while others connect the shortages to longer-term energy policy choices.</p>
@@ -1232,13 +1304,6 @@
 <li>What are the immediate versus long-term solutions to fuel supply disruptions?</li>
 <li>How are different governments balancing consumer protection with energy transition goals?</li>
 <li>What role does global oil market interdependence play in regional conflicts?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/apr/05/nearly-100-nsw-service-stations-face-fines-over-misleading-petrol-prices-amid-fuel-shortage-crackdown" target="_blank" rel="noopener">Nearly 100 NSW service stations fined $1,100 each over misleading petrol prices</a> — The Guardian</li>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-05/italy-sets-jet-fuel-limits-at-some-airports-on-supply-shortage" target="_blank" rel="noopener">Italy Sets Jet Fuel Limits at Some Airports on Supply Shortage</a> — Bloomberg</li>
-<li><a href="https://www.theguardian.com/australia-news/2026/apr/05/asian-leaders-assure-australia-normal-supply-of-fuel-will-continue-as-albanese-focuses-on-averting-shortages" target="_blank" rel="noopener">Asian countries assure Australia ‘normal supply’ of fuel will continue</a> — The Guardian</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15706747/fuel-prices-soar-voters-Miliband-ditch-Net-Zero-obsession-lift-ban-North-Sea-oil-gas.html" target="_blank" rel="noopener">As fuel prices soar, voters tell Miliband to ditch his Net Zero obsession</a> — Daily Mail</li>
 </ul>
 <h4 id="3-trump-issues-threat-to-iran-over-strait-of-hormuz">3) Trump Issues Threat to Iran Over Strait of Hormuz</h4>
 <p><strong>What happened (neutral):</strong> President Trump issued a strongly worded demand that Iran reopen the Strait of Hormuz or face increased consequences. The deadline for reopening the strategic waterway is approaching amid the ongoing regional conflict.</p>
@@ -1250,10 +1315,6 @@
 <li>How do economic and military considerations interact in this situation?</li>
 <li>What historical precedents exist for conflicts involving this waterway?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15706285/trump-hormuz-deadline-iran-threat.html" target="_blank" rel="noopener">Trump issues bloodcurdling MISSPELLED threat to Iran as deadline to reopen Strait of Hormuz approaches</a> — Daily Mail</li>
-</ul>
 <h4 id="4-waitrose-employee-sacked-after-stopping-shoplifter">4) Waitrose Employee Sacked After Stopping Shoplifter</h4>
 <p><strong>What happened (neutral):</strong> A 17-year veteran Waitrose employee in London was sacked after he intervened to stop a shoplifter who had taken multiple Easter eggs. The worker grabbed a bag from the thief before the person escaped.</p>
 <p><strong>Perspectives:</strong> The Guardian presents the story from the employee's viewpoint, highlighting his long service and sense of devastation. The coverage raises questions about retail policies regarding staff intervention in theft, especially amid broader cost-of-living pressures that may contribute to shoplifting.</p>
@@ -1263,10 +1324,6 @@
 <li>How do companies balance staff safety with loss prevention?</li>
 <li>What factors might be driving increased shoplifting incidents?</li>
 <li>How should employers handle long-serving staff in disciplinary matters?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/business/2026/apr/05/waitrose-employee-sacked-after-stopping-shoplifter-from-taking-easter-eggs" target="_blank" rel="noopener">Waitrose employee sacked after stopping shoplifter from taking Easter eggs</a> — The Guardian</li>
 </ul>
 <h4 id="5-man-charged-after-driving-into-lao-new-year-celebration">5) Man Charged After Driving Into Lao New Year Celebration</h4>
 <p><strong>What happened (neutral):</strong> A man has been charged with impaired driving after allegedly driving into a crowd celebrating Lao New Year in Louisiana, injuring at least 15 people. Some injuries are described as serious.</p>
@@ -1278,10 +1335,6 @@
 <li>What support is available for victims of such incidents?</li>
 <li>How do law enforcement agencies investigate impaired driving cases?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/2026/apr/04/louisiana-parade-car-crash" target="_blank" rel="noopener">Man charged with impaired driving after hitting Louisiana crowd celebrating Lao New Year</a> — The Guardian</li>
-</ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-us-rescues-both-crew-members-of-downed-f-15e-fighter-jet-from-iran">1) U.S. Rescues Both Crew Members of Downed F-15E Fighter Jet from Iran</h4>
 <p><strong>What happened (neutral):</strong> (See detailed summary in Top stories section above.)</p>
@@ -1289,12 +1342,6 @@
 <p><strong>Questions to consider:</strong></p>
 <ul>
 <li>(See questions in Top stories section.)</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.france24.com/en/middle-east/20260405-middle-east-war-live-us-airman-rescued-from-iran-safe-and-sound-says-trump" target="_blank" rel="noopener">Middle East War live: Rescued crew member from downed US fighter jet 'safe and sound,' says Trump</a> — France 24</li>
-<li><a href="https://www.reddit.com/r/news/comments/1scuofd/second_airman_in_f15e_that_was_shot_down_over/" target="_blank" rel="noopener">Second airman in F-15E that was shot down over Iran rescued safely</a> — Reddit discussion</li>
-<li><a href="https://www.reddit.com/r/worldnews/comments/1scu9uq/us_deploys_bulk_of_stealthy_longrange_missile_for/" target="_blank" rel="noopener">US Deploys Bulk of Stealthy Long-Range Missile for Iran War</a> — Reddit worldnews thread</li>
 </ul>
 <h4 id="2-netanyahu-confirms-attack-on-petrochemical-plant">2) Netanyahu Confirms Attack on Petrochemical Plant</h4>
 <p><strong>What happened (neutral):</strong> Israeli Prime Minister Netanyahu confirmed an attack on a petrochemical plant as part of ongoing Middle East hostilities. The Guardian's live blog also reported on Iran executing two men convicted of membership in a banned opposition group.</p>
@@ -1306,10 +1353,6 @@
 <li>What role do opposition groups play in Iran's domestic politics?</li>
 <li>How do live blogs affect the way audiences consume fast-moving events?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/apr/04/middle-east-crisis-live-us-iran-war-missing-pilot-downed-jet-israel-bombards-beirut" target="_blank" rel="noopener">Netanyahu confirms attack on petrochemical plant– as it happened</a> — The Guardian live blog</li>
-</ul>
 <h4 id="3-ukraines-sbu-drones-target-russian-steel-supplier">3) Ukraine’s SBU Drones Target Russian Steel Supplier</h4>
 <p><strong>What happened (neutral):</strong> Ukrainian drones reportedly struck a strategic steel supplier that provides material for Russian tank production.</p>
 <p><strong>Perspectives:</strong> Coverage on Reddit's r/worldnews presents this as part of Ukraine's ongoing efforts to disrupt Russian military supply chains. The story fits within the broader context of the conflict now in its 1501st day.</p>
@@ -1319,11 +1362,6 @@
 <li>What is the relationship between specific industries and military production?</li>
 <li>How do such strikes fit into long-term attrition strategies?</li>
 <li>What challenges exist in verifying outcomes of remote strikes?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.reddit.com/r/worldnews/comments/1scruie/ukraines_sbu_drones_cripple_strategic_steel/" target="_blank" rel="noopener">Ukraine’s SBU Drones Cripple Strategic Steel Supplier for Russian Tank Production</a> — Reddit worldnews</li>
-<li><a href="https://www.reddit.com/r/worldnews/comments/1sctpdf/rworldnews_live_thread_russian_invasion_of/" target="_blank" rel="noopener">/r/WorldNews Live Thread: Russian Invasion of Ukraine Day 1501</a> — Ongoing live thread</li>
 </ul>
 <h4 id="4-niece-of-iranian-general-arrested-by-ice-in-los-angeles">4) Niece of Iranian General Arrested by ICE in Los Angeles</h4>
 <p><strong>What happened (neutral):</strong> The niece of a prominent Iranian general was arrested by ICE in Los Angeles along with her daughter. Their green cards have reportedly been revoked over claims she celebrated deaths of U.S. soldiers.</p>
@@ -1335,10 +1373,6 @@
 <li>What constitutes grounds for such enforcement actions?</li>
 <li>How do individual cases reflect broader policy approaches?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15706499/Hamideh-Soleimani-Afshar-qasem-niece-iran-green-card-ice.html" target="_blank" rel="noopener">Niece of infamous Iranian general is arrested by ICE in LA</a> — Daily Mail</li>
-</ul>
 <h4 id="5-man-arrested-at-melbourne-airport-on-murder-charge">5) Man Arrested at Melbourne Airport on Murder Charge</h4>
 <p><strong>What happened (neutral):</strong> A 67-year-old man was arrested at Melbourne International Airport while attempting to board an international flight. He has been charged with murdering a woman whose body was found in a Victorian town.</p>
 <p><strong>Perspectives:</strong> The Guardian reports this as a straightforward criminal justice matter, with police making the arrest before the suspect could leave the country.</p>
@@ -1349,10 +1383,6 @@
 <li>How does the justice system balance presumption of innocence with public safety?</li>
 <li>What support is available for families in such cases?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/apr/05/man-arrested-attempting-to-board-international-flight-at-melbourne-airport-after-allegedly-murdering-woman-ntwnfb" target="_blank" rel="noopener">Man arrested attempting to board international flight at Melbourne airport charged with murdering woman</a> — The Guardian</li>
-</ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-fuel-supply-concerns-grow-as-middle-east-conflict-disrupts-global-oil-flows">1) Fuel Supply Concerns Grow as Middle East Conflict Disrupts Global Oil Flows</h4>
 <p><strong>What happened (neutral):</strong> (See summary in Top stories section.)</p>
@@ -1361,11 +1391,6 @@
 <ul>
 <li>(See questions in Top stories section.)</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-04-05/italy-sets-jet-fuel-limits-at-some-airports-on-supply-shortage" target="_blank" rel="noopener">Italy Sets Jet Fuel Limits at Some Airports on Supply Shortage</a> — Bloomberg</li>
-<li><a href="https://www.theguardian.com/australia-news/2026/apr/05/nearly-100-nsw-service-stations-face-fines-over-misleading-petrol-prices-amid-fuel-shortage-crackdown" target="_blank" rel="noopener">Nearly 100 NSW service stations fined $1,100 each over misleading petrol prices</a> — The Guardian</li>
-</ul>
 <h4 id="2-waitrose-employee-sacked-after-stopping-shoplifter">2) Waitrose Employee Sacked After Stopping Shoplifter</h4>
 <p><strong>What happened (neutral):</strong> (See summary in Top stories section.)</p>
 <p><strong>Perspectives:</strong> (See perspectives in Top stories section.)</p>
@@ -1373,20 +1398,12 @@
 <ul>
 <li>(See questions in Top stories section.)</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/business/2026/apr/05/waitrose-employee-sacked-after-stopping-shoplifter-from-taking-easter-eggs" target="_blank" rel="noopener">Waitrose employee sacked after stopping shoplifter from taking Easter eggs</a> — The Guardian</li>
-</ul>
 <h4 id="3-as-fuel-prices-soar-uk-voters-press-for-policy-changes">3) As Fuel Prices Soar, UK Voters Press for Policy Changes</h4>
 <p><strong>What happened (neutral):</strong> (See summary in Top stories section regarding UK fuel prices and energy policy.)</p>
 <p><strong>Perspectives:</strong> (See perspectives in Top stories section.)</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
 <li>(See questions in Top stories section.)</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15706747/fuel-prices-soar-voters-Miliband-ditch-Net-Zero-obsession-lift-ban-North-Sea-oil-gas.html" target="_blank" rel="noopener">As fuel prices soar, voters tell Miliband to ditch his Net Zero obsession</a> — Daily Mail</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-is-the-uk-falling-out-of-love-with-social-media">1) Is the UK Falling Out of Love with Social Media?</h4>
@@ -1399,10 +1416,6 @@
 <li>What is the relationship between social media use and mental health?</li>
 <li>How might "etiquette" pressures influence personal sharing decisions?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/news/ng-interactive/2026/apr/05/uk-social-media-apps-share" target="_blank" rel="noopener">Is the UK falling out of love with social media?</a> — The Guardian</li>
-</ul>
 <h4 id="2-second-f-15e-crew-member-recovered-after-heavy-firefight">2) Second F-15E Crew Member Recovered After Heavy Firefight</h4>
 <p><strong>What happened (neutral):</strong> (See military rescue coverage in Top stories.) Discussion on technology-focused Reddit threads examines the military technology involved in the rescue operation.</p>
 <p><strong>Perspectives:</strong> Reddit communities discuss the technological aspects of the search and rescue, including stealth capabilities and long-range systems mentioned in related reporting.</p>
@@ -1413,10 +1426,6 @@
 <li>How do technological advantages factor into modern conflicts?</li>
 <li>What limitations still exist despite advanced equipment?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.reddit.com/r/worldnews/comments/1sct9tb/second_f15e_crew_member_recovered_after_heavy/" target="_blank" rel="noopener">Second F-15E Crew Member Recovered After Heavy Firefight</a> — Reddit discussion</li>
-</ul>
 <h4 id="3-us-deploys-bulk-of-stealthy-long-range-missile-for-iran-war">3) US Deploys Bulk of Stealthy Long-Range Missile for Iran War</h4>
 <p><strong>What happened (neutral):</strong> (See related military coverage.) Reports mention deployment of advanced missile systems in the context of the Iran conflict.</p>
 <p><strong>Perspectives:</strong> Coverage on Reddit focuses on the technological dimension of U.S. military capabilities being brought to bear in the region.</p>
@@ -1426,10 +1435,6 @@
 <li>How does technology affect escalation dynamics?</li>
 <li>What information is typically available versus classified?</li>
 <li>How should the public evaluate reporting on military technology?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.reddit.com/r/worldnews/comments/1scu9uq/us_deploys_bulk_of_stealthy_longrange_missile_for/" target="_blank" rel="noopener">US Deploys Bulk of Stealthy Long-Range Missile for Iran War</a> — Reddit worldnews</li>
 </ul>
 <h3 id="top-popular-media-stories-3">Top popular media stories (3)</h3>
 <h4 id="1-timothee-chalamets-luxury-electric-car-towed-from-beverly-hills-mansion">1) Timothee Chalamet's Luxury Electric Car Towed from Beverly Hills Mansion</h4>
@@ -1442,20 +1447,12 @@
 <li>How does media coverage of celebrity incidents differ from similar events involving ordinary citizens?</li>
 <li>What might explain why this story gained attention?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/tvshowbiz/article-15706663/Timothee-Chalamet-car-towed.html" target="_blank" rel="noopener">Timothee Chalamet's embarrassing moment as his luxury electric car is towed</a> — Daily Mail</li>
-</ul>
 <h4 id="2-is-the-uk-falling-out-of-love-with-social-media">2) Is the UK Falling Out of Love with Social Media?</h4>
 <p><strong>What happened (neutral):</strong> (See summary in technology section.)</p>
 <p><strong>Perspectives:</strong> (See perspectives in technology section, with emphasis on cultural shifts in how people document and share their lives.)</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
 <li>(See questions in technology section.)</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/news/ng-interactive/2026/apr/05/uk-social-media-apps-share" target="_blank" rel="noopener">Is the UK falling out of love with social media?</a> — The Guardian</li>
 </ul>
 <h4 id="3-waitrose-employee-sacked-after-stopping-shoplifter">3) Waitrose Employee Sacked After Stopping Shoplifter</h4>
 <p><strong>What happened (neutral):</strong> (See summary in Top stories section.)</p>
@@ -1464,10 +1461,6 @@
 <ul>
 <li>(See questions in Top stories section.)</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/business/2026/apr/05/waitrose-employee-sacked-after-stopping-shoplifter-from-taking-easter-eggs" target="_blank" rel="noopener">Waitrose employee sacked after stopping shoplifter from taking Easter eggs</a> — The Guardian</li>
-</ul>
 <h3 id="top-gossip-stories-3">Top gossip stories (3)</h3>
 <h4 id="1-timothee-chalamets-luxury-electric-car-towed-from-beverly-hills-mansion">1) Timothee Chalamet's Luxury Electric Car Towed from Beverly Hills Mansion</h4>
 <p><strong>What happened (neutral):</strong> (See summary in popular media section.)</p>
@@ -1475,10 +1468,6 @@
 <p><strong>Questions to consider:</strong></p>
 <ul>
 <li>(See questions in popular media section.)</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/tvshowbiz/article-15706663/Timothee-Chalamet-car-towed.html" target="_blank" rel="noopener">Timothee Chalamet's embarrassing moment as his luxury electric car is towed</a> — Daily Mail</li>
 </ul>
 <h4 id="2-niece-of-iranian-general-arrested-by-ice-in-los-angeles">2) Niece of Iranian General Arrested by ICE in Los Angeles</h4>
 <p><strong>What happened (neutral):</strong> (See summary in world stories section.)</p>
@@ -1490,20 +1479,12 @@
 <li>How should readers evaluate stories involving both legal and political elements?</li>
 <li>What context is necessary to understand individual cases like this?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15706499/Hamideh-Soleimani-Afshar-qasem-niece-iran-green-card-ice.html" target="_blank" rel="noopener">Niece of infamous Iranian general is arrested by ICE in LA</a> — Daily Mail</li>
-</ul>
 <h4 id="3-waitrose-employee-sacked-after-stopping-shoplifter">3) Waitrose Employee Sacked After Stopping Shoplifter</h4>
 <p><strong>What happened (neutral):</strong> (See summary in Top stories section.)</p>
 <p><strong>Perspectives:</strong> (See perspectives in Top stories section, with emphasis on the personal impact on the long-serving employee.)</p>
 <p><strong>Questions to consider:</strong></p>
 <ul>
 <li>(See questions in Top stories section.)</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/business/2026/apr/05/waitrose-employee-sacked-after-stopping-shoplifter-from-taking-easter-eggs" target="_blank" rel="noopener">Waitrose employee sacked after stopping shoplifter from taking Easter eggs</a> — The Guardian</li>
 </ul>
 <h3 id="understanding-the-issue-how-the-strait-of-hormuz-shapes-global-energy-vulnerability">Understanding the Issue: How the Strait of Hormuz Shapes Global Energy Vulnerability</h3>
 <p>Most coverage of the current Middle East crisis treats the closure of the Strait of Hormuz as a sudden event driven by one conflict, but this skips over a crucial structural reality: the strait has been a recognized chokepoint in global energy for decades. When politicians or headlines focus only on immediate threats or rescue operations, here's what's actually happening behind the scenes: roughly one-fifth of global seaborne oil trade passes through this narrow waterway between Iran and Oman, creating a permanent geographic vulnerability that no single nation can easily replace in the short term. Tankers must navigate a shipping lane as little as two miles wide in places, making the route inherently sensitive to both military action and political pressure.</p>
@@ -1513,6 +1494,133 @@
 <p>When consuming fast-moving stories involving military operations and unverified claims, cross-check multiple outlets with different editorial approaches rather than relying on any single source. Pay particular attention to what each report explicitly states it cannot verify, and look for primary statements from officials rather than second-hand interpretations. Developing the habit of noticing which facts are agreed upon across sources and which remain in dispute helps build a clearer picture of what is known versus what is still developing.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.npr.org/2026/04/05/nx-s1-5774368/u-s-military-rescue-airman-iran" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=npr.org&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">npr.org</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/apr/05/middle-east-crisis-live-iran-israel-us-war-trump-strait-hormuz-missing-pilot-downed" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15707345/Iran-pilot-rescued-second-US-forces-firefight.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/04/05/us-trump-confirms-missing-us-pilot-rescued.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-05/missing-us-airman-rescued-after-jet-downed-in-iran-axios" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/apr/04/iran-search-missing-us-crew-member-downed-fighter-jet-second-day" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/apr/05/nearly-100-nsw-service-stations-face-fines-over-misleading-petrol-prices-amid-fuel-shortage-crackdown" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-04-05/italy-sets-jet-fuel-limits-at-some-airports-on-supply-shortage" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/apr/05/asian-leaders-assure-australia-normal-supply-of-fuel-will-continue-as-albanese-focuses-on-averting-shortages" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15706747/fuel-prices-soar-voters-Miliband-ditch-Net-Zero-obsession-lift-ban-North-Sea-oil-gas.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15706285/trump-hormuz-deadline-iran-threat.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/business/2026/apr/05/waitrose-employee-sacked-after-stopping-shoplifter-from-taking-easter-eggs" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/2026/apr/04/louisiana-parade-car-crash" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/middle-east/20260405-middle-east-war-live-us-airman-rescued-from-iran-safe-and-sound-says-trump" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/news/comments/1scuofd/second_airman_in_f15e_that_was_shot_down_over/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/worldnews/comments/1scu9uq/us_deploys_bulk_of_stealthy_longrange_missile_for/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/apr/04/middle-east-crisis-live-us-iran-war-missing-pilot-downed-jet-israel-bombards-beirut" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/worldnews/comments/1scruie/ukraines_sbu_drones_cripple_strategic_steel/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/worldnews/comments/1sctpdf/rworldnews_live_thread_russian_invasion_of/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15706499/Hamideh-Soleimani-Afshar-qasem-niece-iran-green-card-ice.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/apr/05/man-arrested-attempting-to-board-international-flight-at-melbourne-airport-after-allegedly-murdering-woman-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/news/ng-interactive/2026/apr/05/uk-social-media-apps-share" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.reddit.com/r/worldnews/comments/1sct9tb/second_f15e_crew_member_recovered_after_heavy/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reddit.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reddit.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/tvshowbiz/article-15706663/Timothee-Chalamet-car-towed.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1899,10 +2007,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

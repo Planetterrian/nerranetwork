@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Iran war escalates with US embassy attack in Baghdad and global inflation fears prompting rate hikes… — Episode 17</h1>
+            <h1><span class="nn-i18n-title">Iran war escalates with US embassy attack in Baghdad and global inflation fears prompting rate hikes…</span> — Episode 17</h1>
             
             <p class="blog-hero-hook">Iran war escalates with US embassy attack in Baghdad and global inflation fears prompting rate hikes.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1195,12 +1276,6 @@
 <li>What role could economic pressures like inflation play in shaping diplomatic responses?</li>
 <li>Are there verified details on the embassy attackers, and how could that influence US policy?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/17/iran-war-live-updates-news-israel-trump-strikes-us-embassy-baghdad-strait-of-hormuz-middle-east-latest" target="_blank" rel="noopener">The Guardian</a> — coverage of embassy attack and summit delay</li>
-<li><a href="https://www.aljazeera.com/video/newsfeed/2026/3/17/eu-says-iran-is-not-europes-war?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — EU stance on non-involvement</li>
-<li><a href="https://www.aljazeera.com/video/newsfeed/2026/3/17/marine-turned-anti-war-protester-says-trump-wrong-on-israel-iran?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — anti-war protester's view on Trump</li>
-</ul>
 <h4 id="2-australia-hikes-interest-rates-amid-global-energy-shock">2) Australia hikes interest rates amid global energy shock</h4>
 <p><strong>What happened (neutral):</strong> The Reserve Bank of Australia raised its official cash rate target by 25 basis points to 4.1%, reversing prior cuts and impacting mortgage holders. RBA governor Michele Bullock stated that higher petrol prices are not the reason for the hike, though developments in the Middle East could contribute to inflation. The decision comes amid worldwide energy uncertainties.</p>
 <p><strong>Perspectives:</strong> The Guardian reports the hike as a necessary response to inflation risks from the Iran war, aligning with economic stability interests that prioritize controlling costs for households, while acknowledging the blow to borrowers. CNBC frames it similarly as an expected move in line with analyst predictions, emphasizing global inflation pressures and the need for monetary tightening to safeguard long-term growth. Both outlets agree on the rate increase details but differ in emphasis, with some viewing it as a reactive measure to external shocks versus a proactive step against domestic pressures.</p>
@@ -1209,11 +1284,6 @@
 <li>How could this rate hike affect everyday Australians facing cost-of-living challenges?</li>
 <li>What uncertainties remain about the Middle East's impact on fuel prices?</li>
 <li>Should central banks coordinate more globally during such crises?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/mar/17/bowen-rba-interest-rates-decision-cost-of-living-inflation-fuel-price-shortages-petrol-jim-chalmers-economy-war-iran-anthony-albanese-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — details on RBA decision and Bullock's comments</li>
-<li><a href="https://www.cnbc.com/2026/03/17/australia-central-bank-interest-rates-rise.html" target="_blank" rel="noopener">CNBC</a> — analysis of hike amid Iran war inflation risks</li>
 </ul>
 <h4 id="3-afghanistan-blames-pakistan-for-deadly-kabul-hospital-strike">3) Afghanistan blames Pakistan for deadly Kabul hospital strike</h4>
 <p><strong>What happened (neutral):</strong> A strike on a Kabul hospital treating drug users reportedly killed hundreds, with Afghanistan's deputy government spokesman stating the death toll has reached 400 so far and about 250 injured, mostly patients. Afghan officials accused the Pakistani military of the attack, though Pakistan denies targeting the facility. Details on the exact circumstances remain unclear.</p>
@@ -1224,10 +1294,6 @@
 <li>How might this affect relations between Afghanistan and Pakistan?</li>
 <li>Could international bodies help investigate such incidents?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/mar/16/afghanistan-accuses-pakistan-of-kabul-hospital-strike-killed" target="_blank" rel="noopener">The Guardian</a> — reports on casualties and accusations</li>
-</ul>
 <h4 id="4-two-charged-with-murder-in-sydney-shooting">4) Two charged with murder in Sydney shooting</h4>
 <p><strong>What happened (neutral):</strong> Two men have been charged with murder following a gangland-linked shooting at a suburban Sydney apartment complex that left one man dead and another injured. The incident is described in reports as connected to organized crime. Further details on the victims or motives are not specified.</p>
 <p><strong>Perspectives:</strong> The Guardian frames the charges as a step toward justice in a community affected by gang violence, reflecting public safety interests that prioritize law enforcement action to deter crime. Coverage connects this to broader concerns about urban safety in Australia, with some outlets viewing it as indicative of rising organized crime challenges that demand stronger policing, while others emphasize the human impact on families and the need for preventive measures.</p>
@@ -1236,10 +1302,6 @@
 <li>What role do gang links play in such incidents, and how can they be addressed?</li>
 <li>How effective are current laws in preventing organized crime violence?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/mar/17/bowen-rba-interest-rates-decision-cost-of-living-inflation-fuel-price-shortages-petrol-jim-chalmers-economy-war-iran-anthony-albanese-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — details on charges and shooting</li>
-</ul>
 <h4 id="5-kent-meningitis-outbreak-prompts-emergency-response">5) Kent meningitis outbreak prompts emergency response</h4>
 <p><strong>What happened (neutral):</strong> Health officials are tracking thousands potentially exposed to a deadly strain of meningitis in Kent, following a cluster that left two dead and 11 gravely ill. An emergency response included providing preventative antibiotics to 2,000 students in Canterbury. Questions arise over the timing of warnings, with reports of a potential case in London.</p>
 <p><strong>Perspectives:</strong> Mail Online coverage highlights the scramble to contain the outbreak as a public health crisis, aligning with concerns for rapid response to protect vulnerable groups like students, and critiques the delay in warnings post-Mother's Day. This connects to broader values of transparency in health alerts, with some framing it as a failure in communication that risks wider spread, while others emphasize the proactive antibiotic distribution as mitigating harm.</p>
@@ -1247,10 +1309,6 @@
 <ul>
 <li>Why was the warning issued after students traveled home?</li>
 <li>What measures can prevent future delays in outbreak notifications?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15652457/Health-chiefs-track-thousands-Kent-meningitis-strain.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — reports on exposure tracking and response</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-eu-rejects-expanding-mission-to-strait-of-hormuz">1) EU rejects expanding mission to Strait of Hormuz</h4>
@@ -1261,11 +1319,6 @@
 <li>How does this affect US-EU relations during the conflict?</li>
 <li>What alternatives exist for securing the Strait of Hormuz?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.aljazeera.com/video/newsfeed/2026/3/17/eu-says-iran-is-not-europes-war?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — EU foreign policy chief's statement</li>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/17/iran-war-live-updates-news-israel-trump-strikes-us-embassy-baghdad-strait-of-hormuz-middle-east-latest" target="_blank" rel="noopener">The Guardian</a> — context on European rejection</li>
-</ul>
 <h4 id="2-australian-council-abandons-aboriginal-flag-ban-plan">2) Australian council abandons Aboriginal flag ban plan</h4>
 <p><strong>What happened (neutral):</strong> The Federation Council in Corowa, NSW, abandoned a plan to stop flying Aboriginal and Torres Strait Islander flags after receiving 266 submissions opposed and only 44 in favor. Despite the reversal, procedural rules led to temporary removal of the flags. The decision followed public backlash against the initial unity-promoting proposal.</p>
 <p><strong>Perspectives:</strong> The Guardian reports the abandonment as a victory for community voices advocating Indigenous recognition, tying into values of inclusivity and cultural respect that see flag displays as essential for reconciliation. Critics of the original plan, as highlighted in submissions, frame it as counterproductive to unity, while supporters viewed removal as a way to reduce division, though the overwhelming opposition shifted the narrative toward preserving symbols of heritage.</p>
@@ -1273,10 +1326,6 @@
 <ul>
 <li>Does flying such flags promote or hinder community unity?</li>
 <li>How should councils balance public input with procedural rules?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/mar/17/corowa-regional-nsw-council-aboriginal-flag-ban-stopped-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — details on submissions and reversal</li>
 </ul>
 <h4 id="3-queensland-backflips-on-contesting-native-title-claims">3) Queensland backflips on contesting native title claims</h4>
 <p><strong>What happened (neutral):</strong> The Queensland government reversed a policy to contest all new native title claims in court, following a federal court judge's request for explanation on halted negotiations with Cape York traditional owners. The backflip came on the eve of a court hearing. The opposition's position on native title remains unclear.</p>
@@ -1286,10 +1335,6 @@
 <li>Why did the government initially adopt this policy?</li>
 <li>How might this affect ongoing native title negotiations?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/mar/17/queensland-native-title-claims-government-backflip-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — reports on policy reversal</li>
-</ul>
 <h4 id="4-hungarian-film-highlights-election-tensions">4) Hungarian film highlights election tensions</h4>
 <p><strong>What happened (neutral):</strong> The low-budget thriller "Feels Like Home" has drawn audiences in Budapest with its abduction plot, paralleling tensions ahead of Hungary's parliamentary elections on April 12. Viewers connect the story to Viktor Orbán's 16-year reign. The film's release timing has amplified its impact despite limited budget.</p>
 <p><strong>Perspectives:</strong> The Guardian coverage weaves audience reactions as seeing the film as a metaphor for political divides under Orbán, reflecting opposition values that critique long-term leadership as stifling freedom. Supporters of the regime might view such parallels as exaggerated, prioritizing stability, while the film's popularity underscores cultural interests in using art to explore electoral anxieties without direct partisanship.</p>
@@ -1298,10 +1343,6 @@
 <li>Can films influence public opinion during elections?</li>
 <li>What parallels exist between the plot and real political dynamics?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/2026/mar/17/low-budget-thriller-highlights-hungary-election-divide" target="_blank" rel="noopener">The Guardian</a> — details on film and election context</li>
-</ul>
 <h4 id="5-uk-pothole-repair-backlog-reaches-record-high">5) UK pothole repair backlog reaches record high</h4>
 <p><strong>What happened (neutral):</strong> The backlog of pothole repairs in England and Wales has hit £18.6bn, with only half the road network in good condition despite 1.9m repairs last year. A wet winter has worsened the issue, described as a national disgrace by an industry body. Exact causes and timelines for fixes remain uncertain.</p>
 <p><strong>Perspectives:</strong> The Guardian reports the backlog as a symptom of underfunding in infrastructure, aligning with public safety advocates who prioritize road maintenance for daily commuters and connect it to government spending values. Industry views emphasize the losing battle against weather, while critics frame it as a policy failure, differing on whether increased funding or better management is the key solution.</p>
@@ -1309,10 +1350,6 @@
 <ul>
 <li>How does weather impact infrastructure maintenance globally?</li>
 <li>What funding changes could address such backlogs?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/uk-news/2026/mar/17/pothole-repair-england-wales-road-aia" target="_blank" rel="noopener">The Guardian</a> — reports on backlog and conditions</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-philippines-expects-mega-ipos-to-boost-market">1) Philippines expects mega IPOs to boost market</h4>
@@ -1323,11 +1360,6 @@
 <li>How might global events like the Iran war affect IPO activity?</li>
 <li>What makes an IPO "mega" in this context?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-03-17/-mega-ipos-to-drive-bumper-year-on-philippines-market-ceo-says" target="_blank" rel="noopener">Bloomberg</a> — CEO's comments on fundraising</li>
-<li><a href="https://www.bloomberg.com/news/videos/2026-03-17/philippine-bourse-chief-sees-mega-ipos-share-sales-video" target="_blank" rel="noopener">Bloomberg</a> — interview on pipeline</li>
-</ul>
 <h4 id="2-china-restricts-overseas-firms-hong-kong-ipos">2) China restricts overseas firms' Hong Kong IPOs</h4>
 <p><strong>What happened (neutral):</strong> Beijing is restricting Chinese companies incorporated overseas from seeking initial public offerings in Hong Kong, potentially upending a route that has fueled billions in share sales. The move follows a deal boom. Exact restrictions or impacts remain unclear.</p>
 <p><strong>Perspectives:</strong> Bloomberg reports this as a regulatory clampdown to control capital flows, reflecting government interests in domestic market stability amid economic pressures. Investors might see it as limiting opportunities, connecting to tensions between innovation and oversight, while supporters frame it as protecting against external risks in a global context.</p>
@@ -1336,10 +1368,6 @@
 <li>Why target overseas-incorporated firms specifically?</li>
 <li>How could this reshape Hong Kong's role as an IPO hub?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-03-17/china-clamps-down-on-key-route-to-hong-kong-ipos-after-deal-boom" target="_blank" rel="noopener">Bloomberg</a> — details on restrictions</li>
-</ul>
 <h4 id="3-canadian-billionaire-buys-stake-in-the-economist">3) Canadian billionaire buys stake in The Economist</h4>
 <p><strong>What happened (neutral):</strong> Canadian billionaire Stephen Smith and his family holding company acquired a 26.9% minority stake in the publisher of The Economist magazine. The agreement is with the existing owners. Further details on implications are not specified.</p>
 <p><strong>Perspectives:</strong> Bloomberg frames the purchase as a strategic investment in media, aligning with interests in diversifying portfolios and influencing global narratives. This connects to values of media independence, with some viewing it as enhancing the publication's resources, while others might question potential shifts in editorial direction based on the buyer's background.</p>
@@ -1347,10 +1375,6 @@
 <ul>
 <li>How might this affect the magazine's content or operations?</li>
 <li>What drives billionaires to invest in media outlets?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-03-17/canadian-billionaire-smith-buys-26-9-of-the-economist-magazine" target="_blank" rel="noopener">Bloomberg</a> — reports on stake acquisition</li>
 </ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-fintech-upvest-raises-funds-at-640m-valuation">1) Fintech Upvest raises funds at €640m valuation</h4>
@@ -1361,10 +1385,6 @@
 <li>How does this funding impact competition in fintech?</li>
 <li>What challenges do neobanks face in adopting such tech?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-03-17/fintech-upvest-said-to-be-valued-at-640-million-in-fundraising" target="_blank" rel="noopener">Bloomberg</a> — details on funding and valuation</li>
-</ul>
 <h4 id="2-dermstore-offers-promo-codes-for-skincare-savings">2) Dermstore offers promo codes for skincare savings</h4>
 <p><strong>What happened (neutral):</strong> Dermstore is providing verified discount codes and rewards offers for up to 25% savings on premium skincare, hair care, and cosmetics. These are current promotions. Exact terms or expiration are not specified.</p>
 <p><strong>Perspectives:</strong> WIRED frames these deals as consumer-friendly opportunities in e-commerce, reflecting interests in accessible luxury amid economic pressures. This connects to digital retail values, with some viewing it as boosting online shopping adoption, while others see it as a strategy to maintain sales in a competitive beauty market.</p>
@@ -1373,15 +1393,103 @@
 <li>How do promo codes influence online buying behavior?</li>
 <li>What verifies the reliability of such discounts?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.wired.com/story/dermstore-promo-code/" target="_blank" rel="noopener">WIRED</a> — list of promo codes and savings</li>
-</ul>
 <h4 id="3-kitchenaid-promo-codes-available-for-appliance-discounts">3) KitchenAid promo codes available for appliance discounts</h4>
 <p><strong>What happened (neutral):</strong> KitchenAid is offering top coupons for up to 20% off on countertop appliances. These are verified discounts from WIRED. Specific appliances or limitations are not detailed.</p>
 <p><strong>Perspectives:</strong> WIRED presents the codes as ways to save on quality kitchen tech,</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/mar/17/iran-war-live-updates-news-israel-trump-strikes-us-embassy-baghdad-strait-of-hormuz-middle-east-latest" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/video/newsfeed/2026/3/17/eu-says-iran-is-not-europes-war?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/video/newsfeed/2026/3/17/marine-turned-anti-war-protester-says-trump-wrong-on-israel-iran?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/live/2026/mar/17/bowen-rba-interest-rates-decision-cost-of-living-inflation-fuel-price-shortages-petrol-jim-chalmers-economy-war-iran-anthony-albanese-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/17/australia-central-bank-interest-rates-rise.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/mar/16/afghanistan-accuses-pakistan-of-kabul-hospital-strike-killed" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15652457/Health-chiefs-track-thousands-Kent-meningitis-strain.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/mar/17/corowa-regional-nsw-council-aboriginal-flag-ban-stopped-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/mar/17/queensland-native-title-claims-government-backflip-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/2026/mar/17/low-budget-thriller-highlights-hungary-election-divide" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/uk-news/2026/mar/17/pothole-repair-england-wales-road-aia" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-03-17/-mega-ipos-to-drive-bumper-year-on-philippines-market-ceo-says" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-03-17/philippine-bourse-chief-sees-mega-ipos-share-sales-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-03-17/china-clamps-down-on-key-route-to-hong-kong-ipos-after-deal-boom" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-03-17/canadian-billionaire-smith-buys-26-9-of-the-economist-magazine" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-03-17/fintech-upvest-said-to-be-valued-at-640-million-in-fundraising" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.wired.com/story/dermstore-promo-code/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=wired.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">wired.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1734,10 +1842,67 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

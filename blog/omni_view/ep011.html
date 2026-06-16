@@ -708,6 +708,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +813,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1176,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Trump claims Iran war could end soon but threatens escalation if oil supplies are disrupted — Episode 11</h1>
+            <h1><span class="nn-i18n-title">Trump claims Iran war could end soon but threatens escalation if oil supplies are disrupted</span> — Episode 11</h1>
             
             <p class="blog-hero-hook">Trump claims Iran war could end soon but threatens escalation if oil supplies are disrupted.</p>
             
@@ -1129,6 +1207,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1191,15 +1272,6 @@
 <li>What role could international diplomacy play in resolving the conflict beyond US threats?</li>
 <li>How do conflicting statements from the US and Iran impact perceptions of the war's progress?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.foxnews.com/politics/blue-state-governors-move-keep-heat-noem-dhs-fires-back" target="_blank" rel="noopener">Fox News</a> — coverage of related US political responses to immigration issues</li>
-<li><a href="https://www.dailymail.co.uk/news/article-15631169/iran-israel-trump-netanyahu-war-tehran-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — live updates on Trump’s threats and Pakistan's navy involvement</li>
-<li><a href="https://www.france24.com/en/video/20260310-trump-says-iran-war-could-end-soon-but-threatens-iran-over-oil-disruption" target="_blank" rel="noopener">France 24</a> — video on Trump's statements and Iran's response</li>
-<li><a href="https://www.france24.com/en/tv-shows/press-review/20260310-who-s-making-money-off-trump-s-war-in-iran" target="_blank" rel="noopener">France 24</a> — press review including economic beneficiaries of the war</li>
-<li><a href="https://www.cnbc.com/2026/03/10/iran-strikes-gulf-neighbors-us-assets-oil-infrastructure.html" target="_blank" rel="noopener">CNBC</a> — details on Iran's defense of strikes and trust issues with neighbors</li>
-<li><a href="https://www.theguardian.com/world/live/2026/mar/10/iran-war-live-updates-iranian-supreme-leader-mojtaba-khamenei-middle-east-tehran-oil-prices-latest-news" target="_blank" rel="noopener">The Guardian</a> — live coverage of the crisis and market reactions</li>
-</ul>
 <h4 id="2-georgia-holds-primary-for-vacant-house-seat">2) Georgia holds primary for vacant House seat</h4>
 <p><strong>What happened (neutral):</strong> Georgia is conducting a high-stakes primary election to fill the congressional seat previously held by Marjorie Taylor Greene, with Republican candidate Clay Fuller, backed by Trump, competing against Democrat Shawn Harris and others in a jungle primary format. The top two candidates will advance to a runoff on April 7, regardless of party. The election is drawing national attention as a test of Trump's influence in the Republican Party and a potential opportunity for Democrats in a conservative district.</p>
 <p><strong>Perspectives:</strong> Right-leaning media portray the race as a chance for Trump-endorsed candidates to maintain conservative momentum, emphasizing Fuller's credentials as a former prosecutor and the importance of holding the seat against Democratic challenges. Left-leaning outlets focus on the possibility of a Democratic upset, highlighting Harris's military background and framing the election as a referendum on extreme Republican positions associated with Greene. Centrist views note the broader implications for US politics, with international observers seeing it as an indicator of Trump's enduring sway in southern states amid ongoing national divisions.</p>
@@ -1208,11 +1280,6 @@
 <li>How might Trump's endorsement influence voter turnout and the runoff outcome?</li>
 <li>What does this election reveal about shifting political dynamics in traditionally red districts?</li>
 <li>Could a Democratic win signal broader changes in Georgia's political landscape?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/us-news/2026/mar/10/marjorie-taylor-greene-house-seat-georgia-primary" target="_blank" rel="noopener">The Guardian</a> — details on the primary and test of Trump's sway</li>
-<li><a href="https://www.foxnews.com/politics/all-eyes-georgia-trump-backed-candidate-battles-high-stakes-congressional-showdown" target="_blank" rel="noopener">Fox News</a> — coverage of the national attention and Trump-backed candidate</li>
 </ul>
 <h4 id="3-blue-state-governors-pursue-accountability-for-former-official-noem">3) Blue-state governors pursue accountability for former official Noem</h4>
 <p><strong>What happened (neutral):</strong> Democratic governors in blue states are vowing to continue investigations into Kristi Noem's actions on immigration enforcement, even after her departure from office. They promise to seek accountability through ongoing probes. The Department of Homeland Security has responded, pushing back against these efforts.</p>
@@ -1223,10 +1290,6 @@
 <li>How do partisan divides influence accountability efforts in US politics?</li>
 <li>Is there a risk of these probes becoming overly politicized?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.foxnews.com/politics/blue-state-governors-move-keep-heat-noem-dhs-fires-back" target="_blank" rel="noopener">Fox News</a> — report on governors' vows and DHS response</li>
-</ul>
 <h4 id="4-minnesota-fraud-scandal-framed-as-spending-issue">4) Minnesota fraud scandal framed as spending issue</h4>
 <p><strong>What happened (neutral):</strong> A fraud scandal in Minnesota is being described not as an immigration problem but as a broader issue with government spending controls. The case involves misuse of funds, illustrated with imagery of the state capitol and currency. Details on the exact nature of the fraud are limited in available information, but it underscores concerns about fiscal oversight.</p>
 <p><strong>Perspectives:</strong> Libertarian-leaning commentary argues that the scandal exposes systemic flaws in government spending, urging reforms to prevent waste regardless of immigration ties. Conservative voices may link it to broader immigration debates, though the primary frame avoids that to focus on fiscal responsibility. Progressive perspectives call for verifying facts to avoid politicizing the issue, emphasizing that spending problems affect all demographics and require bipartisan solutions without scapegoating.</p>
@@ -1236,10 +1299,6 @@
 <li>What role do immigration narratives play in discussions of such scandals?</li>
 <li>Is the focus on spending accurate, or are other factors unclear?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://reason.com/2026/03/10/minnesotas-fraud-scandal-isnt-about-immigration/" target="_blank" rel="noopener">Reason.com</a> — analysis framing it as a spending problem</li>
-</ul>
 <h4 id="5-nixon-aide-alexander-butterfield-dies-at-99">5) Nixon aide Alexander Butterfield dies at 99</h4>
 <p><strong>What happened (neutral):</strong> Alexander Butterfield, who revealed the existence of President Richard Nixon's Oval Office recording system during the Watergate scandal, has died at age 99. His disclosure was pivotal in the investigations that led to Nixon's resignation. The exact cause of death is not specified in available details.</p>
 <p><strong>Perspectives:</strong> Historical accounts from US media recall Butterfield's role as a turning point in American political accountability, with some conservative outlets noting the era's divisions and lessons for current governance. Liberal perspectives celebrate his testimony as a defense of transparency against executive overreach, weaving in comparisons to modern political scandals. International views frame his legacy as a symbol of how individual actions can influence democratic institutions, encouraging reflection on the importance of whistleblowing across eras.</p>
@@ -1248,10 +1307,6 @@
 <li>How has Butterfield's revelation influenced modern views on political transparency?</li>
 <li>What lessons from Watergate apply to today's US politics?</li>
 <li>How might his death prompt reexamination of historical events?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/ckg15l9welxo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — report on his death and Watergate role</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-new-ayatollah-elected-in-iran-amid-war">1) New Ayatollah elected in Iran amid war</h4>
@@ -1263,10 +1318,6 @@
 <li>What does this reveal about power transitions in Iran?</li>
 <li>Could international pressure influence the new regime's approach?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/news/article-15630377/New-Ayatollah-bad-father-terrified-Iranians.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — report on Iranians' fears and election details</li>
-</ul>
 <h4 id="2-iran-defends-strikes-on-gulf-neighbors">2) Iran defends strikes on Gulf neighbors</h4>
 <p><strong>What happened (neutral):</strong> Iran has defended its military strikes on neighboring Gulf countries during the war, claiming they were justified. Gulf states respond that the attacks have created a huge trust gap expected to last for decades. The strikes targeted US assets and oil infrastructure, escalating regional tensions.</p>
 <p><strong>Perspectives:</strong> Iranian officials portray the strikes as defensive measures against aggression, aligning with nationalist sentiments that see them as necessary for sovereignty. Gulf and Western outlets criticize the actions as unprovoked, emphasizing long-term damage to diplomatic relations and economic stability. Centrist international reporting notes the disagreement highlights broader Middle East divides, with some voices urging verification of claims to understand potential for reconciliation.</p>
@@ -1275,10 +1326,6 @@
 <li>How will the trust gap affect future regional alliances?</li>
 <li>What evidence supports or contradicts Iran's defense of the strikes?</li>
 <li>Could this lead to broader involvement from other countries?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/03/10/iran-strikes-gulf-neighbors-us-assets-oil-infrastructure.html" target="_blank" rel="noopener">CNBC</a> — coverage of Iran's defense and neighbors' responses</li>
 </ul>
 <h4 id="3-fears-for-womens-rights-under-chiles-new-president">3) Fears for women's rights under Chile's new president</h4>
 <p><strong>What happened (neutral):</strong> José Antonio Kast, an anti-abortion conservative, is set to take office as Chile's president, raising concerns among women's rights activists. Kast has pushed for a total abortion ban and opposed progressive reforms like legalizing divorce in the past. His father had Nazi party ties, and he is described as the most conservative leader since the Pinochet era.</p>
@@ -1289,10 +1336,6 @@
 <li>What does this election say about conservative shifts in Latin America?</li>
 <li>Could activism influence his administration's approach to rights?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/global-development/2026/mar/10/fears-womens-rights-chile-anti-abortion-president-jose-antonio-kast" target="_blank" rel="noopener">The Guardian</a> — report on activists' fears and Kast's background</li>
-</ul>
 <h4 id="4-protesters-block-iranian-footballers-in-australia">4) Protesters block Iranian footballers in Australia</h4>
 <p><strong>What happened (neutral):</strong> Protesters in Australia attempted to prevent the Iranian women's football team from leaving their hotel on the Gold Coast after five players were granted humanitarian visas for asylum. The demonstrators reportedly rammed a bus and dragged a player, causing a chaotic stand-off. The team was trying to fly home amid the war.</p>
 <p><strong>Perspectives:</strong> Human rights advocates praise the asylum grants as a stand for freedom, framing the protests as passionate support for defectors escaping oppression in Iran. Conservative views might see the incident as disruptive to international sports and travel, emphasizing the need for orderly processes. International media weaves in the war context, with some Australian outlets noting the emotional toll on players and the broader implications for refugee policies during conflicts.</p>
@@ -1302,10 +1345,6 @@
 <li>What risks do athletes face when defecting from their home countries?</li>
 <li>Could similar protests occur in other nations hosting Iranian teams?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/sport/football/article-15630803/Protesters-Iran-women-football-soccer-Australia-protest-bus-leave.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — details on the stand-off and asylum grants</li>
-</ul>
 <h4 id="5-uk-braces-for-snow-and-colder-weather">5) UK braces for snow and colder weather</h4>
 <p><strong>What happened (neutral):</strong> Winter weather is returning to the UK this week, with snow expected in some areas as temperatures drop significantly. Meteorologists Tomasz Shafernaker and Simon King have explained the forecast. The colder conditions follow a period of milder weather.</p>
 <p><strong>Perspectives:</strong> British media outlets present the forecast as a routine seasonal shift, with some emphasizing preparedness for disruptions to daily life and travel. Environmental groups frame it within broader climate patterns, noting how unpredictable weather highlights global warming effects. International views might compare it to weather events elsewhere, with centrist reporting urging verification of local impacts to avoid overhyping.</p>
@@ -1314,10 +1353,6 @@
 <li>How might the cold snap affect vulnerable populations in the UK?</li>
 <li>What preparations are recommended for such weather changes?</li>
 <li>Is this event linked to larger climate trends?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/weather/articles/cp32x44kllko?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — forecast details and explanations</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-markets-react-to-iran-war-developments">1) Markets react to Iran war developments</h4>
@@ -1329,12 +1364,6 @@
 <li>Who benefits economically from prolonged conflicts?</li>
 <li>What broader risks does a fragile global economy face beyond this war?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-03-10/markets-showing-immutable-laws-in-action-on-iran-wei-li-video" target="_blank" rel="noopener">Bloomberg</a> — video on market reactions and BlackRock analysis</li>
-<li><a href="https://www.bloomberg.com/news/newsletters/2026-03-10/market-risks-loom-beyond-iran-in-a-fragile-global-economy" target="_blank" rel="noopener">Bloomberg</a> — newsletter on broader economic risks</li>
-<li><a href="https://www.france24.com/en/tv-shows/press-review/20260310-who-s-making-money-off-trump-s-war-in-iran" target="_blank" rel="noopener">France 24</a> — press review on profiteers from the war</li>
-</ul>
 <h4 id="2-uk-chancellor-faces-questions-on-cost-of-living-pressures">2) UK chancellor faces questions on cost-of-living pressures</h4>
 <p><strong>What happened (neutral):</strong> Chancellor Rachel Reeves is set to face MPs in Treasury questions amid market turbulence linked to the Middle East conflict and rising fuel prices. The RAC predicts continued increases in petrol and diesel costs, impacting households. This comes as oil prices fluctuate due to the Iran war.</p>
 <p><strong>Perspectives:</strong> UK political coverage from progressive outlets stresses the need for government action on inflation, framing Reeves' grilling as a chance to address household burdens exacerbated by global events. Conservative critics may argue the issues stem from international factors beyond domestic control, urging focus on energy independence. Business perspectives note the link to Middle East instability, with some international views seeing it as part of wider economic ripple effects, encouraging cross-party solutions without blame-shifting.</p>
@@ -1343,10 +1372,6 @@
 <li>How are global conflicts contributing to UK inflation?</li>
 <li>What policies could mitigate cost-of-living impacts for motorists?</li>
 <li>Is market turbulence solely due to the Middle East, or are other factors at play?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/politics/live/2026/mar/10/cost-of-living-middle-east-inflation-reeves-starmer-labour-lammy-courts-reform-uk-politics-live-news-updates" target="_blank" rel="noopener">The Guardian</a> — live updates on Reeves' session and market links</li>
 </ul>
 <h4 id="3-amazon-launches-spring-deal-days-sale">3) Amazon launches Spring Deal Days sale</h4>
 <p><strong>What happened (neutral):</strong> Amazon's Spring Deal Days 2026 event is underway, featuring offers from brands like Apple, Ninja, Shark, and Dyson. Shopping editors are tracking the best deals in a live blog. The sale is part of Amazon's Prime promotions, focusing on big-name products.</p>
@@ -1357,15 +1382,108 @@
 <li>How do sales like this affect smaller retailers?</li>
 <li>What brands offer the most value in this event?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.co.uk/buyline/article-15610491/amazon-prime-spring-deal-days-2026-live.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Articles | Mail Online</a> — live blog tracking deals and savings</li>
-</ul>
 <h3 id="top-technology-stories-3">Top technology stories (3)</h3>
 <h4 id="1-market-data-highlights-iran-war-impacts">1) Market data highlights Iran war impacts</h4>
 <p><strong>What happened (neutral):</strong> Bloomberg's video features BlackRock's Wei Li discussing how markets are demonstrating immutable laws</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.foxnews.com/politics/blue-state-governors-move-keep-heat-noem-dhs-fires-back" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=foxnews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">foxnews.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15631169/iran-israel-trump-netanyahu-war-tehran-live-updates.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/video/20260310-trump-says-iran-war-could-end-soon-but-threatens-iran-over-oil-disruption" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.france24.com/en/tv-shows/press-review/20260310-who-s-making-money-off-trump-s-war-in-iran" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=france24.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">france24.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/03/10/iran-strikes-gulf-neighbors-us-assets-oil-infrastructure.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/mar/10/iran-war-live-updates-iranian-supreme-leader-mojtaba-khamenei-middle-east-tehran-oil-prices-latest-news" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/us-news/2026/mar/10/marjorie-taylor-greene-house-seat-georgia-primary" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.foxnews.com/politics/all-eyes-georgia-trump-backed-candidate-battles-high-stakes-congressional-showdown" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=foxnews.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">foxnews.com</span>
+                    </a>
+                    
+                    <a href="https://reason.com/2026/03/10/minnesotas-fraud-scandal-isnt-about-immigration/" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=reason.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">reason.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/ckg15l9welxo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/news/article-15630377/New-Ayatollah-bad-father-terrified-Iranians.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/global-development/2026/mar/10/fears-womens-rights-chile-anti-abortion-president-jose-antonio-kast" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/sport/football/article-15630803/Protesters-Iran-women-football-soccer-Australia-protest-bus-leave.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/weather/articles/cp32x44kllko?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-03-10/markets-showing-immutable-laws-in-action-on-iran-wei-li-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/newsletters/2026-03-10/market-risks-loom-beyond-iran-in-a-fragile-global-economy" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/politics/live/2026/mar/10/cost-of-living-middle-east-inflation-reeves-starmer-labour-lammy-courts-reform-uk-politics-live-news-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.co.uk/buyline/article-15610491/amazon-prime-spring-deal-days-2026-live.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.co.uk&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.co.uk</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1710,10 +1828,67 @@ That's Omni View. For full source links and more context, check out today's writ
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>

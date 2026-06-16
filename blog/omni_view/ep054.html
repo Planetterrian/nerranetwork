@@ -107,7 +107,12 @@
       "url": "https://nerranetwork.com/omni-view.html"
     },
     "image": "https://nerranetwork.com/assets/covers/omni-view.jpg",
-    "transcript": "https://nerranetwork.com/blog/omni_view/ep054.html#transcript"
+    "transcript": "https://nerranetwork.com/blog/omni_view/ep054.html#transcript",
+    "associatedMedia": {
+      "@type": "MediaObject",
+      "contentUrl": "https://audio.nerranetwork.com/omni_view/Omni_View_Ep054_20260518.mp3",
+      "inLanguage": "en"
+    }
   }
 ]
     </script>
@@ -708,6 +713,60 @@
                 max-width: 90vw;
             }
         }
+
+        /* Multilingual audio player + language switcher (June 2026) */
+        .nn-i18n {
+            max-width: 760px;
+            margin: 0 auto var(--sp-4);
+            padding: 0 var(--sp-6);
+        }
+        .nn-i18n-inner {
+            background: var(--nn-card);
+            border: 1px solid var(--nn-border);
+            border-radius: 12px;
+            padding: var(--sp-4) var(--sp-5);
+        }
+        .nn-i18n-row {
+            display: flex;
+            align-items: center;
+            gap: var(--sp-2);
+            flex-wrap: wrap;
+            margin-bottom: var(--sp-3);
+        }
+        .nn-i18n-label {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--sp-1);
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            color: var(--nn-text-muted);
+            margin-right: var(--sp-1);
+        }
+        .nn-i18n-pill {
+            padding: var(--sp-1) var(--sp-4);
+            border-radius: 100px;
+            border: 1px solid var(--nn-border);
+            background: var(--nn-surface, transparent);
+            color: var(--nn-text-muted);
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all var(--duration) var(--ease);
+        }
+        .nn-i18n-pill:hover {
+            border-color: var(--show-color);
+            color: var(--nn-white);
+        }
+        .nn-i18n-pill[aria-pressed="true"] {
+            border-color: var(--show-color);
+            background: color-mix(in srgb, var(--show-color) 18%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            font-weight: 600;
+        }
+        .nn-i18n-audio {
+            width: 100%;
+            height: 38px;
+        }
     </style>
 
 
@@ -759,6 +818,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -1098,7 +1181,7 @@
                 <picture><source type="image/webp" srcset="../../assets/covers/omni-view-400.webp"><img src="../../assets/covers/omni-view.jpg" alt="Omni View" width="40" height="40"></picture>
                 Omni View Blog
             </a>
-            <h1>Trump's warning that "the clock is ticking" for Iran raises risks to global oil supplies and regiona… — Episode 54</h1>
+            <h1><span class="nn-i18n-title">Trump's warning that "the clock is ticking" for Iran raises risks to global oil supplies and regiona…</span> — Episode 54</h1>
             
             <p class="blog-hero-hook">Trump's warning that "the clock is ticking" for Iran raises risks to global oil supplies and regional stability as peace talks stall.</p>
             
@@ -1129,6 +1212,9 @@
             </div>
         </div>
     </header>
+
+    
+    
 
     <!-- Article with TOC sidebar -->
     <div class="blog-article-wrap">
@@ -1210,12 +1296,6 @@
 <li>What signals are regional governments sending when they condemn escalation while urging talks?</li>
 <li>How might markets interpret repeated warnings versus actual policy shifts?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/world/live/2026/may/18/us-israel-iran-lebanon-donald-trump-hormuz-oil-latest-news-updates" target="_blank" rel="noopener">The Guardian</a> — Live updates on statements from multiple governments</li>
-<li><a href="https://www.dailymail.com/news/article-15825695/Trum-warning-iran-clock-ticking-threat-peace-talks-failed.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Full text of the social media post</li>
-<li><a href="https://www.aljazeera.com/news/2026/5/18/iran-war-day-80-trump-issues-warning-tehran-ready-to-confront-aggression?traffic_source=rss" target="_blank" rel="noopener">Al Jazeera</a> — Context on day 80 of the conflict</li>
-</ul>
 <h4 id="2-uk-government-proposes-earlier-intervention-on-youth-crime">2) UK government proposes earlier intervention on youth crime</h4>
 <p><strong>What happened (neutral):</strong> New measures were announced to allow earlier intervention with parents and tougher action to prevent young people from reoffending. Officials said the steps target root causes before patterns become entrenched. Campaigners responded that the proposals do not go far enough to address underlying social drivers.</p>
 <p><strong>Perspectives:</strong> BBC reporting highlighted government emphasis on prevention and accountability for families, while noting concerns from advocacy groups that resources remain focused on enforcement rather than broader support services. The differing views rest on whether early parental involvement reduces offending rates or risks overreach into family life without sufficient community investment.</p>
@@ -1224,10 +1304,6 @@
 <li>What evidence shows early family intervention changes long-term outcomes?</li>
 <li>How do local authorities balance support with enforcement powers?</li>
 <li>What metrics will determine if the approach succeeds?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bbc.com/news/articles/cx21p5qp23xo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener">BBC News</a> — Details on the proposed measures and reactions</li>
 </ul>
 <h4 id="3-starmer-rules-out-setting-departure-timetable-says-ally">3) Starmer rules out setting departure timetable, says ally</h4>
 <p><strong>What happened (neutral):</strong> Deputy Prime Minister David Lammy stated that Keir Starmer is not preparing a timetable for leaving office. The comments came amid ongoing speculation about leadership challenges inside the Labour Party. Lammy described repeated leadership talk as an “own goal” for the party.</p>
@@ -1238,10 +1314,6 @@
 <li>What effect does byelection timing have on internal party dynamics?</li>
 <li>When do repeated leadership questions begin to affect policy delivery?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/politics/2026/may/18/keir-starmer-not-setting-out-timetable-departure-david-lammy-andy-burnham-labour" target="_blank" rel="noopener">The Guardian</a> — Lammy’s full comments and context</li>
-</ul>
 <h4 id="4-labour-figures-clash-over-eu-rejoining-comments">4) Labour figures clash over EU rejoining comments</h4>
 <p><strong>What happened (neutral):</strong> Wes Streeting’s remarks supporting rejoining the EU drew criticism from supporters of Andy Burnham, who accused him of using the issue to influence an upcoming byelection. The exchange highlighted ongoing divisions within the party about Britain’s post-Brexit relationship with Europe.</p>
 <p><strong>Perspectives:</strong> Mail Online coverage portrayed the comments as potentially damaging to Labour’s electoral prospects in key seats. Burnham allies argued the timing undermined candidates focused on domestic issues. Both sides accept the EU question remains sensitive inside Labour; they differ on whether raising it publicly helps or hinders the party’s broader electoral strategy.</p>
@@ -1251,10 +1323,6 @@
 <li>What role do byelections play in testing leadership contenders?</li>
 <li>How do voters respond to mixed signals on major constitutional questions?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15826781/Labour-EU-Burnham-Streeting-Brexit-sabotage-byelection.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Details of the exchange between camps</li>
-</ul>
 <h4 id="5-australian-treasurer-rejects-unhinged-criticism-of-housing-plans">5) Australian treasurer rejects “unhinged” criticism of housing plans</h4>
 <p><strong>What happened (neutral):</strong> Treasurer Jim Chalmers described opposition to proposed housing changes as an unhinged scare campaign. The measures include steps to increase supply of new homes, with particular focus on first-time buyers in Queensland. Critics have questioned the scale and speed of delivery.</p>
 <p><strong>Perspectives:</strong> Guardian reporting noted Chalmers’ emphasis on concrete outcomes such as tens of thousands of additional homes. Opponents have argued the changes risk market distortion without guaranteed results. Both sides agree housing supply is a pressing issue; they differ on whether the announced levers will produce measurable increases in affordable stock.</p>
@@ -1263,10 +1331,6 @@
 <li>What data would show whether new supply targets are being met?</li>
 <li>How do state and federal governments coordinate on housing delivery?</li>
 <li>What safeguards exist if promotion schemes fail to increase actual construction?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/live/2026/may/18/australia-news-live-nsw-victoria-queensland-politics-labor-liberal-coalition-melbourne-sydney-brisbane-economy-weather-ntwnfb" target="_blank" rel="noopener">The Guardian</a> — Treasurer’s statements and market context</li>
 </ul>
 <h3 id="top-world-stories-5">Top world stories (5)</h3>
 <h4 id="1-asia-pacific-markets-decline-on-renewed-iran-tensions">1) Asia-Pacific markets decline on renewed Iran tensions</h4>
@@ -1278,10 +1342,6 @@
 <li>What indicators show when oil supply fears are easing or intensifying?</li>
 <li>How do central banks in import-dependent economies respond to such volatility?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/18/asia-pacific-markets-today-live-updates-nikkei-225-hang-seng-index-kospi-nifty-50.html" target="_blank" rel="noopener">CNBC</a> — Market movements and analyst notes</li>
-</ul>
 <h4 id="2-european-stocks-open-lower-after-iran-warnings">2) European stocks open lower after Iran warnings</h4>
 <p><strong>What happened (neutral):</strong> European equity markets started the week in negative territory following the latest US statements on Iran. Investors cited uncertainty over energy supplies and broader regional stability. Trading volumes reflected caution across major indices.</p>
 <p><strong>Perspectives:</strong> CNBC reporting connected the declines to ongoing concerns about the Strait of Hormuz and possible knock-on effects for European energy costs. Some traders viewed the moves as a short-term repricing rather than a fundamental shift. Both sides agree the statements added volatility; they differ on whether the reaction will persist beyond immediate headlines.</p>
@@ -1290,10 +1350,6 @@
 <li>Which sectors are most exposed when oil route concerns rise?</li>
 <li>How do fund managers adjust portfolios during periods of geopolitical tension?</li>
 <li>What historical patterns exist for European market reactions to Middle East developments?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/18/european-markets-stoxx-600-ftse-dax-iran-latest-uk-news.html" target="_blank" rel="noopener">CNBC</a> — Opening levels and sector reactions</li>
 </ul>
 <h4 id="3-india-positioned-to-manage-russian-oil-supply-shift">3) India positioned to manage Russian oil supply shift</h4>
 <p><strong>What happened (neutral):</strong> Indian refiners are expected to handle the end of a US waiver on Russian crude purchases with limited disruption. Weaker domestic demand and alternative supplies from the US and Middle East are cited as buffers. Officials have not indicated immediate shortages.</p>
@@ -1304,10 +1360,6 @@
 <li>What role do strategic reserves play during such transitions?</li>
 <li>How might global oil traders respond to India’s sourcing changes?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-18/india-can-ride-out-disruption-after-russian-oil-waiver-lapses" target="_blank" rel="noopener">Bloomberg</a> — Supply outlook and demand context</li>
-</ul>
 <h4 id="4-qatari-firm-bids-for-major-african-infrastructure-projects">4) Qatari firm bids for major African infrastructure projects</h4>
 <p><strong>What happened (neutral):</strong> Power International Holding, owned by a Qatari billionaire family, has placed bids for an airport in Ethiopia and a road project in Congo. The moves form part of a wider effort to expand the group’s presence across the continent. Details of the bids remain under review by the respective governments.</p>
 <p><strong>Perspectives:</strong> Bloomberg coverage framed the activity as a strategic push into high-value infrastructure with long-term revenue potential. Local governments have welcomed interest from well-capitalised international players while maintaining standard procurement processes. Both the company and host nations agree large projects require significant capital; they differ on the preferred balance between speed and local content requirements.</p>
@@ -1317,10 +1369,6 @@
 <li>How do financing terms affect long-term project ownership?</li>
 <li>What oversight mechanisms exist for cross-border construction contracts?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/articles/2026-05-18/billionaire-qatari-family-bids-for-ethiopian-airport-congo-road" target="_blank" rel="noopener">Bloomberg</a> — Project details and company background</li>
-</ul>
 <h4 id="5-goldman-sachs-outlines-potential-european-jet-fuel-constraints">5) Goldman Sachs outlines potential European jet fuel constraints</h4>
 <p><strong>What happened (neutral):</strong> Goldman Sachs research highlighted the risk of a summer squeeze on jet fuel supplies in Europe linked to the closure of the Strait of Hormuz. A 15 percent reduction in flights was cited as one possible market response if supplies remain tight. Airlines are already modelling different scenarios.</p>
 <p><strong>Perspectives:</strong> Bloomberg reporting presented the analysis as a reminder that energy route disruptions can quickly affect aviation fuel availability. European carriers have begun reviewing contingency plans while monitoring diplomatic developments. Both analysts and industry participants agree supply routes matter; they differ on how rapidly alternative sourcing can scale.</p>
@@ -1329,10 +1377,6 @@
 <li>How do airlines typically hedge against fuel supply shocks?</li>
 <li>What alternative routes or storage options exist for European jet fuel?</li>
 <li>How do regulators balance passenger demand with supply constraints?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-05-18/goldman-says-europe-faces-summer-jet-fuel-squeeze-video" target="_blank" rel="noopener">Bloomberg</a> — Analyst comments on pricing and demand</li>
 </ul>
 <h3 id="top-business-stories-3">Top business stories (3)</h3>
 <h4 id="1-ryanair-prepares-contingency-plans-for-fuel-shortages">1) Ryanair prepares contingency plans for fuel shortages</h4>
@@ -1344,10 +1388,6 @@
 <li>How do carriers decide which routes to maintain during supply stress?</li>
 <li>What role do forward fuel contracts play in protecting margins?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.cnbc.com/2026/05/18/ryanair-earnings-fy-jet-fuel-crunch-airlines.html" target="_blank" rel="noopener">CNBC</a> — Earnings context and management comments</li>
-</ul>
 <h4 id="2-strait-of-hormuz-disruptions-weigh-on-asset-prices">2) Strait of Hormuz disruptions weigh on asset prices</h4>
 <p><strong>What happened (neutral):</strong> Analysts discussed how the ongoing situation around the Strait of Hormuz is contributing to broader asset price pressure. Energy and transport sectors have seen particular volatility. Investors continue to monitor diplomatic and military developments for further signals.</p>
 <p><strong>Perspectives:</strong> Bloomberg reporting connected the strait’s status directly to daily moves in equities, bonds, and commodities. Portfolio managers have adjusted exposure to sectors most sensitive to energy logistics. Both market participants and research desks agree route security affects pricing; they differ on how long current discounts will persist if tensions ease.</p>
@@ -1356,10 +1396,6 @@
 <li>Which asset classes show the strongest historical correlation with Hormuz developments?</li>
 <li>How do traders distinguish between temporary and structural supply risks?</li>
 <li>What indicators would signal that markets have fully priced in the current situation?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.bloomberg.com/news/videos/2026-05-18/strait-of-hormuz-is-source-of-asset-pain-3-minutes-mliv-video" target="_blank" rel="noopener">Bloomberg</a> — Daily market breakdown</li>
 </ul>
 <h4 id="3-amazon-maintains-dominance-without-major-western-challengers">3) Amazon maintains dominance without major Western challengers</h4>
 <p><strong>What happened (neutral):</strong> BBC analysis examined why Amazon has no significant Western rivals in online retail scale. The company’s logistics network, data advantages, and customer habits were cited as structural factors. Smaller competitors have struggled to match the combination of selection, speed, and pricing.</p>
@@ -1390,10 +1426,6 @@
 <li>How do retailers typically respond to unusual contamination reports?</li>
 <li>What makes certain consumer stories spread rapidly online?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.theguardian.com/australia-news/2026/may/18/live-frog-lettuce-bag-supermarket-australia" target="_blank" rel="noopener">The Guardian</a> — Account from the shoppers and broadcast details</li>
-</ul>
 <h4 id="2-michael-fassbender-and-alicia-vikander-film-receives-standing-ovation-at-cannes">2) Michael Fassbender and Alicia Vikander film receives standing ovation at Cannes</h4>
 <p><strong>What happened (neutral):</strong> The couple’s first joint project in a decade, the South Korean science-fiction film Hope, received a six-minute standing ovation at its Cannes premiere. Both actors appeared on the red carpet for the screening. The film is directed by Na Hong-jin.</p>
 <p><strong>Perspectives:</strong> Mail Online coverage focused on the personal milestone for the actors and the warm audience reaction. Industry observers noted the rarity of joint projects for high-profile couples working in different markets. Both the festival audience and the actors appear to have viewed the screening as a positive moment; they differ on how the film’s reception will translate to wider distribution.</p>
@@ -1403,10 +1435,6 @@
 <li>What factors determine whether joint projects by celebrity couples attract audiences?</li>
 <li>How do standing ovations correlate with later critical or box-office success?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15826291/Michael-Fassbender-Alicia-Vikander-Hope-film-six-minute-standing-ovation-Cannes.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Red-carpet details and reception</li>
-</ul>
 <h4 id="3-stanley-baxter-estate-valued-at-nearly-3-million">3) Stanley Baxter estate valued at nearly £3 million</h4>
 <p><strong>What happened (neutral):</strong> The Scottish actor and comedian Stanley Baxter, who died aged 99 in December, left an estate worth nearly £3 million. The will was made public recently and showed assets accumulated over a long career in television and pantomime. No major disputes over the estate have been reported.</p>
 <p><strong>Perspectives:</strong> Mail Online reporting presented the figure as a reflection of steady earnings from decades of work in British entertainment. Colleagues have remembered Baxter for his longevity and distinctive style. Both family representatives and media outlets agree the estate represents a lifetime of professional success; they differ on how such legacies are typically divided among heirs in the entertainment industry.</p>
@@ -1415,10 +1443,6 @@
 <li>How do performers from earlier eras structure their estates compared with modern celebrities?</li>
 <li>What tax considerations commonly arise with large entertainment estates?</li>
 <li>How do public figures’ wills influence perceptions of their careers?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15826673/Stanley-Baxter-left-estate-worth-nearly-3million-death-aged-99.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Estate details and career summary</li>
 </ul>
 <h3 id="top-gossip-stories-3">Top gossip stories (3)</h3>
 <h4 id="1-swatch-royal-pop-watch-triggers-violent-scenes-at-stores">1) Swatch ‘Royal Pop’ watch triggers violent scenes at stores</h4>
@@ -1430,10 +1454,6 @@
 <li>How do retailers balance security costs against publicity gains from hype?</li>
 <li>What consumer protections exist when crowds become unsafe?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15825625/brawls-globe-WATCH-Violent-scenes-Europe-UK-US-Swatch.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Eyewitness accounts and police response</li>
-</ul>
 <h4 id="2-katie-price-reports-husband-missing-and-fears-kidnapping">2) Katie Price reports husband missing and fears kidnapping</h4>
 <p><strong>What happened (neutral):</strong> Katie Price stated that her husband Lee Andrews has been officially declared a missing person five days after he disappeared. She expressed concern he may have been kidnapped and claimed he was last seen with his hands tied in a van. Police have opened an investigation but released limited details.</p>
 <p><strong>Perspectives:</strong> Mail Online reporting presented the case as a developing personal story with potential criminal elements. Friends and family have appealed for information while respecting police requests for privacy. Both the family and authorities agree the disappearance is unexplained; they differ on how much information should be shared publicly during an active inquiry.</p>
@@ -1442,10 +1462,6 @@
 <li>How do high-profile missing-person cases affect police resource allocation?</li>
 <li>What support exists for families when public appeals are made?</li>
 <li>How do media outlets balance public interest with investigation needs?</li>
-</ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/tvshowbiz/article-15825861/Katie-Prices-husband-Lee-Andrews-declared-missing-vanishing.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Family statements and police confirmation</li>
 </ul>
 <h4 id="3-former-scotland-rugby-captains-marriage-ends">3) Former Scotland rugby captain’s marriage ends</h4>
 <p><strong>What happened (neutral):</strong> Jamie Ritchie, 29, announced the end of his marriage to his childhood sweetheart, with reports that his wife has moved in with a close friend. The former captain said he will return to Scotland following the split. No further details have been released by either party.</p>
@@ -1456,16 +1472,119 @@
 <li>What boundaries do media outlets set when covering athletes’ relationships?</li>
 <li>How do fans typically respond to news about players’ off-field lives?</li>
 </ul>
-<p><strong>Read more (sources):</strong></p>
-<ul>
-<li><a href="https://www.dailymail.com/news/article-15820633/International-rugby-star-left-heartbroken-marriage-childhood-sweetheart-collapses-wife-moves-close-friend.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener">Mail Online</a> — Statement from Ritchie and background</li>
-</ul>
 <h3 id="understanding-the-issue-how-strait-of-hormuz-closures-affect-global-fuel-supplies-and-airline-planning">Understanding the Issue: How Strait of Hormuz closures affect global fuel supplies and airline planning</h3>
 <p>Most coverage of energy route disruptions treats them as simple price spikes, yet the mechanism involves layered logistics, contractual obligations, and regulatory approvals that take weeks or months to adjust. When the strait is restricted, tankers carrying crude and refined products must reroute around Africa, adding roughly two weeks of sailing time and requiring new port slots, insurance terms, and refinery feedstock swaps. Airlines, in turn, rely on forward contracts and storage inventories that were sized for normal flows; once those buffers shrink, carriers must either reduce schedules or pay spot-market premiums that quickly erode margins. Knowing this, when you hear claims that “airlines will simply absorb the cost,” you can check whether the carrier has disclosed hedging levels and alternative sourcing agreements rather than assuming short-term resilience. Next time you see a headline about Hormuz tensions, ask: who holds the physical inventory today, which refineries can process substitute crudes without major retooling, and what regulatory approvals stand between a diverted cargo and an airport fuel truck.</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference statements from governments and companies with primary documents such as shipping schedules and regulatory filings rather than relying on any single summary. Note which outlets disclose their sourcing and which repeat unverified claims. When numbers or timelines appear, verify them against the most recent official data releases before drawing conclusions.</p>
 
             <!-- Sources -->
+            
+            <section class="blog-sources">
+                <h2>Sources</h2>
+                <div class="blog-sources-grid">
+                    
+                    <a href="https://www.theguardian.com/world/live/2026/may/18/us-israel-iran-lebanon-donald-trump-hormuz-oil-latest-news-updates" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15825695/Trum-warning-iran-clock-ticking-threat-peace-talks-failed.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.aljazeera.com/news/2026/5/18/iran-war-day-80-trump-issues-warning-tehran-ready-to-confront-aggression?traffic_source=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=aljazeera.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">aljazeera.com</span>
+                    </a>
+                    
+                    <a href="https://www.bbc.com/news/articles/cx21p5qp23xo?at_medium=RSS&at_campaign=rss" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/politics/2026/may/18/keir-starmer-not-setting-out-timetable-departure-david-lammy-andy-burnham-labour" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15826781/Labour-EU-Burnham-Streeting-Brexit-sabotage-byelection.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/live/2026/may/18/australia-news-live-nsw-victoria-queensland-politics-labor-liberal-coalition-melbourne-sydney-brisbane-economy-weather-ntwnfb" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/05/18/asia-pacific-markets-today-live-updates-nikkei-225-hang-seng-index-kospi-nifty-50.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/05/18/european-markets-stoxx-600-ftse-dax-iran-latest-uk-news.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-18/india-can-ride-out-disruption-after-russian-oil-waiver-lapses" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/articles/2026-05-18/billionaire-qatari-family-bids-for-ethiopian-airport-congo-road" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-05-18/goldman-says-europe-faces-summer-jet-fuel-squeeze-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.cnbc.com/2026/05/18/ryanair-earnings-fy-jet-fuel-crunch-airlines.html" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=cnbc.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">cnbc.com</span>
+                    </a>
+                    
+                    <a href="https://www.bloomberg.com/news/videos/2026-05-18/strait-of-hormuz-is-source-of-asset-pain-3-minutes-mliv-video" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=bloomberg.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">bloomberg.com</span>
+                    </a>
+                    
+                    <a href="https://www.theguardian.com/australia-news/2026/may/18/live-frog-lettuce-bag-supermarket-australia" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=theguardian.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">theguardian.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15826291/Michael-Fassbender-Alicia-Vikander-Hope-film-six-minute-standing-ovation-Cannes.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15826673/Stanley-Baxter-left-estate-worth-nearly-3million-death-aged-99.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15825625/brawls-globe-WATCH-Violent-scenes-Europe-UK-US-Swatch.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/tvshowbiz/article-15825861/Katie-Prices-husband-Lee-Andrews-declared-missing-vanishing.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                    <a href="https://www.dailymail.com/news/article-15820633/International-rugby-star-left-heartbroken-marriage-childhood-sweetheart-collapses-wife-moves-close-friend.html?ns_mchannel=rss&ito=1490&ns_campaign=1490" target="_blank" rel="noopener" class="blog-source-card">
+                        <img src="https://www.google.com/s2/favicons?domain=dailymail.com&sz=32" alt="" class="source-icon" loading="lazy">
+                        <span class="source-domain">dailymail.com</span>
+                    </a>
+                    
+                </div>
+            </section>
             
 
             <!-- Transcript -->
@@ -1892,10 +2011,67 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
 })();
+
+// Multilingual audio: swap track + translated title/description (June 2026).
+(function() {
+    var el = document.getElementById('nn-i18n-tracks');
+    if (!el) return;
+    var tracks;
+    try { tracks = JSON.parse(el.textContent); } catch (e) { return; }
+    var codes = Object.keys(tracks);
+    if (codes.length < 2) return;  // English-only → nothing to switch
+    var audio = document.getElementById('nn-i18n-audio');
+    var titleEl = document.querySelector('.nn-i18n-title');
+    var hookEl = document.querySelector('.blog-hero-hook');
+    var pills = document.querySelectorAll('.nn-i18n-pill');
+    // Site-wide preference (localStorage) so a visitor picks their language
+    // ONCE and every episode they open afterwards is already in it — the
+    // choice persists across episodes and sessions. Falls back gracefully
+    // when a given episode doesn't have the preferred track (without
+    // forgetting the preference for episodes that do).
+    var PREF_KEY = 'nn-pref-lang';
+
+    function savedPref() {
+        try { return localStorage.getItem(PREF_KEY) || ''; } catch (e) { return ''; }
+    }
+    function preferred() {
+        var pref = savedPref();
+        if (pref && tracks[pref]) return pref;            // global choice
+        var nav = (navigator.language || 'en').slice(0, 2).toLowerCase();
+        return tracks[nav] ? nav : 'en';                  // browser language, else English
+    }
+    function apply(code, persist) {
+        var t = tracks[code];
+        if (!t) return;
+        if (audio && t.url) {
+            var wasPlaying = audio && !audio.paused;
+            audio.src = t.url;
+            if (wasPlaying) { audio.play().catch(function(){}); }
+        }
+        if (titleEl && t.title) titleEl.textContent = t.title;
+        if (hookEl && t.desc) hookEl.textContent = t.desc;
+        document.documentElement.setAttribute('lang', code);
+        pills.forEach(function(p) {
+            p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
+        });
+        if (persist) { try { localStorage.setItem(PREF_KEY, code); } catch (e) {} }
+    }
+    pills.forEach(function(p) {
+        p.addEventListener('click', function() { apply(p.dataset.lang, true); });
+    });
+    // Live-switch when the global header language control changes (no reload).
+    // Falls back to English if this episode lacks the chosen track.
+    document.addEventListener('nn-langchange', function(e) {
+        var lang = (e.detail && e.detail.lang) || 'en';
+        apply(tracks[lang] ? lang : 'en', false);
+    });
+    apply(preferred(), false);
+})();
 </script>
 
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>
