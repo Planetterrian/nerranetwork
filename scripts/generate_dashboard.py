@@ -1173,6 +1173,99 @@ def aggregate_costs(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
+_ML_LANGS = ("fr", "ru", "es", "zh")
+
+
+def aggregate_multilingual(
+    root: Path, shows: List[Dict[str, Any]], recent_n: int = 10
+) -> Dict[str, Any]:
+    """Per-show multilingual coverage + 7-day cost (June 2026).
+
+    Coverage comes from each show's ``summaries_<show>.json`` ``translations``
+    map (how many of the last *recent_n* episodes have each language / all
+    languages). The 7-day cost reads ``services.multilingual.estimated_cost_usd``
+    from the recent ``credit_usage_*.json`` files (0 until cost-tracked
+    episodes exist — read defensively). Shows with ``multilingual.enabled``
+    false (the Russian shows) are excluded.
+    """
+    from engine.summaries_io import load_summaries  # local import — script boot
+
+    today = _dt.date.today()
+    d7 = today - _dt.timedelta(days=7)
+    per_show: Dict[str, Any] = {}
+    network_cost_7 = 0.0
+
+    for s in shows:
+        cfg = s.get("cfg")
+        ml = getattr(cfg, "multilingual", None) if cfg else None
+        if not (ml and getattr(ml, "enabled", False)):
+            continue  # disabled / Russian shows
+        slug = s["slug"]
+
+        # Coverage from the summaries translations map.
+        per_language = {lang: 0 for lang in _ML_LANGS}
+        all_languages = 0
+        checked = 0
+        summ = cfg.publishing.summaries_json or ""
+        summ_path = root / summ if summ else None
+        if summ_path and summ_path.exists():
+            try:
+                _w, records = load_summaries(summ_path)
+                recs = sorted(
+                    (r for r in records if isinstance(r.get("episode_num"), int)),
+                    key=lambda r: r["episode_num"], reverse=True,
+                )[:recent_n]
+                checked = len(recs)
+                for r in recs:
+                    tr = r.get("translations") or {}
+                    present = [
+                        lang for lang in _ML_LANGS
+                        if isinstance(tr.get(lang), dict) and tr[lang].get("audio_url")
+                    ]
+                    for lang in present:
+                        per_language[lang] += 1
+                    if len(present) == len(_ML_LANGS):
+                        all_languages += 1
+            except Exception:
+                pass
+        coverage_pct = round(all_languages / checked * 100, 1) if checked else 0.0
+
+        # 7-day multilingual spend (defensive: section absent on old trackers).
+        cost_7 = 0.0
+        ddir = _digests_dir_for(slug, root)
+        if ddir.exists():
+            for f in sorted(ddir.glob("credit_usage_*.json")):
+                try:
+                    data = json.loads(f.read_text(encoding="utf-8"))
+                    when = _dt.date.fromisoformat(data.get("date") or "")
+                except Exception:
+                    continue
+                if when >= d7:
+                    cost_7 += float(
+                        ((data.get("services") or {}).get("multilingual") or {})
+                        .get("estimated_cost_usd") or 0.0
+                    )
+        cost_7 = round(cost_7, 4)
+        network_cost_7 += cost_7
+
+        per_show[slug] = {
+            "languages": list(ml.languages) if getattr(ml, "languages", None) else list(_ML_LANGS),
+            "auto": bool(getattr(ml, "auto", False)),
+            "episodes_checked": checked,
+            "per_language": per_language,
+            "all_languages": all_languages,
+            "coverage_pct": coverage_pct,
+            "cost_7d_usd": cost_7,
+        }
+
+    return {
+        "languages": list(_ML_LANGS),
+        "recent_n": recent_n,
+        "per_show": per_show,
+        "network_cost_7d_usd": round(network_cost_7, 4),
+    }
+
+
 def extract_critical_alerts(
     landmines: List[Dict[str, Any]],
     costs: Dict[str, Any],
@@ -1519,6 +1612,7 @@ def build_dashboard(root: Path, *, offline: bool = False, previous_flat: Optiona
         "alerts": alerts,
         "voice_config": voice,
         "cost_rollup": costs,
+        "multilingual": aggregate_multilingual(root, shows),
         "pipeline_health": metrics,
         "rss_audit": rss,
         "mit_performance": aggregate_mit_performance(root),

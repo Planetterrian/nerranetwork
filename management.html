@@ -205,6 +205,11 @@
   </section>
 
   <section class="mgmt-section">
+    <h2>Multilingual coverage <span id="multilingual-status-pill" style="font-size:12px;font-weight:normal;color:#94a3b8;margin-left:8px;"></span></h2>
+    <div id="multilingual-coverage"></div>
+  </section>
+
+  <section class="mgmt-section">
     <h2>Pipeline p50 duration per show</h2>
     <div id="pipeline-sparklines"></div>
   </section>
@@ -483,6 +488,40 @@
       text: money((costPerShow[s.slug] || {}).last_30_days && (costPerShow[s.slug] || {}).last_30_days.total) + " · 30d" }));
     costSparks.appendChild(row);
   });
+
+  // Multilingual coverage — per-show language badges (count in the last N
+  // episodes), % of recent episodes with all languages, and 7-day spend.
+  const mlWrap = $("#multilingual-coverage");
+  const ml = data.multilingual;
+  if (mlWrap) {
+    if (!ml || !ml.per_show || !Object.keys(ml.per_show).length) {
+      mlWrap.appendChild(h("div", { class: "muted",
+        text: "No multilingual data yet — translations populate as episodes publish." }));
+    } else {
+      const pill = $("#multilingual-status-pill");
+      if (pill) pill.textContent = money(ml.network_cost_7d_usd) + " · 7d · last " + (ml.recent_n || 10) + " eps";
+      shows.forEach((s) => {
+        const c = (ml.per_show || {})[s.slug];
+        if (!c) return;  // disabled / Russian shows are excluded
+        const row = h("div", { class: "sparkline-row" });
+        row.appendChild(h("div", { class: "label", text: s.name || s.slug }));
+        const badges = h("div", { style: "flex:1;display:flex;gap:6px;flex-wrap:wrap;" });
+        (ml.languages || []).forEach((lang) => {
+          const n = (c.per_language || {})[lang] || 0;
+          const on = n > 0;
+          badges.appendChild(h("span", {
+            style: "font:600 11px/1.6 ui-monospace,monospace;padding:1px 7px;border-radius:100px;"
+              + (on ? "background:#0e7490;color:#e0f2fe;" : "background:#1e293b;color:#64748b;"),
+            text: lang.toUpperCase() + (on ? " " + n : ""),
+          }));
+        });
+        row.appendChild(badges);
+        row.appendChild(h("div", { class: "value",
+          text: (c.coverage_pct || 0) + "% all · " + money(c.cost_7d_usd) + " 7d" }));
+        mlWrap.appendChild(row);
+      });
+    }
+  }
 
   const pipeSparks = $("#pipeline-sparklines");
   const health = data.pipeline_health || {};

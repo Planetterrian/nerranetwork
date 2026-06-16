@@ -359,3 +359,53 @@ def test_management_html_renders_audience_card():
     html = (ROOT / "management.html").read_text(encoding="utf-8")
     assert 'id="audience-section"' in html
     assert "data.audience" in html
+
+
+# ---------------------------------------------------------------------------
+# Multilingual coverage card (June 2026)
+# ---------------------------------------------------------------------------
+
+def test_multilingual_section_present_and_shaped():
+    data = gd.build_dashboard(ROOT, offline=True)
+    assert "multilingual" in data, "dashboard must emit a multilingual section"
+    ml = data["multilingual"]
+    assert ml["languages"] == ["fr", "ru", "es", "zh"]
+    assert isinstance(ml["per_show"], dict) and ml["per_show"]
+    # Enabled English shows present; Russian shows excluded (multilingual off).
+    assert "tesla" in ml["per_show"]
+    assert "finansy_prosto" not in ml["per_show"]
+    assert "privet_russian" not in ml["per_show"]
+    entry = ml["per_show"]["tesla"]
+    for k in ("episodes_checked", "per_language", "all_languages",
+              "coverage_pct", "cost_7d_usd", "languages"):
+        assert k in entry, k
+    assert set(entry["per_language"]) == {"fr", "ru", "es", "zh"}
+
+
+def test_aggregate_multilingual_counts_coverage(tmp_path):
+    import json as _json
+    from engine.config import load_config
+    cfg = load_config("shows/tesla.yaml")
+    cfg.publishing.summaries_json = "summaries.json"
+    (tmp_path / "summaries.json").write_text(_json.dumps({
+        "podcast": "t",
+        "summaries": [
+            {"episode_num": 2, "translations": {
+                "fr": {"audio_url": "a"}, "ru": {"audio_url": "b"},
+                "es": {"audio_url": "c"}, "zh": {"audio_url": "d"}}},
+            {"episode_num": 1, "translations": {"fr": {"audio_url": "a"}}},
+        ],
+    }), encoding="utf-8")
+    out = gd.aggregate_multilingual(tmp_path, [{"slug": "tesla", "cfg": cfg}])
+    e = out["per_show"]["tesla"]
+    assert e["episodes_checked"] == 2
+    assert e["all_languages"] == 1          # only ep2 has all four
+    assert e["per_language"]["fr"] == 2     # both episodes have FR
+    assert e["per_language"]["zh"] == 1
+    assert e["coverage_pct"] == 50.0
+
+
+def test_management_html_renders_multilingual_card():
+    html = (ROOT / "management.html").read_text(encoding="utf-8")
+    assert 'id="multilingual-coverage"' in html
+    assert "data.multilingual" in html
