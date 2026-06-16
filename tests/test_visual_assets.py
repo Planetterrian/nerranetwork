@@ -568,6 +568,7 @@ def test_every_show_yaml_has_image_queries():
         "pronunciation_map.yaml",
         "network_meta.yaml",     # scaffold tool registry
         "scaffold_pending.yaml", # pending cron entries from scaffold_show.py
+        "translation_overrides.yaml",  # multilingual phonetic map (June 2026)
     }
     show_files = sorted(
         f for f in shows_dir.glob("*.yaml")

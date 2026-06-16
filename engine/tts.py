@@ -53,6 +53,26 @@ def _ffmpeg_escape(path: Path) -> str:
     return str(path.absolute()).replace("'", "'\\''")
 
 
+def get_cloned_voice_id(env_var: str = "GROK_CLONED_VOICE_ID") -> str:
+    """Return the operator's cloned Grok voice ID from the environment.
+
+    Used by the multilingual audio stage (June 2026). The cloned voice ID
+    is NEVER hardcoded or committed — it's pasted into ``.env`` and read at
+    runtime. The same voice carries across all target languages (Grok keeps
+    one voice identity per language), so the host sounds like the operator
+    in every language. Raises ``RuntimeError`` if the env var is unset so a
+    misconfigured run fails loud instead of silently using the wrong voice.
+    """
+    import os
+    voice = (os.getenv(env_var) or "").strip()
+    if not voice:
+        raise RuntimeError(
+            f"Missing cloned voice ID: set {env_var} in .env "
+            "(the multilingual TTS stage will not run without it)."
+        )
+    return voice
+
+
 # ---------------------------------------------------------------------------
 # Pronunciation map + TTS text preparation
 # ---------------------------------------------------------------------------

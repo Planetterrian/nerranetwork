@@ -24,7 +24,7 @@ def _discover_shows() -> list:
     shows_dir = Path(__file__).resolve().parent.parent / "shows"
     slugs = []
     for f in sorted(shows_dir.glob("*.yaml")):
-        if f.name.startswith("_") or f.name == "pronunciation_map.yaml":
+        if f.name.startswith("_") or f.name in ("pronunciation_map.yaml", "translation_overrides.yaml"):
             continue
         if f.parent.name != "shows":
             continue

@@ -147,6 +147,18 @@ storage:
   secret_key_env: R2_SECRET_ACCESS_KEY
   public_base_url: "https://audio.nerranetwork.com"
 
+# Multilingual *audio* (June 2026). When enabled, the post-hoc translation
+# stage (scripts/generate_translations.py) can render FR/RU/ES/ZH tracks of
+# an English episode with the operator's cloned Grok voice, surfaced on the
+# website (English stays canonical + the podcast-RSS feed). All English
+# shows inherit this; the two Russian shows opt OUT (their source is already
+# Russian). The cloned voice ID lives in .env (GROK_CLONED_VOICE_ID), never
+# in git.
+multilingual:
+  enabled: true
+  languages: [fr, ru, es, zh]
+  cloned_voice_env: GROK_CLONED_VOICE_ID
+
 publishing:
   rss_author: Nerra Network
   rss_email: patrick@planetterrian.com

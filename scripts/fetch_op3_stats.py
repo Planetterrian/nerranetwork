@@ -75,7 +75,7 @@ _PUBLIC_EPISODE_FIELDS = (
 
 _NON_SHOW_YAMLS = {
     "_defaults", "_blocked_sources", "pronunciation_map",
-    "network_meta", "scaffold_pending",
+    "network_meta", "scaffold_pending", "translation_overrides",
 }
 
 

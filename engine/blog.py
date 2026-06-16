@@ -767,6 +767,9 @@ def generate_blog_post_html(
         "page_url": blog_url,
         "date": metadata.get("date_iso", "") or metadata.get("date", ""),
         "audio_url": metadata.get("audio_url", ""),
+        # Per-language audio tracks (June 2026 multilingual). Empty/absent for
+        # English-only episodes → the template renders no switcher.
+        "translations": metadata.get("translations", {}) or {},
         "transcript_url": f"{blog_url}#transcript" if transcript_text else "",
         # Russian shows render UI strings (incl. the AI badge) in Russian.
         "_is_ru": show_slug in ("finansy_prosto", "privet_russian"),

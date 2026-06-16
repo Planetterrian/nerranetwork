@@ -1,0 +1,46 @@
+# Per-language phonetic / spelling overrides for the multilingual audio
+# stage (June 2026). Maps an English term to how it should be SPELLED in
+# the translated script so the cloned Grok voice pronounces it correctly
+# in the target language.
+#
+# This is DISTINCT from shows/pronunciation_map.yaml, which is the
+# English-only letter-spell layer (landmine #17 keeps phonetic respellings
+# OUT of the English path). Here, the override is written into the
+# target-language script text only — it never touches English audio.
+#
+# Each entry: <English term> -> { fr:, ru:, es:, zh: }
+# - Provide a key only for languages where the default reading is wrong.
+# - Tickers/brand names that read fine as-is can be omitted entirely.
+# - The translation PROMPT is told to preserve proper nouns/tickers and is
+#   handed these overrides as guidance; engine/translate.py also applies
+#   them as a post-process safety net (word-boundary, case-insensitive).
+#
+# Maintainership: add a term here once you hear a mispronunciation in a
+# rendered track. Keep it small and evidence-driven.
+
+overrides:
+  # Tickers — letter-spell so they aren't read as words in any language.
+  TSLA:
+    fr: "T-S-L-A"
+    ru: "Ти-Эс-Эл-Эй"
+    es: "T-S-L-A"
+    zh: "T-S-L-A"
+  SPCX:
+    ru: "Эс-Пи-Си-Экс"
+  NASA:
+    fr: "NASA"
+    ru: "НАСА"
+    es: "NASA"
+    zh: "NASA"
+  # Brand / proper nouns prone to target-language misreading.
+  Tesla:
+    ru: "Тесла"
+    zh: "特斯拉"
+  SpaceX:
+    ru: "Спейс-Экс"
+    zh: "SpaceX"
+  xAI:
+    fr: "X-A-I"
+    ru: "Экс-Эй-Ай"
+    es: "X-A-I"
+    zh: "X-A-I"

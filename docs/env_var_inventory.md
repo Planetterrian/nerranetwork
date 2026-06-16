@@ -51,6 +51,18 @@ Nightly audience stats (June 2026; both optional — scripts no-op when unset):
 
 ---
 
+## Multilingual audio (June 2026)
+
+| Variable | Required when |
+|----------|----------------|
+| `GROK_CLONED_VOICE_ID` | Running `scripts/generate_translations.py` (FR/RU/ES/ZH audio). The operator's cloned Grok voice ID — pasted into `.env`, **never** committed to git. The same voice is used for all four languages. The script fails loud if it's unset. |
+
+Reuses `GROK_API_KEY`/`XAI_API_KEY` (translation via `grok-latest` + Grok TTS)
+and the existing `R2_*` credentials (tracks upload to the same bucket as
+English audio).
+
+---
+
 ## Local development
 
 Copy `.env.example` if present, or set at minimum:
