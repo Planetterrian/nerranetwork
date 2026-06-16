@@ -80,6 +80,62 @@ class TestOverrides:
             translate_script("hello", "de")
 
 
+class TestTranslationValidation:
+    def test_empty_rejected(self):
+        from engine.translate import TranslationError, validate_translation
+        with pytest.raises(TranslationError):
+            validate_translation("   ", "fr", "Some English source text.")
+
+    def test_refusal_rejected(self):
+        from engine.translate import TranslationRefusalError, validate_translation
+        with pytest.raises(TranslationRefusalError):
+            validate_translation(
+                "I'm sorry, but I cannot generate this podcast episode.", "fr", "x" * 200
+            )
+
+    def test_untranslated_echo_rejected(self):
+        from engine.translate import TranslationError, validate_translation
+        src = "Tesla expanded its robotaxi program across Texas today."
+        with pytest.raises(TranslationError):
+            validate_translation(src, "fr", src)
+
+    def test_too_short_rejected(self):
+        from engine.translate import TranslationError, validate_translation
+        with pytest.raises(TranslationError):
+            validate_translation("Bonjour.", "fr", "x" * 500)
+
+    def test_wrong_script_rejected_for_ru(self):
+        from engine.translate import TranslationError, validate_translation
+        # Latin text claiming to be Russian → wrong script.
+        latin = "This is clearly English text, not Russian at all, repeated. " * 5
+        with pytest.raises(TranslationError):
+            validate_translation(latin, "ru", latin.replace("Russian", "x"))
+
+    def test_wrong_script_rejected_for_zh(self):
+        from engine.translate import TranslationError, validate_translation
+        latin = "This is English not Chinese characters here. " * 5
+        with pytest.raises(TranslationError):
+            validate_translation(latin, "zh", "y" * 400)
+
+    def test_valid_russian_passes(self):
+        from engine.translate import validate_translation
+        ru = ("Сегодня Тесла расширила программу роботакси по всему Техасу, "
+              "и это важная новость для инвесторов и водителей.")
+        assert validate_translation(ru, "ru", "x" * 80) == ru
+
+    def test_valid_chinese_passes(self):
+        from engine.translate import validate_translation
+        zh = "今天特斯拉在德克萨斯州扩展了它的无人驾驶出租车项目，这对投资者来说是重要消息。"
+        assert validate_translation(zh, "zh", "x" * 40) == zh
+
+    def test_valid_french_passes(self):
+        from engine.translate import validate_translation
+        fr = ("Aujourd'hui, Tesla a étendu son programme de robotaxi à travers "
+              "le Texas, une nouvelle importante pour les investisseurs.")
+        en = "Today Tesla expanded its robotaxi program across Texas."
+        assert validate_translation(fr, "fr", en) == fr
+
+
 # ---------------------------------------------------------------------------
 # R2 key / URL derivation
 # ---------------------------------------------------------------------------
