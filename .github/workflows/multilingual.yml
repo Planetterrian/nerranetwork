@@ -64,7 +64,10 @@ jobs:
         id: resolve
         shell: python3 {0}
         run: |
-          import json, os
+          import json, os, sys
+          # `shell: python3 {0}` runs this from a temp file, so the repo root
+          # isn't on sys.path — add the workspace (cwd) so `engine` imports.
+          sys.path.insert(0, os.getcwd())
           from engine.config import discover_show_slugs, load_config
 
           dispatch = "${{ github.event.inputs.show }}".strip()
