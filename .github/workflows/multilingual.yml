@@ -15,6 +15,15 @@ name: Generate Multilingual Audio
 # tracks a prior run missed. The episode pipeline stays fast + durable.
 
 on:
+  # Fire right after an episode publishes so the latest episode is translated
+  # within minutes (not hours). The episode pipeline ("Run Podcast Show") is a
+  # separate workflow; its completion triggers a sweep here. The sweep is
+  # idempotent (skips already-translated episodes), so the once-per-show-run
+  # fan-out is mostly fast no-ops, and the concurrency group below serializes
+  # them. The scheduled passes stay as a safety net for any run this misses.
+  workflow_run:
+    workflows: ["Run Podcast Show"]
+    types: [completed]
   schedule:
     # After the morning show window (shows finish ~12-13 UTC; GitHub cron is
     # often hours late, which is fine — the sweep is idempotent). Two passes
@@ -46,6 +55,10 @@ permissions:
 jobs:
   translate:
     runs-on: ubuntu-latest
+    # On the workflow_run trigger, only proceed if the episode pipeline that
+    # triggered us actually succeeded — no point translating a failed/partial
+    # publish. Schedule + manual dispatch always run.
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     timeout-minutes: 330
     steps:
       - name: Checkout
