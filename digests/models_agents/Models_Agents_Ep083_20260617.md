@@ -1,0 +1,51 @@
+# Models & Agents
+> **OpenAI’s new deployment simulation technique replays real user requests against unreleased models to surface undesired behaviors before launch.**
+
+**What You Need to Know:** OpenAI released research on Deployment Simulation that estimates real-world failure rates by running candidate models on de-identified past conversations. Anthropic published fresh data showing Claude Code task value rose 27% in six months while success rates stayed consistent across domains. Microsoft Research introduced Next-Latent Prediction, a training method that adds compact world-model prediction on top of next-token training and delivers up to 3.3× faster inference.
+---
+### Top Story
+OpenAI introduced Deployment Simulation, a method that replays recent de-identified user requests through candidate models before release and grades the resulting completions. The approach measures how often undesired behaviors appear under realistic conditions rather than relying solely on static benchmarks. It extends naturally to agentic coding scenarios by simulating tool calls and multi-turn interactions. Traditional evals and red-teaming stay essential for rare high-severity risks, while this technique provides frequency estimates and surfaces novel behaviors. Builders working on frontier or near-frontier systems should watch how labs integrate simulation results into release decisions over the coming months. The method reportedly achieves a 1.5× median multiplicative error on held-out deployment data. Source: [openai.com](https://openai.com/index/deployment-simulation/)
+---
+### Model Updates
+**Next-Latent Prediction Transformers: Microsoft Research**
+Microsoft Research introduced Next-Latent Prediction (NextLat), which adds a self-supervised objective that trains transformers to predict their own next latent state in addition to the next token. The method produces compact belief states that improve representation learning and data efficiency while enabling recursive multi-step lookahead for faster inference. On top of standard next-token training it delivers up to 3.3× faster inference via self-speculative decoding. The approach is detailed in a preprint with accompanying code and blog post. Teams training long-context or reasoning models should test whether adding the latent-prediction loss improves both speed and downstream planning performance. Source: [reddit.com](https://www.reddit.com/r/MachineLearning/comments/1u84mio/nextlatent_prediction_transformers_r/)
+
+**MiniMax Sparse Attention (MSA): MarkTechPost**
+MiniMax released MSA, a two-branch block-sparse attention mechanism built on Grouped Query Attention. A lightweight index branch selects the top-k key-value blocks per query while the main branch attends only to those blocks. The technique matches standard GQA accuracy on downstream benchmarks yet reduces per-token attention compute by 28.4× at 1M context length. It was trained inside a 109B-parameter MoE model using a 3T-token budget. Inference teams handling long contexts should evaluate whether the block-selection overhead is offset by the large compute reduction. Source: [marktechpost.com](https://www.marktechpost.com/2026/06/17/minimax-sparse-attention-msa-a-two-branch-block-sparse-attention-trained-on-a-109b-parameter-moe-with-a-3t-token-budget/)
+
+**RepSelect: Robust LLM Unlearning via Representation Selectivity: arXiv**
+Researchers proposed RepSelect, which isolates forget-set-specific representations by collapsing top principal components of weight gradients before each unlearning update. Across biohazardous knowledge and abusive-tendency categories the method achieved 4-50× larger reduction in post-relearning accuracy than strong baselines while remaining robust to few-shot prompting attacks. Experiments covered Llama 3, Qwen 3.5, Gemma 4, and DeepSeek V2 Lite. Safety teams needing deeper unlearning guarantees should examine the representation-selectivity approach before relying on gradient-based methods alone. Source: [arxiv.org](https://arxiv.org/abs/2606.17168)
+---
+### Agent & Tool Developments
+**MemSlides: Hierarchical Memory Driven Agent Framework: arXiv**
+MemSlides introduces a hierarchical memory architecture for personalized slide-generation agents that separates long-term user profile memory, session-level working memory, and reusable tool memory. Scoped slide-local revision lets the agent edit only the affected region instead of regenerating entire decks. Experiments showed user-profile memory improves persona alignment and tool memory improves closed-loop modification reliability. Presentation-automation teams can explore the memory design to reduce regeneration costs in multi-turn workflows. Source: [arxiv.org](https://arxiv.org/abs/2606.17162)
+
+**OPD-Evolver: Cultivating Holistic Agent Evolver via On-Policy Distillation: arXiv**
+OPD-Evolver presents a slow-fast co-evolution framework that trains agents to read, use, write, and maintain experience across a four-level memory hierarchy. On-policy self-distillation transfers these abilities into the deployable policy. The system outperformed prior memory-augmented agents by up to 11.5% on multi-domain benchmarks. Developers building self-improving agents should examine how outcome-calibrated attribution prevents low-value memory accumulation. Source: [arxiv.org](https://arxiv.org/abs/2606.17628)
+
+**Scaling Enterprise Agent Routing: Degradation, Diagnosis, and Recovery: arXiv**
+A study of single-step routing across a 110-agent, 584-tool enterprise catalog showed routing F1 dropping 16-23 points as catalog size scaled from 10 to 110 agents. Embedding-based shortlisting recovered 10-17 points on real traffic despite lower absolute performance. The work quantifies both retrieval and confusion gaps that appear at production scale. Teams operating large tool catalogs should test shortlisting layers before routing accuracy degrades further. Source: [arxiv.org](https://arxiv.org/abs/2606.17519)
+
+**AIPatient Arena: EHR-grounded evaluation of LLMs in clinical workflows: arXiv**
+AIPatient Arena provides an EHR-grounded multi-turn evaluation framework spanning eight clinical-competence dimensions across 437 primary patients plus out-of-distribution cohorts. Current models score well on questioning skills and ethical conduct yet show persistent weaknesses in handling ambiguity, information coverage, and diagnostic reasoning. The framework surfaces interaction failures such as repetitive questioning that static benchmarks miss. Clinical AI teams should adopt similar workflow-oriented testing before deployment. Source: [arxiv.org](https://arxiv.org/abs/2606.17474)
+---
+### Practical & Community
+**PromptMN: Pseudo Prompting Language: arXiv**
+PromptMN defines a lightweight pseudo-prompting DSL that annotates natural language with compact %-prefixed directives for roles, goals, constraints, and outputs. Semantic resolution allows authors to write directives in any order while models interpret them by function. Early tests across Claude, Gemini, and GPT-class models showed reliable parsing of complex structures without fine-tuning. Prompt engineers working on agentic or SDLC workflows can adopt the syntax to reduce context ambiguity between humans and models. Source: [arxiv.org](https://arxiv.org/abs/2606.17164)
+
+**Self-Generated Error Training for Token Editing in Diffusion Language Models: arXiv**
+Researchers addressed the train-inference mismatch in token-to-token editing for diffusion language models by generating training corruptions from the model’s own draft outputs instead of random vocabulary noise. A short LoRA continued-pretraining pass improved accuracy while lowering unnecessary edit intensity on LLaDA2.1-mini. The change mitigates specific failure modes such as final-digit transcription errors after correct reasoning. Diffusion-model practitioners should test self-generated corruption schedules when tuning token editors. Source: [arxiv.org](https://arxiv.org/abs/2606.17175)
+---
+### Under the Hood: Speculative Decoding
+Everyone talks about speculative decoding as if it is simply “run a small draft model then verify.” In practice the technique is a carefully balanced pipeline whose gains depend on acceptance-rate statistics and KV-cache reuse patterns. The draft model proposes several tokens in a single forward pass; the target model then verifies them in parallel, accepting the longest correct prefix and rolling back only the rejected suffix. Higher acceptance rates come from training the drafter on the target’s output distribution, but each extra draft token still costs compute that must be amortized by the parallel verification step. Real speedups of 2-3× appear most reliably on repetitive or structured text where acceptance lengths stay above 2.5 tokens on average; on highly creative or open-ended generation the acceptance rate often drops below 1.8 and the overhead can erase gains. The practical decision rule is to measure acceptance length on your target workload first—if it stays under 2.0 tokens you are better off with standard decoding or simpler optimizations such as continuous batching.
+---
+### Things to Try This Week
+- Test OpenAI’s Deployment Simulation approach on your own evaluation set by replaying recent prompts against a held-out model checkpoint to estimate real-world failure frequencies.
+- Experiment with Next-Latent Prediction by adding the latent-state prediction loss to a small transformer training run and measuring both inference speedup and planning-task gains.
+- Prototype a MemSlides-style memory hierarchy in your slide-generation agent to see whether scoped local revision reduces token spend on multi-turn edits.
+- Try PromptMN syntax on a complex agent prompt to check whether the typed directives reduce downstream misinterpretation compared with plain prose.
+---
+### On the Horizon
+- More labs are expected to publish deployment-simulation or synthetic-traffic evaluation results following OpenAI’s release.
+- Continued work on sparse attention and latent-prediction objectives will likely appear in upcoming long-context model training runs.
+- Enterprise routing and agent-memory papers suggest production agent platforms will add shortlisting and hierarchical memory features within the next quarter.
