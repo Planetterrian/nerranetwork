@@ -703,6 +703,7 @@ def generate_blog_post_html(
     related_posts: Optional[list] = None,
     youtube_url: str = "",
     youtube_short_url: str = "",
+    translation_bodies: Optional[dict] = None,
 ) -> str:
     """Generate a complete blog post HTML page from digest markdown.
 
@@ -855,6 +856,9 @@ def generate_blog_post_html(
         # Per-language audio tracks (June 2026 multilingual). Empty/absent for
         # English-only episodes → the template renders no switcher.
         "translations": metadata.get("translations", {}) or {},
+        # Per-language readable BODY (rendered from each translated audio
+        # script). Empty when no translated script is on disk → English only.
+        "translation_bodies": translation_bodies or {},
         "transcript_url": f"{blog_url}#transcript" if transcript_text else "",
         # Russian shows render UI strings (incl. the AI badge) in Russian.
         "_is_ru": show_slug in ("finansy_prosto", "privet_russian"),

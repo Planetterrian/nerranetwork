@@ -2603,6 +2603,38 @@ def _attach_translations(slug, cfg, metas):
             meta["translations"] = tr
 
 
+def _plain_text_to_paragraphs(text: str) -> str:
+    """Render a plain translated script (blank-line-separated prose) to safe
+    HTML paragraphs for embedding as a blog body. No markdown — the translated
+    audio script is plain spoken prose."""
+    import html as _html
+
+    blocks = [b.strip() for b in re.split(r"\n\s*\n", text or "") if b.strip()]
+    out = []
+    for b in blocks:
+        # Preserve single newlines within a block as <br> (spoken-line breaks).
+        esc = _html.escape(b).replace("\n", "<br>")
+        out.append(f"<p>{esc}</p>")
+    return "\n".join(out)
+
+
+def _translated_bodies_for_episode(digest_dir, meta) -> dict:
+    """Read each language's saved translated script (``*.<lang>.txt`` next to
+    the audio) and render it to HTML paragraphs. Empty when none exist."""
+    bodies: dict = {}
+    for code, track in (meta.get("translations") or {}).items():
+        script_file = (track or {}).get("script_file")
+        if not script_file:
+            continue
+        p = digest_dir / script_file
+        if p.exists():
+            try:
+                bodies[code] = _plain_text_to_paragraphs(p.read_text(encoding="utf-8"))
+            except OSError:
+                continue
+    return bodies
+
+
 def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None):
     """Generate blog post HTML pages for all episodes of a show.
 
@@ -2675,6 +2707,7 @@ def generate_blog_posts(slug, *, dry_run=False, cross_show_posts=None):
             prev_post=prev_post,
             next_post=next_post,
             related_posts=_related,
+            translation_bodies=_translated_bodies_for_episode(digest_dir, meta),
         )
 
         ep_num = meta["episode_num"]
