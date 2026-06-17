@@ -102,11 +102,19 @@ jobs:
           LATEST="${{ github.event.inputs.latest }}"
           [ -z "$LATEST" ] && LATEST=3
           SHOWS='${{ steps.resolve.outputs.shows }}'
-          echo "$SHOWS" | python3 -c "import sys,json; print('\n'.join(json.load(sys.stdin)))" | while read -r slug; do
+          # Parse the JSON list into a bash array and iterate with a for-loop
+          # (NOT `... | while read`). In the piped while-loop, ffmpeg/ffprobe
+          # invoked inside generate_translations.py read from the loop's stdin
+          # and drained the remaining show list, so the loop exited after the
+          # FIRST show — only env_intel translated on the 2026-06-17 sweep.
+          # The for-loop keeps the script's own stdin; `</dev/null` on the
+          # python call is belt-and-suspenders so no child can eat it.
+          mapfile -t SLUGS < <(echo "$SHOWS" | python3 -c "import sys,json; print('\n'.join(json.load(sys.stdin)))")
+          for slug in "${SLUGS[@]}"; do
             [ -z "$slug" ] && continue
             echo "::group::Translating $slug (--latest $LATEST)"
             # --zh-approved: operator approved all four languages including ZH.
-            python scripts/generate_translations.py "$slug" --latest "$LATEST" --zh-approved || echo "::warning::Translation run failed for $slug (non-fatal)"
+            python scripts/generate_translations.py "$slug" --latest "$LATEST" --zh-approved </dev/null || echo "::warning::Translation run failed for $slug (non-fatal)"
             echo "::endgroup::"
           done
           exit 0
