@@ -115,12 +115,14 @@ button { font-family: var(--font-ui); cursor: pointer; }
   font-size: 1.25rem; font-weight: 700;
   color: var(--nn-white);
   text-decoration: none;
+  flex-shrink: 0;
+  margin-right: var(--sp-4);
 }
 .nn-nav-logo img {
   width: 36px; height: 36px; border-radius: 8px; object-fit: cover;
 }
 .nn-nav-links {
-  display: flex; align-items: center; gap: var(--sp-8);
+  display: flex; align-items: center; gap: var(--sp-6);
   list-style: none;
 }
 .nn-nav-links li { white-space: nowrap; }
@@ -679,6 +681,30 @@ button { font-family: var(--font-ui); cursor: pointer; }
 }
 .show-hero-actions {
   display: flex; gap: var(--sp-3); flex-wrap: wrap;
+}
+/* Secondary "subscribe on platform" row — lighter pill chips so the hero
+   action area reads as a hierarchy (one primary CTA + explore buttons, then
+   a quieter subscribe row) instead of a wall of identical buttons. */
+.show-hero-subscribe {
+  display: flex; gap: var(--sp-2); flex-wrap: wrap; align-items: center;
+  margin-top: var(--sp-4);
+}
+.show-hero-subscribe .subscribe-label {
+  font-family: var(--font-ui); font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--nn-text-muted); margin-right: var(--sp-1);
+}
+.nn-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 13px; border-radius: 999px;
+  font-family: var(--font-ui); font-size: 0.82rem; font-weight: 600;
+  border: 1px solid var(--nn-border);
+  background: transparent; color: var(--nn-text-muted);
+  transition: all var(--duration) var(--ease);
+}
+.nn-chip:hover {
+  color: var(--nn-text); border-color: var(--nn-border-hover);
+  background: var(--nn-surface); transform: translateY(-1px);
 }
 
 /* ---------- Latest Episode Player (Show Page) ---------- */

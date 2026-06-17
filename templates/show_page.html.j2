@@ -45,21 +45,16 @@
    are the most reliable approach. #}
 {%- set _is_ru = (page_lang | default('en')) == 'ru' -%}
 
-{# May 2026 operator request: top-right nav must carry the
-   ``Start Here / Listen / About / Player`` quartet across the
-   whole site for consistency. Layered IN FRONT OF the per-show
-   navigation (Blog / Summaries / RSS / @handle) so listeners on
-   a show page can still jump to that show's secondary surfaces
-   directly while also seeing the network-wide quartet. #}
+{# Top-right nav carries the network-wide ``Start Here / Listen / About /
+   Player`` quartet for consistency across the site. The show's own secondary
+   surfaces (Blog / Summaries / RSS / @handle) are NOT duplicated here — they
+   are prominent action buttons in the hero just below — which keeps the top
+   bar uncluttered. #}
 {% block nav_links %}
 <li><a href="{{ path_prefix }}start-here.html">{{ t.nav_start_here }}</a></li>
 <li><a href="{{ path_prefix }}how-to-listen.html">{{ t.nav_listen }}</a></li>
 <li><a href="{{ path_prefix }}about.html">{{ t.nav_about }}</a></li>
 <li><a href="{{ path_prefix }}player.html">{{ t.nav_player }}</a></li>
-<li><a href="{{ path_prefix }}{{ blog_page }}">{% if _is_ru %}Блог{% else %}Blog{% endif %}</a></li>
-<li><a href="{{ path_prefix }}{{ summaries_page }}">{% if _is_ru %}Выпуски{% else %}Summaries{% endif %}</a></li>
-<li><a href="{{ path_prefix }}{{ rss_file }}">RSS</a></li>
-{% if x_account %}<li><a href="https://x.com/{{ x_account }}" target="_blank" rel="noopener">@{{ x_account }}</a></li>{% endif %}
 {% endblock %}
 
 {% block mobile_nav_links %}
@@ -108,6 +103,9 @@
                 {% if audience %}
                 <p style="font-family:var(--font-ui);font-size:0.88rem;color:var(--nn-text-muted);margin-bottom:var(--sp-4);font-style:italic;">{{ audience }}</p>
                 {% endif %}
+                {# Primary actions: one filled CTA + a few "explore this show"
+                   buttons. Platform subscribe links live in the quieter chip
+                   row below so the hero isn't a wall of identical pills. #}
                 <div class="show-hero-actions">
                     <a href="#episodes" class="nn-btn nn-btn-primary">{% if _is_ru %}Слушать{% else %}Listen Now{% endif %}</a>
                     <a href="{{ path_prefix }}{{ blog_page }}" class="nn-btn">{% if _is_ru %}Читать блог{% else %}Read Blog{% endif %}</a>
@@ -121,20 +119,6 @@
                     {% if show_slug == 'tesla' %}
                     <a href="{{ path_prefix }}tesla-dashboard.html" class="nn-btn">📊 Tesla Dashboard</a>
                     {% endif %}
-                    {% if apple_podcasts_url %}
-                    <a href="{{ apple_podcasts_url | with_utm(campaign=show_slug) }}" class="nn-btn" target="_blank" rel="noopener" data-show="{{ show_slug }}">Apple Podcasts</a>
-                    {% endif %}
-                    {% if spotify_url %}
-                    <a href="{{ spotify_url | with_utm(campaign=show_slug) }}" class="nn-btn" target="_blank" rel="noopener" data-show="{{ show_slug }}">Spotify</a>
-                    {% endif %}
-                    <a href="{{ path_prefix }}{{ rss_file }}" class="nn-btn" data-show="{{ show_slug }}">{% if _is_ru %}RSS-канал{% else %}RSS Feed{% endif %}</a>
-                    {% if youtube_playlist_url %}
-                    <a href="{{ youtube_playlist_url }}" class="nn-btn" target="_blank" rel="noopener" data-show="{{ show_slug }}">{% if _is_ru %}YouTube{% else %}Watch on YouTube{% endif %}</a>
-                    {% endif %}
-                    {% if x_account %}
-                    <a href="https://x.com/{{ x_account }}" class="nn-btn" target="_blank" rel="noopener">@{{ x_account }}</a>
-                    {% endif %}
-
                     {% if show_slug == "modern_investing" %}
                     <a href="{{ path_prefix }}modern-investing-performance.html" class="nn-btn" style="background: var(--show-color, #047857); color: white;">
                         Performance &amp; Lessons
@@ -142,11 +126,29 @@
                     {% endif %}
                 </div>
 
+                {# Subscribe row — quieter chips, clearly grouped. #}
+                <div class="show-hero-subscribe">
+                    <span class="subscribe-label">{% if _is_ru %}Подписаться{% else %}Subscribe{% endif %}</span>
+                    {% if apple_podcasts_url %}
+                    <a href="{{ apple_podcasts_url | with_utm(campaign=show_slug) }}" class="nn-chip" target="_blank" rel="noopener" data-show="{{ show_slug }}">Apple Podcasts</a>
+                    {% endif %}
+                    {% if spotify_url %}
+                    <a href="{{ spotify_url | with_utm(campaign=show_slug) }}" class="nn-chip" target="_blank" rel="noopener" data-show="{{ show_slug }}">Spotify</a>
+                    {% endif %}
+                    <a href="{{ path_prefix }}{{ rss_file }}" class="nn-chip" data-show="{{ show_slug }}">{% if _is_ru %}RSS-канал{% else %}RSS{% endif %}</a>
+                    {% if youtube_playlist_url %}
+                    <a href="{{ youtube_playlist_url }}" class="nn-chip" target="_blank" rel="noopener" data-show="{{ show_slug }}">YouTube</a>
+                    {% endif %}
+                    {% if x_account %}
+                    <a href="https://x.com/{{ x_account }}" class="nn-chip" target="_blank" rel="noopener">@{{ x_account }}</a>
+                    {% endif %}
+                </div>
+
                 {% if language_feeds %}
-                <div class="nn-lang-feeds" style="margin-top:0.85rem;font-size:0.9rem;">
-                    <span style="color:var(--nn-text-muted);">{% if _is_ru %}Аудио на других языках (RSS):{% else %}Listen in another language (podcast RSS):{% endif %}</span>
+                <div class="show-hero-subscribe nn-lang-feeds" style="margin-top:0.55rem;">
+                    <span class="subscribe-label">{% if _is_ru %}Другие языки{% else %}In your language{% endif %}</span>
                     {% for f in language_feeds %}
-                    <a href="{{ f.url }}" class="nn-btn" data-show="{{ show_slug }}" data-lang="{{ f.lang }}" hreflang="{{ f.lang }}" style="padding:4px 10px;font-size:0.82rem;">{{ f.label }}</a>
+                    <a href="{{ f.url }}" class="nn-chip" data-show="{{ show_slug }}" data-lang="{{ f.lang }}" hreflang="{{ f.lang }}">{{ f.label }}</a>
                     {% endfor %}
                 </div>
                 {% endif %}
