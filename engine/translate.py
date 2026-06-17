@@ -44,6 +44,52 @@ LANGUAGE_NAMES: Dict[str, str] = {
 
 _TRANSLATION_MODEL = "grok-latest"
 
+# Per-language guidance injected into the translation prompt. Pointed, native-
+# broadcaster notes — the Chinese block is the most detailed because that's
+# where English was bleeding into shipped tracks (June 2026).
+_LANGUAGE_GUIDANCE: Dict[str, str] = {
+    "zh": (
+        "SIMPLIFIED CHINESE GUIDANCE (read carefully — this is where quality "
+        "slips):\n"
+        "- The output must be natural Mandarin. Do NOT leave English sentences, "
+        "clauses, or phrases in the text, and never mix English and Chinese "
+        "inside one sentence. If you are tempted to keep an English phrase, "
+        "translate it into Mandarin. Only the specific proper nouns/tickers "
+        "listed above may remain in Latin letters.\n"
+        "- Use full-width Chinese punctuation （，。！？、；：“”）, never English "
+        "punctuation between Chinese clauses.\n"
+        "- Write every number, year, price, and percentage in Chinese spoken "
+        "form (e.g. 第513集、百分之五、二十亿美元、二〇二六年).\n"
+        "- When a Latin brand name sits in a Chinese sentence, set it off "
+        "naturally with surrounding Chinese (e.g. 特斯拉的 FSD 系统).\n"
+        "- Translate the WHOLE script — Chinese is compact, but every English "
+        "sentence must have a Mandarin counterpart. Do not condense or drop "
+        "segments to make it shorter."
+    ),
+    "ru": (
+        "RUSSIAN GUIDANCE:\n"
+        "- Decline names and nouns naturally; keep idiomatic broadcast Russian.\n"
+        "- Use Russian quotation marks «…» and spell numbers, prices, and "
+        "percentages the natural spoken Russian way.\n"
+        "- Do not leave English clauses in the text — only the allowed proper "
+        "nouns/tickers stay in Latin."
+    ),
+    "fr": (
+        "FRENCH GUIDANCE:\n"
+        "- Natural broadcast French (radio register); use « » quotation marks "
+        "and spell numbers, prices, and percentages the spoken French way.\n"
+        "- Do not leave English clauses in the text — only the allowed proper "
+        "nouns/tickers stay as-is."
+    ),
+    "es": (
+        "SPANISH GUIDANCE:\n"
+        "- Neutral, international broadcast Spanish; spell numbers, prices, and "
+        "percentages the spoken Spanish way.\n"
+        "- Do not leave English clauses in the text — only the allowed proper "
+        "nouns/tickers stay as-is."
+    ),
+}
+
 
 class TranslationError(RuntimeError):
     """A translation came back unusable (empty, too short, or untranslated)."""
@@ -102,6 +148,11 @@ def _format_overrides_block(lang: str) -> str:
     return "\n".join(f"- {term} => {spelling}" for term, spelling in items.items())
 
 
+def language_guidance(lang: str) -> str:
+    """Per-language broadcaster guidance injected into the prompt (or '')."""
+    return _LANGUAGE_GUIDANCE.get(lang, "")
+
+
 def apply_overrides(text: str, lang: str) -> str:
     """Post-process: enforce per-language phonetic spellings in *text*.
 
@@ -145,7 +196,11 @@ def _is_cjk(c: str) -> bool:
 # Minimum target-script ratio for languages whose script differs from English.
 # Latin-script targets (fr/es) can't be distinguished from an English echo by
 # script alone, so they rely on the echo + length-floor checks instead.
-_MIN_SCRIPT_RATIO = {"ru": 0.5, "zh": 0.3}
+# Raised June 2026 after TST Chinese tracks shipped with English clauses
+# bleeding in (the 0.3 floor let a half-English "translation" pass). A clean
+# zh/ru prose track is ~95%+ target-script even with a handful of Latin brand
+# tokens, so 0.6/0.55 rejects real code-switching without false positives.
+_MIN_SCRIPT_RATIO = {"ru": 0.55, "zh": 0.6}
 # A translation shorter than this fraction of the source is almost certainly
 # truncated or a stub, not a faithful for-the-ear localization.
 _MIN_LENGTH_FRACTION = 0.25
@@ -210,10 +265,28 @@ def _build_script_prompt(english_script: str, lang: str) -> str:
     template = _PROMPT_PATH.read_text(encoding="utf-8")
     return (
         template
+        # Substitute the script LAST so script content containing literal
+        # ``{...}`` (or another placeholder's name) can't corrupt the prompt.
         .replace("{language_name}", language_name(lang))
         .replace("{bcp47}", lang)
         .replace("{phonetic_overrides}", _format_overrides_block(lang))
+        .replace("{language_specific_guidance}", language_guidance(lang))
         .replace("{english_script}", english_script)
+    )
+
+
+def _retry_correction(lang: str) -> str:
+    """Corrective suffix appended on a second attempt after a failed validation
+    (wrong script / English echo / suspiciously short = code-switching or a
+    condensed/partial translation)."""
+    name = language_name(lang)
+    return (
+        f"\n\nCORRECTION — your previous attempt was REJECTED because it was "
+        f"not entirely in {name} (it left English in the text and/or dropped "
+        f"content). Re-translate the ENTIRE script above into {name} ONLY: "
+        f"every sentence rendered in {name}, no English words or phrases "
+        f"remaining anywhere, nothing summarized or omitted. Output only the "
+        f"translated script."
     )
 
 
@@ -236,10 +309,24 @@ def translate_script(
 
     prompt = _build_script_prompt(english_script, lang)
     logger.info("Translating script -> %s (%d chars in)", lang, len(english_script))
-    text = _generate(prompt, model, max_tokens)
-    # Reject refusals / wrong-script / echoes BEFORE they reach TTS.
-    text = validate_translation(text, lang, english_script)
-    return apply_overrides(text, lang)
+
+    # Validation-driven retry: a wrong-script / English-echo / too-short result
+    # (i.e. code-switching or a condensed/partial translation — the ZH failure
+    # mode) gets ONE more attempt with a strong corrective before we give up,
+    # instead of silently dropping the language for the episode.
+    last_err: Optional[Exception] = None
+    for attempt in range(2):
+        p = prompt if attempt == 0 else prompt + _retry_correction(lang)
+        text = _generate(p, model, max_tokens)
+        try:
+            text = validate_translation(text, lang, english_script)
+            return apply_overrides(text, lang)
+        except TranslationError as exc:
+            last_err = exc
+            logger.warning("Translation validation failed for %s (attempt %d/2): %s",
+                           lang, attempt + 1, exc)
+    assert last_err is not None
+    raise last_err
 
 
 def translate_metadata(
