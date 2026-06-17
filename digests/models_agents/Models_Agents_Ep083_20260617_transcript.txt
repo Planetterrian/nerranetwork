@@ -1,0 +1,68 @@
+Glad you're here. Welcome to Models & Agents, episode 83 for June 17th, 2026. Lots of news to walk through.
+Let's start with what actually matters. OpenAI's new deployment simulation technique replays real user requests against unreleased models to surface undesired behaviors before launch.
+OpenAI released research showing how deployment simulation estimates real-world failure rates by running candidate models on de-identified past conversations.
+The method replays recent user requests through candidate models and grades completions under realistic conditions rather than static benchmarks alone.
+It extends to agentic coding by simulating tool calls and multi-turn interactions, while traditional red teaming remains essential for rare high severity risks.
+The approach reportedly achieves a 1.5 times median multiplicative error on held out deployment data.
+Builders working on frontier systems should watch how labs fold these simulation results into future release decisions.
+This work continues the ongoing conversation around evaluation standardization that we have followed in recent episodes.
+Anthropic published fresh data showing cloud code task value rose 27% in six months while success rates stayed consistent across domains.
+The data track performance on code related tasks over the half year period. Success metrics held steady even as task value increased.
+The findings cover multiple domains without reported drops in reliability.
+Observers can compare these trends against other labs releasing similar longitudinal agent metrics.
+Microsoft research introduced next latent prediction which adds a self supervised objective so transformers predict their own next latent state alongside the next token.
+The method creates compact belief states that improve representation learning and enables recursive multi-step look ahead during inference.
+On top of standard next token training it delivers up to 3.3 times faster inference through self speculative decoding.
+The pre print includes code and a blog post for teams training long context or reasoning models.
+This development sits within the current focus on inference economics and test time compute improvements.
+Many max released MSA a two branch block sparse attention mechanism built on grouped query attention that selects top key value blocks via a lightweight index branch.
+The technique matches standard accuracy on downstream benchmarks while cutting per token attention compute by 28.4 times at 1 million token context length.
+It was trained inside a 109 billion parameter Mster of experts model using a 3 trillion token budget.
+Inference teams handling long context can evaluate whether the block selection overhead is offset by the compute savings.
+Researchers proposed rep select for robust LLM unlearning by collapsing top principal components of weight gradients before each unlearning update.
+The method isolates forget set specific representations through this principal component collapse step.
+Test spanned biohazardous knowledge alongside abusive tendency categories.
+It delivered 4 to 50 times larger reduction in post relearning accuracy versus strong baselines.
+Experiments ran on Lama 3, Quinn 3.5, Gemma 4 and Deepseek V2 light.
+The approach stayed robust against few shot prompting attacks.
+Safety teams can examine the representation selectivity approach for deeper unlearning guarantees.
+Mem slides introduces a hierarchical memory architecture for personalized slide generation agents that separates long term user profile memory, session level working memory, and reusable tool memory.
+Scoped slide local revision lets the agent edit only affected regions instead of regenerating entire decks.
+Experiments showed user profile memory improves persona alignment and tool memory improves closed loop modification reliability.
+Presentation automation teams can explore the memory design to cut regeneration costs in multi turn workflows.
+This agent memory work builds directly on the reliability questions for long horizon agents we discussed yesterday.
+OPD Evolver presents a slow fast co-evolution framework that trains agents to read, use, write, and maintain experience across a four level memory hierarchy.
+On policy self distillation transfers these abilities into the deployable policy and the system outperformed prior memory augmented agents by up to 11.5% on multi-domain benchmarks.
+Developers building self improving agents should examine how outcome calibrated attribution prevents low value memory accumulation.
+A study of single step rooting across a 110 agent and 584 tool enterprise catalog showed writing F1 dropping 16 to 23 points as catalog size scaled from 10 to 110 agents.
+Embedding based shortlisting recovered 10 to 17 points on real traffic despite lower absolute performance.
+Teams operating large tool catalogs should test shortlisting layers before routing accuracy degrades further.
+AI patient arena provides an EHR grounded multi turn evaluation framework spanning eight clinical competence directions across 437 primary patients plus out of distribution cohorts.
+Current model score well on questioning skills and ethical conduct yet show persistent weaknesses in handling ambiguity information coverage and diagnostic reasoning.
+The framework surfaces interaction failures such as repetitive questioning that static benchmarks miss clinical AI team should adopt similar workflow oriented testing before deployment.
+Prompt MN defines a lightweight pseudo prompting DSL that annotates natural language with compact percent prefix directives for roles goals constraints and outputs.
+Semantic resolution allows authors to write directives in any order while models interpret them by function.
+Early tests across Claude Gemini and GPT class models showed reliable parsing of complex structures without fine tuning.
+Prompt engineers working on agentic workflows can adopt the syntax to reduce context ambiguity.
+Researchers address the train inference mismatch and token to token editing for diffusion language models by generating training corruptions from the model's own draft outputs instead of random vocabulary noise.
+A short Laura continued pre-training pass improved accuracy while lowering unnecessary edit intensity on L-L-A-D-A 2.1 mini.
+The change mitigates specific failure modes such as final digit transcription errors after correct reasoning.
+Defusion model practitioners should test self generated corruption schedules when tuning token editors.
+Okay, let's pop the hood on speculative decoding because everyone talks about it as simply running a small draft model then verifying.
+In practice, the technique is a balanced pipeline whose gains depend on acceptance rate statistics and KB cache reuse patterns.
+The draft model proposes several tokens in one forward pass while the target model verifies them in parallel and accepts the longest correct prefix.
+Higher acceptance rates come from training the draft on the target's output distribution, yet each extra draft token still costs compute that must be amortized.
+Real speed-ups of two to three times appear most reliably on repetitive or structured text where acceptance lengths stay above 2.5 tokens on average.
+On highly creative generation, the acceptance rate often drops below 1.8 and the overhead can erase gains.
+Measure acceptance length on your target workload first because if it stays under 2.0 tokens, you are better off with standard decoding or continuous batching.
+Test open AI's deployment simulation approach on your own evaluation set by replaying recent prompts against a held out model checkpoint.
+Experiment with next latent prediction by adding the latent state prediction loss to a small transformer training run and measuring inference speed up.
+Prototype a MEM slide style memory hierarchy in your slide generation agent to see whether scoped local revision reduces token spend.
+Try prompt MN syntax on a complex agent prompt to check whether the type directives reduce downstream misinterpretation.
+More labs are expected to publish deployment simulation or synthetic traffic evaluation results following open AI's release.
+Continued work on sparse attention and latent prediction objectives will likely appear in upcoming long context model training runs.
+Tomorrow, keep an eye on additional enterprise rooting studies that expand the shortlisting findings released today.
+That wraps up today's AI briefing. Share this with a developer or builder who wants to stay current.
+Subscribe wherever you listen. See you tomorrow. And before you go, this show is part of the NARA network, a family of daily podcasts covering tech, science, markets and more.
+If you enjoyed today's episode, give unintended consequences a listen. True stories of good intentions that backfired.
+You can explore the whole lineup at NARA network.com. This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.
