@@ -121,6 +121,25 @@
             background: color-mix(in srgb, var(--show-color) 20%, transparent);
             border-color: var(--show-color);
         }
+        /* Multilingual availability badges (June 2026) */
+        .blog-idx-langs {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin: var(--sp-2) 0 var(--sp-1);
+            color: var(--nn-text-muted);
+        }
+        .blog-idx-langs .lang-badge {
+            font-family: var(--font-ui);
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            padding: 1px 7px;
+            border-radius: 100px;
+            border: 1px solid color-mix(in srgb, var(--show-color) 35%, transparent);
+            color: var(--show-color-text, var(--show-color));
+            background: color-mix(in srgb, var(--show-color) 10%, transparent);
+        }
     </style>
 
 
@@ -172,6 +191,30 @@
                        aria-label="Search all episodes across the network">
                 <div id="nn-global-search-results"
                      style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
             </div>
 
             <ul class="nn-nav-links">
@@ -516,6 +559,20 @@
     
     <div class="blog-idx-grid">
         
+        <a href="ep046.html" class="blog-idx-card">
+            <div class="blog-idx-card-top">
+                <span class="blog-idx-date">June 17, 2026</span>
+                <span class="blog-idx-ep">Ep 46</span>
+                <span class="blog-idx-reading">4 min</span>
+            </div>
+            <h2>BC Hydro’s updated integrated resource plan revises capacity assumptions for electrified demand grow…</h2>
+            
+            <p>BC Hydro’s updated integrated resource plan revises capacity assumptions for electrified demand growth through 2035.</p>
+            
+            
+            <span class="blog-idx-read-more">Read article &rarr;</span>
+        </a>
+        
         <a href="ep045.html" class="blog-idx-card">
             <div class="blog-idx-card-top">
                 <span class="blog-idx-date">June 15, 2026</span>
@@ -525,6 +582,11 @@
             <h2>Newfoundland advances 25-year fish sauce site remediation requiring 200 dump-truck trips in St. Mary…</h2>
             
             <p>Newfoundland advances 25-year fish sauce site remediation requiring 200 dump-truck trips in St. Mary’s.</p>
+            
+            <span class="blog-idx-langs" aria-label="Also available in other languages">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <span class="lang-badge">FR</span><span class="lang-badge">RU</span><span class="lang-badge">ES</span>
+            </span>
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -539,6 +601,7 @@
             
             <p>No major Canadian regulatory announcements or enforcement actions appeared in today's feed.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -551,6 +614,7 @@
             <h2>No Canadian regulatory changes, enforcement actions, or technical reports with direct compliance imp…</h2>
             
             <p>No Canadian regulatory changes, enforcement actions, or technical reports with direct compliance implications appear in today’s feed.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -565,6 +629,7 @@
             
             <p>Alberta oilsands carbon capture target cut 77% to 16 Mt/year, with Manitoba pipeline and BC spill settlement also advancing.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -577,6 +642,7 @@
             <h2>DFO endorses relocation of Marineland belugas to Spain and US facilities under federal marine mammal…</h2>
             
             <p>DFO endorses relocation of Marineland belugas to Spain and US facilities under federal marine mammal oversight.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -591,6 +657,7 @@
             
             <p>Alberta oil pipeline route options through northern BC trigger West Moberly First Nations opposition over territory impacts.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -603,6 +670,7 @@
             <h2>Ottawa faces mounting pressure to quantify emissions outcomes from policy shifts while federal vehic…</h2>
             
             <p>Ottawa faces mounting pressure to quantify emissions outcomes from policy shifts while federal vehicle regulations advance.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -617,6 +685,7 @@
             
             <p>Federal environment minister claims substantial climate progress while facing Bloc Québécois accusations of historic policy reversal.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -629,6 +698,7 @@
             <h2>No new Canadian provincial or federal environmental regulatory announcements or enforcement actions…</h2>
             
             <p>No new Canadian provincial or federal environmental regulatory announcements or enforcement actions reported today.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -643,6 +713,7 @@
             
             <p>Alberta commits $5 million to lobbyists securing BC Indigenous support for pipelines, directly affecting project timelines under IAA and provincial environmenta&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -655,6 +726,7 @@
             <h2>US EPA proposes delays for certain PFAS regulations, a move Canadian practitioners should monitor fo…</h2>
             
             <p>US EPA proposes delays for certain PFAS regulations, a move Canadian practitioners should monitor for CCME and provincial threshold alignment.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -669,6 +741,7 @@
             
             <p>Federal electricity strategy advances electrification targets but leaves implementation timelines and provincial coordination gaps unresolved.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -681,6 +754,7 @@
             <h2>Alberta pipeline project now contingent on federal-provincial agreement on industrial carbon tax</h2>
             
             <p>Alberta pipeline project now contingent on federal-provincial agreement on industrial carbon tax.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -695,6 +769,7 @@
             
             <p>Canadian farmers in Alberta and Saskatchewan face sharp increases in fertilizer and diesel costs during spring seeding, directly affecting nutrient management a&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -707,6 +782,7 @@
             <h2>Ontario relocates decades-old mine tailings in Nipissing First Nation after prior consultation failu…</h2>
             
             <p>Ontario relocates decades-old mine tailings in Nipissing First Nation after prior consultation failures.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -721,6 +797,7 @@
             
             <p>Ontario's ban on green rules for developers may raise retrofit costs and slow climate adaptation for extreme weather.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -733,6 +810,7 @@
             <h2>BC court rejects Wet'suwet'en chief's Indigenous law defence in Coastal GasLink ...</h2>
             
             <p>BC court rejects Wet'suwet'en chief's Indigenous law defence in Coastal GasLink conviction while First Nation launches logging lawsuit, sharpening pipeline and &hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -747,6 +825,7 @@
             
             <p>BC Energy Regulator cites LNG Canada for non-compliant black smoke flaring under provincial oversight, while new study attributes record Peace River seismic eve&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -759,6 +838,7 @@
             <h2>Supreme Court decision backs Michigan’s authority to decommission Enbridge Line 5, with direct impli…</h2>
             
             <p>Supreme Court decision backs Michigan’s authority to decommission Enbridge Line 5, with direct implications for Canadian cross-border pipeline risk assessments &hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -773,6 +853,7 @@
             
             <p>Electric ferry deployment in British Columbia highlights emerging vessel-strike risks to humpback whales under the Fisheries Act and Species at Risk Act.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -785,6 +866,7 @@
             <h2>BC launches free foam dock recycling events on the Sunshine Coast to curb marine...</h2>
             
             <p>BC launches free foam dock recycling events on the Sunshine Coast to curb marine debris under provincial waste diversion programs.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -799,6 +881,7 @@
             
             <p>BC NDP pauses DRIPA amendments amid minority-government risk, directly affecting Indigenous consultation requirements on contaminated sites and remediation proj&hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -811,6 +894,7 @@
             <h2>Ontario advances 14 renewable energy projects while ArcelorMittal Dofasco comple...</h2>
             
             <p>Ontario advances 14 renewable energy projects while ArcelorMittal Dofasco completes final coke push at Hamilton facility, altering provincial decarbonization ti&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -825,6 +909,7 @@
             
             <p>Piikani Nation member files notice to sue over selenium pollution in Crowsnest Lake, triggering Fisheries Act and provincial authorization compliance review in &hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -837,6 +922,7 @@
             <h2>Ontario’s Species Conservation Act replaces the Endangered Species Act, leaving ...</h2>
             
             <p>Ontario’s Species Conservation Act replaces the Endangered Species Act, leaving golden eagles, barn owls and many other species largely unprotected.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -851,6 +937,7 @@
             
             <p>BC invests over $10M in parks conservation and opens 2026 Clean Industry Fund intake for emissions-reduction projects.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -863,6 +950,7 @@
             <h2>BC Environment adds formal issues resolution protocol to the environmental asses...</h2>
             
             <p>BC Environment adds formal issues resolution protocol to the environmental assessment process, improving dispute resolution and predictability for proponents an&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -877,6 +965,7 @@
             
             <p>Permafrost thaw slump vegetation recovery is now predictable from annual gross primary productivity, with direct implications for northern remediation and risk &hellip;</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -889,6 +978,7 @@
             <h2>Alberta Bill 23 would eliminate government deadlines to respond to citizen petit...</h2>
             
             <p>Alberta Bill 23 would eliminate government deadlines to respond to citizen petitions under the Citizen Initiative Act.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -903,6 +993,7 @@
             
             <p>Alberta First Nations and farmers demand full federal Impact Assessment for carbon capture pipeline project under IAA.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -915,6 +1006,7 @@
             <h2>Trans Mountain pipeline reaches full capacity in April due to Middle East disruptions, directly affe…</h2>
             
             <p>Trans Mountain pipeline reaches full capacity in April due to Middle East disruptions, directly affecting crude export scheduling and associated environmental c&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -929,6 +1021,7 @@
             
             <p>Ontario's absence from federal Ring of Fire impact assessment creates immediate regulatory uncertainty for mining proponents in northern Ontario.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -941,6 +1034,7 @@
             <h2>Aamjiwnaang First Nation demands full spill details and remediation plan from Su...</h2>
             
             <p>Aamjiwnaang First Nation demands full spill details and remediation plan from Suncor following discharge to St. Clair River.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -955,6 +1049,7 @@
             
             <p>NS enforcement order mandates removal of two unauthorized building storeys, setting precedent for permit compliance in development projects.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -967,6 +1062,7 @@
             <h2>Ontario's fast-tracking of Great Bear mine permits under the Mining Act faces Grassy Narrows lawsuit…</h2>
             
             <p>Ontario's fast-tracking of Great Bear mine permits under the Mining Act faces Grassy Narrows lawsuit, signaling risks for mining assessments in the province.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -981,6 +1077,7 @@
             
             <p>BC EAO proposes expedited EA process for major projects, seeking feedback by April 2026 to cut timelines.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -993,6 +1090,7 @@
             <h2>BC's proposed FOI amendments could restrict access to EMA and CSR records, requiring immediate advoc…</h2>
             
             <p>BC's proposed FOI amendments could restrict access to EMA and CSR records, requiring immediate advocacy before legislative passage.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1007,6 +1105,7 @@
             
             <p>New Brunswick's delayed response to Vanier Highway chemical spill highlights gaps in provincial spill protocols under the Clean Environment Act.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1019,6 +1118,7 @@
             <h2>Carbon market additionality rules may exclude Indigenous-managed lands in BC and federal jurisdictio…</h2>
             
             <p>Carbon market additionality rules may exclude Indigenous-managed lands in BC and federal jurisdictions, limiting offset eligibility.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1033,6 +1133,7 @@
             
             <p>BC opens consultation on Koksilah Watershed Plan, requiring input by April 30 for water sustainability compliance under Water Sustainability Act.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1045,6 +1146,7 @@
             <h2>New Antarctic meltwater data shows minimal iron release, undermining algae bloom assumptions in glob…</h2>
             
             <p>New Antarctic meltwater data shows minimal iron release, undermining algae bloom assumptions in global carbon models used for Canadian climate adaptation planni&hellip;</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1059,6 +1161,7 @@
             
             <p>Road salt accumulation in Ontario's Lake Simcoe watershed exceeds CCME chloride guidelines, triggering site assessments under O. Reg. 153/04.</p>
             
+            
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
         
@@ -1071,6 +1174,7 @@
             <h2>Port of Churchill expansion push triggers federal IAA assessments for Manitoba Arctic infrastructure…</h2>
             
             <p>Port of Churchill expansion push triggers federal IAA assessments for Manitoba Arctic infrastructure, with oil spill risks under Fisheries Act.</p>
+            
             
             <span class="blog-idx-read-more">Read article &rarr;</span>
         </a>
@@ -1275,5 +1379,6 @@
 
     <!-- Centralized, improved global search -->
     <script src="../../assets/js/search.js" defer></script>
+    <script src="../../assets/js/language-control.js" defer></script>
 </body>
 </html>
