@@ -53,13 +53,20 @@ permissions:
   contents: write
 
 jobs:
-  translate:
+  # Decide which shows to translate, then fan out one job per show. Splitting
+  # per-show (vs the old single sequential job that translated every show then
+  # committed once at the end) (a) cuts wall-clock from ~3h to ~15min/show in
+  # parallel and (b) removes the all-or-nothing timeout risk — each show
+  # commits its own tracks independently, so a slow/failed show can't lose the
+  # others' work.
+  resolve:
     runs-on: ubuntu-latest
     # On the workflow_run trigger, only proceed if the episode pipeline that
     # triggered us actually succeeded — no point translating a failed/partial
     # publish. Schedule + manual dispatch always run.
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
-    timeout-minutes: 330
+    outputs:
+      shows: ${{ steps.resolve.outputs.shows }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -70,7 +77,6 @@ jobs:
         with:
           python-version: '3.12'
           requirements-file: 'requirements.txt'
-          system-packages: 'ffmpeg'
           skip-checkout: 'true'
 
       - name: Resolve shows to translate
@@ -102,7 +108,33 @@ jobs:
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
               f.write(f"shows={json.dumps(shows)}\n")
 
-      - name: Generate translations
+  translate:
+    needs: resolve
+    # Skip cleanly when no show qualifies (e.g. a no-op episode run).
+    if: ${{ needs.resolve.outputs.shows != '' && needs.resolve.outputs.shows != '[]' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      # Cap parallelism: bounds Grok TTS concurrency (rate limits) and
+      # push contention against main. The retry loop below absorbs the rest.
+      max-parallel: 3
+      matrix:
+        show: ${{ fromJson(needs.resolve.outputs.shows) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: '3.12'
+          requirements-file: 'requirements.txt'
+          system-packages: 'ffmpeg'
+          skip-checkout: 'true'
+
+      - name: Translate ${{ matrix.show }}
         env:
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
           XAI_API_KEY: ${{ secrets.GROK_API_KEY }}
@@ -111,83 +143,57 @@ jobs:
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
         run: |
-          set +e
           LATEST="${{ github.event.inputs.latest }}"
           [ -z "$LATEST" ] && LATEST=3
-          SHOWS='${{ steps.resolve.outputs.shows }}'
-          # Parse the JSON list into a bash array and iterate with a for-loop
-          # (NOT `... | while read`). In the piped while-loop, ffmpeg/ffprobe
-          # invoked inside generate_translations.py read from the loop's stdin
-          # and drained the remaining show list, so the loop exited after the
-          # FIRST show — only env_intel translated on the 2026-06-17 sweep.
-          # The for-loop keeps the script's own stdin; `</dev/null` on the
-          # python call is belt-and-suspenders so no child can eat it.
-          mapfile -t SLUGS < <(echo "$SHOWS" | python3 -c "import sys,json; print('\n'.join(json.load(sys.stdin)))")
-          for slug in "${SLUGS[@]}"; do
-            [ -z "$slug" ] && continue
-            echo "::group::Translating $slug (--latest $LATEST)"
-            # --zh-approved: operator approved all four languages including ZH.
-            python scripts/generate_translations.py "$slug" --latest "$LATEST" --zh-approved </dev/null || echo "::warning::Translation run failed for $slug (non-fatal)"
-            echo "::endgroup::"
-          done
-          exit 0
+          # --zh-approved: operator approved all four languages including ZH.
+          # `</dev/null`: keep ffmpeg/ffprobe from consuming the step's stdin.
+          python scripts/generate_translations.py "${{ matrix.show }}" --latest "$LATEST" --zh-approved </dev/null
 
-      - name: Build per-language podcast RSS feeds
+      - name: Build ${{ matrix.show }} language feeds
+        if: always()
         env:
-          # Channel title/description are translated once and cached in
-          # digests/<slug>/channel_i18n.json; the key lets the first build
-          # populate that cache. Subsequent rebuilds are credit-free.
+          # Translates + caches this show's channel title/description once
+          # (digests/<slug>/channel_i18n.json); later rebuilds are credit-free.
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
           XAI_API_KEY: ${{ secrets.GROK_API_KEY }}
         run: |
-          # Rebuild every show's FR/RU/ES/ZH podcast feed from the canonical
-          # summaries JSON (idempotent; only writes a feed for a language that
-          # has at least one track). Non-fatal — a feed glitch must not block
-          # the translation commit.
-          python scripts/build_language_feeds.py --all || \
-            echo "::warning::Language-feed build failed — next sweep retries (idempotent)"
+          python scripts/build_language_feeds.py "${{ matrix.show }}" || \
+            echo "::warning::Language-feed build failed for ${{ matrix.show }}"
 
-      - name: Regenerate blogs so the language switcher appears
+      - name: Regenerate ${{ matrix.show }} pages
+        if: always()
         run: |
-          # Translations live in summaries_*.json; regenerate blog posts +
-          # indexes so the inline switcher + badges render. Non-fatal.
-          python generate_html.py --blogs --network --sitemap || \
-            echo "::warning::HTML regen failed — switcher will appear on the next nightly regen"
+          # Regenerate just this show's pages so the per-episode language
+          # switcher + per-language feed links render. Show-scoped, so parallel
+          # jobs never touch the same files.
+          python generate_html.py --show "${{ matrix.show }}" --blogs || \
+            echo "::warning::HTML regen failed for ${{ matrix.show }} — next nightly regen will catch it"
 
-      - name: Commit and push translations
+      - name: Commit and push ${{ matrix.show }}
+        if: always()
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
 
-          # The summaries JSONs carry the new translation tracks (source of
-          # truth the site reads); the blog/index HTML render the switcher.
-          git add 'digests/**/summaries_*.json' || true
-          # Per-language podcast feeds + the cached channel title/description
-          # translations that back them (Apple/Spotify subscribe to these).
-          git add '*_podcast.*.rss' || true
-          git add 'digests/**/channel_i18n.json' || true
-          git add 'blog/**' || true
-          git add '*.html' || true
-          git add 'blog/index.html' || true
-          git add index.html || true
-          git add sitemap.xml || true
-
+          # Fresh checkout + show-scoped translate/feed/regen means the only
+          # changes present belong to this show, so `git add -A` is safe and
+          # parallel jobs stage disjoint files.
+          git add -A
           if git diff --cached --quiet; then
-            echo "No new translations to commit."
+            echo "No new translations to commit for ${{ matrix.show }}."
             exit 0
           fi
-          git commit -m "Multilingual: add translation tracks $(date -u +%Y-%m-%d)"
+          git commit -m "Multilingual: ${{ matrix.show }} translation tracks $(date -u +%Y-%m-%d)"
 
-          # Drop any incidental unstaged regen so the rebase isn't blocked
-          # (same guard as run-show's finalize step).
-          git checkout -- . 2>/dev/null || true
-
-          for attempt in 1 2 3 4 5; do
+          # More attempts than the single-job path: up to 3 shows push
+          # concurrently, so ref-update collisions are expected and retried.
+          for attempt in 1 2 3 4 5 6 7 8; do
             if git pull --rebase origin main && git push origin main; then
               echo "Push succeeded on attempt $attempt"
               exit 0
             fi
-            [ $attempt -lt 5 ] && sleep $((attempt * 3))
+            git rebase --abort 2>/dev/null || true
+            [ $attempt -lt 8 ] && sleep $((attempt * 4))
           done
-          echo "::warning::Could not push multilingual updates after 5 attempts — next sweep will retry (idempotent)."
+          echo "::warning::Could not push ${{ matrix.show }} translations after 8 attempts — next sweep will retry (idempotent)."
           exit 0
