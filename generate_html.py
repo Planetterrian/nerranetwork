@@ -107,6 +107,25 @@ def _read_show_image_provider(slug: str) -> str:
     return (yt.get("image_provider") or "pexels").strip().lower() or "pexels"
 
 
+def _collect_language_feeds(rss_file: str, prefix: str) -> list:
+    """Return the per-language podcast feeds that exist for a show.
+
+    Scans for ``<rss_stem>.<lang>.rss`` siblings of the English feed (built
+    by ``scripts/build_language_feeds.py``) and returns a list of
+    ``{"lang", "label", "url"}`` for the show page / how-to-listen table.
+    Empty when no translated feed has been built yet, so the template
+    renders nothing for English-only shows.
+    """
+    from engine.language_feeds import LANGUAGE_META, feed_filename
+
+    feeds = []
+    for lang, (autonym, _locale) in LANGUAGE_META.items():
+        fname = feed_filename(rss_file, lang)
+        if (ROOT / fname).exists():
+            feeds.append({"lang": lang, "label": autonym, "url": f"{prefix}{fname}"})
+    return feeds
+
+
 # ---------------------------------------------------------------------------
 # Marketing / Analytics configuration
 # ---------------------------------------------------------------------------
@@ -1547,6 +1566,7 @@ def _build_all_shows_list():
             "summaries_page": cfg["summaries_page"],
             "podcast_image": cfg["podcast_image"],
             "rss_file": cfg["rss_file"],
+            "language_feeds": _collect_language_feeds(cfg["rss_file"], ""),
             "brand_color": cfg["brand_color"],
             "tagline": cfg["tagline"],
             "schedule": cfg.get("schedule", "Daily"),
@@ -2251,6 +2271,7 @@ def generate_show_page(slug, *, dry_run=False):
         "schema_web_feed": f"{GITHUB_RAW}/{cfg['rss_file']}",
         "schema_image_url": f"{GITHUB_RAW}/{cfg['podcast_image'].lstrip('/')}",
         "rss_url": f"{prefix}{cfg['rss_file']}",
+        "language_feeds": _collect_language_feeds(cfg["rss_file"], prefix),
         "related_show": related_show_data,
         "blog_page": f"blog/{cfg['slug']}/index.html",
         "latest_blog_posts": latest_blog_posts,

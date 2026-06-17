@@ -119,7 +119,50 @@ The per-episode blog page renders an inline `<audio>` player + language pills
 **only when a translation track exists** (English-only episodes show nothing
 new). It defaults to the visitor's `Accept-Language`, remembers the session
 choice, and swaps the audio + translated title/description on selection. Vanilla
-JS, no build step. The podcast RSS feed is unchanged (English remains canonical).
+JS, no build step. The **canonical English** podcast RSS feed
+(`<show>_podcast.rss`) is unchanged — English stays the master.
+
+## Per-language podcast feeds (Apple / Spotify)
+
+Each translation track is also published as a real, subscribable podcast in a
+**dedicated per-language feed** next to the English one:
+
+```
+spacex_podcast.rss        # English, canonical (untouched)
+spacex_podcast.fr.rss     # French tracks only
+spacex_podcast.es.rss     # Spanish tracks only  …
+```
+
+- Built by [`engine/language_feeds.py`](../engine/language_feeds.py) via
+  [`scripts/build_language_feeds.py`](../scripts/build_language_feeds.py),
+  **fresh from the canonical `summaries_<slug>.json`** each run (idempotent —
+  never depends on the prior feed file). A feed is written **only** for a
+  language that has at least one track (no empty feeds).
+- The channel **title + description are translated once** (via
+  `engine.translate.translate_metadata`) and cached in
+  `digests/<slug>/channel_i18n.json`, so nightly rebuilds cost no Grok credits.
+  With no key + no cache it degrades to an autonym-suffixed English title
+  (`SpaceX Daily (Français)`) so the build always ships a valid feed.
+- The channel `<language>` is region-qualified (`fr-fr`, `ru-ru`, `es-es`,
+  `zh-cn`) so directories shelve each feed in the right locale.
+- Per-episode **GUIDs are deterministic** (`<guid_prefix>-<lang>-ep<NNN>-<date>`)
+  so a rebuild never re-notifies subscribers or double-lists an episode.
+- Enclosure byte length comes from the track's `bytes` field (captured at
+  render time in `engine/multilingual.py`); older records fall back to a
+  duration estimate.
+
+**Pipeline wiring:** the multilingual sweep
+(`.github/workflows/multilingual.yml`) rebuilds + commits the feeds right after
+it generates tracks; the nightly maintenance workflow rebuilds them again as a
+regenerable safety net. Show pages and the How-to-Listen table link the
+available language feeds (`generate_html._collect_language_feeds`).
+
+**Operator:** submit each per-language feed URL
+(`https://nerranetwork.com/<show>_podcast.<lang>.rss`) to Apple Podcasts Connect
+and Spotify for Podcasters once, the same as the English feed. Run
+`python scripts/build_language_feeds.py --all` to print the full list.
+
+Drift guards: `tests/test_language_feeds.py`.
 
 ## Scope (this pass)
 

@@ -128,9 +128,21 @@ jobs:
           # Optionally regenerate full site if needed:
           # python generate_html.py --all
 
+      - name: Rebuild per-language podcast RSS feeds (safety net)
+        # The multilingual workflow rebuilds + commits these after each
+        # translation sweep; this nightly pass is a regenerable safety net
+        # (deterministic from summaries → usually a no-op diff). The key
+        # populates digests/<slug>/channel_i18n.json if a show is missing it.
+        env:
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          XAI_API_KEY: ${{ secrets.GROK_API_KEY }}
+        run: python scripts/build_language_feeds.py --all || echo "::warning::Language-feed rebuild failed (non-fatal)"
+
       - uses: ./.github/actions/safe-commit-push
         with:
           add-paths: |
+            *_podcast.*.rss
+            digests/**/channel_i18n.json
             api/dashboard.json
             api/op3_stats.json
             api/buttondown_stats.json
