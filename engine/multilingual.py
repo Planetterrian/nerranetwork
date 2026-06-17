@@ -174,6 +174,10 @@ def generate_for_episode(
         local_mp3 = output_dir / f"{tts_file.stem.replace('_tts', '')}.{lang}.mp3"
         render_track(translated, lang, voice_id, api_key, local_mp3, max_chars)
         dur = ffprobe_duration(str(local_mp3))
+        try:
+            size_bytes = local_mp3.stat().st_size
+        except OSError:
+            size_bytes = 0
 
         en_dur = ffprobe_duration(english_url)
         if en_dur and dur:
@@ -201,6 +205,10 @@ def generate_for_episode(
             "title": t_title,
             "description": t_desc,
             "duration_sec": round(dur, 1) if dur else 0,
+            # Exact enclosure byte length for the per-language podcast feed
+            # (engine.language_feeds). Falls back to a duration estimate for
+            # records that predate this field.
+            "bytes": size_bytes,
             "generated_at": datetime.now(timezone.utc).isoformat(),
         })
         results[lang] = "done"

@@ -141,6 +141,15 @@
                     </a>
                     {% endif %}
                 </div>
+
+                {% if language_feeds %}
+                <div class="nn-lang-feeds" style="margin-top:0.85rem;font-size:0.9rem;">
+                    <span style="color:var(--nn-text-muted);">{% if _is_ru %}Аудио на других языках (RSS):{% else %}Listen in another language (podcast RSS):{% endif %}</span>
+                    {% for f in language_feeds %}
+                    <a href="{{ f.url }}" class="nn-btn" data-show="{{ show_slug }}" data-lang="{{ f.lang }}" hreflang="{{ f.lang }}" style="padding:4px 10px;font-size:0.82rem;">{{ f.label }}</a>
+                    {% endfor %}
+                </div>
+                {% endif %}
                 <div style="margin-top:var(--sp-3);">
                     {{ ai_badge(path_prefix=path_prefix, is_ru=_is_ru) }}
                 </div>

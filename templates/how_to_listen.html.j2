@@ -232,7 +232,10 @@
                 in English, Fran&ccedil;ais, Русский, Espa&ntilde;ol and 中文. On the
                 website, use the globe control in the top menu (or the language
                 buttons on any episode page) to pick your audio language &mdash; it's
-                remembered across the site.
+                remembered across the site. To subscribe in your language inside a
+                podcast app, each show also publishes a dedicated per-language RSS
+                feed &mdash; the language codes under <em>Feed</em> in the table below
+                link straight to them.
             </p>
 
             <section class="htl-shows-section">
@@ -273,6 +276,11 @@
                                 {% if s.rss_file %}
                                 <a href="{{ path_prefix }}{{ s.rss_file }}" class="plat-link">Feed</a>
                                 {% else %}<span class="na">—</span>{% endif %}
+                                {% if s.language_feeds %}
+                                <span class="lang-feeds" style="display:block;margin-top:3px;font-size:0.78rem;">
+                                    {% for f in s.language_feeds %}<a href="{{ path_prefix }}{{ f.url }}" class="plat-link" hreflang="{{ f.lang }}" title="{{ s.name }} — {{ f.label }}">{{ f.lang|upper }}</a>{% if not loop.last %} {% endif %}{% endfor %}
+                                </span>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}

@@ -111,6 +111,21 @@ jobs:
           done
           exit 0
 
+      - name: Build per-language podcast RSS feeds
+        env:
+          # Channel title/description are translated once and cached in
+          # digests/<slug>/channel_i18n.json; the key lets the first build
+          # populate that cache. Subsequent rebuilds are credit-free.
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          XAI_API_KEY: ${{ secrets.GROK_API_KEY }}
+        run: |
+          # Rebuild every show's FR/RU/ES/ZH podcast feed from the canonical
+          # summaries JSON (idempotent; only writes a feed for a language that
+          # has at least one track). Non-fatal — a feed glitch must not block
+          # the translation commit.
+          python scripts/build_language_feeds.py --all || \
+            echo "::warning::Language-feed build failed — next sweep retries (idempotent)"
+
       - name: Regenerate blogs so the language switcher appears
         run: |
           # Translations live in summaries_*.json; regenerate blog posts +
@@ -126,6 +141,10 @@ jobs:
           # The summaries JSONs carry the new translation tracks (source of
           # truth the site reads); the blog/index HTML render the switcher.
           git add 'digests/**/summaries_*.json' || true
+          # Per-language podcast feeds + the cached channel title/description
+          # translations that back them (Apple/Spotify subscribe to these).
+          git add '*_podcast.*.rss' || true
+          git add 'digests/**/channel_i18n.json' || true
           git add 'blog/**' || true
           git add '*.html' || true
           git add 'blog/index.html' || true
