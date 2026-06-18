@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -811,7 +823,7 @@
             </a>
 
             
-            <div class="nn-global-search" style="position:relative;margin-left:auto;margin-right:0.5rem;max-width:180px;flex:1 1 auto;min-width:120px;">
+            <div class="nn-global-search" style="position:relative;margin-left:auto;margin-right:0.5rem;max-width:200px;flex:0 1 200px;min-width:110px;">
                 <input type="search" id="nn-global-search-input"
                        placeholder="Search…"
                        style="width:100%;padding:6px 8px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.85rem;"
@@ -1228,6 +1240,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Today we explore the wonderful world of animals with fun Russian words that every beginner can use right away.</em></p>
 <h4 id="word-of-the-day">Word of the Day</h4>
 <p><strong>кит</strong></p>
@@ -1290,6 +1304,8 @@
 <p>In Russian fairy tales, the giant fish-whale “Kit” often carries entire villages on its back, showing how Russians have long imagined whales as magical helpers from the sea.</p>
 <p><strong>Practice Challenge:</strong></p>
 <p>For kids: Draw your favourite animal and say its Russian name out loud three times. For adults: Look at a pet or zoo photo and make one sentence like “Это [animal]” (This is a [animal]).</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1643,6 +1659,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1669,6 +1686,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
