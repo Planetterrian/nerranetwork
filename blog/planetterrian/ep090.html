@@ -108,11 +108,40 @@
     },
     "image": "https://nerranetwork.com/assets/covers/planetterrian-daily.jpg",
     "transcript": "https://nerranetwork.com/blog/planetterrian/ep090.html#transcript",
-    "associatedMedia": {
-      "@type": "MediaObject",
-      "contentUrl": "https://audio.nerranetwork.com/planetterrian/Planetterrian_Daily_Ep090_20260615.mp3",
-      "inLanguage": "en"
-    }
+    "associatedMedia": [
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/planetterrian/Planetterrian_Daily_Ep090_20260615.mp3",
+        "inLanguage": "en"
+      },
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/planetterrian/Planetterrian_Daily_Ep090_20260615.fr.mp3",
+        "inLanguage": "fr"
+      },
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/planetterrian/Planetterrian_Daily_Ep090_20260615.ru.mp3",
+        "inLanguage": "ru"
+      },
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/planetterrian/Planetterrian_Daily_Ep090_20260615.es.mp3",
+        "inLanguage": "es"
+      },
+      {
+        "@type": "MediaObject",
+        "contentUrl": "https://audio.nerranetwork.com/planetterrian/Planetterrian_Daily_Ep090_20260615.zh.mp3",
+        "inLanguage": "zh"
+      }
+    ],
+    "availableLanguage": [
+      "en",
+      "fr",
+      "ru",
+      "es",
+      "zh"
+    ]
   }
 ]
     </script>
@@ -767,6 +796,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1214,6 +1255,36 @@
     </header>
 
     
+    <section class="nn-i18n" aria-label="Listen in another language">
+        <div class="nn-i18n-inner">
+            <div class="nn-i18n-row">
+                <span class="nn-i18n-label">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    Listen in
+                </span>
+                <button type="button" class="nn-i18n-pill" data-lang="en" aria-pressed="true">English</button>
+                
+                <button type="button" class="nn-i18n-pill" data-lang="fr" aria-pressed="false">Français</button>
+                
+                <button type="button" class="nn-i18n-pill" data-lang="ru" aria-pressed="false">Русский</button>
+                
+                <button type="button" class="nn-i18n-pill" data-lang="es" aria-pressed="false">Español</button>
+                
+                <button type="button" class="nn-i18n-pill" data-lang="zh" aria-pressed="false">中文</button>
+                
+            </div>
+            <audio id="nn-i18n-audio" class="nn-i18n-audio" controls preload="none" src="https://audio.nerranetwork.com/planetterrian/Planetterrian_Daily_Ep090_20260615.mp3"></audio>
+        </div>
+        <script type="application/json" id="nn-i18n-tracks">
+{
+  "en": {"url": "https://audio.nerranetwork.com/planetterrian/Planetterrian_Daily_Ep090_20260615.mp3", "title": "Underground fungal networks span 110 quadrillion kilometers and move 4 billion tons of carbon dioxid…", "desc": "Underground fungal networks span 110 quadrillion kilometers and move 4 billion tons of carbon dioxide into soils each year."},
+  "fr": {"url": "https://audio.nerranetwork.com/planetterrian/Planetterrian_Daily_Ep090_20260615.fr.mp3", "title": "Ép 90 : Les réseaux fongiques souterrains s’étendent sur 110 quadrillions de kilomètres et transportent 4 milliards de tonnes de dioxyde de carbone dans les sols chaque année.", "desc": "Les réseaux fongiques souterrains s’étendent sur 110 quadrillions de kilomètres et transportent 4 milliards de tonnes de dioxyde de carbone dans les sols chaque année."},
+  "ru": {"url": "https://audio.nerranetwork.com/planetterrian/Planetterrian_Daily_Ep090_20260615.ru.mp3", "title": "Эп 90: Подземные грибные сети общей длиной 110 квадриллионов километров ежегодно перемещают 4 миллиарда тонн углекислого газа в почвы", "desc": "Подземные грибные сети общей длиной 110 квадриллионов километров ежегодно перемещают 4 миллиарда тонн углекислого газа в почвы"},
+  "es": {"url": "https://audio.nerranetwork.com/planetterrian/Planetterrian_Daily_Ep090_20260615.es.mp3", "title": "Ep 90: Las redes fúngicas subterráneas se extienden por 110 cuatrillones de kilómetros y transportan 4 mil millones de toneladas de dióxido de carbono a los suelos cada año.", "desc": "Las redes fúngicas subterráneas se extienden por 110 cuatrillones de kilómetros y transportan 4 mil millones de toneladas de dióxido de carbono a los suelos cada año."},
+  "zh": {"url": "https://audio.nerranetwork.com/planetterrian/Planetterrian_Daily_Ep090_20260615.zh.mp3", "title": "Ep 90: 地下真菌网络总长度达110千万亿公里，每年将40亿吨二氧化碳移入土壤。", "desc": "地下真菌网络总长度达110千万亿公里，每年将40亿吨二氧化碳移入土壤。"}
+}
+        </script>
+    </section>
     
 
     <!-- Article with TOC sidebar -->
@@ -1234,6 +1305,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="planetterrian-daily">Planetterrian Daily</h2>
 <p>🌍 <strong>Planetterrian Daily</strong> - Science, Longevity & Health Discoveries</p>
 <p><em>Underground fungal networks span 110 quadrillion kilometers and move 4 billion tons of carbon dioxide into soils each year.</em></p>
@@ -1279,6 +1352,448 @@
 <p>Most people picture soil as a mix of minerals, water, and plant roots with only scattered microbes. In reality, mycorrhizal fungi form continuous living filaments that link plants across entire landscapes. Right now, as you stand or sit, these threads are exchanging nutrients and carbon between roots that may be meters apart. One memorable scale: the total length reaches 110 quadrillion kilometers worldwide. The networks move 4 billion tons of carbon dioxide into soils each year, a flux comparable to major geological processes. Next time you walk across grass or forest floor, remember the hidden connections beneath are actively redistributing resources and storing carbon. Watch for field studies that measure how drought or warming alters the density of these filaments in different ecosystems.</p>
 <hr>
 <p>New maps and models keep revealing how living systems scale from cells to landscapes.</p>
+            </div>
+            
+            <div class="blog-body-lang" data-lang="fr" hidden>
+                <p class="blog-translated-note">Français — AI-translated from the English episode.</p>
+                <p>Salut, bienvenue dans Planetterrian Daily, épisode quatre-vingt-dix, pour le quinze juin deux mille vingt-six. Voici votre point science et santé.</p>
+<p>Les réseaux fongiques souterrains s’étendent sur cent dix quadrillions de kilomètres et déplacent quatre milliards de tonnes de dioxyde de carbone vers les sols chaque année.</p>
+<p>Des chercheurs ont compilé des données pour estimer la longueur totale des filaments fongiques mycorhiziens à cent dix quadrillions de kilomètres.</p>
+<p>Ces réseaux déplacent environ quatre milliards de tonnes de dioxyde de carbone vers les sols chaque année.</p>
+<p>Ils soutiennent la croissance des plantes et influencent la régulation climatique par le stockage du carbone.</p>
+<p>Cette cartographie fournit une base de référence pour suivre la réaction de ces systèmes aux changements environnementaux.</p>
+<p>La plupart des gens imaginent le sol comme un mélange de minéraux, d’eau et de racines végétales avec seulement quelques microbes dispersés.</p>
+<p>En réalité, les champignons mycorhiziens forment des filaments vivants continus qui relient les plantes sur des paysages entiers.</p>
+<p>En ce moment même, que vous soyez debout ou assis, ces fils échangent des nutriments et du carbone entre des racines qui peuvent se trouver à plusieurs mètres de distance.</p>
+<p>Un ordre de grandeur mémorable est que la longueur totale atteint cent dix quadrillions de kilomètres dans le monde.</p>
+<p>Ces réseaux déplacent quatre milliards de tonnes de dioxyde de carbone vers les sols chaque année, un flux comparable aux grands processus géologiques.</p>
+<p>La prochaine fois que vous marcherez sur de l’herbe ou sur le sol d’une forêt, souvenez-vous que les connexions cachées en dessous redistribuent activement les ressources et stockent du carbone.</p>
+<p>Surveillez les études de terrain qui mesurent comment la sécheresse ou le réchauffement modifie la densité de ces filaments dans différents écosystèmes.</p>
+<p>Passons maintenant à un domaine de recherche très différent.</p>
+<p>Une équipe internationale a produit le premier connectome complet de toutes les connexions neuronales du système nerveux central d’une mouche du vinaigre adulte.</p>
+<p>La carte couvre à la fois les régions du cerveau et du cordon nerveux ventral.</p>
+<p>Plusieurs laboratoires de l’École de médecine de Harvard et de l’Université de Princeton ont dirigé l’effort.</p>
+<p>Cette ressource permet de tester directement comment des circuits spécifiques contrôlent le comportement.</p>
+<p>Les neuroscientifiques peuvent désormais retracer comment des circuits définis produisent des comportements précis et tester des prédictions par des manipulations ciblées.</p>
+<p>La ressource sert aussi de modèle pour comparer les modifications du câblage selon des conditions génétiques ou environnementales.</p>
+<p>Sur une autre note.</p>
+<p>Le suivi par drone d’abeilles sauvages a montré que chaque insecte maintient son propre trajet constant entre les sites de butinage.</p>
+<p>Certains itinéraires se répétaient avec une telle précision que les abeilles passaient à quelques centimètres des positions précédentes.</p>
+<p>Les arbres et autres repères stabilisaient les trajets, tandis que les champs ouverts comme le maïs augmentaient les variations.</p>
+<p>Les résultats soulignent comment les insectes utilisent des repères visuels pour se repérer dans des milieux naturels.</p>
+<p>Au programme ensuite.</p>
+<p>Une analyse protéomique du plasma a évalué l’âge biologique dans plus de quarante types cellulaires.</p>
+<p>Un vieillissement accéléré dans certaines populations cellulaires était corrélé à un risque plus élevé de maladies spécifiques.</p>
+<p>Les signatures ont aussi identifié des individus présentant un vieillissement plus lent dans certains types cellulaires.</p>
+<p>Cette approche offre un moyen de mesurer des rythmes de vieillissement hétérogènes à partir d’un seul échantillon sanguin.</p>
+<p>Les chercheurs ont identifié des signatures protéomiques qui reflètent l’âge biologique de chaque type cellulaire.</p>
+<p>Ces marqueurs ont permis de prévoir le risque de maladie et la résilience dans plusieurs conditions.</p>
+<p>L’étude a relié des profils de vieillissement distincts dans différentes populations cellulaires à des événements cliniques ultérieurs.</p>
+<p>Passons maintenant à un domaine de recherche très différent.</p>
+<p>Un criblage génétique prospectif chez des mutants atfs-1 de Caenorhabditis elegans a mis au jour des gènes qui limitent la perte de neurones dopaminergiques due à la surexpression d’alpha-synucléine.</p>
+<p>La perte de jmjd-1.2, jmjd-3.1 ou twk-14 a accru la neurodégénérescence dans ce contexte.</p>
+<p>Les gènes jmjd codent des déméthylases H3K27me3, tandis que twk-14 code un orthologue d’un canal potassique.</p>
+<p>Les résultats pointent vers des voies liées à la chromatine et au potentiel de membrane qui tamponnent normalement la toxicité protéique.</p>
+<p>Sur une autre note.</p>
+<p>Un essai croisé randomisé a comparé une stimulation synchronisée sur la phase de la marche à une stimulation cérébrale profonde continue.</p>
+<p>L’approche adaptative s’est révélée réalisable et sûre tout en réduisant le taux de chutes.</p>
+<p>Le décodage neuronal s’est appuyé sur les principes de l’encodage locomoteur pour ajuster la stimulation en temps réel.</p>
+<p>Les participants ont montré un meilleur contrôle de la marche lors des activités quotidiennes.</p>
+<p>Au programme ensuite.</p>
+<p>Un système d’imagerie quantitative a capturé la dynamique cellulaire pendant la transition épithélio-mésenchymateuse dans des cellules souches pluripotentes induites humaines.</p>
+<p>La progression différait entre les cultures en deux dimensions et en trois dimensions et était liée à l’intégrité de la membrane basale.</p>
+<p>La plateforme intègre plusieurs mesures pour suivre les transitions d’état en temps réel.</p>
+<p>Elle permet une comparaison systématique des régulateurs de la transition épithélio-mésenchymateuse selon les géométries.</p>
+<p>Le système enregistre simultanément les changements de morphologie cellulaire et d’expression des marqueurs.</p>
+<p>Les chercheurs ont utilisé la plateforme pour examiner comment les propriétés de la matrice influencent le moment de la transition.</p>
+<p>Les données produites incluent des cartes temporelles de la localisation des protéines pendant le processus.</p>
+<p>Passons maintenant à un domaine de recherche très différent.</p>
+<p>HiCFoundation a été pré-entraîné sur un vaste ensemble de données Hi-C pour des études du génome en trois dimensions.</p>
+<p>Le modèle prend en charge des applications unicellulaires et multi-omiques sur plusieurs espèces.</p>
+<p>Il capture des caractéristiques de l’architecture chromatinienne qui se généralisent au-delà des données d’entraînement.</p>
+<p>Les chercheurs peuvent l’appliquer à de nouveaux jeux de données pour l’interprétation épigénomique.</p>
+<p>L’entraînement a inclus des jeux de données provenant de plusieurs organismes afin d’améliorer la détection des caractéristiques.</p>
+<p>L’architecture permet un ajustement fin sur des cartes Hi-C fournies par l’utilisateur sans réentraînement complet.</p>
+<p>Les embeddings produits préservent à la fois les motifs de contact locaux et les signaux de compartimentation à plus grande échelle.</p>
+<p>Sur une autre note.</p>
+<p>Les modèles climatiques et les données de terrain montrent que la fragmentation des roches par le gel se déplace vers des altitudes plus élevées.</p>
+<p>Les altitudes plus basses subissent moins de cycles gel-dégel à mesure que les températures augmentent.</p>
+<p>Cette redistribution modifie les lieux et les moments où les chutes de pierres sont les plus probables.</p>
+<p>L’étude cartographie les risques changeants pour les paysages montagneux.</p>
+<p>Les projections indiquent que la zone de fragmentation maximale par le gel se déplacera vers le haut de plusieurs centaines de mètres dans les décennies à venir.</p>
+<p>Des mesures de terrain dans les Pyrénées ont confirmé une réduction des taux de fracture sur les sites précédemment actifs.</p>
+<p>Les cartes de risques mises à jour intègrent à la fois les tendances de température et la susceptibilité selon le type de roche.</p>
+<p>Au programme ensuite.</p>
+<p>Des chercheurs australiens ont comparé la tolérance thermique selon les stratégies de nidification des abeilles.</p>
+<p>Les espèces nichant dans les tiges se sont révélées plus vulnérables à la hausse des températures à court terme.</p>
+<p>Les abeilles nichant dans le sol peuvent modifier leur profondeur pour éviter les fortes chaleurs.</p>
+<p>La différence provient de la faible capacité de tampon thermique des tiges végétales.</p>
+<p>Sur une autre note.</p>
+<p>Des expériences menées à la Kelley School of Business ont révélé une élévation constante des actes d’autosacrifice dans les jugements d’héroïsme.</p>
+<p>Les participants ont noté les actions sacrificielles plus haut même lorsque les résultats correspondaient à des alternatives non sacrificielles.</p>
+<p>Le schéma s’est maintenu dans différents scénarios et groupes démographiques.</p>
+<p>Le travail examine comment les observateurs évaluent l’intention par rapport au résultat.</p>
+<p>Les notes sont restées stables lorsque les participants ont été invités à justifier leurs choix par écrit.</p>
+<p>Une élévation similaire du sacrifice est apparue à la fois dans les échantillons d’étudiants et d’adultes en ligne.</p>
+<p>Le protocole a fait varier l’équivalence des résultats pour isoler le rôle du coût personnel.</p>
+<p>Au programme ensuite.</p>
+<p>Des chercheurs ont retracé les mauvais goûts dans le lactosérum concentré jusqu’aux minéraux résiduels.</p>
+<p>Une nouvelle étape de traitement élimine ces minéraux tout en préservant la sensation en bouche plus onctueuse obtenue par les méthodes de concentration antérieures.</p>
+<p>L’approche cible la source de l’amertume sans compromettre les propriétés fonctionnelles.</p>
+<p>Elle vise à améliorer l’acceptation par les consommateurs des boissons protéinées.</p>
+<p>L’élimination des minéraux a été réalisée grâce à des colonnes d’échange d’ions sélectives calibrées pour les flux de lactosérum.</p>
+<p>Des panels sensoriels ont confirmé une réduction des scores d’amertume sans modification des mesures de viscosité ou de solubilité.</p>
+<p>La méthode maintient des taux de récupération protéique supérieurs à ceux des concentrés non traités.</p>
+<p>Passons maintenant à un domaine de recherche très différent.</p>
+<p>Des archéologues ont examiné un squelette féminin dont le cerveau avait été extrait après le décès.</p>
+<p>Les os restants avaient été disposés délibérément pour l’inhumation.</p>
+<p>Certains os avaient été façonnés en outils.</p>
+<p>La découverte illustre des pratiques mortuaires spécifiques de cette période.</p>
+<p>Au programme ensuite.</p>
+<p>Taylor and Francis a publié le premier résumé en langage clair dans une revue vétérinaire.</p>
+<p>Le format traduit les résultats techniques en langage accessible pour un public plus large.</p>
+<p>Il s’adresse aux praticiens de la santé animale et aux non-spécialistes intéressés.</p>
+<p>L’initiative étend les pratiques d’accès ouvert déjà utilisées en médecine humaine.</p>
+<p>Le résumé accompagne une étude sur les thérapies articulaires équines et inclut des définitions des termes clés.</p>
+<p>Les éditeurs ont travaillé avec les auteurs pour préserver l’exactitude tout en raccourcissant les sections méthodes et résultats.</p>
+<p>Les prochains numéros incluront des résumés similaires comme une caractéristique standard.</p>
+<p>De nouvelles cartes et de nouveaux modèles continuent de révéler comment les systèmes vivants s’organisent de la cellule au paysage.</p>
+<p>Gardez un œil sur les mises à jour du travail du modèle de fondation Hi-C concernant l’analyse de la chromatine entre espèces.</p>
+<p>Voilà qui couvre l’actualité science et santé du jour. Partagez ce contenu avec quelqu’un qui s’intéresse aux dernières recherches. C’est Patrick à Vancouver. À la prochaine. Et avant de partir, cette émission fait partie du réseau Nerra, une famille de podcasts quotidiens couvrant la tech, la science, les marchés et bien plus encore.</p>
+<p>Si l’épisode d’aujourd’hui vous a plu, écoutez Environmental Intelligence : le bulletin sur l’environnement et les politiques climatiques pour le Canada. Vous pouvez découvrir toute la programmation sur nerranetwork point com.</p>
+<p>Cet épisode a utilisé une synthèse vocale par intelligence artificielle de ma voix ; la sélection éditoriale et l’analyse sont les miennes.</p>
+            </div>
+            
+            <div class="blog-body-lang" data-lang="ru" hidden>
+                <p class="blog-translated-note">Русский — AI-translated from the English episode.</p>
+                <p>Привет, добро пожаловать на Планеттерриан Дейли, девяностый выпуск за пятнадцатое июня две тысячи двадцать шестого года. Вот ваш обзор новостей науки и здоровья.</p>
+<p>Подземные грибные сети протянулись на сто десять квадриллионов километров и перемещают четыре миллиарда тонн углекислого газа в почвы каждый год.</p>
+<p>Исследователи собрали данные, чтобы оценить общую длину микоризных грибных нитей в сто десять квадриллионов километров.</p>
+<p>Эти сети ежегодно перемещают примерно четыре миллиарда тонн углекислого газа в почвы.</p>
+<p>Они поддерживают рост растений и влияют на регулирование климата через хранение углерода.</p>
+<p>Картирование даёт базовую линию для отслеживания того, как эти системы реагируют на изменения окружающей среды.</p>
+<p>Большинство людей представляют почву как смесь минералов, воды и корней растений с редкими микробами.</p>
+<p>На самом деле микоризные грибы образуют непрерывные живые нити, которые связывают растения по всему ландшафту.</p>
+<p>Прямо сейчас, пока вы стоите или сидите, эти нити обмениваются питательными веществами и углеродом между корнями, которые могут находиться в нескольких метрах друг от друга.</p>
+<p>Один запоминающийся масштаб — общая длина достигает ста десяти квадриллионов километров по всему миру.</p>
+<p>Сети перемещают четыре миллиарда тонн углекислого газа в почвы каждый год, и этот поток сравним с крупными геологическими процессами.</p>
+<p>В следующий раз, когда вы пройдёте по траве или лесной подстилке, помните, что скрытые связи под ногами активно перераспределяют ресурсы и хранят углерод.</p>
+<p>Следите за полевыми исследованиями, которые измеряют, как засуха или потепление меняют плотность этих нитей в разных экосистемах.</p>
+<p>Теперь перейдём к совсем другой области исследований.</p>
+<p>Международная команда создала первую полную коннектом всех нейронных связей в центральной нервной системе взрослой плодовой мушки.</p>
+<p>Карта охватывает и мозг, и области брюшной нервной цепочки.</p>
+<p>Работу возглавили несколько лабораторий Гарвардской медицинской школы и Принстонского университета.</p>
+<p>Этот ресурс позволяет напрямую проверять, как конкретные цепи управляют поведением.</p>
+<p>Нейробиологи теперь могут проследить, как определённые цепи порождают конкретные формы поведения, и проверять прогнозы с помощью targeted манипуляций.</p>
+<p>Ресурс также служит шаблоном для сравнения изменений проводки в разных генетических или экологических условиях.</p>
+<p>Кстати о другом.</p>
+<p>Отслеживание дронов за дикими медоносными пчёлами показало, что каждое насекомое сохраняет свой собственный устойчивый маршрут между местами сбора корма.</p>
+<p>Некоторые маршруты повторялись так точно, что пчёлы пролетали в считанных сантиметрах от прежних позиций.</p>
+<p>Деревья и другие ориентиры стабилизировали пути, а открытые поля, например кукурузные, увеличивали разброс.</p>
+<p>Результаты подчёркивают, как насекомые используют зрительные ориентиры для навигации в естественной среде.</p>
+<p>Следующая тема.</p>
+<p>Плазменный протеомный анализ оценил биологический возраст более чем сорока типов клеток.</p>
+<p>Ускоренное старение в отдельных популяциях клеток коррелировало с повышенным риском конкретных заболеваний.</p>
+<p>Сигнатуры также выявили людей с замедленным старением в определённых типах клеток.</p>
+<p>Этот подход даёт способ измерять неоднородные темпы старения по одному образцу крови.</p>
+<p>Исследователи определили протеомные сигнатуры, отражающие биологический возраст отдельных типов клеток.</p>
+<p>Эти маркеры предсказывали риск заболеваний и устойчивость к ним при разных состояниях.</p>
+<p>Исследование связало разные профили старения в различных клеточных популяциях с последующими клиническими событиями.</p>
+<p>Кстати о другом.</p>
+<p>Прямой генетический скрининг у мутантов atfs-1 нематоды Caenorhabditis elegans выявил гены, которые ограничивают потерю дофаминергических нейронов при избыточной экспрессии альфа-синуклеина.</p>
+<p>Потеря jmjd-1.2, jmjd-3.1 или twk-14 усиливала нейродегенерацию в этом фоне.</p>
+<p>Гены jmjd кодируют деметилазы H3K27me3, а twk-14 — ортолог калиевого канала.</p>
+<p>Результаты указывают на пути хроматина и мембранного потенциала, которые в норме буферизуют токсичность белка.</p>
+<p>Кстати о другом.</p>
+<p>Рандомизированное перекрёстное исследование сравнило стимуляцию, синхронизированную с фазой походки, с постоянной глубокой стимуляцией мозга.</p>
+<p>Адаптивный подход оказался осуществимым и безопасным, при этом снизил частоту падений.</p>
+<p>Нейронное декодирование опиралось на принципы кодирования локомоции, чтобы регулировать стимуляцию в реальном времени.</p>
+<p>Участники показали улучшенный контроль походки во время повседневной активности.</p>
+<p>Следующая тема.</p>
+<p>Система количественной визуализации зафиксировала клеточную динамику во время эпителиально-мезенхимального перехода в человеческих индуцированных плюрипотентных стволовых клетках.</p>
+<p>Ход процесса различался между двумерными и трёхмерными культурами и зависел от целостности базальной мембраны.</p>
+<p>Платформа объединяет несколько показаний, чтобы отслеживать переходы состояний в реальном времени.</p>
+<p>Она позволяет систематически сравнивать регуляторы эпителиально-мезенхимального перехода в разных геометриях.</p>
+<p>Система одновременно записывает изменения морфологии клеток и экспрессии маркеров.</p>
+<p>Исследователи использовали платформу, чтобы изучить, как свойства матрикса влияют на время перехода.</p>
+<p>Выходные данные включают карты локализации белков с разрешением по времени в ходе процесса.</p>
+<p>Кстати о другом.</p>
+<p>HiCFoundation прошла предварительное обучение на большой коллекции наборов данных Hi-C для исследований трёхмерного генома.</p>
+<p>Модель поддерживает приложения для отдельных клеток и мультиомики у разных видов.</p>
+<p>Она улавливает особенности архитектуры хроматина, которые обобщаются за пределами обучающих данных.</p>
+<p>Исследователи могут применять её к новым наборам данных для эпигеномной интерпретации.</p>
+<p>Обучение включало наборы данных из нескольких организмов, чтобы улучшить обнаружение признаков.</p>
+<p>Архитектура позволяет дообучать модель на предоставленных пользователем картах Hi-C без обучения с нуля.</p>
+<p>Встраивания на выходе сохраняют и локальные паттерны контактов, и сигналы крупномасштабной компартментализации.</p>
+<p>Кстати о другом.</p>
+<p>Климатические модели и полевые данные показывают, что разрушение горных пород под действием мороза смещается на более высокие высоты.</p>
+<p>На меньших высотах становится меньше циклов замерзания-оттаивания по мере роста температур.</p>
+<p>Перераспределение меняет, где и когда наиболее вероятны камнепады.</p>
+<p>Исследование картографирует меняющиеся опасности для горных ландшафтов.</p>
+<p>Прогнозы указывают, что зона пикового морозного выветривания сместится вверх по склону на несколько сотен метров в ближайшие десятилетия.</p>
+<p>Полевые измерения в Пиренеях подтвердили снижение скорости образования трещин на ранее активных участках.</p>
+<p>Обновлённые карты опасностей учитывают и тенденции температуры, и восприимчивость пород.</p>
+<p>Следующая тема.</p>
+<p>Австралийские исследователи сравнили термотолерантность у пчёл с разными стратегиями гнездования.</p>
+<p>Виды, гнездящиеся в стеблях, показали большую уязвимость к росту температур в краткосрочной перспективе.</p>
+<p>Пчёлы, гнездящиеся в земле, могут менять глубину, чтобы избежать экстремальной жары.</p>
+<p>Разница объясняется ограниченной тепловой буферизацией внутри растительных стеблей.</p>
+<p>Кстати о другом.</p>
+<p>Эксперименты Школы бизнеса Келли обнаружили устойчивое повышение оценки самопожертвования при суждениях о героизме.</p>
+<p>Участники выше оценивали жертвенные действия, даже когда результаты совпадали с несамопожертвованными альтернативами.</p>
+<p>Закономерность сохранялась в разных сценариях и демографических группах.</p>
+<p>Работа изучает, как наблюдатели взвешивают намерение и результат.</p>
+<p>Оценки оставались стабильными, когда участников просили письменно обосновать свой выбор.</p>
+<p>Аналогичное повышение оценки жертвы наблюдалось и в студенческих, и в онлайн-выборках взрослых.</p>
+<p>В дизайне варьировали эквивалентность результатов, чтобы выделить роль личных затрат.</p>
+<p>Следующая тема.</p>
+<p>Исследователи проследили посторонние привкусы в концентрированной сыворотке до остаточных минералов.</p>
+<p>Новый этап обработки удаляет эти минералы, сохраняя при этом более гладкую тексттуру, полученную предыдущими методами концентрирования.</p>
+<p>Подход нацелен на источник горечи без ущерба для функциональных свойств.</p>
+<p>Он призван повысить потребительское принятие белковых напитков.</p>
+<p>Удаление минералов достигли с помощью селективных ионообменных колонок, откалиброванных для потоков сыворотки.</p>
+<p>Сенсорные панели подтвердили снижение показателей горечи без изменений вязкости или растворимости.</p>
+<p>Метод сохраняет коэффициенты извлечения белка выше, чем у необработанных концентратов.</p>
+<p>Кстати о другом.</p>
+<p>Археологи изучили женский скелет, у которого после смерти извлекли мозг.</p>
+<p>Оставшиеся кости были намеренно уложены для погребения.</p>
+<p>Некоторые кости были обработаны и превращены в орудия.</p>
+<p>Находка иллюстрирует конкретные погребальные практики того периода.</p>
+<p>Следующая тема.</p>
+<p>Издательство Taylor and Francis выпустило первую сводку публикации простым языком в ветеринарном журнале.</p>
+<p>Формат переводит технические выводы на доступный язык для более широкой аудитории.</p>
+<p>Он ориентирован на специалистов по здоровью животных и заинтересованных неспециалистов.</p>
+<p>Инициатива расширяет практику открытого доступа, уже применяемую в медицине человека.</p>
+<p>Сводка сопровождает исследование методов лечения суставов у лошадей и включает определения ключевых терминов.</p>
+<p>Редакторы работали с авторами, чтобы сохранить точность, одновременно сократив разделы методов и результатов.</p>
+<p>В будущих выпусках такие сводки станут стандартной рубрикой.</p>
+<p>Новые карты и модели продолжают раскрывать, как живые системы масштабируются от клеток до ландшафтов.</p>
+<p>Следите за обновлениями по работе фундаментальной модели Hi-C в области кросс-видового анализа хроматина.</p>
+<p>На этом обзор сегодняшних новостей науки и здоровья завершён. Поделитесь выпуском с тем, кому интересно узнать о последних исследованиях. С вами был Патрик из Ванкувера. До следующего раза. А перед уходом — этот подкаст входит в сеть Нерра Нетворк, семейство ежедневных подкастов о технологиях, науке, рынках и многом другом.</p>
+<p>Если вам понравился сегодняшний выпуск, послушайте «Энвайронментал Интеллидженс» — обзор окружающей среды и климатической политики Канады. Весь каталог можно найти на сайте нерра нетворк точка ком.</p>
+<p>В этом выпуске использовался синтез голоса на основе искусственного интеллекта — редакторский отбор и анализ принадлежат мне.</p>
+            </div>
+            
+            <div class="blog-body-lang" data-lang="es" hidden>
+                <p class="blog-translated-note">Español — AI-translated from the English episode.</p>
+                <p>Hola, bienvenidos a Planetterrian Daily, episodio noventa, correspondiente al quince de junio de dos mil veintiséis. Aquí tienes tu resumen diario de ciencia y salud.</p>
+<p>Las redes de hongos subterráneos abarcan ciento diez mil billones de kilómetros y trasladan cuatro mil millones de toneladas de dióxido de carbono hacia los suelos cada año.</p>
+<p>Los investigadores recopilaron datos para estimar la longitud total de los filamentos de hongos micorrícicos en ciento diez mil billones de kilómetros.</p>
+<p>Estas redes mueven aproximadamente cuatro mil millones de toneladas de dióxido de carbono hacia los suelos anualmente.</p>
+<p>Apoyan el crecimiento de las plantas e influyen en la regulación del clima mediante el almacenamiento de carbono.</p>
+<p>El mapeo proporciona una línea base para seguir cómo responden estos sistemas a los cambios ambientales.</p>
+<p>La mayoría de las personas imaginan el suelo como una mezcla de minerales, agua y raíces de plantas con solo microbios dispersos.</p>
+<p>En realidad, los hongos micorrícicos forman filamentos vivos continuos que conectan plantas a lo largo de paisajes enteros.</p>
+<p>En este momento, mientras estás de pie o sentado, estos hilos están intercambiando nutrientes y carbono entre raíces que pueden estar a varios metros de distancia.</p>
+<p>Una escala memorable es que la longitud total alcanza ciento diez mil billones de kilómetros en todo el mundo.</p>
+<p>Las redes trasladan cuatro mil millones de toneladas de dióxido de carbono hacia los suelos cada año, un flujo comparable a los principales procesos geológicos.</p>
+<p>La próxima vez que camines sobre la hierba o el suelo del bosque, recuerda que las conexiones ocultas debajo están redistribuyendo activamente recursos y almacenando carbono.</p>
+<p>Estate atento a los estudios de campo que miden cómo la sequía o el calentamiento alteran la densidad de estos filamentos en diferentes ecosistemas.</p>
+<p>Ahora pasamos a un área de investigación muy distinta.</p>
+<p>Un equipo internacional elaboró el primer conectoma completo de todas las conexiones neuronales en el sistema nervioso central de una mosca de la fruta adulta.</p>
+<p>El mapa abarca tanto las regiones del cerebro como las del cordón nervioso ventral.</p>
+<p>Varios laboratorios de la Escuela de Medicina de Harvard y de la Universidad de Princeton lideraron el esfuerzo.</p>
+<p>Este recurso permite probar directamente cómo circuitos específicos controlan el comportamiento.</p>
+<p>Los neurocientíficos pueden ahora rastrear cómo circuitos definidos producen comportamientos concretos y poner a prueba predicciones mediante manipulaciones dirigidas.</p>
+<p>El recurso también sirve como plantilla para comparar cambios en la conectividad bajo condiciones genéticas o ambientales.</p>
+<p>Por otro lado.</p>
+<p>El seguimiento con drones de abejas melíferas salvajes mostró que cada insecto mantiene su propia ruta constante entre los sitios de forrajeo.</p>
+<p>Algunas rutas se repetían de forma tan exacta que las abejas pasaban a pocos centímetros de posiciones anteriores.</p>
+<p>Los árboles y otros puntos de referencia estabilizaban las trayectorias, mientras que los campos abiertos como los de maíz aumentaban la variación.</p>
+<p>Los hallazgos destacan cómo los insectos utilizan señales visuales para navegar en entornos naturales.</p>
+<p>A continuación.</p>
+<p>El análisis proteómico del plasma evaluó la edad biológica en más de cuarenta tipos de células.</p>
+<p>El envejecimiento acelerado en poblaciones celulares concretas se correlacionó con un mayor riesgo de enfermedades específicas.</p>
+<p>Las firmas también identificaron individuos que mostraban un envejecimiento más lento en ciertos tipos de células.</p>
+<p>Este enfoque ofrece una forma de medir tasas de envejecimiento heterogéneas a partir de una sola muestra de sangre.</p>
+<p>Los investigadores identificaron firmas proteómicas que reflejan la edad biológica de tipos celulares individuales.</p>
+<p>Estos marcadores pronosticaron el riesgo de enfermedad y la resiliencia en múltiples condiciones.</p>
+<p>El estudio vinculó perfiles de envejecimiento distintos en diferentes poblaciones celulares con eventos clínicos posteriores.</p>
+<p>Ahora pasamos a un área de investigación muy distinta.</p>
+<p>Un cribado genético directo en mutantes atfs-1 de Caenorhabditis elegans reveló genes que limitan la pérdida de neuronas dopaminérgicas por la sobreexpresión de alfa-sinucleína.</p>
+<p>La pérdida de jmjd-1.2, jmjd-3.1 o twk-14 aumentó la neurodegeneración en este contexto.</p>
+<p>Los genes jmjd codifican desmetilasas de H3K27me3, mientras que twk-14 codifica un ortólogo de canal de potasio.</p>
+<p>Los resultados apuntan a vías de cromatina y potencial de membrana que normalmente amortiguan la toxicidad proteica.</p>
+<p>Por otro lado.</p>
+<p>Un ensayo cruzado aleatorizado comparó la estimulación sincronizada con la fase de la marcha frente a la estimulación cerebral profunda continua.</p>
+<p>El enfoque adaptativo demostró ser viable y seguro al tiempo que reducía las tasas de caídas.</p>
+<p>La decodificación neuronal se basó en principios de codificación locomotora para ajustar la estimulación en tiempo real.</p>
+<p>Los participantes mostraron un mejor control de la marcha durante las actividades diarias.</p>
+<p>A continuación.</p>
+<p>Un sistema de imagen cuantitativa capturó la dinámica celular durante la transición epitelial-mesenquimatosa en células madre pluripotentes inducidas humanas.</p>
+<p>La progresión difería entre formatos de cultivo bidimensional y tridimensional y estaba ligada a la integridad de la membrana basal.</p>
+<p>La plataforma integra múltiples lecturas para seguir las transiciones de estado en tiempo real.</p>
+<p>Permite la comparación sistemática de reguladores de la transición epitelial-mesenquimatosa en distintas geometrías.</p>
+<p>El sistema registra simultáneamente cambios en la morfología celular y en la expresión de marcadores.</p>
+<p>Los investigadores utilizaron la plataforma para examinar cómo las propiedades de la matriz influyen en el momento de la transición.</p>
+<p>Los datos de salida incluyen mapas resueltos en el tiempo de la localización de proteínas durante el proceso.</p>
+<p>Ahora pasamos a un área de investigación muy distinta.</p>
+<p>HiCFoundation se preentrenó con una amplia colección de conjuntos de datos Hi-C para estudios del genoma tridimensional.</p>
+<p>El modelo admite aplicaciones unicelulares y multiómicas en distintas especies.</p>
+<p>Captura características de la arquitectura de la cromatina que se generalizan más allá de los datos de entrenamiento.</p>
+<p>Los investigadores pueden aplicarlo a nuevos conjuntos de datos para la interpretación epigenómica.</p>
+<p>El entrenamiento incluyó datos de múltiples organismos para mejorar la detección de características.</p>
+<p>La arquitectura permite el ajuste fino en mapas Hi-C proporcionados por el usuario sin necesidad de reentrenar desde cero.</p>
+<p>Las incrustaciones de salida conservan tanto los patrones de contacto locales como las señales de compartimentación a mayor escala.</p>
+<p>Por otro lado.</p>
+<p>Los modelos climáticos y los datos de campo muestran que la fragmentación de rocas por heladas se desplaza hacia elevaciones más altas.</p>
+<p>Las elevaciones más bajas experimentan menos ciclos de congelación y descongelación a medida que aumentan las temperaturas.</p>
+<p>Esta redistribución altera dónde y cuándo son más probables los desprendimientos de rocas.</p>
+<p>El estudio cartografía los cambios en los riesgos para los paisajes de montaña.</p>
+<p>Las proyecciones indican que la zona de máxima meteorización por heladas se desplazará varios cientos de metros cuesta arriba en las próximas décadas.</p>
+<p>Las mediciones de campo en los Pirineos confirmaron tasas de fractura reducidas en sitios previamente activos.</p>
+<p>Los mapas de riesgo actualizados incorporan tanto las tendencias de temperatura como la susceptibilidad según el tipo de roca.</p>
+<p>A continuación.</p>
+<p>Investigadores australianos compararon la tolerancia térmica entre distintas estrategias de anidación de abejas.</p>
+<p>Las especies que anidan en tallos mostraron mayor vulnerabilidad al aumento de temperaturas a corto plazo.</p>
+<p>Las abejas que anidan en el suelo pueden cambiar de profundidad para evitar el calor extremo.</p>
+<p>La diferencia surge de la limitada capacidad de amortiguación térmica en los tallos de las plantas.</p>
+<p>Por otro lado.</p>
+<p>Experimentos de la Kelley School of Business encontraron una elevación constante de los actos de autosacrificio en las valoraciones de heroísmo.</p>
+<p>Los participantes calificaron las acciones de sacrificio más alto incluso cuando los resultados coincidían con alternativas no sacrificiales.</p>
+<p>El patrón se mantuvo en distintos escenarios y grupos demográficos.</p>
+<p>El trabajo examina cómo los observadores sopesan la intención frente al resultado.</p>
+<p>Las valoraciones permanecieron estables cuando se pidió a los participantes que justificaran sus elecciones por escrito.</p>
+<p>Una elevación similar del sacrificio apareció tanto en muestras de estudiantes como de adultos en línea.</p>
+<p>El diseño varió la equivalencia de resultados para aislar el papel del coste personal.</p>
+<p>A continuación.</p>
+<p>Los investigadores rastrearon sabores desagradables en el suero de leche concentrado hasta los minerales residuales.</p>
+<p>Un nuevo paso de procesamiento elimina estos minerales mientras conserva la textura más suave lograda con métodos de concentración anteriores.</p>
+<p>El enfoque se dirige a la fuente de la amargura sin comprometer las propiedades funcionales.</p>
+<p>Su objetivo es mejorar la aceptación por parte del consumidor de las bebidas proteicas.</p>
+<p>La eliminación de minerales se logró mediante columnas de intercambio iónico selectivo calibradas para corrientes de suero.</p>
+<p>Los paneles sensoriales confirmaron puntuaciones de amargura reducidas sin cambios en las métricas de viscosidad o solubilidad.</p>
+<p>El método mantiene tasas de recuperación de proteínas superiores a las de los concentrados sin tratar.</p>
+<p>Ahora pasamos a un área de investigación muy distinta.</p>
+<p>Los arqueólogos examinaron un esqueleto femenino cuyo cerebro había sido extraído después de la muerte.</p>
+<p>Los huesos restantes se dispusieron de forma deliberada para el entierro.</p>
+<p>Algunos huesos habían sido transformados en herramientas.</p>
+<p>El hallazgo ilustra prácticas mortuorias específicas de la época.</p>
+<p>A continuación.</p>
+<p>Taylor and Francis publicó el primer Resumen en Lenguaje Claro de una Publicación en una revista veterinaria.</p>
+<p>El formato traduce hallazgos técnicos a un lenguaje accesible para audiencias más amplias.</p>
+<p>Se dirige a profesionales de la salud animal y a no especialistas interesados.</p>
+<p>La iniciativa amplía las prácticas de acceso abierto ya utilizadas en la medicina humana.</p>
+<p>El resumen acompaña a un estudio sobre terapias articulares equinas e incluye definiciones de términos clave.</p>
+<p>Los editores trabajaron con los autores para preservar la exactitud mientras acortaban las secciones de métodos y resultados.</p>
+<p>Los próximos números incluirán resúmenes similares como característica habitual.</p>
+<p>Los nuevos mapas y modelos siguen revelando cómo los sistemas vivos se escalan desde las células hasta los paisajes.</p>
+<p>Mantente atento a las actualizaciones del trabajo del modelo fundacional Hi-C sobre el análisis de cromatina entre especies.</p>
+<p>Esto cubre las noticias de ciencia y salud de hoy. Compártelo con alguien curioso por las últimas investigaciones. Soy Patrick desde Vancouver. Hasta la próxima. Y antes de irte, este programa forma parte de la Red Nerra, una familia de podcasts diarios que cubren tecnología, ciencia, mercados y más.</p>
+<p>Si te gustó el episodio de hoy, escucha Environmental Intelligence: el resumen de medio ambiente y política climática para Canadá. Puedes explorar toda la programación en nerranetwork punto com.</p>
+<p>Este episodio utilizó síntesis de voz por inteligencia artificial de mi voz; la selección editorial y el análisis son propios.</p>
+            </div>
+            
+            <div class="blog-body-lang" data-lang="zh" hidden>
+                <p class="blog-translated-note">中文 — AI-translated from the English episode.</p>
+                <p>嘿，欢迎收听《地球人日报》，第九十集，2026年6月15日。这是您的科学与健康简报。</p>
+<p>地下真菌网络绵延110千万亿公里，每年将40亿吨二氧化碳输送至土壤中。</p>
+<p>研究人员汇总数据，估算出菌根真菌丝的总长度达到110千万亿公里。</p>
+<p>这些网络每年将约40亿吨二氧化碳移入土壤。</p>
+<p>它们通过碳储存支持植物生长并影响气候调节。</p>
+<p>这项绘制工作为追踪这些系统对环境变化的响应提供了基准。</p>
+<p>大多数人想象土壤是矿物质、水和植物根系的混合物，仅有零星微生物。</p>
+<p>实际上，菌根真菌形成连续的活丝状结构，将整个景观中的植物连接起来。</p>
+<p>此刻，无论您站立还是坐下，这些丝状体正在交换可能相隔数米的根系之间的养分和碳。</p>
+<p>一个令人难忘的尺度是，全球总长度达到110千万亿公里。</p>
+<p>这些网络每年将40亿吨二氧化碳移入土壤，这一通量堪比主要地质过程。</p>
+<p>下次您走过草地或森林地面时，请记住下方隐藏的连接正在主动重新分配资源并储存碳。</p>
+<p>请留意田间研究，这些研究测量干旱或变暖如何改变不同生态系统中这些丝状体的密度。</p>
+<p>现在，转向一个截然不同的研究领域。</p>
+<p>一个国际团队绘制出成年果蝇中枢神经系统所有神经元连接的首个完整连接组。</p>
+<p>该图谱覆盖大脑和腹神经索区域。</p>
+<p>哈佛医学院和普林斯顿大学的多个实验室主导了这项工作。</p>
+<p>这一资源能够直接测试特定回路如何控制行为。</p>
+<p>神经科学家现在可以追踪特定回路如何产生特定行为，并通过靶向操作测试预测。</p>
+<p>该资源还可作为模板，用于比较遗传或环境条件下的布线变化。</p>
+<p>换个话题。</p>
+<p>无人机追踪野生蜜蜂的研究显示，每只昆虫在觅食地点之间都保持自己固定的路径。</p>
+<p>有些路线重复得如此精确，以至于蜜蜂与之前的位置仅相差几厘米。</p>
+<p>树木和其他地标稳定了路径，而玉米等开阔田地则增加了变化。</p>
+<p>这些发现凸显了昆虫如何在自然环境中利用视觉线索进行导航。</p>
+<p>接下来。</p>
+<p>血浆蛋白质组学分析评估了40多种细胞类型的生物年龄。</p>
+<p>特定细胞群的加速衰老与特定疾病风险升高相关。</p>
+<p>这些特征还识别出某些细胞类型衰老较慢的个体。</p>
+<p>该方法提供了一种从单次血液样本测量异质衰老率的方式。</p>
+<p>研究人员识别出反映单个细胞类型生物年龄的蛋白质组特征。</p>
+<p>这些标记预测了多种疾病的风险和恢复力。</p>
+<p>该研究将不同细胞群的独特衰老特征与后来的临床事件联系起来。</p>
+<p>现在，转向一个截然不同的研究领域。</p>
+<p>在秀丽隐杆线虫atfs-1突变体中进行的前向遗传筛选，发现了限制多巴胺能神经元因α-突触核蛋白过表达而丢失的基因。</p>
+<p>jmjd-1.2、jmjd-3.1或twk-14的缺失增加了这一背景下的神经退行性变。</p>
+<p>jmjd基因编码H3K27me3去甲基化酶，而twk-14编码钾通道同源物。</p>
+<p>结果指向通常缓冲蛋白毒性的染色质和膜电位通路。</p>
+<p>换个话题。</p>
+<p>一项随机交叉试验测试了步态相位同步刺激与连续深部脑刺激的效果。</p>
+<p>自适应方法被证明可行且安全，同时降低了跌倒率。</p>
+<p>神经解码借鉴运动编码原理，实时调整刺激。</p>
+<p>参与者在日常活动中表现出更好的步态控制。</p>
+<p>接下来。</p>
+<p>定量成像系统捕捉了人类诱导多能干细胞上皮-间质转化过程中的细胞动态。</p>
+<p>进展在二维和三维培养格式之间存在差异，并与基底膜完整性相关。</p>
+<p>该平台整合多种读数，实时追踪状态转变。</p>
+<p>它支持跨几何形状系统比较上皮-间质转化调节因子。</p>
+<p>该系统同时记录细胞形态和标记物表达的变化。</p>
+<p>研究人员利用该平台考察基质特性如何影响转化时机。</p>
+<p>数据输出包括过程中蛋白质定位的时间分辨图谱。</p>
+<p>现在，转向一个截然不同的研究领域。</p>
+<p>HiCFoundation在大量Hi-C数据集上预训练，用于三维基因组研究。</p>
+<p>该模型支持跨物种的单细胞和多组学应用。</p>
+<p>它捕捉超出训练数据的染色质结构特征。</p>
+<p>研究人员可将其应用于新数据集进行表观基因组解读。</p>
+<p>训练包含来自多个生物体的数据集，以改进特征检测。</p>
+<p>该架构允许在用户提供的Hi-C图谱上微调，而无需从头重新训练。</p>
+<p>输出嵌入保留局部接触模式和更大尺度的区室化信号。</p>
+<p>换个话题。</p>
+<p>气候模型和实地数据表明，霜冻驱动的岩石崩解正向更高海拔移动。</p>
+<p>随着气温上升，低海拔地区经历的冻融循环减少。</p>
+<p>这种重新分布改变了岩崩最可能发生的地点和时间。</p>
+<p>该研究绘制了山地景观变化的危险图。</p>
+<p>预测显示，峰值霜冻风化带将在未来几十年向上移动数百米。</p>
+<p>比利牛斯山脉的实地测量证实，以前活跃地点的断裂率有所下降。</p>
+<p>更新后的危险图同时纳入温度趋势和岩石类型易感性。</p>
+<p>接下来。</p>
+<p>澳大利亚研究人员比较了不同筑巢策略蜜蜂的耐热能力。</p>
+<p>短期内，茎巢物种对气温上升表现出更大脆弱性。</p>
+<p>地巢蜜蜂可通过改变深度来避开极端高温。</p>
+<p>差异源于植物茎中有限的热缓冲能力。</p>
+<p>换个话题。</p>
+<p>凯利商学院的实验发现，在英雄主义判断中自我牺牲行为持续升高。</p>
+<p>即使结果与非牺牲性替代方案相同，参与者对牺牲行为的评分也更高。</p>
+<p>这一模式在不同情景和人口统计中保持一致。</p>
+<p>这项工作考察观察者如何权衡意图与结果。</p>
+<p>当参与者被要求书面说明选择理由时，评分保持稳定。</p>
+<p>在学生和在线成人样本中，牺牲的类似升高均有出现。</p>
+<p>该设计改变结果等效性，以分离个人成本的作用。</p>
+<p>接下来。</p>
+<p>研究人员追踪浓缩乳清中的异味源于残留矿物质。</p>
+<p>新的加工步骤去除这些矿物质，同时保留先前浓缩方法带来的更顺滑口感。</p>
+<p>该方法针对苦味来源，同时不损害功能特性。</p>
+<p>它旨在提高消费者对蛋白质饮料的接受度。</p>
+<p>矿物质去除通过针对乳清流的选择性离子交换柱实现。</p>
+<p>感官小组确认苦味评分降低，同时粘度和溶解度指标无变化。</p>
+<p>该方法保持蛋白质回收率高于未处理浓缩物。</p>
+<p>现在，转向一个截然不同的研究领域。</p>
+<p>考古学家检查了一具女性骨骼，其大脑在死后被取出。</p>
+<p>剩余骨骼被刻意排列用于埋葬。</p>
+<p>部分骨骼被塑造成工具。</p>
+<p>这一发现展示了该时期特定的丧葬习俗。</p>
+<p>接下来。</p>
+<p>泰勒与弗朗西斯出版社在一本兽医期刊上发布了首个简明语言出版摘要。</p>
+<p>该格式将技术发现转化为易懂语言，面向更广泛受众。</p>
+<p>它针对动物健康从业者和感兴趣的非专业人士。</p>
+<p>该举措扩展了已在人类医学中使用的开放获取实践。</p>
+<p>摘要附带一项关于马关节疗法的研究，并包含关键术语定义。</p>
+<p>编辑与作者合作，在缩短方法和结果部分的同时保持准确性。</p>
+<p>未来期刊将把类似摘要作为标准功能纳入。</p>
+<p>新地图和模型不断揭示生命系统如何从细胞扩展到景观。</p>
+<p>请关注Hi-C基础模型在跨物种染色质分析方面的工作更新。</p>
+<p>以上就是今天的科学与健康新闻。分享给对最新研究感兴趣的人。我是温哥华的帕特里克。下次见。在您离开前，本节目属于内拉网络，这是一个涵盖科技、科学、市场等领域的每日播客家族。</p>
+<p>如果您喜欢今天的节目，请收听《环境情报》：加拿大的环境与气候政策简报。您可以在nerranetwork.com探索整个系列。</p>
+<p>本集使用了我的声音的AI语音合成，编辑选择和分析由我本人完成。</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1859,6 +2374,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1885,6 +2401,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
