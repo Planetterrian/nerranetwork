@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1242,6 +1254,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents">Models & Agents</h2>
 <p><em>OpenAI just added goal mode and screen-aware context to Codex, letting agents work autonomously for hours on real tasks.</em></p>
 <p><strong>What You Need to Know:</strong> OpenAI rolled out Goal mode, Appshots, and advanced annotation in Codex across app, IDE, and CLI. Anthropic reported finding over 10,000 high-severity vulnerabilities through Project Glasswing using Claude models. Multiple new open-source releases focus on faster inference and smaller footprints for consumer hardware.</p>
@@ -1294,6 +1308,8 @@
 <li>More ik_llama.cpp-compatible quants for 16 GB cards are likely as the project gains adoption.</li>
 <li>Additional DFlash-style speculative decoding implementations may appear for other inference engines.</li>
 </ul>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1777,6 +1793,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1803,6 +1820,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

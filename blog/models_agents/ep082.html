@@ -796,6 +796,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1301,6 +1313,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents">Models & Agents</h2>
 <p><em>Export controls on Fable-5 now block the exact code-fixing workflows defenders rely on daily.</em></p>
 <p><strong>What You Need to Know:</strong> Simon Willison published a detailed breakdown showing how Fable-5's refusal to "fix this code" on vulnerable open-source examples triggered export-control enforcement. Nemotron 3 Ultra launched as a 550B/55B MoE hybrid Mamba model with 1M context. Hermes Agent added asynchronous subagents that no longer block the parent session. Builders should watch how these restrictions reshape defensive security tooling and test new open models for long-running agent workflows.</p>
@@ -1351,6 +1365,8 @@
 <li>Continued rollout of asynchronous subagent patterns across other agent frameworks.</li>
 <li>More vendor-neutral context formats likely to appear as teams standardize on OKF-style bundles.</li>
 </ul>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1885,6 +1901,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1911,6 +1928,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

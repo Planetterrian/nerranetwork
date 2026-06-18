@@ -796,6 +796,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1301,6 +1313,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents">Models & Agents</h2>
 <p><em>Z.ai just shipped GLM-5.2 with a usable 1M-token context and dual thinking modes that drop straight into existing Claude-compatible tools.</em></p>
 <p><strong>What You Need to Know:</strong> Z.ai released GLM-5.2 on June 13 with a 1-million-token context window, High and Max effort thinking levels, and Anthropic-compatible endpoints for Claude Code, Cline, and OpenClaw. No benchmarks were published at launch, with MIT open weights promised next week. Builders should watch how the two effort tiers affect cost and latency on long-context coding tasks this week.</p>
@@ -1344,6 +1358,8 @@
 <li>Expanded use of multi-trial aggregation and position randomization in public leaderboards following the LLM-as-Judge reliability findings.</li>
 <li>Additional agent navigation diagnostics on larger data-lake benchmarks using the SANA framework.</li>
 </ul>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1799,6 +1815,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1825,6 +1842,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

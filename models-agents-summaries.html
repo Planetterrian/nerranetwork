@@ -1093,18 +1093,25 @@
                         </div>
                     ` : '';
 
-                    const titleHtml = title ? `<div style="font-weight:600;color:var(--show-color-text, var(--show-color));font-family:var(--font-ui);font-size:0.88rem;">${escapeHtml(title)}</div>` : '';
+                    const titleHtml = title ? `<div class="nn-summary-title" style="font-weight:600;color:var(--show-color-text, var(--show-color));font-family:var(--font-ui);font-size:0.88rem;">${escapeHtml(title)}</div>` : '<div class="nn-summary-title" hidden></div>';
 
-                    // Multilingual availability badges (June 2026): surface the
-                    // per-language audio tracks recorded on this episode.
-                    const LANG_LABELS = { fr: 'FR', ru: 'RU', es: 'ES', zh: '中文' };
+                    // Multilingual language buttons (June 2026): the episode's
+                    // per-language tracks. Clicking one swaps this card's title +
+                    // summary + audio to that language and sets the site-wide
+                    // preference; English is always offered. Driven by the global
+                    // `nn-pref-lang` so a choice sticks across the list + site.
+                    const LANG_LABELS = { en: 'EN', fr: 'FR', ru: 'RU', es: 'ES', zh: '中文' };
                     const tr = (s.translations && typeof s.translations === 'object') ? s.translations : {};
                     const langs = Object.keys(tr).filter(k => tr[k] && tr[k].audio_url);
-                    const badgeStyle = 'font-family:var(--font-ui);font-size:0.66rem;font-weight:600;padding:1px 7px;border-radius:100px;border:1px solid color-mix(in srgb, var(--show-color) 35%, transparent);color:var(--show-color-text, var(--show-color));background:color-mix(in srgb, var(--show-color) 10%, transparent);';
-                    const langsHtml = langs.length ? `<span class="nn-summary-langs" aria-label="Also available in other languages" style="display:inline-flex;gap:4px;margin-top:4px;">${langs.map(k => `<span style="${badgeStyle}">${LANG_LABELS[k] || k.toUpperCase()}</span>`).join('')}</span>` : '';
+                    // i18n payload the apply fn reads: English baseline + each track.
+                    const i18n = { en: { title: title, summary: content, url: audioUrl } };
+                    langs.forEach(k => { i18n[k] = { title: tr[k].title || title, summary: tr[k].description || '', url: tr[k].audio_url || audioUrl }; });
+                    const pillStyle = 'font-family:var(--font-ui);font-size:0.66rem;font-weight:600;padding:1px 8px;border-radius:100px;cursor:pointer;border:1px solid color-mix(in srgb, var(--show-color) 35%, transparent);color:var(--show-color-text, var(--show-color));background:color-mix(in srgb, var(--show-color) 10%, transparent);';
+                    const order = langs.length ? ['en'].concat(langs) : [];
+                    const langsHtml = order.length ? `<span class="nn-summary-langs" role="group" aria-label="Listen and read in another language" style="display:inline-flex;gap:4px;margin-top:4px;">${order.map(k => `<button type="button" class="nn-summary-lang" data-lang="${k}" style="${pillStyle}">${LANG_LABELS[k] || k.toUpperCase()}</button>`).join('')}</span>` : '';
 
                     return `
-                        <div class="nn-summary-item" data-date="${escapeAttr(date)}">
+                        <div class="nn-summary-item" data-date="${escapeAttr(date)}" data-i18n='${escapeAttr(JSON.stringify(i18n))}'>
                             <div class="nn-summary-header">
                                 <div>
                                     <div class="nn-summary-date">${formatDate(date)}</div>
@@ -1116,6 +1123,33 @@
                             <div class="nn-summary-content">${renderMarkdown(content)}</div>
                         </div>
                     `;
+                }
+
+                // Apply the site-wide language preference to one card: swap its
+                // title + summary + audio to the chosen language (falling back to
+                // English for any piece the episode doesn't have translated).
+                function applyCardLang(card, code) {
+                    let data;
+                    try { data = JSON.parse(card.getAttribute('data-i18n') || '{}'); } catch (e) { return; }
+                    const t = data[code] || data.en;
+                    if (!t) return;
+                    const titleEl = card.querySelector('.nn-summary-title');
+                    const contentEl = card.querySelector('.nn-summary-content');
+                    const audioEl = card.querySelector('.nn-summary-audio');
+                    if (titleEl && t.title) titleEl.textContent = t.title;
+                    if (contentEl) contentEl.innerHTML = renderMarkdown((t.summary && t.summary.trim()) ? t.summary : data.en.summary);
+                    if (audioEl && t.url) { const playing = !audioEl.paused; audioEl.src = t.url; if (playing) audioEl.play().catch(() => {}); }
+                    card.querySelectorAll('.nn-summary-lang').forEach(b => {
+                        b.setAttribute('aria-pressed', b.dataset.lang === code ? 'true' : 'false');
+                        b.style.outline = b.dataset.lang === code ? '2px solid var(--show-color)' : 'none';
+                    });
+                }
+                function savedLangPref() { try { return localStorage.getItem('nn-pref-lang') || 'en'; } catch (e) { return 'en'; } }
+                function applyAllCardsLang(code) {
+                    document.querySelectorAll('.nn-summary-item[data-i18n]').forEach(card => {
+                        const data = (() => { try { return JSON.parse(card.getAttribute('data-i18n') || '{}'); } catch (e) { return {}; } })();
+                        applyCardLang(card, (code === 'en' || data[code]) ? code : 'en');
+                    });
                 }
 
                 function renderPage() {
@@ -1132,6 +1166,7 @@
                     container.innerHTML = html;
                     initAudioUX(container);
                     initShareButtons(container);
+                    applyAllCardsLang(savedLangPref());
                     const loadMoreBtn = document.getElementById('loadMoreBtn');
                     if (loadMoreBtn) {
                         loadMoreBtn.addEventListener('click', () => {
@@ -1142,6 +1177,21 @@
                 }
 
                 renderPage();
+
+                // Per-card language buttons: set the site-wide preference, swap
+                // every card live, and notify the rest of the page/site.
+                container.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.nn-summary-lang');
+                    if (!btn) return;
+                    const code = btn.dataset.lang || 'en';
+                    try { localStorage.setItem('nn-pref-lang', code); } catch (err) {}
+                    applyAllCardsLang(code);
+                    try { document.dispatchEvent(new CustomEvent('nn-langchange', { detail: { lang: code } })); } catch (err) {}
+                });
+                // React to the global header language control.
+                document.addEventListener('nn-langchange', (e) => {
+                    applyAllCardsLang((e.detail && e.detail.lang) || 'en');
+                });
 
                 // Populate year filter from available summary dates (newest first)
                 if (yearFilter) {

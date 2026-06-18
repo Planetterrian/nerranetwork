@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1242,6 +1254,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents">Models & Agents</h2>
 <p><em>Claude Fable 5 delivers a qualitative jump for long-horizon agentic work, letting builders hand off ambitious multi-step projects with less oversight.</em></p>
 <p><strong>What You Need to Know:</strong> Anthropic released Claude Fable 5, the same base as Mythos but with added safeguards, posting SOTA results across benchmarks and strong real-world gains on difficult, extended tasks. Cohere open-sourced North Mini Code, a 30B (3B active) agentic coding model under Apache 2.0. Nex-N2-mini, a 35B model purpose-built for autonomous agents, also surfaced today. Watch how quickly teams integrate these into production coding and agent harnesses this week.</p>
@@ -1289,6 +1303,8 @@
 <li>Expanded regulatory guidance on agentic systems in finance and data-handling domains.</li>
 <li>New long-context memory benchmarks that stress bi-temporal retrieval over full-history baselines.</li>
 </ul>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1796,6 +1812,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1822,6 +1839,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

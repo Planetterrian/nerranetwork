@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1235,6 +1247,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Gemma 4 delivers massive gains across European languages while a 25.6M Rust model achieves 50× faster inference via hybrid attention.</em></p>
 <p><strong>What You Need to Know:</strong> Google’s Gemma 4 (especially the 31B variant) has climbed to top-3 or better on nearly every major European language leaderboard according to EuroEval, often beating much larger models on Danish, Dutch, French, Italian and Finnish. Simultaneously, an independent researcher released a byte-level hybrid-attention model that replaces standard attention with linear–quadratic–linear stages plus a learned gate, delivering 286 tokens/sec on a 4060 Ti versus 5.6 t/s before with almost no quality regression. The community is also actively exploring “coding agents as general-purpose agents,” collapsing traditional pipelines into tool-using loops that read, write, and execute code on the fly. Pay attention to the tension between pure scaling, clever architecture, and agentic workflow design—this week’s papers and posts show all three are delivering measurable gains.</p>
 <h4 id="top-story">Top Story</h4>
@@ -1281,6 +1295,8 @@
 <li>A2A-Agentization benchmarks and tooling for turning ordinary web digital assets into interoperable agents should see rapid iteration now that the formal framework and evaluation suite are public.</li>
 <li>Watch for production deployments of Cognitive Fabric Nodes (CFN) middleware—early results show >10 % gains on HotPotQA and MuSiQue by turning memory into an active topology, grounding, and security layer.</li>
 </ul>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1851,6 +1867,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1877,6 +1894,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

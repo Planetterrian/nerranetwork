@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1235,6 +1247,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>MetaComp just released the world's first dedicated AI agent governance framework built specifically for regulated financial services.</em></p>
 <p><strong>What You Need to Know:</strong> Today’s biggest practical leap comes from the intersection of agentic systems and compliance: MetaComp’s new governance framework gives banks and fintechs a structured way to deploy, monitor, and audit autonomous agents in production. At the same time, Adobe is doubling down on agentic CX at Summit 2026, Pine Labs’ CTO is calling out the missing “identity” layer for agents, and Coinbase-backed x402 launched Agentic.market as a marketplace for AI agent services. The research wave is equally strong, with fresh arXiv papers on multimodal claim extraction, cross-family speculative decoding on Apple Silicon, and hallucination detection via sparse autoencoders. Developers should pay attention to the rapid maturation of production-ready agent infrastructure this week.</p>
 <h4 id="top-story">Top Story</h4>
@@ -1288,6 +1302,8 @@
 <li>Watch for expanded multimodal sarcasm and claim-extraction benchmarks as social-media fact-checking teams adopt the new CFMS and MICE datasets.</li>
 <li>Real-time voice model leaders will almost certainly release updated full-duplex benchmarks after EchoChain’s sobering <50 % pass-rate results become public.</li>
 </ul>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1793,6 +1809,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1819,6 +1836,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

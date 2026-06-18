@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1242,6 +1254,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents">Models & Agents</h2>
 <p><em>Anthropic's $65B Series H at $965B valuation and $47B run-rate revenue show Claude demand is scaling faster than most labs can match.</em></p>
 <p><strong>What You Need to Know:</strong> Liquid AI shipped LFM2.5-8B-A1B with 128K context and 38T pre-training tokens for edge devices. A new monokernel on AMD MI300X hits 3,300 output tokens/s for small models. Researchers released RightNow-Arabic-0.5B-Turbo and Aryabhata 2, while local builders are shifting agents to HTML rendering for diagrams and structured output.</p>
@@ -1289,6 +1303,8 @@
 <li>Additional monokernel and single-program inference work on AMD and Apple Silicon hardware is likely as memory bandwidth remains the bottleneck.</li>
 <li>Continued experiments with HTML and structured output formats for agents will appear as builders move away from markdown defaults.</li>
 </ul>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1776,6 +1792,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1802,6 +1819,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

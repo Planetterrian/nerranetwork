@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1237,6 +1249,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents">Models & Agents</h2>
 <p><em>Anthropic's acquisition of StainlessAPI hands developers cleaner SDKs and MCP server tooling for building production agents today.</em></p>
 <p><strong>What You Need to Know:</strong> Anthropic acquired StainlessAPI, the platform behind every Anthropic SDK since the API's earliest days, to accelerate SDK and MCP server development. Alibaba previewed new Qwen models that currently rank as the top Chinese entries on the LMSYS Arena. Enterprise teams now have clearer guidance on moving agentic platforms from pilot to production, while researchers released concrete scaling laws for skill libraries in agent systems.</p>
@@ -1280,6 +1294,8 @@
 <li>More Qwen preview checkpoints are anticipated following Alibaba’s recent Arena gains.</li>
 <li>Additional arXiv releases on agent benchmarks such as CHI-Bench and PQR are likely to appear in the coming weeks as evaluation frameworks mature.</li>
 </ul>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1761,6 +1777,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1787,6 +1804,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
