@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -811,7 +823,7 @@
             </a>
 
             
-            <div class="nn-global-search" style="position:relative;margin-left:auto;margin-right:0.5rem;max-width:180px;flex:1 1 auto;min-width:120px;">
+            <div class="nn-global-search" style="position:relative;margin-left:auto;margin-right:0.5rem;max-width:200px;flex:0 1 200px;min-width:110px;">
                 <input type="search" id="nn-global-search-input"
                        placeholder="Search…"
                        style="width:100%;padding:6px 8px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.85rem;"
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><strong># Финансы Просто</strong></p>
 <p><strong>Дата:</strong> April 26, 2026</p>
 <p><strong>Заголовок:</strong> Как правильно использовать неиспользованные RRSP-вычеты, чтобы защитить пособия по старости</p>
@@ -1286,6 +1300,8 @@
 <p>Source: <span class="cite"><a class="cite-pill" href="https://www.reddit.com/r/PersonalFinanceCanada/comments/1sve3d0/i_am_dying_and_not_sure_how_to_handle_my_debts/" target="_blank" rel="noopener" aria-describedby="cite-card">reddit.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.reddit.com/r/PersonalFinanceCanada/comments/1sve3d0/i_am_dying_and_not_sure_how_to_handle_my_debts/</span></span></p>
 <h4 id="задание-на-неделю">Задание на неделю</h4>
 <p>Зайдите в свой CRA My Account (или помогите зайти родителям). Найдите раздел «RRSP» и посмотрите, есть ли у вас (или у них) unused RRSP contributions. Запишите эту сумму на бумажке или в заметки телефона. Если она больше 1000 долларов — это уже повод поговорить с бухгалтером перед следующей подачей налогов. Это займёт всего 10 минут, но может сохранить сотни долларов в год на налогах и пособиях.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1717,6 +1733,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1743,6 +1760,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
