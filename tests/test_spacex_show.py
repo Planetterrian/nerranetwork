@@ -155,6 +155,38 @@ class TestPromptContracts:
         assert "10-12" not in system and "10–12" not in system and "12–14" not in system
 
 
+class TestXaiEngineeringScope:
+    """June 2026 scope broadening: the engineering analysis (Engineering Deep
+    Dive + AI & Compute) explicitly covers xAI software-systems engineering and
+    the xAI business, not only SpaceX hardware. Chapter-anchor REQUIRED phrases
+    stay intact (guarded elsewhere)."""
+
+    def _txt(self, fname):
+        return (_ROOT / "shows/prompts" / fname).read_text(encoding="utf-8").lower()
+
+    def test_deep_dive_admits_software_engineering(self):
+        for fname in ("spacex_digest.txt", "spacex_podcast.txt"):
+            t = self._txt(fname)
+            assert "software-engineering" in t or "software engineering" in t, fname
+            assert "colossus" in t and ("inference" in t or "gpu" in t), fname
+
+    def test_ai_section_covers_xai_business(self):
+        for fname in ("spacex_digest.txt", "spacex_podcast.txt"):
+            t = self._txt(fname)
+            # business of xAI: funding/valuation/capex + ecosystem economics
+            assert "business" in t, fname
+            assert ("funding" in t or "valuation" in t or "capex" in t), fname
+
+    def test_system_prompt_widens_engineering_heart(self):
+        t = self._txt("spacex_system.txt")
+        assert "xai" in t and ("ai-infrastructure" in t or "software-systems" in t), t[:200]
+
+    def test_deep_dive_chapter_anchor_preserved(self):
+        # Broadening must not drop the REQUIRED chapter-key phrase.
+        t = self._txt("spacex_podcast.txt")
+        assert "from an engineering standpoint" in t and "on the ai front" in t
+
+
 class TestIpoPositioning:
     """June 13 2026 repositioning: the show launched on SpaceX's IPO day
     (Nasdaq: SPCX, June 12 2026) and is the daily companion for following
