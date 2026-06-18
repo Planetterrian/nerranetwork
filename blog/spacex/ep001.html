@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1238,6 +1250,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="spacex-daily">SpaceX Daily</h2>
 <p><em>SpaceX's $75 billion IPO at $135 per share hands public investors a direct stake in Starship reuse and Starlink cash flow while locking in Musk's voting control.</em></p>
 <p>SpaceX Daily is the daily companion for following SpaceX now that anyone can own a piece of it — every weekday: the news with sources, what the community is buzzing about, one honest counterpoint, the engineering and economics behind the headlines, and the SPCX market picture. Subscribe so you never miss a day.</p>
@@ -1279,6 +1293,8 @@
 <p>Reaching one thousand Starships per year at Gigabay requires not only factory floor space but also a closed-loop supply chain for engines, tanks, and avionics that has never been executed at that rate. The prospectus lists AI infrastructure and Starship as explicit uses of proceeds, implying that orbital compute satellites and lunar cargo missions are now competing for the same production slots. Investors can watch pad turnaround data and engine test counts as leading indicators of whether that factory output will actually translate into flight rate.</p>
 <p>Orbital refueling remains the gating item for any revenue beyond low Earth orbit, yet the same dual-class structure that gives Musk control also means the timeline for that demonstration is set internally rather than by quarterly earnings pressure. If the first public earnings miss on launch margins, the market will have a concrete signal on whether the loss-making side of the business is narrowing or widening. That single number will tell shareholders more about Starship progress than any static-fire headline.</p>
 <p>SpaceX Daily will track every earnings release, filing, and flight test so subscribers stay ahead of both the hardware and the numbers.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1811,6 +1827,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1837,6 +1854,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

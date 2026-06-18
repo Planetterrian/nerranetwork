@@ -796,6 +796,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1287,6 +1299,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="spacex-daily-weekly-recap-week-of-june-14-2026">SpaceX Daily — Weekly Recap (Week of June 14, 2026)</h2>
 <p>Welcome back to SpaceX Daily, episode 3. It's June 14, 2026 and I'm Patrick in Vancouver. Let's get into today's SpaceX developments.</p>
 <p>The week's biggest developments, pulled together — what actually moved, why it matters, and what to watch next.</p>
@@ -1323,6 +1337,8 @@
 <p>Before we go, that static-fire attempt and the engine install on Booster Twenty are the items to watch next week.</p>
 <p>And that's a wrap on today's SpaceX developments. S P C X closed at one hundred sixty dollars and ninety-five cents. Share this with a fellow spaceflight fan if you found it useful, and subscribe so you don't miss tomorrow's episode. I'm Patrick in Vancouver. See you next time.</p>
 <p>And before you go — this show is part of the Nerra Network, a family of daily podcasts covering tech, science, markets, and more. If you enjoyed today's episode, give Unintended Consequences a listen: true stories of good intentions that backfired. You can explore the whole lineup at nerranetwork.com.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1838,6 +1854,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1864,6 +1881,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
