@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1238,6 +1250,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h4 id="segment-1-the-hook">Segment 1 — The Hook</h4>
 <p><em>In 1941, a police constable named Albert Alexander lay dying in an Oxford hospital from a simple scratch that had spread infection through his face and bloodstream. Doctors turned to a new experimental drug, penicillin, and watched the infection retreat within days. Yet within a single human lifetime, the same class of medicines that once saved Alexander would help create bacterial strains capable of shrugging off nearly every treatment available, contributing to an estimated 1.27 million deaths worldwide each year.</em></p>
 <h4 id="segment-2-the-good-intention">Segment 2 — The Good Intention</h4>
@@ -1250,6 +1264,8 @@
 <p>Public-health agencies responded with stewardship programs that restrict prescriptions and require diagnostic confirmation before antibiotics are dispensed. The European Union banned antibiotic growth promoters in animal feed in 2006, while the United States implemented voluntary guidance in 2017 that reduced agricultural sales by roughly 40 percent over the following five years. Pharmaceutical companies have restarted discovery pipelines, yet only a handful of truly novel classes have reached market since 1980 because development costs exceed projected returns for short-course drugs. Some hospitals now use rapid genomic sequencing to track resistant clones in real time, a partial technological fix that itself generates new data-privacy questions. Global estimates still place annual deaths from resistant infections above one million, concentrated in low-resource settings where diagnostics and alternatives remain scarce. The original goal of eliminating bacterial disease has been replaced by a permanent management posture.</p>
 <h4 id="segment-6-the-lesson">Segment 6 — The Lesson</h4>
 <p>Incentive structures that reward immediate, visible results—whether shorter hospital stays or heavier livestock—tend to externalize long-term evolutionary costs onto future patients and food systems. Complex biological populations respond to uniform pressure by redistributing genetic advantages faster than human institutions can adapt regulations. Decision-makers therefore benefit from building in early monitoring for resistance markers and from diversifying interventions rather than relying on any single chemical class. The same pattern appears today in antiviral prescribing during influenza seasons and in the routine use of antifungals on crops. How might current efforts to deploy CRISPR-based antimicrobials or microbiome therapies avoid repeating the same narrow selection dynamic?</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1655,6 +1671,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1681,6 +1698,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

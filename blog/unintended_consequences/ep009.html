@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1238,6 +1250,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h4 id="segment-1-the-hook">Segment 1 — The Hook</h4>
 <p><em>In the spring of 1939, French troops at Ouvrage Hackenberg rotated through underground barracks connected by electric railways, confident that the 1,500-meter-deep concrete positions could absorb any artillery barrage Germany might direct at them. The line had been built to force any future invasion into a slow, grinding battle along a narrow front where French artillery and reserves could dominate. Instead, the same fortifications channeled German planning toward the one sector left lightly held—the Ardennes—and within six weeks of the May 1940 offensive the French government had fled Paris and signed an armistice at Compiègne.</em></p>
 <h4 id="segment-2-the-good-intention">Segment 2 — The Good Intention</h4>
@@ -1250,6 +1264,8 @@
 <p>After the 1940 armistice, German forces occupied the Maginot ouvrages, removed many of the guns for use elsewhere, and converted some into ammunition depots. When Allied troops reached the line in 1944–45 they found the concrete largely intact but the tactical situation reversed; American units simply bypassed the strongest positions. Post-war French defense policy abandoned fixed frontier works entirely. The Fourth Republic joined NATO and placed its reliance on American nuclear guarantees and, later, its own force de frappe. The physical structures were gradually decommissioned; today a handful operate as museums, while the majority stand empty. No subsequent French government has attempted a comparable static barrier.</p>
 <h4 id="segment-6-the-lesson">Segment 6 — The Lesson</h4>
 <p>The central principle is that any defense whose location and character are known in advance invites an opponent to treat geography as a variable rather than a constant. When resources are concentrated on a visible line, planning staffs tend to under-weight the mobility of new technologies—in this case the combination of radio, fast tanks, and close air support that produced blitzkrieg. A second lesson concerns the hidden cost of over-specification: once billions had been committed to concrete, political and bureaucratic inertia made it difficult to reallocate funds toward the very mobile forces that could have countered the new threat. Decision-makers today face analogous choices whenever they harden one part of a network—whether border infrastructure, cybersecurity perimeters, or regulatory regimes—without simultaneously preserving the capacity to respond elsewhere. The question worth asking is which current systems we are reinforcing so heavily that an adversary’s cheapest move will simply be to walk around them.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1685,6 +1701,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1711,6 +1728,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

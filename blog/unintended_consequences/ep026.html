@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1238,6 +1250,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>The No Child Left Behind Act tied federal funding to test scores to help every child succeed and instead narrowed what millions of students were taught.</em></p>
 <hr>
 <h4 id="segment-1-the-cold-open">Segment 1 — The Cold Open</h4>
@@ -1252,6 +1266,8 @@
 <p>By 2011 both parties in Congress acknowledged that the adequate-yearly-progress rules were unworkable for nearly all schools. The Obama administration began granting waivers that relaxed some requirements, and in December 2015 President Obama signed the Every Student Succeeds Act, which returned most decisions about goals, interventions, and accountability systems to the states. The new law retained annual testing but eliminated the rigid federal timeline of sanctions. Some states quickly restored requirements for social studies and science testing; others kept the narrowed focus on reading and mathematics. Ten years later, most districts still administer more standardized tests than they did before 2002, and debates continue over how much instructional time should be protected for subjects that do not carry federal consequences.</p>
 <h4 id="segment-6-the-lesson">Segment 6 — The Lesson</h4>
 <p>When a single quantitative target carries large financial or career stakes, organizations will optimize for that target even when doing so undermines the broader mission. Multiple overlapping goals require multiple measures; otherwise the easiest metric crowds out everything else. Before scaling any accountability system, it is worth asking what observable behavior will disappear once people treat the measure as the objective itself. How might current efforts to evaluate schools, hospitals, or public agencies repeat the same narrowing pattern today?</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1661,6 +1677,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1687,6 +1704,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

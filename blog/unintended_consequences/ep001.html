@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1233,6 +1245,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Delhi's British government paid for dead cobras to cut snake numbers, but the bounty led to breeding, and scrapping it released more snakes into the city.</em></p>
 <h4 id="segment-1-the-hook">Segment 1 — The Hook</h4>
 <p>In the narrow lanes and crowded markets of colonial Delhi, where cobras regularly entered homes and shops, British administrators set up payment stations and began handing out cash for every dead snake turned in. The goal was straightforward: reduce a persistent hazard that caused injuries and deaths by enlisting residents in the work of removal. What followed was the opposite of the intended result, as the policy created conditions for more cobras rather than fewer once the payments ended.</p>
@@ -1246,6 +1260,8 @@
 <p>The colonial government discontinued the bounty once the scale of breeding became clear. No immediate replacement program on the same model was introduced, though snake control efforts likely continued through direct capture or environmental measures such as clearing potential hiding places. The episode did not trigger broad changes in how similar bounties were applied elsewhere in the short term. Delhi’s snake management challenges remained part of the city’s ongoing urban conditions under colonial rule. In later decades the story circulated in administrative and economic discussions as an example of incentive failure, without a documented follow-up intervention that itself produced new problems. The case is now preserved primarily as a reference point rather than an active policy.</p>
 <h4 id="segment-6-the-lesson">Segment 6 — The Lesson</h4>
 <p>Incentive programs can be undermined when they reward an outcome without controlling the conditions that produce it. Decision-makers benefit from examining how people might adapt their behavior to maximize rewards, including by increasing the very thing the policy seeks to reduce. Simple interventions in systems that involve human choice and biological reproduction often generate responses that travel beyond the first intended effect. When creating rewards or penalties, it is useful to consider the full chain of possible adaptations rather than assuming the desired action will occur in isolation. This episode from colonial Delhi invites reflection on how current policies in areas such as conservation payments or performance targets might similarly shift underlying behaviors in ways that require later correction.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1784,6 +1800,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1810,6 +1827,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

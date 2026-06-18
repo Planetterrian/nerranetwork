@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1238,6 +1250,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>A designer removed one click to make browsing smoother in 2006 — and helped build the endless feeds that now shape how billions spend their time.</em></p>
 <hr>
 <h4 id="segment-1-the-cold-open">Segment 1 — The Cold Open</h4>
@@ -1252,6 +1266,8 @@
 <p>By the late 2010s Raskin began speaking publicly about the regret, describing infinite scroll as an invention he wished he could retract. Some platforms introduced optional time-limit reminders and “take a break” prompts, though these features remained secondary to the default continuous experience. YouTube added an auto-play toggle after user complaints, yet the setting stayed on for most accounts. Researchers and advocacy groups now study the cumulative impact of frictionless design on sleep, productivity, and mental health, while product teams continue to test small variations that preserve engagement. The core pattern persists across new services because the underlying incentive to increase time-on-platform has not changed.</p>
 <h4 id="segment-6-the-lesson">Segment 6 — The Lesson</h4>
 <p>Design choices that lower the cost of continuing an activity will reliably increase how long people stay with it, even when no one intends that outcome. Once a system removes every natural breakpoint, later attempts to restore limits must compete against habits already formed. Teams that treat each incremental reduction in friction as neutral should ask what behavior the new default will reward at scale. How might we evaluate the next convenience we are about to ship before the first million users have already adapted to it?</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1657,6 +1673,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1683,6 +1700,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1238,6 +1250,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>California's three-strikes law promised to lock up dangerous repeat offenders — and instead gave life sentences for stealing pizza and videotapes.</em></p>
 <hr>
 <h4 id="segment-1-the-cold-open">Segment 1 — The Cold Open</h4>
@@ -1252,6 +1266,8 @@
 <p>By 2010, voter and legislative concern over costs and fairness produced Proposition 36, which voters approved in November 2012 by a 69 percent margin. The measure narrowed third-strike eligibility to serious or violent felonies and allowed resentencing for some inmates already serving life terms. Roughly 2,000 people received reduced sentences after the reform, though thousands more remained incarcerated under the original statute. The rollback itself generated new litigation over retroactivity and eligibility criteria. California’s prison population later declined, but the state still operates under federal population caps first imposed during the three-strikes era.</p>
 <h4 id="segment-6-the-lesson">Segment 6 — The Lesson</h4>
 <p>Broad mandatory-sentencing rules interact with existing plea practices and charging discretion in ways that are difficult to predict from the statute’s text alone. When a single additional conviction can multiply sentence length by an order of magnitude, even modest changes in what counts as a felony produce large shifts in incarceration volume. Modern risk-assessment tools and diversion programs attempt to target the same goal of selective incapacitation with narrower eligibility criteria; the three-strikes experience suggests those tools must be evaluated against actual filing and plea data rather than intended categories. How might today’s proposals for automatic sentence enhancements for repeat offenses fare under similar real-world charging dynamics?</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1667,6 +1683,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1693,6 +1710,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

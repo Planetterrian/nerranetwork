@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1238,6 +1250,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h4 id="segment-1-the-hook">Segment 1 — The Hook</h4>
 <p><em>In the spring of 1928, a young engineer named Thomas Midgley Jr. stood in a laboratory in Dayton, Ohio, and demonstrated that a new synthetic gas could be breathed without harm and would not catch fire even when a lit match was held to it. The compound, dichlorodifluoromethane, soon became known as Freon-12. Within a few decades it and its chemical cousins had replaced ammonia and sulfur dioxide in millions of refrigerators and air conditioners, making safe mechanical cooling available to homes, offices, and cars around the world. Yet the same stability that made these chlorofluorocarbons so useful allowed them to drift intact into the stratosphere, where they began steadily dismantling the ozone molecules that shield Earth from ultraviolet radiation.</em></p>
 <h4 id="segment-2-the-good-intention">Segment 2 — The Good Intention</h4>
@@ -1250,6 +1264,8 @@
 <p>The scientific consensus solidified rapidly after the 1985 discovery. In September 1987, diplomats meeting in Montreal produced the first binding international agreement to phase out ozone-depleting substances, with developed countries committing to a 50 percent reduction in CFC production by 1998. Subsequent amendments accelerated the schedule; production of the main CFCs ended in industrialized nations by 1996. The Montreal Protocol is widely credited with preventing far larger ozone losses. Satellite records now show that the Antarctic ozone hole has begun a slow, uneven recovery, though full restoration to 1980 levels is not expected until roughly 2070. The transition to substitutes was not without its own complications: hydrofluorocarbons, adopted in the 1990s, proved to be potent greenhouse gases, prompting the 2016 Kigali Amendment to address their climate impact. Today the episode is frequently cited as an example of successful global environmental governance, yet the original decision-makers in the 1930s could not have anticipated either the atmospheric chemistry or the institutional machinery that eventually addressed it.</p>
 <h4 id="segment-6-the-lesson">Segment 6 — The Lesson</h4>
 <p>One clear principle is that chemical stability, while desirable for safety and performance on the ground, can become a liability once a substance enters a region where different reaction pathways dominate. A second is that global commons problems often require monitoring systems capable of detecting slow, cumulative changes long before local effects become obvious. Finally, the Montreal experience suggests that international agreements can succeed when the underlying science is clear, the number of major producers is small, and technically feasible substitutes exist. The forward-looking question the story leaves us with is how many other widely used compounds we are releasing today whose atmospheric lifetimes and reaction products we still understand only incompletely.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1685,6 +1701,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1711,6 +1728,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

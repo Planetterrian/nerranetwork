@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1238,6 +1250,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h4 id="segment-1-the-hook">Segment 1 — The Hook</h4>
 <p><em>In July 1960, Egyptian engineers began diverting the Nile at Aswan to lay the foundation of a dam that would finally tame the river’s annual flood. The structure, completed a decade later, delivered reliable electricity and ended the centuries-old cycle of destructive high water. Yet within a few years the same river that had deposited fresh silt across the valley floor each summer began to carry far less of it, leaving fields that had been fertile for five thousand years suddenly dependent on imported fertilizer and exposing the Mediterranean coast to steady erosion.</em></p>
 <h4 id="segment-2-the-good-intention">Segment 2 — The Good Intention</h4>
@@ -1250,6 +1264,8 @@
 <p>By the early 1980s Egyptian authorities had launched a national drainage program and begun subsidizing fertilizers to compensate for lost silt. Coastal protection works, including groins and beach nourishment, were installed at several hotspots, though these structures sometimes accelerated erosion farther along the shore. In 1992 the government introduced a policy allowing farmers to sell water rights, an attempt to improve efficiency that also created new disputes over allocation during drought years. Lake Nasser continues to supply roughly 55 percent of Egypt’s electricity and supports a reservoir fishery that yields more than 30,000 tons annually, yet the delta’s land-loss rate remains a concern for planners. Sudan and Ethiopia have since built their own upstream reservoirs, further complicating sediment and water-sharing agreements that were never fully resolved after the 1959 Nile Waters Agreement.</p>
 <h4 id="segment-6-the-lesson">Segment 6 — The Lesson</h4>
 <p>Complex natural systems often deliver multiple services through the same physical process; when one service is optimized, others can disappear without anyone intending the loss. Decision-makers therefore benefit from mapping the full material flow—sediment, nutrients, water—before intervening at a single point. The Aswan case also shows that once a large infrastructure project is in place, subsequent adaptations tend to add cost and complexity rather than restore the original balance. Today, as countries consider new dams on sediment-heavy rivers from the Mekong to the Colorado, the same question recurs: what will the river stop carrying once we teach it to stand still?</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1691,6 +1707,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1717,6 +1734,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

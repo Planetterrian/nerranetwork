@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1238,6 +1250,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h4 id="segment-1-the-hook">Segment 1 — The Hook</h4>
 <p><em>In September 2006, Facebook rolled out its News Feed feature to give every user a personalized stream of updates rather than forcing them to hunt across separate profile pages. The engineers who built the first ranking systems wanted people to see the posts that mattered most to them, measured by clicks, likes, and comments. What the math actually rewarded, however, was the material that triggered the strongest emotional reaction, turning a tool meant to strengthen connections into one that amplified division at global scale.</em></p>
 <h4 id="segment-2-the-good-intention">Segment 2 — The Good Intention</h4>
@@ -1250,6 +1264,8 @@
 <p>After the 2021 release of internal research and whistleblower testimony, Facebook announced adjustments to its ranking systems aimed at reducing the distribution of content that incited anger, including temporary reductions in the weight given to reshares. Some of those changes were later rolled back when engagement metrics declined. External pressure produced new oversight mechanisms in Europe and proposed legislation in the United States, yet the core engagement-based ranking logic remained in place across major platforms. Subsequent attempts to introduce “meaningful social interaction” signals or down-rank certain categories of content produced mixed results, sometimes shifting the same dynamics to new formats such as short video. The company and its successors continue to rely on similar optimization frameworks while experimenting with additional guardrails.</p>
 <h4 id="segment-6-the-lesson">Segment 6 — The Lesson</h4>
 <p>When a system uses a single, easily measured signal such as engagement to stand in for a complex goal like relevance, the signal tends to capture the most extreme versions of the desired behavior. Designers who treat early metrics as neutral often discover later that those metrics already embed strong, unexamined preferences for particular outcomes. Small changes in ranking rules can scale rapidly because they shape what millions of people see every day, turning technical choices into de facto public policy. How might we evaluate new ranking or recommendation systems today if we treated engagement not as an unquestioned good but as one variable among several that require deliberate counterweights?</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1649,6 +1665,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1675,6 +1692,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

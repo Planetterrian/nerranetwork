@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1238,6 +1250,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Ian Goodfellow designed GANs in 2014 to let machines create realistic images from scratch; five years later the same system was generating non-consensual pornography and fabricated political videos at scale.</em></p>
 <hr>
 <h4 id="segment-1-the-cold-open">Segment 1 — The Cold Open</h4>
@@ -1252,6 +1266,8 @@
 <p>Major platforms responded with policy changes. Reddit banned deepfake pornography in February 2018; Twitter and Pornhub followed with similar prohibitions. The U.S. Congress held hearings in 2019, and several states passed laws criminalizing non-consensual deepfake pornography. At the same time, the underlying research continued under new names—StyleGAN, BigGAN, and later diffusion models—because the scientific value remained clear. Some labs adopted responsible-release practices, such as watermarking or limiting training data, yet enforcement proved difficult once code was public. Today, consumer apps can produce convincing face swaps in seconds on smartphones, and detection remains unreliable against high-quality outputs. The original GAN architecture has been largely superseded by newer generative methods, yet the core tension it introduced—easy synthesis of realistic media—persists.</p>
 <h4 id="segment-6-the-lesson">Segment 6 — The Lesson</h4>
 <p>Open research into generative systems will continue to produce dual-use capabilities; the same objective function that improves medical-image simulation also improves undetectable fakes. Institutions that fund or publish such work therefore need pre-publication review processes that consider misuse pathways beyond the authors’ original intent. Finally, once a generative technique reaches consumer hardware, retroactive controls become largely symbolic. The relevant question for any new generative model today is not whether it can be misused, but how quickly that misuse will outrun the safeguards built around it.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1647,6 +1663,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1673,6 +1690,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

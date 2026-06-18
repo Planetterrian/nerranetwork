@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1238,6 +1250,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h4 id="segment-1-the-hook">Segment 1 — The Hook</h4>
 <p><em>In January 1920, the day after the 18th Amendment banned the manufacture and sale of intoxicating liquor, Chicago police reported that saloons had simply shuttered their front doors while new suppliers began delivering whiskey by the case from hidden stills. Reformers had passed the amendment to shrink crime, cut family violence, and empty jails; within three years the same city saw weekly shootouts between rival liquor gangs and an estimated 30,000 speakeasies operating openly. The policy that aimed to dry up the nation instead built the largest criminal enterprises the United States had ever known.</em></p>
 <h4 id="segment-2-the-good-intention">Segment 2 — The Good Intention</h4>
@@ -1250,6 +1264,8 @@
 <p>By 1930, both major parties recognized that enforcement costs and public defiance had become unsustainable. Franklin Roosevelt campaigned in 1932 on a repeal platform, and the 21st Amendment was ratified on December 5, 1933, ending national prohibition after thirteen years. States regained the power to regulate alcohol, and most quickly adopted systems of licensed sales and taxation that generated revenue during the Depression. The criminal empires did not disappear overnight; many simply moved into gambling and labor racketeering, but the specific incentive to control liquor distribution vanished. Public health data collected after repeal showed a rapid decline in deaths from denatured alcohol. The episode remains the only time an amendment to the Constitution has been repealed by another amendment.</p>
 <h4 id="segment-6-the-lesson">Segment 6 — The Lesson</h4>
 <p>Prohibition illustrates how an intervention that removes a legal market without shrinking underlying demand reliably creates a black market whose participants face strong incentives toward violence and product adulteration. Complex social behaviors such as drinking are embedded in networks of supply, custom, and enforcement capacity; altering one node without addressing the others tends to shift harms rather than eliminate them. Modern efforts to restrict other substances or behaviors therefore benefit from asking whether legal channels can be shaped rather than simply closed. When policymakers consider new bans today, the question worth testing is whether the expected reduction in use will exceed the predictable growth of unregulated suppliers and the enforcement burden those suppliers impose.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1695,6 +1711,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1721,6 +1738,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

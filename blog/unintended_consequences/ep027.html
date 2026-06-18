@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1238,6 +1250,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Western aid meant to build self-sufficient African economies instead left many governments dependent on the next foreign transfer to stay afloat.</em></p>
 <hr>
 <h4 id="segment-1-the-cold-open">Segment 1 — The Cold Open</h4>
@@ -1252,6 +1266,8 @@
 <p>Dambisa Moyo’s 2009 book <em>Dead Aid</em> crystallized long-standing academic critiques and prompted renewed public debate, yet aid volumes to the region remained substantial. Some governments, notably Botswana and later Rwanda, deliberately limited aid dependence and emphasized domestic revenue and private investment; others continued to receive large inflows while experimenting with results-based financing and cash-on-delivery contracts. China’s rise as a lender operating outside the OECD aid consensus introduced new terms and new accountability pressures. No comprehensive reversal of aid architecture occurred; instead, the conversation shifted toward “aid effectiveness” metrics and blended finance instruments. The underlying pattern of high aid-to-revenue ratios persists in a number of low-income countries, though the mix of donors and instruments has grown more diverse.</p>
 <h4 id="segment-6-the-lesson">Segment 6 — The Lesson</h4>
 <p>Incentive structures tend to reward the behavior that secures the next resource flow, whether that flow is tax revenue or external grants. When external resources consistently exceed domestic extraction, governments rationally invest more effort in managing donor relationships than in building broad tax capacity or responsive institutions. Complex systems also adapt around simple transfers; once aid becomes a durable share of the budget, political coalitions form around its distribution and resist changes that would shrink it. The practical question for any large-scale assistance program is therefore whether its design contains an explicit, time-bound mechanism for the recipient to replace external funds with internal ones before dependency sets in.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1683,6 +1699,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1709,6 +1726,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

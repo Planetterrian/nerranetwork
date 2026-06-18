@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1238,6 +1250,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Rent control was meant to shield tenants from unaffordable rents, yet it repeatedly reduced the supply of rental housing and raised prices for everyone else.</em></p>
 <hr>
 <h4 id="segment-1-the-cold-open">Segment 1 — The Cold Open</h4>
@@ -1252,6 +1266,8 @@
 <p>Cambridge ended rent control by referendum in 1994; within four years, average rents in formerly controlled units rose, yet the quantity and quality of rental housing also increased as owners invested again. New York has repeatedly tightened and loosened its rules, most recently expanding coverage in 2019 while still confronting chronic shortages. Berlin’s 2020 freeze was struck down by the federal constitutional court in 2021, returning the city to its prior regulatory framework. No major city has found a durable political path to repeal once controls are in place; the concentrated benefits to sitting tenants outweigh the diffuse costs to future renters and would-be landlords. Estimates of forgone new construction remain imprecise, but the pattern of reduced rental supply appears consistently across the empirical literature.</p>
 <h4 id="segment-6-the-lesson">Segment 6 — The Lesson</h4>
 <p>Price ceilings on a durable good with long production lags tend to shrink the stock of that good over time. When rules create large windfall gains for current occupants, those beneficiaries become a durable political constituency that resists later adjustment. Complex urban housing markets transmit the effects of a single intervention through multiple channels—maintenance, conversion, mobility, and new supply—so the net result is rarely confined to the targeted price. Cities still weighing similar caps today might first ask what mechanism will ensure that tomorrow’s renters can enter the market at all.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1611,6 +1627,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1637,6 +1654,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

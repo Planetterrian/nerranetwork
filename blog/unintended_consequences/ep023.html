@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1238,6 +1250,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Cash for Clunkers paid Americans to destroy nearly 700,000 old cars in 2009 to revive the economy, but it left low-income buyers facing higher used-car prices for years.</em></p>
 <hr>
 <h4 id="segment-1-the-cold-open">Segment 1 — The Cold Open</h4>
@@ -1252,6 +1266,8 @@
 <p>After the program ended, no follow-on federal scrappage effort of similar scale was attempted. Subsequent academic analyses, including work by Resources for the Future and the Congressional Research Service, documented the price effects on used vehicles and the limited long-term stimulus. Some states explored smaller, targeted replacements, but none repeated the nationwide crushing requirement. The episode quietly informed later incentive designs, which more often relied on repair subsidies or targeted rebates that left older cars in circulation. Today the U.S. used-vehicle market remains sensitive to supply shocks, a vulnerability visible again during the 2021–2023 semiconductor shortage when prices for older models climbed sharply.</p>
 <h4 id="segment-6-the-lesson">Segment 6 — The Lesson</h4>
 <p>Incentive programs that remove durable goods from secondary markets can shift costs onto the very households they aim to help indirectly. When the mechanism requires permanent destruction rather than resale or refurbishment, the supply reduction can persist long after the original stimulus window closes. Policymakers weighing similar fleet-turnover ideas today might therefore examine whether the same environmental or economic goals can be reached without eliminating the lowest-cost segment of the existing stock. How might current electric-vehicle purchase incentives interact with the used market once early models begin to age out?</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1655,6 +1671,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1681,6 +1698,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1238,6 +1250,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Congress set stricter fuel economy rules for cars than light trucks in 1975, and automakers responded by selling millions of SUVs instead.</em></p>
 <hr>
 <h4 id="segment-1-the-cold-open">Segment 1 — The Cold Open</h4>
@@ -1252,6 +1266,8 @@
 <p>Congress attempted to close the gap in the 2007 Energy Independence and Security Act by directing NHTSA to set attribute-based standards that varied with vehicle footprint, reducing the incentive to enlarge a vehicle simply to qualify as a truck. The Obama administration later tightened the rules further, projecting a 54.5 mpg fleet average by 2025. Those targets were rolled back in 2020 and then reinstated in 2024, each change producing new compliance modeling rather than a single stable rule. Meanwhile the installed base of SUVs and crossovers continues to dominate sales, and the average curb weight of new vehicles has increased roughly 1,000 pounds since 1980. No subsequent policy has reversed the physical transformation of the U.S. fleet that the original car-truck distinction helped set in motion.</p>
 <h4 id="segment-6-the-lesson">Segment 6 — The Lesson</h4>
 <p>Regulatory distinctions based on fixed categories invite reclassification rather than genuine redesign. When the cost of meeting a standard differs sharply across categories, market actors will migrate volume toward the lower-cost category even if that migration undercuts the original goal. The CAFE experience suggests that durable policy requires either uniform standards across substitutes or continuous adjustment mechanisms that anticipate redefinition. The same principle appears whenever rules attempt to separate “good” from “bad” versions of economically interchangeable products—electric-vehicle credits, building-energy codes, or emissions trading categories among them. How might today’s emerging rules for autonomous or electric vehicles embed similar category boundaries that future markets will simply walk around?</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1667,6 +1683,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1693,6 +1710,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1238,6 +1250,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>China's one-child policy aimed to ease population pressure but instead produced a 30-million-person gender imbalance and a shrinking workforce that will shape the country for decades.</em></p>
 <hr>
 <h4 id="segment-1-the-cold-open">Segment 1 — The Cold Open</h4>
@@ -1252,6 +1266,8 @@
 <p>By the early 2010s internal government reports and academic demographers were documenting the labor-force contraction and the growing cost of elder care. In 2015 the central government ended the one-child limit and introduced a universal two-child policy effective 1 January 2016; three years later it further relaxed the rule to three children. Birth numbers rose modestly in 2016 and then resumed their decline, indicating that economic pressures, housing costs, and changed expectations now outweighed the earlier legal constraint. The gender imbalance among young adults persists and will affect marriage and caregiving patterns into the 2040s. Provincial governments have introduced cash subsidies and extended maternity leave, yet none have reversed the underlying age structure created between 1980 and 2015.</p>
 <h4 id="segment-6-the-lesson">Segment 6 — The Lesson</h4>
 <p>Demographic policies set in motion processes whose full consequences appear only after a full generation has passed, making reversal costly and slow. When a single quantitative target is given enforcement power over a complex social system, families will adapt in ways the original models did not anticipate, especially when technology supplies new means of compliance. Any intervention that alters the age or sex composition of a population therefore carries compounding fiscal and social obligations that extend far beyond the original planning horizon. The question for today’s policymakers is which current numerical targets—whether for carbon, housing, or migration—may similarly lock in imbalances whose correction will fall to people not yet born.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1703,6 +1719,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1729,6 +1746,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

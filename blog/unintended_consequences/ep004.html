@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1238,6 +1250,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>After Allied forces dusted civilians in Naples with DDT in 1944 to halt a typhus epidemic, the same persistent chemical that saved lives from insect-borne disease began thinning the eggshells of bald eagles and peregrine falcons across North America and Europe by the late 1950s.</em></p>
 <h4 id="segment-1-the-hook">Segment 1 — The Hook</h4>
 <p>In the winter of 1943–1944, U.S. Army typhus control teams in Naples pumped handheld sprayers filled with a 10 percent DDT solution over the heads and clothing of more than a million refugees and soldiers. Within weeks the epidemic collapsed, and the compound that had been synthesized only four years earlier was hailed as a public-health triumph. Yet two decades later, field biologists in the northeastern United States were cracking open eggs from eyries that contained no viable embryos; the shells were so thin they collapsed under the weight of incubating parents. The substance designed to sever the transmission of malaria and typhus had entered the fatty tissues of fish and birds, concentrating at each step up the food chain until it reached the top predators whose reproductive failure no one had modeled.</p>
@@ -1251,6 +1265,8 @@
 <p>Rachel Carson’s Silent Spring, serialized in The New Yorker in June 1962 and published as a book that September, synthesized these field observations and forced the issue into national debate. President Kennedy directed the Science Advisory Committee to review the evidence; its 1963 report confirmed the hazards to wildlife and called for tighter controls. The U.S. Environmental Protection Agency, newly created in 1970, held formal hearings and in 1972 banned DDT for most agricultural uses while allowing continued public-health applications. In some regions where spraying ceased abruptly, malaria incidence rose again; Sri Lanka recorded a resurgence to more than half a million cases by 1969. The meta-irony emerged decades later when the World Health Organization, facing persistent malaria mortality in sub-Saharan Africa, endorsed limited indoor DDT spraying again in 2006 after newer insecticides proved less durable on mud walls. Today DDT remains detectable in Arctic food webs and in human serum worldwide, even though its legal agricultural use has ended in most countries; the compound’s environmental half-life has proven far longer than the institutions that first deployed it.</p>
 <h4 id="segment-6-the-lesson">Segment 6 — The Lesson</h4>
 <p>Once a persistent, fat-soluble molecule is released into living systems, its movement through food webs and its cumulative dose cannot be predicted from short-term toxicity tests alone. Decision-makers therefore need monitoring protocols that track second- and third-order ecological changes rather than relying solely on the original target organism. At the same time, the urgency of controlling disease vectors remains real; the question is not whether to intervene but how to design interventions whose side-effects can be detected and corrected before they scale. The DDT story continues to surface whenever new classes of pesticides, plastics, or pharmaceuticals are introduced at industrial volumes: the same tension between immediate, measurable benefits and diffuse, delayed consequences reappears. How might we build regulatory and scientific institutions that treat ecological persistence as a design criterion rather than an after-the-fact surprise?</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1698,6 +1714,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1724,6 +1741,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

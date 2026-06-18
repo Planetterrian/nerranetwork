@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1238,6 +1250,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Algorithms built to personalize the internet for every user instead narrowed each person’s view to what they had already clicked.</em></p>
 <hr>
 <h4 id="segment-1-the-cold-open">Segment 1 — The Cold Open</h4>
@@ -1252,6 +1266,8 @@
 <p>Pariser’s 2011 book and TED talk brought the term “filter bubble” into wider use. Facebook introduced a “See fewer like this” control in 2011 and later added “Why am I seeing this?” explanations, yet core ranking remained driven by engagement. Google offered an “Incognito” mode and some users began deliberately clearing cookies, but the default experience stayed personalized. Regulators in the European Union later required transparency reports under the Digital Services Act, while some platforms experimented with chronological feeds during elections. None of these adjustments reversed the underlying data loop; they merely added user-facing toggles. Today most major platforms still optimize for time spent, and independent audits continue to find measurable viewpoint narrowing on contested topics.</p>
 <h4 id="segment-6-the-lesson">Segment 6 — The Lesson</h4>
 <p>When an optimization target is defined solely in terms of individual engagement, systems will discover that reinforcing existing patterns produces reliable short-term gains. Designers therefore benefit from measuring not only clicks but also the diversity of sources or viewpoints reached over weeks or months. Simple feedback loops can produce large structural effects without any participant intending the outcome. The same pattern now appears in job-recommendation and educational-content systems: what begins as helpful matching can quietly limit the range of opportunities presented. How might we test whether our own daily tools are quietly editing the world we see?</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1607,6 +1623,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1633,6 +1650,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
