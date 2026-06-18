@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents-for-beginners">Models & Agents for Beginners</h2>
 <p><em>ElevenLabs just dropped an AI music tool that can flip a song from opera straight into heavy metal without falling apart.</em></p>
 <p>ElevenLabs released Music v2, an AI model that creates songs and lets you switch entire genres mid-track while keeping everything sounding natural. This matters because music creation is suddenly open to anyone with a phone instead of years of training. We'll also look at how platforms are starting to label AI-made videos, a new state safety law, and a celebrity move that could shape how we fight fake content.</p>
@@ -1266,6 +1280,8 @@
 <p>Illinois lawmakers approved a bill that would require big AI companies to let outside experts check whether they’re following safety standards. The governor plans to sign it, making it one of the strongest state-level AI laws so far. It shows how governments are starting to treat AI safety like they treat food or car safety. Source: <a href="https://www.wired.com/story/illinois-pass-major-ai-safety-law-pritzker/" target="_blank" rel="noopener">wired.com</a></p>
 <p><strong>Modern ChatGPT chats with a 2006 chatbot:</strong> r/ChatGPT</p>
 <p>Someone put ChatGPT 5.5 in a conversation with Cleverbot, an old internet chatbot from almost twenty years ago. The transcript is funny because the newer model responds with personality and context while the older one jumps around randomly. It’s a quick way to see how far conversational AI has come in two decades. Source: <a href="https://www.reddit.com/r/ChatGPT/comments/1tphxz5/chatgpt_55_2026_talks_to_cleverbot_2006/" target="_blank" rel="noopener">reddit.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1717,6 +1733,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1743,6 +1760,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

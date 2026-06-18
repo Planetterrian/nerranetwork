@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents-for-beginners">Models & Agents for Beginners</h2>
 <p><em>Google just dropped live speech-to-speech translation that feels like magic in your pocket.</em></p>
 <p>The biggest news is Gemini 3.5 Live Translate, a new tool that turns your phone into a real-time translator for over 70 languages. It starts working the moment you speak and keeps the conversation flowing naturally. Today we'll break down how it actually works, plus fun experiments you can try right now with emoji art and World Cup predictions.</p>
@@ -1264,6 +1278,8 @@
 <p>Eight months ago, someone gave several AI models actual cash and real-time stock data to see how they would perform. Five of them are now beating the S&P 500, with GPT showing especially strong results. It's a fascinating real-world test of whether AI can handle financial decisions over time. Source: <a href="https://www.reddit.com/r/ChatGPT/comments/1u19xmk/8_months_ago_we_gave_ai_models_money_to_invest/" target="_blank" rel="noopener">reddit.com</a></p>
 <p><strong>Germany building its own AI safety lab</strong></p>
 <p>Germany's National Security Council approved a new institute called DE-AISI to test powerful AI models for risks, following a similar group in the UK. The goal is to check models from companies like Anthropic and OpenAI before they become widely used. This shows countries are starting to treat advanced AI like other technologies that need safety checks. Source: <a href="https://the-decoder.com/germanys-national-security-council-greenights-an-ai-safety-institute-modeled-after-the-uks-aisi/" target="_blank" rel="noopener">the-decoder.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1689,6 +1705,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1715,6 +1732,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

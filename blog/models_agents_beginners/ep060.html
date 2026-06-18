@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1234,6 +1246,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em># Models & Agents for Beginners</em></p>
 <p>Teens are using AI to outsmart expensive World Cup ticket scalpers and build their own tools.</p>
 <p>Fans on Reddit are teaming up with Claude to create custom software that helps them find affordable tickets for the 2026 World Cup. This shows how everyday people can use AI to solve real problems without being programmers. We'll also explore how AI can double-check its own work for safety and look at a brand-new open-source agent you can try.</p>
@@ -1265,6 +1279,8 @@
 <p>Google announced plans to replenish more water than its AI data centers consume by 2030 through new conservation projects. It’s a direct response to concerns about how much water big AI systems need. Source: <a href="https://www.engadget.com/2186418/google-pledges-to-replenish-water-data-centers-by-2030/" target="_blank" rel="noopener">engadget.com</a></p>
 <p><strong>Meta teams up to shut down over a million scam accounts</strong></p>
 <p>In a big operation with Microsoft, SpaceX, and law enforcement, Meta removed more than a million fake accounts used for scams, many tied to networks in Southeast Asia. AI helped spot the patterns that humans might miss. Source: <a href="https://www.engadget.com/2186397/meta-took-down-over-a-million-scam-accounts-in-joint-operation-with-microsoft-spacex-and-doj/" target="_blank" rel="noopener">engadget.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1726,6 +1742,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1752,6 +1769,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

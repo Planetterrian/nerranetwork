@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents-for-beginners">Models & Agents for Beginners</h2>
 <p><em>Spotify just built an AI that turns your listening history, emails, and notes into a daily podcast made only for you.</em></p>
 <p>The biggest story is Spotify's new standalone app that creates personalized audio briefings and podcasts on demand. This matters because it shows how AI is moving from answering questions to actively making creative things you can listen to every day. We'll also look at why AI still struggles in real-life moments like graduations, plus a fun way to think about how these systems actually work under the hood.</p>
@@ -1257,6 +1271,8 @@
 <p>The dream of lightweight AI glasses that understand everything you see runs into a simple problem: they need constant fast uploads to the cloud, and current cell networks aren't built for that many live video streams at once.</p>
 <p><strong>A giant robot that runs on four legs then stands up:</strong> Live Science</p>
 <p>China showed off a 10-foot-tall, 1,000-pound humanoid robot that can switch between bounding like an animal and walking upright, built for moving through city spaces. Source: <a href="https://www.livescience.com/technology/robotics/chinas-real-life-transformer-mech-is-a-giant-humanoid-robot-that-can-switch-from-bounding-on-4-legs-to-walking-on-2" target="_blank" rel="noopener">livescience.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1685,6 +1701,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1711,6 +1728,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

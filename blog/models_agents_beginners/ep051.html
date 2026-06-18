@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents-for-beginners">Models & Agents for Beginners</h2>
 <p><em>Pope Leo just dropped a major warning about keeping humans at the center as AI grows.</em></p>
 <p>Today we're looking at a powerful new message from the Pope about staying human while AI changes everything around us. We'll break down what that actually means in everyday life, then dive into how "vibe coding" is quietly opening AI to way more people than before. Stick around for quick looks at how robots might learn from your chores and what shrinking entry-level jobs could mean for your future.</p>
@@ -1255,6 +1269,8 @@
 <p>Researchers are asking people to record themselves cooking, cleaning, and doing laundry so future humanoid robots can learn those same movements. The idea is that your normal routines could become the lessons that teach machines how to help around the house one day. It raises interesting questions about privacy and who benefits when your daily life becomes training material. Source: <a href="https://www.wired.com/story/household-chores-training-robots/" target="_blank" rel="noopener">wired.com</a></p>
 <p><strong>Entry-level jobs may be the first to feel AI pressure</strong></p>
 <p>A new analysis warns that while overall employment numbers look steady, the starting jobs many students and new graduates rely on are quietly getting harder to find. AI tools are already handling some of the simple tasks that used to be first steps into a career. This shift could change how people get their first real work experience in the next few years. Source: <a href="https://www.technologyreview.com/2026/05/26/1137865/its-time-to-address-the-looming-crisis-in-entry-level-work/" target="_blank" rel="noopener">technologyreview.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1678,6 +1694,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1704,6 +1721,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

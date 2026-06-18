@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents-for-beginners">Models & Agents for Beginners</h2>
 <p><em>An AI built for safer mental health chats just scored way higher on safety tests than anything else out there.</em></p>
 <p>Today we're looking at a new AI designed specifically to be safer for talking about feelings and mental health. We'll also break down how AI models can start "eating their own words" when they run out of fresh human examples to learn from. Plus we'll check out some hands-on experiments you can try right now with video tools and real-time social signal detection.</p>
@@ -1263,6 +1277,8 @@
 <p>One builder connected an open-source AI agent called OpenClaw to physical hardware so it can actually move and interact with the real world. The story shows how good AI coding tools are making it easier for regular people to experiment with simple robotics projects at home. Source: <a href="https://www.wired.com/story/i-gave-my-openclaw-agent-physical-body-robot/" target="_blank" rel="noopener">wired.com</a></p>
 <p><strong>AI spotting when drivers get drowsy:</strong> Reddit experiment</p>
 <p>A creator used video generation tools to make fake driving footage complete with masks that show exactly where the driver is looking and how alert they seem. It's a clever way to create practice data for safety systems without filming real people for hours. Source: <a href="https://www.reddit.com/r/artificial/comments/1tinw56/synthetic_dms_training_data_generation_with_video/" target="_blank" rel="noopener">reddit.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1737,6 +1753,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1763,6 +1780,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

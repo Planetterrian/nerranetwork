@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1231,6 +1243,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents-for-beginners">Models & Agents for Beginners</h2>
 <p><em>Imagine turning your random ideas into working apps just by chatting — no coding classes required.</em></p>
 <p>A new Wired story shows how regular people with zero tech background are already building real projects using AI chatbots. This matters because it opens doors for anyone curious about creating things, whether for school, hobbies, or future jobs. We'll also look at how AI is starting to handle personal money questions and explore what these changes really mean under the hood.</p>
@@ -1252,6 +1266,8 @@
 <p>Users notice newer versions of ChatGPT and Claude now pause more often to give ethical warnings even on ordinary creative requests. It shows companies trying hard to keep AI safe, though it can sometimes feel overly cautious. Source: <a href="https://www.reddit.com/r/artificial/comments/1tgg9s0/has_ai_alignment_gone_too_far_with_content/" target="_blank" rel="noopener">reddit.com</a></p>
 <p><strong>Turning family photos into anime style hits new guardrails:</strong> Reddit ChatGPT</p>
 <p>Some people are running into blocks when they try to restyle personal pictures, which highlights how AI safety rules keep evolving. It sparks conversations about where helpful creativity ends and over-protection begins. Source: <a href="https://www.reddit.com/r/ChatGPT/comments/1tg4mqm/guardrails_on_a_family_photo/" target="_blank" rel="noopener">reddit.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1685,6 +1701,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1711,6 +1728,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

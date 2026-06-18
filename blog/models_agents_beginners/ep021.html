@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1229,6 +1241,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>What if your browser could chat with you about any webpage you're on — using ChatGPT or Claude?</em></p>
 <p><strong>What's Cool Today:</strong> Opera just made it super easy to add powerful AI chatbots directly into your browser so they can see what you're looking at and help you on the spot. This is huge because it turns your everyday web surfing into something interactive and smart, without forcing you to use just one company's tools. Today we'll also explore how AI can change the way we listen to podcasts, why some big companies are facing tough questions about certain apps, and a simple way to think about what makes AI "smart." Plus, we'll give you fun things to try right now.</p>
 <h4 id="the-big-story">The Big Story</h4>
@@ -1263,6 +1277,8 @@
 <p><strong>Boston Dynamics Robot Dog Gets New Vision Skills</strong></p>
 <p>Boston Dynamics' famous robot dog can now read gauges and thermometers in factories thanks to Google's Gemini AI. It uses the AI to understand what the dials and numbers mean during inspections. This shows how AI is helping robots move from cool videos to doing real practical jobs.</p>
 <p>Source: <span class="cite"><a class="cite-pill" href="https://arstechnica.com/ai/2026/04/robot-dogs-now-read-gauges-and-thermometers-using-google-gemini/" target="_blank" rel="noopener" aria-describedby="cite-card">arstechnica.com</a><span class="cite-card" id="cite-card" role="tooltip">https://arstechnica.com/ai/2026/04/robot-dogs-now-read-gauges-and-thermometers-using-google-gemini/</span></span></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1775,6 +1791,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1801,6 +1818,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

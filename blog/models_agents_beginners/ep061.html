@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents-for-beginners">Models & Agents for Beginners</h2>
 <p><em>Google just released an AI that runs on ordinary laptops and understands pictures, text, and sound all at once.</em></p>
 <p>The biggest news is a new open-source model called Gemma 4 12B that brings powerful multimodal AI straight to regular computers with only 16 GB of RAM. This matters because it means you no longer need expensive cloud services or high-end hardware to experiment with advanced AI. Today we'll unpack how this model works, explore a fun Google tool that turns your personal data into cartoons, and check out Amazon's new AI image search feature you can try right in the app.</p>
@@ -1265,6 +1279,8 @@
 <p>Proteus, Amazon’s latest warehouse robot, can take spoken instructions in normal language instead of requiring workers to write code or use special commands. This makes it easier for people without technical training to work alongside the machines. Source: <a href="https://www.theverge.com/ai-artificial-intelligence/942884/amazon-next-generation-warehouse-robot-proteus" target="_blank" rel="noopener">theverge.com</a></p>
 <p><strong>A British MP is taking xAI to court over Grok’s image generator</strong></p>
 <p>The lawsuit asks whether xAI should be legally responsible when its AI creates images that could harm real people. It’s one of the first big legal tests of who is accountable when AI makes deepfakes or misleading pictures. Source: <a href="https://www.engadget.com/2186883/british-mp-is-suing-to-see-if-xai-is-legally-responsible-for-the-images-grok-produces/" target="_blank" rel="noopener">engadget.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1702,6 +1718,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1728,6 +1745,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

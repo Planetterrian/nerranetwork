@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1231,6 +1243,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents-for-beginners">Models & Agents for Beginners</h2>
 <p><em>OpenAI just brought back easy shortcuts so students can turn ChatGPT into a personal tutor in seconds.</em></p>
 <p>OpenAI quietly confirmed that Study Mode is still available through simple shortcuts like /study, making it easier for anyone to get step-by-step homework help. This matters because it turns a general chatbot into something that actually teaches instead of just giving answers. We'll also look at how new AI tools on Android phones can handle real tasks like filling forms or planning trips, plus a giant robot you can actually buy. By the end you'll have specific things to try on your phone or laptop right now.</p>
@@ -1258,6 +1272,8 @@
 <p>The company fixed the problem with a quick software update sent over the air. It shows that even self-driving cars still need humans watching the bigger picture when weird weather happens. Source: <a href="https://www.engadget.com/2171165/waymo-recalls-nearly-4000-robotaxis-after-a-car-drove-directly-into-a-flooded-road/" target="_blank" rel="noopener">engadget.com</a></p>
 <p><strong>Threads users are annoyed they can't block Meta's new AI chatbot:</strong> Engadget</p>
 <p>The chatbot appears in searches and conversations whether people want it or not, making it the top trending topic on the app. It highlights how companies are adding AI everywhere even when users push back. Source: <a href="https://www.engadget.com/2171113/threads-users-are-pissed-they-cant-block-metas-new-ai-chatbot/" target="_blank" rel="noopener">engadget.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1710,6 +1726,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1736,6 +1753,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

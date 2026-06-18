@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents-for-beginners">Models & Agents for Beginners</h2>
 <p><em>A new open AI model just launched with a million-token memory that could let chats remember entire books at once.</em></p>
 <p>Chinese company MiniMax released M3, an open-weight model that combines strong coding skills, native image handling, and a massive context window. This matters because open models let more people experiment without paying big fees or waiting for company approvals. Today we break down what that huge memory actually does, explore an offline phone-based AI companion you might soon try, and look at two quick updates about everyday AI use.</p>
@@ -1257,6 +1271,8 @@
 <p>The fitness app Strava is now charging developers $11.99 a month for API access after noticing too many AI tools scraping user routes and stats without permission. It’s a reminder that the data we share on apps can be reused in ways we didn’t expect. Source: <a href="https://www.theverge.com/gadgets/940854/strava-restricts-api-access-ai-apps" target="_blank" rel="noopener">theverge.com</a></p>
 <p><strong>Two ways people use AI that lead to very different results:</strong> Source Name Reddit</p>
 <p>One group treats AI like a vending machine — they grab the output and move on without learning why it worked. The other group spends an extra ten minutes asking the AI to explain its choices, which builds real skill over time. The second habit leads to higher pay and better work because judgment grows alongside the tool. Source: <a href="https://www.reddit.com/r/artificial/comments/1tttae5/two_types_of_ai_users_i_keep_seeing_one_is/" target="_blank" rel="noopener">reddit.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1690,6 +1706,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1716,6 +1733,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

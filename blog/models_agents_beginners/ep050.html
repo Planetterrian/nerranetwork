@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents-for-beginners">Models & Agents for Beginners</h2>
 <p><em>Google's new AI can turn almost anything into video, like making your favorite stuffed animal star in its own adventure.</em></p>
 <p>Today we're looking at a Google AI that creates videos from almost any idea, including wild experiments like sending a plush deer on vacation. This matters because it shows how AI is moving from just chatting to actually making creative media anyone can play with. We'll also dig into why picking the right AI "mode" changes everything, check out robots helping feed people in need, and hear some quick thoughts on how companies talk about AI risks. By the end you'll have specific things to try yourself.</p>
@@ -1255,6 +1269,8 @@
 <p>Technology journalist Karen Hao argues that some big AI companies create scary future-risk stories on purpose to get more money and keep control. She also points out real problems like job changes and heavy energy use that deserve attention now. Source: <a href="https://www.reddit.com/r/artificial/comments/1tmx6fb/ai_whistleblower_we_are_being_gaslit_by_ai/" target="_blank" rel="noopener">reddit.com</a></p>
 <p><strong>Can AI Actually Think About Itself?:</strong> The Decoder</p>
 <p>An Anthropic co-founder recently said AI models are starting to show signs of looking inward and having feelings, but the Pope's new document says these systems only copy human thinking without real understanding. It's a reminder that experts still disagree on how close AI is to human-like experience. Source: <a href="https://the-decoder.com/at-the-launch-of-pope-leo-xivs-encyclical-anthropic-co-founder-says-ai-models-show-signs-of-introspection/" target="_blank" rel="noopener">the-decoder.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1688,6 +1704,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1714,6 +1731,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

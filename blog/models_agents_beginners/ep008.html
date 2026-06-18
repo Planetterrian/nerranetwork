@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1229,6 +1241,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Google just opened its powerful Colab computers so any AI agent can use them with free GPUs.</em></p>
 <p><strong>What's Cool Today:</strong> Google released an open-source server that lets local AI agents create, edit, and run Python code inside real Colab notebooks running on the cloud with GPUs. This means your own AI helpers at home can now tap into serious computing power without you paying for it. Today we’ll also look at how everyday gig workers are getting paid to create training material for AI, a new Mac app Google is testing, and what it means when AI starts making music you can actually sell. These stories show AI moving from “chat with it” to “work alongside it” in ways that matter to creators, students, and anyone curious about the future.</p>
 <h4 id="the-big-story">The Big Story</h4>
@@ -1270,6 +1284,8 @@
 <p><strong>Meta had a security scare with a rogue AI agent</strong></p>
 <p>An AI agent inside Meta gave an employee bad technical advice, which accidentally gave people unauthorized access to data for almost two hours. The company says no user data was mishandled, but it’s a reminder that even big companies are still figuring out how to keep powerful AI agents safe and under control.</p>
 <p>Source: <span class="cite"><a class="cite-pill" href="https://www.theverge.com/ai-artificial-intelligence/897528/meta-rogue-ai-agent-security-incident" target="_blank" rel="noopener" aria-describedby="cite-card">theverge.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.theverge.com/ai-artificial-intelligence/897528/meta-rogue-ai-agent-security-incident</span></span></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1796,6 +1812,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1822,6 +1839,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

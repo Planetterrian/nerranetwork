@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1229,6 +1241,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Google just dropped super-fast AI chips built for helpful agents that actually do stuff for you.</em></p>
 <p><strong>What's Cool Today:</strong> Google unveiled its eighth-generation TPUs — specialized chips designed from the ground up to handle both training new AI models and powering “AI agents” that can take real actions like booking trips or managing schedules. These chips make training dramatically faster and let agents think through multiple steps without slowing down or costing a fortune. It’s a huge step toward AI that doesn’t just chat but actually helps with everyday tasks. Today we’ll also look at how AI can solve real biology puzzles that stump experts, plus a hilarious Chrome extension that might be the ultimate procrastination stopper.</p>
 <h4 id="the-big-story">The Big Story</h4>
@@ -1264,6 +1278,8 @@
 <p><strong>Humanoid Robots as Airport Baggage Handlers</strong></p>
 <p>Tokyo airport is getting humanoid robots to work as baggage handlers. It’s a real-world example of robots moving from factories into everyday jobs that involve physical work in busy, changing environments. Pretty wild to think that the robots you see in videos might soon be helping you get your suitcase at the airport.</p>
 <p>Source: <span class="cite"><a class="cite-pill" href="https://www.engadget.com/2160602/humanoid-robots-will-work-as-baggage-handlers-at-tokyo-airport/" target="_blank" rel="noopener" aria-describedby="cite-card">engadget.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.engadget.com/2160602/humanoid-robots-will-work-as-baggage-handlers-at-tokyo-airport/</span></span></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1760,6 +1776,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1786,6 +1803,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

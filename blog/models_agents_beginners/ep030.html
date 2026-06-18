@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1231,6 +1243,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents-for-beginners">Models & Agents for Beginners</h2>
 <p><em>ChatGPT just leveled up for everyone with a smarter, more reliable AI model rolling out right now.</em></p>
 <p>OpenAI is giving every ChatGPT user a free upgrade to GPT-5.5 Instant, which handles facts and everyday tasks better than before. We’ll also explore how researchers are teaching AI the “why” behind good behavior so it stays helpful in new situations, plus real-world AI uses like self-driving delivery vehicles and AI that could help anyone launch a food brand. By the end you’ll have clear next steps to try these ideas yourself.</p>
@@ -1250,6 +1264,8 @@
 <p>Microsoft, Google, and xAI are voluntarily letting government experts review their newest AI models before they launch publicly. The goal is to catch safety or fairness issues early rather than after millions of people are already using the tools. It’s a sign that companies and regulators are starting to work together on keeping powerful AI systems in check. Source: <a href="https://www.reddit.com/r/artificial/comments/1t57n0h/microsoft_google_and_xai_will_let_the_government/" target="_blank" rel="noopener">reddit.com</a></p>
 <p><strong>Xbox Steps Back from Microsoft’s Copilot AI</strong></p>
 <p>Microsoft is removing its Copilot AI assistant from Xbox consoles and the Xbox mobile app after deciding the feature wasn’t the right fit for gamers right now. The move shows that even big companies test AI ideas and then adjust quickly when real users don’t find them useful yet. Source: <a href="https://www.engadget.com/2165562/xbox-is-ditching-microsofts-copilot-ai/" target="_blank" rel="noopener">engadget.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1688,6 +1704,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1714,6 +1731,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

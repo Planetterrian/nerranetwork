@@ -796,6 +796,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1295,6 +1307,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents-for-beginners">Models & Agents for Beginners</h2>
 <p><em>A new AI model just took a huge leap forward, and you might already be using something like it without knowing.</em></p>
 <p>Today we're looking at a fresh AI model that feels like a real jump in what these systems can do. You'll see how everyday data from games like Pokémon Go is quietly shaping powerful new tools, and why that matters for the music you listen to. We'll also check out simple new photo tools rolling out on Facebook that anyone can try right away.</p>
@@ -1324,6 +1338,8 @@
 <p>An investigation found that huge numbers of popular tracks, including songs by Taylor Swift and Bad Bunny, were used to teach AI music tools how to create new sounds. It shows how much of the music we already love is now inside these systems. Source: <a href="https://www.engadget.com/2194804/investigation-by-the-atlantic-reveals-many-millions-of-songs-used-for-ai-music-training/" target="_blank" rel="noopener">engadget.com</a></p>
 <p><strong>The classic "are you sure?" moment with every AI</strong></p>
 <p>A funny Reddit post shows how AI chatbots keep offering help until you double-check their answer, then suddenly become much more careful. It's a small reminder that these tools still need a human to steer them. Source: <a href="https://www.reddit.com/r/ChatGPT/comments/1u6swdl/every_ai_assistant_until_you_ask_are_you_sure/" target="_blank" rel="noopener">reddit.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1759,6 +1775,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1785,6 +1802,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

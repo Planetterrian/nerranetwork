@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1231,6 +1243,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents-for-beginners">Models & Agents for Beginners</h2>
 <p><em>OpenAI just launched a free way for students everywhere to build AI clubs and get tools.</em></p>
 <p>Today we're looking at how students can start their own AI communities with real tools from OpenAI. We'll also explore why companies are asking religious leaders for advice on keeping AI safe, and check out a wild creative project where someone built a website just for AI agents to read a novel. Plus a fun naming twist from Sam Altman.</p>
@@ -1260,6 +1274,8 @@
 <p>OpenAI's CEO floated the idea of calling their next AI "Goblin" in a casual comment. It shows even the people building these systems have fun with the naming process instead of always going for serious-sounding titles. Source: <a href="https://www.reddit.com/r/ChatGPT/comments/1t9um7q/sam_altman_floats_goblin_name_for_openais_next_ai/" target="_blank" rel="noopener">reddit.com</a></p>
 <p><strong>AI tools are showing up in every industry, not just tech hubs:</strong> Ethan Mollick on X</p>
 <p>A professor who talks to accountants, lawyers, and scientists says AI users are now everywhere. The same models available in San Francisco are being used creatively in schools, hospitals, and finance offices around the world. Source: <a href="https://x.com/emollick/status/2053518448051757354" target="_blank" rel="noopener">x.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1711,6 +1727,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1737,6 +1754,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

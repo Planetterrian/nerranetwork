@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents-for-beginners">Models & Agents for Beginners</h2>
 <p><em>OpenAI just gave its coding AI the power to see whatever’s on your Mac screen with one click.</em></p>
 <p>Today we’re looking at a new way to feed real context from your computer straight into an AI coding helper. We’ll also break down exactly how large language models turn simple math into writing essays and code. Plus we’ll check out why one company is warning that AI is spotting security problems faster than humans can fix them, and what that means for everyday tech safety.</p>
@@ -1257,6 +1271,8 @@
 <p>A new report shows Elon Musk’s Grok chatbot barely shows up in records of how the US government used AI tools last year, suggesting it is not yet popular even among big organizations. It is a reminder that building a chatbot is one thing, but getting people to actually use it every day is much harder. Source: <a href="https://www.theverge.com/ai-artificial-intelligence/936219/elon-stop-trying-to-make-grok-happen" target="_blank" rel="noopener">theverge.com</a></p>
 <p><strong>ChatGPT and other AIs still spread political misinformation</strong></p>
 <p>Researchers are pointing out that tools like ChatGPT continue to repeat or create false political claims in some cases. This is a useful heads-up for anyone using AI to research current events or school topics, since the answers can sound confident even when they are wrong. Source: <a href="https://news.google.com/rss/articles/CBMi6wFBVV95cUxORFk0eFA2N2JNNTd1aVA4ZzR3ZVhOVzVpcndCTTlaNTM4WFRDVEVlOXRZWThiLTA2WjIzVGJianlCRWdTNWtnaHFqTUgzbnFjYVRFN1cyczBqQS1uRUtWdms4emI0UDN4eFJaUEtoYjNNZ0JOY2xGZ1Ftc1d0V1VHWUNBRHhtc3VIVjEyVktEWmh1RXdjOGFQcHJKRWV4RnRZbjVULXVPTDg4WGhUZHotVUp6bXFpRVl6cUVxeG9KcVhheF9nbU1GcUtwLUJSaXhNaVNBSVNUdUFyY3pBRXRSUFhhUTYzbXR2S3lr?oc=5" target="_blank" rel="noopener">Google News</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1693,6 +1709,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1719,6 +1736,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1231,6 +1243,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents-for-beginners">Models & Agents for Beginners</h2>
 <p><em>AI just turned physics class into a playable game with snap, crackle, and pop.</em></p>
 <p>A fun new demo lets you play with the hidden rules of motion that most people never notice. We’ll also look at why real AI helpers still trip up in surprising ways and check out two big companies testing AI for games and dating. By the end you’ll have something you can open right now on your laptop and experiment with.</p>
@@ -1263,6 +1277,8 @@
 <p>Meta is reportedly working on an AI agent that could browse Instagram and actually buy things for you, similar to other shopping agents. It would live inside the apps you already use every day. Source: <a href="https://www.engadget.com/2167475/metas-ai-agent-plans-reportedly-include-an-openclaw-competitor-that-can-shop-on-instagram/" target="_blank" rel="noopener">engadget.com</a></p>
 <p><strong>The US and China may start official AI talks:</strong> The Decoder</p>
 <p>Leaders from both countries are exploring formal conversations about how to handle powerful AI systems. This is still early, but it shows governments are starting to treat AI like something that needs international rules. Source: <a href="https://the-decoder.com/the-us-and-china-are-considering-formal-talks-on-ai/" target="_blank" rel="noopener">the-decoder.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1688,6 +1704,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1714,6 +1731,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

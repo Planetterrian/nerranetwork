@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1231,6 +1243,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents-for-beginners">Models & Agents for Beginners</h2>
 <p><strong>Date:</strong> April 24, 2026</p>
 <p><em>An AI that remembers you feels like a real friend — but is that trust real or “counterfeit”?</em></p>
@@ -1268,6 +1282,8 @@
 <p><strong>Google Says AI Now Writes 75% of Its New Code</strong></p>
 <p>Google reported that artificial intelligence helps write three-quarters of all new programming code at the company, with humans reviewing everything afterward. This shows how fast AI is moving from “helper on the side” to “main creative partner” inside big tech teams.</p>
 <p>Source: <span class="cite"><a class="cite-pill" href="https://the-decoder.com/google-says-75-percent-of-its-new-code-is-now-written-by-ai/" target="_blank" rel="noopener" aria-describedby="cite-card">the-decoder.com</a><span class="cite-card" id="cite-card" role="tooltip">https://the-decoder.com/google-says-75-percent-of-its-new-code-is-now-written-by-ai/</span></span></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1834,6 +1850,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1860,6 +1877,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

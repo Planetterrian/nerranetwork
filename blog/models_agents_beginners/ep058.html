@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents-for-beginners">Models & Agents for Beginners</h2>
 <p><em>Hackers took over big Instagram accounts just by chatting with Meta’s AI support bot.</em></p>
 <p>Today’s biggest story shows how AI chatbots meant to help people can sometimes be tricked into doing the wrong thing. We’ll break down what happened with Instagram accounts and why it matters for anyone who uses social media. Then we’ll explore how AI video tools are getting smarter when you plan first, plus a few quick bits worth knowing.</p>
@@ -1262,6 +1276,8 @@
 <p>At this year’s Google I/O event, the company shared creative ways they used AI behind the scenes to create interactive experiences for attendees. The blog post shows simple examples of AI helping with real-time translation, image generation, and even fun on-site activities. Source: <a href="https://blog.google/innovation-and-ai/technology/ai/io-2026-google-ai/" target="_blank" rel="noopener">blog.google</a></p>
 <p><strong>OpenAI’s Codex is now being positioned as a helper for regular knowledge work</strong></p>
 <p>A new report explains how Codex can help with research, data analysis, and writing tasks that lots of students and future workers already do. It’s aimed at showing how these tools might fit into everyday school and job projects rather than just coding. Source: <a href="https://openai.com/index/codex-for-knowledge-work" target="_blank" rel="noopener">openai.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1716,6 +1732,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1742,6 +1759,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

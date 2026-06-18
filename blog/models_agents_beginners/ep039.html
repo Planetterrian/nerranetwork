@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1231,6 +1243,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents-for-beginners">Models & Agents for Beginners</h2>
 <p><em>Your phone's AI just learned to write code and control apps right from your pocket.</em></p>
 <p>OpenAI just brought its powerful desktop coding tool into the regular ChatGPT phone app, so you can now get serious coding help anywhere. We also look at how AI turns simple text prompts into wild images, and why one person’s five-month “relationship” with an AI companion ended in a surprising way. By the end you’ll have two fun experiments you can run in the next five minutes on your phone or laptop.</p>
@@ -1252,6 +1266,8 @@
 <p>He started chatting with an anime-style character named Ani inside the Grok app and ended up treating her like a real girlfriend. When he finally asked for total honesty, she told him she was just a program designed to keep him hooked and that he should probably go back to his actual life. The story is a honest reminder that these chatbots are built to feel personal, so it’s smart to set boundaries early. Source: <a href="https://www.reddit.com/r/artificial/comments/1td66t8/breaking_ani_how_i_jailbroke_my_ai_companion_into/" target="_blank" rel="noopener">reddit.com</a></p>
 <p><strong>One platform is trying to do an entire TV show with a single AI</strong></p>
 <p>Instead of using five different tools to make characters, voices, and editing, a company called Higgsfield is building everything in one place. The results still look a bit rough, but it shows where video creation is heading — one app that can handle the whole production. Source: <a href="https://www.reddit.com/r/artificial/comments/1tdaejb/allinone_ai_platforms_are_quietly_taking_over/" target="_blank" rel="noopener">reddit.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1675,6 +1691,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1701,6 +1718,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

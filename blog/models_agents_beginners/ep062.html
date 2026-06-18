@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1234,6 +1246,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>ChatGPT just learned to remember way more about you without you asking.</em></p>
 <p>OpenAI rolled out a smarter memory system that tracks important details automatically for ChatGPT Plus and Pro users. This changes how the AI can help with school projects, creative work, and daily tasks by keeping context across chats. Today we’ll also explore how AI cracked an 80-year-old math puzzle, check out a new image model from Egypt, and see what happens when an Uber driver discovers his playlist is 100% AI-generated.</p>
 <hr>
@@ -1254,6 +1268,8 @@
 <p>A passenger discovered that the music the driver was blasting came entirely from Suno, an AI music tool. The driver had no idea and still loved the songs after finding out. It shows how quickly AI creative tools are blending into everyday life. Source: <a href="https://x.com/LinusEkenstam/status/2062808956620214340" target="_blank" rel="noopener">x.com</a></p>
 <p><strong>Top universities in South Korea giving students free GPT Pro access</strong></p>
 <p>Several leading schools are now covering the paid version of ChatGPT for their students. This highlights how access to better AI tools could affect learning opportunities depending on where you study. Source: <a href="https://www.reddit.com/r/ChatGPT/comments/1tx3zas/top_universities_in_south_korea_are_now_providing/" target="_blank" rel="noopener">reddit.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1678,6 +1694,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1704,6 +1721,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

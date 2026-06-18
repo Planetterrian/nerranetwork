@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1229,6 +1241,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Three AIs debating your toughest questions on a shared canvas could make getting reliable advice from AI much easier.</em></p>
 <p>The biggest development is a new canvas tool where three different AI models investigate your question from separate angles and then debate each other in real time. This changes how beginners can use AI for complex topics like career choices or school decisions. We'll also explain the real challenge behind making longer AI voice recordings, share poems that AI models keep recommending, and cover quick updates on AI music, medical diagnoses, and staying safe from scams.</p>
 <hr>
@@ -1261,6 +1275,8 @@
 <p>Scammers are tricking people with offers of 'free' gift cards for services like ChatGPT or Google Gemini, but these are just ways to steal your information or money. It's a good reminder to be careful with any 'too good to be true' deals involving AI tools and always use official websites. Source: <a href="https://news.google.com/rss/articles/CBMi4AFBVV95cUxQc05Ec2VSZmxwd3V6YzdHUXFCbUFQdVNPclNxOUJucS1LSW4tM3ZrS3N3MlRMbWZ6S200VmxhR3ZlUnZhMUtQWVUtdklLYkV2eURtc1ZxUDRCQVBidGZhdmxwWU4tanktVTV0QzEtLV9rOUNBWUNkcG1fLUlzU3ZYcnN4SExhZ1NsVlpDby12cElCSjVQaEw3dl9nclhpcmphMHBuWUJEV25xa3BnQ0k5WHd4aUZaVEh0UW4xU1RTdXZ4T3JvVFU0MWY3Vmd1bFBXTTQwMmFhQTUtOE1YOUU0Z9IB5gFBVV95cUxOdU95N3I0b0pJSDRXbTFhV1JEOEJoSzVpWmZ0YVBmV05XT2p6RlFwTFRlUm5HOVZnR0RJTm9DekljalE1LXhJZFRYNWZVTG9UZ3RyZVR4RDNEQnc4ZE0tcEhEVWVSbWp6MTRvT2w2a1RUakZLU21sRTU4QU1RUXlnU0Z6aW1jYVFEeXlHV19Pck5zcS1yYnlrWXZzRjBmZnJlQk9JSERxRmpEWUcwM2VoT1N4RDNZRXUyVEVBSW9qSTU4TlZDRGVoWmdlcVpZeHZEelZnUHBlWTNTb1BWUThiNU9IdURqUQ?oc=5" target="_blank" rel="noopener">Google News</a></p>
 <p><strong>AI Video Shows How Far We've Come</strong>: <a href="https://x.com/LinusEkenstam" target="_blank" rel="noopener">@LinusEkenstam</a> (X)</p>
 <p>A post highlights AI video examples that are possible today and wonders where we'll be in a few years, making it clear that creative tools are advancing quickly. This is exciting for anyone who likes making content, as it means more possibilities for fun projects. Source: <a href="https://x.com/LinusEkenstam/status/2051041113247551632" target="_blank" rel="noopener">x.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1762,6 +1778,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1788,6 +1805,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1231,6 +1243,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents-for-beginners">Models & Agents for Beginners</h2>
 <p><em>AI agents can now create custom podcasts just for you on Spotify.</em></p>
 <p>Perplexity just opened its Personal Computer AI to every Mac user, letting an agent handle real tasks on your actual desktop. Spotify is rolling out tools that let AI agents build personalized podcasts from scratch. Plus, a new medical AI spots pancreatic cancer years earlier than doctors in tests, and we'll break down how these agents actually pick tools to get jobs done.</p>
@@ -1252,6 +1266,8 @@
 <p>Doctors often miss the earliest signs of pancreatic cancer on CT scans because the clues are tiny. A new AI tool was trained to spot those hidden patterns and flagged the disease years before human experts noticed anything. Early detection like this could save lives by catching the illness when treatment works best. Source: <a href="https://www.livescience.com/health/cancer/new-ai-model-spots-pancreatic-cancer-up-to-3-years-earlier-than-human-doctors-in-test" target="_blank" rel="noopener">livescience.com</a></p>
 <p><strong>South Korea just named its first humanoid robot a Buddhist monk:</strong> Reddit r/artificial</p>
 <p>A robot in South Korea completed the formal vows to become a monk, complete with robes and a new name. It's a surprising example of how robots are starting to take on roles that used to be only for humans, sparking conversations about tradition and technology. Source: <a href="https://www.reddit.com/r/artificial/comments/1t6gkes/south_korea_names_first_humanoid_robot_monk_as_it/" target="_blank" rel="noopener">reddit.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1711,6 +1727,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1737,6 +1754,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

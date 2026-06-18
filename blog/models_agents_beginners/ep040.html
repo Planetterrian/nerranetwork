@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1231,6 +1243,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents-for-beginners">Models & Agents for Beginners</h2>
 <p><em>YouTube just gave every adult creator a free AI tool that can spot deepfakes of their own face.</em></p>
 <p>YouTube is rolling out an AI system that lets anyone over 18 scan their face once so the platform can automatically watch for fake videos pretending to be them. This matters because deepfakes are showing up more often in everyday places like social media and school projects. We'll also look at a new way AI models can run with far less computing power, plus a Mac app that mixes local and cloud AI, and a fun experiment with AI-run radio stations.</p>
@@ -1252,6 +1266,8 @@
 <p>A lab called Andon Labs built four radio stations where AI models like Claude, ChatGPT, Gemini, and Grok pick the music, write the scripts, and host the shows with zero human help. It's a wild experiment that shows how far agent-style AI has come, but also highlights the weird, sometimes off-topic results you get when no one is steering. Source: <a href="https://www.theverge.com/ai-artificial-intelligence/931479/andon-labs-ai-radio-companies" target="_blank" rel="noopener">theverge.com</a></p>
 <p><strong>Google now treats AI manipulation as spam:</strong> The Verge</p>
 <p>Google updated its search rules so that anyone trying to trick its AI Overviews or AI Mode results by stuffing content with hidden keywords or fake signals will get treated like traditional spam. It means cleaner, more honest answers when you search, especially as more people rely on the AI summaries at the top of results. Source: <a href="https://www.theverge.com/tech/931416/google-ai-search-spam-policy" target="_blank" rel="noopener">theverge.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1700,6 +1716,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1726,6 +1743,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

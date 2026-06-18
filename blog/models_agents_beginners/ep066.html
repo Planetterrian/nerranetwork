@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents-for-beginners">Models & Agents for Beginners</h2>
 <p><em>Apple just gave Siri a major upgrade that could make your phone feel like it actually understands you.</em></p>
 <p>Today we're diving into Apple's big WWDC announcement of a much smarter, more conversational Siri that runs partly on your device and partly in the cloud. You'll also learn exactly how on-device AI works under the hood using a simple everyday analogy. Plus we'll check out updates to Apple's image tools and a fresh look at why AI has made bigger leaps in some fields than others.</p>
@@ -1264,6 +1278,8 @@
 <p>Anthropic shared a new blog post explaining that AI has improved faster at writing code than at helping with biology research because biology databases were never designed for AI to read them easily. Think of old city streets built for horses that now have to handle cars and delivery robots. The post asks how we can redesign those databases so future AI helpers can actually use them.</p>
 <p><strong>The hidden work that makes AI agents actually useful</strong></p>
 <p>A recent discussion on Reddit pointed out that building an AI agent is only about 20 percent about the smart model itself. The other 80 percent is setting up clear rules for who gets notified, how mistakes get fixed, and where information gets stored so the agent’s output doesn’t just sit ignored in a chat. It’s the everyday process stuff that turns a cool demo into something that actually helps in real life. Source: <a href="https://www.reddit.com/r/artificial/comments/1u10t7w/the_boring_part_of_ai_agents_nobody_builds_and/" target="_blank" rel="noopener">reddit.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1684,6 +1700,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1710,6 +1727,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

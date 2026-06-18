@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1229,6 +1241,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Google just turned AI from a chat buddy into something that can actually do your tasks for you.</em></p>
 <p>Today’s biggest news comes from Google I/O, where the company showed off new AI agents that can watch topics, organize your life, and even help build apps. These tools move AI from answering questions to taking actions, which changes how you might use it for school, hobbies, or future jobs. We’ll break down what that really means, how the tech works under the hood, and a couple of fun things you can try right now.</p>
 <hr>
@@ -1256,6 +1270,8 @@
 <p>At a recent college graduation, former Google CEO Eric Schmidt got booed when he talked about how fast AI is changing everything. It shows that not everyone is excited about AI moving this quickly, and students especially are asking hard questions about jobs and the future. Source: <a href="https://www.reddit.com/r/artificial/comments/1tht7am/the_american_rebellion_against_ai_is_gaining_steam/" target="_blank" rel="noopener">reddit.com</a></p>
 <p><strong>[Anyone can now customize their own AI]</strong></p>
 <p>A simple video explains how regular people — no coding required — can fine-tune an AI model so it better matches their own needs, like helping with specific school subjects or creative projects. The tools are getting easier every month. Source: <a href="https://www.reddit.com/r/artificial/comments/1ti1rry/anyone_can_customize_llms_for_their_needs/" target="_blank" rel="noopener">reddit.com</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1695,6 +1711,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1721,6 +1738,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

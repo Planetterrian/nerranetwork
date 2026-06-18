@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="models-agents-for-beginners">Models & Agents for Beginners</h2>
 <p><em>A tiny neural network turns any photo into a playable game you control with your keyboard.</em></p>
 <p>Researchers built a small AI that can take a still image and turn it into an interactive game that runs on ordinary gaming PCs. This matters because it shows how AI is moving from just making pictures to letting you step inside them. Today we explore how this works, why personal AI helpers still miss obvious things, and what it means when chatbots get medical facts wrong one time out of five.</p>
@@ -1255,6 +1269,8 @@
 <p>OpenAI is letting governments and research groups use its GPT-Rosalind model at no cost to help prepare for future pandemics. Early partners include big labs and vaccine groups, and anyone worldwide can apply to join the program. Source: <a href="https://the-decoder.com/openai-is-giving-away-its-life-sciences-ai-model-to-help-governments-prepare-for-the-next-pandemic/" target="_blank" rel="noopener">the-decoder.com</a></p>
 <p><strong>Even top chatbots still get health facts wrong</strong></p>
 <p>Doctors tested popular AI chatbots on medical questions and found they gave incorrect answers about one time in five. The study is a reminder that these tools can sound confident even when they’re not accurate, especially on health topics. Source: <a href="https://news.google.com/rss/articles/CBMihwFBVV95cUxNckxQQ2ZxVjhiN2ZPZlZYSkpuSXlnVlRRSWRWWDBBSmV3NWJUaUpHT0pQbDF1NWE0S25RdVl2NFBlaDRiNzJ0emgzLVUyeWpSbmJYRnEySkZLSjZWMWpRM3V0TnJ5bi1IeTlEdTdETjZrRkN0WkhQV0ozc1FLSGhTdjFycERvcUU?oc=5" target="_blank" rel="noopener">Google News</a></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1678,6 +1694,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1704,6 +1721,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
