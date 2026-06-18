@@ -42,6 +42,11 @@ on:
         required: false
         default: '3'
         type: string
+      force:
+        description: 'Re-translate even if a track already exists (passes --force). Use to refresh episodes after a prompt change.'
+        required: false
+        default: false
+        type: boolean
 
 # Serialize multilingual runs so two sweeps never fight over the same
 # summaries files / git push.
@@ -145,9 +150,13 @@ jobs:
         run: |
           LATEST="${{ github.event.inputs.latest }}"
           [ -z "$LATEST" ] && LATEST=3
+          # Operator-set --force re-translates episodes that already have tracks
+          # (e.g. to refresh them after a translation-prompt change).
+          FORCE=""
+          [ "${{ github.event.inputs.force }}" = "true" ] && FORCE="--force"
           # --zh-approved: operator approved all four languages including ZH.
           # `</dev/null`: keep ffmpeg/ffprobe from consuming the step's stdin.
-          python scripts/generate_translations.py "${{ matrix.show }}" --latest "$LATEST" --zh-approved </dev/null
+          python scripts/generate_translations.py "${{ matrix.show }}" --latest "$LATEST" --zh-approved $FORCE </dev/null
 
       - name: Build ${{ matrix.show }} language feeds
         if: always()
