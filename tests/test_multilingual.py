@@ -145,6 +145,40 @@ class TestTranslationValidation:
         en = "Today Tesla expanded its robotaxi program across Texas."
         assert validate_translation(fr, "fr", en) == fr
 
+    def test_chinese_with_heavy_english_bleed_rejected(self):
+        # The shipped-TST failure mode (June 2026): a "Chinese" track that is
+        # really half English clauses. The tightened zh ratio floor (0.6) must
+        # reject it so the retry fires instead of voicing English.
+        from engine.translate import TranslationError, validate_translation
+        bleed = ("今天的新闻 Tesla is urging owners to oppose the New Jersey bill "
+                 "before it advances 这很重要 and here is why it matters to drivers")
+        with pytest.raises(TranslationError):
+            validate_translation(bleed, "zh", "x" * 200)
+
+
+# ---------------------------------------------------------------------------
+# Translation prompt guidance (June 2026 quality pass)
+# ---------------------------------------------------------------------------
+
+class TestTranslationGuidance:
+    def test_every_supported_language_has_guidance(self):
+        from engine.translate import language_guidance, supported_languages
+        for lang in supported_languages():
+            assert language_guidance(lang).strip(), lang
+
+    def test_zh_guidance_bans_english_and_is_injected(self):
+        from engine.translate import _build_script_prompt, language_guidance
+        g = language_guidance("zh")
+        assert "Mandarin" in g and "English" in g
+        prompt = _build_script_prompt("Elon Musk likes Tesla.", "zh")
+        assert g.split("\n", 1)[0] in prompt  # guidance is actually injected
+        assert "{language_specific_guidance}" not in prompt  # placeholder filled
+
+    def test_people_overrides_localize_musk(self):
+        from engine.translate import apply_overrides
+        assert apply_overrides("Elon Musk", "zh") == "埃隆·马斯克"
+        assert apply_overrides("Musk", "ru") == "Маск"
+
 
 # ---------------------------------------------------------------------------
 # R2 key / URL derivation
