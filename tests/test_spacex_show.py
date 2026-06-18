@@ -80,6 +80,53 @@ class TestChapterPositionalAnchors:
         assert by_title["Tomorrow Teaser"].get("where") == "end"
 
 
+class TestClosingBeforeMarketWatch:
+    """The code-supplied closing block appends the SPCX price, which the
+    Market Watch pattern also matches. Closing MUST be listed before Market
+    Watch so it wins the sign-off line — otherwise weekly-recap episodes
+    (no separate Market Watch segment) ship with the sign-off mis-titled
+    'Market Watch' and NO Closing chapter (Ep3 2026-06-14 orphan-closing)."""
+
+    def test_closing_listed_before_market_watch(self):
+        titles = [m["title"] for m in _spacex_markers()]
+        assert titles.index("Closing") < titles.index("Market Watch"), (
+            "Closing must precede Market Watch so the price-carrying sign-off "
+            "line is titled Closing, not Market Watch"
+        )
+
+    def test_recap_signoff_with_price_gets_closing_chapter(self):
+        # Weekly-recap shape: no separate Market Watch segment; the closing
+        # carries the SPCX price (the exact Ep3 failure).
+        script = (
+            "Welcome to SpaceX Daily, episode 3. Let's get into it.\n\n"
+            "From an engineering standpoint, the booster catch geometry is "
+            "the whole game this week.\n\n"
+            "Before we go, the static-fire attempt is the item to watch next week.\n\n"
+            "And that's a wrap on today's SpaceX developments. S P C X closed "
+            "at one hundred sixty dollars and ninety-five cents. See you next time."
+        )
+        titles = [c.title for c in parse_chapters(
+            script, _spacex_markers(), show_name="SpaceX Daily")]
+        assert "Closing" in titles, titles
+        assert "Market Watch" not in titles, (
+            "no Market Watch segment in a recap — the price-only sign-off must "
+            f"not create a spurious Market Watch chapter: {titles}")
+
+    def test_daily_keeps_both_market_watch_and_closing(self):
+        # Daily shape: a real Market Watch segment AND a price-carrying close.
+        script = (
+            "Welcome to SpaceX Daily. Let's get into today's developments.\n\n"
+            "From an engineering standpoint, Raptor 3's plumbing is the story.\n\n"
+            "And a quick market note: S P C X is at two hundred one dollars, "
+            "down two percent.\n\n"
+            "That's a wrap on today's SpaceX developments. S P C X is trading "
+            "at two hundred one dollars, down two percent. See you tomorrow."
+        )
+        titles = [c.title for c in parse_chapters(
+            script, _spacex_markers(), show_name="SpaceX Daily")]
+        assert "Market Watch" in titles and "Closing" in titles, titles
+
+
 class TestClosingPoolMatchesChapterPattern:
     def test_every_closing_variant_matched(self):
         regex = re.compile(_closing_pattern(), re.IGNORECASE)

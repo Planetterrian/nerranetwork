@@ -196,6 +196,18 @@ chapters:
     - pattern: "Space ?X Daily|welcome to Space ?X"
       title: "Introduction"
       where: start
+    # Closing is listed BEFORE Market Watch so it wins the sign-off line.
+    # The code-supplied closing block appends the SPCX price ("…that's a
+    # wrap. S P C X closed at $X…"), which the Market Watch pattern below
+    # also matches. On weekly-recap episodes there's no separate Market
+    # Watch SEGMENT to consume that marker first, so the sign-off was being
+    # mis-titled "Market Watch" and the episode shipped with NO Closing
+    # chapter (Ep3 2026-06-14). `where: end` keeps Closing pinned to the
+    # sign-off; daily episodes still get a Market Watch chapter from their
+    # real segment. Orphan-closing class (cf. EI/OV/MAB/FP/UC).
+    - pattern: "that.?s.*for today|that.?s a wrap|that covers|see you (tomorrow|next time)"
+      title: "Closing"
+      where: end
     - pattern: "on the market side|market watch|S ?P ?C ?X (closed|is at|is trading|opened)"
       title: "Market Watch"
     - pattern: "one thing worth watching|worth keeping an eye on|the counterpoint"
@@ -210,9 +222,6 @@ chapters:
       title: "AI & Compute"
     - pattern: "Before we go|before we wrap"
       title: "Tomorrow Teaser"
-      where: end
-    - pattern: "that.?s.*for today|that.?s a wrap|that covers|see you (tomorrow|next time)"
-      title: "Closing"
       where: end
 
 newsletter:
