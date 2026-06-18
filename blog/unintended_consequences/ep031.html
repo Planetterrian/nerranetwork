@@ -796,6 +796,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1297,6 +1309,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>A sedative promoted as safe for pregnant women in the 1950s produced the largest drug-related birth-defect epidemic on record before testing rules changed.</em></p>
 <hr>
 <h4 id="segment-1-the-cold-open">Segment 1 — The Cold Open</h4>
@@ -1311,6 +1325,8 @@
 <p>Grünenthal withdrew Contergan in November 1961; most other markets followed within months. In the United States, thalidomide was never approved, sparing American births from the same scale of injury. The episode prompted passage of the 1962 Kefauver-Harris Amendments, which required proof of efficacy and more rigorous safety testing before marketing. Modern teratogenicity studies, pregnancy registries, and risk-evaluation-and-mitigation strategies trace their regulatory lineage to that statute. Survivors in several countries later received compensation funds, though amounts and eligibility rules varied. Today thalidomide is prescribed under strict controls for leprosy and certain cancers, with mandatory contraception and monthly testing requirements that themselves illustrate how later safeguards were built on the original failure.</p>
 <h4 id="segment-6-the-lesson">Segment 6 — The Lesson</h4>
 <p>When a new compound shows no toxicity in adult animals, further investigation is still required for every stage of human development that might be affected. Regulatory systems that treat absence of evidence as evidence of safety create an opening for molecules whose effects appear only under specific biological conditions. Finally, requiring independent verification of both efficacy and reproductive safety before widespread use remains the most direct way to prevent similar scale of harm; the question for any new therapeutic class is whether today’s data standards would detect an effect as narrow and devastating as the one thalidomide produced.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1714,6 +1730,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1740,6 +1757,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
