@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1227,6 +1239,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Excess belly fat combined with low muscle mass raises death risk by 83% through accelerated inflammation and muscle loss.</em></p>
 <h4 id="top-12-science-health-discoveries">Top 12 Science & Health Discoveries</h4>
 <ol>
@@ -1273,6 +1287,8 @@
 <h4 id="science-deep-dive-sarcopenic-obesity">Science Deep Dive: Sarcopenic Obesity</h4>
 <p>Most people think carrying extra weight is mainly dangerous because of the strain it puts on your heart and joints. But when that weight is concentrated around the belly and muscle mass is low, something far more destructive happens inside your tissues. Right now, as you sit and read this, visceral fat is releasing inflammatory signals that directly accelerate the breakdown of nearby muscle fibres while the loss of muscle further worsens metabolic control. The combination turns into a self-reinforcing loop that quietly raises mortality risk far beyond what either condition does alone. Your body is constantly balancing muscle maintenance and fat storage through pathways that respond strongly to both protein intake and resistance activity. One practical takeaway is to pay attention to both your waist measurement and how easily you can stand up from a chair without using your hands. Future research will likely refine simple screening tools so that this hidden risk can be caught and managed years before serious decline begins.</p>
 <p>Today's selection shows how discoveries span human health, environmental monitoring, and fundamental biology. Stay curious.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1773,6 +1789,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1799,6 +1816,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1234,6 +1246,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="planetterrian-daily">Planetterrian Daily</h2>
 <p>🌍 <strong>Planetterrian Daily</strong> - Science, Longevity & Health Discoveries</p>
 <p><em>Older adults allocate extra cortical resources to balance as sensory and motor signals slow with age.</em></p>
@@ -1279,6 +1293,8 @@
 <p>Most people picture the immune system as a relatively recent biological invention tied to complex animals. In reality, core elements trace back to single-celled organisms that lived roughly 700 million years ago. Right now your circulating blood cells carry molecular machinery inherited from those distant ancestors. One memorable figure is the 700-million-year span separating modern immune function from its unicellular roots. The next time you hear about immune disorders, remember that researchers are essentially studying tweaks to an ancient cellular toolkit rather than a brand-new system. Watch for future papers that map which specific ancestral genes remain active in human white blood cells.</p>
 <hr>
 <p>The day’s findings underscore how basic biology and long-term observation continue to reshape what we know about health and the living world.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1778,6 +1794,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1804,6 +1821,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

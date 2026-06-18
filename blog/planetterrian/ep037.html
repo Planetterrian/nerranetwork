@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1227,6 +1239,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Supercomputer simulations have mapped the full motions of the spliceosome inside a two-million-atom model of the human cell.</em></p>
 <h4 id="top-12-science-health-discoveries">Top 12 Science & Health Discoveries</h4>
 <ol>
@@ -1285,6 +1299,8 @@
 <h4 id="science-deep-dive-why-appetite-vanishes-when-youre-sick">Science Deep Dive: Why appetite vanishes when you’re sick</h4>
 <p>Most people assume feeling sick simply drains your energy and that loss of appetite is just a side effect of general fatigue. In reality, specialized cells in your gut actively detect parasites and bacteria, then send targeted signals that tell the brain to suppress hunger. Right now, as you read this, those gut cells are constantly sampling what you’ve eaten and monitoring for invaders. The process builds gradually, which is why you often feel fine at first but suddenly lose interest in food once the infection takes hold. A single nerve pathway can relay these signals at speeds up to 120 metres per second, faster than most cars on the highway. This mechanism is an ancient defence that prevents you from consuming more pathogens while your immune system fights the current threat. The next time you feel that sudden disinterest in eating during an illness, remember it is not weakness but a deliberate protective response. Pay attention to how quickly appetite returns after symptoms ease; that rebound can be a useful personal signal that your body has cleared the immediate danger.</p>
 <p>Today's findings remind us that science is steadily peeling back layers of complexity in everything from the Sun’s interior to the machines inside our own cells. Keep asking good questions.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1809,6 +1825,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1835,6 +1852,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

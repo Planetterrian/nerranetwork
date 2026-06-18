@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1234,6 +1246,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="planetterrian-daily">Planetterrian Daily</h2>
 <p>🌍 <strong>Planetterrian Daily</strong> - Science, Longevity & Health Discoveries</p>
 <p><em>Acetylcholine surges in the brain when expected rewards fail, prompting mice to switch strategies in a virtual maze.</em></p>
@@ -1279,6 +1293,8 @@
 <p>Most people hear “nitrate” and picture a single harmful compound to avoid in water or cured meats. In reality the same molecule behaves differently depending on its dietary origin. Right now, as you eat a salad, nitrate from leafy greens is converted by oral bacteria into nitric oxide that supports vascular function; the same nitrate swallowed from processed meat or contaminated water follows different metabolic routes that can form compounds linked to oxidative stress. A study of more than 54,000 adults found vegetable-derived nitrate associated with lower dementia incidence while equivalent amounts from meat or water showed the opposite pattern. The contrast arises because vegetable matrices supply antioxidants and fibre that alter downstream chemistry. One practical step is to track where nitrate appears in your own diet rather than treating all sources as equivalent; future dietary guidelines may begin separating these origins when discussing cognitive risk.</p>
 <hr>
 <p>New measurements keep refining which signals inside the brain and environment actually move health outcomes.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1698,6 +1714,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1724,6 +1741,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

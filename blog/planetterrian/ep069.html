@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1234,6 +1246,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="planetterrian-daily">Planetterrian Daily</h2>
 <p>🌍 <strong>Planetterrian Daily</strong> - Science, Longevity & Health Discoveries</p>
 <p><em>A liver protein called HELZ2 shuts down production of the cholesterol carrier apoB.</em></p>
@@ -1279,6 +1293,8 @@
 <p>Most people assume the nutritional value of a meal is simply the sum of its individual ingredients. In reality, the moment foods are combined, enzymes and reactive compounds from one item can alter compounds in another before they ever reach the intestine. Right now, as you consider your next smoothie, polyphenol oxidase from a banana is already converting flavanols from berries into forms the body absorbs far less efficiently. A single blending step can cut circulating flavanol levels by more than half compared with berries alone. The practical takeaway is to keep high-oxidase fruits separate from polyphenol-rich ingredients if maximizing those specific compounds is the goal; future nutrition labels may eventually list interaction warnings alongside standard nutrient values.</p>
 <hr>
 <p>New measurements keep revealing how tightly linked everyday choices and molecular mechanisms already are.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1762,6 +1778,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1788,6 +1805,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

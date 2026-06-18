@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1234,6 +1246,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="planetterrian-daily">Planetterrian Daily</h2>
 <p>🌍 <strong>Planetterrian Daily</strong> - Science, Longevity & Health Discoveries</p>
 <p><em>UK data show air pollution directly slows lung growth in children.</em></p>
@@ -1259,6 +1273,8 @@
 <p>Most people assume plants either resist infection or succumb to it with little middle ground. In reality, plants constantly adjust immune activity to avoid damaging themselves when a defense would cost more than it protects. Right now, as a virus enters a leaf cell, the plant is measuring the threat level and deciding whether to trigger full-scale production of antimicrobial compounds or to pause that response. One memorable detail is that over-activation of these pathways can kill more plant tissue than the pathogen itself would have destroyed. The next time you see a crop field after a viral outbreak, the surviving plants may have used precisely this kind of temporary immune brake rather than mounting an all-out response. A practical takeaway is to watch for breeding programs that aim to fine-tune these regulatory circuits instead of simply boosting every defense gene at once.</p>
 <hr>
 <p>Primary research on basic biological mechanisms continues to surface mechanisms that were previously invisible at larger scales.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1670,6 +1686,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1696,6 +1713,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

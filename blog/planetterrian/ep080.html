@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1234,6 +1246,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="planetterrian-daily">Planetterrian Daily</h2>
 <p>🌍 <strong>Planetterrian Daily</strong> - Science, Longevity & Health Discoveries</p>
 <p><em>Brains from people aged 80–100 reveal how microglia shift from protective to destructive states in Alzheimer's.</em></p>
@@ -1279,6 +1293,8 @@
 <p>Most people picture climate change as steadily rising temperatures or bigger hurricanes, yet the data show subtler, year-round shifts in familiar seasons. Right now, as spring transitions to summer, the atmosphere is already carrying extra energy that alters storm tracks and precipitation timing. North Atlantic records reveal spring storms have become more common since 1940, a change tied directly to warmer ocean surfaces. One memorable figure: reservoirs worldwide are losing storage capacity at 7.3 % per decade from faster sediment buildup driven by changing rainfall patterns. These numbers matter because they affect water supply reliability long before extreme events make headlines. The practical takeaway is to watch regional climate reports for changes in seasonal storm frequency rather than waiting for headline disasters; those incremental shifts are already reshaping water planning and agriculture calendars.</p>
 <hr>
 <p>Today's findings underscore how cellular, environmental, and technological systems interact in measurable ways.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1734,6 +1750,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1760,6 +1777,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

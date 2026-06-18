@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1234,6 +1246,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="planetterrian-daily">Planetterrian Daily</h2>
 <p>🌍 <strong>Planetterrian Daily</strong> - Science, Longevity & Health Discoveries</p>
 <p><em>AI analysis of CT scans links healthier thymuses to longer lifespans and lower disease risk in adults.</em></p>
@@ -1279,6 +1293,8 @@
 <p>Most people assume the thymus shrinks into irrelevance after puberty and plays no further role in adult health. In reality, the organ continues to export T cells and support immune surveillance well into later life, even if at reduced volume. Right now, as you sit reading this, your thymus is still shaping the diversity of T cells circulating through your blood and tissues. AI analysis of CT scans from tens of thousands of adults showed that individuals whose thymuses retained more tissue volume lived longer and experienced markedly lower rates of heart disease and cancer. The memorable detail is that this single imaging feature tracked with broad survival differences across a large population, independent of obvious clinical markers. One practical takeaway is to ask whether future routine scans could flag thymic health the same way they already flag bone density or vascular plaque, prompting earlier attention to immune resilience.</p>
 <hr>
 <p>New imaging and probe technologies continue to sharpen how we observe both the body’s internal clocks and the universe beyond.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1706,6 +1722,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1732,6 +1749,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

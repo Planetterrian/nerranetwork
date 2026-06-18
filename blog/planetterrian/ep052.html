@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1229,6 +1241,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="planetterrian-daily">Planetterrian Daily</h2>
 <p><strong>Date:</strong> April 29, 2026</p>
 <p>🌍 <strong>Planetterrian Daily</strong> - Science, Longevity & Health Discoveries</p>
@@ -1270,6 +1284,8 @@
 <h4 id="science-deep-dive-why-profound-autism-feels-like-a-new-term-but-isnt-quite-what-most-people-imagine">Science Deep Dive: Why “profound autism” feels like a new term but isn’t quite what most people imagine</h4>
 <p>You’ve probably heard recent discussions frame “profound autism” as a brand-new diagnostic category that neatly separates severe cases from everyone else on the spectrum. That framing is misleading — the term is not a formal clinical diagnosis in major manuals like the DSM-5; it’s a descriptive concept meant to highlight individuals who need substantial lifelong support with communication, daily living skills, and who may also have intellectual disability or minimal spoken language. Right now, as you listen, roughly one in three autistic people meet criteria that would fall under this umbrella according to recent prevalence estimates, yet the boundary between “profound” and other levels remains fuzzy because autism traits exist on overlapping continua rather than clean boxes. One memorable number: studies consistently show that about 30–40 percent of autistic children have co-occurring intellectual disability, a figure that has remained relatively stable even as overall autism identification has risen. The next time you encounter headlines about autism policy, remember that support needs can change across a lifetime and are influenced by environment, co-occurring conditions, and access to communication tools. A practical takeaway is to focus less on the label and more on individualized assessments — asking what specific communication, sensory, and daily-living supports a person actually needs rather than assuming severity can be captured in a single word. Watch for research that tracks functional outcomes over decades instead of cross-sectional snapshots; those longitudinal findings tend to reveal far more about what helps people thrive.</p>
 <p>Today's edition leaned into diagnostics, public-health trends, and real-world questions from the science community. Stay curious out there.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1739,6 +1755,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1765,6 +1782,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

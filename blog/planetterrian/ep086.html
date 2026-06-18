@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1234,6 +1246,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="planetterrian-daily">Planetterrian Daily</h2>
 <p>🌍 <strong>Planetterrian Daily</strong> - Science, Longevity & Health Discoveries</p>
 <p><em>Higher vitamin C levels track with larger gray matter volume and stronger brain network connectivity in adults over 64.</em></p>
@@ -1273,6 +1287,8 @@
 <p>Most people assume mitochondria simply wear out with time like an old battery that can’t hold charge. In reality, a specific drop in the membrane lipid phosphatidylcholine disrupts electron transport chain efficiency long before wholesale organelle failure occurs. Right now, as you sit reading, your muscle and brain cells are adjusting membrane composition in response to nutrient availability and oxidative stress. Studies in aging models show that restoring phosphatidylcholine can return respiratory rates to levels seen in younger tissues. One memorable detail: the change often appears well before overt disease symptoms, suggesting an early window for intervention. A practical step is to watch for upcoming human studies that measure phosphatidylcholine levels alongside functional outcomes such as VO2 max or cognitive testing rather than relying on blood NAD alone.</p>
 <hr>
 <p>New data continue to refine how specific molecules and behaviours shape health trajectories over decades.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1797,6 +1813,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1823,6 +1840,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

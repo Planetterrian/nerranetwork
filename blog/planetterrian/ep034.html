@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1229,6 +1241,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="planetterrian-daily">Planetterrian Daily</h2>
 <p><strong>Date:</strong> March 21, 2026</p>
 <p>🌍 <strong>Planetterrian Daily</strong> - Science, Longevity & Health Discoveries</p>
@@ -1315,6 +1329,8 @@
 <h4 id="science-deep-dive-the-hidden-cost-of-losing-the-y-chromosome">Science Deep Dive: The hidden cost of losing the Y chromosome</h4>
 <p>Most people assume that once chromosomes are set during development they stay fixed for life, yet in many men the Y chromosome quietly disappears from an increasing fraction of cells as they age. Right now, as you read this, some of your cells—or those of the men around you—may already be living without it, and those Y-less cells appear to gain a competitive growth advantage that lets them slowly crowd out normal ones. This isn't a minor genetic footnote; the loss has been tied to higher rates of heart disease, cancer, Alzheimer’s, and overall shorter lifespan. One striking detail is how common the phenomenon becomes in older age, turning what once looked like a harmless quirk into a suspected driver of multiple age-related conditions. The mechanism seems to involve disrupted gene regulation and altered immune signalling once the Y is gone. The practical takeaway is that tracking Y chromosome loss could become a useful biomarker for men’s health in coming years, prompting earlier attention to cardiovascular and cognitive risks. Watch for studies that test whether lifestyle factors slow the rate of this loss or whether new therapies can protect remaining Y-bearing cells.</p>
 <p>Today's edition shows how deeply biology, environment, and behaviour intersect—from engineered microbes fighting cancer to the quiet loss of a chromosome shaping longevity. Stay curious.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1814,6 +1830,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1840,6 +1857,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

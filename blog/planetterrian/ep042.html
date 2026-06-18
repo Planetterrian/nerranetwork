@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1227,6 +1239,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><strong># Planetterrian Daily</strong></p>
 <p><strong>Date:</strong> April 07, 2026</p>
 <p>🌍 <strong>Planetterrian Daily</strong> - Science, Longevity & Health Discoveries</p>
@@ -1314,6 +1328,8 @@
 <p>Most of us assume consciousness is simply something the brain produces, like a computer running software. Christof Koch’s recent reflections challenge that comfortable picture by confronting the “hard problem”: why subjective experience exists at all instead of just unconscious information processing. Right now, as you sit listening, the boundary between neural activity and felt experience remains one of science’s deepest open questions, touching on physics, near-death reports, and moments of unexpected clarity at the end of life. A memorable detail is how even rigorous neuroscience keeps colliding with phenomena that don’t fit neatly inside a purely brain-generated model. The next time you ponder what makes “you” you, remember that the seat of awareness may not be located solely between your ears.</p>
 <p>A practical takeaway is to stay alert for experiments that test integrated information theory or quantum-inspired models; findings there could quietly rewrite how we think about anesthesia, coma recovery, and even artificial sentience in coming years.</p>
 <p>Today's edition pulls together fresh discoveries that quietly shift our maps of materials, oceans, planets, and even awareness itself. Stay curious.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1829,6 +1845,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1855,6 +1872,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

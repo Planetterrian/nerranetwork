@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1229,6 +1241,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="planetterrian-daily">Planetterrian Daily</h2>
 <p>🌍 <strong>Planetterrian Daily</strong> - Science, Longevity & Health Discoveries</p>
 <p><em>Centenarians maintain immune systems far less prone to chronic inflammation than typical older adults.</em></p>
@@ -1250,6 +1264,8 @@
 <p>Most people assume that chronic low-grade inflammation steadily increases with age and eventually drives frailty and disease in everyone. Research on centenarians demonstrates this process can be markedly slowed, showing that inflammaging is not a fixed feature of human aging. Right now, as you listen, your immune cells are interpreting signals from tissues, microbes, and daily stressors, deciding whether to mount a contained response or allow persistent low-level activation that accumulates damage over decades. In most adults inflammatory markers rise noticeably after middle age, yet centenarians frequently keep these markers closer to levels seen in healthy middle-aged people. This difference correlates with better responses to new infections and lower rates of several chronic conditions. The distinction matters because it shifts attention from simply treating late-stage inflammation to understanding what early patterns keep immune activity in check. One practical step is to track how consistent sleep, movement, and social engagement affect personal energy and recovery, since these behaviours influence the same inflammatory pathways under study. Future biomarker tests may soon make it easier to see whether an individual’s immune trajectory is drifting toward or away from the centenarian pattern.</p>
 <hr>
 <p>Today's findings underscore that exceptional aging often reflects preserved biological systems rather than dramatic interventions.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1677,6 +1693,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1703,6 +1720,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

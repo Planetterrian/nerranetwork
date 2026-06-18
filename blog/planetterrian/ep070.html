@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1234,6 +1246,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="planetterrian-daily">Planetterrian Daily</h2>
 <p>🌍 <strong>Planetterrian Daily</strong> - Science, Longevity & Health Discoveries</p>
 <p><em>Satellites have measured sulfur dioxide released by refinery fires in Tehran.</em></p>
@@ -1273,6 +1287,8 @@
 <p>Most people picture heat waves as dry, cloudless stretches of scorching air that bake the ground and spike dehydration risk. In reality, a distinct category called moist heat waves arrives with tropical cyclones, bringing high humidity and heavy rain alongside the heat. Right now, atmospheric patterns over the western Pacific are already capable of steering these systems toward land, where the combination of heat and moisture stresses both the body’s cooling mechanisms and infrastructure. These events have risen to roughly one quarter of all heat wave days in Japan over the past three decades. The added humidity prevents sweat from evaporating efficiently, raising heat-stress risk even when air temperatures are not at record highs. One practical step is to watch local forecasts for cyclone-linked humidity spikes and prepare cooling and hydration plans earlier than for classic dry heat waves.</p>
 <hr>
 <p>New findings on inflammation pathways and atmospheric monitoring continue to refine how we track health and environmental risks.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1781,6 +1797,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1807,6 +1824,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

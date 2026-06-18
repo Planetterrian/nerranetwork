@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1234,6 +1246,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="planetterrian-daily">Planetterrian Daily</h2>
 <p>🌍 <strong>Planetterrian Daily</strong> - Science, Longevity & Health Discoveries</p>
 <p><em>Smartphone cameras can now measure resting heart rate passively across skin tones using facial video alone.</em></p>
@@ -1279,6 +1293,8 @@
 <p>Most people picture memory as a mental video library that simply replays stored scenes on demand. In reality, retrieval is an active reconstruction that pulls elements from multiple brain regions and reassembles them each time. Right now, as you recall what you had for breakfast, your retrosplenial cortex is helping bind spatial context, time stamps, and sensory details into a coherent episode rather than pulling a fixed file. One memorable detail: signals supporting this binding travel through circuits that can be mapped at the level of individual cell clusters, not diffuse networks. The practical takeaway is that activities strengthening spatial navigation, such as varying your daily walking routes, may support the same circuits used for everyday recall; watch for upcoming human studies that test whether targeted navigation training improves memory performance in older adults.</p>
 <hr>
 <p>Today's findings show steady refinement of tools that measure biology and behavior at finer resolution.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1771,6 +1787,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1797,6 +1814,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

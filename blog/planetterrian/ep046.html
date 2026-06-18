@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1227,6 +1239,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Ideaya’s eye cancer drug met its phase 2/3 primary endpoint, clearing a path to accelerated FDA filing later this year.</em></p>
 <h4 id="top-15-science-health-discoveries">Top 15 Science & Health Discoveries</h4>
 <ol>
@@ -1276,6 +1290,8 @@
 <h4 id="science-deep-dive-copper-bioleaching-chemistry">Science Deep Dive: Copper Bioleaching Chemistry</h4>
 <p>Most people picture copper mining as giant open pits and smelters belching smoke, assuming the metal is simply dug up and melted out. In reality, roughly 70 percent of the world’s copper comes from chalcopyrite, a mineral whose crystal structure stubbornly resists conventional extraction, forcing miners to use energy-intensive methods that generate significant waste. Right now, as global demand for copper surges to electrify everything from wind turbines to EV motors, researchers are studying the hidden “gatekeeper” chemistry inside chalcopyrite that controls how readily it dissolves. A single insight into this mineral’s surface behaviour could cut both the energy and environmental footprint of production. One memorable detail: chalcopyrite’s recalcitrance has kept bioleaching yields low for decades, yet unlocking its gatekeeper reactions may allow bacteria to do the heavy lifting at ambient temperatures instead of furnaces running at over 1,000 °C. The practical takeaway is to pay attention to advances in mineralogy and biohydrometallurgy; improvements here could deliver cleaner copper at the scale needed for the energy transition without simply digging more holes in the ground.</p>
 <p>Today's edition highlights how targeted molecules and cell therapies are quietly moving the needle on tough cancers while the broader biotech ecosystem adjusts to new economic realities. Stay curious.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1777,6 +1793,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1803,6 +1820,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

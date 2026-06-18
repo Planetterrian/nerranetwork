@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1229,6 +1241,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="planetterrian-daily">Planetterrian Daily</h2>
 <p>🌍 <strong>Planetterrian Daily</strong> - Science, Longevity & Health Discoveries</p>
 <p><em>Researchers identified a shared set of genes that enable limb regrowth in salamanders, fish, and mice.</em></p>
@@ -1254,6 +1268,8 @@
 <p>Most people picture limb regrowth as a salamander-only trick that mammals abandoned long ago. In reality, mice already possess fragments of the same genetic toolkit, and the recent work simply shows how to switch it back on. Right now, as you sit reading this, your own cells are running related repair programs after every minor cut or bone fracture. The key difference is that full limb regrowth requires coordinated activation of the SP genes across many cell types at once. A single nerve signal travels at roughly 120 metres per second during these repair cascades—fast enough to synchronise distant tissues. The practical takeaway is to watch for early human trials that test whether brief gene-therapy pulses can nudge existing repair pathways toward larger-scale regeneration rather than scar formation.</p>
 <hr>
 <p>New findings on regeneration pathways and targeted gene delivery continue to shift what we expect from basic biology.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1691,6 +1707,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1717,6 +1734,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

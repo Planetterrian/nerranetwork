@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1234,6 +1246,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="planetterrian-daily">Planetterrian Daily</h2>
 <p>🌍 <strong>Planetterrian Daily</strong> - Science, Longevity & Health Discoveries</p>
 <p><em>Strength training shows a clear upper limit of benefit at 120 minutes weekly for lowering mortality risk.</em></p>
@@ -1271,6 +1285,8 @@
 <p>Most people assume that if some resistance exercise lowers mortality risk, then more must be better. The data show the opposite: benefits plateau at roughly two hours per week. Right now, as you consider adding another gym session, your muscles and connective tissues are already receiving the primary stimulus for the pathways that reduce inflammation and improve metabolic control. Beyond that point, additional volume mainly increases recovery demand without further measurable gains in the large cohort studies. One memorable figure is the combined 45 percent mortality reduction when strength work pairs with five to fifteen hours of aerobic activity—roughly double the effect of strength training alone. The practical takeaway is to treat 120 minutes as a target rather than a floor; once reached, consistency and the addition of aerobic work matter more than extra lifting time.</p>
 <hr>
 <p>New findings continue to refine how movement patterns, early detection tools, and ecological pressures shape long-term health outcomes.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1722,6 +1738,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1748,6 +1765,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

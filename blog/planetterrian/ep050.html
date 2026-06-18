@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1229,6 +1241,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="planetterrian-daily">Planetterrian Daily</h2>
 <p><strong>Date:</strong> April 25, 2026</p>
 <p>🌍 <strong>Planetterrian Daily</strong> - Science, Longevity & Health Discoveries</p>
@@ -1282,6 +1296,8 @@
 <h4 id="science-deep-dive-microplastics-reaching-the-brain">Science Deep Dive: Microplastics Reaching the Brain</h4>
 <p>Most of us picture microplastics as an ocean or gut problem—tiny beads and fibres that marine life or our digestive tract might encounter, but surely the blood-brain barrier keeps them out of our most protected organ. That intuition is wrong. Right now, as you listen, particles small enough to hitch a ride on immune cells or slip through compromised junctions can and do cross into brain tissue, exactly as the controlled mouse study demonstrated. Once inside, they trigger inflammatory signalling cascades that researchers can measure within weeks of exposure. A single memorable number: the particles were detectable in brain regions after only short-term laboratory dosing, showing the barrier is more permeable to these pollutants than previously modelled. The next time you reach for single-use plastics or synthetic fabrics that shed fibres in the wash, remember those fragments are small enough to become airborne or enter water supplies and, eventually, neural tissue. This knowledge reframes everyday consumption choices as direct inputs into long-term brain health. Pay attention to future studies that track human brain-autopsy data or cerebrospinal-fluid markers; those will tell us how quickly the burden accumulates in real populations and whether certain diets or exercise patterns can help clear or mitigate the inflammatory load.</p>
 <p>Today's discoveries remind us that longevity signals hide in education data, environmental pollutants reach deeper than we thought, and fundamental particles still carry secrets from the universe's first moments. Stay curious.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1807,6 +1823,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1833,6 +1850,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

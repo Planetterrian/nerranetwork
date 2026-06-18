@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1229,6 +1241,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="planetterrian-daily">Planetterrian Daily</h2>
 <p><strong>Date:</strong> March 20, 2026</p>
 <p>🌍 <strong>Planetterrian Daily</strong> - Science, Longevity & Health Discoveries</p>
@@ -1286,6 +1300,8 @@
 <h4 id="science-deep-dive-how-belly-fat-harms-the-heart-differently-than-other-fat">Science Deep Dive: How belly fat harms the heart differently than other fat</h4>
 <p>Most people assume that carrying extra weight is risky mainly because of the total number on the scale or overall BMI. In reality, the location of that fat matters far more than many realize, especially when it accumulates around the waist. Right now, as you sit or stand listening, visceral fat around your organs is biologically active tissue that releases inflammatory molecules into your bloodstream. Those signals can reach the heart muscle and promote harmful remodeling even if your weight falls in the normal range. A key detail that changes how we think about risk is that this connection to heart failure appears stronger than the link from BMI alone. The next time you measure health progress, checking your waist circumference alongside weight gives a clearer picture of what’s happening inside. This knowledge points to a practical step: paying attention to abdominal fat through simple tape measurements or consistent movement patterns can help spot risks earlier than waiting for the scale to shift dramatically.</p>
 <p>Today's edition pulls together discoveries that quietly reshape what we thought we knew about intelligence in nature, hidden heart risks, and tools that could make treatments more precise.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1765,6 +1781,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1791,6 +1808,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

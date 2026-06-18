@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1229,6 +1241,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="planetterrian-daily">Planetterrian Daily</h2>
 <p><strong>Date:</strong> April 19, 2026</p>
 <p>🌍 <strong>Planetterrian Daily</strong> - Science, Longevity & Health Discoveries</p>
@@ -1278,6 +1292,8 @@
 <p>What everyday protein-related process—digestion, muscle repair, immune recognition—would you like to see redesigned first?</p>
 <h4 id="science-deep-dive-why-your-brain-treats-social-rejection-like-physical-pain">Science Deep Dive: Why Your Brain Treats Social Rejection Like Physical Pain</h4>
 <p>Most people assume the ache of being excluded is “just emotional” and therefore less real than a broken bone or burn. In reality, the brain uses overlapping neural circuitry for both social rejection and physical injury; the anterior cingulate cortex and insula light up in fMRI scans whether you stub your toe or learn you’ve been ghosted. Right now, as you listen, any fresh memory of exclusion is still sending signals down some of the same pathways that once warned your ancestors about ostracism from the tribe—an evolutionary cue that once carried genuine survival risk. One memorable number: the intensity of social pain activates the same opioid-receptor networks that mute physical pain, which is why the brain can temporarily dampen heartbreak with the same chemistry it uses for a sprained ankle. This shared hardware explains why loneliness reliably elevates inflammation markers and why chronic social isolation correlates with mortality risk on par with smoking. The practical takeaway is to treat meaningful relationships as core health infrastructure, not optional extras. The next time you see a headline about “social prescribing” or loneliness interventions, pay attention—the science shows these are not soft recommendations but measurable physiologic treatments.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1818,6 +1834,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1844,6 +1861,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
