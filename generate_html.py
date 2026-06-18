@@ -2608,6 +2608,7 @@ def _plain_text_to_paragraphs(text: str) -> str:
     HTML paragraphs for embedding as a blog body. No markdown — the translated
     audio script is plain spoken prose."""
     import html as _html
+    import re
 
     blocks = [b.strip() for b in re.split(r"\n\s*\n", text or "") if b.strip()]
     out = []
