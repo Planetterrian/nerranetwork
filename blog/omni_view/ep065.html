@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1284,6 +1296,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="omni-view-omniview-briefing">Omni View — Omni‑View Briefing</h2>
 <p><em>Escalating drone exchanges between Ukraine and Russia are disrupting energy supplies and raising risks for civilians on both sides of the border.</em></p>
 <h3 id="top-stories-5">Top stories (5)</h3>
@@ -1477,6 +1491,8 @@
 <p>Most coverage of snap elections treats them as simple popularity contests, yet the decision to dissolve parliament early follows specific constitutional and political rules that vary by country. In Malta’s case, the prime minister can advise the president to dissolve parliament when the government believes it holds an advantage or needs a fresh mandate on pressing issues such as housing and infrastructure. This mechanism allows the ruling party to choose timing that maximizes its prospects while opposition parties must respond within a compressed campaign window. Knowing this, when you hear claims that an election was called purely for democratic renewal, you can evaluate whether the timing aligns with polling data or external pressures instead. Next time you see a headline about a snap vote, ask: who benefits from the chosen date, what constitutional threshold must be met, and how have similar decisions played out in past cycles?</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference official election commission statements with multiple independent outlets before drawing conclusions about likely outcomes. Primary documents such as candidate manifestos and government statistical releases provide clearer grounding than secondary commentary. Consistent patterns across left-leaning, right-leaning, and international sources strengthen confidence in reported facts.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -2023,6 +2039,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -2049,6 +2066,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

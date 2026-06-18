@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1288,6 +1300,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="omni-view-omniview-briefing">Omni View — Omni‑View Briefing</h2>
 <p><em>A UK court ruling frees the government from Rwanda deal payments while Labour navigates leadership moves and health policy adjustments.</em></p>
 <h3 id="top-stories-5">Top stories (5)</h3>
@@ -1498,6 +1512,8 @@
 <p>Most coverage of court rulings on deals like the Rwanda arrangement assumes either automatic enforcement or total judicial override. In reality, UK courts examine whether the specific contractual terms create an enforceable payment obligation once one party withdraws. The process begins with the government's decision to end performance, followed by the counterparty's claim for compensation, then judicial review of the agreement's wording and any statutory authority. Knowing this, when you hear claims that a ruling either "saves billions" or "abandons commitments," you can check whether the decision turned on contract language rather than broader policy preference. Next time you see a headline about a collapsed international pact, ask: what exact clause addressed non-completion payments, and does the judgment cite domestic statute or treaty text?</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference court documents and official statements against multiple outlets before drawing conclusions about financial or policy consequences. Primary sources such as judgments and parliamentary records often clarify what reporting summarises. Consistent patterns across independent reporting increase reliability; single-source framing warrants extra verification.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -2078,6 +2094,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -2104,6 +2121,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

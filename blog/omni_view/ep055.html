@@ -107,12 +107,7 @@
       "url": "https://nerranetwork.com/omni-view.html"
     },
     "image": "https://nerranetwork.com/assets/covers/omni-view.jpg",
-    "transcript": "https://nerranetwork.com/blog/omni_view/ep055.html#transcript",
-    "associatedMedia": {
-      "@type": "MediaObject",
-      "contentUrl": "https://audio.nerranetwork.com/omni_view/Omni_View_Ep055_20260519.mp3",
-      "inLanguage": "en"
-    }
+    "transcript": "https://nerranetwork.com/blog/omni_view/ep055.html#transcript"
   }
 ]
     </script>
@@ -767,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1268,6 +1275,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="omni-view-omniview-briefing">Omni View — Omni‑View Briefing</h2>
 <p><em>Russia and Belarus have begun joint nuclear drills while the UN Security Council meets on Ukraine, highlighting how routine military exercises can quickly raise regional tensions.</em></p>
 <h3 id="top-stories-5">Top stories (5)</h3>
@@ -1388,6 +1397,8 @@
 <p>Most coverage of UN Security Council meetings treats them as simple diplomatic gatherings, yet the process involves specific procedural rules and veto powers that shape outcomes long before any vote occurs. When a member state or group requests a meeting, the agenda must be approved and statements are delivered in a fixed order, giving permanent members like Russia significant influence over tone and timing. Knowing this, when you hear claims that a meeting “demands” an immediate ceasefire, you can evaluate whether the language reflects enforceable action or largely symbolic pressure. Historical parallels, such as repeated sessions during earlier phases of the Ukraine conflict, show that discussions often serve to document positions for future negotiations rather than produce instant resolutions. Next time you see a headline about a UN meeting on Ukraine, ask: which permanent members are speaking, what specific proposals are on the table, and whether the session is meant to gather evidence or push for immediate votes.</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference official UN records with reporting from multiple outlets to distinguish between statements of intent and binding decisions. Primary documents such as meeting transcripts often clarify what was actually proposed versus what was interpreted in headlines. Checking the sequence of speakers and veto history provides useful context for understanding why certain resolutions advance while others stall.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1902,6 +1913,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1928,6 +1940,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

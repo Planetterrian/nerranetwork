@@ -790,6 +790,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1318,6 +1330,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="omni-view-omniview-briefing">Omni View — Omni‑View Briefing</h2>
 <p><em>Colombia’s national soccer jersey has become a contested symbol as the country holds a presidential runoff and opens its World Cup campaign on the same week.</em></p>
 <h3 id="top-stories-5">Top stories (5)</h3>
@@ -1438,6 +1452,8 @@
 <p>Most coverage treats the appearance of Colombia’s soccer jersey in campaign materials as simple opportunism. In reality, parties often adopt widely recognized cultural markers because they already carry emotional resonance with voters who may not follow policy details closely. The jersey’s design and colors predate any current candidate, giving it broad recognition that newer logos lack. When campaigns overlay political slogans on such symbols, they borrow existing attachment rather than building it from scratch. Knowing this mechanism helps readers distinguish between organic cultural pride and deliberate political framing. Next time coverage highlights a team shirt in an election, ask who chose the imagery, whether the team’s governing body consented, and whether similar symbols have been used by multiple sides in past cycles.</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference reporting from outlets with differing editorial priorities on the same event. Primary documents such as official statements or court filings often clarify details that summaries compress. Comparing multiple accounts reveals which facts are agreed upon and which remain contested.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1641,12 +1657,10 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 </a>
                 
                 
-                <div class="next nav-next-placeholder" style="text-align:right;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.92rem;">
-                    <span class="nav-label">Tomorrow &rarr;</span>
-                    <span class="nav-title">New episode tomorrow</span>
-                    <a href="#subscribe-cta" style="font-size:0.82rem;color:var(--show-color-text, var(--show-color));text-decoration:none;display:block;margin-top:4px;">Subscribe so you don't miss it &rarr;</a>
-                </div>
-                
+                <a href="ep085.html" rel="next" class="next">
+                    <span class="nav-label">Next &rarr;</span>
+                    <span class="nav-title">Episode 85</span>
+                </a>
                 
             </nav>
             
@@ -1888,6 +1902,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1914,6 +1929,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1279,6 +1291,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="omni-view-omniview-briefing">Omni View — Omni‑View Briefing</h2>
 <p><em>Trump's warning that "the clock is ticking" for Iran raises risks to global oil supplies and regional stability as peace talks stall.</em></p>
 <h3 id="top-stories-5">Top stories (5)</h3>
@@ -1471,6 +1485,8 @@
 <p>Most coverage of energy route disruptions treats them as simple price spikes, yet the mechanism involves layered logistics, contractual obligations, and regulatory approvals that take weeks or months to adjust. When the strait is restricted, tankers carrying crude and refined products must reroute around Africa, adding roughly two weeks of sailing time and requiring new port slots, insurance terms, and refinery feedstock swaps. Airlines, in turn, rely on forward contracts and storage inventories that were sized for normal flows; once those buffers shrink, carriers must either reduce schedules or pay spot-market premiums that quickly erode margins. Knowing this, when you hear claims that “airlines will simply absorb the cost,” you can check whether the carrier has disclosed hedging levels and alternative sourcing agreements rather than assuming short-term resilience. Next time you see a headline about Hormuz tensions, ask: who holds the physical inventory today, which refineries can process substitute crudes without major retooling, and what regulatory approvals stand between a diverted cargo and an airport fuel truck.</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference statements from governments and companies with primary documents such as shipping schedules and regulatory filings rather than relying on any single summary. Note which outlets disclose their sourcing and which repeat unverified claims. When numbers or timelines appear, verify them against the most recent official data releases before drawing conclusions.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -2019,6 +2035,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -2045,6 +2062,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

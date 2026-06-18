@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1268,6 +1280,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="omni-view-omniview-briefing">Omni View — Omni‑View Briefing</h2>
 <p><em>A potential Iran nuclear deal in days could reopen the Strait of Hormuz and ease global oil pressure, while a U.S. Army helicopter incident near the waterway highlights ongoing risks.</em></p>
 <h3 id="top-stories-5">Top stories (5)</h3>
@@ -1377,6 +1391,8 @@
 <p>Most coverage of potential Hormuz disruptions assumes that any closure immediately spikes prices worldwide, yet the actual mechanism involves layered responses from strategic reserves, alternative pipelines, and rerouting that can blunt short-term effects. When tensions rise, traders first price in the probability and duration of interruption rather than a total cutoff, because roughly 20 percent of global oil normally transits the strait while spare capacity elsewhere and government stockpiles provide buffers. Knowing this, when you hear claims of an “instant crisis,” you can check whether reports account for these offsets or treat the strait as an on-off switch. Next time you see a headline about Hormuz, ask: which alternative supply routes are already quantified, how large are current reserve releases, and what historical precedent exists for rapid rerouting during past tensions?</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference official statements from governments and companies with shipping and inventory data released by agencies such as the EIA. Primary documents such as trade statistics and regulatory filings often reveal the scale of any disruption more precisely than initial commentary.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1876,6 +1892,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1902,6 +1919,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

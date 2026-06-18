@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1270,6 +1282,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="omni-view-omniview-briefing">Omni View — Omni‑View Briefing</h2>
 <p><em>US-Iran talks show tentative progress toward ending conflict, yet disagreements over uranium stockpiles and Hormuz access keep energy markets and regional security on edge.</em></p>
 <h3 id="top-stories-5">Top stories (5)</h3>
@@ -1399,6 +1413,8 @@
 <p>Most coverage treats presidential or ministerial warnings of force as simple policy declarations, yet these statements often serve multiple overlapping purposes including domestic signaling, alliance reassurance, and diplomatic pressure. In practice, leaders weigh how specific language will be interpreted by adversaries, allies, and their own legislatures, drawing on precedents such as past US statements toward various Caribbean nations or European responses during earlier crises. The choice of words, timing, and follow-up actions creates a spectrum from rhetorical posturing to operational preparation, with each step calibrated to avoid unintended escalation while still conveying resolve. Knowing this, when you hear a leader say military options remain “on the table,” you can evaluate whether the remark is primarily aimed at deterring an opponent, satisfying a domestic audience, or testing international reaction. Next time you see headlines about possible intervention, ask: who is the intended audience for this language, what concrete steps would follow if the threat were acted upon, and how have similar statements played out historically without leading to conflict.</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference official statements with primary documents such as transcripts or government releases rather than relying solely on secondary summaries. Compare coverage across outlets with different national or political perspectives to identify which facts are consistently reported and which interpretations vary. Primary data sources like economic statistics or military announcements provide the clearest baseline for assessing later claims.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1925,6 +1941,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1951,6 +1968,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

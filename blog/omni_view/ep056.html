@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1286,6 +1298,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="omni-view-omniview-briefing">Omni View — Omni‑View Briefing</h2>
 <p><em>Putin and Xi’s energy pipeline talks amid Middle East tensions could reshape global supply routes and alliances that affect everyday energy costs worldwide.</em></p>
 <h3 id="top-stories-5">Top stories (5)</h3>
@@ -1487,6 +1501,8 @@
 <p>Most coverage of Russia-China energy talks treats announcements as simple bilateral deals, yet the process involves layered approvals, financing structures, and long-term pricing formulas that can take years to finalize. When politicians say a pipeline is “revived,” the actual work often includes renegotiating transit fees, securing export licenses, and aligning regulatory standards across borders. Knowing this, when you hear claims of an imminent breakthrough, you can evaluate whether the statement refers to a signed memorandum or merely renewed discussions. Next time you see a headline about a revived pipeline, ask: who benefits from the timing of the announcement, what financing mechanisms are proposed, and what historical precedents exist for similar projects stalling after initial fanfare.</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference official statements from the governments involved with data from energy market trackers and regulatory filings. Primary documents such as trade ministry releases often contain more precise language than initial news summaries. Checking multiple jurisdictions’ records helps clarify what has been formally agreed versus what remains under discussion.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1992,6 +2008,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -2018,6 +2035,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

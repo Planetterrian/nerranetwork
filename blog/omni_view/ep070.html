@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1268,6 +1280,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="omni-view-omniview-briefing">Omni View — Omni‑View Briefing</h2>
 <p><em>Six states are suing the Trump administration over a nearly $1 billion payout to cancel a major offshore wind lease, testing the reach of federal energy decisions.</em></p>
 <h3 id="top-stories-5">Top stories (5)</h3>
@@ -1389,6 +1403,8 @@
 <p>Most coverage of federal energy decisions treats project cancellations as simple policy reversals, yet the legal and financial mechanics are more layered. When an administration terminates a lease or contract, it can trigger compensation obligations under existing agreements, often paid from public funds, while states retain independent authority to sue in federal court over coastal or environmental impacts. This structure creates a dual-track process: executive action on one side and judicial review on the other, with outcomes that can restore, modify, or permanently end projects. Knowing this, when you hear claims that a cancellation is final or cost-free, you can evaluate whether litigation or settlement negotiations remain active. Next time you see reporting on energy lease disputes, ask: what contractual clauses govern termination payments, which courts have jurisdiction, and how prior administrations handled similar reversals.</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference primary court filings and official agency announcements rather than relying solely on secondary summaries. Compare how different outlets describe the same payout or policy change to identify which facts are consistently reported and which remain interpretive.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1907,6 +1923,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1933,6 +1950,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

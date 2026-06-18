@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1269,6 +1281,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="omni-view-omniview-briefing">Omni View — Omni‑View Briefing</h2>
 <p><em>Pakistan’s airstrike on an Afghan rehabilitation centre has left families demanding answers and raised fresh questions about accountability in cross-border conflict.</em></p>
 <h3 id="top-stories-5">Top stories (5)</h3>
@@ -1423,6 +1437,8 @@
 </ul>
 <h3 id="understanding-the-issue-how-federal-budgets-are-prepared-and-presented">Understanding the Issue: How Federal Budgets Are Prepared and Presented</h3>
 <p>Most coverage of a national budget focuses on the headline announcements, yet the process that produces those numbers is shaped by constitutional rules, departmental negotiations, and political calendars that are rarely explained in detail. In parliamentary systems such as Australia’s, the treasurer works with the treasury department and other ministries to reconcile revenue forecasts, spending requests, and policy priorities months before the speech; the final document must also align with the government’s legislative timetable and coalition agreements. This preparation phase determines which measures can be announced immediately and which require later parliamentary approval or state cooperation. Knowing this sequence helps readers</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1881,6 +1897,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1907,6 +1924,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

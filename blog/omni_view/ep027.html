@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1281,6 +1293,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><strong># Omni View — Omni‑View Briefing</strong></p>
 <p><strong>Date:</strong> April 03, 2026</p>
 <p><em>Trump warns Iran of further strikes after US-Israeli attack destroys Iran's largest bridge, as Tehran vows continued resistance.</em></p>
@@ -1517,6 +1531,8 @@
 <p>Next time you see a headline about strikes near Iran or warnings about energy shocks, ask: what percentage of global oil moves through this specific waterway? What are the realistic alternatives for oil transport? Who benefits from heightened tensions versus stable passage? What's the historical precedent from previous crises in the same location? Understanding the physical geography behind the headlines helps separate tactical military reporting from the deeper structural risks that affect economies worldwide.</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-check claims about targets hit, casualty figures, and economic impacts across multiple outlets rather than relying on any single source. Pay attention to which details different organizations emphasize or omit. When possible, review primary statements from governments and international bodies directly. Remember that in fast-moving conflicts, initial reports often contain uncertainties that become clearer over time.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -2063,6 +2079,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -2089,6 +2106,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

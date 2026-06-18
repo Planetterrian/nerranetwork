@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1279,6 +1291,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><strong># Omni View — Omni‑View Briefing</strong></p>
 <p><strong>Date:</strong> April 07, 2026</p>
 <p><em>Trump issues Tuesday deadline threatening to strike Iranian infrastructure if the Strait of Hormuz remains closed, driving up oil prices and rattling markets.</em></p>
@@ -1511,6 +1525,8 @@
 <h3 id="understanding-the-issue-how-ultimatums-function-in-international-diplomacy">Understanding the Issue: How Ultimatums Function in International Diplomacy</h3>
 <p>Most coverage of Trump’s Iran deadline treats it as a simple countdown to potential military action or diplomatic breakthrough. What’s often missed is how ultimatums actually operate as signaling mechanisms within a larger bargaining framework that includes multiple parties, incomplete information, and domestic political incentives on all sides.</p>
 <p>When leaders issue public deadlines backed by specific threats, they are attempting to change the other side’s assessment of costs and benefits. The target (in this case Iran) must weigh compliance against resistance while calculating how credible the threat actually is. Mediators from Pakistan, Egypt and Turkey are simultaneously trying to create off-ramps that allow face-saving compromises. History shows that successful ultimatums are usually paired with credible face-saving exits</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -2060,6 +2076,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -2086,6 +2103,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

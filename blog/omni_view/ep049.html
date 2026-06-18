@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1283,6 +1295,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="omni-view-omniview-briefing">Omni View — Omni‑View Briefing</h2>
 <p><em>Britain's Labour government faces a direct test of authority as Prime Minister Starmer meets a leading rival while pledging to continue governing ahead of the King's Speech.</em></p>
 <h3 id="top-stories-5">Top stories (5)</h3>
@@ -1493,6 +1507,8 @@
 <p>Most coverage of family-court decisions assumes that expert psychological reports carry formal professional oversight, yet many experts providing testimony operate without statutory regulation. In practice, courts rely on a mix of registered psychologists, counsellors and other practitioners whose qualifications are evaluated case-by-case rather than through a single licensing body. This structure developed historically to ensure timely access to specialist insight in urgent custody matters, but it leaves room for varying standards of training and methodology. When judges weigh these reports, they must balance the expert’s stated experience against the absence of mandatory peer review or continuing professional development requirements. Knowing this, readers can better evaluate claims that a particular outcome resulted from “expert advice” by asking whether the individual held recognised credentials or simply presented relevant experience. Next time you see reporting on a custody dispute involving psychological evidence, ask: what formal qualifications did the expert hold, was their methodology open to challenge, and what alternative sources of information were available to the court?</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-check court documents and official regulatory registers against news summaries, especially when stories involve expert testimony or institutional processes. Primary sources such as inquest transcripts or fund announcements often clarify details that secondary reporting condenses. Comparing coverage across outlets with different editorial priorities helps identify which facts are consistently reported and which remain open to interpretation.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -2029,6 +2045,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -2055,6 +2072,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1281,6 +1293,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>King Charles faces US pressure over Falklands sovereignty as Trump envoys head to Iran peace talks in Pakistan.</em></p>
 <h3 id="top-stories-5">Top stories (5)</h3>
 <h4 id="1-king-flies-into-us-storm-over-falklands">1) King flies into US storm over Falklands</h4>
@@ -1512,6 +1526,8 @@
 <p>Most coverage of I'm A Celebrity exits and contestant complaints treats the shows as spontaneous adventures or personal journeys. Here's what's actually happening behind the scenes: participants sign detailed, legally binding contracts weeks or months before filming that explicitly cover compensation, exit clauses, editing rights, post-show publicity obligations, and restrictions on what they can say publicly. These contracts are negotiated through agents and lawyers, with larger payments often tied to staying longer or generating drama. Production companies maintain strict control over narrative through selective editing, which contestants later discover when the show airs. Knowing this changes how to interpret dramatic exits or accusations — they are rarely complete surprises to producers, and financial incentives are usually disclosed in the fine print rather than emerging as sudden revelations. The mechanism is straightforward commercial television: networks pay for compelling content, talent receives significant sums relative to normal earnings, and both sides accept that the edited version may differ from lived experience. Historical parallels exist in earlier reality formats where similar complaints surfaced years later once social media allowed direct contestant voices. Next time you see a headline about a reality star's "shock" departure or "explosive" claims, ask: What does the contract likely say? Who benefits from the drama? What remains unseen due to editing rights? What's the financial context the coverage might be omitting?</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-check dramatic claims against primary documents when possible, especially contracts or official statements rather than second-hand reports. Different outlets emphasize different aspects of the same event based on their audience and commercial incentives. Reading multiple sources, including those you disagree with, reveals what facts are agreed upon versus what is interpretation. Primary footage, full interviews, or regulatory filings often tell a more complete story than any single headline.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1990,6 +2006,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -2016,6 +2033,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

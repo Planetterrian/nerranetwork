@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1288,6 +1300,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="omni-view-omniview-briefing">Omni View — Omni‑View Briefing</h2>
 <p><em>Israel's order to seize 70 percent of Gaza threatens the October ceasefire and raises risks of renewed fighting across the region.</em></p>
 <h3 id="top-stories-5">Top stories (5)</h3>
@@ -1498,6 +1512,8 @@
 <p>Most coverage of ceasefire announcements treats them as simple pauses in fighting, yet the actual mechanism involves layered verification, third-party monitoring, and political signaling that often continues even when violations occur. In practice, a ceasefire typically begins with a written understanding between parties, followed by deployment of observers from neutral states or international bodies who report movements across agreed lines; these reports then feed into diplomatic channels rather than automatic enforcement. Historical parallels, such as the 1973 Sinai disengagement or multiple Lebanon-related truces, show that monitoring teams document incidents but lack independent military power, so compliance ultimately rests on the parties’ own calculations of cost and benefit. Knowing this, when you hear claims that one side has “violated” a ceasefire, you can evaluate whether the statement refers to a documented crossing of a monitored line or to a broader political interpretation of intent. The same structure explains why incremental territorial directives, such as orders to expand control, can coexist with ongoing talks: they test the limits of enforcement without immediately ending diplomatic contact. Next time you see a headline about a new ceasefire or its breach, ask: who is tasked with on-the-ground verification, what constitutes a reportable incident, and what leverage exists if violations accumulate.</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference claims about military movements or diplomatic drafts against primary documents such as official statements or court filings rather than secondary summaries. Note when sources share the same original reporting chain and seek additional outlets with independent access. Primary sources often reveal the precise wording that later interpretations expand or soften.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -2046,6 +2062,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -2072,6 +2089,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

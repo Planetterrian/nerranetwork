@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1270,6 +1282,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="omni-view-omniview-briefing">Omni View — Omni‑View Briefing</h2>
 <p><em>Iran's expanded claim over the Strait of Hormuz raises risks for global oil supplies that millions depend on for energy and transport costs.</em></p>
 <h3 id="top-stories-5">Top stories (5)</h3>
@@ -1399,6 +1413,8 @@
 <p>Most coverage of Ebola outbreaks assumes that standard medical protocols can be applied uniformly, yet the reality in places like DR Congo shows how insecurity fundamentally alters every step. Response teams must first negotiate safe access with local armed groups, then establish contact-tracing networks that rely on community trust built over months rather than days. Historical parallels from earlier outbreaks demonstrate that when violence disrupts supply routes or forces repeated evacuations, even basic case isolation becomes far more difficult than maps suggest. Knowing this, when you hear claims that “more resources will quickly end the outbreak,” you can evaluate whether those resources address physical security and local relationships or simply assume open roads and willing populations. Next time you see a headline about an Ebola case count, ask: who controls the roads to treatment centres, what recent violence has occurred nearby, and how long have health workers already been on site building relationships.</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-check outbreak numbers against multiple health agencies rather than relying on any single report. Primary documents such as WHO situation reports provide raw case data that news summaries sometimes simplify. Comparing coverage across outlets reveals which aspects receive emphasis and which context is omitted.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1904,6 +1920,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1930,6 +1947,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

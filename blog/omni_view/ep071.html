@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1268,6 +1280,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="omni-view-omniview-briefing">Omni View — Omni‑View Briefing</h2>
 <p><em>A new Israel-Lebanon ceasefire takes hold even as Israel continues operations in southern Lebanon, testing whether the agreement can hold amid broader regional talks.</em></p>
 <h3 id="top-stories-5">Top stories (5)</h3>
@@ -1393,6 +1407,8 @@
 <p>Most coverage of large political donations assumes the public instantly knows who is funding which party and why. In the UK, parties must report donations above a certain threshold to the Electoral Commission within set timeframes, after which the information becomes public. The system relies on self-reporting by parties rather than real-time independent verification, and cryptocurrency donations are treated under the same rules as other contributions once converted to pounds. Knowing this, when you hear claims about “record fundraising,” you can check whether the totals reflect many small donors or a few large ones by reviewing the commission’s published registers. Next time you see a headline about party funding, ask: what is the disclosure threshold, when will the next report appear, and does the source separate one-off gifts from recurring support?</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference donation figures with the Electoral Commission’s primary database rather than secondary summaries. Compare coverage across outlets with different editorial priorities to see which details each emphasizes. Primary documents such as official statements and regulatory filings remain the clearest starting point for verifying claims.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1901,6 +1917,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1927,6 +1944,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

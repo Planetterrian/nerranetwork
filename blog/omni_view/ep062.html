@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1288,6 +1300,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="omni-view-omniview-briefing">Omni View — Omni‑View Briefing</h2>
 <p><em>Escalating Israeli strikes in Lebanon and the killing of a militant leader are intensifying Middle East fighting, threatening civilian safety and pushing energy costs higher for households.</em></p>
 <h3 id="top-stories-5">Top stories (5)</h3>
@@ -1498,6 +1512,8 @@
 <p>Most coverage of targeted strikes presents them as straightforward security decisions, yet the timing and wording of announcements follow deliberate patterns shaped by legal, diplomatic and domestic considerations. Governments typically release statements through defence ministries or senior officials to establish a clear narrative of responsibility and intent, often using specific phrasing that signals both resolve and legal justification under self-defence claims. Historical parallels show that such public messaging can serve to deter further action by adversaries while also managing alliances and domestic opinion. Knowing this, when you hear claims about the immediacy or necessity of a strike, you can evaluate whether the announcement aligns with standard signalling practices or appears aimed at a particular audience. Next time you see a headline about an elimination or strike, ask: who benefits from the timing of the disclosure, what legal language is used, and how does the statement compare with previous announcements from the same actor?</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference casualty figures and strike details across multiple outlets rather than relying on any single report. Primary documents such as official statements from defence ministries or UN records provide the clearest baseline before interpretations are added. Checking the date and sourcing of each claim helps separate confirmed events from ongoing disputes.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -2047,6 +2063,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -2073,6 +2090,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

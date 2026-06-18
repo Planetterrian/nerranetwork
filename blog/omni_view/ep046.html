@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1279,6 +1291,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="omni-view-omniview-briefing">Omni View — Omni‑View Briefing</h2>
 <p><em>Iran's Revolutionary Guards have threatened US sites in the Middle East if its tankers face attack, as Washington awaits Tehran's reply on a proposed peace deal.</em></p>
 <h3 id="top-stories-5">Top stories (5)</h3>
@@ -1471,6 +1485,8 @@
 <p>Most coverage of security threats from state-linked forces treats public warnings as straightforward declarations of imminent action. In practice, such statements often serve as calibrated messages within ongoing negotiations, where the goal is to influence the other side's calculations without crossing into direct confrontation. Revolutionary Guard announcements, like those issued this week, follow a pattern seen in other nations' military or security institutions: they establish red lines, test resolve, and create space for back-channel talks. Knowing this, when you hear claims of inevitable escalation, you can evaluate whether the language matches historical precedents for posturing versus actual mobilization indicators such as troop movements or asset repositioning. Next time you see a headline about a security force threat, ask: who is the intended audience, what leverage does the statement aim to preserve, and what verifiable actions accompany the words?</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference claims about international threats against official government releases and multiple independent wire services rather than relying on any single outlet. Primary documents such as statements from the Revolutionary Guards or US State Department briefings provide clearer context than secondary interpretations. Checking timelines of confirmed incidents against reported warnings helps distinguish between rhetoric and documented developments.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1974,6 +1990,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -2000,6 +2017,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

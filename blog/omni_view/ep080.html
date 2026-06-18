@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1268,6 +1280,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="omni-view-omniview-briefing">Omni View — Omni‑View Briefing</h2>
 <p><em>The United States has directed a leading AI firm to block foreign nationals from its most advanced models, underscoring how national security rules are reshaping global technology access.</em></p>
 <h3 id="top-stories-5">Top stories (5)</h3>
@@ -1384,6 +1398,8 @@
 <p>Most coverage of technology restrictions treats them as simple on-off switches, yet the process involves layered licensing, technical definitions, and ongoing compliance monitoring. When the US government issues an export control directive to a company like Anthropic, officials first classify the specific models under existing regulations, then require the firm to implement user verification and access blocks that can be audited. Companies must update their systems, document compliance, and sometimes redesign features to prevent circumvention, all while continuing to serve domestic users. This mechanism draws on decades of precedent with semiconductor and encryption controls, where definitions of “sensitive” capabilities evolve with each generation of hardware or software. Knowing this, when you hear claims that a ban is either total or easily bypassed, you can evaluate whether the reporting accounts for the administrative steps companies must complete and the enforcement tools available to regulators. Next time you see a headline about AI export rules, ask: which agency issued the classification, what technical thresholds triggered it, and how the company is required to demonstrate compliance over time.</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-reference official government announcements with company statements when restrictions on technology are reported. Primary documents such as court rulings or regulatory directives often clarify scope more precisely than secondary summaries. Checking multiple jurisdictions’ approaches to the same technology can reveal where enforcement practices diverge.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1959,6 +1975,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1985,6 +2002,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1283,6 +1295,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="omni-view-omniview-briefing">Omni View — Omni‑View Briefing</h2>
 <p><em>President Trump is reviewing a new peace proposal from Iran but doubts it will be acceptable since Tehran has not paid a big enough price.</em></p>
 <h3 id="top-stories-5">Top stories (5)</h3>
@@ -1493,6 +1507,8 @@
 <p>Most coverage of the latest Iran peace proposal frames it as a direct offer to the United States, but here's what's actually happening behind the scenes: intermediaries like Pakistan play a key role in transmitting and facilitating the exchange. In international diplomacy, third-party mediators allow adversaries to exchange ideas without immediate face-to-face meetings that could be seen as concessions. The mediator's role includes ensuring the proposal reaches the right officials, in this case leading to President Trump's review. Historical examples, such as Norway's role in past Middle East talks, show how intermediaries can sustain dialogue during tense periods. This mechanism means that public statements, like Trump's doubt about the plan's acceptability, are often calibrated responses after internal analysis by advisors and intelligence teams. Knowing this, when you hear a leader express doubt about a plan's acceptability, it can be seen as part of an iterative negotiation rather than a closed door. Next time you see a headline about a new peace plan, ask: What is the role of the mediator, and how does it affect the credibility of the proposal? What verification processes are in place?</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>To gain a fuller picture of international developments, it is useful to compare reports from outlets in different countries with official government statements. Primary sources, such as transcripts of press conferences or released proposal summaries, can clarify details that media summaries may omit. This approach encourages readers to form their own views based on a range of evidence.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -2089,6 +2105,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -2115,6 +2132,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

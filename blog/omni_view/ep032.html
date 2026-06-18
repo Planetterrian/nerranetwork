@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1263,6 +1275,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Rory McIlroy wins back-to-back Masters in thrilling Augusta finale as Trump announces Strait of Hormuz blockade sending oil above $100.</em></p>
 <h3 id="top-stories-5">Top stories (5)</h3>
 <h4 id="1-rory-mcilroy-wins-second-straight-masters">1) Rory McIlroy wins second straight Masters</h4>
@@ -1410,6 +1424,8 @@
 <p>Next time you see a headline about the Strait of Hormuz, ask: Who benefits from higher prices or from resolved uncertainty? What's the difference between physical blockade and market signaling? What's the historical precedent for how these situations typically resolve? Who controls the insurance markets and shipping companies that ultimately decide whether tankers sail?</p>
 <h3 id="media-literacy-note">Media-literacy note</h3>
 <p>Cross-check breaking news on fast-moving stories like the Hormuz situation by reading both financial outlets (Bloomberg, BBC) and regional sources (Guardian live blogs, Al Jazeera) rather than relying on any single perspective. Primary documents such as official statements from CENTCOM or Iranian negotiators often contain important nuances that get simplified in headlines. Remember that market reactions can precede verified facts, so look for what is confirmed versus what is anticipated. When sources conflict on causation or intent, focus first on the agreed-upon timeline of events before weighing competing interpretations.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -2043,6 +2059,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -2069,6 +2086,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
