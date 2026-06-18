@@ -475,9 +475,10 @@ class YouTubeConfig:
     #               without paying for long-form re-rendering.
     image_provider: str = "pexels"
     # ``grok-imagine-image`` ($0.02/image, 300 req/min) is the safe
-    # default. ``grok-imagine-image-pro`` ($0.07/image, 30 req/min)
-    # is the higher-quality tier — use only on a show flagged for
-    # quality emphasis since it's 3.5× the cost.
+    # default for new shows. ``grok-imagine-image-quality`` ($0.05/image,
+    # 300 req/min; released 2026-04-03, supersedes the old
+    # ``grok-imagine-image-pro`` id) is the higher-quality tier the
+    # YouTube-image shows opt into via their YAML.
     grok_image_model: str = "grok-imagine-image"
     # Optional one-line tone descriptor injected into every Grok prompt.
     # Defaults to a generic photojournalism cue; shows can override

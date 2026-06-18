@@ -8,10 +8,11 @@ opt-in via each show's ``youtube.image_provider`` config knob:
                 Shorts via Grok Imagine, prompted from the day's hook
   ``hybrid``  — Pexels for long-form, Grok for Shorts (cheaper test)
 
-Pricing (verified May 2026, see CLAUDE.md landmine on this rollout):
+Pricing (verified against xAI docs, June 2026 — see CLAUDE.md landmine):
 
-  ``grok-imagine-image``       $0.02 / image  (300 req/min)
-  ``grok-imagine-image-pro``   $0.07 / image  ( 30 req/min)
+  ``grok-imagine-image``           $0.02 / image  (300 req/min, alias …-2026-03-02)
+  ``grok-imagine-image-quality``   $0.05 / image  (300 req/min, released 2026-04-03;
+                                   ``grok-imagine-image-pro`` is now an alias of it)
 
 At 8 images per format × 2 formats × ~52 episodes/month for Tesla + MAB
 (the only YouTube-enabled shows) the standard model lands at ~$17/mo.
@@ -60,10 +61,16 @@ DEFAULT_TIMEOUT_S = 60
 # flips between standard and pro.
 MODEL_COST_USD = {
     "grok-imagine-image": 0.02,
-    "grok-imagine-image-pro": 0.07,
+    # Higher-quality tier (released 2026-04-03). xAI made the old
+    # "-pro" id an alias of "-quality" and dropped the price 0.07 -> 0.05
+    # at the higher 300 req/min rate.
+    "grok-imagine-image-quality": 0.05,
+    "grok-imagine-image-quality-latest": 0.05,
+    "grok-imagine-image-pro": 0.05,
     # Aliases the operator might type in YAML.
     "grok-imagine-standard": 0.02,
-    "grok-imagine-pro": 0.07,
+    "grok-imagine-quality": 0.05,
+    "grok-imagine-pro": 0.05,
 }
 
 
