@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1227,6 +1239,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Artemis 2 astronauts have successfully repaired their toilet during the first crewed lunar mission in over 50 years.</em></p>
 <h4 id="top-15-space-astronomy-stories">Top 15 Space & Astronomy Stories</h4>
 <ol>
@@ -1281,6 +1295,8 @@
 <p>The temperatures involved reached trillions of degrees, and the timescales were measured in tiny fractions of a second. Yet the idea remains strangely elegant: black holes born in the first moments of cosmic history could have left their fingerprints on everything that followed.</p>
 <p>What keeps physicists up at night is figuring out exactly how many of these primordial black holes existed and whether their explosions left observable traces we could still detect in the cosmic microwave background or the abundance of light elements.</p>
 <p>What a day for space fans — from practical plumbing fixes on the way to the Moon to new clues about how planets and the universe itself took shape. Clear skies and keep looking up.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1775,6 +1791,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1801,6 +1818,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

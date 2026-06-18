@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1229,6 +1241,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="fascinating-frontiers">Fascinating Frontiers</h2>
 <p><strong>Date:</strong> May 02, 2026</p>
 <p>🚀 <strong>Fascinating Frontiers</strong> - Space & Astronomy News</p>
@@ -1278,6 +1292,8 @@
 <h4 id="cosmic-deep-dive-how-laser-communications-transmit-data-from-space">Cosmic Deep Dive: How Laser Communications Transmit Data from Space</h4>
 <p>If the distance from Earth to the Moon were scaled down to one kilometer, a laser communication beam would still need to hit a receiver the size of a small coin while both ends move at orbital speeds. The process begins when a spacecraft's laser terminal modulates data onto a narrow beam of light, which then travels through space at 300,000 kilometers per second to reach a ground-based telescope. This method allows for data rates high enough to support live high-definition video streams, far surpassing the capabilities of radio frequency systems used in earlier missions. During Artemis II, the laser terminal made it possible for millions of people to watch detailed footage of the crew's journey around the Moon. Alignment must be maintained with extreme accuracy, often using advanced tracking systems to account for the spacecraft's motion and any atmospheric effects on the final leg of the journey. Despite these engineering feats, one lingering question is how to ensure reliable performance when the line of sight passes close to the Sun, where interference could disrupt the signal.</p>
 <p>Innovation in propulsion and communications is opening new doors for exploration, while global partnerships grow stronger.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1830,6 +1846,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1856,6 +1873,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

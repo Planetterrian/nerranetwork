@@ -796,6 +796,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1293,6 +1305,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="fascinating-frontiers">Fascinating Frontiers</h2>
 <p>🚀 <strong>Fascinating Frontiers</strong> - Space & Astronomy News</p>
 <p><em>Tiny red dots scattered across the early universe have turned out to be black holes cloaked in dense gas.</em></p>
@@ -1338,6 +1352,8 @@
 <p>If Earth rotated as slowly as Venus, a single day would last 243 of our years, stretching sunrise to sunset across more than two centuries. On Venus the surface itself creeps eastward at only a few kilometres per hour, so a walker moving westward at 6.5 km/h can stay exactly beneath the setting Sun. That speed is roughly the pace of a brisk human stroll on Earth, yet it matches an entire planetary rotation. The geometry works because Venus’s thick atmosphere and rocky crust turn together, letting the walker keep the terminator fixed without fighting winds. We can watch the same principle in fast-forward during a lunar eclipse when Earth’s shadow creeps across the Moon at a few kilometres per second. No one yet knows whether Venus has always spun this slowly or whether a single ancient collision flipped and braked it into the present state.</p>
 <hr>
 <p>New observations keep reshaping how we read the sky’s oldest signals.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1925,6 +1941,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1951,6 +1968,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

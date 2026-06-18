@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1229,6 +1241,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="fascinating-frontiers">Fascinating Frontiers</h2>
 <p>🚀 <strong>Fascinating Frontiers</strong> - Space & Astronomy News</p>
 <p><em>ESA and JAXA have formalized a joint mission to study asteroid Apophis ahead of its close 2029 flyby.</em></p>
@@ -1264,6 +1278,8 @@
 <p>If Pluto were scaled to the size of a grapefruit, this newly observed body would be no larger than a lemon, yet it still supports a detectable gaseous envelope. Gravity on such a small object is weak, so any gas molecules should quickly reach escape velocity and drift away into the vacuum. Instead, the atmosphere appears replenished by slow sublimation from surface ices that have remained cold enough over billions of years to trap volatiles. Temperatures hover near 40 kelvin, where even trace amounts of nitrogen or methane can linger in equilibrium between solid and gas phases. The exact balance between escape and replenishment remains unclear, leaving astronomers wondering which internal heat source or seasonal cycle keeps the layer intact when similar objects show none at all.</p>
 <hr>
 <p>New missions and fresh data keep expanding what we can measure beyond Earth.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1774,6 +1790,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1800,6 +1817,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

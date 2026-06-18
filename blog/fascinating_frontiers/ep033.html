@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1227,6 +1239,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="fascinating-frontiers">Fascinating Frontiers</h2>
 <p><strong>Date:</strong> February 27, 2026</p>
 <p>🚀 <strong>Fascinating Frontiers</strong> - Space & Astronomy News</p>
@@ -1282,6 +1296,8 @@
 <h4 id="cosmic-spotlight">Cosmic Spotlight</h4>
 <p>NASA's overhaul of the Artemis program stands out today, as it cancels the Artemis 3 landing while adding a 2027 mission to lay essential groundwork. By standardizing vehicles and focusing on preparatory steps, this shift acknowledges past delays and aims for a more feasible path to sustainable lunar exploration. It reveals the challenges of ambitious timelines but opens doors to refined strategies that could accelerate overall progress. What do you think this means for the future of human spaceflight?</p>
 <p>Today's stories highlight how space agencies are adapting to realities while uncovering cosmic clues from planets to ancient impacts. Let's keep exploring what the universe reveals next.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1803,6 +1819,7 @@ That's Fascinating Frontiers for today. If you enjoyed this episode, a rating or
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1829,6 +1846,14 @@ That's Fascinating Frontiers for today. If you enjoyed this episode, a rating or
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

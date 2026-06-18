@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1229,6 +1241,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="fascinating-frontiers">Fascinating Frontiers</h2>
 <p><strong>Date:</strong> April 28, 2026</p>
 <p>🚀 <strong>Fascinating Frontiers</strong> - Space & Astronomy News</p>
@@ -1285,6 +1299,8 @@
 <h4 id="cosmic-deep-dive-how-decaying-dark-matter-could-seed-supermassive-black-holes">Cosmic Deep Dive: How Decaying Dark Matter Could Seed Supermassive Black Holes</h4>
 <p>If you compressed all the dark matter in a typical galaxy into a volume the size of our Solar System, its total mass would still outweigh everything visible by a factor of five. Here's what would actually happen if a fraction of that invisible scaffolding began to decay: streams of energetic particles would pour into the hearts of newborn galaxies, heating and compressing the gas clouds that would otherwise take far longer to collapse. Imagine riding alongside one of those decay products racing at nearly the speed of light; within a few hundred million years it could dump enough energy to trigger runaway accretion onto the first generation of black holes, letting them balloon to millions of solar masses while the universe was still less than a billion years old. The mechanism relies on a specific decay timescale — roughly 10^25 years for some proposed dark-matter candidates — that neatly matches the window when JWST sees these unexpectedly massive objects already in place. Yet we still don't know the exact particle properties that would produce exactly the right amount of energy without erasing other cosmological signals we already trust. We can model the gravitational ripples it leaves behind, but nobody yet knows whether this exotic decay truly happened or if we're still missing an even stranger piece of the puzzle.</p>
 <p>Today's digest blends fresh mission updates with surprising discoveries that keep rewriting our cosmic storybook. Clear skies and curious minds.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1875,6 +1891,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1901,6 +1918,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

@@ -796,6 +796,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1293,6 +1305,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="fascinating-frontiers">Fascinating Frontiers</h2>
 <p>🚀 <strong>Fascinating Frontiers</strong> - Space & Astronomy News</p>
 <p><em>Chandra spots possible supernova remains surprisingly close to the Milky Way’s central black hole.</em></p>
@@ -1338,6 +1352,8 @@
 <p>A single neutrino could cross a block of lead one light-year thick and emerge on the other side with barely any chance of interacting. These ghostly particles interact only through the weak force and gravity, so ordinary matter presents almost no obstacle. In the Sun’s core, trillions of neutrinos stream outward every second; on Earth we detect only a handful per cubic centimeter each second despite the flood passing through our bodies. Detectors like IceCube bury thousands of photomultiplier tubes deep in Antarctic ice to catch the rare flashes produced when a neutrino finally does collide with an atom. The same elusive nature that makes them hard to catch also lets them carry undistorted information from the most violent cosmic events across billions of light-years. Yet physicists still cannot explain why neutrinos have any mass at all, or why their three flavors oscillate in ways that challenge the simplest versions of the Standard Model.</p>
 <hr>
 <p>Another day of steady mission cadence and fresh data arriving from across the solar system and beyond.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1905,6 +1921,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1931,6 +1948,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

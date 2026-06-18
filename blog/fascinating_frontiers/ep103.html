@@ -796,6 +796,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1293,6 +1305,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="fascinating-frontiers">Fascinating Frontiers</h2>
 <p>🚀 <strong>Fascinating Frontiers</strong> - Space & Astronomy News</p>
 <p><em>China's Tianwen-2 probe is executing a string of fine burns to reach its target asteroid next month.</em></p>
@@ -1338,6 +1352,8 @@
 <p>If the Sun were scaled to the size of a basketball in Vancouver, the asteroid belt would lie roughly as far away as a single grain of sand on a beach in Halifax. Tianwen-2’s recent burns illustrate how spacecraft reach such tiny targets across hundreds of millions of kilometres. A main engine firing first drops the probe onto an intercept trajectory, after which a series of much smaller thruster pulses—each lasting only seconds—correct for tiny errors in position and velocity. These adjustments are measured by radio signals that travel at the speed of light and return with timing precision measured in microseconds. The final approach must occur within a window measured in tens of kilometres, otherwise the relative speed will carry the spacecraft past its target forever. Scientists still cannot predict exactly how much residual propellant will remain after the last correction, leaving open the question of whether future missions can safely attempt a second rendezvous if the first attempt is missed.</p>
 <hr>
 <p>New data from multiple missions continue to refine our picture of both nearby and distant worlds.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1935,6 +1951,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1961,6 +1978,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1229,6 +1241,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="fascinating-frontiers">Fascinating Frontiers</h2>
 <p>🚀 <strong>Fascinating Frontiers</strong> - Space & Astronomy News</p>
 <p><em>Two space agencies just finalized plans to study an asteroid that will skim Earth in 2029, offering a rare close-up of a potentially hazardous object.</em></p>
@@ -1268,6 +1282,8 @@
 <p>If the Milky Way were scaled to the size of North America, most stars would sit within a few city blocks of each other while the sparse outer regions would stretch across entire provinces. An interstellar comet begins its journey in one of those thinly populated zones, where gravitational nudges from passing stars or the galaxy’s overall rotation slowly alter its path over millions of years. It then coasts through the vast emptiness between stellar neighborhoods at speeds around 30 kilometres per second relative to our Sun. When it finally enters the inner solar system, its trajectory becomes a precise record of every gravitational encounter it experienced along the way. Yet astronomers still cannot explain why some of these visitors show unexpected activity, such as sudden brightening or fragmentation, at distances where sunlight should be too weak to drive such changes.</p>
 <hr>
 <p>Fresh data on asteroids, galaxies, and biological experiments in orbit keeps the week’s discoveries grounded in real measurements rather than speculation.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1764,6 +1780,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1790,6 +1807,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

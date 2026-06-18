@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1229,6 +1241,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="fascinating-frontiers">Fascinating Frontiers</h2>
 <p><strong>Date:</strong> April 20, 2026</p>
 <p>🚀 <strong>Fascinating Frontiers</strong> - Space & Astronomy News</p>
@@ -1285,6 +1299,8 @@
 <h4 id="cosmic-deep-dive-how-three-body-systems-stay-stable">Cosmic Deep Dive: How Three-Body Systems Stay Stable</h4>
 <p>If you tried to predict the motion of three stars orbiting one another using simple math, you would hit a wall that has puzzled scientists for centuries. Unlike two-body systems where orbits are neat ellipses that repeat forever, three bodies create chaotic dances where tiny differences in starting position can send objects flying apart or crashing together after thousands of years. Imagine dropping three magnets near each other on a table; sometimes they settle into a rhythm, sometimes one shoots away, and the outcome can flip with the slightest nudge. In the case of the newly studied exoplanet system, hidden gravitational resonances and temporary stable configurations called “islands of stability” appear to be keeping the planets from being ejected despite the three stars tugging in constantly changing directions. These resonances act like invisible scaffolding, locking the system into repeating patterns over millions of years even though the individual orbits never exactly repeat. One particularly surprising detail is that some three-body exoplanet systems have been found stable on timescales longer than 100 million years, far beyond what early computer models predicted. Yet we still don’t fully understand why certain configurations survive while nearly identical ones fly apart almost immediately. The specific arrangement of masses and distances that allows long-term survival remains one of the deepest open questions in celestial mechanics.</p>
 <p>Today's digest shows how quickly new observatories, international partnerships, and ambitious lunar plans are reshaping our reach into space. Keep looking up.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1829,6 +1845,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1855,6 +1872,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

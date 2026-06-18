@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1234,6 +1246,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="fascinating-frontiers">Fascinating Frontiers</h2>
 <p>🚀 <strong>Fascinating Frontiers</strong> - Space & Astronomy News</p>
 <p><em>A meteorite from the Sahara holds the first direct traces of a lost moon-size world that formed just after the solar system began.</em></p>
@@ -1279,6 +1293,8 @@
 <p>If Earth’s gravity were scaled down to that of a 10-kilometer asteroid, a person could jump off the surface and never return. On such tiny worlds the weak pull allows loose grains to sit almost weightless, so even gentle vibrations or micrometeorite impacts can make the top layer expand like foam. Experiments in a 100-meter drop tower showed that the same dry powder used to simulate asteroid dirt increased in volume by more than 30 percent once free-fall removed its weight. That extra fluff changes how a spacecraft footpad sinks or how a drill bit grips the surface. Yet no one has measured the exact porosity of the uppermost centimeters on any visited asteroid, leaving open the question of whether real surfaces are even lighter than the lab results suggest.</p>
 <hr>
 <p>Another day of steady progress across multiple missions and fresh clues from ancient rocks.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1804,6 +1820,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1830,6 +1847,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

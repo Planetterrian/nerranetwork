@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1227,6 +1239,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>NASA's SPHEREx has mapped vast "interstellar glaciers" of ice stretching more than 600 light-years across the Milky Way.</em></p>
 <h4 id="top-15-space-astronomy-stories">Top 15 Space & Astronomy Stories</h4>
 <ol>
@@ -1281,6 +1295,8 @@
 <p>Smaller stars like our Sun never reach the core densities required for this dramatic rebound. Instead, they swell into red giants, gently puffing their outer atmospheres into space over thousands of years before leaving behind a white dwarf.</p>
 <p>We can watch these explosions across the universe and model the physics with powerful computers, yet one specific mystery remains: exactly how the neutrino-driven shockwave manages to revive and explode in every direction instead of stalling in some cases. That precise mechanism still keeps astrophysicists awake at night.</p>
 <p>Today's lineup shows how quickly our view of the cosmos is sharpening, from ancient ices in distant clouds to the next steps on the Moon. Keep looking up.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1802,6 +1818,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1828,6 +1845,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

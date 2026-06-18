@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1234,6 +1246,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="fascinating-frontiers">Fascinating Frontiers</h2>
 <p>🚀 <strong>Fascinating Frontiers</strong> - Space & Astronomy News</p>
 <p><em>NASA is ordering the first rovers, landers and drones to build a Moon base spanning hundreds of square miles.</em></p>
@@ -1273,6 +1287,8 @@
 <p>If you could stretch a single distant galaxy’s light across an entire foreground cluster, the magnification would reach factors of dozens or even hundreds. That is exactly what happens when a massive galaxy cluster lies between us and a faraway object: its gravity warps spacetime and bends light rays like a giant lens. Light from LAP1-B traveled 13 billion years and was bent into multiple bright arcs that JWST could resolve. The same geometry also stretches the apparent size of the background source, turning an otherwise undetectable smudge into a target for spectroscopy. One lingering puzzle is why some of the most magnified systems still appear chemically simpler than models predict; no one yet knows whether that reflects true early-universe conditions or selection effects in which objects get strongly lensed.</p>
 <hr>
 <p>Moon base hardware and early-universe galaxies both moved forward today.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1764,6 +1780,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1790,6 +1807,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

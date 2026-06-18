@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1234,6 +1246,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="fascinating-frontiers">Fascinating Frontiers</h2>
 <p>🚀 <strong>Fascinating Frontiers</strong> - Space & Astronomy News</p>
 <p><em>A lunar meteorite recovered from the Sahara carries chemical traces of a 3.5-billion-year-old impact that struck the Moon, Earth, and asteroids at the same time.</em></p>
@@ -1279,6 +1293,8 @@
 <p>If you stacked every Sentinel-1 radar image of Earth taken in a single year, the stack would be taller than Mount Everest yet still miss nothing on the surface. The satellite sends radio pulses downward and records the strength and timing of the echo that bounces back, a process that works day or night and through clouds. In the Buenos Aires composite, January data were assigned blue, March green, and May red; any patch that changed between acquisitions lights up in the resulting colour mix. Agricultural fields therefore shift from green to red as crops grow and then dry, while the city stays grey because buildings do not move. The same technique can measure millimetre-scale ground motion after earthquakes or track the slow advance of glaciers. The remaining puzzle is how to separate the signal of vegetation growth from the signal of changing soil moisture when both occur at once.</p>
 <hr>
 <p>New data keep arriving from every direction.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1676,6 +1692,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1702,6 +1719,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

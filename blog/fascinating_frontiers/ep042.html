@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1229,6 +1241,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="fascinating-frontiers">Fascinating Frontiers</h2>
 <p><strong>Date:</strong> March 20, 2026</p>
 <p>🚀 <strong>Fascinating Frontiers</strong> - Space & Astronomy News</p>
@@ -1283,6 +1297,8 @@
 <h4 id="cosmic-deep-dive-gamma-ray-burst-echoes">Cosmic Deep Dive: Gamma-Ray Burst Echoes</h4>
 <p>If you could compress the Sun's mass into a sphere the size of a small city, you'd have a neutron star — yet here we're talking about explosions that briefly outshine entire galaxies. When a massive star collapses or two neutron stars merge, the resulting gamma-ray burst releases energy across the electromagnetic spectrum in a matter of seconds. Imagine riding alongside one of those high-energy photons as it races outward at 300,000 kilometres per second, slamming into surrounding gas and dust. That collision creates the "echo" we eventually detect, often days or weeks later, as lower-energy light. These echoes can reveal details about the burst's environment that the initial flash itself hides. The surprising part is how much energy gets reradiated at wavelengths our telescopes can actually catch from billions of light-years away. Yet one mystery remains: we still don't fully understand exactly how the central engine converts so much gravitational energy into such tightly focused jets.</p>
 <p>Today's space stories show how quickly our view of the sky is changing, from new ways to fly astronauts to fresh eyes on both near-Earth rocks and distant explosions. Keep looking up.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1779,6 +1795,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1805,6 +1822,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

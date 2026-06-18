@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1227,6 +1239,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Hubble has caught a tiny comet slowing its spin and then reversing direction entirely.</em></p>
 <h4 id="top-15-space-astronomy-stories">Top 15 Space & Astronomy Stories</h4>
 <ol>
@@ -1279,6 +1293,8 @@
 <h4 id="cosmic-deep-dive-measuring-the-universes-expansion">Cosmic Deep Dive: Measuring the Universe's Expansion</h4>
 <p>If you stretched the observable universe to the size of Canada, the difference between competing measurements of its expansion rate would equal the distance between Toronto and Ottawa. The Hubble constant tells us how fast space itself is growing, yet two main ways of calculating it keep giving stubbornly different answers. One method uses the cosmic microwave background from the early universe, while the other relies on nearby supernovae and galaxies whose distances we can measure directly. Imagine trying to guess the speed of a river by looking at its source 13 billion years ago versus watching the water flow right beside you today. Gravitational waves from colliding neutron stars now offer a third, completely independent ruler that travels at the speed of light across billions of light-years without being bent by intervening matter. Each new technique seems to sharpen the mystery instead of solving it. We can measure the universe expanding in exquisite detail, yet we still don’t know why our two best numbers refuse to agree.</p>
 <p>Today's edition is packed with fresh discoveries and missions that keep pushing our understanding further outward. Keep looking up.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1777,6 +1793,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1803,6 +1820,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

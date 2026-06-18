@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1227,6 +1239,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>A Falcon Heavy is rolling toward the pad for its first launch in 18 months while Europe prepares Ariane 6’s second flight with four boosters.</em></p>
 <h4 id="top-15-space-astronomy-stories">Top 15 Space & Astronomy Stories</h4>
 <ol>
@@ -1307,6 +1321,8 @@
 <p>If you could line up every rocket ever launched nose-to-tail they would stretch to the Moon and back more than twice, yet only a handful ever get to touch another world again. Here’s what actually happens when a Falcon 9 upper stage, after delivering its payload, is nudged onto a long, looping path that ends in a deliberate crash into the lunar farside at roughly 2.5 kilometres per second. The impact releases energy equivalent to a few hundred kilograms of TNT, sending pressure waves rippling through solid rock that seismometers placed by earlier landers can detect from hundreds of kilometres away. Because we know the exact mass, speed, and impact angle of the “artificial meteor,” each flash and rumble becomes a precisely calibrated probe of the Moon’s crust and mantle.</p>
 <p>The really wild part is that the Moon rings like a bell for up to an hour after even a modest strike, revealing layering we still don’t fully understand. We can watch the flash from orbit, measure the seismic coda from the surface, and compare both to computer models, yet one specific mystery refuses to yield: why do some lunar impact sites show unexpectedly deep fracturing while others appear to “heal” far faster than rock physics predicts? That single unanswered detail sits at the heart of how the Moon’s interior has evolved over billions of years.</p>
 <p>Today’s sky is full of real hardware on the move and quiet science still unfolding light-years away. Clear skies, everyone.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1889,6 +1905,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1915,6 +1932,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1227,6 +1239,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>NASA’s Nancy Grace Roman Space Telescope has completed final assembly and is on track for September launch.</em></p>
 <h4 id="top-15-space-astronomy-stories">Top 15 Space & Astronomy Stories</h4>
 <ol>
@@ -1305,6 +1319,8 @@
 <h4 id="cosmic-deep-dive-how-stellar-flares-reshape-habitable-zones">Cosmic Deep Dive: How Stellar Flares Reshape Habitable Zones</h4>
 <p>If you shrunk our Sun to the size of a grapefruit, an average red dwarf would be a grape sitting just across the street—yet its flares can outshine the star itself by factors of hundreds in ultraviolet light. Imagine riding along on a small rocky planet tucked inside that star’s traditional liquid-water zone; every few days a sudden magnetic reconnection in the star’s atmosphere unleashes a torrent of energetic particles and UV photons that can strip away an atmosphere in geological instants. These outbursts also drive complex photochemistry, splitting water molecules and creating oxygen and ozone even in places that would otherwise stay frozen. Surprisingly, some models show the repeated flare energy could push the outer edge of the UV habitable zone outward by tens of percent around M-stars that live for trillions of years. The mechanism is so violent it sounds like science fiction, yet we watch it happen on Proxima Centauri and TRAPPIST-1 with current telescopes. The genuine mystery is whether life could evolve fast enough to survive the sterilizing bursts, or whether it learns to hide beneath protective ice or rock while the surface chemistry cooks.</p>
 <p>Today’s digest shows how commercial, government, and citizen efforts keep pushing our reach farther outward. Keep looking up—there’s always more to discover.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1835,6 +1851,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1861,6 +1878,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1234,6 +1246,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="fascinating-frontiers">Fascinating Frontiers</h2>
 <p>🚀 <strong>Fascinating Frontiers</strong> - Space & Astronomy News</p>
 <p><em>SpaceX just flew its largest Starship yet on a test that ended with a controlled splashdown halfway around the world.</em></p>
@@ -1273,6 +1287,8 @@
 <p>If you scaled a typical reentry speed to everyday distances, a spacecraft would cross the length of a football field in less than a millisecond while the air in front of it is compressed to temperatures above 1,600 °C. The shield does not try to absorb that heat; instead it sheds most of it by ionizing the air into a plasma that carries energy away from the vehicle. Starship’s tiles must withstand not only the temperature spike but also the mechanical stress of a banking turn at hypersonic speeds, where even small gaps can let superheated gas reach the underlying structure. Engineers still cannot predict exactly how the tiles will erode after dozens of flights because the interaction between material microstructure, plasma chemistry, and vibration remains only partly modeled. The open question is whether any current tile formulation can survive the cumulative damage of repeated high-energy entries without requiring replacement after every mission.</p>
 <hr>
 <p>Starship’s first V3 flight delivered both progress and new data points for the next attempt.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1716,6 +1732,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1742,6 +1759,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1229,6 +1241,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="fascinating-frontiers">Fascinating Frontiers</h2>
 <p>🚀 <strong>Fascinating Frontiers</strong> - Space & Astronomy News</p>
 <p><em>JWST has directly examined the surface of a distant exoplanet for the first time.</em></p>
@@ -1260,6 +1274,8 @@
 <p>If the Sun were scaled to the size of a basketball, the thermosphere would still extend hundreds of kilometers outward during peak activity, enough to reach satellites that normally orbit in near-vacuum. Picture yourself riding alongside a spent rocket stage at 400 kilometers altitude as a surge in solar ultraviolet radiation heats the thin air below, causing it to balloon upward and create measurable friction on every pass. Over 36 years of records, researchers identified a clear threshold: once solar activity climbs past roughly 67 percent of cycle maximum, drag forces shorten orbital lifetimes dramatically. This process can lower a satellite’s altitude by tens of kilometers within weeks, far faster than gravitational perturbations or residual atmospheric density at solar minimum. The same expansion also increases collision risk for active spacecraft that must fire thrusters more often to stay in position. Yet the precise chain of energy transfer—from solar photons to atmospheric molecules to macroscopic drag—still contains gaps that models cannot fully close. We can forecast the overall effect, but the exact timing and strength of individual reentry events remain difficult to pin down.</p>
 <hr>
 <p>From exoplanet surfaces to solar-driven orbital shifts, the day’s updates show how new instruments and long datasets keep refining what we know about both distant worlds and our own orbital environment.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1780,6 +1796,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1806,6 +1823,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

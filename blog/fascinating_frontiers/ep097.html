@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1234,6 +1246,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="fascinating-frontiers">Fascinating Frontiers</h2>
 <p>🚀 <strong>Fascinating Frontiers</strong> - Space & Astronomy News</p>
 <p><em>A galactic wind driven by early-universe collisions is stripping star-forming fuel so fast it may explain why so many massive galaxies went dead.</em></p>
@@ -1279,6 +1293,8 @@
 <p>If the Milky Way were scaled to the size of a dinner plate, a typical early-universe galaxy collision would span a city block and release energy equivalent to billions of supernovae detonating at once. The resulting wind slams into surrounding gas at thousands of kilometers per second, sweeping up and heating material until it can no longer collapse into new stars. Telescopes have measured outflow speeds exceeding 1,000 km/s in galaxies seen when the universe was less than two billion years old. These winds can clear an entire galaxy’s reservoir of star-forming fuel in just a few tens of millions of years. Yet we still do not know exactly how much of the expelled gas falls back later versus escaping forever into intergalactic space.</p>
 <hr>
 <p>New instruments keep turning yesterday’s mysteries into tomorrow’s routine measurements.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1892,6 +1908,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1918,6 +1935,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1234,6 +1246,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="fascinating-frontiers">Fascinating Frontiers</h2>
 <p>🚀 <strong>Fascinating Frontiers</strong> - Space & Astronomy News</p>
 <p><em>NASA is shifting its Moon strategy from the Lunar Gateway toward a permanent surface base.</em></p>
@@ -1265,6 +1279,8 @@
 <p>If two telescopes sit a kilometer apart, they can together resolve details as sharply as a single dish that wide, turning modest hardware into an instrument the size of a city block. Light waves from a distant star or galaxy reach each telescope at slightly different times, and precise electronics measure those tiny delays before computers combine the signals into one high-resolution image. The technique demands keeping the path lengths matched to within a fraction of a wavelength, which is why space-based versions must control vibrations and temperature changes at the nanometer level. A baseline of just 100 meters already delivers resolution equivalent to reading a license plate from hundreds of kilometers away. Yet even with these gains, astronomers still cannot directly image the surfaces of most exoplanets because the required baselines would stretch across thousands of kilometers. How do we maintain perfect synchronization across such distances when the only reference is the faint starlight itself?</p>
 <hr>
 <p>New findings keep arriving from every corner of the solar system and beyond.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1713,6 +1729,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1739,6 +1756,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

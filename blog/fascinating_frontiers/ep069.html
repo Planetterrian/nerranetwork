@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1229,6 +1241,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="fascinating-frontiers">Fascinating Frontiers</h2>
 <p>🚀 <strong>Fascinating Frontiers</strong> - Space & Astronomy News</p>
 <p><em>A supernova caught mid-explosion in a spiral galaxy offers a rare window into stellar death at 50 million light-years away.</em></p>
@@ -1262,6 +1276,8 @@
 <p>Picture the International Space Station as a sealed room the size of a large house, yet every loose droplet inside behaves as though it were the only thing that matters. On Earth a milliliter of water collapses under its own weight into a puddle; in orbit the same volume is pulled inward from all directions by surface tension until it becomes a near-perfect sphere roughly the diameter of a grape. That sphere can grow or shrink simply by adding or removing tiny amounts of liquid because nothing is pressing it against a surface. Astronauts have measured these droplets reaching several centimeters across before they merge or split, all while floating at speeds matching the station’s 28,000 kilometers per hour around the planet. The same physics governs how fuel settles inside rocket tanks and how sweat behaves on an astronaut’s skin during a spacewalk. Yet researchers still cannot fully predict how trace contaminants or prolonged radiation exposure will change the surface tension of these droplets over the course of a six-month mission.</p>
 <hr>
 <p>New hardware and observations keep revealing how little we still understand about operating far from Earth.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1749,6 +1765,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1775,6 +1792,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
