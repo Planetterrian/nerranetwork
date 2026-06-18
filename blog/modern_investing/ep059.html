@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1238,6 +1250,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>SpaceX has no announced IPO, yet the mechanics of how retail investors actually access or approach any future listing are worth mastering now.</em></p>
 <hr>
 <h4 id="segment-1-the-open">Segment 1 — The Open</h4>
@@ -1252,6 +1266,8 @@
 <p>The strongest bull case for any high-profile listing rests on the possibility that early revenue traction and technological leadership translate into durable market share, yet historical base rates show many such companies later face margin compression or competitive response once public scrutiny increases. The bear case highlights the documented tendency of IPOs to underperform in the years after listing, driven by both initial over-optimism and the eventual release of locked-up shares. Private-market platforms carry their own frictions: accreditation requirements, high minimums, wide bid-ask spreads, and the risk that the platform itself faces liquidity or regulatory issues. Even if SpaceX eventually lists, the timing, pricing, and lock-up terms remain unknown, so any current exposure through indirect vehicles carries basis risk relative to a future public share price. Currency movements between CAD and USD add another layer of volatility for Canadian investors holding U.S. securities. None of these considerations constitute a prediction; they simply illustrate that the range of outcomes is wide and that past cohort performance offers only probabilistic guidance rather than certainty.</p>
 <h4 id="segment-6-the-takeaways">Segment 6 — The Takeaways</h4>
 <p>Rule one: treat any unannounced IPO as speculative and evaluate exposure routes on their actual accessibility and cost rather than anticipated future liquidity. Rule two: read the S-1 for revenue concentration, dilution mechanics, and lock-up size before considering any post-IPO purchase. Rule three: default to waiting several quarters after listing to observe trading behavior once insiders can sell. Rule four: apply the same account-type and position-sizing discipline used for any equity, recognizing that IPOs carry no special exemption from ordinary market risk. Watch for the next concrete filing of an S-1 by a company with meaningful private-market visibility; that document will provide the first verifiable data set on which to test the framework.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1677,6 +1693,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1703,6 +1720,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

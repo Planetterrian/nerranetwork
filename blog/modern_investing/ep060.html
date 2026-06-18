@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1238,6 +1250,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>SpaceX filed its S-1 on May 20 targeting a June 12 Nasdaq listing at roughly $1.8 trillion valuation; this episode gives retail investors a concrete plan across three time horizons.</em></p>
 <hr>
 <h4 id="segment-1-the-open">Segment 1 — The Open</h4>
@@ -1252,6 +1266,8 @@
 <p>Historical data on large IPOs shows that many names experience first-day gains followed by underperformance over the subsequent one to three years once lock-up supply arrives and fundamentals are tested in public reporting. The current research notes that some analysts view the valuation as aggressive relative to a sum-of-parts breakdown, while others highlight the optionality embedded in Starship economics and future businesses. Execution risk remains material because launch cadence, satellite deployment, and regulatory approvals for spectrum and orbital slots must continue at scale. Musk’s concentrated voting control reduces the ability of public shareholders to influence strategy, which can be viewed as either a strength or a governance concern depending on execution outcomes. Competition in satellite broadband from established and new entrants, plus the capital demands of both the launch and AI segments, could pressure margins even if Starlink grows. The base rate that IPOs tend to lag broad indices in the first few years after listing is well documented across multiple market cycles and should inform any position-size decision.</p>
 <h4 id="segment-6-the-takeaways">Segment 6 — The Takeaways</h4>
 <p>Pre-define separate entry and sizing rules for the first trading week, the lock-up expiry window, and the multi-year hold period rather than reacting to price action. Focus first on the quality and concentration of revenue and the path to sustainable free cash flow in the S-1 before considering valuation multiples. Treat any single-name growth stock as a satellite position whose size is capped by personal volatility tolerance and overall portfolio construction rules. Watch for amendments to the S-1 and broker announcements on retail access in the coming weeks, then compare those details against the three-horizon framework before taking any action.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1735,6 +1751,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1761,6 +1778,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

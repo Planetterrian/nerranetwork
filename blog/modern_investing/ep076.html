@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1228,6 +1240,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="modern-investing-techniques-weekly-recap-week-of-june-14-2026">Modern Investing Techniques — Weekly Recap (Week of June 14, 2026)</h2>
 <p>Hey, welcome to Modern Investing Techniques, episode 76. It's June 14, 2026 and I'm Patrick in Vancouver. Here's your daily market intelligence and today's practice trade.</p>
 <p>Quick reminder — everything we discuss here is for education and entertainment. The Practice Investment of the Day uses simulated trades with no real money. I'm not a licensed financial advisor and this isn't financial advice. Always do your own research before putting real money to work.</p>
@@ -1281,6 +1295,8 @@
 <p>The practical takeaway is to keep position sizes modest on catalyst-driven trades and to use volume confirmation before adding to any winner.</p>
 <p>That wraps up today's Modern Investing Techniques. Remember, every trade is a learning opportunity, win or lose. Subscribe, share with a friend who wants to invest smarter, and we'll see you tomorrow. And if you'd rather watch than listen, find us on YouTube at @NerraNetwork — link's in the show notes.</p>
 <p>And before you go — this show is part of the Nerra Network, a family of daily podcasts covering tech, science, markets, and more. If you enjoyed today's episode, give Models and Agents for Beginners a listen: artificial intelligence explained simply, for beginners and curious teens. You can explore the whole lineup at nerranetwork.com.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1914,6 +1930,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1940,6 +1957,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

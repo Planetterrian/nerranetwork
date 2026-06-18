@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1235,6 +1247,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="modern-investing-techniques">Modern Investing Techniques</h2>
 <p><strong>Date:</strong> April 14, 2026</p>
 <p>💰 <strong>Modern Investing Techniques</strong> — AI-Powered Daily Market Intelligence</p>
@@ -1306,6 +1320,8 @@
 <p>Beijing’s planned bond issuance could stabilize domestic liquidity; Canadian investors with China exposure should watch for follow-through strength in related ADRs and consider small tactical adds if yields compress.</p>
 <p>Source: <span class="cite"><a class="cite-pill" href="https://www.investing.com/news/economy-news/exclusivechina-finance-ministry-to-meet-underwriters-on-special-treasury-bond-issuance-plan-4611951" target="_blank" rel="noopener" aria-describedby="cite-card">investing.com</a><span class="cite-card" id="cite-card" role="tooltip">https://www.investing.com/news/economy-news/exclusivechina-finance-ministry-to-meet-underwriters-on-special-treasury-bond-issuance-plan-4611951</span></span></p>
 <p><strong>This briefing is for EDUCATIONAL and ENTERTAINMENT purposes only. Nothing discussed constitutes financial advice, investment recommendations, or solicitations to buy or sell securities. The "Practice Investment of the Day" uses SIMULATED trades with NO real money — it is a learning exercise to demonstrate analytical techniques. Past performance does not predict future results. Markets involve risk of loss. Always do your own research and consult a licensed financial advisor before making investment decisions. The host and Nerra Network have no fiduciary relationship with listeners.</strong></p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1800,6 +1816,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1826,6 +1843,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
