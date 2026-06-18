@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -806,7 +818,7 @@
             </a>
 
             
-            <div class="nn-global-search" style="position:relative;margin-left:auto;margin-right:0.5rem;max-width:180px;flex:1 1 auto;min-width:120px;">
+            <div class="nn-global-search" style="position:relative;margin-left:auto;margin-right:0.5rem;max-width:200px;flex:0 1 200px;min-width:110px;">
                 <input type="search" id="nn-global-search-input"
                        placeholder="Search…"
                        style="width:100%;padding:6px 8px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.85rem;"
@@ -1227,6 +1239,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>CREA снизила прогноз продаж жилья на 2026 год — что это значит для Ванкувера</em></p>
 <p><strong>Что сегодня важного:</strong></p>
 <p>Канадская ассоциация недвижимости CREA понизила свой прогноз по продажам домов на 2026 год из-за неуверенного старта экономики. В марте продажи по стране уже упали на 2,3 % по сравнению с прошлым годом. Для нас, живущих в Lower Mainland, это особенно важно: именно здесь цены на жильё и так одни из самых высоких в стране. Сегодня мы разберём, что это может значить для вашей ипотеки, аренды и планов на покупку дома в Burnaby, Surrey или Richmond. Также поговорим о новом удобном способе платить налоги CRA и, как всегда, разберём одно важное финансовое понятие «как подруге».</p>
@@ -1274,6 +1288,8 @@
 <p>За последний год оптимизм работников по поводу рынка труда снизился на 10 пунктов, а с 2019 года — на целых 23 пункта. Люди чувствуют усталость и неуверенность. Если вы сейчас думаете о смене работы или повышении — это хороший момент, чтобы обновить резюме и посмотреть, какие навыки сейчас востребованы в вашем городе.</p>
 <p>Source: <span class="cite"><a class="cite-pill" href="https://nationalpost.com/news/north-americas-shrinking-workforce-is-feeling-burned-out-and-pessimistic" target="_blank" rel="noopener" aria-describedby="cite-card">nationalpost.com</a><span class="cite-card" id="cite-card" role="tooltip">https://nationalpost.com/news/north-americas-shrinking-workforce-is-feeling-burned-out-and-pessimistic</span></span></p>
 <p>Спасибо, что слушаете «Финансы Просто». Если у вас есть вопросы по сегодняшнему выпуску — пишите в комментариях или в директ. Помните: каждая из нас может стать финансово увереннее, шаг за шагом. Увидимся завтра!</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1714,6 +1730,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1740,6 +1757,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
