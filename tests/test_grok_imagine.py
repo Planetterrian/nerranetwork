@@ -290,18 +290,21 @@ class TestCostTable:
         from engine.grok_imagine import MODEL_COST_USD
         assert MODEL_COST_USD["grok-imagine-image"] == 0.02
 
-    def test_pro_price_is_seven_cents(self):
+    def test_quality_tier_price_is_five_cents(self):
+        # The higher-quality tier (released 2026-04-03). xAI made the old
+        # "-pro" id an alias of "-quality" at $0.05 (was $0.07).
         from engine.grok_imagine import MODEL_COST_USD
-        assert MODEL_COST_USD["grok-imagine-image-pro"] == 0.07
+        assert MODEL_COST_USD["grok-imagine-image-quality"] == 0.05
+        assert MODEL_COST_USD["grok-imagine-image-pro"] == 0.05
 
     def test_aliases_map_to_same_prices(self):
         """Operators sometimes type ``grok-imagine-standard`` /
-        ``grok-imagine-pro`` instead of the API IDs. The cost table
+        ``grok-imagine-quality`` instead of the API IDs. The cost table
         recognises both spellings so cost tracking stays accurate
         regardless."""
         from engine.grok_imagine import MODEL_COST_USD
         assert MODEL_COST_USD["grok-imagine-standard"] == MODEL_COST_USD["grok-imagine-image"]
-        assert MODEL_COST_USD["grok-imagine-pro"] == MODEL_COST_USD["grok-imagine-image-pro"]
+        assert MODEL_COST_USD["grok-imagine-quality"] == MODEL_COST_USD["grok-imagine-image-quality"]
 
 
 # ---------------------------------------------------------------------------
