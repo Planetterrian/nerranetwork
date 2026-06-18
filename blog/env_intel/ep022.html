@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1240,6 +1252,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Piikani Nation member files notice to sue over selenium pollution in Crowsnest Lake, triggering Fisheries Act and provincial authorization compliance review in Alberta/BC border region.</em></p>
 <p><strong>Executive Summary:</strong> A Piikani Nation member has vowed legal action against governments and Evolve Power for alleged violations of his treaty right to harvest fish, directly engaging Alberta EPEA, federal Fisheries Act, and Species at Risk Act considerations at a contaminated waterbody. This enforcement-adjacent court challenge highlights ongoing gaps in selenium management at mining-impacted sites. Practitioners with mining, power, or linear infrastructure projects near Indigenous territories should review consultation records and water quality triggers this week.</p>
 <h4 id="lead-story">Lead Story</h4>
@@ -1283,6 +1297,8 @@
 <li>April 30: BC CSR Schedule 2 annual performance reporting deadline for applicable contaminated sites</li>
 <li>May 8: CCME anticipated release window for revised soil vapour intrusion guidance — final comment period likely follows immediately</li>
 </ul>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1776,6 +1792,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1802,6 +1819,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

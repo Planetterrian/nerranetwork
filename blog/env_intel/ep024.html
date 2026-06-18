@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1240,6 +1252,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>BC NDP pauses DRIPA amendments amid minority-government risk, directly affecting Indigenous consultation requirements on contaminated sites and remediation projects.</em></p>
 <p><strong>Executive Summary:</strong> British Columbia has temporarily withdrawn proposed changes to the Declaration on the Rights of Indigenous Peoples Act while facing potential government collapse, with Premier Eby signalling that core sections still require pause. Clean energy groups are pressing for East-West electricity grid interconnections to accelerate renewable integration across provinces. US EPA advances a plastic waste recycling proposal that could ease permitting for certain recovery operations, while satellite data shows urban methane emissions rising faster than reported inventories. Canadian practitioners should review cross-border data centre and pipeline developments this week for potential influence on federal and provincial climate policy alignment.</p>
 <h4 id="lead-story">Lead Story</h4>
@@ -1292,6 +1306,8 @@
 <li>May 1–15: Expected window for re-tabling of BC DRIPA-related language if minority government stabilizes.</li>
 <li>Ongoing: CCME guideline review cycles for soil vapour intrusion and PFAS — check Canada Gazette for any new 30-day comment periods.</li>
 </ul>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1781,6 +1797,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1807,6 +1824,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

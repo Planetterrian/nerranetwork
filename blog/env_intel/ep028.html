@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1240,6 +1252,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>BC Energy Regulator cites LNG Canada for non-compliant black smoke flaring under provincial oversight, while new study attributes record Peace River seismic events to oil and gas wastewater injection.</em></p>
 <p><strong>Executive Summary:</strong> British Columbia enforcement action against LNG Canada highlights ongoing compliance gaps at major industrial facilities in the northeast. A peer-reviewed analysis directly links waste injection to three significant earthquakes in the Peace River region, contradicting earlier regulator findings. Practitioners should also note continued provincial pushback on ecosystem protections and early wildfire risk signals for summer 2026 field programs. Watch BC regulatory enforcement trends and induced seismicity implications for upstream oil and gas clients this week.</p>
 <h4 id="lead-story">Lead Story</h4>
@@ -1285,6 +1299,8 @@
 <li>May 15: Federal IAA guidance on cumulative effects and climate change adaptation for marine projects anticipated for release.</li>
 <li>May 31: Standard deadline for many BC EMA annual air and effluent compliance reports covering 2025 operations.</li>
 </ul>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1794,6 +1810,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1820,6 +1837,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

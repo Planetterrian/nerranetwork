@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1240,6 +1252,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>BC launches free foam dock recycling events on the Sunshine Coast to curb marine debris under provincial waste diversion programs.</em></p>
 <p><strong>Executive Summary:</strong> British Columbia’s Ministry of Water, Land and Resource Stewardship is expanding collection infrastructure for expanded polystyrene dock materials to reduce persistent marine pollution. Canadian clean-tech innovators have been selected to develop shore-power and alternative energy solutions for Coast Guard vessels, directly engaging federal procurement priorities. A new MIT study quantifies an overlooked loophole in Montreal Protocol compliance that could push back global ozone recovery by up to seven years, with implications for Canadian UV exposure modelling and CEPA toxic substance tracking. Practitioners should watch for cross-border mining decisions and emerging ocean methane data that may influence future Fisheries Act and risk assessment baselines this week.</p>
 <h4 id="lead-story">Lead Story</h4>
@@ -1283,6 +1297,8 @@
 <li>May 5: CCME technical working group webinar on microplastics monitoring protocols—registration recommended for labs and risk assessors.</li>
 <li>May 15: anticipated release of updated federal methane inventory factors under CEPA; schedule internal QA/QC review for affected clients.</li>
 </ul>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1740,6 +1756,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1766,6 +1783,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

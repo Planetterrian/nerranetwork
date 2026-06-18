@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1235,6 +1247,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Alberta First Nations and farmers demand full federal Impact Assessment for carbon capture pipeline project under IAA.</em></p>
 <p><strong>Executive Summary:</strong> Alberta stakeholders are pressing for a full environmental assessment of a proposed carbon capture and storage pipeline to the West Coast, citing risks that governments will fast-track the project and bypass IAA requirements. Ontario’s absence from the federal-First Nations interim assessment of the Ring of Fire mining region highlights ongoing federal-provincial coordination gaps under the Impact Assessment Act. Practitioners should review both files this week for implications on current mining, pipeline, and oil sands projects in western and northern Ontario jurisdictions.</p>
 <h4 id="lead-story">Lead Story</h4>
@@ -1275,6 +1289,8 @@
 <li>Monitor for any BC government announcements on revised CleanBC implementation timelines following agency restructuring.</li>
 <li>Track federal Impact Assessment Agency notices for new designated project guidance that may affect linear infrastructure reviews in Alberta and Ontario.</li>
 </ul>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1733,6 +1749,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1759,6 +1776,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

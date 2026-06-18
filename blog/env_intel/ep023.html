@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1240,6 +1252,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Ontario advances 14 renewable energy projects while ArcelorMittal Dofasco completes final coke push at Hamilton facility, altering provincial decarbonization timelines.</em></p>
 <p><strong>Executive Summary:</strong> Ontario’s procurement of 14 renewable electricity projects directly supports compliance with provincial decarbonization targets and reduces pressure on emissions-intensive sectors. Hamilton steel operations reach a regulatory milestone with the permanent shutdown of one coke plant under provincial air and waste approvals. US EPA leadership changes and biomass carbon accounting debates carry cross-border implications for Canadian offset protocols and federal carbon pricing alignment. Practitioners should review project-specific implications for current EA and compliance portfolios this week.</p>
 <h4 id="lead-story">Lead Story</h4>
@@ -1295,6 +1309,8 @@
 <li>Ongoing: Track US EPA policy direction under new leadership for potential effects on bilateral Great Lakes and air quality initiatives.</li>
 <li>Q2 2026: Anticipated federal and provincial carbon pricing reviews — prepare client exposure models incorporating political precedents from Ireland and US sub-national debates.</li>
 </ul>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1777,6 +1793,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1803,6 +1820,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

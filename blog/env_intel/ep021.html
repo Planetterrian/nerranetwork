@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1240,6 +1252,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Ontario’s Species Conservation Act replaces the Endangered Species Act, leaving golden eagles, barn owls and many other species largely unprotected.</em></p>
 <p><strong>Executive Summary:</strong> Ontario has repealed the Endangered Species Act and enacted the Species Conservation Act, which experts state provides substantially weaker protections for numerous listed plants and animals. This regulatory shift directly affects due-diligence, permitting and risk registers for projects in southern and central Ontario under the provincial EPA and federal SARA overlap. Practitioners should review project-specific permitting pathways and client exposure this week.</p>
 <h4 id="lead-story">Lead Story</h4>
@@ -1286,6 +1300,8 @@
 <li>April 22: Earth Day—several federal and provincial departments traditionally release updated guidance or data sets; watch Canada Gazette and provincial registries.</li>
 <li>April 30: End of current CCME comment period on several draft aquatic guidelines (confirm exact closing dates on CCME website).</li>
 </ul>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1791,6 +1807,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1817,6 +1834,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

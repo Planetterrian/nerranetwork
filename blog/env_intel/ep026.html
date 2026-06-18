@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1240,6 +1252,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Electric ferry deployment in British Columbia highlights emerging vessel-strike risks to humpback whales under the Fisheries Act and Species at Risk Act.</em></p>
 <p><strong>Executive Summary:</strong> British Columbia’s new all-electric passenger ferry reduces underwater noise but increases collision potential for humpback whales, requiring updated marine risk assessments. A Colombian rights-of-nature defender received the Goldman Prize for blocking fracking along the Magdalena River, with implications for how Canadian practitioners frame Indigenous and ecological protections in regulatory submissions. Engineered biochar research advances carbon capture and resource recovery techniques relevant to contaminated-sites remediation. Professionals should review project-specific marine mammal mitigation plans and track cross-border policy influence on nature-based remediation approaches this week.</p>
 <h4 id="lead-story">Lead Story</h4>
@@ -1282,6 +1296,8 @@
 <li>April 30: Internal deadline for many BC CSR Schedule 2 sites to finalize annual compliance reporting packages.</li>
 <li>May 15: CCME working group target for revised guidance on climate-resilient contaminated sites risk assessment.</li>
 </ul>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1778,6 +1794,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1804,6 +1821,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

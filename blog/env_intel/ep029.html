@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1240,6 +1252,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>BC court rejects Wet'suwet'en chief's Indigenous law defence in Coastal GasLink conviction while First Nation launches logging lawsuit, sharpening pipeline and forestry compliance risks.</em></p>
 <p><strong>Executive Summary:</strong> B.C. courts issued two significant rulings this week on Indigenous rights challenges to major projects, directly affecting regulatory approvals under provincial environmental assessment processes and forestry legislation. A B.C. gold mining company received a $162K penalty for environmental non-compliance, reinforcing EMA enforcement expectations on mine sites. Federal proposals to expand law enforcement powers over small mail packages appear in the 2026 spring economic update with potential implications for cross-border contaminated sites documentation. Practitioners should review project-specific consultation records and Indigenous engagement files this week for litigation exposure.</p>
 <h4 id="lead-story">Lead Story</h4>
@@ -1286,6 +1300,8 @@
 <li>May 15: Ontario Ministry of the Environment, Conservation and Parks expected window for updated guidance on transboundary watershed monitoring.</li>
 <li>May 30: CCME intergovernmental working group meeting on water quality guidelines where boundary waters issues may be raised.</li>
 </ul>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1786,6 +1802,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1812,6 +1829,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
