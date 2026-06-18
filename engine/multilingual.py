@@ -179,6 +179,19 @@ def generate_for_episode(
         except OSError:
             size_bytes = 0
 
+        # Persist the translated SCRIPT text (speech tags stripped) next to the
+        # audio so the blog + summaries can offer the episode as READABLE text
+        # in this language — reusing the translation already produced for TTS,
+        # at no extra LLM cost. (Was previously discarded after synthesis.)
+        from engine.utils import strip_speech_tags
+        script_name = f"{tts_file.stem.replace('_tts', '')}.{lang}.txt"
+        try:
+            (output_dir / script_name).write_text(
+                strip_speech_tags(translated).strip() + "\n", encoding="utf-8")
+        except OSError as exc:
+            logger.warning("Ep%s [%s]: could not save translated script: %s", episode_num, lang, exc)
+            script_name = ""
+
         en_dur = ffprobe_duration(english_url)
         if en_dur and dur:
             logger.info("Ep%s LENGTH [%s]: %.0fs vs EN %.0fs (%+.0f%%)",
@@ -209,6 +222,10 @@ def generate_for_episode(
             # (engine.language_feeds). Falls back to a duration estimate for
             # records that predate this field.
             "bytes": size_bytes,
+            # Filename of the persisted translated script (read by the blog
+            # generator to render the body in this language). Empty if the
+            # write failed.
+            "script_file": script_name,
             "generated_at": datetime.now(timezone.utc).isoformat(),
         })
         results[lang] = "done"
