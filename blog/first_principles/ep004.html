@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Steel that cost as much as silver per ton fell toward the price of its ore and fuel when air was blown through molten iron.</em></p>
 <h4 id="segment-1-the-cold-open">Segment 1 — The Cold Open</h4>
 <p>Before the 1850s a ton of steel typically required days of labor in small crucibles or puddling furnaces and sold for sums that made it rarer than many nonferrous metals. Henry Bessemer watched the same molten pig iron that had already been reduced from ore and wondered what further chemistry was strictly required to turn it into usable steel. The answer he reached—injecting ordinary air—removed most of the carbon and silicon in minutes while releasing enough heat to keep the metal liquid without extra fuel. That single change collapsed both the time and the cost of the conversion step by a large multiple within a few decades.</p>
@@ -1248,6 +1262,8 @@
 <p>Within twenty years the Bessemer converter and its basic variant had reduced the price of bulk steel by roughly an order of magnitude in the regions where the process took hold, moving output from a few thousand tons per year to millions. The new Idiot Index for ordinary rail steel sat far closer to the raw-material floor, although it never reached the theoretical minimum because the iron still had to be mined, transported, and first reduced in blast furnaces. The process still required a preceding blast furnace, produced steel that needed further rolling, and left behind slag whose disposal carried its own costs. It also demanded ores or fluxes matched to the lining chemistry, so regions without suitable raw materials continued to rely on slower methods. Those boundaries explain why the price decline, while dramatic, eventually leveled off until later open-hearth and electric-arc improvements attacked the remaining steps.</p>
 <h4 id="segment-5-the-lesson">Segment 5 — The Lesson</h4>
 <p>A part or material whose price greatly exceeds the value of its constituent atoms is announcing a design or process problem, not an immutable shortage. Questioning the requirement itself—does decarburization need continuous external heat or can the chemistry supply it—often reveals larger savings than refining the existing sequence. The same pattern of stripping a conversion step to its physics could be applied next to any process whose cost is still dominated by repeated heating, manual handling, or small-batch custom work; the first signal would be an engineer stating the raw-material floor out loud and measuring every current operation against it.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1657,6 +1673,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1683,6 +1700,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

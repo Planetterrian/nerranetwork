@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Before Ford, a car cost a skilled worker years of wages; he cut the price by treating it as atoms in motion rather than a fitted craft object.</em></p>
 <hr>
 <h4 id="segment-1-the-cold-open">Segment 1 — The Cold Open</h4>
@@ -1248,6 +1262,8 @@
 <p>The price trajectory is well documented: from the initial $850 down through successive cuts to the $260 range by 1925. Part counts and assembly hours fell in parallel, though exact contemporary figures vary by source. The new Idiot Index was still well above one, because steel, rubber, and fuel remained real costs and because the line itself required expensive tooling and supervision. The human trade-off was equally real: the pace and monotony of the line produced high turnover until Ford countered with the famous five-dollar day. Even after the wage increase, the fundamental gap between material floor and finished price had narrowed dramatically compared with the pre-Ford craft baseline. What remained hard was any further reduction once the design was locked; later competitors would have to rethink the car itself, not merely its assembly.</p>
 <h4 id="segment-5-the-lesson">Segment 5 — The Lesson</h4>
 <p>A part or assembly whose price greatly exceeds its materials is announcing a design or process problem, not a shortage of atoms. Question the inherited requirement—hand fitting, stationary assembly, fragmented supply—before optimizing within it. The same logic that turned an $850 car into a $260 car is available wherever the Idiot Index remains high because the process still copies yesterday’s convention rather than the physics of the materials. Who will apply it next, and to what product whose price today still looks inevitable?</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1675,6 +1691,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1701,6 +1718,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

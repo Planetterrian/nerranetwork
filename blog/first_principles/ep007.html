@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Ammonia fertilizer that sells for hundreds of dollars a ton rests on raw inputs whose theoretical floor is a small fraction of that price.</em></p>
 <h4 id="segment-1-the-cold-open">Segment 1 — The Cold Open</h4>
 <p>Ammonia that ends up on farm fields today carries a delivered price that can exceed several hundred dollars per metric ton. The atoms themselves come from air and, ultimately, from water or natural gas. Between those two points lies a chain of high-temperature, high-pressure steps, centralized plants, and fossil-derived hydrogen whose cumulative markups produce a large gap between finished cost and the physical minimum. That gap is the opening for first-principles examination.</p>
@@ -1253,6 +1267,8 @@
 <p>For any of these moves to close the gap, three conditions must hold simultaneously: electrolyzer capital cost must continue to fall so that hydrogen reaches the $1–2 per kg range on an all-in basis; catalysts must achieve acceptable rates at lower pressure without prohibitive rare-metal loadings; and permitting regimes must accommodate distributed ammonia plants whose hazard profiles differ from today’s 1-million-ton facilities. The hard problems are real. Intermittent power requires either storage or flexible operation that today’s Haber loops are not designed for; nitrogen separation from air still costs energy; and any new catalyst must survive thousands of hours without rapid deactivation. None of these barriers is dismissed by pointing to the magic-wand number; they are the engineering surfaces that must be attacked next.</p>
 <h4 id="segment-5-the-lesson">Segment 5 — The Lesson</h4>
 <p>A product whose price greatly exceeds the cost of its constituent atoms and minimum energy is signaling a design or process problem, not a raw-material shortage. Questioning the requirement for 200-bar centralized plants before optimizing the compressors inside them is the faster route to lower cost. Tomorrow we examine another domain where the same gap between floor and finished price invites the same scrutiny.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1630,6 +1646,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1656,6 +1673,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

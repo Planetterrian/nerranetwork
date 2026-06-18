@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>A blood test whose reagents cost pennies can still bill for hundreds because the price lives almost entirely outside the materials.</em></p>
 <h4 id="segment-1-the-cold-open">Segment 1 — The Cold Open</h4>
 <p>A standard panel of blood tests today can be ordered for a few hundred dollars at a commercial lab, yet the chemical reagents that actually perform the measurements are measured in fractions of a dollar per sample. The difference is not hidden in exotic inputs; it sits in the chain of instruments, labor, regulatory steps, billing systems, and liability buffers that have grown around the test. First-principles reasoning asks what would remain if those layers were stripped back to the physical minimum required to move a drop of blood across a reaction and read the result.</p>
@@ -1247,6 +1261,8 @@
 <p>A redesign that started from the reagent floor would first attack the instrument and workflow together by moving as much of the reaction as possible into a low-cost, single-use cartridge that still meets analytical performance standards. That move requires demonstrating equivalent accuracy and precision under CLIA-waived or near-waived conditions so that the test can be performed closer to the patient and without the full central-lab overhead. Second, the cartridge would need to be manufactured at volumes that drive the per-unit cost of plastics and reagents toward their commodity floor; achieving that scale depends on standardized interfaces that multiple instrument makers could adopt rather than proprietary lock-in. Third, transparent pricing and direct reimbursement for the cartridge itself, rather than bundled lab fees, would remove the administrative layer that currently multiplies the ticket price. Each of these steps faces genuine constraints. Analytical performance cannot be traded away without creating clinical risk, and regulators rightly demand evidence that simplified devices do not increase false positives or negatives. Supply-chain concentration in high-grade plastics and enzymes could create new bottlenecks if demand surged. Liability allocation remains difficult when a result is generated outside a traditional laboratory setting. Yet none of these obstacles changes the arithmetic that the physical inputs are already cheap; the prize is therefore the reduction of everything that sits between those inputs and the final report. The first concrete signal that someone is pursuing this path would be a cartridge whose published bill of materials is openly compared against its selling price, making the new Idiot Index visible rather than opaque.</p>
 <h4 id="segment-5-the-lesson">Segment 5 — The Lesson</h4>
 <p>A test whose price greatly exceeds its reagents is announcing that the design of the surrounding system, not the chemistry, is the dominant variable. Questioning the requirement for central-lab processing before optimizing the next analyzer is the move that opens the largest reduction. Tomorrow the show returns with another example or opportunity drawn from the same principle. The question left on the table is which diagnostic category will first publish its own reagent-to-billed-price ratio and treat the gap as an engineering target rather than an accepted cost of doing business.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1622,6 +1638,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1648,6 +1665,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

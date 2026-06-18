@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Desalinated water sells for several dollars per cubic meter, yet the thermodynamic minimum energy needed to separate the salt is worth only a few cents — the rest is everything except the membranes.</em></p>
 <h4 id="segment-1-the-cold-open">Segment 1 — The Cold Open</h4>
 <p>Seawater contains roughly 35 kilograms of salt per cubic meter. Pulling that salt out to leave usable fresh water carries a hard physical price set by entropy and the free energy of mixing. Modern plants already reach within a few times of that thermodynamic floor on the energy line alone. Yet the delivered cost of the water remains several dollars per cubic meter, not cents. The difference sits in capital recovery, pretreatment chemistry, intake structures, and brine management rather than in any shortage of membrane material itself.</p>
@@ -1253,6 +1267,8 @@
 <p>The hardest constraints are regulatory timelines and the absence of a standardized product platform. Until multiple jurisdictions accept modular designs with pre-approved environmental envelopes, the schedule advantage cannot be realized at scale. Yet the arithmetic is clear: if capital recovery and soft costs could be halved while energy intensity stayed at today’s level, delivered water prices would move noticeably closer to the sum of the thermodynamic floor plus unavoidable pretreatment and brine expenses.</p>
 <h4 id="segment-5-the-lesson">Segment 5 — The Lesson</h4>
 <p>A process whose price greatly exceeds its thermodynamic minimum is announcing a design and delivery problem, not an energy shortage. Questioning the requirement for site-specific, multi-year construction before optimizing the membranes or pumps inside that construction reveals where the largest ratios actually sit. Tomorrow and every day after, the show will examine either one concrete example of this kind of reasoning already at work or one domain still waiting for it. The first signal that someone is attempting exactly this in desalination would be a credible proposal for a repeatable, factory-built module whose total installed cost per cubic meter of capacity falls well below today’s custom-plant benchmark.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1636,6 +1652,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1662,6 +1679,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

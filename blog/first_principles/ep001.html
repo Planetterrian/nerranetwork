@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>A rocket engine once priced in the millions now approaches a fraction of that cost because its designers began with the raw metals and the physics of combustion instead of copying legacy engines.</em></p>
 <h4 id="segment-1-the-cold-open">Segment 1 — The Cold Open</h4>
 <p>Welcome to First Principles Daily, a show that examines how the biggest cost and performance leaps come from rebuilding problems from the ground up rather than tweaking what already exists. One engine that once carried a price tag in the low millions now sits at a reported cost per unit well below that level, not because new materials appeared but because the team repeatedly asked what the minimum physical requirements actually were. That single shift in starting point is the thread running through every episode.</p>
@@ -1247,6 +1261,8 @@
 <p>Residential construction offers a contrasting case in which the gap between finished price and raw-material cost remains large and persistent. A typical new single-family home in North America carries a construction cost, excluding land, reported by industry surveys in the range of two hundred to four hundred dollars per square foot depending on region and finishes. The major raw materials—dimensional lumber, concrete, oriented-strand board, drywall, copper wire, and asphalt shingles—can be priced at commodity levels whose sum for an average-sized house falls on the order of fifty to eighty thousand dollars according to public wholesale indices. Dividing a three-hundred-thousand-dollar construction cost by a seventy-thousand-dollar material estimate produces a rough Idiot Index between four and five, though the true figure is higher once land, financing, and permitting are included. The difference arises from multiple stacked stages rather than from any single villain. On-site stick framing requires skilled labor for each custom cut; weather delays compound carrying costs on borrowed capital; fragmented subcontractors each add margin for coordination risk; and permitting timelines measured in months rather than days freeze capital and inflate interest expense. Factory-built approaches have demonstrated lower costs in controlled settings by moving those same operations indoors, yet they still confront building codes written around site-built assumptions and local inspection regimes that treat each house as a one-off. A first-principles redesign would therefore begin by fixing the structural frame and utility runs in a repeatable module whose interfaces are standardized across many units, allowing the same pressure-tested assemblies to be inspected once at the factory rather than repeatedly in the field. Next would come substitution of high-volume processes such as automated framing tables or continuous panel lines for hand-cut lumber, provided the modules remain compatible with existing transport limits and crane capacities. Policy changes that allow performance-based codes instead of prescriptive material rules would be required before those modules could be deployed at national scale. The genuinely hard constraints are not physics but coordination: convincing lenders, insurers, and code officials that a factory-certified assembly meets safety thresholds without requiring the same sequence of field inspections that evolved for site-built homes. Where those barriers have been lowered, as in certain modular multifamily projects, reported costs have moved measurably closer to the material floor, though still far above it.</p>
 <h4 id="segment-5-the-lesson-the-promise">Segment 5 — The Lesson & The Promise</h4>
 <p>Two principles travel with every example. A part or structure whose price greatly exceeds its raw materials is announcing a design or process problem, not a shortage of atoms. Questioning the original requirement before optimizing the component that satisfies it often removes more cost than refining the component itself. Tomorrow and every day after, the show will examine either one concrete instance of this thinking already at work or one domain where the gap between current price and material floor still invites the same questions. The only standing invitation is to notice the next time a price tag feels inevitable and to ask what the atoms alone would cost.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1711,6 +1727,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1737,6 +1754,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

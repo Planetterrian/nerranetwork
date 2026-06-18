@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Before containers, moving cargo cost many times the goods themselves because every item had to be handled by hand at each transfer.</em></p>
 <h4 id="segment-1-the-cold-open">Segment 1 — The Cold Open</h4>
 <p>In the 1950s a single cargo ship might spend a week or more in port while hundreds of longshoremen carried crates, barrels, and bales one by one from truck to hold and back again. The goods inside those loads were often cheap to produce, yet the price of getting them from factory to distant market was dominated by that repeated manual handling. Malcom McLean, a North Carolina trucker, looked at the physical reality of freight and asked what would remain if the handling steps themselves were removed rather than merely sped up.</p>
@@ -1247,6 +1261,8 @@
 <p>Containerization reduced the cost of moving general cargo by roughly an order of magnitude once ports and fleets were reconfigured around the box, a figure established in economic histories of the period. The new Idiot Index of freight movement fell dramatically because the dominant expense shifted from repeated manual handling to the comparatively stable costs of steel fabrication, fuel, and scheduled crane cycles. Trade volumes expanded accordingly because goods that had been uneconomic to ship over long distances became viable once the process cost collapsed. Limits remain visible: the box itself still carries tare weight, empty repositioning moves containers without revenue, and ports in some regions have not fully adopted the mechanical handling that makes the system efficient. The physical floor set by material and energy has not been reached, yet the redesign proved that the largest share of the old premium was removable once the requirement for piece-by-piece transfer was discarded.</p>
 <h4 id="segment-5-the-lesson">Segment 5 — The Lesson</h4>
 <p>A cost that greatly exceeds the raw materials involved usually signals that the design or process, not the physics, is the constraint worth attacking first. Questioning the necessity of an intermediate step—unpacking at every transfer—revealed leverage that optimizing within the old sequence could never have found. The same pattern appears whenever an industry treats repeated handling or custom fitting as inevitable rather than as a variable. Which other movement of goods or materials still carries an Idiot Index set by legacy interfaces rather than by the mass being moved?</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1728,6 +1744,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1754,6 +1771,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

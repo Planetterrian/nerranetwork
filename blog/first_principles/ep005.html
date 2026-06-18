@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Nuclear plants cost billions, yet their steel, concrete, and fuel are worth only a small fraction of that price.</em></p>
 <h4 id="segment-1-the-cold-open">Segment 1 — The Cold Open</h4>
 <p>A completed nuclear power station can carry a price tag measured in billions of dollars while the steel, concrete, and enriched fuel inside it represent only a modest slice of that total. The difference is not hidden in exotic materials; it sits in how the plant is planned, permitted, assembled, and financed. That gap is large enough to suggest the present cost is not dictated by physics alone.</p>
@@ -1247,6 +1261,8 @@
 <p>A from-scratch redesign would first target repeatability by moving major modules into factories that can produce identical units on a measured takt time. Factory settings allow welding, inspection, and testing to occur under controlled conditions with the same crews and the same procedures on every unit. That shift alone removes much of the site-specific training and weather exposure that inflate field labor hours. Second, the redesign would standardize interfaces so that modules from different suppliers bolt together without custom adapters or last-minute engineering changes. Achieving that requires early agreement on envelope dimensions, nozzle locations, and control-system protocols across an entire fleet rather than project by project. Third, the regulatory pathway would need to certify a design once and then apply that certification to subsequent identical units, shifting the review burden from each site to the manufacturing process itself. For these moves to work at scale, supply chains must support series production of large components rather than sporadic orders, and financing structures must recognize that later units carry lower risk once the first-of-a-kind uncertainties have been retired. The genuinely hard parts remain: public acceptance of any accelerated process, the need for a deep enough order book to justify factory investment, and the technical task of qualifying new manufacturing methods to the same safety standards now applied to field construction. Small modular reactors illustrate one attempt to attack these constraints by reducing module size to something that can travel by rail or barge and by designing for factory repetition from the outset. Whether that approach closes enough of the gap will depend on whether regulators, utilities, and fabricators can align on the required standardization.</p>
 <h4 id="segment-5-the-lesson">Segment 5 — The Lesson</h4>
 <p>A finished cost many times higher than the raw-material value signals that the dominant constraints sit in process and organization rather than in the physics of the materials. Questioning which requirements must be met by unique hardware and which can be met by repeatable process control opens the largest levers for cost reduction. Tomorrow we will examine another domain where the same distinction between material floor and delivered price reveals an opportunity still waiting to be seized.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1684,6 +1700,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1710,6 +1727,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

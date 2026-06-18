@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Solar panels that once cost hundreds of dollars per watt now cost cents, because the industry kept asking what the sand, silver, and aluminum alone were worth.</em></p>
 <h4 id="segment-1-the-cold-open">Segment 1 — The Cold Open</h4>
 <p>In the 1970s a solar module could easily run several hundred dollars for a single watt of capacity. The same watt of capacity today sells for well under a dollar at the module level. That collapse did not come from finding cheaper substitutes for sunlight or inventing an entirely new absorber. It came from repeatedly stripping the design and the process back to the physical minimum required by the materials themselves.</p>
@@ -1247,6 +1261,8 @@
 <p>Module prices have fallen more than two orders of magnitude in real terms since the 1970s, landing in the range of 15 to 30 cents per watt for leading Chinese production in recent years. The Idiot Index has compressed from well above 50 to something closer to 5–8, showing that most of the original waste has been engineered out. Remaining headroom exists mainly in silver reduction, kerf loss, and balance-of-system costs outside the module itself. Trade-offs accepted along the way include greater sensitivity to micro-cracks in thinner wafers and tighter process control to maintain yield at high throughput. The physical floor set by glass, aluminum, and silicon remains visible but not yet reached, because silver still carries an elevated price relative to its abundance and because module-level integration has not been fully rethought as a continuous high-speed manufacturing line.</p>
 <h4 id="segment-5-the-lesson">Segment 5 — The Lesson</h4>
 <p>A part whose price greatly exceeds its materials is announcing a design or process problem, not a material shortage. Questioning the requirement—why this thickness, why this contact method, why this batch size—must precede any attempt to optimize the part that satisfies it. The same logic that drove solar down its curve is now being applied to other commodity energy and materials systems; the first clear signal will be when someone publishes a credible new magic-wand estimate and begins cutting the Idiot Index in public data.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1700,6 +1716,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1726,6 +1743,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
