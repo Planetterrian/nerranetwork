@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -811,7 +823,7 @@
             </a>
 
             
-            <div class="nn-global-search" style="position:relative;margin-left:auto;margin-right:0.5rem;max-width:180px;flex:1 1 auto;min-width:120px;">
+            <div class="nn-global-search" style="position:relative;margin-left:auto;margin-right:0.5rem;max-width:200px;flex:0 1 200px;min-width:110px;">
                 <input type="search" id="nn-global-search-input"
                        placeholder="Search…"
                        style="width:100%;padding:6px 8px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.85rem;"
@@ -1228,6 +1240,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="привет-русский-episode-plan">Привет, Русский! — Episode Plan</h2>
 <p><strong>Date:</strong> May 02, 2026</p>
 <p><em>Space (Космос)</em></p>
@@ -1318,6 +1332,8 @@
 <p><strong>Practice Challenge:</strong></p>
 <p>For kids: Draw a simple picture of a rocket flying to the moon with stars and planets around it, then point to each part and say the Russian words out loud — ракета, луна, звезда, планета!</p>
 <p>For adults: Imagine you are an astronaut on a mission and create one sentence using at least three new words, like "Моя ракета летит в космос к луне." Say it slowly, then try it at normal speed.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1859,6 +1875,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1885,6 +1902,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
