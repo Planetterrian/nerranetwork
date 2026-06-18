@@ -796,6 +796,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1295,6 +1307,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><em>Rockets once priced at roughly ten thousand dollars per kilogram to orbit now reach a few thousand through reuse — because the question changed from building expendables cheaper to whether the hardware must be thrown away after one flight.</em></p>
 <h4 id="segment-1-the-cold-open">Segment 1 — The Cold Open</h4>
 <p>For most of the space age a Falcon 9-class booster would have been discarded after a single flight, its tanks, engines, and avionics committed to the ocean. Today the same booster returns, lands, and flies again, sometimes more than a dozen times, turning the dominant cost item from fabrication into inspection and refurbishment. The shift did not come from asking how to make each new rocket slightly less expensive; it came from asking what physics actually demands must be replaced after every launch and what can be retained.</p>
@@ -1306,6 +1320,8 @@
 <p>Falcon 9 flights now achieve costs per kilogram to low Earth orbit reported in the low thousands of dollars when averaged across many reuses, a clear reduction from the prior industry baseline yet still well above the theoretical material floor. The current refurbishment process — inspection of engines, replacement of thermal protection elements, and verification of avionics — keeps the Idiot Index of a reused booster perhaps three to five times the magic-wand materials estimate rather than the double-digit figure of a purely expendable design. Limits remain visible: the engines still require post-flight work that cannot yet be eliminated by design alone, and the fairing recovery system, while demonstrated, adds its own inspection overhead. The approach also trades some payload performance for the propellant margin needed to return the booster, an explicit compromise accepted because the reduction in amortized hardware cost outweighs the lost mass. Further gains will require either dramatically cheaper inspection methods or a booster architecture whose engines and tanks need essentially no refurbishment between flights.</p>
 <h4 id="segment-5-the-lesson">Segment 5 — The Lesson</h4>
 <p>A vehicle whose price greatly exceeds its contained materials is signaling that the design or the operational concept, not the physics, is carrying the cost. Questioning whether the entire rocket must be replaced after one mission opened a lever that incremental improvements inside the expendable frame could never reach. The same pattern of separating physics requirements from inherited assumptions now sits ready for any hardware that is built once and discarded. What would change first if the next generation of launch stages were designed from the outset around repeated flight rather than around a single use?</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1520,12 +1536,10 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
                 </a>
                 
                 
-                <div class="next nav-next-placeholder" style="text-align:right;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.92rem;">
-                    <span class="nav-label">Tomorrow &rarr;</span>
-                    <span class="nav-title">New episode tomorrow</span>
-                    <a href="#subscribe-cta" style="font-size:0.82rem;color:var(--show-color-text, var(--show-color));text-decoration:none;display:block;margin-top:4px;">Subscribe so you don't miss it &rarr;</a>
-                </div>
-                
+                <a href="ep013.html" rel="next" class="next">
+                    <span class="nav-label">Next &rarr;</span>
+                    <span class="nav-title">Episode 13</span>
+                </a>
                 
             </nav>
             
@@ -1767,6 +1781,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1793,6 +1808,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
