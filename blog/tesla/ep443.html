@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1233,6 +1245,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="tesla-shorts-time">Tesla Shorts Time</h2>
 <p><strong>Date:</strong> April 21, 2026</p>
 <p><strong>REAL-TIME TSLA price:</strong> $392.50 ▲ $0.09 (0.0%)</p>
@@ -1306,6 +1320,8 @@
 <p>Tesla has used NMC in many vehicles but has also leaned heavily into LFP — lithium iron phosphate — especially in standard-range models. LFP is cheaper to make, does not use expensive cobalt, runs cooler, and can handle a lot more charge cycles before noticeable degradation. The trade-off is lower energy density, so the same size battery gives you fewer kilometres, but for many drivers that is an acceptable compromise if the price is lower and the battery lasts longer.</p>
 <p>Then Tesla introduced the 4680 cell format. These are physically larger, tabless designs that reduce internal resistance, allow faster charging, and are simpler to manufacture at scale. The chemistry inside can be tuned — some 4680 packs lean nickel-rich for maximum range, others can use LFP-type stability. The format itself changes how the cells are integrated into the vehicle structure, turning the battery pack into part of the structural strength.</p>
 <p>When you look internationally the approaches diverge in interesting ways. In China, manufacturers embraced LFP early and aggressively because keeping costs down opened up massive domestic demand for affordable EVs. The chemistry aligned with local priorities around urban driving, frequent charging, and minimizing reliance on imported materials. Europe has tended to favour high-nickel NMC because regulators and buyers there put a premium on maximum range to reduce range anxiety on longer trips and because cold weather hurts efficiency more. Carmakers there also face stricter recycling rules, so chemistry choices must consider end-of-life recovery rates.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1849,6 +1865,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1875,6 +1892,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

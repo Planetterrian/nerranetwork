@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1231,6 +1243,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="tesla-shorts-time">Tesla Shorts Time</h2>
 <p><strong>REAL-TIME TSLA price:</strong> $0.00 (price unavailable)</p>
 <p><em>Tesla's decision to spotlight Signature Edition Model S and X comes as production focus shifts elsewhere in the lineup.</em></p>
@@ -1286,6 +1300,8 @@
 <p>Taking a step back from today's headlines, the narrowing technical differences between mid-priced EVs force a harder look at what actually still separates Tesla from the pack. Early advantages in range, charging speed, and software have become table stakes for many buyers, yet Tesla still controls its own silicon, data loops, and manufacturing stack in ways most rivals do not. The question is whether those internal capabilities can still create meaningful edges once the hardware specs look similar on paper.</p>
 <p>Recent owner discussions note that liquid cooling, battery management, and over-the-air updates were once decisive reasons to choose Tesla over a Nissan Leaf or early competitors. Today the same buyers see comparable range and DC fast-charging on vehicles from Hyundai, Kia, and Ford. What remains distinctive is Tesla’s ability to collect fleet-wide driving data and push improvements without dealer visits, but even that edge shrinks as other makers add their own connectivity features.</p>
 <p>If Tesla leans harder into vertical integration for the next generation of vehicles and autonomy hardware, the company could still pull ahead on cost and iteration speed. That path would matter more than any single spec sheet comparison because it lets Tesla change the product after delivery in ways traditional automakers cannot match without rebuilding supply chains. The practical result would be continued pressure on rivals to either match the data advantage or accept thinner margins on hardware that looks increasingly interchangeable.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1777,6 +1793,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1803,6 +1820,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

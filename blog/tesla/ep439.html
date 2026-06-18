@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1218,6 +1230,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><strong>SECTION 1: NEWS</strong></p>
 <p>Hey, it's been an interesting 24 hours in the Tesla world. Let's walk through what's actually moving the needle today.</p>
 <p>Tesla didn't waste any time after getting FSD Supervised approved in the Netherlands. Within a week they're already rolling out free trials to local owners. The goal is straightforward: get people using it, gather real-world feedback in European conditions, and build some momentum before it becomes a paid feature. It's a practical way to accelerate adoption in a market that's been waiting for this.</p>
@@ -1244,6 +1258,8 @@
 <p>For a new investor or owner, the key question isn't who is winning this month. It's which architecture has the better long-term scaling curve. Tesla is still operating in supervised mode in most places, meaning the driver must stay attentive. The company continues pushing toward unsupervised capability, but regulatory bodies and real-world edge cases keep the timeline uncertain. Waymo has actual driverless robotaxis running in select cities, which proves their stack works in those conditions, but at high cost and limited scale.</p>
 <p>The beginner-friendly takeaway is this: Tesla's Full Self-Driving is essentially a massive bet on software and data solving problems that others are trying to solve with more expensive hardware. It's why every software update feels significant — the car you bought years ago can meaningfully improve. But it's also why patience is required. The architecture is elegant in its simplicity, yet teaching it to handle every weird situation on earth takes time, miles, and careful iteration. The race isn't over, but understanding these foundational choices helps explain why Tesla keeps moving in its own direction instead of copying the competition.</p>
 <p>That's today's catch-up. Always appreciate you following along — drop me a note if anything here sparked a question. Talk soon.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1675,6 +1691,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1701,6 +1718,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1236,6 +1248,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="tesla-shorts-time">Tesla Shorts Time</h2>
 <p><strong>REAL-TIME TSLA price:</strong> $428.80 ▲ $5.06 (1.2%)</p>
 <p><em>Tesla's new interior accent lights now turn red to warn of blind-spot vehicles, giving drivers a direct visual cue without glancing at mirrors.</em></p>
@@ -1291,6 +1305,8 @@
 <p>Taking a step back from today's headlines, the decision to extend Dashcam and Sentry Mode buffers to a full 24 hours of rolling footage challenges the assumption that storage limits are mainly a hardware constraint.</p>
 <p>The change relies on existing onboard memory management rather than new drives, showing that software scheduling alone can multiply usable recording time without added cost. In practice this means owners can review an entire day of activity instead of stitching together short clips, which matters for insurance claims or security reviews where context spans hours.</p>
 <p>Tesla's vertical control over both the vehicle OS and camera hardware lets it push such increments through over-the-air updates, a path traditional automakers with fragmented supplier stacks rarely match at the same speed. The next indicator will be whether similar buffer extensions reach other data-logging features like the new blind-spot lighting system.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1760,6 +1776,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1786,6 +1803,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

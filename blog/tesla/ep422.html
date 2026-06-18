@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1218,6 +1230,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><strong>Tesla Shorts Time – Special Educational Episode</strong></p>
 <p>Hey, it’s April 1st, 2026. Normally I’d roll up with the latest batch of Tesla updates, but the news cycle decided to take a quiet holiday this week. So instead, we’re doing something a little different – a proper deep-dive episode.</p>
 <p>Today I want to talk about something that keeps coming up in every serious conversation about Tesla’s future, yet still confuses a lot of people: <strong>how Tesla’s vehicle software and Full Self-Driving actually make money, and what it would take for it to become the big margin driver everyone hopes for.</strong></p>
@@ -1250,6 +1264,8 @@
 <p>It’s not just about cooler cars. It’s about changing the fundamental business model from one-time sales to something that looks more like a high-margin tech platform.</p>
 <p>That’s it for this special episode. I’ll be back to the regular format as soon as the news picks up again. In the meantime, if there’s a specific Tesla topic you’d like me to break down like this, just let me know.</p>
 <p>Talk soon.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1655,6 +1671,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1681,6 +1698,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

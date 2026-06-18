@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1231,6 +1243,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="tesla-shorts-time">Tesla Shorts Time</h2>
 <p><strong>REAL-TIME TSLA price:</strong> $426.01 ▲ $8.16 (2.0%)</p>
 <p><em>Tesla’s new magnet patent cuts rare-earth content below one percent by weight while keeping the part structurally intact.</em></p>
@@ -1286,6 +1300,8 @@
 <p>Taking a step back from today’s headlines, the decision by a major sovereign fund to exit its Tesla stake raises a narrower question than valuation debates usually allow: what concrete operating metric would have to improve for that capital to return.</p>
 <p>The filing shows the sales occurred without any disclosed change in Tesla’s vehicle margins or energy-deployment volumes during the same quarter. Historical data from other large funds indicate that sustained quarterly growth above 15 percent in energy-storage deployments has previously coincided with re-entry by similar investors within two quarters.</p>
 <p>Tesla’s vertical integration of battery and power electronics gives it a direct lever on that metric through cell production ramp and Megapack utilization rates. If those rates continue to rise while vehicle gross margins stabilize, the same balance-sheet logic that prompted the exit could support re-entry without any shift in narrative or macro conditions.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1854,6 +1870,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1880,6 +1897,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

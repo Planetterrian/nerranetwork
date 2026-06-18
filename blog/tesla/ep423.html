@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1218,6 +1230,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><strong>Tesla Shorts Time – Special Educational Episode</strong></p>
 <p>Hey, it’s me.</p>
 <p>April 1st, 2026, and the news cycle was basically a graveyard today, so I figured we’d do something different. Instead of rushing through headlines that aren’t there, let’s sit with one topic that keeps coming up in our conversations and that actually matters a ton for anyone who owns a Tesla, invests in the company, or just wants to understand where this whole thing is headed.</p>
@@ -1237,6 +1251,8 @@
 <p>That’s what I wanted to lay out today – not the victory lap version, not the doomer version, just the actual shape of the problem. Because if you’re trying to understand Tesla’s valuation, its competitive position, or whether your car will one day pay for itself, this is the single biggest variable still sitting in front of us.</p>
 <p>Anyway, that’s it for this special episode. When real news picks up again we’ll be back to the regular short format. In the meantime, if there’s a topic like this you want me to dig into next time the news is quiet, just let me know.</p>
 <p>Talk soon.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1652,6 +1668,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1678,6 +1695,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

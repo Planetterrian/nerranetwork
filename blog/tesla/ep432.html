@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1231,6 +1243,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="tesla-shorts-time">Tesla Shorts Time</h2>
 <p><strong>Date:</strong> April 10, 2026</p>
 <p><strong>REAL-TIME TSLA price:</strong> $345.62 ▲ $0.69 (0.2%)</p>
@@ -1300,6 +1314,8 @@
 <p><strong>The Data Says:</strong> Physics shows that adding 1,000 pounds of payload increases energy consumption far more in an EV (because of regenerative braking limits and added rolling resistance) than the efficiency penalty in an internal combustion truck. Real towing further compounds this because sustained high power draw stresses both the battery thermal system and the charger. Tesla's own Cybertruck numbers demonstrate strong unloaded efficiency but the gap narrows significantly once you start working the truck hard.</p>
 <p><strong>The Tesla Approach:</strong> Instead of promising one vehicle does everything perfectly, Tesla designs for iterative improvement — using the existing 4680 cells, structural battery pack, and steer-by-wire to reduce weight where possible while focusing Supercharger upgrades on higher power delivery even under thermal load. They treat the pickup like a software-hardware system that can be updated rather than a fixed mechanical specification.</p>
 <p><strong>The Bottom Line:</strong> The popular narrative that "range is everything" misses the engineering reality that payload and duty cycle dominate total cost of ownership for actual truck buyers. Tesla's best path isn't matching diesel capability on paper but making the electric experience so much better in daily use that the limitations matter less for the growing percentage of owners who rarely max out their trucks.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1808,6 +1824,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1834,6 +1851,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

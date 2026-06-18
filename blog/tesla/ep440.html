@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1218,6 +1230,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><strong>Hey, it's me catching you up on Tesla today.</strong></p>
 <p>It's April 18, 2026, and the stock is sitting at $400.62 after a decent bump. There's a nice mix of practical updates, regulatory fights, and some real-world proof that these cars can take a beating. Nothing earth-shattering, but a few things worth knowing if you're in the ecosystem or thinking about jumping in.</p>
 <p><strong>Top stories today:</strong></p>
@@ -1258,6 +1272,8 @@
 <p>For a new investor or owner, the important thing to understand is that this isn't a simple software toggle. It's a whole architecture that improves with every mile driven by the fleet. Progress can feel slow between big releases, but each update builds on the last. The shift from rule-based systems to learned, vision-first AI is a fundamental change in how we think about self-driving cars.</p>
 <p>(Word count: ~595)</p>
 <p>Let me know what you think or what I should dig into next — just reply or find me at @teslashortstime. Talk soon.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1763,6 +1779,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1789,6 +1806,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

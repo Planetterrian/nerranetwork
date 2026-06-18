@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1218,6 +1230,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><strong>Hey, it's April 23, 2026.</strong></p>
 <p>Tesla just posted its Q1 numbers and the profit picture is a lot stronger than many expected, giving them real runway to push harder into AI, robotics, and the next wave of autonomy. The stock reaction was muted though, as the big capital spending plans and a tiny revenue miss left some traders wanting more clarity on the returns. It's a classic Tesla moment where the financials show progress but the market is already pricing in what comes next.</p>
 <p>The spending side is getting a lot of attention today. Tesla is raising its 2026 capex outlook, with a clear focus on AI infrastructure and robotics projects that Elon sees as central to the company's future value. From a business standpoint this tells you they're choosing to invest through the current margin recovery rather than coasting. For the industry it reinforces how Tesla is doubling down on proprietary technology instead of playing defence.</p>
@@ -1259,6 +1273,8 @@
 <p>For a new investor or owner, the simplest way to think about it is this: Tesla is treating self-driving like a software problem more than a hardware one. They bet that improving the neural nets with real-world miles will get them there faster and cheaper than bolting expensive sensors on every vehicle. Whether that bet pays off is still unfolding, but the architecture they’ve chosen is elegant in its simplicity — cameras, neural nets, and continuous learning. It’s the same first-principles mindset they apply to batteries and manufacturing: strip away the unnecessary parts and solve the problem at its core.</p>
 <p>The two deep dives show how connected everything at Tesla really is. Better batteries make robotaxis more economical. Smarter self-driving software makes the expensive hardware work harder. It’s all one system, even if the headlines focus on one piece at a time.</p>
 <p>Talk soon — keep an eye on how those FSD subscriptions trend, I have a feeling that number is going to tell us a lot about what’s actually happening on the road.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1800,6 +1816,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1826,6 +1843,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

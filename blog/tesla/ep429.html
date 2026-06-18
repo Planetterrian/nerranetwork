@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1231,6 +1243,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="tesla-shorts-time">Tesla Shorts Time</h2>
 <p><strong>Date:</strong> April 07, 2026</p>
 <p><strong>REAL-TIME TSLA price:</strong> $352.82 ▲ $2.92 (0.8%)</p>
@@ -1284,6 +1298,8 @@
 <p><strong>The Data Says:</strong> Real-world Class 8 trucks often travel 120,000–150,000 km per year. With electricity at 12–15 cents per kWh and diesel at current North American averages, the fuel savings alone can offset a $150,000–$200,000 higher upfront cost within three years for high-utilization fleets, assuming 2–3 kWh per km efficiency. Lower utilization or poor charging access flips the equation quickly.</p>
 <p><strong>The Tesla Approach:</strong> Tesla designs the Semi from the ground up around cell-to-pack integration and structural battery elements to minimize weight and cost, while simultaneously building Megachargers at high-traffic depots so that fleets can achieve the utilization rates the physics demands. The company treats energy cost and uptime as first-order variables rather than bolting batteries onto an existing diesel chassis.</p>
 <p><strong>The Bottom Line:</strong> Electric heavy trucks win economically only where route predictability, depot charging, and high annual mileage align; in fragmented, low-mileage, or remote operations diesel still holds the advantage. Tesla’s bet is that it can reshape enough of the freight network to make those favourable conditions the norm rather than the exception.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1771,6 +1787,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1797,6 +1814,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

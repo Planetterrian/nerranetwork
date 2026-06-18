@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1231,6 +1243,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="tesla-shorts-time">Tesla Shorts Time</h2>
 <p><strong>Date:</strong> April 09, 2026</p>
 <p><strong>REAL-TIME TSLA price:</strong> $343.25 ▲ $2.00 (0.6%)</p>
@@ -1300,6 +1314,8 @@
 <p><strong>The Data Says:</strong> Real-world trials show that trucks covering 120,000 kilometres or more per year at electricity rates below 20 cents per kWh can recover the higher capital cost within three to four years through fuel and maintenance savings alone. Routes with predictable depot returns allow overnight charging at even lower rates, widening the advantage. Physics favours electric drivetrains because roughly three times as much energy reaches the wheels compared with diesel after accounting for thermal losses. The variables that matter most are therefore utilization rate and energy cost, not raw battery price.</p>
 <p><strong>The Tesla Approach:</strong> Tesla designs the Semi from the ground up around a dedicated electric chassis rather than converting an existing diesel platform, which keeps weight and efficiency penalties low. By controlling both the vehicle and its charging infrastructure, Tesla can optimise duty cycles and energy contracts in ways that third-party operators cannot. The company also benefits from massive battery production scale that continues to drive cell costs lower each year.</p>
 <p><strong>The Bottom Line:</strong> Electric trucks are not universally superior today, but for high-utilization fleets with access to cheap electrons they already win on total cost of ownership. This explains why Chinese adoption happened so quickly and why markets like Australia are now seeing price parity sooner than expected. Tesla's long-term edge will come from pairing the vehicle with its own energy products and software to lock in the lowest possible operating costs.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1804,6 +1820,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1830,6 +1847,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

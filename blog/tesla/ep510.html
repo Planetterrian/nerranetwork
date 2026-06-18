@@ -767,6 +767,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1228,6 +1240,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="tesla-shorts-time-weekly-recap-week-of-june-14-2026">Tesla Shorts Time — Weekly Recap (Week of June 14, 2026)</h2>
 <p>Good to have you on Tesla Shorts Time Daily, episode 510 for June 14, 2026. I'm Patrick, coming to you from Vancouver. Here's what's happening with Tesla today.</p>
 <p>The week's biggest developments, pulled together — what actually moved, why it matters, and what to watch next.</p>
@@ -1316,6 +1330,8 @@
 <p>Before we go — keep an eye on June wholesale figures from China and the first European sites using the new foldable Superchargers.</p>
 <p>And that's a wrap on today's Tesla news. T S L A closed at four hundred six dollars and forty-three cents, up, seven dollars and twenty-eight cents, one point eight percent. If you enjoyed this episode, please leave a rating or review — it genuinely helps other Tesla fans find us. I'm Patrick in Vancouver. See you tomorrow.</p>
 <p>And before you go — this show is part of the Nerra Network, a family of daily podcasts covering tech, science, markets, and more. If you enjoyed today's episode, give SpaceX Daily a listen: the daily companion for following SpaceX as a public company, from Starship to the stock ticker. You can explore the whole lineup at nerranetwork.com.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -2310,6 +2326,7 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -2336,6 +2353,14 @@ This episode used AI voice synthesis of my voice — editorial selection and ana
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

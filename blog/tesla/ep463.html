@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1231,6 +1243,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="tesla-shorts-time">Tesla Shorts Time</h2>
 <p><strong>REAL-TIME TSLA price:</strong> $392.51 ▲ $0.62 (0.2%)</p>
 <p><em>Tesla’s Spring Update now links the car’s accent lights directly to blind spot monitoring.</em></p>
@@ -1284,6 +1298,8 @@
 <p>Tesla’s vertical integration gives it a practical lever in these mature markets. By controlling battery chemistry choices, software calibration, and service logistics in one stack, the company can adjust range, efficiency, and update cadence without waiting for suppliers to align. In Norway that shows up as consistent top-line sales even as competitors introduce new models. The same playbook is now being tested in the UK, where registrations jumped 62 percent last month. If the pattern holds, Tesla’s advantage may lie less in winning every new market from zero and more in defending leadership once infrastructure and buyer habits have already shifted. That distinction matters for how quickly the rest of Europe follows the Norwegian curve.</p>
 <hr>
 <p>Let me know your thoughts at <a href="https://x.com/teslashortstime" target="_blank" rel="noopener">@teslashortstime</a>.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1864,6 +1880,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1890,6 +1907,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1231,6 +1243,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="tesla-shorts-time">Tesla Shorts Time</h2>
 <p><strong>Date:</strong> April 14, 2026</p>
 <p><strong>REAL-TIME TSLA price:</strong> $352.42 ▼ $0.87 (0.2%)</p>
@@ -1300,6 +1314,8 @@
 <p><strong>The Data Says:</strong> Early Model 3 production taught Tesla that structural battery integration and 4680-style cells can cut pack costs dramatically; pairing a smaller pack with high-efficiency motors (already proven in current vehicles) and minimal hardware changes means the majority of customer value can come from software updates rather than added Bill of Materials. A vehicle using roughly 60-70 percent of the battery capacity of a Model Y could still deliver 250-plus miles of range at highway speeds while costing thousands less to produce once factories reach mature yields.</p>
 <p><strong>The Tesla Approach:</strong> Tesla would solve this by starting with the fundamental constraints of physics (energy density, aerodynamics, and thermal management) and manufacturing (gigacasting, cell scaling, and minimal parts count), then layering on software that turns fixed hardware into an improving product over time. This avoids the trap of trying to compete on hardware specs alone and instead uses continuous updates to add features like enhanced efficiency modes, navigation optimizations, and even future paid capabilities that offset the smaller initial battery.</p>
 <p><strong>The Bottom Line:</strong> A truly affordable Tesla does not need to be the lowest-spec vehicle on paper; it needs to be the one where manufacturing cost per mile driven falls fastest and where software keeps the ownership experience ahead of competitors. Getting the cost-structure and efficiency balance right in places like India could open markets that legacy automakers have struggled to serve profitably with internal combustion engines.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1829,6 +1845,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1855,6 +1872,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

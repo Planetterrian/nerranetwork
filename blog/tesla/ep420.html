@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1218,6 +1230,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><strong>Tesla Shorts Time – Special Educational Episode</strong></p>
 <p>Hey, it’s March 31st, 2026. Normally we’d be diving into the week’s biggest Tesla stories, but the news cycle was unusually quiet, so I thought we’d do something different today. This is a proper deep-dive educational episode on a topic that keeps coming up in our community and actually matters a lot for where Tesla is headed.</p>
 <p>Today we’re talking about <strong>Robotaxi – how it actually works, what the real technical and regulatory hurdles are, and what it would mean if Tesla can pull it off.</strong></p>
@@ -1233,6 +1247,8 @@
 <p>These are the real questions that will decide whether Robotaxi becomes a meaningful part of Tesla’s business in the next few years or remains a longer-term ambition.</p>
 <p>That’s the landscape as it stands right now. It’s equal parts exciting and complicated – classic Tesla territory. If the news picks up next week we’ll be back to the regular format, but I figured it was worth taking the time to really unpack this one since so many of the other big bets tie back to solving unsupervised autonomy.</p>
 <p>Thanks for hanging out with me on this special episode. I’ll talk to you soon.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1628,6 +1644,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1654,6 +1671,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

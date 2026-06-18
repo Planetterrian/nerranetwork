@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1231,6 +1243,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="tesla-shorts-time">Tesla Shorts Time</h2>
 <p><table role="presentation" cellpadding="0" cellspacing="0" border="0" class="surface-white" style="background:#ffffff;margin:0 0 16px;"><tr><td class="surface-tsla" style="padding:10px 14px;border-left:4px solid #E31937;background:#fef2f2;border-radius:0 6px 6px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;"><div class="text-muted" style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">TSLA today</div><div class="brand-text-tesla" style="font-size:18px;font-weight:700;color:#0f172a;line-height:1.2;">$390.82<span style="color:#10b981;font-size:14px;font-weight:600;">▲ $9.44 (2.5%)</span></div></td></tr></table></p>
 <p>The final Model X to roll off the line carries a hidden tribute with factory signatures under its Garnet Red paint.</p>
@@ -1277,6 +1291,8 @@
 <p>Getting charging costs and locations right could be the practical factor that makes the Semi appealing to businesses, helping it move from early deployments into wider fleet use.</p>
 <p><hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0;" /></p>
 <p>Let me know your thoughts on these updates at <a href="https://x.com/teslashortstime" target="_blank" rel="noopener">@teslashortstime</a>.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1811,6 +1827,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1837,6 +1854,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

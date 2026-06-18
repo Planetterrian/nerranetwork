@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1231,6 +1243,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="tesla-shorts-time">Tesla Shorts Time</h2>
 <p><strong>Date:</strong> March 10, 2026</p>
 <p><strong>REAL-TIME TSLA price:</strong> $398.68 ▲ $1.84 (0.5%)</p>
@@ -1284,6 +1298,8 @@
 <p><strong>The Tesla Approach:</strong> Break it down to basics: identify core skills needed for innovation, then build recruitment around mission-driven appeals like accelerating sustainable energy, combined with internal promotions and stock grants tied to milestones, bypassing traditional perks for direct impact on world-changing projects.</p>
 <p><strong>The Bottom Line:</strong> This strengthens Tesla's workforce resilience, fostering loyalty through purpose over pay, ultimately driving faster advancements in vehicle and energy tech amid industry talent wars.</p>
 <p>Drop a line with your thoughts on today's Tesla buzz at @teslashortstime.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1829,6 +1845,7 @@ That's your Tesla news for today. T S L A closed at three hundred ninety-eight d
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1855,6 +1872,14 @@ That's your Tesla news for today. T S L A closed at three hundred ninety-eight d
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

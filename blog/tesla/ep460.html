@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1231,6 +1243,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <h2 id="tesla-shorts-time">Tesla Shorts Time</h2>
 <p><strong>REAL-TIME TSLA price:</strong> $390.82 ▲ $9.44 (2.5%)</p>
 <p><em>Tesla has started high-volume production of the Semi with the first unit off the line at its giant factory.</em></p>
@@ -1271,6 +1285,8 @@
 <p>The new registration figures indicating significant year-over-year growth serve as a concrete indicator of improved market performance compared to the prior year. This data point shows that Tesla has been able to reverse some of the declines seen in 2025, providing a basis for assessing the effectiveness of its strategies in Europe.</p>
 <p>Tesla's vertical integration and focus on software and energy solutions allow it to adapt quickly to regional demands, which could help sustain this momentum. For the business, this recovery in Europe can provide additional revenue to fund advancements in areas like the Semi and FSD, strengthening Tesla's overall position in the global EV industry.</p>
 <p>Let me know what you think about these updates at <a href="https://x.com/teslashortstime" target="_blank" rel="noopener">@teslashortstime</a>.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1782,6 +1798,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1808,6 +1825,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');

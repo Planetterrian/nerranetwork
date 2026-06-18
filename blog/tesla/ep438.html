@@ -762,6 +762,18 @@
             width: 100%;
             height: 38px;
         }
+        /* Per-language article bodies — only the active one shows. */
+        .blog-body-lang[hidden] { display: none !important; }
+        .blog-translated-note {
+            font-family: var(--font-ui);
+            font-size: 0.82rem;
+            color: var(--nn-text-muted);
+            border-left: 3px solid var(--show-color, #00D4FF);
+            padding: 6px 12px;
+            margin: 0 0 var(--sp-4);
+            background: var(--nn-surface);
+            border-radius: 0 8px 8px 0;
+        }
     </style>
 
 
@@ -1229,6 +1241,8 @@
         
 
         <article class="blog-article">
+            
+            <div class="blog-body-lang" data-lang="en">
             <p><strong># Tesla Shorts Time</strong></p>
 <p><strong>Date:</strong> April 16, 2026</p>
 <p><strong>REAL-TIME TSLA price:</strong> $391.95 ▼ $1.62 (0.4%)</p>
@@ -1297,6 +1311,8 @@
 <p><strong>The Data Says:</strong> Early insurance customers using FSD see materially different claim frequencies and severity; each saved claim provides both cash margin and labelled edge-case data that improves the very software reducing those claims. The loop tightens as fleet size grows because the law of large numbers makes the risk model more accurate faster than any traditional insurer can achieve.</p>
 <p><strong>The Tesla Approach:</strong> Tesla solves this by owning the entire stack—cameras, inference computer, training compute, vehicle software, and now insurance policy pricing—removing every intermediary that would otherwise slow learning or capture margin. First principles says you cannot optimise what you do not control, so control everything that touches the critical data path.</p>
 <p><strong>The Bottom Line:</strong> This integrated approach is quietly becoming one of Tesla's hardest advantages to copy. It turns every insured FSD mile into both revenue and a training signal, something no legacy automaker or pure software player can match without years of catch-up investment. The popular narrative still sees these as unrelated experiments; the physics and economics suggest they are the foundation of the next margin layer.</p>
+            </div>
+            
 
             <!-- Sources -->
             
@@ -1844,6 +1860,7 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
     var titleEl = document.querySelector('.nn-i18n-title');
     var hookEl = document.querySelector('.blog-hero-hook');
     var pills = document.querySelectorAll('.nn-i18n-pill');
+    var bodyBlocks = document.querySelectorAll('.blog-body-lang');
     // Site-wide preference (localStorage) so a visitor picks their language
     // ONCE and every episode they open afterwards is already in it — the
     // choice persists across episodes and sessions. Falls back gracefully
@@ -1870,6 +1887,14 @@ This podcast is curated by Patrick but generated using AI voice synthesis of my 
         }
         if (titleEl && t.title) titleEl.textContent = t.title;
         if (hookEl && t.desc) hookEl.textContent = t.desc;
+        // Swap the readable article body too — independent fallback so an
+        // episode with a translated track but no translated body (or vice
+        // versa) still degrades to English for the missing piece.
+        if (bodyBlocks.length) {
+            var hasBody = document.querySelector('.blog-body-lang[data-lang="' + code + '"]');
+            var bodyLang = hasBody ? code : 'en';
+            bodyBlocks.forEach(function(b) { b.hidden = (b.dataset.lang !== bodyLang); });
+        }
         document.documentElement.setAttribute('lang', code);
         pills.forEach(function(p) {
             p.setAttribute('aria-pressed', p.dataset.lang === code ? 'true' : 'false');
