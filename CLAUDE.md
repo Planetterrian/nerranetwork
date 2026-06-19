@@ -13,13 +13,13 @@ and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
 | Omni View | — (deleted) | `shows/omni_view.yaml` | Daily | `@omniviewnews` | Grok TTS (custom) |
 | Fascinating Frontiers | — (deleted) | `shows/fascinating_frontiers.yaml` | Daily | `@planetterrian` | Grok TTS (custom) |
 | Planetterrian Daily | — (deleted) | `shows/planetterrian.yaml` | Daily | `@planetterrian` | Grok TTS (custom) |
-| Env Intel | — | `shows/env_intel.yaml` | Odd weekdays | `@teslashortstime` | Grok TTS (custom) |
+| Env Intel | — | `shows/env_intel.yaml` | Monday | `@teslashortstime` | Grok TTS (custom) |
 | Models & Agents | — | `shows/models_agents.yaml` | Daily | — (X disabled) | Grok TTS (custom) |
 | Models & Agents for Beginners | — | `shows/models_agents_beginners.yaml` | Daily | — (X disabled) | Grok TTS (custom) |
-| Финансы Просто | — | `shows/finansy_prosto.yaml` | Even days | — (X disabled) | Grok TTS (Olya) |
+| Финансы Просто | — | `shows/finansy_prosto.yaml` | Monday | — (X disabled) | Grok TTS (Olya) |
 | Modern Investing Techniques | — | `shows/modern_investing.yaml` | Daily | — (X disabled) | Grok TTS (custom) |
-| Привет, Русский! | — | `shows/privet_russian.yaml` | Even days | — (X disabled) | Grok TTS (Olya) |
-| Unintended Consequences | — | `shows/unintended_consequences.yaml` | Weekdays | — (X disabled) | Grok TTS (custom) |
+| Привет, Русский! | — | `shows/privet_russian.yaml` | Monday | — (X disabled) | Grok TTS (Olya) |
+| Unintended Consequences | — | `shows/unintended_consequences.yaml` | Daily | — (X disabled) | Grok TTS (custom) |
 | First Principles Daily | — | `shows/first_principles.yaml` | Daily | — (X disabled) | Grok TTS (custom) |
 | SpaceX Daily | — | `shows/spacex.yaml` | Daily | — (X disabled) | Grok TTS (custom) |
 
