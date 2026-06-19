@@ -17,18 +17,18 @@ const WORKFLOW = "run-show.yml";
 // [utcHour, utcMinute, show, dayFilter]
 const SLOTS: Array<[number, number, string, string | null]> = [
   [6, 7,  "privet_russian",          "monday"],
-  [6, 37, "omni_view",                null],
-  [7, 7,  "planetterrian",            null],
-  [7, 37, "fascinating_frontiers",    null],
+  [7, 1,  "omni_view",                null],
+  [7, 16, "planetterrian",            null],
+  [7, 31, "fascinating_frontiers",    null],
+  [7, 46, "models_agents",            null],
   [8, 7,  "env_intel",               "monday"],
-  [8, 37, "models_agents",            null],
-  [9, 7,  "models_agents_beginners",  null],
+  [8, 1,  "models_agents_beginners",  null],
+  [8, 16, "modern_investing",         null],
+  [8, 31, "first_principles",         null],
+  [8, 46, "tesla",                    null],
+  [9, 1,  "unintended_consequences",  null],
+  [9, 16, "spacex",                   null],
   [9, 37, "finansy_prosto",          "monday"],
-  [10, 7, "modern_investing",         null],
-  [10, 37, "first_principles",        null],
-  [11, 7, "tesla",                    null],
-  [11, 37, "unintended_consequences", null],
-  [12, 7, "spacex",                   null],
 ];
 
 function dayFilterPasses(filter: string | null, now: Date): boolean {
