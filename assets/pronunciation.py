@@ -1008,7 +1008,50 @@ def replace_dates(text: str) -> str:
 
 
 def replace_times(text: str) -> str:
-    """Convert clock times to spoken form: '03:08 AM' -> 'three oh eight A M'."""
+    """Convert clock times to spoken form: '03:08 AM' -> 'three oh eight A M'.
+
+    Handles HH:MM and HH:MM:SS (seconds are dropped — no podcast host reads
+    them aloud), plus compact 24-hour "military"/UTC times like
+    ``0850:45 UTC`` (SpaceX launch reporting). Without the seconds-tolerant
+    pattern, ``1:50:45 a.m.`` matched only ``1:50`` and shipped the garble
+    "one fifty A M:45 a.m." (SpaceX Ep8, 2026-06-19).
+    """
+
+    def _mil_time(m: re.Match) -> str:
+        """Compact 24-hour UTC/GMT times: '0850:45 UTC' -> 'oh eight fifty UTC'.
+
+        Runs BEFORE the HH:MM matcher (which would otherwise match the
+        trailing '50:45' inside '0850:45' and bail out as hour>12). The
+        timezone token is left literal for replace_timezones() to expand.
+        Seconds are dropped; 24-hour spoken form is correct for UTC (no AM/PM).
+        """
+        hh, mm = m.group(1), m.group(2)
+        zone = m.group(3)
+        try:
+            hour, minute = int(hh), int(mm)
+        except ValueError:
+            return m.group(0)
+        if not (1 <= hour <= 23) or minute > 59:
+            # 00xx (midnight UTC) is rare in launch reporting and reads
+            # awkwardly in 24-hour spoken form — leave it untouched.
+            return m.group(0)
+        hour_word = (
+            "oh " + number_to_words(hour) if hour <= 9 else number_to_words(hour)
+        )
+        if minute == 0:
+            min_word = "hundred"
+        elif minute <= 9:
+            min_word = "oh " + number_to_words(minute)
+        else:
+            min_word = number_to_words(minute)
+        return f"{hour_word} {min_word} {zone}"
+
+    text = re.sub(
+        r"\b(\d{2})(\d{2})(?::\d{2})?\s+(UTC|GMT)\b",
+        _mil_time,
+        text,
+    )
+
     def _time(m: re.Match) -> str:
         hour_str = m.group(1)
         minute_str = m.group(2)
@@ -1047,7 +1090,7 @@ def replace_times(text: str) -> str:
             return m.group(0)
 
     text = re.sub(
-        r"(\d{1,2}):(\d{2})\s*(AM|PM|am|pm|A\.M\.|P\.M\.|a\.m\.|p\.m\.)?",
+        r"(\d{1,2}):(\d{2})(?::\d{2})?(?:\s*(AM|PM|am|pm|A\.M\.|P\.M\.|a\.m\.|p\.m\.))?",
         _time,
         text,
     )
