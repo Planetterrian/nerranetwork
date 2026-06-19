@@ -274,18 +274,44 @@ chapters:
     # June 10 2026: positional `where` anchors (the Tesla chapter-bug
     # class) + "see you next" closing coverage (Ep081 ended "See you
     # next time." which matched no pattern -> no Closing chapter).
-    - pattern: "Welcome.*Planet|Planet-terry-an.*episode"
+    # June 18 2026: the Introduction pattern only matched the "Welcome"
+    # greeting, but the intro line rotates four greetings (engine/intros.py
+    # _SHOW_PERSONALITIES["planetterrian"]) — "Good to have you on" and
+    # "Thanks for tuning in to" carry no "Welcome", so ~50% of episodes
+    # (Ep085/086/088/093) shipped with NO Introduction chapter, which
+    # collapsed the whole body under the teaser-anchored first chapter
+    # (an orphaned-body class). All four greetings contain
+    # "Planetterrian Daily, episode N", so anchor on that instead. The
+    # respelling alternative `Planet-terry-an` never matches the real
+    # spoken spelling and is kept only as belt-and-braces.
+    - pattern: "Welcome.*Planet|Planetterrian.*episode|Planet-terry-an.*episode"
       title: "Introduction"
       where: start
     - pattern: "Planetterrian Spotlight|Planet-terry-an Spotlight|Spotlight"
       title: "Planetterrian Spotlight"
-    - pattern: "science deep dive|deep dive|under the microscope"
+    # The podcast prompt forbids announcing the deep dive as a section
+    # ("Do NOT announce it as 'Science Deep Dive'"), so the literal-label
+    # markers never matched and the section fell into the garbage
+    # auto-segment fallback (the M&A "pop the hood" / EI deep-dive class).
+    # The prompt seeds a consistent spoken opener instead ("Now, here's
+    # something most people get wrong..." / "Most people picture/assume
+    # ..."), verified in Ep090-093 — match that.
+    - pattern: "science deep dive|deep dive|under the microscope|something most people get wrong|most people (picture|assume|think|believe|get wrong)"
       title: "Science Deep Dive"
-    - pattern: "Before we go|Next time|before we wrap"
-      title: "Tomorrow Teaser"
-      where: end
+    # June 18 2026: Closing precedes Tomorrow Teaser (the EI June-11
+    # class). The spoken teaser opens "Keep an eye on..." / "Watch for..."
+    # (the prompt's seeded teaser lead-ins), which the old pattern missed,
+    # so the teaser's `Next time` greedily matched "See you next time" in
+    # the CLOSING line — stealing it and leaving Ep086/090 with no Closing
+    # chapter and the closing mislabeled "Tomorrow Teaser". With Closing
+    # listed first it wins the sign-off line; the broadened teaser pattern
+    # now matches the real teaser line so both chapters parse on separate
+    # lines.
     - pattern: "That's Planet|that.?s.*for today|until next time|see you next"
       title: "Closing"
+      where: end
+    - pattern: "Before we go|Next time|before we wrap|keep an eye on|watch for"
+      title: "Tomorrow Teaser"
       where: end
 
 newsletter:

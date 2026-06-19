@@ -396,6 +396,26 @@ TST received a full recursive improvement architecture (analogous to MIT):
   `where` anchors + "see you next" closing coverage. Watch the first week
   for `podcast_script_too_thin` skip markers; fall back to floor 1400 if
   PT skips more than once. A/B-listen per landmine #17.
+  **June 18 2026 second pass** (review:
+  [`docs/reviews/planetterrian_review_2026_06_18.md`](docs/reviews/planetterrian_review_2026_06_18.md);
+  drift guards: `tests/test_planetterrian_quality_pass.py::TestChapterShapeJune18`):
+  the June-10 `where` anchors exposed two deeper chapter P0s (all
+  metadata-only, no A/B). (1) The Introduction marker matched only the
+  "Welcome" greeting, but the intro rotates four greetings — "Good to have
+  you on" / "Thanks for tuning in to" carry no "Welcome", so ~50% of
+  episodes (Ep085/086/088/093) shipped with NO Introduction chapter and the
+  whole body collapsed under the teaser-anchored first chapter
+  (orphaned-body class); now anchored on "Planetterrian … episode" (matches
+  all four greetings). (2) The spoken teaser opens "Keep an eye on…" / "Watch
+  for…" (the pattern missed it), so the teaser's `Next time` stole "See you
+  next time" from the closing line and Ep086/090 shipped with no Closing
+  chapter — fixed via the EI June-11 ordering rule (Closing precedes Tomorrow
+  Teaser) + a broadened teaser pattern. (3) The Science Deep Dive marker was
+  dead (prompt forbids announcing the section); now matches the seeded spoken
+  opener ("most people get wrong / picture / assume"). The June-10 length fix
+  scored a MISS — episodes still 1178–1378w (digest ceiling, FF/UC root
+  cause); re-attack deferred behind the four-show length A/B. Garbage
+  mid-body auto-segment chapter titles also deferred (shared LLM-title class).
 - **June 10 2026 Russian-shows pass** (FP + PR; review:
   [`docs/russian_shows_review_2026_06_10.md`](docs/russian_shows_review_2026_06_10.md);
   drift guards: `tests/test_russian_shows_quality_pass.py`): the spoken +
