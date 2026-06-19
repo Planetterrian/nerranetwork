@@ -24,22 +24,22 @@ on:
     # Saturday with a weekend-focus angle (international markets, crypto,
     # lessons learned). Cron times shifted +1h from the prior schedule.
     #
-    # Привет, Русский!: Even days at 6:00 UTC
-    - cron: '7 6 2-31/2 * *'
+    # Привет, Русский!: Weekly on Monday at 6:00 UTC
+    - cron: '7 6 * * 1'
     # Omni View: Daily at 6:30 UTC (Sunday = weekly recap)
     - cron: '37 6 * * *'
     # Planetterrian Daily: Daily at 7:00 UTC (Sunday = weekly recap)
     - cron: '7 7 * * *'
     # Fascinating Frontiers: Daily at 7:30 UTC (Sunday = weekly recap)
     - cron: '37 7 * * *'
-    # Environmental Intelligence: Odd weekdays at 8:00 UTC
-    - cron: '7 8 1-31/2 * 1-5'
+    # Environmental Intelligence: Weekly on Monday at 8:00 UTC
+    - cron: '7 8 * * 1'
     # Models & Agents: Daily at 8:30 UTC (Sunday = weekly recap)
     - cron: '37 8 * * *'
     # Models & Agents for Beginners: Daily at 9:00 UTC (Sunday = weekly recap)
     - cron: '7 9 * * *'
-    # Финансы Просто: Even days at 9:30 UTC
-    - cron: '37 9 2-31/2 * *'
+    # Финансы Просто: Weekly on Monday at 9:30 UTC
+    - cron: '37 9 * * 1'
     # Modern Investing Techniques: Daily at 10:00 UTC.
     # Mon-Fri = US market preview; Sat = weekend angle (international
     # markets, crypto, lessons learned, what to prepare for, long-term
@@ -51,9 +51,9 @@ on:
     - cron: '37 10 * * *'
     # Tesla Shorts Time: Daily at 11:00 UTC (Sunday = weekly recap)
     - cron: '7 11 * * *'
-    # Unintended Consequences: Weekdays at 11:30 UTC. Narrative show —
-    # topic-queue-driven, no daily news fetch. Mon-Fri only (5x/week).
-    - cron: '37 11 * * 1-5'
+    # Unintended Consequences: Daily at 11:30 UTC. Narrative show —
+    # topic-queue-driven, no daily news fetch. Runs all 7 days.
+    - cron: '37 11 * * *'
     # SpaceX Daily: Daily at 12:07 UTC (Sunday = weekly recap)
     - cron: '7 12 * * *'
 
@@ -134,18 +134,18 @@ jobs:
               # so some crons fire more often than intended.  The day_filter
               # applies the intended restriction.
               CRON_MAP = {
-                  "7 6 2-31/2 * *":   ("privet_russian",          "even"),
+                  "7 6 * * 1":        ("privet_russian",          "monday"),
                   "37 6 * * *":       ("omni_view",                None),
                   "7 7 * * *":        ("planetterrian",            None),
                   "37 7 * * *":       ("fascinating_frontiers",    None),
-                  "7 8 1-31/2 * 1-5": ("env_intel",               "odd_weekday"),
+                  "7 8 * * 1":        ("env_intel",               "monday"),
                   "37 8 * * *":       ("models_agents",            None),
                   "7 9 * * *":        ("models_agents_beginners",  None),
-                  "37 9 2-31/2 * *":  ("finansy_prosto",          "even"),
+                  "37 9 * * 1":       ("finansy_prosto",          "monday"),
                   "7 10 * * *":       ("modern_investing",         None),
                   "37 10 * * *":      ("first_principles",         None),
                   "7 11 * * *":       ("tesla",                    None),
-                  "37 11 * * 1-5":    ("unintended_consequences", "weekday"),
+                  "37 11 * * *":      ("unintended_consequences", None),
                   "7 12 * * *":       ("spacex",                   None),
               }
 
@@ -177,6 +177,13 @@ jobs:
                       run_today = False
                       known_noop = True
                       print(f"Weekend no-op: {show_slug} only runs on weekdays.")
+                  elif day_filter == "monday" and weekday != 0:
+                      # Weekly shows run only on Monday (weekday()==0). The cron
+                      # already pins Monday; this guard also drops a GitHub cron
+                      # that fires late on a different day.
+                      run_today = False
+                      known_noop = True
+                      print(f"Weekly no-op: {show_slug} only runs on Mondays.")
 
                   if run_today:
                       shows.append(show_slug)

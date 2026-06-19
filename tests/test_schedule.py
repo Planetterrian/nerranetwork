@@ -127,8 +127,9 @@ DAILY_SHOWS = [
     "models_agents", "models_agents_beginners", "modern_investing",
 ]
 ALT_CADENCE_SHOWS = [
+    # Weekly on Monday (June 2026): privet_russian + finansy_prosto moved off
+    # even-days, env_intel off odd-weekdays. None carry the recap flag.
     "privet_russian", "finansy_prosto", "env_intel",
-    "unintended_consequences",  # weekday-only narrative show
 ]
 
 
@@ -163,7 +164,7 @@ def test_alt_cadence_show_does_not_recap(slug):
 # Daily narrative shows (run every day, topic-queue-driven, no recap)
 # ---------------------------------------------------------------------------
 
-DAILY_NARRATIVE_SHOWS = ["first_principles"]
+DAILY_NARRATIVE_SHOWS = ["first_principles", "unintended_consequences"]
 
 
 @pytest.mark.parametrize("slug", DAILY_NARRATIVE_SHOWS)
