@@ -1,0 +1,94 @@
+Glad you're here. Welcome to Models & Agents Episode 85 for June 19, 2026.
+Your daily AI briefing. Your daily briefing on the AI models and agents that are changing everything.
+And no, not those kinds of models and agents. Let's get into it.
+Nvidia just released an open frontier model built from the ground up for long-running agents.
+Nvidia released Nemotron 3 Ultra, an open frontier model positioned for long-running AI agents.
+The model targets sustained agent operation rather than single-turned-chat,
+addressing a gap where most open models still struggle with extended tool use loops and
+state management. Builders working on autonomous workflows now have a high capability open option
+that can be self-hosted or fine-tuned without closed model restrictions.
+Early positioning suggests it competes directly with the top closed models on agent relevant
+tasks while remaining fully open weights. Watch for integration examples with existing agent frameworks
+and any announced context length or tool calling benchmarks in the coming weeks.
+DeepSeek previewed the V4 series with two MOE models that support million token
+contexts. V4 Pro totals 1.6 trillion parameters with 49 billion active while V4 Flash totals 284
+billion parameters with 13 billion active. Both use hybrid compressed sparse attention plus heavily
+compressed attention, manifold constrained hyperconnections, and the muon optimizer after pre-training
+on over 32 trillion tokens. V4 Pro Max reportedly cuts inference plops to 27% and KV cash to 10%
+of the prior version at million token lengths. Checkpoints are already on hugging face.
+This moves the open weight model's conversation forward from last week's coverage,
+where the performance gap with closed systems remained the central open question.
+Liquid AI released two 350 million parameter retriever models.
+The pair includes a dense buying coder and a call-burt late interaction variant.
+Both target fast multilingual search across 11 languages. The models focus on edge deployment
+with low latency retrieval on resource constrained hardware. They combine dense and late interaction
+approaches to balance speed and accuracy. Developers building on-device rag or search features
+now have a compact multilingual option that avoids larger cloud models.
+The releases follow Liquid AI's earlier work on efficient inference architectures.
+Anthropics shared video of its first project fetch experiment testing clouds ability to program
+robot dogs. In phase two, Opus 4.7 completed the programming task roughly 20 times faster than
+last year's best human team using Opus 4.1. The physical robot still failed to fetch a beach ball.
+The work explores how frontier models handle real-world robotics code under realistic constraints.
+Teams building physical or simulated agents should review the accompanying frontier red team blog
+for details on failure modes and iteration speed. This continues the agents and tool use thread from
+yesterday's episode, where long horizon reliability stayed the key open question.
+Step two integrated Gemini Enterprise agents into its managed threat monitoring platform
+for security operations. The agents now participate in live detection and response workflows inside
+customer environments. This marks another production deployment of frontier models inside regulated
+security stacks. The integration allows agents to handle alert triage directly within existing
+customer SOC setups. Security teams evaluating agentic SOC tooling can request early access to see how
+the Gemini agents handle alert triage and escalation. The move follows step two's prior work on managed
+detection platforms. Fabrics.ai showed live production grade agentic operations running at Cisco Live.
+The demonstration focused on real enterprise workflows rather than prototypes. Attendees saw agents
+handling multi-step network and security tasks with measurable reliability. The live run covered
+coordinated actions across multiple systems in a single session. Operators looking for battle-tested
+agent platforms should examine the demo recordings for concrete latency and success rate numbers.
+The presentation highlighted measurable outcomes from production environments. Qualcomm's CEO
+discussed the shift toward on device and edge AI agents as the next major platform change.
+The comments emphasize hardware level support for persistent agent execution rather than cloud
+clear signals on where silicon vendors are investing. The discussion highlighted requirements
+for memory architectures that support long running local execution. Watch for upcoming snap
+dragon platforms that expose agent specific accelerators and memory architectures. The remarks
+align with Qualcomm's ongoing hardware roadmap updates. Simon Willis in published full details on
+data set apps including the live demo and one line UV commands for local testing. The system gives
+HTML plus JS apps a JSON API plus full relational database back end. It extends the clawed artifacts
+pattern with persistent structured storage. The one liners allow immediate local setup without
+additional configuration steps. Developers who want artifact style rapid prototyping with real data
+persistence can install and run the examples immediately. The post includes a working demo that
+illustrates the full stack in action. e2e-assure launched an updated cumulo platform that uses
+customer dedicated AI models and digital twins for zero-day threat detection across IT and OT.
+The system is positioned as the United Kingdom's only sovereign AI first SOC offering and directly
+addresses GCHQ's AI CyberShield call. It supports air gap deployments for regulated environments.
+The platform combines dedicated models with digital twin simulations for both IT and OT networks.
+Security teams needing air gaped or regulated deployments now have a concrete sovereign
+option to evaluate. The update follows e2e-assures earlier work on UK focused security tooling.
+Okay, let's pop the hood on the million token context claims in these new MOE models.
+Everyone talks about million token context as if it is simply a bigger KV cache.
+In practice, it requires coordinated changes across attention, residual connections,
+and optimizer to keep both memory and compute manageable.
+DeepSeq V4's hybrid CSA plus HCA approach compresses the attention computation so
+that a 1 million token forward pass uses only 27% of the flops and 10% of the KV cache of the prior
+version. The manifold constrained hyperconnections further stabilized training at this scale by replacing
+standard residuals with learned manifold projections. At inference time, the savings only appear once
+context exceeds roughly 128,000 tokens. Below that, the overhead of the compressed paths can
+actually slow things down. Teams should therefore profile both short and long contexts before
+committing to these architectures. The practical decision rule is simple. If your typical
+agent session stays under 100,000 tokens, the new mechanisms add complexity with little payoff.
+Once you routinely exceed that threshold, the efficiency gains become decisive.
+Test DeepSeq V4 Flash or V4 Pro on hugging phase for any workflow that already pushes past 128,000
+tokens and measure actual KV cache and latency savings. Run the data set apps OneLiners from Simon
+Willison's post to prototype a small HTML plus JS app backed by a real relational database in under
+five minutes. Review andthropics project fetch phase two blog for concrete numbers on how much faster
+frontier models now iterate on robotics code compared with human teams. Experiment with liquid
+AI's 350 million Colbert retriever on Edge hardware if you need fast multilingual search without
+calling larger cloud models. More inference providers are expected to add GLM 5.2 support
+following Simon Willison's request to GROC and Sarabras. Additional phase two project fetch results
+from Anthropic will likely include more detailed failure analysis and iteration metrics.
+Further details on Nemotron 3 Ultra Agent benchmarks are anticipated in the coming weeks.
+Tomorrow keep an eye on the first batch of inference benchmarks for Nemotron 3 Ultra once early
+self-hosted deployments report their numbers. That wraps up today's AI briefing. Share this with a
+developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow
+and before you go, this show is part of the NARA network, a family of daily podcasts covering tech,
+science, markets and more. If you enjoyed today's episode, give Tesla shorts time a listen.
+Your daily deep dive into everything Tesla. You can explore the whole lineup at NURNnetwork.com.
+This episode used AI voice synthesis of my voice, editorial selection and analysis are my own.
