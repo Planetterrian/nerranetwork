@@ -27,18 +27,58 @@ TESLA_DIGESTS = PROJECT_ROOT / "digests" / "tesla_shorts_time"
 # ---------------------------------------------------------------------------
 
 class TestMultilingualConfig:
-    def test_english_show_inherits_enabled_default(self):
+    def test_per_show_languages(self):
+        # June 2026 per-show language sets (Spanish dropped network-wide):
+        # flagships get fr/ru/zh, lighter shows fr-only, the rest English-only.
         from engine.config import load_config
-        cfg = load_config("shows/tesla.yaml")
-        assert cfg.multilingual.enabled is True
-        assert cfg.multilingual.languages == ["fr", "ru", "es", "zh"]
-        assert cfg.multilingual.cloned_voice_env == "GROK_CLONED_VOICE_ID"
+        expected = {
+            "tesla": ["fr", "ru", "zh"],
+            "spacex": ["fr", "ru", "zh"],
+            "fascinating_frontiers": ["fr", "ru", "zh"],
+            "first_principles": ["fr"],
+            "models_agents": ["fr"],
+            "env_intel": ["fr"],
+        }
+        for slug, langs in expected.items():
+            cfg = load_config(f"shows/{slug}.yaml")
+            assert cfg.multilingual.enabled is True, slug
+            assert cfg.multilingual.languages == langs, slug
+            assert "es" not in cfg.multilingual.languages, slug
+        assert load_config("shows/tesla.yaml").multilingual.cloned_voice_env == "GROK_CLONED_VOICE_ID"
+
+    def test_english_only_shows_disabled(self):
+        from engine.config import load_config
+        for slug in ("modern_investing", "planetterrian", "omni_view",
+                     "models_agents_beginners", "unintended_consequences"):
+            assert load_config(f"shows/{slug}.yaml").multilingual.enabled is False, slug
 
     def test_russian_shows_opt_out(self):
         from engine.config import load_config
         for slug in ("finansy_prosto", "privet_russian"):
             cfg = load_config(f"shows/{slug}.yaml")
             assert cfg.multilingual.enabled is False, slug
+
+
+class TestMultilingualCostTracking:
+    """Translation spend is recorded so the dashboard stops reading $0."""
+
+    def test_track_cost_is_positive_and_tts_dominant(self):
+        from engine.multilingual import _estimate_track_cost
+        c = _estimate_track_cost(6500, 7000)
+        assert c > 0
+        # A full track is mostly TTS; sanity-bound it well under a dollar.
+        assert 0.005 < c < 0.5
+
+    def test_writes_multilingual_usage_file(self, tmp_path):
+        import json, types
+        from engine.multilingual import _write_ml_usage
+        cfg = types.SimpleNamespace(name="Demo", slug="demo")
+        _write_ml_usage(tmp_path, cfg, 7, "2026-06-18", 0.12, 21000, ["fr", "ru", "zh"])
+        f = tmp_path / "credit_usage_2026-06-18_ep007_multilingual.json"
+        assert f.exists()
+        d = json.loads(f.read_text())
+        ml = d["services"]["multilingual"]
+        assert ml["estimated_cost_usd"] == 0.12 and ml["tracks"] == 3
 
     def test_auto_enabled_for_english_shows(self):
         from engine.config import load_config

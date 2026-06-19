@@ -16,18 +16,18 @@ const WORKFLOW = "run-show.yml";
 
 // [utcHour, utcMinute, show, dayFilter]
 const SLOTS: Array<[number, number, string, string | null]> = [
-  [6, 7,  "privet_russian",          "even"],
+  [6, 7,  "privet_russian",          "monday"],
   [6, 37, "omni_view",                null],
   [7, 7,  "planetterrian",            null],
   [7, 37, "fascinating_frontiers",    null],
-  [8, 7,  "env_intel",               "odd_weekday"],
+  [8, 7,  "env_intel",               "monday"],
   [8, 37, "models_agents",            null],
   [9, 7,  "models_agents_beginners",  null],
-  [9, 37, "finansy_prosto",          "even"],
+  [9, 37, "finansy_prosto",          "monday"],
   [10, 7, "modern_investing",         null],
   [10, 37, "first_principles",        null],
   [11, 7, "tesla",                    null],
-  [11, 37, "unintended_consequences", "weekday"],
+  [11, 37, "unintended_consequences", null],
   [12, 7, "spacex",                   null],
 ];
 
@@ -44,6 +44,8 @@ function dayFilterPasses(filter: string | null, now: Date): boolean {
       return isWeekday;
     case "odd_weekday":
       return day % 2 === 1 && isWeekday;
+    case "monday":
+      return weekday === 1;
     default:
       return true;
   }

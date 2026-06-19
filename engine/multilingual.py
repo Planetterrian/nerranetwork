@@ -151,6 +151,12 @@ def generate_for_episode(
     existing = rec.get("translations", {}) or {}
 
     results: Dict[str, str] = {}
+    # Cost accounting — written to a per-episode multilingual credit_usage file
+    # so the dashboard's multilingual spend stops reading $0 (the untracked
+    # blind spot; June 2026). Charged: Grok TTS chars + the translation LLM.
+    ml_cost = 0.0
+    ml_chars = 0
+    ml_langs_done: list[str] = []
     for lang in languages:
         if lang in existing and not force:
             results[lang] = "skip"
@@ -229,9 +235,51 @@ def generate_for_episode(
             "generated_at": datetime.now(timezone.utc).isoformat(),
         })
         results[lang] = "done"
+        ml_cost += _estimate_track_cost(len(english_script), len(translated))
+        ml_chars += len(translated)
+        ml_langs_done.append(lang)
         logger.info("Ep%s [%s]: done → %s", episode_num, lang, public_url)
 
+    if ml_langs_done and not dry_run:
+        _write_ml_usage(output_dir, config, episode_num, rec.get("date", ""),
+                        ml_cost, ml_chars, ml_langs_done)
     return results
+
+
+def _estimate_track_cost(english_chars: int, translated_chars: int) -> float:
+    """Per-track translation cost: Grok TTS on the translated script + the
+    translation LLM call (grok-latest, priced like grok-4.3; tokens ≈ chars/4)."""
+    from engine.tracking import GROK_PRICING, GROK_TTS_COST_PER_1K_CHARS
+    tts_cost = (translated_chars / 1000.0) * GROK_TTS_COST_PER_1K_CHARS
+    pr = GROK_PRICING.get("grok-4.3", {"input_per_1m": 1.25, "output_per_1m": 2.50})
+    llm_cost = ((english_chars / 4.0) / 1e6) * pr["input_per_1m"] \
+        + ((translated_chars / 4.0) / 1e6) * pr["output_per_1m"]
+    return tts_cost + llm_cost
+
+
+def _write_ml_usage(output_dir, config, episode_num: int, date_str: str,
+                    cost: float, chars: int, langs: list) -> None:
+    """Write a per-episode multilingual credit_usage file. The dashboard's
+    aggregate_multilingual reads services.multilingual.estimated_cost_usd; the
+    network episode-cost aggregator reads only grok_api/tts_api, so this file
+    (multilingual-only) never double-counts."""
+    import json
+    ds = (date_str or datetime.now(timezone.utc).strftime("%Y-%m-%d"))[:10]
+    path = output_dir / f"credit_usage_{ds}_ep{episode_num:03d}_multilingual.json"
+    try:
+        path.write_text(json.dumps({
+            "date": ds,
+            "show": getattr(config, "name", None) or getattr(config, "slug", ""),
+            "episode_number": episode_num,
+            "services": {"multilingual": {
+                "estimated_cost_usd": round(cost, 6),
+                "languages": langs,
+                "tracks": len(langs),
+                "tts_chars": chars,
+            }},
+        }, ensure_ascii=False, indent=2), encoding="utf-8")
+    except OSError as exc:  # noqa: BLE001 — cost record must never block a run
+        logger.warning("Ep%s: could not write multilingual usage: %s", episode_num, exc)
 
 
 def auto_generate_after_publish(config, episode_num: int) -> Dict[str, str]:
