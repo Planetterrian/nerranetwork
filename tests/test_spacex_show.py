@@ -602,3 +602,24 @@ class TestDashboardV2Visuals:
             cum, series = mod._update_metrics_timeseries(
                 mb, now, path=pathlib.Path(d) / "m.json")
         assert series and series[-1]["total"] == cum
+
+
+class TestLaunchTimePronunciation:
+    """SpaceX reports precise launch times (HH:MM:SS local + HHMM:SS UTC).
+    Ep8 (2026-06-19) shipped the garble "one fifty A M:45 a.m." and
+    "0850:45 U T C" because replace_times() matched only HH:MM and stranded
+    the seconds. Guard the fix at the real shipped strings."""
+
+    def _conv(self, text):
+        from assets.pronunciation import replace_times, replace_timezones
+        return replace_timezones(replace_times(text))
+
+    def test_local_time_with_seconds_no_garble(self):
+        out = self._conv("from pad 4E at 1:50:45 a.m. PDT on June 19")
+        assert "one fifty A M" in out
+        assert "M:" not in out and ":45" not in out
+
+    def test_compact_utc_launch_time_no_garble(self):
+        out = self._conv("Liftoff occurred at 0850:45 UTC after checks")
+        assert "oh eight fifty U T C" in out
+        assert "0850" not in out and ":45" not in out

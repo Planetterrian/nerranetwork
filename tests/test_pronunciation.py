@@ -325,6 +325,47 @@ class TestReplaceTimes:
         assert "two" in result
         assert "fifty-nine" in result
 
+    # --- HH:MM:SS + compact UTC times (SpaceX Ep8 garble, 2026-06-19) ---
+    # The digest said "1:50:45 a.m." and "0850:45 UTC"; the seconds-blind
+    # matcher shipped "one fifty A M:45 a.m." and "0850:45 U T C" to TTS.
+
+    def test_time_with_seconds_drops_seconds(self):
+        # 1:50:45 a.m. must not strand the ":45" — seconds are dropped.
+        result = replace_times("at 1:50:45 a.m. Pacific")
+        assert "one fifty A M" in result
+        assert ":45" not in result
+        assert "M:" not in result  # no stranded "A M:45"
+
+    def test_pm_time_with_seconds(self):
+        result = replace_times("at 2:30:15 PM")
+        assert "two thirty P M" in result
+        assert ":15" not in result
+
+    def test_compact_utc_time(self):
+        # 0850:45 UTC -> 24-hour spoken, seconds dropped, zone left literal.
+        result = replace_times("Liftoff at 0850:45 UTC after checks")
+        assert "oh eight fifty UTC" in result
+        assert "0850" not in result
+        assert ":45" not in result
+
+    def test_compact_utc_time_no_seconds(self):
+        result = replace_times("window at 1430 GMT")
+        assert "fourteen thirty GMT" in result
+
+    def test_time_without_ampm_keeps_trailing_space(self):
+        # The whitespace before an absent AM/PM must NOT be eaten (it used
+        # to glue the next word: "two thirty P MUTC").
+        result = replace_times("launched at 14:30:00 UTC today")
+        assert "P M UTC" in result
+        assert "P MUTC" not in result
+
+    def test_large_number_not_a_time(self):
+        # A bare count must not be mistaken for a compact time.
+        assert replace_times("the 15000 satellites filing") == (
+            "the 15000 satellites filing"
+        )
+        assert replace_times("In 2026 the program") == "In 2026 the program"
+
 
 class TestReplaceTimezones:
     def test_pst(self):

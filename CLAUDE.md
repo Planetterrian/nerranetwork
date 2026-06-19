@@ -512,6 +512,25 @@ TST received a full recursive improvement architecture (analogous to MIT):
   paragraphs of 4-6 sentences" ~250-360w) — the expand-the-deep-dive lever
   stays deferred pending the network four-show length A/B. The AI-lumping
   and hook-jargon June-13 deferrals did NOT recur.
+  **June 19 2026 third pass** (review:
+  [`docs/reviews/spacex_review_2026_06_19.md`](docs/reviews/spacex_review_2026_06_19.md);
+  drift guards: `tests/test_pronunciation.py::TestReplaceTimes`,
+  `tests/test_spacex_show.py::TestLaunchTimePronunciation`): both June-18
+  predictions scored (deep-dive-still-short HIT — Ep8 139w; daily-Closing HIT,
+  recap pending). New P0 spoken garble: launch times **with seconds** shipped
+  mangled — the digest's `1:50:45 a.m.` was voiced "one fifty A M:45 a.m." and
+  `0850:45 UTC` as raw digits (Whisper-confirmed in Ep8 audio). The shared
+  `assets/pronunciation.py:replace_times` matcher was seconds-blind
+  (`(\d{1,2}):(\d{2})…` matched only `1:50`, stranding `:45`). Fix: drop
+  seconds (`(?::\d{2})?`), add a compact `0850:45 UTC` → "oh eight fifty U T C"
+  handler that runs before the HH:MM matcher, and tighten the trailing
+  whitespace so an absent AM/PM no longer glues the next word ("P MUTC"). A
+  latent network-wide bug surfacing on SpaceX because spaceflight reporting
+  gives T-0 to the second — the same spoken-garble class as the June-13
+  `tf`→`T F` fix. Deterministic number-normalization correctness change (not a
+  respelling) but changes spoken output — A/B-listen per landmine #17. The
+  deep-dive length lever + price-spoken-twice (8/8) stay deferred (reasons
+  hold); tomorrow-teaser "watch for the [next] <test>" frame now 6/8 (P2 monitor).
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:
