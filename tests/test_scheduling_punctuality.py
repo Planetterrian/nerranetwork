@@ -40,11 +40,17 @@ def _worker_slots() -> dict:
 
 
 def test_cron_minutes_off_peak():
-    """Top-of-hour and half-hour marks are the most contended schedule
-    slots; every show cron must sit at :07/:37."""
+    """Crons are staggered to avoid bunching on the same minute. The
+    original :07/:37 design avoided top-of-hour contention but capped at
+    2 slots/hour (13 shows, 12 hours min). For 10 daily shows in 3 hours,
+    :01/:16/:31/:46 spacing is used instead (same anti-bunch principle,
+    tighter packing). GitHub fallback crons are no longer on the
+    historically-off-peak :07/:37 marks, but the Cloudflare Worker (primary,
+    minute-accurate dispatch) is unaffected and the duplicate guard still
+    prevents double-publishing."""
     crons = re.findall(r"- cron: '(\d+) ", _WF)
     assert crons, "no crons parsed"
-    assert set(crons) <= {"7", "37"}, f"on-peak cron minutes present: {crons}"
+    assert set(crons) <= {"1", "7", "16", "31", "37", "46"}, f"unexpected cron minutes: {crons}"
 
 
 def test_worker_slots_match_cron_map():
@@ -60,7 +66,7 @@ def test_worker_slots_match_cron_map():
 
 def test_worker_trigger_covers_all_slots():
     toml = (_ROOT / "workers" / "scheduler" / "wrangler.toml").read_text(encoding="utf-8")
-    assert '"7,37 6-12 * * *"' in toml
+    assert '"1,7,16,31,37,46 6-12 * * *"' in toml
 
 
 def test_gate_has_duplicate_guard():
