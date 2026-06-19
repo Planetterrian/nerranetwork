@@ -3,8 +3,8 @@ name: Run Podcast Show
 on:
   schedule:
     # Network ships ~10 episodes/day. All shows scheduled to finish before
-    # 8 AM Eastern (~12 UTC EDT / 13 UTC EST). Pipeline takes up to 45 min,
-    # so triggers must be staggered by at least that much.
+    # 10:01 UTC. Pipeline takes up to 45 min, so triggers must be staggered
+    # accordingly (15-minute intervals for 10 daily shows across 7:01-10:01 UTC).
     #
     # June 2026 punctuality pass: GitHub delivers `schedule` events
     # best-effort and 1-6 h late in practice (Tesla's 11:00 cron observed
@@ -24,38 +24,38 @@ on:
     # Saturday with a weekend-focus angle (international markets, crypto,
     # lessons learned). Cron times shifted +1h from the prior schedule.
     #
-    # Привет, Русский!: Weekly on Monday at 6:00 UTC
+    # Привет, Русский!: Weekly on Monday at 6:07 UTC
     - cron: '7 6 * * 1'
-    # Omni View: Daily at 6:30 UTC (Sunday = weekly recap)
-    - cron: '37 6 * * *'
-    # Planetterrian Daily: Daily at 7:00 UTC (Sunday = weekly recap)
-    - cron: '7 7 * * *'
-    # Fascinating Frontiers: Daily at 7:30 UTC (Sunday = weekly recap)
-    - cron: '37 7 * * *'
-    # Environmental Intelligence: Weekly on Monday at 8:00 UTC
+    # Omni View: Daily at 7:01 UTC (Sunday = weekly recap)
+    - cron: '1 7 * * *'
+    # Planetterrian Daily: Daily at 7:16 UTC (Sunday = weekly recap)
+    - cron: '16 7 * * *'
+    # Fascinating Frontiers: Daily at 7:31 UTC (Sunday = weekly recap)
+    - cron: '31 7 * * *'
+    # Models & Agents: Daily at 7:46 UTC (Sunday = weekly recap)
+    - cron: '46 7 * * *'
+    # Environmental Intelligence: Weekly on Monday at 8:07 UTC
     - cron: '7 8 * * 1'
-    # Models & Agents: Daily at 8:30 UTC (Sunday = weekly recap)
-    - cron: '37 8 * * *'
-    # Models & Agents for Beginners: Daily at 9:00 UTC (Sunday = weekly recap)
-    - cron: '7 9 * * *'
-    # Финансы Просто: Weekly on Monday at 9:30 UTC
-    - cron: '37 9 * * 1'
-    # Modern Investing Techniques: Daily at 10:00 UTC.
+    # Models & Agents for Beginners: Daily at 8:01 UTC (Sunday = weekly recap)
+    - cron: '1 8 * * *'
+    # Modern Investing Techniques: Daily at 8:16 UTC.
     # Mon-Fri = US market preview; Sat = weekend angle (international
     # markets, crypto, lessons learned, what to prepare for, long-term
     # insights); Sun = weekly recap.
-    - cron: '7 10 * * *'
-    # First Principles Daily: Daily at 10:30 UTC. Narrative show —
+    - cron: '16 8 * * *'
+    # First Principles Daily: Daily at 8:31 UTC. Narrative show —
     # topic-queue-driven, no daily news fetch. Alternates concrete
     # example / opportunity area per episode. Runs all 7 days.
-    - cron: '37 10 * * *'
-    # Tesla Shorts Time: Daily at 11:00 UTC (Sunday = weekly recap)
-    - cron: '7 11 * * *'
-    # Unintended Consequences: Daily at 11:30 UTC. Narrative show —
+    - cron: '31 8 * * *'
+    # Tesla Shorts Time: Daily at 8:46 UTC (Sunday = weekly recap)
+    - cron: '46 8 * * *'
+    # Unintended Consequences: Daily at 9:01 UTC. Narrative show —
     # topic-queue-driven, no daily news fetch. Runs all 7 days.
-    - cron: '37 11 * * *'
-    # SpaceX Daily: Daily at 12:07 UTC (Sunday = weekly recap)
-    - cron: '7 12 * * *'
+    - cron: '1 9 * * *'
+    # SpaceX Daily: Daily at 9:16 UTC (Sunday = weekly recap)
+    - cron: '16 9 * * *'
+    # Финансы Просто: Weekly on Monday at 9:37 UTC
+    - cron: '37 9 * * 1'
 
   workflow_dispatch:
     inputs:
@@ -135,18 +135,18 @@ jobs:
               # applies the intended restriction.
               CRON_MAP = {
                   "7 6 * * 1":        ("privet_russian",          "monday"),
-                  "37 6 * * *":       ("omni_view",                None),
-                  "7 7 * * *":        ("planetterrian",            None),
-                  "37 7 * * *":       ("fascinating_frontiers",    None),
+                  "1 7 * * *":        ("omni_view",                None),
+                  "16 7 * * *":       ("planetterrian",            None),
+                  "31 7 * * *":       ("fascinating_frontiers",    None),
+                  "46 7 * * *":       ("models_agents",            None),
                   "7 8 * * 1":        ("env_intel",               "monday"),
-                  "37 8 * * *":       ("models_agents",            None),
-                  "7 9 * * *":        ("models_agents_beginners",  None),
+                  "1 8 * * *":        ("models_agents_beginners",  None),
+                  "16 8 * * *":       ("modern_investing",         None),
+                  "31 8 * * *":       ("first_principles",         None),
+                  "46 8 * * *":       ("tesla",                    None),
+                  "1 9 * * *":        ("unintended_consequences", None),
+                  "16 9 * * *":       ("spacex",                   None),
                   "37 9 * * 1":       ("finansy_prosto",          "monday"),
-                  "7 10 * * *":       ("modern_investing",         None),
-                  "37 10 * * *":      ("first_principles",         None),
-                  "7 11 * * *":       ("tesla",                    None),
-                  "37 11 * * *":      ("unintended_consequences", None),
-                  "7 12 * * *":       ("spacex",                   None),
               }
 
               shows = []
