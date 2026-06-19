@@ -7,11 +7,11 @@ reviews:
       AI-chapter spacing + AI-accuracy items same-day; this pass took the next
       tier: theme-miner source-label pollution and a spoken thrust-unit garble.
     shipped:
-      - theme miner strips markdown source-link labels (was leaking "google
-        spacex" as the #1 theme; latent on all memory shows) + rebuilt clean
+      - theme miner strips markdown source-link labels (was leaking google
+        spacex as the top theme; latent on all memory shows) + rebuilt clean
         spacex_theme_history.json
-      - "tf" thrust unit expanded to "tons-force" via per-show
-        pronunciation_overrides (was spoken "T F")
+      - tf thrust unit expanded to tons-force via per-show
+        pronunciation_overrides (was spoken T F)
     deferred:
       - SPCX price spoken twice/episode (Market Watch segment + closing block);
         clean fix needs Closing marker reordered ahead of Market Watch AND the
@@ -25,11 +25,52 @@ reviews:
       - metric: highest-weighted key in spacex_theme_history.json recurring_themes
         baseline: "'google spacex' (count 6)"
         expected: "no source-label token (google/news/com/gov/reddit) in any top-30 theme key after Ep3-Ep5 mine"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-06-18: top themes all real (data center 8, starship/starlink/falcon/launch 5, elon musk 4); no source-label token in top 30."
       - metric: count of "tf" / "T F" letter-spellings in spacex _tts.txt + transcripts
         baseline: "2 (Ep2)"
         expected: "0 — 'tf' renders as 'tons-force' going forward"
+        verdict: hit
+        evidence: "2026-06-18: 'tf' only in pre-fix Ep2 _tts.txt; no 'T F' in any Ep3-7 transcript."
+
+  - date: 2026-06-18
+    pr: null
+    doc: docs/reviews/spacex_review_2026_06_18.md
+    summary: >
+      Second review. Both prior predictions HIT. Found + fixed a P0: weekly-
+      recap episodes shipped with NO Closing chapter — the price-carrying
+      sign-off was grabbed by the Market Watch marker (orphan-closing class).
+      Reordered Closing ahead of Market Watch (metadata-only, no audio).
+      Documented deep-dive-under-delivery as the root cause of chronic under-
+      length (deferred — four-show length A/B pending) and noted the P0
+      reorder now clears the chapter blocker on the deferred price-twice fix.
+    shipped:
+      - Closing chapter marker reordered before Market Watch in shows/spacex.yaml
+        so the price-carrying sign-off keeps its Closing chapter (fixes Ep3
+        weekly-recap orphan-closing; verified zero regression on all 7 scripts)
+    deferred:
+      - Engineering Deep Dive under-delivers its own spec (140-181w vs the
+        digest prompt's "3 paragraphs of 4-6 sentences" ~250-360w) -> chronic
+        under-length; expand-the-deep-dive lever stays deferred pending the
+        network four-show length A/B, evidence strengthened (short vs its OWN
+        per-section spec). Attack — explicit ~280-340w deep-dive floor in
+        digest + podcast prompts; A/B.
+      - SPCX price spoken twice/episode (Market Watch segment + closing block,
+        7/7). Chapter blocker now cleared by this pass's Closing/Market Watch
+        reorder; next pass can make the Market Watch note qualitative (no
+        repeated number), single precise quote in the closing. Observe Ep8+
+        first; audio-affecting -> A/B.
+      - tomorrow-teaser "Watch for the [first/next] <test>" frame now 5/7;
+        monitor for dead rotation (P2).
+    predictions:
+      - metric: Closing chapter present in chapters_ep*.json for the next weekly-recap + all dailies
+        baseline: "Ep3 (2026-06-14 recap) shipped with NO Closing chapter"
+        expected: "every episode incl. the next weekly recap has a Closing chapter; dailies keep Market Watch too"
+        verdict: pending
+        evidence: null
+      - metric: Engineering Deep Dive word count in digests (Ep8+)
+        baseline: "Ep4-7 deep dive 140-276w vs ~250-360 spec"
+        expected: "still <250w on most episodes UNLESS the deferred deep-dive floor ships (scores the digest-ceiling thesis)"
         verdict: pending
         evidence: null
     agent_cost_usd: null

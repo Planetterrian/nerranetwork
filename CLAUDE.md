@@ -493,6 +493,25 @@ TST received a full recursive improvement architecture (analogous to MIT):
   regression; and "AI & Compute" chapter lumping (swallows trailing Top
   News when the LLM emits news after the editorial markers) — observe Ep3+
   before a prompt change.
+  **June 18 2026 second pass** (review:
+  [`docs/reviews/spacex_review_2026_06_18.md`](docs/reviews/spacex_review_2026_06_18.md);
+  drift guard: `tests/test_spacex_show.py::TestClosingBeforeMarketWatch`):
+  both June-13 predictions HIT (themes clean, no `tf`/`T F`). Found + fixed a
+  P0 the snapshot's "clean chapters" check missed — **weekly-recap episodes
+  shipped with NO Closing chapter** (`chapters_ep003.json` ended at a
+  mis-titled "Market Watch"). The code-supplied closing block appends the
+  SPCX price into the sign-off, the Market Watch marker matches that price
+  phrase, and Market Watch was listed before Closing; dailies escaped via
+  the real Market Watch segment consuming the marker first (once-per-title),
+  but recaps have no such segment. Fixed by ordering the **Closing marker
+  ahead of Market Watch** (`where: end` keeps it pinned to the sign-off) —
+  metadata-only, no audio, zero regression on all 7 scripts. This also
+  clears the chapter blocker on the deferred price-twice fix. Deferred
+  (evidence strengthened): chronic under-length is the **Engineering Deep
+  Dive under-delivering its own spec** (140-181w vs the digest prompt's "3
+  paragraphs of 4-6 sentences" ~250-360w) — the expand-the-deep-dive lever
+  stays deferred pending the network four-show length A/B. The AI-lumping
+  and hook-jargon June-13 deferrals did NOT recur.
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:
