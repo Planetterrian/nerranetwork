@@ -1,29 +1,22 @@
-name: "First Principles Daily"
+name: First Principles Daily
 slug: first_principles
-description: "A daily narrative podcast that reasons from first principles — the 'magic wand number' (what something would cost if you only paid for raw materials) and the 'Idiot Index' (how many times more a finished part costs than its materials). Episodes alternate: one day a concrete example of first-principles thinking in action — from history (Ford, Bessemer, the shipping container) and modern industry (solar, batteries, mRNA), and yes sometimes one of Musk's teams — the next a deep exposé on an industry ripe for the same treatment. Musk popularized the language; the method is much older and bigger than any one person. Produced by the Nerra Network in Vancouver."
-
-# Narrative mode: topic-queue-driven (no RSS fetch). The runner runs
-# ``generate_digest()`` with topic template vars from ``topic_queue_file``
-# (outline via first_principles_episode.txt), then the podcast chain
-# expands it into the full spoken script. The queue is ordered
-# alternately (debut -> concrete_example -> opportunity_area -> ...), and
-# ``pick_next_topic`` is sequential, so the show alternates per episode.
+description: 'A daily narrative podcast that reasons from first principles — the ''magic
+  wand number'' (what something would cost if you only paid for raw materials) and
+  the ''Idiot Index'' (how many times more a finished part costs than its materials).
+  Episodes alternate: one day a concrete example of first-principles thinking in action
+  — from history (Ford, Bessemer, the shipping container) and modern industry (solar,
+  batteries, mRNA), and yes sometimes one of Musk''s teams — the next a deep exposé
+  on an industry ripe for the same treatment. Musk popularized the language; the method
+  is much older and bigger than any one person. Produced by the Nerra Network in Vancouver.'
 narrative_mode: true
 topic_queue_file: shows/topic_queues/first_principles.yaml
-
-# Daily (7x/week). Narrative show — no Sunday weekly recap; the topic
-# queue is evergreen and plays out at its own pace (see test_schedule.py:
-# first_principles is a daily *narrative* show, deliberately NOT carrying
-# weekly_recap_on_sunday).
 weekly_recap_on_sunday: false
-
-min_articles_skip: 0       # Narrative show — articles aren't the input.
-
+min_articles_skip: 0
 multilingual:
   enabled: true
   auto: true
-  languages: [fr]
-
+  languages:
+  - fr
 llm:
   provider: xai
   system_prompt_file: shows/prompts/first_principles_system.txt
@@ -33,37 +26,11 @@ llm:
   podcast_temperature: 0.7
   max_tokens: 4800
   podcast_max_tokens: 9000
-  # Length reality (June 2026): grok-4.3 produces ~1,200-1,500-word podcast
-  # scripts per single call network-wide (Tesla ~1,290, M&A ~1,420, etc.) —
-  # ~9-11 min audio — and resists prompt escalation past that ceiling. Three
-  # First Principles regenerations (8 -> 10.6 -> 10.1 min) confirmed the
-  # plateau. The show is positioned as a ~10-12 min long-form daily (label on
-  # the show page matches). The prompts still ask for the top of the range to
-  # keep output maximized. This floor (1,500) keeps the soft skip floor at 900
-  # and fires the expansion retry (~990) only on a genuinely thin pass, so a
-  # healthy ~1,480-word episode ships clean without a wasteful retry.
   min_podcast_words: 1500
-  # June 2026 network quality pass: chronic below-target episodes —
-  # the expand-retry now fires on ANY below-target script.
   podcast_expand_below_target: true
   podcast_chain: true
-
-tts:
-  # Inherit the blessed network chain from shows/_defaults.yaml verbatim:
-  # provider=grok, voice_id=kdif6sqjcyiq (Patrick's English voice),
-  # language_code=en, single-call synthesis, <fast> whole-script wrap,
-  # voice EQ + sidechain ducking + EBU R128 -16 LUFS + VBR encode.
-  # Per landmine #17: NO custom voice settings, NO phonetic respellings,
-  # NO programmatic tag injection. Pacing/pronunciation are handled at the
-  # prompt level (acronyms expanded, numbers/units spelled out), never by
-  # changing the voice or adding TTS tweaks.
-  {}
-
+tts: {}
 audio:
-  # Theme music enabled June 11 2026 (operator-produced track, 4:20 @
-  # 190 kbps/48 kHz). Timing/volume params below follow the network's
-  # May 13 shape (10 s music-only intro, 45 s under voice, 20 s outro).
-  # A/B-listen the first mixed episode per landmine #17.
   music_file: assets/music/first_principles.mp3
   transition_sting: assets/music/transition_sting.mp3
   voice_intro_delay: 10.0
@@ -77,131 +44,116 @@ audio:
   overlap_volume: 0.4
   fade_volume: 0.3
   outro_volume: 0.5
-
 publishing:
   rss_file: first_principles_podcast.rss
   rss_title: First Principles Daily
-  rss_description: "A daily narrative podcast that reasons about the world from first principles — the 'magic wand number' and the 'Idiot Index'. Episodes alternate between a concrete example of first-principles thinking in action (historical and modern — Ford, Bessemer, the shipping container, solar, batteries, and sometimes Musk's teams) and a deep exposé on an industry ripe for the same treatment."
-  rss_summary: "Reason from raw materials, not analogy. One example or one opportunity, every day."
+  rss_description: A daily narrative podcast that reasons about the world from first
+    principles — the 'magic wand number' and the 'Idiot Index'. Episodes alternate
+    between a concrete example of first-principles thinking in action (historical
+    and modern — Ford, Bessemer, the shipping container, solar, batteries, and sometimes
+    Musk's teams) and a deep exposé on an industry ripe for the same treatment.
+  rss_summary: Reason from raw materials, not analogy. One example or one opportunity,
+    every day.
   rss_link: https://nerranetwork.com/first-principles.html
   rss_author: Patrick
   rss_email: patrick@planetterrian.com
   rss_image: https://nerranetwork.com/assets/covers/first-principles-daily.jpg
-  # Apple taxonomy fix (June 2026): "Technology" is a TOP-LEVEL Apple
-  # category with no subcategories — the previous "Tech News" nesting
-  # ("Tech News" belongs under News) risked a Podcasts Connect rejection
-  # or silent category stripping at submission time.
   rss_category: Technology
-  rss_keywords: "first principles, Elon Musk, SpaceX, Tesla, engineering, cost, manufacturing, innovation, idiot index"
+  rss_keywords: first principles, Elon Musk, SpaceX, Tesla, engineering, cost, manufacturing,
+    innovation, idiot index
   guid_prefix: first-principles
   base_url: https://nerranetwork.com
   audio_subdir: digests/first_principles
   summaries_json: digests/first_principles/summaries_first_principles.json
   summaries_podcast_name: first_principles
-  # No distribution at launch (operator decision): X posting disabled.
   x_enabled: false
-
 episode:
   prefix: First_Principles
-  filename_pattern: "{prefix}_Ep{num:03d}_{date:%Y%m%d}.mp3"
+  filename_pattern: '{prefix}_Ep{num:03d}_{date:%Y%m%d}.mp3'
   output_dir: digests/first_principles
-  mp3_glob: "First_Principles_Ep*.mp3"
-
+  mp3_glob: First_Principles_Ep*.mp3
 chapters:
   enabled: true
-  # Markers match the section phrasing the podcast prompt produces (the
-  # prompt and these markers are authored together so chapters land
-  # correctly in Apple/Spotify).
-  # June 10 2026 quality pass: FP was missed by the Tesla/four-show
-  # chapter hardening — it had no positional `where` anchors, so the
-  # closing's "First Principles Daily" / "first principle" mentions
-  # re-opened body chapters at the END (Ep001-003 each shipped a second
-  # "Introduction" chapter on the sign-off; Ep001-004 had NO Closing
-  # chapter). `where: start` pins Introduction to the opening window,
-  # `where: end` pins Closing to the final window. Both FP closing-pool
-  # variants + the Ep1 special closing match the Closing pattern via
-  # "see you tomorrow". Drift guard: tests/test_first_principles_quality_pass.py.
   section_markers:
-    - pattern: "Welcome.*First Principles|First Principles Daily|first episode"
-      title: "Introduction"
-      where: start
-    - pattern: "first principle|magic wand|raw material|atoms"
-      title: "The First Principle"
-    - pattern: "idiot index|finished part|cost of the materials|times more"
-      title: "The Idiot Index"
-    - pattern: "what they did|how they|the breakthrough|the redesign|the engineering"
-      title: "The Breakdown"
-    - pattern: "opportunity|what if|imagine if|ripe for|the potential|could be"
-      title: "The Opportunity"
-    - pattern: "lesson|takeaway|principle to remember|what this teaches|the bigger idea"
-      title: "The Lesson"
-    - pattern: "that.?s.*for today|until next time|see you tomorrow|one example or one opportunity"
-      title: "Closing"
-      where: end
-
+  - pattern: Welcome.*First Principles|First Principles Daily|first episode
+    title: Introduction
+    where: start
+  - pattern: first principle|magic wand|raw material|atoms
+    title: The First Principle
+  - pattern: idiot index|finished part|cost of the materials|times more
+    title: The Idiot Index
+  - pattern: what they did|how they|the breakthrough|the redesign|the engineering
+    title: The Breakdown
+  - pattern: opportunity|what if|imagine if|ripe for|the potential|could be
+    title: The Opportunity
+  - pattern: lesson|takeaway|principle to remember|what this teaches|the bigger idea
+    title: The Lesson
+  - pattern: that.?s.*for today|until next time|see you tomorrow|one example or one
+      opportunity
+    title: Closing
+    where: end
 newsletter:
-  # Turned on June 15 2026 (operator created the "First Principles Daily"
-  # Buttondown tag). Per-episode email like the other shows. Narrative show,
-  # not financial — no disclaimer.
   enabled: true
   platform: buttondown
   api_key_env: BUTTONDOWN_API_KEY
   status: about_to_send
-  tag: "First Principles Daily"        # must match the Buttondown Tags page exactly
-  short_label: "First Principles"
-  emoji: "💡"
-  newsletter_start_date: "2026-06-15"
+  tag: First Principles Daily
+  short_label: First Principles
+  emoji: 💡
+  newsletter_start_date: '2026-06-15'
   requires_financial_disclaimer: false
   length_target_words: 1200
-
 content_tracking:
   enabled: true
-
 slow_news:
-  # Narrative show — the topic queue is the input, not RSS. Slow-news
-  # fallback never fires; present only to satisfy the config schema.
   enabled: false
-
 content_freshness:
-  # Narrative show — episodes are evergreen; the queue prevents repeats.
   lookback_days: 0
   similarity_threshold: 1.0
-
 youtube:
-  # June 14 2026 — Enabled as PODCAST-ONLY (long-form upload, no Shorts) on
-  # @NerraNetwork. Playlist created + flagged as a podcast in YouTube Studio
-  # the same day (landmine #15). Adds ~2,100 units/day to the EN channel
-  # paper budget; flip publish_shorts back to true once the @NerraNetwork
-  # quota increase lands. See landmine #20.
   podcast_playlist_id: PLRHMnzNNXPYChHSTQ19lcAN_oV_yz1tsu
   enabled: true
   channel: en
-  category_id: 27                # Education (first-principles thinking framing)
+  category_id: 27
   default_language: en
   privacy_status: public
   publish_long_form: true
-  publish_shorts: false           # podcast-only: long-form on, Shorts off until quota approval
-  synthetic_disclosure: "All audio narration is generated using AI voice synthesis. Curated and produced by Patrick at the Nerra Network in Vancouver, Canada."
+  publish_shorts: false
+  synthetic_disclosure: All audio narration is generated using AI voice synthesis.
+    Curated and produced by Patrick at the Nerra Network in Vancouver, Canada.
   image_queries:
-    - "rocket engine factory"
-    - "engineering blueprint schematic"
-    - "raw metal ingots foundry"
-    - "exploded view machine parts"
-    - "automated assembly line robots"
-    - "spacecraft engine test fire"
-    - "engineer examining components"
-    - "cost analysis spreadsheet engineering"
-  image_query_prefix: "engineering"
-  # Grok Imagine for podcast-format imagery (long-form slideshow only since
-  # Shorts are off). Required by test_all_youtube_shows_use_grok_imagine.
+  - rocket engine factory
+  - engineering blueprint schematic
+  - raw metal ingots foundry
+  - exploded view machine parts
+  - automated assembly line robots
+  - spacecraft engine test fire
+  - engineer examining components
+  - cost analysis spreadsheet engineering
+  image_query_prefix: engineering
   image_provider: grok
   grok_image_model: grok-imagine-image
-  grok_image_descriptor: "documentary-style engineering photo, dramatic lighting, technical, ultra-detailed"
+  grok_image_descriptor: documentary-style engineering photo, dramatic lighting, technical,
+    ultra-detailed
   tags:
-    - first principles
-    - engineering thinking
-    - idiot index
-    - innovation
-    - problem solving
-    - learning
-    - education podcast
+  - first principles
+  - engineering thinking
+  - idiot index
+  - innovation
+  - problem solving
+  - learning
+  - education podcast
+  video_genre: narrative-education
+  video_mood: thoughtful-analytical-foundational
+  video_keywords:
+  - first principles
+  - case study
+  - innovation
+  - business
+  - examples
+  - deep thinking
+  video_visual_style: 'Case study footage, historical examples, business visuals,
+
+    technical demonstrations, expert analysis, before/after comparisons,
+
+    systems thinking diagrams, educational, analytical aesthetic.'
