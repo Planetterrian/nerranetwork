@@ -1,0 +1,103 @@
+Glad you're here. Welcome to Models and Agents, episode 87 for June 20th, 2026. Your daily AI briefing.
+There's signal and noise in AI every day. Let's get to the signal. Virtuals just wired latens
+distributed GPU engine into its agent network to run GLM 5.2 at scale. A security report out this
+week flags active exploits targeting Langflow and related agent frameworks. A major security report
+details active exploits against Langflow and related frameworks. Builders should audit any
+self-hosted agent tooling this week. Patches for Langgraph, Langflow and Langchain Core are already
+available. Teams should verify upgrades before the next wave of reported exploits. The report highlights
+risks in self-hosted agent tooling. Related frameworks face ongoing exploit activity.
+Verification of upgrades is recommended ahead of further incidents. Teams running self-hosted
+tooling should audit upgrades before the next wave hits. The virtual's integration now routes GLM
+times 5.2 calls through latens distributed engine. Agents execute without managing individual
+GPU nodes themselves. Existing virtual users get immediate access to the model on the new back end.
+The move follows earlier reports that the same model performs well on fast custom silicon.
+Other agent platforms are already watching whether similar distributed back ends appear soon.
+This development sits in the ongoing maturation of agent tool use tracked since episode 86.
+Vive thinker 3B is a 3 billion parameter dense model built on quen 2.5 coder 3B.
+It uses the spectrum to signal post-training pipeline. The model reaches parity with deep seek v3.2
+and kimi k 2.5 on verifiable reasoning benchmarks. It ships under an MIT license that permits commercial
+use and fine tuning. Builders focused on code or math tasks can now compare its 3 billion scale
+directly against larger open-weight families. This release continues the narrowing performance gap
+between open-weight and closed frontier models noted in episode 85. Min flux offers a minimal
+pie torch re-implementation of both flux 1 and flux 2. The repo supplies explicit VAE and transformer
+components along with line by line mappings to the hugging-faced diffusers library.
+Training and inference loops use flow matching and Euler ODE steps.
+Flux 2 updates transformer blocks modulation FFN VAE normalization and position IDs over the first
+version. Anyone studying diffusion architectures can run the loops locally without the full diffusers
+abstractions. DVD-gepa demonstrates a minimal joint embedding predictive architecture on a bouncing
+logo video task. A context encoder EMA target encoder and latent predictor learn 32-dimensional
+representations without labels or a decoder. An optional decoder lets the model dream correct future
+frames for roughly 20 steps before drift sets in. The entire project runs in the browser through
+a 40-line JavaScript re-implementation of the trained MLPs. A new open handbook covers LLM inference
+at scale with chapters on GPU internals, KV cache behavior and batching. It explains why GPU sit idle
+during generation and where memory bottlenecks occur, complete with mermaid diagrams.
+The latest section walks through VLLM SG-Lang and tensor-RT-LLM trade-offs. Practitioners can review
+the GPU internals chapter to sharpen their mental model of production inference. This handbook directly
+addresses the AI compute and inference questions tracked since episode 86. Sui deployed CLMPC on
+mainnet to give AI agents secure multi-party computation. Sui deployed CLMPC on mainnet to give AI
+agents secure multi-party computation capabilities. The feature allows agents to perform joint
+computations without exposing private inputs. The feature lets agents perform joint computations
+without exposing private inputs. Teams building workflows that require shared secret handling
+now have a production ready on-chain option. Teams building agent workflows that require shared
+secret handling now have a production ready on-chain option. The deployment occurred on mainnet.
+It supplies secure multi-party computation for agents. Nvidia AI released spatial claw,
+a training-free agent that writes and executes Python inside a persistent kernel for 3D spatial
+reasoning. It composes existing perception tools through code rather than learned policies.
+The approach removes additional training while still handling complex spatial queries.
+Developers working on robotics or 3D scene understanding can test the code as action pattern
+immediately. Atomic Mail now lets agents create and manage their own email inboxes with no human
+account creation step. Atomic Mail now allows agents to create and manage their own email inboxes
+autonomously. No human account creation step is required. The service target's agent workflows
+that need persistent independent email identities. The service target's agent workflows that need
+persistent independent email identities. Agents can register their own inboxes with no human
+involvement. The release enables autonomous inbox management. It removes any requirement for human
+account creation. Data set apps reimagines Claude style artifacts with a full relational database
+and JSON API back end. Data set apps gives developers the interactive artifact experience but
+back by a full relational database and JSON API. HTML plus JS applications can read and write
+structured data directly instead of relying on local storage. HTML plus JS applications can read
+and write structured data directly instead of relying on local storage. The project post includes
+live demo details and UV1 liners for quick local testing. The project blog post includes live demo
+details and UV1 liners for local testing. It provides a relational back end for artifacts.
+Applications gain direct data access through the JSON API. A recorded workshop posted to YouTube
+covers the full LLM stack from perceptrons through pre-training, instruction tuning and RL.
+The recorded workshop covers the full LLM stack from perceptrons through pre-training, instruction
+tuning, and RL using slides, Excel examples, and PyTorch code. It uses slides, Excel examples,
+and PyTorch code with no prior machine learning background assumed beyond comfort with code.
+No prior ML background is assumed beyond comfort with code. Slides and exercises remain available
+for self-paced study. Slides and exercises are available for self-paced study. The workshop teaches
+ML, LLM, and math intuition. It assumes only basic comfort with code. Yandex open sourced Yaf,
+a zero copy wire format for proto-buff that offers four memory layouts. The flat layout reaches 1.2 times
+the speed of a raw C++ struct in benchmarks. Production advertising systems have already reported 10-20%
+CPU savings after adoption. TimeColePilot supplies an end-to-end forecasting pipeline that combines
+statistical, foundation, and GPU-accelerated models. TimeColePilot provides an end-to-end workflow
+that combines statistical, foundation, and GPU-accelerated models with rolling cross-validation and
+probabilistic forecasts. It includes rolling cross-validation, probabilistic forecasts, and an optional
+LLM agent that selects models and explains predictions. An optional LLM agent can select models and
+explain predictions. The tutorial demonstrates the workflow on real airline passenger data plus
+synthetic series with injected anomalies. The tutorial uses real airline passenger data plus
+synthetic series with injected anomalies. It supplies automated anomaly detection. The pipeline supports
+foundation models. Okay, let's pop the hood on flow matching as it appears in the min flux implementation.
+The technique re-parameterizes generation as learning of velocity field that transports noise to
+data along straight paths in probability space. The model therefore predicts the instantaneous
+direction of the probability flow rather than a score or noise estimate. Straight paths let the
+Odesimal Disciver Solver take larger steps at inference time and cut the number of function
+evaluations required. Training pays a cost because the velocity target must be estimated from paired
+noise data points, which raises gradient variance compared with the simpler noise prediction loss.
+In the min-flx loop, the VAE first encodes images, the flow matching velocity is computed,
+and an MSE loss regresses against that velocity. Choose flow matching when your inference budget is
+dominated by solver steps. Stick with classic diffusion when training stability matters more than
+step count. Try the virtual's plus latent integration if you already run agents that need fast GLM
+5.2 access without managing GPUs yourself. Clown the min-flux repo and run its training and inference
+loops to study flux internals without the full diffusers complexity. Test Vive thinker 3B on code or
+math tasks where you want deep-seek level reasoning at 3B scale under MIT license terms.
+Walk through the data set apps demo and UV one-liners to see how a relational backend changes what
+HTML plus JS artifacts can do. More agent platforms are expected to announce distributed inference
+backends for GLM 5.2. Patches for Lang graph, Lang flow, and Lang chain core are already available.
+Yandex, YAHFF may appear in additional ProtoBuff heavy pipelines as the reported CPU saving spread.
+Tomorrow, keep an eye on whether additional agent platforms confirm distributed backends for GLM 5.2.
+That wraps up today's AI briefing. Share this with a developer or builder who wants to stay
+current. Subscribe wherever you listen. See you tomorrow and before you go, this show is part of the
+NARA network, a family of daily podcasts covering tech, science, markets, and more. If you enjoyed
+today's episode, give OmniView a listen. A balanced daily world news briefing that takes every side
+seriously. You can explore the whole lineup at NARANetwork.com. This episode used AI voice synthesis
+of my voice. Editorial selection and analysis are my own.
