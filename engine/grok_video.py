@@ -95,6 +95,169 @@ class GrokVideoResult:
     failures: List[str] = field(default_factory=list)
 
 
+def _build_video_prompt(
+    segment_text: str,
+    show_config=None,
+    hook: str = "",
+    episode_title: str = "Episode",
+    segment_index: int = 0,
+    total_segments: int = 1,
+    previous_visual_note: str = "",
+) -> str:
+    """Build a show-specific, visually coherent video prompt.
+
+    Args:
+        segment_text: The podcast script for this 15-second clip
+        show_config: The loaded show config (has video_genre, video_mood, etc.)
+        hook: The episode hook (headline/narrative)
+        episode_title: Full episode title
+        segment_index: Which segment this is (0 = first)
+        total_segments: Total number of segments
+        previous_visual_note: Continuity hint from prior segment
+
+    Returns:
+        Full prompt for Grok Video API
+    """
+    # Extract video-specific fields from config, with sensible defaults
+    genre = ""
+    mood = ""
+    keywords = []
+    visual_style = ""
+
+    if show_config and hasattr(show_config, "youtube"):
+        yt = show_config.youtube
+        genre = getattr(yt, "video_genre", "")
+        mood = getattr(yt, "video_mood", "")
+        keywords = getattr(yt, "video_keywords", [])
+        visual_style = getattr(yt, "video_visual_style", "")
+
+    # Fallback genre if not specified
+    if not genre:
+        genre = "technology-news"
+
+    # Build keywords string (first 5, joined)
+    keywords_str = ", ".join(keywords[:5]) if keywords else ""
+
+    # Truncate segment text for prompt inclusion
+    segment_preview = segment_text[:500] if segment_text else ""
+
+    # Continuity note for non-first segments
+    continuity_line = ""
+    if segment_index > 0 and previous_visual_note:
+        continuity_line = f"\nVISUAL CONTINUITY NOTE: {previous_visual_note}"
+
+    prompt = f"""Generate a professional, high-production-value video clip for a podcast episode.
+
+PODCAST CONTEXT:
+- Episode Title: {episode_title}
+- Main Topic: {hook if hook else episode_title}
+- Content Genre: {genre}
+- Mood/Tone: {mood if mood else "professional"}
+- Key Topics: {keywords_str if keywords_str else "technology news"}
+- Segment: {segment_index + 1} of {total_segments}
+
+VISUAL DIRECTION:
+{visual_style if visual_style else "Cinematic, professional, modern, high production value"}
+
+SCRIPT FOR THIS SEGMENT:
+{segment_preview}
+
+REQUIREMENTS:
+- Duration: exactly 15 seconds
+- Resolution: 1280x720 (16:9 YouTube standard)
+- Visual style: Cohesive with podcast branding and episode theme
+- No text overlays or subtitles (podcast provides audio)
+- Dynamic camera movements, varied composition
+- Professional color grading, bright and clear
+- Smooth transitions between shots
+- High-quality licensed or original content{continuity_line}
+
+AVOID:
+- Blurry or low-quality footage
+- Excessive special effects that distract from content
+- Irrelevant or off-topic visuals
+- Text overlays or watermarks
+- Generic "news broadcast" aesthetic
+- Talking heads unless essential to the topic"""
+
+    return prompt.strip()
+
+
+def _composite_video_with_audio(
+    video_path: Path,
+    audio_path: Path,
+    output_path: Path,
+) -> bool:
+    """Composite a video with pre-mixed audio using FFmpeg.
+
+    This ensures the pre-mixed podcast audio (with intro/outro music,
+    EQ, compression) is used instead of any audio the video might have.
+
+    Args:
+        video_path: Path to the video MP4 (may have audio)
+        audio_path: Path to the pre-mixed audio (MP3 or WAV)
+        output_path: Where to write the composited result
+
+    Returns:
+        True if successful, False otherwise
+    """
+    if not video_path.exists():
+        logger.error("Video file not found: %s", video_path)
+        return False
+    if not audio_path.exists():
+        logger.error("Audio file not found: %s", audio_path)
+        return False
+
+    try:
+        # FFmpeg command to composite video + audio
+        # -c:v copy: Keep video codec (no re-encoding, preserve quality)
+        # -c:a aac: Use AAC audio codec (YouTube-compatible)
+        # -map 0:v:0 -map 1:a:0: Use video from input 0, audio from input 1
+        # -shortest: Stop at shortest input (safety against video overflow)
+        cmd = [
+            "ffmpeg",
+            "-i", str(video_path),
+            "-i", str(audio_path),
+            "-c:v", "copy",
+            "-c:a", "aac",
+            "-b:a", "192k",
+            "-map", "0:v:0",
+            "-map", "1:a:0",
+            "-shortest",
+            "-y",
+            str(output_path),
+        ]
+
+        logger.info("Compositing video with audio: %s", " ".join(cmd))
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+
+        if result.returncode != 0:
+            logger.error(
+                "FFmpeg audio composite failed: %s\nStderr: %s",
+                result.returncode, result.stderr,
+            )
+            return False
+
+        logger.info(
+            "Audio composite successful: %s (%.1f MB)",
+            output_path,
+            output_path.stat().st_size / (1024 * 1024),
+        )
+        return True
+
+    except subprocess.TimeoutExpired:
+        logger.error("FFmpeg audio composite timed out for %s", video_path)
+        return False
+    except Exception as exc:
+        logger.error("FFmpeg audio composite error: %s", exc)
+        return False
+
+
 def _break_script_into_clips(
     script: str,
     max_duration_s: int = 15,
@@ -388,6 +551,8 @@ def generate_grok_videos(
     aspect_ratio: str = "16:9",
     generate_short: bool = True,
     short_duration_seconds: int = 40,
+    final_mp3_path: Optional[Path] = None,
+    show_config=None,
 ) -> GrokVideoResult:
     """Generate full-length and short videos from a podcast script.
 
@@ -397,9 +562,25 @@ def generate_grok_videos(
     3. Poll for completion
     4. Download each clip
     5. Stitch clips together for full video
-    6. Optionally generate a separate short version
+    6. Composite video with pre-mixed audio (if provided)
+    7. Optionally generate a separate short version
 
-    Returns a GrokVideoResult with paths to generated videos and cost tracking.
+    Args:
+        work_dir: Directory for video output
+        episode_num: Episode number (for file naming)
+        podcast_script: The full podcast script text
+        hook: Episode hook/headline (optional, used in prompts)
+        episode_title: Episode title (optional, used in prompts)
+        api_key: Grok API key (falls back to env vars if not provided)
+        resolution: "720p" or "480p" for video quality
+        aspect_ratio: "16:9" for full-length, "9:16" for shorts
+        generate_short: Whether to generate a short version
+        short_duration_seconds: Duration in seconds for the short
+        final_mp3_path: Path to pre-mixed episode audio (for composite)
+        show_config: Show configuration object (has video_genre, video_mood, etc.)
+
+    Returns:
+        GrokVideoResult with paths to generated videos and cost tracking.
     """
     start_time = time.time()
 
@@ -426,25 +607,24 @@ def generate_grok_videos(
         result.is_fallback = True
         return result
 
-    # Generate video prompts from segments
+    # Generate video prompts from segments using show-specific prompt builder
     clips = []
+    num_segments = len(script_segments)
     for idx, (segment_text, est_duration) in enumerate(script_segments):
-        # Build a descriptive prompt for each segment
-        # Include hook context for the first clip
-        context = f"Episode {episode_num}: {hook}" if idx == 0 else ""
-        prompt = (
-            f"Generate a professional video for podcast content: {context} "
-            f"Audio transcript: {segment_text[:200]}... "
-            f"Style: cinematic, engaging, dynamic camera movements, "
-            f"high production value, bright colors, professional lighting. "
-            f"Subject: technology and innovation news. "
-            f"No text overlay."
+        # Build a show-specific, visually coherent prompt
+        prompt = _build_video_prompt(
+            segment_text=segment_text,
+            show_config=show_config,
+            hook=hook,
+            episode_title=episode_title,
+            segment_index=idx,
+            total_segments=num_segments,
         )
 
         clip = VideoClip(
             clip_id=f"ep{episode_num:03d}_clip{idx:02d}",
             request_id="",
-            prompt=prompt[:512],  # API likely has prompt length limits
+            prompt=prompt[:2000],  # API accepts longer prompts now
             duration_seconds=min(est_duration, 15),  # Clamp to max
             resolution=resolution,
         )
@@ -536,8 +716,26 @@ def generate_grok_videos(
         full_video_path = video_dir / f"episode_{episode_num:03d}_full.mp4"
 
         if _stitch_videos_ffmpeg(local_paths, full_video_path):
-            result.full_video_path = full_video_path
-            logger.info("Full episode video ready: %s", full_video_path)
+            logger.info("Full episode video stitched: %s", full_video_path)
+
+            # Composite with pre-mixed audio if provided
+            if final_mp3_path and final_mp3_path.exists():
+                audio_composited_path = video_dir / f"episode_{episode_num:03d}_with_audio.mp4"
+                if _composite_video_with_audio(full_video_path, final_mp3_path, audio_composited_path):
+                    # Replace the video path with the audio-composited version
+                    full_video_path.unlink()  # Remove the video-only version
+                    audio_composited_path.rename(full_video_path)  # Rename to standard name
+                    result.full_video_path = full_video_path
+                    logger.info("Full episode video ready with audio composite: %s", full_video_path)
+                else:
+                    logger.warning("Audio composite failed; using video-only version")
+                    result.full_video_path = full_video_path
+                    result.failures.append("Audio composite failed; using video-only")
+            else:
+                if not final_mp3_path:
+                    logger.warning("No audio path provided; video will not have audio")
+                result.full_video_path = full_video_path
+                logger.info("Full episode video ready: %s", full_video_path)
         else:
             result.failures.append("Video stitching failed")
             logger.error("Failed to stitch clips for episode %d", episode_num)

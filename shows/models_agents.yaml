@@ -1,171 +1,151 @@
-name: "Models & Agents"
+name: Models & Agents
 slug: models_agents
-weekly_recap_on_sunday: true   # May 2026: daily cadence; Sunday slot recaps the past 7 days from the content lake.
-memory_enabled: true           # Phase 3: recursive narrative memory (programs in engine/show_memory.py). Flip to false to disable.
-description: "Daily AI briefing covering new model releases, agent frameworks, and practical developments in the AI models and agents ecosystem. Helping you stay on top of the most exciting developments of our generation."
-
+weekly_recap_on_sunday: true
+memory_enabled: true
+description: Daily AI briefing covering new model releases, agent frameworks, and
+  practical developments in the AI models and agents ecosystem. Helping you stay on
+  top of the most exciting developments of our generation.
 sources:
-  # Major AI Labs & Research
-  - url: https://openai.com/blog/rss.xml
-    label: OpenAI Blog
-  - url: https://blog.google/technology/ai/rss/
-    label: Google AI Blog
-  - url: https://huggingface.co/blog/feed.xml
-    label: Hugging Face Blog
-
-  # AI News & Analysis
-  - url: https://arstechnica.com/ai/feed/
-    label: Ars Technica AI
-  - url: https://www.marktechpost.com/feed/
-    label: MarkTechPost
-  - url: https://www.artificialintelligence-news.com/feed/
-    label: AI News
-
-  # Research & Papers
-  - url: https://arxiv.org/rss/cs.CL
-    label: arXiv NLP
-
-  # Developer & Agent Ecosystem
-  - url: https://github.blog/feed/
-    label: GitHub Blog
-  - url: https://devblogs.microsoft.com/semantic-kernel/feed/
-    label: Microsoft Semantic Kernel
-  # Removed: blog.langchain.dev/rss/ — serves malformed XML ("not
-  # well-formed (invalid token)"), 0 entries + 1 failed feed every run.
-  # No working replacement (blog.langchain.com/rss also malformed,
-  # changelog 404). LangChain coverage still flows via Google News + Reddit.
-  - url: https://www.latent.space/feed
-    label: Latent Space
-
-  # MLOps & Production AI
-  - url: https://simonwillison.net/atom/everything/
-    label: Simon Willison
-  - url: https://towardsdatascience.com/feed
-    label: Towards Data Science
-  # Google News — supplementary broad coverage
-  - url: "https://news.google.com/rss/search?q=artificial+intelligence+AI+news&hl=en-US&gl=US&ceid=US:en"
-    label: Google News AI
-  - url: "https://news.google.com/rss/search?q=large+language+model+LLM+GPT&hl=en-US&gl=US&ceid=US:en"
-    label: Google News LLM
-  - url: "https://news.google.com/rss/search?q=AI+agent+autonomous+agent&hl=en-US&gl=US&ceid=US:en"
-    label: Google News AI Agents
-  # Reddit — community AI coverage
-  - url: "https://www.reddit.com/r/MachineLearning/.rss"
-    label: r/MachineLearning
-  - url: "https://www.reddit.com/r/LocalLLaMA/.rss"
-    label: r/LocalLLaMA
-  # --- Round 4 additions (April 2026) ---
-  - url: https://research.google/blog/rss/
-    label: Google Research Blog
-  - url: http://export.arxiv.org/rss/cs.CL
-    label: arXiv cs.CL
-  - url: https://venturebeat.com/feed/
-    label: VentureBeat
-  - url: https://arstechnica.com/feed/
-    label: Ars Technica
-
+- url: https://openai.com/blog/rss.xml
+  label: OpenAI Blog
+- url: https://blog.google/technology/ai/rss/
+  label: Google AI Blog
+- url: https://huggingface.co/blog/feed.xml
+  label: Hugging Face Blog
+- url: https://arstechnica.com/ai/feed/
+  label: Ars Technica AI
+- url: https://www.marktechpost.com/feed/
+  label: MarkTechPost
+- url: https://www.artificialintelligence-news.com/feed/
+  label: AI News
+- url: https://arxiv.org/rss/cs.CL
+  label: arXiv NLP
+- url: https://github.blog/feed/
+  label: GitHub Blog
+- url: https://devblogs.microsoft.com/semantic-kernel/feed/
+  label: Microsoft Semantic Kernel
+- url: https://www.latent.space/feed
+  label: Latent Space
+- url: https://simonwillison.net/atom/everything/
+  label: Simon Willison
+- url: https://towardsdatascience.com/feed
+  label: Towards Data Science
+- url: https://news.google.com/rss/search?q=artificial+intelligence+AI+news&hl=en-US&gl=US&ceid=US:en
+  label: Google News AI
+- url: https://news.google.com/rss/search?q=large+language+model+LLM+GPT&hl=en-US&gl=US&ceid=US:en
+  label: Google News LLM
+- url: https://news.google.com/rss/search?q=AI+agent+autonomous+agent&hl=en-US&gl=US&ceid=US:en
+  label: Google News AI Agents
+- url: https://www.reddit.com/r/MachineLearning/.rss
+  label: r/MachineLearning
+- url: https://www.reddit.com/r/LocalLLaMA/.rss
+  label: r/LocalLLaMA
+- url: https://research.google/blog/rss/
+  label: Google Research Blog
+- url: http://export.arxiv.org/rss/cs.CL
+  label: arXiv cs.CL
+- url: https://venturebeat.com/feed/
+  label: VentureBeat
+- url: https://arstechnica.com/feed/
+  label: Ars Technica
 web_search_queries:
-  - "AI artificial intelligence news today"
-  - "large language model LLM news"
-  - "AI agent framework news"
-  - "OpenAI Anthropic Google AI news"
-
+- AI artificial intelligence news today
+- large language model LLM news
+- AI agent framework news
+- OpenAI Anthropic Google AI news
 x_accounts:
-  - handle: sama
-    label: Sam Altman (OpenAI)
-    max_posts: 4
-  - handle: karpathy
-    label: Andrej Karpathy
-    max_posts: 4
-  - handle: AnthropicAI
-    label: Anthropic
-    max_posts: 4
-  - handle: OpenAI
-    label: OpenAI
-    max_posts: 4
-  - handle: DarioAmodei
-    label: Dario Amodei (Anthropic)
-    max_posts: 3
-  - handle: demishassabis
-    label: Demis Hassabis (DeepMind)
-    max_posts: 3
-  - handle: simonw
-    label: Simon Willison (AI builder)
-    max_posts: 3
-
+- handle: sama
+  label: Sam Altman (OpenAI)
+  max_posts: 4
+- handle: karpathy
+  label: Andrej Karpathy
+  max_posts: 4
+- handle: AnthropicAI
+  label: Anthropic
+  max_posts: 4
+- handle: OpenAI
+  label: OpenAI
+  max_posts: 4
+- handle: DarioAmodei
+  label: Dario Amodei (Anthropic)
+  max_posts: 3
+- handle: demishassabis
+  label: Demis Hassabis (DeepMind)
+  max_posts: 3
+- handle: simonw
+  label: Simon Willison (AI builder)
+  max_posts: 3
 min_articles_skip: 4
-
 keywords:
-  - ai model
-  - language model
-  - large language model
-  - LLM
-  - GPT
-  - Claude
-  - Gemini
-  - Llama
-  - Mistral
-  - Grok
-  - foundation model
-  - frontier model
-  - open source model
-  - open weight
-  - fine-tuning
-  - RLHF
-  - reinforcement learning
-  - benchmark
-  - evaluation
-  - inference
-  - token
-  - context window
-  - multimodal
-  - vision model
-  - reasoning model
-  - agent
-  - ai agent
-  - autonomous agent
-  - agent framework
-  - tool use
-  - function calling
-  - agentic
-  - multi-agent
-  - orchestration
-  - MCP
-  - model context protocol
-  - computer use
-  - browser agent
-  - coding agent
-  - OpenClaw
-  - Agent Zero
-  - Perplexity
-  - AutoGPT
-  - CrewAI
-  - LangChain
-  - LangGraph
-  - prompt engineering
-  - RAG
-  - retrieval augmented
-  - embedding
-  - vector
-  - transformer
-  - diffusion
-  - image generation
-  - text to speech
-  - speech to text
-  - API
-  - SDK
-  - model release
-  - model update
-  - model comparison
-  - AI safety
-  - alignment
-  - guardrails
-
+- ai model
+- language model
+- large language model
+- LLM
+- GPT
+- Claude
+- Gemini
+- Llama
+- Mistral
+- Grok
+- foundation model
+- frontier model
+- open source model
+- open weight
+- fine-tuning
+- RLHF
+- reinforcement learning
+- benchmark
+- evaluation
+- inference
+- token
+- context window
+- multimodal
+- vision model
+- reasoning model
+- agent
+- ai agent
+- autonomous agent
+- agent framework
+- tool use
+- function calling
+- agentic
+- multi-agent
+- orchestration
+- MCP
+- model context protocol
+- computer use
+- browser agent
+- coding agent
+- OpenClaw
+- Agent Zero
+- Perplexity
+- AutoGPT
+- CrewAI
+- LangChain
+- LangGraph
+- prompt engineering
+- RAG
+- retrieval augmented
+- embedding
+- vector
+- transformer
+- diffusion
+- image generation
+- text to speech
+- speech to text
+- API
+- SDK
+- model release
+- model update
+- model comparison
+- AI safety
+- alignment
+- guardrails
 multilingual:
   enabled: true
   auto: true
-  languages: [fr]
-
+  languages:
+  - fr
 llm:
   provider: xai
   system_prompt_file: shows/prompts/models_agents_system.txt
@@ -173,29 +153,14 @@ llm:
   podcast_prompt_file: shows/prompts/models_agents_podcast.txt
   digest_temperature: 0.5
   podcast_temperature: 0.7
-  # May 2026 substance-boost: bumped 3500 → 5000 (matches Tesla / PT /
-  # FF). The digest now asks for 4-6 Model Updates + 4-5 Agent & Tool
-  # items + 4-5 Practical & Community items at 4-5 sentences each;
-  # the 3500-token cap was producing 2-3 items per section after
-  # grok-4.3 reasoning consumed the budget.
   max_tokens: 5000
   podcast_max_tokens: 10000
-  # June 2026 network quality pass: 8 of 8 recent episodes shipped below
-  # the (previously implicit) 1500-word target. Target made explicit and
-  # the expand-retry now fires on ANY below-target script.
   min_podcast_words: 1500
   podcast_expand_below_target: true
-
-tts:
-  # Inherits provider=grok, voice_id=sal, language_code=en, max_chars=10000
-  # from shows/_defaults.yaml (network default since May 2026 — Grok TTS
-  # at $4.20/M chars vs ElevenLabs Flash $150/M).
-  {}
-
+tts: {}
 audio:
   music_file: assets/music/ModelsAgents.mp3
   transition_sting: assets/music/transition_sting.mp3
-  # May 12 2026 retune (see shows/_defaults.yaml).
   voice_intro_delay: 10.0
   intro_duration: 10.0
   overlap_duration: 15.0
@@ -207,19 +172,21 @@ audio:
   overlap_volume: 0.5
   fade_volume: 0.4
   outro_volume: 0.6
-
 publishing:
   rss_file: models_agents_podcast.rss
-  rss_title: "Models & Agents"
-  # June 2026: value-prop description for Apple/Spotify listing pages
-  # (the old one led with a confusing negation).
-  rss_description: "Your daily briefing on AI models and agents: new releases from the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and practical tools you can use the same day — with long-running program tracking so you always know where the big stories stand. For developers, builders, and AI practitioners."
+  rss_title: Models & Agents
+  rss_description: 'Your daily briefing on AI models and agents: new releases from
+    the frontier labs, open-weight drops, agent frameworks, benchmarks, pricing, and
+    practical tools you can use the same day — with long-running program tracking
+    so you always know where the big stories stand. For developers, builders, and
+    AI practitioners.'
   rss_link: https://nerranetwork.com/models-agents.html
   rss_author: Patrick
   rss_email: patrick@planetterrian.com
   rss_image: https://nerranetwork.com/assets/covers/models-agents.jpg
   rss_category: Technology
-  rss_keywords: "ai, llm, machine learning, openai, anthropic, agents, claude, gpt, ai news"
+  rss_keywords: ai, llm, machine learning, openai, anthropic, agents, claude, gpt,
+    ai news
   guid_prefix: models-agents
   base_url: https://nerranetwork.com
   audio_subdir: digests/models_agents
@@ -227,103 +194,97 @@ publishing:
   summaries_podcast_name: models_agents
   player_html: models-agents.html
   summaries_html: models-agents-summaries.html
-  # X posting enabled May 12 2026 — shares @teslashortstime account
-  # (Option B from the pipeline-streamline plan). AI/ML news has a
-  # large X audience and the Tesla account already covers AI heavily
-  # (FSD, Optimus, Dojo, etc.) so brand fit is acceptable. Up to ~3
-  # posts/day from this account: Tesla daily, Env Intel odd weekdays,
-  # M&A daily, plus MIT daily after this PR — manageable cadence.
   x_enabled: true
-  x_env_prefix: "X_"
-
+  x_env_prefix: X_
 episode:
   prefix: Models_Agents
-  filename_pattern: "{prefix}_Ep{num:03d}_{date:%Y%m%d}.mp3"
+  filename_pattern: '{prefix}_Ep{num:03d}_{date:%Y%m%d}.mp3'
   output_dir: digests/models_agents
-  mp3_glob: "Models_Agents_Ep*.mp3"
-
+  mp3_glob: Models_Agents_Ep*.mp3
 chapters:
   enabled: true
   section_markers:
-    # June 10 2026: positional `where` anchors + tightened patterns. The
-    # bare "agent" pattern opened a spurious "Agent & Tool Developments"
-    # chapter ~30s into every episode (first mention of "agents"), and
-    # the "That wraps up today's AI briefing" closing variant matched no
-    # pattern at all.
-    - pattern: "welcome.*Models and Agents|Models and Agents.*episode"
-      title: "Introduction"
-      where: start
-    - pattern: "what you need to know|key summary"
-      title: "What You Need to Know"
-    - pattern: "top story|main event"
-      title: "Top Story"
-    - pattern: "model updates|model news"
-      title: "Model Updates"
-    - pattern: "agent and tool developments|tool developments|agentic systems|agent news"
-      title: "Agent & Tool Developments"
-    - pattern: "practical and community|community corner|open.source"
-      title: "Practical & Community"
-    # June 14 2026 review: the engineering deep-dive opens with "let's pop
-    # the hood on …" in 9-10/10 episodes (the prompt seeds that exact
-    # phrase) but never the literal "under the hood", so only 1/5 recent
-    # episodes got an Under the Hood chapter — the missing marker dropped
-    # several episodes below min_chapters (4), firing the auto-segmentation
-    # fallback that titled chapters from raw mid-sentence text (Ep080).
-    - pattern: "under the hood|deep dive|technical deep dive|pop the hood"
-      title: "Under the Hood"
-    - pattern: "things to try|try this week"
-      title: "Things to Try"
-    - pattern: "on the horizon|coming up|what's coming"
-      title: "On the Horizon"
-    - pattern: "Before we go|before we wrap"
-      title: "Tomorrow Teaser"
-      where: end
-    - pattern: "That's Models and Agents|that wraps up|that.?s.*for today|until next time"
-      title: "Closing"
-      where: end
-
+  - pattern: welcome.*Models and Agents|Models and Agents.*episode
+    title: Introduction
+    where: start
+  - pattern: what you need to know|key summary
+    title: What You Need to Know
+  - pattern: top story|main event
+    title: Top Story
+  - pattern: model updates|model news
+    title: Model Updates
+  - pattern: agent and tool developments|tool developments|agentic systems|agent news
+    title: Agent & Tool Developments
+  - pattern: practical and community|community corner|open.source
+    title: Practical & Community
+  - pattern: under the hood|deep dive|technical deep dive|pop the hood
+    title: Under the Hood
+  - pattern: things to try|try this week
+    title: Things to Try
+  - pattern: on the horizon|coming up|what's coming
+    title: On the Horizon
+  - pattern: Before we go|before we wrap
+    title: Tomorrow Teaser
+    where: end
+  - pattern: That's Models and Agents|that wraps up|that.?s.*for today|until next
+      time
+    title: Closing
+    where: end
 slow_news:
   enabled: true
   library_file: shows/segments/models_agents.json
   max_segments: 2
   cooldown_days: 30
-
 newsletter:
   enabled: true
   platform: buttondown
   api_key_env: BUTTONDOWN_API_KEY
   status: about_to_send
-  tag: "Models & Agents"
-  short_label: "M&A"
-  emoji: "🤖"
-  newsletter_start_date: "2026-04-30"
+  tag: Models & Agents
+  short_label: M&A
+  emoji: 🤖
+  newsletter_start_date: '2026-04-30'
   requires_financial_disclaimer: false
   length_target_words: 1300
-
 youtube:
   podcast_playlist_id: PLRHMnzNNXPYAUq0HBfZahYXJaEaknuTGg
-  enabled: false                # Phase 2 (swapped out for models_agents_beginners)
+  enabled: false
   channel: en
-  category_id: 28               # Science & Tech
+  category_id: 28
   default_language: en
   privacy_status: public
-  # AI / LLM / agent imagery. Bare keywords like "model" or "agent"
-  # collide with photography models and real-estate agents respectively,
-  # so every query is contextualized.
   image_queries:
-    - artificial intelligence
-    - server data center
-    - neural network visualization
-    - computer code
-    - circuit board glow
-    - robotics laboratory
-    - cloud computing
-  image_query_prefix: ""
+  - artificial intelligence
+  - server data center
+  - neural network visualization
+  - computer code
+  - circuit board glow
+  - robotics laboratory
+  - cloud computing
+  image_query_prefix: ''
   tags:
-    - ai
-    - llm
-    - artificial intelligence
-    - ai agents
-    - openai
-    - anthropic
-    - ai podcast
+  - ai
+  - llm
+  - artificial intelligence
+  - ai agents
+  - openai
+  - anthropic
+  - ai podcast
+  video_genre: ai-technology-innovation
+  video_mood: intellectual-futuristic-technical
+  video_keywords:
+  - AI
+  - machine learning
+  - Claude
+  - neural networks
+  - large language models
+  - AI research
+  - algorithms
+  - deep learning
+  video_visual_style: 'Code visualizations, neural network diagrams, AI concept renders,
+
+    tech office environments, server rooms, digital abstractions,
+
+    whiteboard explanations, technical demos, data flow visualizations.
+
+    Modern, sleek, professional design.'

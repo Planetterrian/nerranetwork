@@ -498,6 +498,22 @@ class YouTubeConfig:
     # "9:16" for Shorts. Default empty = not used.
     video_aspect_ratio: str = ""
 
+    # ---- Show-specific video prompt customization ----
+    # Genre/category for the show (e.g., "automotive-tech-news", "aerospace-engineering",
+    # "science-space-discovery"). Used to guide Grok's visual generation.
+    video_genre: str = ""
+    # Emotional mood/tone for the video (e.g., "energetic-professional",
+    # "awe-inspiring-technical", "curious-wonder-educational").
+    video_mood: str = ""
+    # Keywords/topics specific to the show. Injected into video prompts
+    # so Grok knows what to visualize (e.g., Tesla cars, rockets, AI concepts).
+    video_keywords: List[str] = field(default_factory=list)
+    # Multi-line visual style descriptor. Example:
+    # "Cinematic product reveals, technical demos, factory automation,
+    #  futuristic concept renders, engineering close-ups, real-world EV footage"
+    # This provides detailed visual direction to Grok beyond just the genre.
+    video_visual_style: str = ""
+
     # Optional path (relative to repo root) to a text template for the
     # long-form description body. Placeholders: {hook}, {episode_num},
     # {show_name}, {today_str}. When empty, uses digest paragraphs.

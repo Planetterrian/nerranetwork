@@ -1,24 +1,16 @@
-name: "Unintended Consequences"
+name: Unintended Consequences
 slug: unintended_consequences
-description: "A daily narrative podcast profiling inventions, policies, and systems that were meant to help — but triggered surprising, unintended consequences. From the Cobra Effect to social media algorithms, every episode follows a single case study through good intentions, implementation, unexpected fallout, and the lessons we can learn. Produced by the Nerra Network in Vancouver."
-
-# Narrative mode: topic-queue-driven (no RSS fetch). The runner still
-# runs ``generate_digest()`` with topic template vars from
-# ``topic_queue_file`` (outline via unintended_consequences_episode.txt),
-# then ``podcast_chain`` expands into the full script.
+description: A daily narrative podcast profiling inventions, policies, and systems
+  that were meant to help — but triggered surprising, unintended consequences. From
+  the Cobra Effect to social media algorithms, every episode follows a single case
+  study through good intentions, implementation, unexpected fallout, and the lessons
+  we can learn. Produced by the Nerra Network in Vancouver.
 narrative_mode: true
 topic_queue_file: shows/topic_queues/unintended_consequences.yaml
-
-# Mon-Fri only (5x/week per spec). No Sunday recap — narrative episodes
-# are evergreen, the topic queue plays out at its own pace.
 weekly_recap_on_sunday: false
-
-min_articles_skip: 0       # Narrative show — articles aren't the input
-
+min_articles_skip: 0
 multilingual:
-  # English-only show (operator decision June 2026) — no translations.
   enabled: false
-
 llm:
   provider: xai
   system_prompt_file: shows/prompts/unintended_consequences_system.txt
@@ -29,28 +21,11 @@ llm:
   max_tokens: 4500
   podcast_max_tokens: 9000
   min_podcast_words: 1300
-  # June 2026 network quality pass: chronic below-target episodes —
-  # the expand-retry now fires on ANY below-target script.
   podcast_expand_below_target: true
   podcast_chain: true
-
-tts:
-  # Inherits provider=grok, voice_id=kdif6sqjcyiq, language_code=en
-  # from shows/_defaults.yaml — same host voice as the rest of the
-  # English network for consistent identity. Narrative pacing is
-  # achieved at the prompt level (longer pauses, more <emphasis>),
-  # not by changing the voice ID.
-  {}
-
+tts: {}
 audio:
-  # No music_file yet — UC ships voice-only until operator generates a
-  # narrative-tone score (slower, reflective, documentary feel rather
-  # than the news-show intro stings used by peer shows). The runner's
-  # ``if config.audio.music_file:`` guard at run_show.py:1786 means
-  # leaving this empty cleanly skips the mix step. Once a track exists,
-  # add `music_file: assets/music/unintended_consequences.mp3` here.
   transition_sting: assets/music/transition_sting.mp3
-  # May 12 2026 retune (see shows/_defaults.yaml).
   voice_intro_delay: 10.0
   intro_duration: 10.0
   overlap_duration: 15.0
@@ -62,135 +37,100 @@ audio:
   overlap_volume: 0.4
   fade_volume: 0.3
   outro_volume: 0.5
-
 publishing:
   rss_file: unintended_consequences_podcast.rss
   rss_title: Unintended Consequences
-  # June 2026: clarify cadence + signal breadth with concrete anchors.
-  rss_description: "Every weekday, one true story of good intentions gone sideways. From cobra bounties in colonial Delhi to recommendation algorithms, each episode follows a single case through the original idea, how it rolled out, the unintended fallout, and the lessons that still apply — told with empathy for the people who tried."
-  rss_summary: "Good intentions. Surprising results. Real lessons."
+  rss_description: Every weekday, one true story of good intentions gone sideways.
+    From cobra bounties in colonial Delhi to recommendation algorithms, each episode
+    follows a single case through the original idea, how it rolled out, the unintended
+    fallout, and the lessons that still apply — told with empathy for the people who
+    tried.
+  rss_summary: Good intentions. Surprising results. Real lessons.
   rss_link: https://nerranetwork.com/unintended-consequences.html
   rss_author: Patrick
   rss_email: patrick@planetterrian.com
   rss_image: https://nerranetwork.com/assets/covers/unintended-consequences.jpg
   rss_category: Education
   rss_subcategory: Self-Improvement
-  rss_keywords: "history, case studies, narrative, business mistakes, unintended consequences, decisions"
+  rss_keywords: history, case studies, narrative, business mistakes, unintended consequences,
+    decisions
   guid_prefix: unintended-consequences
   base_url: https://nerranetwork.com
   audio_subdir: digests/unintended_consequences
   summaries_json: digests/unintended_consequences/summaries_unintended_consequences.json
   summaries_podcast_name: unintended_consequences
-  # X posting enabled May 12 2026 — shares @planetterrian account
-  # (Option B from the pipeline-streamline plan). UC's narrative /
-  # contemplative tone fits Planetterrian's audience better than the
-  # news-velocity accounts. UC has no ``x_accounts`` configured so
-  # the X-fetch path stays empty (no source ingestion from X), but
-  # posting goes out via the planetterrian creds. Weekday cadence.
   x_enabled: true
-  x_env_prefix: "PLANETTERRIAN_X_"
-  x_handle: "@planetterrian"
-
+  x_env_prefix: PLANETTERRIAN_X_
+  x_handle: '@planetterrian'
 episode:
   prefix: Unintended_Consequences
-  filename_pattern: "{prefix}_Ep{num:03d}_{date:%Y%m%d}.mp3"
+  filename_pattern: '{prefix}_Ep{num:03d}_{date:%Y%m%d}.mp3'
   output_dir: digests/unintended_consequences
-  mp3_glob: "Unintended_Consequences_Ep*.mp3"
-
+  mp3_glob: Unintended_Consequences_Ep*.mp3
 chapters:
   enabled: true
-  # June 12 2026 quality pass (docs/reviews/unintended_consequences_review_2026_06_12.md):
-  # UC was missed by the Tesla/four-show/FP chapter hardening — it had NO
-  # positional `where` anchors and seven keyword markers that depended on
-  # the spoken prose containing literal section words. But the podcast
-  # prompt explicitly tells the model NOT to label sections ("flow
-  # naturally between them"), so the middle markers (good intention /
-  # implemented / aftermath / lesson) almost never matched, while the
-  # show's own brand name ("Unintended Consequences", which contains
-  # "consequence") collided with the body "Unintended Consequences"
-  # marker on the intro AND the sign-off. Result: 0/10 recent episodes
-  # had a correct chapter shape — out-of-order semantic labels, the
-  # closing brand mention titling a body chapter, and missing
-  # Introduction/Closing (chapters_ep024 even opened on "The Lesson").
-  #
-  # Fix: keep only the two markers that CAN match reliably on a
-  # label-free narrative show — Introduction pinned to the opening window
-  # (`where: start`) and Closing pinned to the final window
-  # (`where: end`) — and let the engine's auto-segmentation fallback fill
-  # the middle with in-order, content-derived titles (the same path other
-  # shows use when their semantic markers under-fire). The Introduction
-  # pattern ORs the intro/closing-pool vocabulary, the brand, the spelled
-  # episode number, the date, and a generic opening-word fallback so the
-  # first chapter is titled "Introduction" even when the LLM rewrites the
-  # supplied intro line (observed on ~30% of episodes — it dropped the
-  # brand + "episode N" entirely). The Closing pattern covers both
-  # closing-pool variants + the appended network promo. Verified: 10/10
-  # recent episodes now parse Introduction-first, Closing-last, 4-6
-  # chapters. Drift guard: tests/test_unintended_consequences_quality_pass.py.
   section_markers:
-    - pattern: "Unintended Consequences|episode (?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty)|good intentions|the cure was almost worse|well-meaning people|complex systems|reasonable plan|did the opposite|doing their best|case study|case today|today.?s (?:story|case|profile)|good to have you|glad you.?re here|settle in|welcome (?:back|to)|this is a show about|wrap the week|a (?:story|case) (?:that|of|about)|(?:two thousand|twenty)[\\s-]twenty-six|^(?:Today|It.?s|Good|Welcome|Glad|Settle|Every|In|On|This|We|By|When|For|There)\\b"
-      title: "Introduction"
-      where: start
-    - pattern: "that.?s\\b.*\\bfor today|that wraps today.?s case|until next time|see you tomorrow|back tomorrow|before you go"
-      title: "Closing"
-      where: end
-
+  - pattern: Unintended Consequences|episode (?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty)|good
+      intentions|the cure was almost worse|well-meaning people|complex systems|reasonable
+      plan|did the opposite|doing their best|case study|case today|today.?s (?:story|case|profile)|good
+      to have you|glad you.?re here|settle in|welcome (?:back|to)|this is a show about|wrap
+      the week|a (?:story|case) (?:that|of|about)|(?:two thousand|twenty)[\s-]twenty-six|^(?:Today|It.?s|Good|Welcome|Glad|Settle|Every|In|On|This|We|By|When|For|There)\b
+    title: Introduction
+    where: start
+  - pattern: that.?s\b.*\bfor today|that wraps today.?s case|until next time|see you
+      tomorrow|back tomorrow|before you go
+    title: Closing
+    where: end
 newsletter:
   enabled: true
   platform: buttondown
   api_key_env: BUTTONDOWN_API_KEY
   status: about_to_send
-  tag: "Unintended Consequences"
-  short_label: "Consequences"
-  emoji: "⚖️"
-  newsletter_start_date: "2026-05-04"
+  tag: Unintended Consequences
+  short_label: Consequences
+  emoji: ⚖️
+  newsletter_start_date: '2026-05-04'
   requires_financial_disclaimer: false
   length_target_words: 1100
-
 content_tracking:
   enabled: true
-
 slow_news:
-  # Narrative show — the topic queue is the input, not RSS articles.
-  # Slow-news fallback never fires; this block is here to satisfy the
-  # config schema and document the design choice.
   enabled: false
-
 content_freshness:
-  # Narrative show — episodes are evergreen, no cross-episode similarity
-  # filter needed. Topic queue prevents repeats by definition.
   lookback_days: 0
   similarity_threshold: 1.0
-
 youtube:
-  # Created May 2026 after channel verification cleared. Same pattern
-  # as the other 10 shows (commit a87c4097). The runner will add
-  # uploaded videos to this playlist via
-  # ``engine/youtube.add_video_to_playlist`` once ``enabled`` is
-  # flipped to true (currently gated on the network-wide YouTube
-  # quota cap — see landmine #20).
   podcast_playlist_id: PLRHMnzNNXPYCaZmqVHARd4L1Qi977FL5d
-  enabled: false                 # Disabled — YouTube quota cap (only TST + MAB)
-                                 # See landmine #20 in CLAUDE.md.
-                                 # Flip to true once the quota strategy
-                                 # lands (operator decision).
+  enabled: false
   channel: en
-  category_id: 27                # Education
+  category_id: 27
   default_language: en
   privacy_status: public
   publish_long_form: true
   publish_shorts: true
-  synthetic_disclosure: "All audio narration is generated using AI voice synthesis. Curated and produced by Patrick at the Nerra Network in Vancouver, Canada."
-
-  # Curated image queries for the YouTube slideshow — narrative-friendly
-  # visual themes that match the show's thoughtful, retrospective tone.
+  synthetic_disclosure: All audio narration is generated using AI voice synthesis.
+    Curated and produced by Patrick at the Nerra Network in Vancouver, Canada.
   image_queries:
-    - "domino chain falling"
-    - "ripple effect water"
-    - "old library archives"
-    - "vintage newspaper headlines"
-    - "history museum exhibit"
-    - "policy document gavel"
-    - "factory workers historical"
-    - "city skyline retrospective"
-  image_query_prefix: "documentary"
+  - domino chain falling
+  - ripple effect water
+  - old library archives
+  - vintage newspaper headlines
+  - history museum exhibit
+  - policy document gavel
+  - factory workers historical
+  - city skyline retrospective
+  image_query_prefix: documentary
+  video_genre: narrative-storytelling
+  video_mood: thoughtful-narrative-introspective
+  video_keywords:
+  - narrative
+  - case study
+  - systems thinking
+  - consequences
+  - history
+  - analysis
+  video_visual_style: 'Documentary-style storytelling, archival footage, expert commentary,
+
+    case study visuals, systems diagrams, historical context,
+
+    cause-and-effect visualizations, thoughtful, contemplative aesthetic.'

@@ -3856,6 +3856,8 @@ def _publish_youtube(
                 aspect_ratio=aspect_ratio,
                 generate_short=True,
                 short_duration_seconds=getattr(yt, "short_duration_seconds", 40),
+                final_mp3_path=final_mp3,  # Pre-mixed audio with intro/outro/EQ
+                show_config=config,  # For show-specific video prompts
             )
 
             if grok_video_result.full_video_path and grok_video_result.full_video_path.exists():
