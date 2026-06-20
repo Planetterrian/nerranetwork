@@ -3812,13 +3812,82 @@ def _publish_youtube(
         except Exception as exc:  # pragma: no cover — best-effort
             logger.warning("Caption generation failed: %s", exc)
 
+    # ---- Video generation (June 2026 Grok Video experiment) ----
+    # When ``video_provider`` is set to "grok", generate full videos from the
+    # podcast script instead of still-image slideshows. This is a distinct
+    # path from the image provider logic (the two don't mix). Cost: ~$0.07/sec
+    # for 720p, so a 12-min episode costs ~$50.40. Early test for Tesla to
+    # measure engagement delta vs. image-based approach.
+    yt = config.youtube
+    video_provider = (getattr(yt, "video_provider", None) or "").lower()
+    grok_video_cost = 0.0
+    grok_video_failures: list = []
+    grok_video_result = None
+
+    if video_provider == "grok" and getattr(yt, "enabled", False):
+        try:
+            from engine.grok_video import generate_grok_videos
+
+            resolution = getattr(yt, "video_resolution", "720p")
+            aspect_ratio = getattr(yt, "video_aspect_ratio", "16:9")
+
+            logger.info(
+                "Generating Grok Video for episode %d (%s @ %s)",
+                episode_num, resolution, aspect_ratio,
+            )
+
+            # Read the podcast script to use as video generation input
+            # The script is what was synthesized and saved to _tts.txt
+            script_path = digests_dir / f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}_tts.txt"
+            podcast_script = ""
+            if script_path.exists():
+                podcast_script = script_path.read_text(encoding="utf-8")
+
+            if not podcast_script:
+                logger.warning("Podcast script not found for video generation")
+
+            grok_video_result = generate_grok_videos(
+                work_dir=digests_dir,
+                episode_num=episode_num,
+                podcast_script=podcast_script,
+                hook=hook,
+                episode_title=f"{config.name} Ep{episode_num}",
+                resolution=resolution,
+                aspect_ratio=aspect_ratio,
+                generate_short=True,
+                short_duration_seconds=getattr(yt, "short_duration_seconds", 40),
+            )
+
+            if grok_video_result.full_video_path and grok_video_result.full_video_path.exists():
+                # Use the generated video as the long-form upload
+                long_video_path = grok_video_result.full_video_path
+                logger.info(
+                    "Grok Video generated: full=%s, short=%s",
+                    long_video_path,
+                    grok_video_result.short_video_path,
+                )
+                grok_video_cost = grok_video_result.total_cost_usd
+                grok_video_failures.extend(grok_video_result.failures)
+            else:
+                logger.warning(
+                    "Grok Video failed or produced no output; falling back to image slideshow"
+                )
+                video_provider = None  # Fall through to image provider logic
+        except Exception as exc:
+            logger.warning(
+                "Grok Video generation failed: %s; falling back to image slideshow",
+                exc,
+            )
+            video_provider = None  # Fall through to image provider logic
+
     # ---- Resolve scene slideshow ----
     # ``image_provider`` selects between three paths (May 2026 rollout):
     #   pexels  — free Pexels search; same set used for long-form + Shorts
     #   grok    — Grok Imagine generates two distinct sets per episode
     #             (long-form 16:9 + Shorts 9:16) prompted from the hook
     #   hybrid  — Pexels for long-form, Grok for Shorts only
-    yt = config.youtube
+    #
+    # This is skipped if ``video_provider`` is enabled (videos replace slides).
     image_provider = (getattr(yt, "image_provider", "pexels") or "pexels").lower()
 
     long_scene_paths = [cover_path]
@@ -4069,14 +4138,16 @@ def _publish_youtube(
             first_failure or None,
         )
 
-    if image_provider == "grok":
-        long_scene_paths = _run_grok_path(aspect="16:9", label_suffix="")
-        short_scene_paths = _run_grok_path(aspect="9:16", label_suffix="_short")
-    elif image_provider == "hybrid":
-        _run_pexels_path(into_long=True, into_short=False)
-        short_scene_paths = _run_grok_path(aspect="9:16", label_suffix="_short")
-    else:  # pexels (default)
-        _run_pexels_path(into_long=True, into_short=True)
+    # Skip image provider logic if video_provider is enabled (videos replace slides)
+    if video_provider != "grok":
+        if image_provider == "grok":
+            long_scene_paths = _run_grok_path(aspect="16:9", label_suffix="")
+            short_scene_paths = _run_grok_path(aspect="9:16", label_suffix="_short")
+        elif image_provider == "hybrid":
+            _run_pexels_path(into_long=True, into_short=False)
+            short_scene_paths = _run_grok_path(aspect="9:16", label_suffix="_short")
+        else:  # pexels (default)
+            _run_pexels_path(into_long=True, into_short=True)
 
     # Shorts thumbnail: vertical crop from cover or first vertical scene.
     shorts_thumb_base = cover_path
@@ -4573,6 +4644,12 @@ def _publish_youtube(
     if grok_image_failures:
         result["grok_image_failures"] = grok_image_failures[:5]
     result["image_provider"] = image_provider
+    # Grok Video cost tracking (June 2026 experiment). Zero when
+    # video_provider != grok.
+    result["grok_video_cost_usd"] = round(grok_video_cost, 4)
+    if grok_video_failures:
+        result["grok_video_failures"] = grok_video_failures[:5]
+    result["video_provider"] = video_provider if video_provider == "grok" else ""
     # Gallery (Phase 1) upload outcome. Always surfaced so the
     # dashboard can plot "uploaded N / attempted M (reason=…)" per
     # episode and spot a misconfigured bucket immediately.
