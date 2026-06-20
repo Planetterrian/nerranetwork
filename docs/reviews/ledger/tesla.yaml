@@ -21,13 +21,59 @@ reviews:
       - metric: episodes with trailing duplicate "Introduction" chapter
         baseline: "10 of 10 (Ep496-505)"
         expected: "0 of 10 on next review"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "chapters_ep507-516.json — no duplicate/trailing
+          Introduction on any of the last 10 episodes."
       - metric: median _tts.txt words, last 10 eps
         baseline: "~15-35% under the old 1600 target"
         expected: ">= 2000 words consistently"
+        verdict: miss
+        evidence: "Ep507-516 run 1254-1676w (median ~1440); every episode
+          below the 2000 floor. Re-diagnosed: the digest itself is the
+          ceiling (1234-1800w, script tracks ~1:1), Top-12 items ship at 3
+          thin sentences from Google-News snippets. Same root cause as
+          FF/UC/PT — deferred behind the four-show length A/B with the
+          digest-expansion / First-Principles-expansion levers named."
+
+  - date: 2026-06-20
+    pr: null
+    doc: docs/reviews/tesla_review_2026_06_20.md
+    summary: Second agent pass — scored June 10 (chapters hit, length miss),
+      fixed the Teslarati spoken garble, the "Daily" brand normalizer, and
+      13F filing-spam at fetch time; re-diagnosed under-length as the digest
+      ceiling and documented the chapter body-nav regression.
+    shipped:
+      - "fix_phonetic_garbles: Tesla-rah-tee -> Teslarati (25+ eps, voiced garble)"
+      - "brand normalizer drops stray 'Daily' (spoken intro said it 100% of eps)"
+      - "exclude_title_patterns: drop 13F institutional-filing spam at fetch (no-A/B)"
+    deferred:
+      - "chronic under-length: digest ceiling (Top-12 3-sentence snippet items);
+        levers = digest-expansion retry OR First-Principles essay expansion;
+        held behind the four-show length A/B (FF/UC/PT same root cause)"
+      - "chapter body navigation: fragment auto-segment titles (8/10) AND the
+        no-body-chapter regression (2/10, Ep515/516 — chapters.py:208 trigger
+        doesn't match its docstring's 'head spans most of script' condition).
+        Fix = digest-driven chapter titles; shared engine/chapters.py, route
+        through the network review."
+      - "digest-driven chapter titles (carried from June 10 — still the lever
+        for the fragment-title class)"
+    predictions:
+      - metric: '"Tesla-rah-tee" occurrences in last-10 _tts.txt scripts'
+        baseline: "5 of last 10 episodes (Ep500/505/512/516 + more)"
+        expected: "0 of 10 — every instance restored to 'Teslarati'"
         verdict: pending
         evidence: null
+      - metric: episodes whose spoken intro says "Tesla Shorts Time Daily"
+        baseline: "10 of 10 (Ep506-516)"
+        expected: "0 of 10 — normalizer drops the stray 'Daily'"
+        verdict: pending
+        evidence: null
+      - metric: 13F institutional-filing items in the digest
+        baseline: "up to 3/episode on thin days (Ep516)"
+        expected: "0 — filtered at fetch via exclude_title_patterns"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
 
 do_not_retry:
   - idea: phonetic respellings or programmatic speech-tag injection
