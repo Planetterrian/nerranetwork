@@ -484,6 +484,20 @@ class YouTubeConfig:
     # Defaults to a generic photojournalism cue; shows can override
     # (e.g. UC's narrative tone might want "documentary archival photo").
     grok_image_descriptor: str = "photorealistic news photo"
+
+    # ---- Video generation (June 2026 Grok Video experiment) ----
+    # When set to "grok", generates full-length videos from the podcast
+    # script instead of still-image slideshows. Pricing: $0.05-0.07/second
+    # depending on resolution. Falls back to image slideshow on any failure.
+    # When empty/null, uses the image provider path instead.
+    video_provider: str = ""
+    # Video resolution: "720p" (HD) or "480p" (standard). 720p is YouTube
+    # quality; 480p is cheaper but lower quality. Default empty = not used.
+    video_resolution: str = ""
+    # Aspect ratio for video generation. "16:9" for full-length episodes,
+    # "9:16" for Shorts. Default empty = not used.
+    video_aspect_ratio: str = ""
+
     # Optional path (relative to repo root) to a text template for the
     # long-form description body. Placeholders: {hook}, {episode_num},
     # {show_name}, {today_str}. When empty, uses digest paragraphs.
