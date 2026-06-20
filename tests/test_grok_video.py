@@ -26,7 +26,7 @@ class TestShowSpecificVideoPrompts:
 
     def test_tesla_prompt_includes_genre_and_keywords(self):
         """Tesla prompts should include automotive-tech-news genre."""
-        config = load_config("tesla")
+        config = load_config("shows/tesla.yaml")
 
         prompt = _build_video_prompt(
             segment_text="Tesla announces new Cybertruck features",
@@ -43,7 +43,7 @@ class TestShowSpecificVideoPrompts:
 
     def test_spacex_prompt_includes_aerospace_keywords(self):
         """SpaceX prompts should include aerospace-engineering and spaceflight keywords."""
-        config = load_config("spacex")
+        config = load_config("shows/spacex.yaml")
 
         prompt = _build_video_prompt(
             segment_text="Starship completes hot stage separation test",
@@ -71,7 +71,7 @@ class TestShowSpecificVideoPrompts:
     def test_prompt_includes_segment_context(self):
         """Prompts should include relevant context from the script segment."""
         script = "Breaking news: Tesla announces new battery technology with 50% higher density"
-        config = load_config("tesla")
+        config = load_config("shows/tesla.yaml")
 
         prompt = _build_video_prompt(
             segment_text=script,
@@ -163,7 +163,7 @@ class TestYAMLConfigIntegration:
 
     def test_tesla_yaml_has_video_fields(self):
         """Tesla YAML should have video_genre, video_mood, video_keywords."""
-        config = load_config("tesla")
+        config = load_config("shows/tesla.yaml")
         yt = config.youtube
 
         assert hasattr(yt, "video_genre")
@@ -178,7 +178,7 @@ class TestYAMLConfigIntegration:
 
     def test_spacex_yaml_has_video_fields(self):
         """SpaceX YAML should have video customization."""
-        config = load_config("spacex")
+        config = load_config("shows/spacex.yaml")
         yt = config.youtube
 
         assert yt.video_genre == "aerospace-engineering"
@@ -194,7 +194,7 @@ class TestYAMLConfigIntegration:
         ]
 
         for slug in show_names:
-            config = load_config(slug)
+            config = load_config(f"shows/{slug}.yaml")
             yt = config.youtube
 
             # All shows should have these fields (even if empty)
