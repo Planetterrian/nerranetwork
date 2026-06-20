@@ -635,8 +635,20 @@ def generate_grok_videos(
         len(clips), episode_num,
     )
 
-    # Submit all clips for generation (async)
-    for clip in clips:
+    # Submit all clips for generation (sequential with rate limiting)
+    # The Grok Video API has resource limits; submitting too fast causes HTTP 429.
+    # 1-2s delay between submissions keeps us within safe limits.
+    SUBMISSION_DELAY_S = 1.5
+
+    for idx, clip in enumerate(clips):
+        # Rate limit: wait between submissions (but not before the first)
+        if idx > 0:
+            logger.info(
+                "Rate limit: waiting %.1fs before clip %d/%d",
+                SUBMISSION_DELAY_S, idx + 1, len(clips),
+            )
+            time.sleep(SUBMISSION_DELAY_S)
+
         try:
             request_id = _request_one_video(
                 clip.prompt,
@@ -648,8 +660,8 @@ def generate_grok_videos(
             clip.request_id = request_id
             clip.status = "pending"
             logger.info(
-                "Submitted video clip %s (request_id=%s)",
-                clip.clip_id, request_id,
+                "Submitted video clip %s (request_id=%s, %d/%d)",
+                clip.clip_id, request_id, idx + 1, len(clips),
             )
         except GrokVideoError as exc:
             clip.status = "failed"
