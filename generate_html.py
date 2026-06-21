@@ -3176,7 +3176,7 @@ def generate_about_page(*, dry_run=False):
         "path_prefix": "",
         "page_title": "About — Nerra Network",
         "page_description": "Meet the independent podcast network producing ad-free daily shows on AI, Tesla, investing, space, science, and environmental policy. Based in Vancouver, Canada.",
-        "meta_description": "About Nerra Network — an independent, ad-free podcast network producing daily shows covering AI, Tesla, investing, space, science, and environmental policy. Founded by Patrick Novak.",
+        "meta_description": f"About Nerra Network — an independent, ad-free podcast network producing {len(NETWORK_SHOWS)} daily shows covering AI, Tesla, investing, space, science, and environmental policy. Founded by Patrick Novak.",
         "meta_keywords": "about Nerra Network, Patrick Novak, independent podcast network, Vancouver podcasts, ad-free podcasts",
         "theme_color": "#6B47FF",
         "og_image": "",
@@ -3382,7 +3382,7 @@ def generate_player_page(*, dry_run=False):
     context = {
         "path_prefix": "",
         "page_title": "Player | Nerra Network",
-        "meta_description": "Listen to all Nerra Network shows in one player. Build your queue, reorder episodes, and discover content across AI, Tesla, investing, space, science, environmental, and financial podcasts.",
+        "meta_description": f"Listen to all {len(NETWORK_SHOWS)} Nerra Network shows in one player. Build your queue, reorder episodes, and discover new content.",
         "meta_keywords": "podcast player, Nerra Network, queue, playlist",
         "theme_color": "#6B47FF",
         "og_image": None,
