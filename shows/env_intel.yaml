@@ -1,156 +1,179 @@
 name: Environmental Intelligence
 slug: env_intel
-description: Daily environmental regulatory, science, and compliance briefing for
-  Canadian environmental professionals covering all provinces, territories, and federal
-  jurisdictions.
+description: Daily environmental regulatory, science, and compliance briefing for Canadian environmental professionals covering all provinces, territories, and federal jurisdictions.
+
 sources:
-- url: https://news.gov.bc.ca/ministries/environment-and-parks/feed
-  label: BC Ministry of Environment
-- url: https://news.gov.bc.ca/ministries/energy-and-climate-solutions/feed
-  label: BC Energy and Climate Solutions
-- url: https://news.gov.bc.ca/ministries/water-land-and-resource-stewardship/feed
-  label: BC Water Land and Resource Stewardship
-- url: https://news.gov.bc.ca/ministries/emergency-management-and-climate-readiness/feed
-  label: BC Emergency Management
-- url: https://www.gazette.gc.ca/rss/p1-eng.xml
-  label: Canada Gazette Part I
-- url: https://www.gazette.gc.ca/rss/p2-eng.xml
-  label: Canada Gazette Part II
-- url: https://www.nature.com/nclimate.rss
-  label: Nature Climate Change
-- url: https://www.sciencedaily.com/rss/top/environment.xml
-  label: ScienceDaily Environment
-- url: https://www.science.org/rss/news_current.xml
-  label: Science AAAS
-- url: https://thetyee.ca/rss2.xml
-  label: The Tyee
-- url: https://www.cbc.ca/webfeed/rss/rss-canada
-  label: CBC Canada
-- url: https://www.desmog.com/feed/
-  label: DeSmog
-- url: https://www.carbonbrief.org/feed/
-  label: Carbon Brief
-- url: https://yaleclimateconnections.org/feed/
-  label: Yale Climate Connections
-- url: https://grist.org/feed/
-  label: Grist
-- url: https://insideclimatenews.org/feed/
-  label: Inside Climate News
-- url: https://eponline.com/rss-feeds/News.aspx
-  label: Environmental Protection Online
-- url: https://news.google.com/rss/search?q=british+columbia+environment+OR+BC+climate+policy&hl=en-CA&gl=CA&ceid=CA:en
-  label: Google News BC Environment
-- url: https://news.google.com/rss/search?q=canada+climate+change+policy&hl=en-CA&gl=CA&ceid=CA:en
-  label: Google News Canada Climate
-- url: https://news.google.com/rss/search?q=environmental+science+sustainability+news&hl=en-CA&gl=CA&ceid=CA:en
-  label: Google News Environmental Science
-- url: https://news.google.com/rss/search?q=clean+energy+canada+renewable&hl=en-CA&gl=CA&ceid=CA:en
-  label: Google News Clean Energy Canada
-- url: https://www.reddit.com/r/environment/.rss
-  label: r/environment
-- url: https://www.reddit.com/r/climate/.rss
-  label: r/climate
-- url: https://www.reddit.com/r/britishcolumbia/.rss
-  label: r/britishcolumbia
+  # British Columbia
+  - url: https://news.gov.bc.ca/ministries/environment-and-parks/feed
+    label: BC Ministry of Environment
+  - url: https://news.gov.bc.ca/ministries/energy-and-climate-solutions/feed
+    label: BC Energy and Climate Solutions
+  - url: https://news.gov.bc.ca/ministries/water-land-and-resource-stewardship/feed
+    label: BC Water Land and Resource Stewardship
+  - url: https://news.gov.bc.ca/ministries/emergency-management-and-climate-readiness/feed
+    label: BC Emergency Management
+
+  # Alberta — note: alberta.ca and aer.ca no longer offer standard RSS feeds.
+  # Coverage sourced via Canadian Geographic, The Narwhal, and CBC Canada feeds.
+
+  # Ontario — note: news.ontario.ca/en/rss returns HTML/JS, not RSS.
+  # Coverage sourced via CBC Canada, National Observer, and general feeds.
+
+  # Federal Canada
+  - url: https://www.gazette.gc.ca/rss/p1-eng.xml
+    label: Canada Gazette Part I
+  - url: https://www.gazette.gc.ca/rss/p2-eng.xml
+    label: Canada Gazette Part II
+
+  # US EPA (cross-border relevance)
+
+  # Science Journals
+  - url: https://www.nature.com/nclimate.rss
+    label: Nature Climate Change
+  - url: https://www.sciencedaily.com/rss/top/environment.xml
+    label: ScienceDaily Environment
+  - url: https://www.science.org/rss/news_current.xml
+    label: Science AAAS
+
+  # Canadian Environmental News
+  # NOTE: thenarwhal.ca/feed/ removed 2026-04-16 — returning HTTP 415 since at
+  # least 2026-04-05 (3 consecutive feed audits). Re-add if they fix their RSS.
+  - url: https://thetyee.ca/rss2.xml
+    label: The Tyee
+  - url: https://www.cbc.ca/webfeed/rss/rss-canada
+    label: CBC Canada
+  - url: https://www.desmog.com/feed/
+    label: DeSmog
+  # General Environmental / Climate
+  - url: https://www.carbonbrief.org/feed/
+    label: Carbon Brief
+  - url: https://yaleclimateconnections.org/feed/
+    label: Yale Climate Connections
+  - url: https://grist.org/feed/
+    label: Grist
+  - url: https://insideclimatenews.org/feed/
+    label: Inside Climate News
+  - url: https://eponline.com/rss-feeds/News.aspx
+    label: Environmental Protection Online
+  # Google News — supplementary broad coverage
+  - url: "https://news.google.com/rss/search?q=british+columbia+environment+OR+BC+climate+policy&hl=en-CA&gl=CA&ceid=CA:en"
+    label: Google News BC Environment
+  - url: "https://news.google.com/rss/search?q=canada+climate+change+policy&hl=en-CA&gl=CA&ceid=CA:en"
+    label: Google News Canada Climate
+  - url: "https://news.google.com/rss/search?q=environmental+science+sustainability+news&hl=en-CA&gl=CA&ceid=CA:en"
+    label: Google News Environmental Science
+  - url: "https://news.google.com/rss/search?q=clean+energy+canada+renewable&hl=en-CA&gl=CA&ceid=CA:en"
+    label: Google News Clean Energy Canada
+  # Reddit — community environmental coverage
+  - url: "https://www.reddit.com/r/environment/.rss"
+    label: r/environment
+  - url: "https://www.reddit.com/r/climate/.rss"
+    label: r/climate
+  - url: "https://www.reddit.com/r/britishcolumbia/.rss"
+    label: r/britishcolumbia
+
 web_search_queries:
-- British Columbia environment news today
-- Canada climate policy news
-- environmental science breakthrough
-- clean energy news Canada
-- Ontario environment regulation contaminated sites news
-- Alberta environment policy AER oil sands regulation news
-- Quebec environment regulation MELCCFP news
-- Saskatchewan Manitoba Atlantic Canada environment regulation news
+  - "British Columbia environment news today"
+  - "Canada climate policy news"
+  - "environmental science breakthrough"
+  - "clean energy news Canada"
+  # All-province coverage (Phase 4) — provincial regulatory bodies lack reliable
+  # RSS, so surface them via web search instead of fabricating broken feed URLs.
+  - "Ontario environment regulation contaminated sites news"
+  - "Alberta environment policy AER oil sands regulation news"
+  - "Quebec environment regulation MELCCFP news"
+  - "Saskatchewan Manitoba Atlantic Canada environment regulation news"
+
 x_accounts:
-- handle: environmentca
-  label: Environment and Climate Change Canada
-  max_posts: 4
-- handle: TheNarwhalCA
-  label: The Narwhal (Canadian env journalism)
-  max_posts: 4
-- handle: TheTyee
-  label: The Tyee (BC investigative)
-  max_posts: 3
-- handle: DavidSuzukiFDN
-  label: David Suzuki Foundation
-  max_posts: 3
-- handle: PembinaInst
-  label: Pembina Institute (energy/climate)
-  max_posts: 3
-- handle: BCGovNews
-  label: BC Government News
-  max_posts: 3
+  - handle: environmentca
+    label: Environment and Climate Change Canada
+    max_posts: 4
+  - handle: TheNarwhalCA
+    label: The Narwhal (Canadian env journalism)
+    max_posts: 4
+  - handle: TheTyee
+    label: The Tyee (BC investigative)
+    max_posts: 3
+  - handle: DavidSuzukiFDN
+    label: David Suzuki Foundation
+    max_posts: 3
+  - handle: PembinaInst
+    label: Pembina Institute (energy/climate)
+    max_posts: 3
+  - handle: BCGovNews
+    label: BC Government News
+    max_posts: 3
+
 keywords:
-- contaminated sites
-- remediation
-- site assessment
-- groundwater
-- soil contamination
-- environmental management act
-- contaminated sites regulation
-- CSR
-- EMA
-- CEPA
-- ISO 17025
-- environmental assessment
-- impact assessment
-- water quality
-- air quality
-- emissions
-- climate change
-- carbon
-- greenhouse gas
-- GHG
-- permit
-- compliance
-- enforcement
-- regulation
-- amendment
-- brownfield
-- risk assessment
-- vapour intrusion
-- PFAS
-- per- and polyfluoroalkyl
-- hazardous waste
-- spill
-- cleanup
-- monitoring well
-- aquifer
-- watershed
-- effluent
-- discharge
-- environmental monitoring
-- CCME
-- federal impact assessment
-- Alberta Energy Regulator
-- AER
-- Ontario environmental
-- Quebec environment
-- Saskatchewan environment
-- Manitoba environment
-- provincial regulation
-- interprovincial
-- pipeline
-- tailings
-- oil sands
-- mining environmental
-- fisheries act
-- species at risk
-- environment
-- environmental
-- pollution
-- sustainability
-- conservation
-- biodiversity
-- clean energy
-- renewable
+  - contaminated sites
+  - remediation
+  - site assessment
+  - groundwater
+  - soil contamination
+  - environmental management act
+  - contaminated sites regulation
+  - CSR
+  - EMA
+  - CEPA
+  - ISO 17025
+  - environmental assessment
+  - impact assessment
+  - water quality
+  - air quality
+  - emissions
+  - climate change
+  - carbon
+  - greenhouse gas
+  - GHG
+  - permit
+  - compliance
+  - enforcement
+  - regulation
+  - amendment
+  - brownfield
+  - risk assessment
+  - vapour intrusion
+  - PFAS
+  - per- and polyfluoroalkyl
+  - hazardous waste
+  - spill
+  - cleanup
+  - monitoring well
+  - aquifer
+  - watershed
+  - effluent
+  - discharge
+  - environmental monitoring
+  # Pan-Canadian additions
+  - CCME
+  - federal impact assessment
+  - Alberta Energy Regulator
+  - AER
+  - Ontario environmental
+  - Quebec environment
+  - Saskatchewan environment
+  - Manitoba environment
+  - provincial regulation
+  - interprovincial
+  - pipeline
+  - tailings
+  - oil sands
+  - mining environmental
+  - fisheries act
+  - species at risk
+  # Broader terms for volume on slow news days
+  - environment
+  - environmental
+  - pollution
+  - sustainability
+  - conservation
+  - biodiversity
+  - clean energy
+  - renewable
+
 min_articles: 5
 min_articles_skip: 2
-multilingual:
-  enabled: true
-  auto: true
-  languages:
-  - fr
+
 llm:
   provider: xai
   system_prompt_file: shows/prompts/env_intel_system.txt
@@ -160,13 +183,35 @@ llm:
   podcast_temperature: 0.7
   max_tokens: 3500
   podcast_max_tokens: 8000
+  # env_intel is structurally a shorter, specialist show: alt-cadence
+  # (odd weekdays), narrow content surface (BC environmental policy +
+  # federal regulatory tracking), small daily news pool. The last five
+  # shipped episodes ran 693, 730, 820, 838 and 928 words — the network
+  # default ``min_podcast_words: 1500`` was never close. Pin the target
+  # to reality so the "below target" warning isn't permanent noise; pair
+  # it with an explicit ``min_podcast_word_floor: 450`` so a narrow-news
+  # day (Ep036, 2026-05-21 came in at 539 words and was incorrectly
+  # treated as "clearly broken") ships as a short-but-legitimate
+  # episode instead of aborting. The podcast prompt already tells the
+  # LLM "if the briefing is genuinely thin, let the episode be shorter
+  # rather than fill space with editorial padding"; this aligns the
+  # pipeline gate with that instruction.
   min_podcast_words: 900
+  # June 2026 network quality pass: chronic below-target episodes —
+  # the expand-retry now fires on ANY below-target script.
   podcast_expand_below_target: true
   min_podcast_word_floor: 450
-tts: {}
+
+tts:
+  # Inherits provider=grok, voice_id=sal, language_code=en, max_chars=10000
+  # from shows/_defaults.yaml (network default since May 2026 — Grok TTS
+  # at $4.20/M chars vs ElevenLabs Flash $150/M).
+  {}
+
 audio:
   music_file: assets/music/EnvIntel.mp3
   transition_sting: assets/music/transition_sting.mp3
+  # May 12 2026 retune (see shows/_defaults.yaml).
   voice_intro_delay: 10.0
   intro_duration: 10.0
   overlap_duration: 15.0
@@ -178,22 +223,20 @@ audio:
   overlap_volume: 0.3
   fade_volume: 0.25
   outro_volume: 0.4
+
 publishing:
   rss_file: env_intel_podcast.rss
-  rss_title: Environmental Intelligence
-  rss_description: The environmental compliance briefing for Canadian practitioners,
-    published every other weekday. Each episode opens with a scannable Compliance
-    Brief you can forward to your team, then regulatory updates across provincial
-    and federal jurisdictions, contaminated sites and remediation news, and a practitioner
-    field lesson with the most common mistake and its fix.
+  rss_title: "Environmental Intelligence"
+  # June 2026: say the real cadence (odd weekdays, not daily) and lead
+  # with the scannable Compliance Brief — the B2B differentiator.
+  rss_description: "The environmental compliance briefing for Canadian practitioners, published every other weekday. Each episode opens with a scannable Compliance Brief you can forward to your team, then regulatory updates across provincial and federal jurisdictions, contaminated sites and remediation news, and a practitioner field lesson with the most common mistake and its fix."
   rss_link: https://nerranetwork.com/env-intel.html
   rss_author: Environmental Intelligence
   rss_email: patrick@planetterrian.com
   rss_image: https://nerranetwork.com/assets/covers/environmental-intelligence.jpg
   rss_category: Science
   rss_subcategory: Earth Sciences
-  rss_keywords: environment, canada environment, regulation, sustainability, climate,
-    compliance
+  rss_keywords: "environment, canada environment, regulation, sustainability, climate, compliance"
   guid_prefix: env-intel
   base_url: https://nerranetwork.com
   audio_subdir: digests/env_intel
@@ -202,90 +245,113 @@ publishing:
   player_html: env-intel.html
   summaries_html: env-intel-summaries.html
   x_enabled: false
-  x_env_prefix: ''
+  x_env_prefix: ""
+
 episode:
   prefix: Env_Intel
-  filename_pattern: '{prefix}_Ep{num:03d}_{date:%Y%m%d}.mp3'
+  filename_pattern: "{prefix}_Ep{num:03d}_{date:%Y%m%d}.mp3"
   output_dir: digests/env_intel
-  mp3_glob: Env_Intel_Ep*.mp3
+  mp3_glob: "Env_Intel_Ep*.mp3"
+
 chapters:
   enabled: true
   section_markers:
-  - pattern: This is Environmental Intelligence
-    title: Introduction
-    where: start
-  - pattern: executive summary|here's what matters
-    title: Executive Summary
-  - pattern: lead story|centrepiece|most significant
-    title: Lead Story
-  - pattern: regulatory|policy watch
-    title: Regulatory & Policy Watch
-  - pattern: science|technical
-    title: Science & Technical
-  - pattern: industry|(?<!your )practice
-    title: Industry & Practice
-  - pattern: practitioner deep dive|deep dive|under the hood
-    title: Practitioner Deep Dive
-  - pattern: action items|if you're working on
-    title: Action Items
-  - pattern: week ahead|mark your calendar
-    title: Week Ahead
-  - pattern: That's Environmental Intelligence|That covers today.?s environmental
-      intelligence
-    title: Closing
-    where: end
-  - pattern: Before we wrap|Tomorrow
-    title: Tomorrow Teaser
-    where: end
+    # June 10 2026 quality pass: positional `where` anchors (the Tesla
+    # chapter-bug class — env_intel was missed in the four-show pass) so
+    # the Introduction can't be re-titled by a late brand mention and the
+    # Closing/Teaser can't be matched mid-script (Ep040 shipped a
+    # "Closing" chapter at word-position 7 of 10). The Closing pattern
+    # also gained the "That covers today's environmental intelligence"
+    # closing-pool variant, which previously matched no pattern (same
+    # MAB orphan-closing bug — half those episodes shipped with no
+    # Closing chapter).
+    # June 17 2026: the greeting rotates between "Good morning. This is",
+    # "Good to have you back. This is" and "Welcome to" (engine/intros.py
+    # env_intel `greetings`). The original pattern only matched the "This
+    # is" forms, so every "Welcome to Environmental Intelligence" episode
+    # (Ep037/038/042/046 of the last ten) shipped with NO Introduction
+    # chapter — the opening welcome + Compliance Brief got absorbed into
+    # the first content chapter. Match all three greeting shapes. The
+    # `where: start` window (first 10%) keeps the closing's "Environmental
+    # Intelligence" mention from re-triggering this marker.
+    - pattern: "(?:This is|Welcome to) Environmental Intelligence"
+      title: "Introduction"
+      where: start
+    - pattern: "executive summary|here's what matters"
+      title: "Executive Summary"
+    - pattern: "lead story|centrepiece|most significant"
+      title: "Lead Story"
+    - pattern: "regulatory|policy watch"
+      title: "Regulatory & Policy Watch"
+    - pattern: "science|technical"
+      title: "Science & Technical"
+    # "industry" never appears in practice; bare "practice" was matching
+    # the closing's "useful to your practice" and stealing the final
+    # segment's title (Ep040). Exclude that phrase with a lookbehind.
+    - pattern: "industry|(?<!your )practice"
+      title: "Industry & Practice"
+    - pattern: "practitioner deep dive|deep dive|under the hood"
+      title: "Practitioner Deep Dive"
+    - pattern: "action items|if you're working on"
+      title: "Action Items"
+    - pattern: "week ahead|mark your calendar"
+      title: "Week Ahead"
+    # June 11 2026 follow-up: Closing is listed BEFORE Tomorrow Teaser so
+    # that when the LLM merges the teaser sentence and the {closing_block}
+    # into ONE paragraph (Ep044, 2026-06-11 — "Tomorrow, watch for… That's
+    # Environmental Intelligence for today…" on a single line), the
+    # line-level "first marker wins" rule titles that line "Closing" rather
+    # than "Tomorrow Teaser", so the episode still gets its standard final
+    # Closing chapter. When the two sentences land on SEPARATE lines (the
+    # normal case) both chapters are produced as before — the closing
+    # pattern doesn't match the teaser-only line. The June 10 anchors +
+    # once-per-title dedup keep the positions correct regardless of order.
+    - pattern: "That's Environmental Intelligence|That covers today.?s environmental intelligence"
+      title: "Closing"
+      where: end
+    - pattern: "Before we wrap|Tomorrow"
+      title: "Tomorrow Teaser"
+      where: end
+
 slow_news:
   enabled: true
   library_file: shows/segments/env_intel.json
   max_segments: 2
   cooldown_days: 30
+
 newsletter:
   enabled: true
   platform: buttondown
   api_key_env: BUTTONDOWN_API_KEY
   status: about_to_send
-  tag: Environmental Intelligence
-  short_label: Env Intel
-  emoji: 🌲
-  newsletter_start_date: '2026-04-30'
+  tag: "Environmental Intelligence"
+  short_label: "Env Intel"
+  emoji: "🌲"
+  newsletter_start_date: "2026-04-30"
   requires_financial_disclaimer: false
   length_target_words: 1300
+
 youtube:
   podcast_playlist_id: PLRHMnzNNXPYCFXOTtrwHsydurFmReceXo
-  enabled: false
+  enabled: false                # Phase 2 — flip after quota raise
   channel: en
-  category_id: 28
+  category_id: 28               # Science & Tech
   default_language: en
+  # Canadian environmental policy / contaminated sites / regulatory
+  # imagery. Avoid the show's "CCME" / "PFAS" acronyms which Pexels
+  # interprets as random initialisms.
   image_queries:
-  - canadian wilderness
-  - environmental cleanup
-  - water quality testing
-  - industrial site inspection
-  - canadian forest
-  - regulatory documents
-  - air quality monitoring
-  image_query_prefix: ''
+    - canadian wilderness
+    - environmental cleanup
+    - water quality testing
+    - industrial site inspection
+    - canadian forest
+    - regulatory documents
+    - air quality monitoring
+  image_query_prefix: ""
   tags:
-  - environment
-  - canada environment
-  - environmental compliance
-  - climate
-  - sustainability
-  video_genre: environmental-policy-business
-  video_mood: professional-solutions-focused
-  video_keywords:
-  - environment
-  - environmental policy
-  - sustainability
-  - business
-  - regulatory
-  - ESG
-  - compliance
-  video_visual_style: 'Environmental landscapes, policy documents, business meetings,
-
-    regulatory visuals, sustainability solutions, corporate settings,
-
-    professional, solutions-focused, business-appropriate aesthetic.'
+    - environment
+    - canada environment
+    - environmental compliance
+    - climate
+    - sustainability

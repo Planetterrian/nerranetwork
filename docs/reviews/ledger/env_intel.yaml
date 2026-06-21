@@ -36,8 +36,8 @@ reviews:
       - metric: median _tts.txt words, last 10 eps
         baseline: "~750 (avg); target was contradictory 1500"
         expected: ">= 900 median; stable, not lower than baseline"
-        verdict: pending
-        evidence: "Ep044=835 but a genuine no-news day; one episode is not a median. Re-score next pass on normal-news episodes."
+        verdict: miss
+        evidence: "2026-06-17 snapshot: last-10 median 814.5w; post-fix-only (Ep044/045/046) median 867w — both under the 900 floor. Chronic under-length persists; digest ceiling, deferred behind the four-show length A/B."
     agent_cost_usd: null
 
   - date: 2026-06-11
@@ -98,11 +98,42 @@ reviews:
       - metric: deep-dive openers using "You arrive at a…", last 10 episodes
         baseline: "9/10 (Ep036-045, all but the short Ep043)"
         expected: "<= 3/10 within 2 weeks of post-merge episodes; openers rotate among the menu framings"
-        verdict: pending
-        evidence: "A/B test render (Ep046 thin pool) opened 'A Phase I ESA flags a B.C. site within 5 km of a glacial lake…' instead of 'You arrive at a…'."
+        verdict: hit
+        evidence: "Ep046 (first true post-merge episode) opens the deep dive 'There's a nuance here worth understanding when benzene detections appear inconsistent…' — no 'You arrive at a…'. Only 1 post-merge episode; re-score rotation next pass."
       - metric: transcripts using "here's something I wish someone had told me early in my career"
         baseline: "5/10"
         expected: "0/10 post-merge"
+        verdict: hit
+        evidence: "Absent from Ep046 (tts.txt). Present in pre-merge Ep045 line 51."
+    agent_cost_usd: null
+
+  - date: 2026-06-17
+    pr: 671
+    doc: docs/reviews/env_intel_review_2026_06_17.md
+    summary: >
+      Fourth pass. Scored the June 15 tic fixes against Ep046 (first true
+      post-merge episode) — both hit. Fixed a latent orphan-Introduction
+      chapter bug the June 10 where-anchor pass left half-fixed: the
+      Introduction marker only matched the "This is Environmental
+      Intelligence" greeting, so every "Welcome to Environmental
+      Intelligence" episode (Ep037/038/042/046 of the last ten) shipped
+      with no Introduction chapter.
+    shipped:
+      - Introduction chapter pattern broadened to match all three intros.py greetings ("(?:This is|Welcome to) Environmental Intelligence"); metadata-only, no audio/prompt change
+    deferred:
+      - chronic under-length / digest ceiling (median 814w vs 900 floor) — non-padding lever is deep-dive expansion, behind the four-show length A/B
+      - digest-driven / position-aware mid-section chapter titles (Ep046 had no Week Ahead chapter; week-ahead content merged into Action Items) — medium effort, shared
+      - numbers/dates spell-out drift ("Protocol 4", "Q three") — landmine #17, needs A/B
+      - thin-news blog title reads as intelligence — re-score on a post-fix thin-news day
+    predictions:
+      - metric: episodes shipping with no Introduction chapter, last 10
+        baseline: "4/10 (Ep037/038/042/046 — the 'Welcome to' greeting variant)"
+        expected: "0/10 post-merge — all three greeting shapes now title an Introduction chapter"
+        verdict: pending
+        evidence: "Drift guards pass: test_introduction_pattern_matches_every_greeting_variant + test_welcome_to_opener_yields_introduction_chapter. Re-score on next 2-3 'Welcome to' episodes."
+      - metric: deep-dive opener "There's a nuance here worth understanding" (potential new tic)
+        baseline: "1/1 post-merge episode (Ep046)"
+        expected: "openers rotate; this lead-in does not become a 5+/10 template echo"
         verdict: pending
         evidence: null
     agent_cost_usd: null
