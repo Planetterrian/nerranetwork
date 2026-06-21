@@ -324,6 +324,33 @@ TST received a full recursive improvement architecture (analogous to MIT):
   (`_is_dedupe_worthy_title`); blog posts link the Story Tracker page.
   Length/brand prompt changes alter shipped audio — A/B-listen per
   landmine #17.
+- **June 20 2026 second agent pass** (review:
+  [`docs/reviews/tesla_review_2026_06_20.md`](docs/reviews/tesla_review_2026_06_20.md);
+  drift guards: `tests/test_tesla_quality_pass.py`): scored June 10 — the
+  chapter-anchoring HIT (0/10 trailing-Introduction) but the length
+  prediction MISSED (Ep507-516 1254-1676w, all under the 2000 floor).
+  Three deterministic fixes. (1) The podcast-gen step spelled Teslarati —
+  the show's #1 source — phonetically as `Tesla-rah-tee` in 25+ episodes
+  (5 of the last 10), voiced as an audible garble (Whisper of Ep516:
+  "Tesla had RadT"); added to the blessed `engine.utils.fix_phonetic_garbles`
+  restore layer (removes a respelling → outside landmine #17, A/B anyway).
+  (2) The June-10 "drop Daily from the spoken brand" decision had MISSED
+  the pre-existing brand normalizer in `engine/generator.py`, which kept
+  normalizing TOWARD "Tesla Shorts Time Daily" — so the LLM-appended
+  "Daily" shipped in the spoken intro of 100% of episodes (Ep506-516);
+  the normalizer now drops the stray "Daily" (completes the approved
+  decision; A/B-listen). (3) 13F institutional-filing spam ("LLC Purchases
+  New Stake in Tesla", 3× in Ep516) now filtered at fetch via
+  `exclude_title_patterns` in `shows/tesla.yaml` (deterministic, no-A/B,
+  FF stock-filter class). Deferred with re-diagnosis: chronic under-length
+  is the DIGEST ceiling (Top-12 items ship 3 thin sentences from
+  Google-News snippets; script tracks the digest ~1:1) — same root cause
+  as FF/UC/PT, held behind the four-show length A/B (levers: digest-
+  expansion retry / First-Principles essay expansion). Also deferred:
+  chapter body navigation — fragment auto-segment titles (8/10) AND a new
+  no-body-chapter regression (2/10; `engine/chapters.py:208` never
+  implemented its docstring's "head spans most of script" auto-segment
+  trigger) — fix is network-scoped digest-driven titles.
 - **June 10 2026 four-show pass** (MIT, M&A, MAB, FF; full review:
   [`docs/four_show_review_2026_06_10.md`](docs/four_show_review_2026_06_10.md);
   drift guards: `tests/test_four_show_quality_pass.py`): every show's

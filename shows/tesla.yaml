@@ -73,6 +73,23 @@ min_articles: 10
 min_articles_skip: 6
 min_audio_duration: 300
 
+# June 20 2026 review: MarketBeat/Defense-World-style 13F institutional-
+# filing spam ("SG Trading Solutions LLC Purchases New Stake in Tesla",
+# "Tempo Wealth LLC Invests $4.88 Million in Tesla") kept slipping into the
+# digest despite the prompt's "reject pure stock/market data" rule — Ep516
+# (the shortest recent episode) shipped THREE of them, each a zero-value
+# non-story ("No position size details were highlighted"). These follow a
+# rigid title template, so they're filtered deterministically at fetch time
+# (same accepted no-A/B class as Fascinating Frontiers' stock-market filter).
+# Patterns are anchored on "...in Tesla" / "shares ... by <firm>" so real
+# news ("Tesla shares jump 5%", "Tesla stock rises on robotaxi news") is
+# never caught. Verified against live spam + legit titles in the review.
+exclude_title_patterns:
+- (purchases|acquires|buys|sells|trims|boosts|lowers|raises|cuts|reduces|grows|takes|sold|bought|has) (a )?(new |\$[\d.,]+ (million|billion) )?(stake|position|holdings|shares) in tesla
+- invests \$[\d.,]+ (million|billion) in tesla
+- tesla.{0,25}\bshares (purchased|sold|acquired|bought) by\b
+- (stake|position|holdings) in tesla.{0,40}(llc|inc\b|trust|ltd|capital|management|advisors|advisers|wealth|group)
+
 web_search_queries:
   - "Tesla news today"
   - "TSLA stock market news"

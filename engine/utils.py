@@ -670,6 +670,16 @@ _PHONETIC_GARBLES = {
     "an-thropic": "Anthropic",
     "lah-mah": "Llama",
     "hah-sah-biss": "Hassabis",
+    # Tesla Shorts Time (June 20 2026 review): the podcast-gen step spells
+    # the show's most-attributed source phonetically as "Tesla-rah-tee"
+    # (Teslarati) despite the prompt ban — it shipped to TTS in 25+
+    # episodes, including 5 of the last 10 (Ep500/505/512/516), often
+    # several times per episode. Whisper of Ep516 audio confirms it voices
+    # as a garble ("Tesla had RadT reported"); the hyphens force an audible
+    # break on the custom voice. The trailing \b leaves possessives intact
+    # ("Tesla-rah-tee's" → "Teslarati's"). Note: only the hyphenated
+    # respelling is restored — the correct "Teslarati" never matches.
+    "tesla-rah-tee": "Teslarati",
 }
 
 _PHONETIC_GARBLE_RE = re.compile(

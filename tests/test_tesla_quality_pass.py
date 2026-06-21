@@ -392,3 +392,118 @@ class TestExpansionRetryCarriesDigest:
             "retry prompt does not carry the digest — model cannot add facts"
         )
         assert "skipped or compressed" in retry_prompt
+
+
+# ---------------------------------------------------------------------------
+# June 20 2026 review (second agent pass)
+# ---------------------------------------------------------------------------
+
+
+class TestTeslaratiPhoneticGarble:
+    """The podcast-gen step spelled the show's #1 source phonetically as
+    "Tesla-rah-tee" (Teslarati) in 25+ episodes (5 of the last 10), and it
+    voiced as an audible garble on the custom voice. The blessed
+    ``fix_phonetic_garbles`` restore layer now repairs it (it removes a
+    respelling, so it is outside the landmine-#17 no-respelling rule)."""
+
+    def test_garble_restored_to_teslarati(self):
+        from engine.utils import fix_phonetic_garbles
+
+        assert fix_phonetic_garbles(
+            "According to Tesla-rah-tee, the update shipped."
+        ) == "According to Teslarati, the update shipped."
+        # case-insensitive + possessive preserved
+        assert fix_phonetic_garbles("per Tesla-Rah-Tee's editor") == (
+            "per Teslarati's editor"
+        )
+
+    def test_correct_spelling_untouched(self):
+        from engine.utils import fix_phonetic_garbles
+
+        # The correct form (and the prompt's example) must never match.
+        assert fix_phonetic_garbles("According to Teslarati.") == (
+            "According to Teslarati."
+        )
+
+
+class TestSpokenBrandDropsDaily:
+    """The June 10 pass aligned the spoken brand to "Tesla Shorts Time"
+    (no "Daily") in intros.py + the prompt, but the generator brand
+    normalizer still normalized TOWARD "Tesla Shorts Time Daily", so the
+    LLM-appended "Daily" shipped in 100% of episodes' spoken intros. The
+    normalizer now drops the stray "Daily" so the deterministic layer
+    enforces the brand decision."""
+
+    def test_stray_daily_dropped(self):
+        from engine.generator import _correct_common_llm_text_mistakes as fix
+
+        assert fix("Good to have you on Tesla Shorts Time Daily, episode 516.") == (
+            "Good to have you on Tesla Shorts Time, episode 516."
+        )
+        assert fix("This is Tesla Short's Time Daily.") == (
+            "This is Tesla Shorts Time."
+        )
+        assert fix("Welcome to Tela Shorts Time Daily.") == (
+            "Welcome to Tesla Shorts Time."
+        )
+
+    def test_clean_name_and_lowercase_handle_untouched(self):
+        from engine.generator import _correct_common_llm_text_mistakes as fix
+
+        assert fix("Welcome to Tesla Shorts Time, episode 500.") == (
+            "Welcome to Tesla Shorts Time, episode 500."
+        )
+        # The spoken X-handle reference stays lowercase (audio-identical,
+        # but a true no-op keeps the diff honest).
+        assert fix("You can find us on X at tesla shorts time.") == (
+            "You can find us on X at tesla shorts time."
+        )
+
+    def test_normalizer_never_reintroduces_daily(self):
+        from engine.generator import _correct_common_llm_text_mistakes as fix
+        import re
+
+        for sample in (
+            "Tesla Shorts Time Daily",
+            "Tesla Short's Time, daily",
+            "Tela Shorts Time. Daily",
+        ):
+            assert not re.search(
+                r"Shorts? Time[.,;\s]*[Dd]aily", fix(sample)
+            ), f"normalizer left a stray Daily in: {sample!r}"
+
+
+class TestInstitutionalFilingSpamFilter:
+    """13F institutional-filing spam ("LLC Purchases New Stake in Tesla",
+    "Invests $X Million in Tesla") is filtered at fetch time via
+    ``exclude_title_patterns`` (deterministic, no-A/B). Real Tesla news
+    must never be caught."""
+
+    def _patterns(self):
+        from engine.config import load_config
+
+        return load_config("shows/tesla.yaml").exclude_title_patterns
+
+    def test_patterns_present(self):
+        assert len(self._patterns()) >= 4
+
+    def test_filing_spam_dropped_real_news_kept(self):
+        from engine.utils import drop_excluded_titles
+
+        spam = [
+            "SG Trading Solutions LLC Purchases New Stake in Tesla, Inc. $TSLA",
+            "Tempo Wealth LLC Invests $4.88 Million in Tesla",
+            "Tesla, Inc. Shares Purchased by Brookstone Capital Management",
+            "Vanguard Group Inc Trims Position in Tesla",
+        ]
+        legit = [
+            "Tesla Cybercab launch is imminent after latest sighting at Giga Texas",
+            "Tesla shares jump 5% after strong delivery numbers",
+            "Tesla stock rises on robotaxi news",
+            "EPA filing reveals key Tesla Cybercab vehicle specifications",
+        ]
+        articles = [{"title": t} for t in spam + legit]
+        kept, dropped = drop_excluded_titles(articles, self._patterns())
+        assert dropped == len(spam)
+        kept_titles = {a["title"] for a in kept}
+        assert kept_titles == set(legit)

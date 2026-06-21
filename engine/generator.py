@@ -1050,20 +1050,33 @@ def _correct_common_llm_text_mistakes(text: str) -> str:
     # --- TST show title and the famous framing line ---
     # The model has a persistent habit of mangling the exact strings that
     # appear in engine/intros.py personality pools and in this prompt.
+    # June 20 2026 review: the spoken brand was aligned to "Tesla Shorts
+    # Time" (no "Daily") in the June 10 pass — intros.py show_name dropped
+    # it and the podcast prompt bans appending it — so the audio brand
+    # matches the Apple/Spotify/website listing for search. But this
+    # normalizer predates that decision and was still normalizing TOWARD
+    # "Tesla Shorts Time Daily": the LLM re-adds "Daily" every episode (a
+    # training habit) and this layer blessed it, so "Tesla Shorts Time
+    # Daily" shipped in the spoken intro of 100% of episodes (verified
+    # Ep506-516, post-June-10). Targets now DROP the stray "Daily" so the
+    # deterministic layer enforces the brand decision instead of fighting
+    # it. (Mangled-spelling fixes — Tela / Short's — are preserved.)
     replacements = [
         # The classic framing line (one of the framings in intros.py)
         (r"neither do['’]s the news cycle", "neither does the news cycle"),
         (r"Tela never sleeps", "Tesla never sleeps"),
-        # All common manglings of the show name the operator has seen.
-        # Made more permissive to catch periods, commas, and sentence breaks
-        # (e.g. "Tesla Short's time. Daily" or "Shorts Time. Daily episode").
-        (r"\bTela Shorts? Time[.,;\s]*[Dd]aily\b", "Tesla Shorts Time Daily"),
-        (r"\bTesla Short['’]?s Time[.,;\s]*[Dd]aily\b", "Tesla Shorts Time Daily"),
-        (r"\bTesla Shorts? Time[.,;\s]*[Dd]aily\b", "Tesla Shorts Time Daily"),
-        (r"welcome to Tela Short", "welcome to Tesla Shorts Time Daily"),
-        (r"welcome to Tesla Short['’]s Time", "welcome to Tesla Shorts Time Daily"),
-        # Catch the exact user-reported opening from Ep490 / similar
-        (r"welcome to Tela Short's Time, daily", "Welcome to Tesla Shorts Time Daily"),
+        # All common manglings of the show name the operator has seen, plus
+        # the stray "Daily" the LLM keeps appending — normalize to the exact
+        # listing brand "Tesla Shorts Time" (drop "Daily"). Permissive on
+        # periods, commas, and sentence breaks ("Tesla Short's time. Daily").
+        # Misspellings (Tela / Short's) → always corrected, Daily dropped.
+        (r"\bTela Short['’]?s? Time(?:[.,;\s]*[Dd]aily)?\b", "Tesla Shorts Time"),
+        (r"\bTesla Short['’]s Time(?:[.,;\s]*[Dd]aily)?\b", "Tesla Shorts Time"),
+        # Correctly-spelled name carrying a stray "Daily" → drop only the
+        # "Daily" (requires Daily to match, so clean "Tesla Shorts Time"
+        # and the lowercase handle "tesla shorts time" are left untouched).
+        (r"\bTesla Shorts Time[.,;\s]*[Dd]aily\b", "Tesla Shorts Time"),
+        (r"welcome to Tela Short['’]?s? Time(?:[.,;\s]*[Dd]aily)?", "welcome to Tesla Shorts Time"),
     ]
     for pattern, repl in replacements:
         text = re.sub(pattern, repl, text, flags=re.IGNORECASE)
