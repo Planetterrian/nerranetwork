@@ -212,6 +212,30 @@ nerranetwork/
   titles (Ep078-class residual, Tesla-deferred) and Under-the-Hood length
   expansion (after the four-show length A/B). The "pop the hood" opener tic
   was left unchanged (signature phrase; shipped-audio risk).
+  **June 21 2026 third pass** (review:
+  [`docs/reviews/models_agents_review_2026_06_21.md`](docs/reviews/models_agents_review_2026_06_21.md);
+  drift guards: `tests/test_models_agents_quality_pass.py::TestPhoneticGarbleRepair`):
+  all four June-14 predictions scored HIT. One recurring reader-facing text
+  bug: the SHARED pronunciation map respells `CUDA → "koo-dah"`
+  (`assets/pronunciation.py:168`, an ElevenLabs-era word-acronym guide), and
+  that respelling is written into the `_tts.txt` → the published blog/RSS
+  transcript (`engine/blog.py:767`), shipping verbatim in 12 episodes since
+  Ep040 (e.g. Ep088 "open-sourced a koo-dah kernel"). Same class as the
+  original "nassa" leak that created `fix_phonetic_garbles`; restored the same
+  way — `koo-dah → CUDA` added to `engine.utils._PHONETIC_GARBLES` (global;
+  the canonical acronym reaches both transcript and TTS, exactly as
+  `nassa → NASA` already ships). Collision-safe ("koo-dah" has no English
+  use); the collision-unsafe map guides (`LoRA → "Laura"`, `RAG → "rag"`) are
+  left alone. Sharpened the deferred chapter diagnosis: chapter quality is
+  inversely correlated with prompt compliance — Ep084/086 ship a full
+  9-chapter shape only because the host announces the banned section labels
+  aloud ("Now turning to model updates"), while prompt-compliant episodes
+  (Ep085/087/088) collapse to auto-segment fragments or sparse shapes;
+  confirms digest-driven titles as the durable lever (deferred). New deferred
+  network-wide item: pronunciation-map word-guides leaking into published
+  transcripts (durable fix = source the transcript from pre-pronunciation or
+  Whisper text). Restore-layer edit touches TTS — spot-check per landmine #17
+  (low risk; matches the NASA/Anthropic precedent that ships today).
 - **MAB** (Models & Agents for Beginners) runs via `run_show.py` +
   `shows/models_agents_beginners.yaml`; beginner/teen-focused version of M&A.
   Uses **ElevenLabs TTS**. X posting disabled.

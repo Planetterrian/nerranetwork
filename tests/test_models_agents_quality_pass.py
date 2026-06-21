@@ -49,6 +49,26 @@ class TestPhoneticGarbleRepair:
         clean = "Anthropic and Llama and Hassabis are fine."
         assert fix_phonetic_garbles(clean) == clean
 
+    def test_cuda_respelling_restored(self):
+        # June 21 2026 review: the shared pronunciation map respells
+        # CUDA -> "koo-dah" for TTS, and that respelling leaked verbatim
+        # into 12 episodes' published blog transcripts. The restore layer
+        # now reverses it (same mechanism as nassa -> NASA).
+        assert fix_phonetic_garbles(
+            "open-sourced a koo-dah kernel"
+        ) == "open-sourced a CUDA kernel"
+        # Capitalised / sentence-start variant.
+        assert fix_phonetic_garbles("Koo-dah kernels run on-GPU") == (
+            "CUDA kernels run on-GPU"
+        )
+
+    def test_cuda_restore_is_collision_safe(self):
+        # "koo-dah" has no legitimate English use, so restoration never
+        # mangles ordinary prose (unlike RAG->"rag"/LoRA->"Laura", which
+        # are deliberately NOT in the restore dict).
+        clean = "She wore a Laura dress and grabbed a rag."
+        assert fix_phonetic_garbles(clean) == clean
+
 
 class TestUnderTheHoodMarker:
     def _under_the_hood_pattern(self):

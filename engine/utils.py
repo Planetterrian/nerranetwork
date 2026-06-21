@@ -680,6 +680,19 @@ _PHONETIC_GARBLES = {
     # ("Tesla-rah-tee's" → "Teslarati's"). Note: only the hyphenated
     # respelling is restored — the correct "Teslarati" never matches.
     "tesla-rah-tee": "Teslarati",
+    # Models & Agents (June 21 2026 review): unlike the LLM-introduced
+    # garbles above, "koo-dah" is emitted by the SHARED pronunciation map
+    # (`assets/pronunciation.py` COMMON_ACRONYMS: "CUDA" → "koo-dah", an
+    # ElevenLabs-era word-acronym guide). That respelling is written into
+    # the `_tts.txt` and therefore the published blog/RSS transcript — it
+    # has shipped verbatim in 12 M&A episodes since Ep040 (e.g. Ep088:
+    # "open-sourced a koo-dah kernel"). Restoring CUDA here is the SAME
+    # mechanism already applied to "nassa" → NASA: the canonical acronym
+    # reaches TTS (verified live — NASA/Anthropic ship as written on the
+    # custom voice) and the reader sees "CUDA", not "koo-dah". "koo-dah"
+    # has no legitimate English use, so no collision (unlike RAG→"rag" /
+    # LoRA→"Laura", which are left alone).
+    "koo-dah": "CUDA",
 }
 
 _PHONETIC_GARBLE_RE = re.compile(

@@ -36,6 +36,47 @@ reviews:
       - metric: median _tts.txt words, last 10 eps
         baseline: "~1290 (range 1085-1476; all below 1500 floor)"
         expected: "no regression; chronic under-length stays deferred to digest-expansion lever"
+        verdict: hit
+        evidence: "Median ~1300 (range 1067-1582); no regression. Digest-ceiling root cause unchanged."
+    agent_cost_usd: null
+
+  - date: 2026-06-21
+    pr: null
+    doc: docs/reviews/models_agents_review_2026_06_21.md
+    summary: >
+      Third M&A pass. All four June-14 predictions scored HIT. One recurring
+      reader-facing text bug fixed: the shared pronunciation map respells
+      CUDA -> "koo-dah" for TTS, and that respelling leaks into the published
+      blog/RSS transcript (built from _tts.txt) — shipped in 12 episodes since
+      Ep040 (23 occurrences). Same class as the original "nassa" leak that
+      created fix_phonetic_garbles; restored the same way. Sharpened the
+      deferred chapter diagnosis: chapter quality is inversely correlated with
+      prompt compliance (full chapters only when the host announces banned
+      section labels aloud), confirming digest-driven titles as the durable
+      lever. Found a broader network-wide latent class (LoRA->"Laura",
+      RAG->"rag", JAXA->"jacksa" etc. all leak to transcripts) — deferred.
+    shipped:
+      - 'fix_phonetic_garbles += "koo-dah" -> CUDA (engine/utils.py, global restore layer)'
+    deferred:
+      - digest-driven / position-aware chapter titles (carried; sharpened diagnosis — chapters only clean when host disobeys the no-spoken-labels prompt rule)
+      - 'network-wide: pronunciation-map word-guides leak to published transcripts (LoRA/RAG/JAXA/CRISPR/PSYCHE/LOFAR/DART); collision-unsafe ones cannot use the restore dict — durable fix is sourcing the blog/RSS transcript from pre-pronunciation text or the Whisper transcript'
+      - expand Under the Hood section for length, after the four-show length A/B settles (carried)
+      - chronic under-length = digest ceiling, deferred behind four-show length A/B (carried)
+      - '"keep an eye on" Tomorrow-Teaser opener tic (10/10) — optional A/B rotation menu, not changed'
+    predictions:
+      - metric: '"koo-dah" occurrences in published blog transcripts of post-merge CUDA episodes'
+        baseline: "shipped in 12 episodes since Ep040 (23 total occurrences); live in Ep086 (2), Ep088 (2)"
+        expected: "0 in any episode generated post-merge that mentions CUDA (CUDA appears instead)"
+        verdict: pending
+        evidence: null
+      - metric: 'custom voice still reads CUDA cleanly (Whisper of next post-merge CUDA episode)'
+        baseline: 'current "koo-dah" audio reads as ~CUDA (Whisper Ep088: "a CUDA kernel")'
+        expected: 'Whisper transcript shows "CUDA"; no "C U D A" letter-split (matches NASA/Anthropic precedent)'
+        verdict: pending
+        evidence: null
+      - metric: median _tts.txt words, last 10 eps
+        baseline: "~1300 (range 1067-1582; 9/10 below 1500 floor)"
+        expected: "no regression; chronic under-length stays deferred to the four-show length A/B"
         verdict: pending
         evidence: null
     agent_cost_usd: null
