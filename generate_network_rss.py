@@ -25,7 +25,7 @@ OUTPUT = "network.rss"
 
 NETWORK_TITLE = "Nerra Network"
 NETWORK_DESCRIPTION = (
-    "Thirteen podcasts in two languages keeping you informed about exciting changes in the world. "
+    "Daily podcasts keeping you informed about exciting changes in the world. "
     "Unbiased, multi-perspective coverage of Tesla, world news, space, science, AI, "
     "the environment, modern investing, financial literacy, Russian language learning, "
     "and the unintended consequences of well-meant ideas."
