@@ -232,7 +232,7 @@
                     <div class="nn-nav-dropdown-menu" role="menu">
                         {% for s in all_shows %}
                         <a href="{{ path_prefix }}{{ s.show_page }}" role="menuitem">
-                            <picture><source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp"><img src="{{ path_prefix }}{{ s.podcast_image }}" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp"><img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400" loading="lazy"></picture>
                             {{ s.name }}
                         </a>
                         {% endfor %}
@@ -249,7 +249,7 @@
                         </a>
                         {% for s in all_shows %}
                         <a href="{{ path_prefix }}{{ s.blog_page }}">
-                            <picture><source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp"><img src="{{ path_prefix }}{{ s.podcast_image }}" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp"><img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400" loading="lazy"></picture>
                             {{ s.name }} {{ t.show_blog_suffix }}
                         </a>
                         {% endfor %}
@@ -281,7 +281,7 @@
             <div class="nn-mobile-shows-title">{{ t.mobile_all_shows }}</div>
             {% for s in all_shows %}
             <a href="{{ path_prefix }}{{ s.show_page }}" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp"><img src="{{ path_prefix }}{{ s.podcast_image }}" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp"><img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400" loading="lazy"></picture>
                 {{ s.name }}
             </a>
             {% endfor %}
@@ -293,7 +293,7 @@
             </a>
             {% for s in all_shows %}
             <a href="{{ path_prefix }}{{ s.blog_page }}" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp"><img src="{{ path_prefix }}{{ s.podcast_image }}" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="{{ path_prefix }}{{ s.podcast_image[:-4] if s.podcast_image.endswith('.jpg') else s.podcast_image }}-400.webp"><img src="{{ path_prefix }}{{ s.podcast_image }}" alt="{{ s.name }} cover art" width="1400" height="1400" loading="lazy"></picture>
                 {{ s.name }} {{ t.show_blog_suffix }}
             </a>
             {% endfor %}
