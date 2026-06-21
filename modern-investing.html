@@ -168,7 +168,6 @@
                     <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
                     <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
                     <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
-                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
                     <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
                     <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
                 </div>
@@ -675,33 +674,33 @@
                 <div class="glass-card" style="padding:var(--sp-4);">
                     <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">NASDAQ ^IXIC</div>
                     <div style="font-size:1.5rem;font-weight:700;margin-top:var(--sp-1);">
-                        nan
+                        26,518
                     </div>
                     <div style="font-size:0.85rem;color:var(--nn-text-muted);margin-top:var(--sp-1);">
                         YTD
-                        +nan%
+                        +14.13%
                     </div>
                 </div>
                 <div class="glass-card" style="padding:var(--sp-4);">
                     <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Portfolio YTD</div>
                     <div style="font-size:1.5rem;font-weight:700;margin-top:var(--sp-1);">
                         
-                        +nan%
+                        +1.04%
                     </div>
                     <div style="font-size:0.85rem;color:var(--nn-text-muted);margin-top:var(--sp-1);">
                         Since inception
                         
-                        +nan%
+                        +1.04%
                     </div>
                 </div>
                 <div class="glass-card" style="padding:var(--sp-4);">
                     <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Alpha vs NASDAQ</div>
                     
                     <div style="font-size:1.5rem;font-weight:700;margin-top:var(--sp-1);color:#ef4444;">
-                        +nan% YTD
+                        -13.09% YTD
                     </div>
                     <div style="font-size:0.85rem;color:var(--nn-text-muted);margin-top:var(--sp-1);">
-                        Since inception +nan%
+                        Since inception -17.48%
                     </div>
                 </div>
                 <div class="glass-card" style="padding:var(--sp-4);">
@@ -1400,6 +1399,14 @@
                 <ul style="margin:0;padding-left:var(--sp-5);font-size:0.92rem;line-height:1.7;">
                     
                     <li style="margin-bottom:var(--sp-2);">
+                        <span style="font-family:monospace;color:var(--nn-text-muted);font-size:0.82rem;">LL-054</span>
+                        <em style="color:var(--nn-text-muted);">[content, Ep82, 2026-06-20]</em>
+                        — Without closing prices we cannot measure whether the leadership-change catalyst produced any excess return relative to the broader market
+                        <br>
+                        <strong>Rule:</strong> Require closing-price confirmation before declaring any catalyst trade complete
+                    </li>
+                    
+                    <li style="margin-bottom:var(--sp-2);">
                         <span style="font-family:monospace;color:var(--nn-text-muted);font-size:0.82rem;">LL-053</span>
                         <em style="color:var(--nn-text-muted);">[content, Ep81, 2026-06-19]</em>
                         — The position delivered a modest gain but failed to keep pace once sector rotation favored other areas; waiting for volume confirmation would have avoided the lag
@@ -1467,14 +1474,6 @@
                         <span style="font-family:monospace;color:var(--nn-text-muted);font-size:0.82rem;">LL-045</span>
                         <em style="color:var(--nn-text-muted);">[content, Ep72, 2026-06-10]</em>
                         — The healthcare catalyst produced a loss once broader market volatility increased without supporting volume
-                        <br>
-                        <strong>Rule:</strong> Require both a fundamental catalyst and a volume spike above the 20-day average before committing capital to healthcare launches
-                    </li>
-                    
-                    <li style="margin-bottom:var(--sp-2);">
-                        <span style="font-family:monospace;color:var(--nn-text-muted);font-size:0.82rem;">LL-044</span>
-                        <em style="color:var(--nn-text-muted);">[content, Ep71, 2026-06-09]</em>
-                        — The catalyst entry produced a loss once broader market volatility increased without supporting volume
                         <br>
                         <strong>Rule:</strong> Require both a fundamental catalyst and a volume spike above the 20-day average before committing capital to healthcare launches
                     </li>
@@ -2203,7 +2202,7 @@
             <div class="nn-footer-grid">
                 <div>
                     <div class="nn-footer-brand"><span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span></div>
-                    <p class="nn-footer-desc">13 shows. Zero fluff. Independent podcast network produced in Vancouver, Canada.</p>
+                    <p class="nn-footer-desc">Zero fluff. Independent podcast network produced in Vancouver, Canada.</p>
                 </div>
                 <div class="nn-footer-col">
                     <h4>Shows</h4>
@@ -2497,7 +2496,7 @@
             const tr = opts.translations || {};
             const langs = Object.keys(tr).filter((l) => tr[l] && tr[l].audio_url);
             if (!langs.length) { box.style.display = 'none'; return; }
-            const LABELS = { en: 'English', fr: 'Français', ru: 'Русский', es: 'Español', zh: '中文' };
+            const LABELS = { en: 'English', fr: 'Français', ru: 'Русский', zh: '中文' };
             const order = ['en'].concat(langs);
             const audioEl = opts.audioEl, titleEl = opts.titleEl, summaryEl = opts.summaryEl;
             const enTitle = opts.enTitle || 'Episode';
