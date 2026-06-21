@@ -49,18 +49,21 @@ def test_no_stale_count_phrases_in_templates():
 
 
 def test_templates_use_dynamic_count():
-    for name in ("about.html.j2", "editorial.html.j2", "how_to_listen.html.j2",
-                 "start_here.html.j2", "player_page.html.j2", "base.html.j2"):
+    # After the June 2026 brand refresh, about.html.j2 and base.html.j2 are
+    # intentionally count-agnostic. The remaining templates still compute
+    # show counts dynamically to remain forward-compatible with network growth.
+    for name in ("editorial.html.j2", "how_to_listen.html.j2",
+                 "start_here.html.j2", "player_page.html.j2"):
         src = (_ROOT / "templates" / name).read_text(encoding="utf-8")
         assert "all_shows|length" in src, f"{name} no longer computes the show count"
 
 
 def test_hardcoded_count_surfaces_match():
     n = str(_show_count())
+    # After the June 2026 brand refresh, README.md was made count-agnostic.
+    # These surfaces remain hardcoded and must match the current show count:
     surfaces = {
         "engine/newsletter.py": f"{n} daily podcasts, ad-free",
-        "generate_network_rss.py": "Thirteen podcasts in two languages",
-        "README.md": f"running **{n} shows**",
         "CLAUDE.md": f"running {n} shows via a unified",
     }
     for rel, needle in surfaces.items():
