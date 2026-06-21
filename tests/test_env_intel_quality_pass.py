@@ -88,6 +88,40 @@ class TestChapterPositionalAnchors:
         # but a real industry mention still matches
         assert regex.search("in practice this changes site closure criteria")
 
+    def test_introduction_pattern_matches_every_greeting_variant(self):
+        """June 17 2026. The original 'This is Environmental Intelligence'
+        pattern missed the 'Welcome to' greeting (engine/intros.py rotates
+        three greetings); Ep037/038/042/046 — the four 'Welcome to'
+        episodes of the last ten — each shipped with NO Introduction
+        chapter. The pattern must match every greeting × show-name opener."""
+        regex = re.compile(_markers()["Introduction"]["pattern"], re.IGNORECASE)
+        personality = _SHOW_PERSONALITIES["env_intel"]
+        show_name = personality["show_name"]
+        for greeting in personality["greetings"]:
+            opener = f"{greeting} {show_name}, episode forty-six, for June 17."
+            assert regex.search(opener), (
+                "env_intel intro greeting ships without an Introduction "
+                f"chapter: {opener!r}"
+            )
+
+    def test_welcome_to_opener_yields_introduction_chapter(self):
+        """End-to-end: a 'Welcome to' episode (the Ep046 shape) must
+        produce an Introduction chapter, not start on a content chapter."""
+        markers = [_Marker(m) for m in _marker_list()]
+        body = "Host: " + ("Regulatory update for the day. " * 80) + "\n\n"
+        script = (
+            "Welcome to Environmental Intelligence, episode forty-six, for "
+            "June seventeenth, twenty twenty-six. Your briefing on what "
+            "matters for Canadian professionals.\n\n"
+            + body
+            + "That's Environmental Intelligence for today. We'll be back "
+            "with the next briefing.\n"
+        )
+        titles = [c.title for c in parse_chapters(script, markers, show_name="ei")]
+        assert titles and titles[0] == "Introduction", (
+            f"'Welcome to' opener must yield a leading Introduction chapter; got {titles}"
+        )
+
 
 class TestClosingWinsOverTeaserWhenMerged:
     """June 11 2026 follow-up. Ep044 (2026-06-11) shipped with NO Closing

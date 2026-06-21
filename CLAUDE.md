@@ -191,6 +191,24 @@ nerranetwork/
   (scenario → science → most-common-mistake + fix) is the show's intentional
   B2B signature and is unchanged. Prompt edits change output — A/B-listen
   per landmine #17.
+  **June 17 2026 fourth pass** (review:
+  [`docs/reviews/env_intel_review_2026_06_17.md`](docs/reviews/env_intel_review_2026_06_17.md);
+  drift guards: `tests/test_env_intel_quality_pass.py::TestChapterPositionalAnchors`):
+  both June-15 deep-dive tic fixes HIT on Ep046 (first true post-merge
+  episode — odd-weekday show; the "You arrive at a…" and "wish someone had
+  told me…" openers are both gone). New finding — a latent orphan-
+  Introduction bug the June-10 `where`-anchor pass left half-fixed: the
+  Introduction marker only matched the "This is Environmental Intelligence"
+  greeting, but `engine/intros.py` rotates a "Welcome to Environmental
+  Intelligence" greeting too, so every "Welcome to" episode
+  (Ep037/038/042/046 of the last ten) shipped with NO Introduction chapter
+  (the welcome + Compliance Brief got absorbed into the first content
+  chapter). Broadened the pattern to `(?:This is|Welcome to) Environmental
+  Intelligence` (metadata-only, no audio/prompt change — same orphan-
+  chapter class the June 10/11 passes fixed for the Closing variant).
+  Chronic under-length stays deferred (median 814w vs 900 floor; digest
+  ceiling, behind the four-show length A/B), as does the mid-section
+  chapter-marker keyword reliance (Ep046 had no Week Ahead chapter).
 - **M&A** (Models & Agents) runs exclusively via `run_show.py` +
   `shows/models_agents.yaml`; no legacy script.
   **June 14 2026 quality pass** (review:
