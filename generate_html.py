@@ -3184,10 +3184,8 @@ def generate_about_page(*, dry_run=False):
         "show_color": "",
         "show_color_dark": "",
         "all_shows": _build_all_shows_list(),
-        # Stats
-        "shows_count": len(NETWORK_SHOWS),
+        # Stats (shows_count removed as part of count-agnostic brand refresh)
         "total_episodes": _count_total_episodes(),
-        "languages_count": _count_languages(),
         "founding_date": "2024-07-01",
     }
 
