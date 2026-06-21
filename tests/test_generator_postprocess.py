@@ -343,8 +343,8 @@ class TestCorrectCommonLLMTextMistakes:
         ]
         for bad in cases:
             out = _correct_common_llm_text_mistakes(bad)
-            assert "Tesla Shorts Time Daily" in out
-            # No possessive on Short or Time, title case Daily
+            assert "Tesla Shorts Time" in out
+            # No possessive on Short or Time
             assert "Short's" not in out
             assert "Shorts Time, daily" not in out.lower()
 
@@ -359,7 +359,7 @@ class TestCorrectCommonLLMTextMistakes:
         from engine.generator import _correct_common_llm_text_mistakes
         good = (
             "Tesla never sleeps and neither does the news cycle. "
-            "Welcome to Tesla Shorts Time Daily, episode 490. "
+            "Welcome to Tesla Shorts Time, episode 490. "
             "According to Teslarati..."
         )
         out = _correct_common_llm_text_mistakes(good)

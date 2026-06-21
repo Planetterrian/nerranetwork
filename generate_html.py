@@ -2486,8 +2486,8 @@ def generate_network_page(*, dry_run=False):
 
     context = {
         "path_prefix": "",
-        "page_title": f"Nerra Network | {len(NETWORK_SHOWS)} Daily Shows",
-        "meta_description": f"Nerra Network — {len(NETWORK_SHOWS)} daily podcasts keeping you informed. Tesla, world news, space, science, environment, AI, modern investing, first-principles thinking, narrative case studies, Russian finance, and language learning. Independent, daily, free.",
+        "page_title": "Nerra Network — Independent Podcast Network",
+        "meta_description": "Daily podcasts keeping you informed. Tesla, world news, space, science, environment, AI, modern investing, first-principles thinking, narrative case studies, Russian finance, and language learning. Independent, ad-free, always free.",
         "meta_keywords": "podcast network, daily podcasts, Nerra Network, Tesla, space, science, AI, environment, history, unintended consequences",
         "theme_color": "#6B47FF",
         "og_image": f"{GITHUB_RAW}/assets/og-preview.png",
@@ -3031,7 +3031,7 @@ def generate_start_here_page(*, dry_run=False):
         "path_prefix": "",
         "page_title": "Start Here | Nerra Network",
         "page_description": "Not sure where to start? Find the perfect show for your interests across AI, news, science, investing, and more.",
-        "meta_description": "Find your perfect Nerra Network show. 11 ad-free daily podcasts covering AI, Tesla, world news, science, investing, and more.",
+        "meta_description": "Find your perfect Nerra Network show covering AI, Tesla, world news, science, investing, and more.",
         "meta_keywords": "podcast recommendations, best podcasts, AI podcasts, Tesla podcasts, science podcasts",
         "theme_color": "#6B47FF",
         "og_image": "",
@@ -3175,7 +3175,7 @@ def generate_about_page(*, dry_run=False):
     context = {
         "path_prefix": "",
         "page_title": "About — Nerra Network",
-        "page_description": "Meet the independent podcast network producing 11 ad-free daily shows on AI, Tesla, investing, space, science, and environmental policy. Based in Vancouver, Canada.",
+        "page_description": "Meet the independent podcast network producing ad-free daily shows on AI, Tesla, investing, space, science, and environmental policy. Based in Vancouver, Canada.",
         "meta_description": f"About Nerra Network — an independent, ad-free podcast network producing {len(NETWORK_SHOWS)} daily shows in Vancouver, Canada. Founded by Patrick Novak.",
         "meta_keywords": "about Nerra Network, Patrick Novak, independent podcast network, Vancouver podcasts, ad-free podcasts",
         "theme_color": "#6B47FF",
@@ -3212,7 +3212,7 @@ def generate_press_page(*, dry_run=False):
         "path_prefix": "",
         "page_title": "Press & Media Kit — Nerra Network",
         "page_description": "Media resources for journalists and partners covering Nerra Network. Boilerplate, logo, founder contact, and a complete show directory.",
-        "meta_description": "Nerra Network press kit — boilerplate, logo assets, founder contact, and a complete directory of our 11 daily podcast shows.",
+        "meta_description": "Nerra Network press kit — boilerplate, logo assets, founder contact, and a complete directory of our shows.",
         "meta_keywords": "Nerra Network press kit, media resources, podcast press, Patrick Novak, Vancouver podcast",
         "theme_color": "#6B47FF",
         "og_image": "",
@@ -3249,8 +3249,8 @@ def generate_editorial_page(*, dry_run=False):
     context = {
         "path_prefix": "",
         "page_title": "Editorial process — Nerra Network",
-        "page_description": "How Nerra Network selects, fact-checks, and produces every episode. The editorial process behind 11 AI-narrated podcasts.",
-        "meta_description": "How Nerra Network selects, fact-checks, and produces every episode. The editorial process behind 11 AI-narrated podcasts.",
+        "page_description": "How Nerra Network selects, fact-checks, and produces every episode. The editorial process behind our AI-narrated podcasts.",
+        "meta_description": "How Nerra Network selects, fact-checks, and produces every episode. The editorial process behind our AI-narrated podcasts.",
         "meta_keywords": "Nerra Network editorial, podcast methodology, AI podcast process, how AI podcasts are made",
         "theme_color": "#6B47FF",
         "og_image": "",
