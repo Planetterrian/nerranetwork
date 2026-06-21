@@ -359,8 +359,9 @@ _DARK_MODE_STYLE = """\
      * heading is never touched. */
     .nn h1, .nn h2, .nn h3, .nn h4 { color:#ffffff !important; }
     /* Secondary / muted text — class-targeted so it doesn't override
-     * other usages. */
-    .nn .text-muted { color:#94a3b8 !important; }
+     * other usages. Bumped from #94a3b8 (3.0:1 on white) to #64748b
+     * (5.0:1 on white) for WCAG AA compliance. */
+    .nn .text-muted { color:#64748b !important; }
 
     /* Links. */
     .nn a, .nn a span { color:#93c5fd !important; }
@@ -1418,14 +1419,14 @@ def _build_reply_share_html(
     def _share_link(href: str, label: str) -> str:
         return (
             f'<a href="{href}" '
-            f'style="color:#64748b;text-decoration:none;font-weight:600;">'
+            f'style="color:#475569;text-decoration:none;font-weight:600;">'
             f'{label}</a>'
         )
 
     share_label = "Поделиться:" if is_russian else "Share:"
     share_line = (
         '<p class="text-muted" '
-        'style="font-size:12px;color:#64748b;margin:0;line-height:1.5;">'
+        'style="font-size:12px;color:#475569;margin:0;line-height:1.5;">'
         f'{share_label} '
         + _share_link(twitter, "X") + ' · '
         + _share_link(linkedin, "LinkedIn") + ' · '
@@ -1459,7 +1460,7 @@ def _build_reply_share_html(
         )
     forward_line = (
         '<p class="text-muted" '
-        'style="font-size:12px;color:#64748b;margin:6px 0 0;line-height:1.5;">'
+        'style="font-size:12px;color:#475569;margin:6px 0 0;line-height:1.5;">'
         f'{forward_html}'
         '</p>'
     )
@@ -1573,7 +1574,7 @@ def _build_footer_html(show: Dict[str, str]) -> str:
             return ""
         return (
             f'<a href="{href}" '
-            f'style="color:#64748b;text-decoration:none;font-weight:600;">'
+            f'style="color:#475569;text-decoration:none;font-weight:600;">'
             f'{label}</a>'
         )
 
@@ -1584,7 +1585,7 @@ def _build_footer_html(show: Dict[str, str]) -> str:
         ) if link
     ]
     secondary = (
-        '<p class="text-muted" style="font-size:13px;color:#64748b;'
+        '<p class="text-muted" style="font-size:13px;color:#475569;'
         'margin:14px 0 0;line-height:1.6;">'
         + ' &nbsp;·&nbsp; '.join(secondary_links)
         + '</p>'
