@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Listen to all Nerra Network shows in one player. Build your queue, reorder episodes, and discover new content across 11 daily podcasts.">
+    <meta name="description" content="Listen to all 13 Nerra Network shows in one player. Build your queue, reorder episodes, and discover new content.">
     
     <meta name="keywords" content="podcast player, Nerra Network, queue, playlist">
     <title>Player | Nerra Network</title>
@@ -11,17 +11,17 @@
 
     <!-- Open Graph -->
     <meta property="og:title" content="Player | Nerra Network">
-    <meta property="og:description" content="Listen to all Nerra Network shows in one player. Build your queue, reorder episodes, and discover new content across 11 daily podcasts.">
+    <meta property="og:description" content="Listen to all 13 Nerra Network shows in one player. Build your queue, reorder episodes, and discover new content.">
     <meta property="og:type" content="website">
-    <meta property="og:image" content="assets/og-preview.png">
+    <meta property="og:image" content="https://nerranetwork.com/assets/og-preview.png">
     <meta property="og:url" content="https://nerranetwork.com/player.html">
     <meta property="og:site_name" content="Nerra Network">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Player | Nerra Network">
-    <meta name="twitter:description" content="Listen to all Nerra Network shows in one player. Build your queue, reorder episodes, and discover new content across 11 daily podcasts.">
-    <meta name="twitter:image" content="assets/og-preview.png">
+    <meta name="twitter:description" content="Listen to all 13 Nerra Network shows in one player. Build your queue, reorder episodes, and discover new content.">
+    <meta name="twitter:image" content="https://nerranetwork.com/assets/og-preview.png">
 
     <link rel="canonical" href="https://nerranetwork.com/player.html">
     
@@ -469,8 +469,41 @@
         <div class="nn-nav-inner">
             <a href="index.html" class="nn-nav-logo">
                 <img src="assets/nerra-logo-icon.svg" alt="Nerra Network" width="36" height="36">
-                <span class="gradient-text">Nerra</span> Network
+                <span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span>
             </a>
+
+            
+            <div class="nn-global-search" style="position:relative;margin-left:auto;margin-right:0.5rem;max-width:200px;flex:0 1 200px;min-width:110px;">
+                <input type="search" id="nn-global-search-input"
+                       placeholder="Search…"
+                       style="width:100%;padding:6px 8px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.85rem;"
+                       aria-label="Search all episodes across the network">
+                <div id="nn-global-search-results"
+                     style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-height:340px;overflow:auto;z-index:1000;font-size:0.85rem;"></div>
+            </div>
+
+            
+            <style>
+                #nn-lang-menu .nn-lang-opt{display:block;width:100%;text-align:left;padding:7px 12px;background:none;border:none;color:inherit;font-size:0.85rem;cursor:pointer;}
+                #nn-lang-menu .nn-lang-opt:hover{background:var(--nn-card);}
+                #nn-lang-menu .nn-lang-opt[aria-checked="true"]{color:var(--nn-purple,#a78bfa);font-weight:600;}
+            </style>
+            <div class="nn-lang-control" style="position:relative;margin-right:0.5rem;flex:0 0 auto;">
+                <button type="button" id="nn-lang-toggle" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Audio language for episodes" title="Choose the audio language for episodes (page text stays the same)"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--nn-border);background:var(--nn-surface);color:inherit;font-size:0.8rem;cursor:pointer;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    <span id="nn-lang-current">EN</span>
+                </button>
+                <div id="nn-lang-menu" role="menu" aria-label="Audio language"
+                     style="display:none;position:absolute;top:100%;right:0;margin-top:4px;min-width:160px;background:var(--nn-surface);border:1px solid var(--nn-border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.25);z-index:1000;overflow:hidden;padding-bottom:4px;">
+                    <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
+                    <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
+                    <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
+                    <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
+                    <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
+                </div>
+            </div>
 
             <ul class="nn-nav-links">
                 <li class="nn-nav-dropdown">
@@ -481,58 +514,68 @@
                     <div class="nn-nav-dropdown-menu" role="menu">
                         
                         <a href="models-agents.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="assets/covers/models-agents-400.webp"><img src="assets/covers/models-agents.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="assets/covers/models-agents-400.webp"><img src="assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
                             Models & Agents
                         </a>
                         
                         <a href="planetterrian.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp"><img src="assets/covers/planetterrian-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp"><img src="assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
                             Planetterrian Daily
                         </a>
                         
                         <a href="omni-view.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
                             Omni View
                         </a>
                         
                         <a href="models-agents-beginners.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp"><img src="assets/covers/models-agents-beginners.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp"><img src="assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
                             Models & Agents for Beginners
                         </a>
                         
                         <a href="fascinating-frontiers.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp"><img src="assets/covers/fascinating-frontiers.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp"><img src="assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
                             Fascinating Frontiers
                         </a>
                         
                         <a href="modern-investing.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="assets/covers/modern-investing-400.webp"><img src="assets/covers/modern-investing.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="assets/covers/modern-investing-400.webp"><img src="assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
                             Modern Investing Techniques
                         </a>
                         
                         <a href="tesla.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="assets/covers/tesla-shorts-time-400.webp"><img src="assets/covers/tesla-shorts-time.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="assets/covers/tesla-shorts-time-400.webp"><img src="assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
                             Tesla Shorts Time
                         </a>
                         
                         <a href="env-intel.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
                             Environmental Intelligence
                         </a>
                         
                         <a href="ru/finansy-prosto.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
                             Финансы Просто
                         </a>
                         
                         <a href="ru/privet-russian.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
                             Привет, Русский!
                         </a>
                         
                         <a href="unintended-consequences.html" role="menuitem">
-                            <picture><source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp"><img src="assets/covers/unintended-consequences.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp"><img src="assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
                             Unintended Consequences
+                        </a>
+                        
+                        <a href="first-principles.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/first-principles-daily-400.webp"><img src="assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            First Principles Daily
+                        </a>
+                        
+                        <a href="spacex.html" role="menuitem">
+                            <picture><source type="image/webp" srcset="assets/covers/spacex-400.webp"><img src="assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            SpaceX Daily
                         </a>
                         
                     </div>
@@ -548,58 +591,68 @@
                         </a>
                         
                         <a href="blog/models_agents/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/models-agents-400.webp"><img src="assets/covers/models-agents.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="assets/covers/models-agents-400.webp"><img src="assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
                             Models & Agents Blog
                         </a>
                         
                         <a href="blog/planetterrian/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp"><img src="assets/covers/planetterrian-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp"><img src="assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
                             Planetterrian Daily Blog
                         </a>
                         
                         <a href="blog/omni_view/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
                             Omni View Blog
                         </a>
                         
                         <a href="blog/models_agents_beginners/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp"><img src="assets/covers/models-agents-beginners.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp"><img src="assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
                             Models & Agents for Beginners Blog
                         </a>
                         
                         <a href="blog/fascinating_frontiers/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp"><img src="assets/covers/fascinating-frontiers.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp"><img src="assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
                             Fascinating Frontiers Blog
                         </a>
                         
                         <a href="blog/modern_investing/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/modern-investing-400.webp"><img src="assets/covers/modern-investing.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="assets/covers/modern-investing-400.webp"><img src="assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
                             Modern Investing Techniques Blog
                         </a>
                         
                         <a href="blog/tesla/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/tesla-shorts-time-400.webp"><img src="assets/covers/tesla-shorts-time.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="assets/covers/tesla-shorts-time-400.webp"><img src="assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
                             Tesla Shorts Time Blog
                         </a>
                         
                         <a href="blog/env_intel/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
                             Environmental Intelligence Blog
                         </a>
                         
                         <a href="blog/finansy_prosto/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
                             Финансы Просто Blog
                         </a>
                         
                         <a href="blog/privet_russian/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
                             Привет, Русский! Blog
                         </a>
                         
                         <a href="blog/unintended_consequences/index.html">
-                            <picture><source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp"><img src="assets/covers/unintended-consequences.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                            <picture><source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp"><img src="assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
                             Unintended Consequences Blog
+                        </a>
+                        
+                        <a href="blog/first_principles/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/first-principles-daily-400.webp"><img src="assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            First Principles Daily Blog
+                        </a>
+                        
+                        <a href="blog/spacex/index.html">
+                            <picture><source type="image/webp" srcset="assets/covers/spacex-400.webp"><img src="assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                            SpaceX Daily Blog
                         </a>
                         
                     </div>
@@ -624,58 +677,68 @@
             <div class="nn-mobile-shows-title">All Shows</div>
             
             <a href="models-agents.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="assets/covers/models-agents-400.webp"><img src="assets/covers/models-agents.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/models-agents-400.webp"><img src="assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents
             </a>
             
             <a href="planetterrian.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp"><img src="assets/covers/planetterrian-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp"><img src="assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
                 Planetterrian Daily
             </a>
             
             <a href="omni-view.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
                 Omni View
             </a>
             
             <a href="models-agents-beginners.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp"><img src="assets/covers/models-agents-beginners.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp"><img src="assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents for Beginners
             </a>
             
             <a href="fascinating-frontiers.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp"><img src="assets/covers/fascinating-frontiers.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp"><img src="assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
                 Fascinating Frontiers
             </a>
             
             <a href="modern-investing.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="assets/covers/modern-investing-400.webp"><img src="assets/covers/modern-investing.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/modern-investing-400.webp"><img src="assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
                 Modern Investing Techniques
             </a>
             
             <a href="tesla.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="assets/covers/tesla-shorts-time-400.webp"><img src="assets/covers/tesla-shorts-time.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/tesla-shorts-time-400.webp"><img src="assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
                 Tesla Shorts Time
             </a>
             
             <a href="env-intel.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
                 Environmental Intelligence
             </a>
             
             <a href="ru/finansy-prosto.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
                 Финансы Просто
             </a>
             
             <a href="ru/privet-russian.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
                 Привет, Русский!
             </a>
             
             <a href="unintended-consequences.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp"><img src="assets/covers/unintended-consequences.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp"><img src="assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
                 Unintended Consequences
+            </a>
+            
+            <a href="first-principles.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/first-principles-daily-400.webp"><img src="assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                First Principles Daily
+            </a>
+            
+            <a href="spacex.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/spacex-400.webp"><img src="assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                SpaceX Daily
             </a>
             
         </div>
@@ -686,58 +749,68 @@
             </a>
             
             <a href="blog/models_agents/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="assets/covers/models-agents-400.webp"><img src="assets/covers/models-agents.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/models-agents-400.webp"><img src="assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents Blog
             </a>
             
             <a href="blog/planetterrian/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp"><img src="assets/covers/planetterrian-daily.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp"><img src="assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy"></picture>
                 Planetterrian Daily Blog
             </a>
             
             <a href="blog/omni_view/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/omni-view-400.webp"><img src="assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy"></picture>
                 Omni View Blog
             </a>
             
             <a href="blog/models_agents_beginners/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp"><img src="assets/covers/models-agents-beginners.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp"><img src="assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy"></picture>
                 Models & Agents for Beginners Blog
             </a>
             
             <a href="blog/fascinating_frontiers/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp"><img src="assets/covers/fascinating-frontiers.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp"><img src="assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy"></picture>
                 Fascinating Frontiers Blog
             </a>
             
             <a href="blog/modern_investing/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="assets/covers/modern-investing-400.webp"><img src="assets/covers/modern-investing.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/modern-investing-400.webp"><img src="assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy"></picture>
                 Modern Investing Techniques Blog
             </a>
             
             <a href="blog/tesla/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="assets/covers/tesla-shorts-time-400.webp"><img src="assets/covers/tesla-shorts-time.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/tesla-shorts-time-400.webp"><img src="assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy"></picture>
                 Tesla Shorts Time Blog
             </a>
             
             <a href="blog/env_intel/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp"><img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy"></picture>
                 Environmental Intelligence Blog
             </a>
             
             <a href="blog/finansy_prosto/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp"><img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy"></picture>
                 Финансы Просто Blog
             </a>
             
             <a href="blog/privet_russian/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/privet-russian-400.webp"><img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy"></picture>
                 Привет, Русский! Blog
             </a>
             
             <a href="blog/unintended_consequences/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
-                <picture><source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp"><img src="assets/covers/unintended-consequences.jpg" alt="" width="1400" height="1400" loading="lazy"></picture>
+                <picture><source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp"><img src="assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy"></picture>
                 Unintended Consequences Blog
+            </a>
+            
+            <a href="blog/first_principles/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/first-principles-daily-400.webp"><img src="assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                First Principles Daily Blog
+            </a>
+            
+            <a href="blog/spacex/index.html" class="nn-mobile-show-link" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">
+                <picture><source type="image/webp" srcset="assets/covers/spacex-400.webp"><img src="assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy"></picture>
+                SpaceX Daily Blog
             </a>
             
         </div>
@@ -749,7 +822,7 @@
 <div class="nn-player-header">
   <div>
     <h1><span class="gradient-text">Network</span> Player</h1>
-    <p>All 11 shows. One queue. Your order.</p>
+    <p>One queue. Your order.</p>
   </div>
   <button class="nn-player-refresh" id="refresh-btn" aria-label="Check for new episodes" title="Check for new episodes">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
@@ -781,6 +854,10 @@
   <button class="nn-filter-btn" data-filter="modern_investing" style="--show-color:#047857">Modern Investing Techniques</button>
   
   <button class="nn-filter-btn" data-filter="unintended_consequences" style="--show-color:#B45309">Unintended Consequences</button>
+  
+  <button class="nn-filter-btn" data-filter="first_principles" style="--show-color:#0F766E">First Principles Daily</button>
+  
+  <button class="nn-filter-btn" data-filter="spacex" style="--show-color:#1A5CFF">SpaceX Daily</button>
   
   <input type="search" class="nn-player-search" id="search-input" placeholder="Search episodes..." aria-label="Search episodes">
   <button class="nn-sort-toggle" id="sort-toggle" aria-label="Toggle sort order">Newest first</button>
@@ -891,8 +968,8 @@
         <div class="container">
             <div class="nn-footer-grid">
                 <div>
-                    <div class="nn-footer-brand"><span class="gradient-text">Nerra</span> Network</div>
-                    <p class="nn-footer-desc">Eleven shows. Zero fluff. Independent podcast network produced in Vancouver, Canada.</p>
+                    <div class="nn-footer-brand"><span class="gradient-text">Nerra</span> <span class="nn-wordmark-rest">Network</span></div>
+                    <p class="nn-footer-desc">Zero fluff. Independent podcast network produced in Vancouver, Canada.</p>
                 </div>
                 <div class="nn-footer-col">
                     <h4>Shows</h4>
@@ -918,6 +995,10 @@
                     <a href="ru/privet-russian.html">Привет, Русский!</a>
                     
                     <a href="unintended-consequences.html">Unintended Consequences</a>
+                    
+                    <a href="first-principles.html">First Principles Daily</a>
+                    
+                    <a href="spacex.html">SpaceX Daily</a>
                     
                 </div>
                 <div class="nn-footer-col">
@@ -945,6 +1026,10 @@
                     <a href="blog/privet_russian/index.html">Привет, Русский!</a>
                     
                     <a href="blog/unintended_consequences/index.html">Unintended Consequences</a>
+                    
+                    <a href="blog/first_principles/index.html">First Principles Daily</a>
+                    
+                    <a href="blog/spacex/index.html">SpaceX Daily</a>
                     
                     <a href="blog.rss">Blog RSS (All Shows)</a>
                 </div>
@@ -977,6 +1062,10 @@
                     
                     <a href="unintended_consequences_podcast.rss">Unintended Consequences RSS</a>
                     
+                    <a href="first_principles_podcast.rss">First Principles Daily RSS</a>
+                    
+                    <a href="spacex_podcast.rss">SpaceX Daily RSS</a>
+                    
                 </div>
                 <div class="nn-footer-col">
                     <h4>Connect</h4>
@@ -996,6 +1085,9 @@
                 <a href="privacy-policy.html">Privacy Policy</a>
                 <a href="terms-of-service.html">Terms of Service</a>
                 <a href="ai-disclosure.html">AI Disclosure</a>
+                <a href="editorial.html">Editorial Process</a>
+                <a href="gallery.html">Image Gallery</a>
+                <a href="data.html">Data &amp; Dashboards</a>
                 <a href="management.html">Network Status</a>
             </div>
             <!-- Newsletter Subscribe -->
@@ -1004,14 +1096,16 @@
                       onsubmit="var btn=this.querySelector('button[type=submit]');btn.disabled=true;btn.textContent="Subscribing…";setTimeout(function(){btn.textContent="Check your email ✓";btn.disabled=false;},500);">
                     <h4>Get Show Updates</h4>
                     <p>Pick the shows you want in your inbox:</p>
-                    <div class="nn-subscribe-tags">
-                        <label><input type="checkbox" name="tag" value="Tesla Shorts Time"> Tesla Shorts Time</label>
+                    <div class="nn-subscribe-tags"><label><input type="checkbox" name="tag" value="Tesla Shorts Time"> Tesla Shorts Time</label>
+                        <label><input type="checkbox" name="tag" value="Omni View"> Omni View</label>
                         <label><input type="checkbox" name="tag" value="Fascinating Frontiers"> Fascinating Frontiers</label>
-                        <label><input type="checkbox" name="tag" value="Models & Agents for Beginners"> Models & Agents for Beginners</label>
+                        <label><input type="checkbox" name="tag" value="Planetterrian Daily"> Planetterrian Daily</label>
                         <label><input type="checkbox" name="tag" value="Environmental Intelligence"> Environmental Intelligence</label>
+                        <label><input type="checkbox" name="tag" value="Models & Agents"> Models &amp; Agents</label>
+                        <label><input type="checkbox" name="tag" value="Models & Agents for Beginners"> Models &amp; Agents for Beginners</label>
                         <label><input type="checkbox" name="tag" value="Modern Investing Techniques"> Modern Investing Techniques</label>
-                        <label><input type="checkbox" name="tag" value="Финансы Просто"> Финансы Просто</label>
-                        <label><input type="checkbox" name="tag" value="Привет, Русский!"> Привет, Русский!</label>
+                        <label><input type="checkbox" name="tag" value="Unintended Consequences"> Unintended Consequences</label><label><input type="checkbox" name="tag" value="Finansy Prosto"> Финансы Просто</label>
+                        <label><input type="checkbox" name="tag" value="Privet Russian"> Привет, Русский!</label>
                     </div>
                     <div class="nn-subscribe-row">
                         <input type="email" name="email" placeholder="your@email.com" required aria-label="Email address">
@@ -1030,6 +1124,8 @@
                     <a href="privacy-policy.html">Privacy</a> &middot;
                     <a href="terms-of-service.html">Terms</a> &middot;
                     <a href="ai-disclosure.html">AI Disclosure</a>
+                    <span style="opacity:0.5;">&middot;</span>
+                    <span style="font-size:0.7rem;opacity:0.6;">Automation: reliable nightly + post-publish pipeline</span>
                 </div>
             </div>
         </div>
@@ -1084,6 +1180,10 @@ const SHOWS = [
   { slug: "modern_investing", name: "Modern Investing Techniques", jsonPath: "digests/modern_investing/summaries_modern_investing.json", cover: '' + "assets/covers/modern-investing.jpg", color: "#047857" },
 
   { slug: "unintended_consequences", name: "Unintended Consequences", jsonPath: "digests/unintended_consequences/summaries_unintended_consequences.json", cover: '' + "assets/covers/unintended-consequences.jpg", color: "#B45309" },
+
+  { slug: "first_principles", name: "First Principles Daily", jsonPath: "digests/first_principles/summaries_first_principles.json", cover: '' + "assets/covers/first-principles-daily.jpg", color: "#0F766E" },
+
+  { slug: "spacex", name: "SpaceX Daily", jsonPath: "digests/spacex/summaries_spacex.json", cover: '' + "assets/covers/spacex.jpg", color: "#1A5CFF" },
 
 ];
 
@@ -1795,5 +1895,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+
+    <!-- Centralized, improved global search -->
+    <script src="assets/js/search.js" defer></script>
+    <script src="assets/js/language-control.js" defer></script>
 </body>
 </html>
