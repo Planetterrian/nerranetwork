@@ -73,6 +73,9 @@ def test_hardcoded_count_surfaces_match():
 
 def test_generate_html_metas_are_computed():
     src = (_ROOT / "generate_html.py").read_text(encoding="utf-8")
-    assert src.count("{len(NETWORK_SHOWS)}") >= 4
+    # After the June 2026 brand refresh, meta descriptions are more count-agnostic.
+    # The about and player pages still compute show counts dynamically, but
+    # the network page hero and title were changed to be count-agnostic.
+    assert src.count("{len(NETWORK_SHOWS)}") >= 2
     assert "11 Daily Shows" not in src
     assert "Eleven daily podcasts" not in src
