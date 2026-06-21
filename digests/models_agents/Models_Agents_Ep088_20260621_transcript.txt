@@ -1,0 +1,142 @@
+Welcome back to Models and Agents episode 88 for June 21st, 2026.
+Their signal and noise in AI every day, let's get to the signal.
+The week's biggest developments pulled together,
+what actually moved, why it matters, and what to watch next.
+Z.AI shipped GLM 5.2 on June 13th
+with a 1 million token context window
+and two explicit thinking effort modes called high and max.
+The model routes through anthropic compatible endpoints,
+so it drops straight into clawed code,
+climb an open claw with no code changes.
+No benchmarks appeared at launch,
+yet MIT licensed open weights are promised for the following week.
+Teams already running those coding tools can swap the endpoint today
+and measure whether the extra context helps multi-file work.
+Remember, we last checked frontier models on episode 86.
+This release adds an open weight contender
+that directly tests the cost versus reasoning trade-off
+the category has been tracking.
+Open AI published deployment simulation research
+that replays de-identified past conversations
+through candidate models
+to estimate real failure rates before release.
+The method produced a 1.5x median multiplicative error
+on held out deployment data
+and extends to multi-turn agent scenarios
+by simulating tool calls.
+Traditional static benchmarks remain necessary
+for rare high severity cases
+while this approach supplies frequency estimates
+under realistic conditions.
+Anthropic reported that clawed code task value
+rose 27% over six months
+even as success rates held steady across domains.
+Microsoft research introduced next latent prediction
+which layers compact world model prediction
+on top of standard next token training
+and yields up to 3.3 times faster inference.
+Open AI released life side bench 750 expert authored tasks
+spanning seven biological research workflows
+created with 173 scientists.
+GPT Rosalind outperformed GPT 5.5
+on every workflow in the suite
+and GPT 5.4 completed a full medicinal chemistry project
+from literature to validated result
+when paired with molecule.1's Maria AI.
+Nvidia released NimaTron 3 Ultra
+an open frontier model built as a 550 billion slash 55 billion
+mixture of experts hybrid mamba architecture
+with 1 million token context.
+The model targets sustained agent operation
+rather than single turn chat addressing the gap
+where most open models lose coherence across long tool use loops.
+Remember we covered open weight models on episode 85.
+NimaTron 3 Ultra gives builders a self hostable option
+that competes on agent relevant tasks
+without closed model restrictions.
+Deepseek previewed its V4 series of mixed
+mixture of experts models that support million token context
+with major efficiency gains over prior releases.
+A developer open sourced a CUDA kernel
+that keeps top K vector search entirely on the GPU.
+Removing the PsiE roundtrip
+that previously created variable latency
+in agentic retrieval augmented generation.
+The kernel produces deterministic microsecond scale
+tail latencies while preserving answer quality
+which matters for production agents
+that must meet strict response times service level agreements.
+Virtual's wired latens distributed GPU engine into its agent network
+so agents can call GLM 5.2 across a shared compute fabric
+without managing individual clusters.
+Teams already running virtual agents gain immediate access
+to the new model without fresh infrastructure work.
+Simon Willison documented how fabled files refusal patterns
+under export control rules now blocked the multi-step fix this code
+prompts defenders use daily on vulnerable open source examples.
+The model rejected an initial review for security issues framing
+yet complied when asked simply to fix,
+turning the output into working test scripts.
+Remember, we tracked safety and policy on episode 87.
+This enforcement treats routine defensive patching
+as a prohibited capability and narrow access to models
+that support the fine fixed test loop inside the United States.
+Hermes agent added asynchronous sub agents that no longer block the
+parent session during delegated work.
+The update appears in the same week as Nemotron 3 Ultra
+and Fable 5 Export Control coverage.
+Mark Tech Post reported the change on June 16th.
+Builders testing long-running agent workflows can now
+delegate tasks without halting the main chat thread.
+The feature directly addresses one of the open questions
+on agent reliability tracks since episode 87.
+Watch for integration examples that combine the new sub agent behavior
+with million token context models released this week.
+ViveThinker 3B is a 3 billion parameter dense model derived from
+quen 2.5 colder 3B through the spectrum to signal post-training pipeline.
+It reaches parity with deep seek v3.2 and k2.5 on verifiable reasoning
+benchmarks under an MIT license that permits commercial use and fine tuning.
+Liquid AI introduced LFM 2-5 embedding 350M and LFM 2-5 colbert 3-5-0M
+dense biocoder and late interaction models for fast multi-lingual search.
+The pair covers 11 languages and targets retrieval workloads that appear inside agent loops.
+Mark Tech Post covered the release on June 19th.
+These embedding models can be paired with the new GPU resident top k kernel
+to keep both indexing and search on device.
+Teams running retrieval augmented generation should test whether the late interaction variant
+reduces context leakage compared with prior biocoder baselines.
+Google Cloud introduced the Open Knowledge Format, a vendor neutral markdown specification
+that supplies curated context to AI agents.
+The format was announced the same week as GLM.5.2 and point availability.
+It gives agent builders a structured way to inject domain knowledge without vendor lock-in.
+Early adopters can convert existing documentation repositories into OKF files
+and serve them alongside the new 1 million token models.
+Mark Tech Post noted the release on June 16th, a major security report detailed active exploits
+against Langflow and related agent frameworks. The findings were referenced in episode 87 coverage
+and remain relevant for any self-hosted deployment.
+Teams should audit running instances this week before connecting new models such as NEMOTRON-3 Ultra
+or GLM times 5.2. The report underscores the ongoing safety and policy thread
+that has followed export control and evaluation discussions throughout the month.
+VentureBeat published analysis showing that fine-tuning forgets prior knowledge
+while rag leaks context and that hypernetworks can build the model and agent needs on demand.
+The piece appeared on June 20th, hypernetworks offer a third path that avoids both permanent
+weight changes and repeated retrieval steps. Builders working on long horizon agents can prototype
+the approach against the Atomic Fact Memory Systems also released this week.
+A new GPU resident top-k kernel and Atomic Fact Memory Systems for agents both surfaced in
+research this week offering concrete ways to reduce tail latency and context leakage in long
+horizon workflows. If you run retrieval augmented agents benchmark the open-sourced Kudah
+kernel against your current retrieval step this week. If you already use Cloud Code or Cline,
+point the endpoint at GLM-5.2 and test the high versus max effort modes on a multi-file refactoring
+task. If you build life science tooling run GPT Rosalind and GPT 5.4 against the life-side bench
+tasks that match your domain. If you self-host agents audit any langflow or related framework instances
+for the active exploits detailed in this week's security report. Keep an eye on the GLM-5.2
+open weights release and any early independent comparisons of its effort tiers on real workloads.
+Watch whether regulators issue clarification on whether routine code review prompts remain
+restricted under the Fable 5 rules. Before we go, tomorrow we will have more on how the new inference
+kernels and agent memory systems perform once teams start integrating them at scale. That's models
+and agents for today. If you found this useful, share it with someone who's trying to keep up with
+all these changes and subscribe so you don't miss tomorrow's update. The AI world moves fast.
+We'll help you keep up. See you tomorrow and before you go, this show is part of the NARA network,
+a family of daily podcasts covering tech, science, markets, and more. If you enjoyed today's episode,
+give fascinating frontiers a listen. The most fascinating news from space and science. You can
+explore the whole lineup at NARAnetwork.com. This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.
