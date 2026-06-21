@@ -11,7 +11,7 @@
 
     <!-- Open Graph -->
     <meta property="og:title" content="{{ page_title | default('Nerra Network — Independent Podcast Network') }}">
-    <meta property="og:description" content="{{ page_description | default(meta_description | default('11 ad-free daily shows covering AI, Tesla, investing, space, science, environmental policy, and more. Produced in Vancouver, Canada.')) }}">
+    <meta property="og:description" content="{{ page_description | default(meta_description | default('Daily ad-free shows covering AI, Tesla, investing, space, science, environmental policy, and more. Produced in Vancouver, Canada.')) }}">
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
     <meta property="og:image" content="{{ og_image | default('https://nerranetwork.com/assets/og-preview.png', boolean=true) }}">
     {% if canonical_url %}<meta property="og:url" content="{{ canonical_url }}">{% endif %}
@@ -20,7 +20,7 @@
     <!-- Twitter Card -->
     <meta name="twitter:card" content="{% block twitter_card %}summary_large_image{% endblock %}">
     <meta name="twitter:title" content="{{ page_title | default('Nerra Network') }}">
-    <meta name="twitter:description" content="{{ page_description | default(meta_description | default('11 ad-free daily shows. Feed your curiosity. Not your anxiety.')) }}">
+    <meta name="twitter:description" content="{{ page_description | default(meta_description | default('Daily ad-free shows. Feed your curiosity. Not your anxiety.')) }}">
     <meta name="twitter:image" content="{{ og_image | default('https://nerranetwork.com/assets/og-preview.png', boolean=true) }}">
 
     {% if canonical_url %}<link rel="canonical" href="{{ canonical_url }}">{% endif %}
@@ -149,7 +149,7 @@
         'footer_listen': 'Слушать' if _is_ru else 'Listen',
         'footer_connect': 'Контакты' if _is_ru else 'Connect',
         'footer_about': 'О сети' if _is_ru else 'About',
-        'footer_brand_desc': ('Подкастов: ' ~ (all_shows|length) ~ '. Без рекламы. Независимая сеть из Ванкувера, Канада.') if _is_ru else ((all_shows|length) ~ ' shows. Zero fluff. Independent podcast network produced in Vancouver, Canada.'),
+        'footer_brand_desc': 'Без рекламы. Независимая сеть из Ванкувера, Канада.' if _is_ru else 'Zero fluff. Independent podcast network produced in Vancouver, Canada.',
         'footer_network_player': 'Плеер сети' if _is_ru else 'Network Player',
         'footer_network_rss': 'RSS сети' if _is_ru else 'Network RSS',
         'footer_about_network': 'О Nerra Network' if _is_ru else 'About Nerra Network',
@@ -218,7 +218,6 @@
                     <div style="padding:8px 12px 4px;font-size:0.66rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--nn-text-muted);">Episode audio language</div>
                     <button type="button" role="menuitemradio" data-lang="en" class="nn-lang-opt" aria-checked="true">English</button>
                     <button type="button" role="menuitemradio" data-lang="fr" class="nn-lang-opt" aria-checked="false">Français</button>
-                    <button type="button" role="menuitemradio" data-lang="es" class="nn-lang-opt" aria-checked="false">Español</button>
                     <button type="button" role="menuitemradio" data-lang="ru" class="nn-lang-opt" aria-checked="false">Русский</button>
                     <button type="button" role="menuitemradio" data-lang="zh" class="nn-lang-opt" aria-checked="false">中文</button>
                 </div>
