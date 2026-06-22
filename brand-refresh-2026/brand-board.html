@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nerra Network — Brand Refresh 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Poppins:wght@500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0F1A; --bg2:#0F172A; --surface:#141A2A; --surface2:#1B2236;
+    --border:#26304A; --text:#F8FAFC; --muted:#9FB0C9; --muted2:#6B7A95;
+    --violet:#6B47FF; --cyan:#00D4FF; --violet-text:#8B6BFF;
+    --grad:linear-gradient(135deg,#6B47FF,#00D4FF);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,Arial,sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,.dpl{font-family:'Poppins',sans-serif;letter-spacing:-.02em;line-height:1.15}
+  a{color:var(--cyan);text-decoration:none}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+  .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .eyebrow{font-family:'Poppins';font-weight:700;font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--cyan);margin:0 0 14px}
+  section{padding:78px 0;border-top:1px solid var(--border)}
+  section:first-of-type{border-top:none}
+  .lead{color:var(--muted);font-size:1.06rem;max-width:680px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:26px}
+  .grid{display:grid;gap:18px}
+  .badge{display:inline-flex;align-items:center;gap:7px;font-family:'Poppins';font-weight:600;font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:6px 13px}
+
+  /* Hero */
+  .hero{position:relative;padding:96px 0 88px;text-align:center;overflow:hidden}
+  .hero::before{content:"";position:absolute;inset:0;background:
+     radial-gradient(60% 50% at 50% 0%,rgba(107,71,255,.22),transparent 70%),
+     radial-gradient(50% 40% at 80% 30%,rgba(0,212,255,.13),transparent 70%);pointer-events:none}
+  .hero h1{font-size:clamp(2.6rem,6vw,4.4rem);font-weight:800;margin:18px 0 10px;position:relative}
+  .hero p{position:relative;color:var(--muted);font-size:1.15rem;max-width:600px;margin:0 auto}
+  .hero-logo{width:min(440px,82%);margin:0 auto 6px;display:block;position:relative}
+  .stat-row{display:flex;gap:30px;justify-content:center;flex-wrap:wrap;margin-top:34px;position:relative}
+  .stat b{font-family:'Poppins';font-weight:700;font-size:1.7rem;display:block}
+  .stat span{color:var(--muted2);font-size:.82rem;text-transform:uppercase;letter-spacing:.1em}
+
+  /* logo showcase */
+  .logo-tile{background:var(--surface);border:1px solid var(--border);border-radius:18px;display:flex;align-items:center;justify-content:center;padding:30px;min-height:150px}
+  .logo-tile.light{background:#EEF2F8}
+  .logo-tile img{max-width:100%;max-height:120px}
+  .cap{font-size:.8rem;color:var(--muted2);margin-top:9px;text-align:center;letter-spacing:.02em}
+
+  /* palette */
+  .sw{border-radius:14px;border:1px solid var(--border);overflow:hidden;cursor:pointer;transition:transform .12s}
+  .sw:hover{transform:translateY(-3px)}
+  .sw .chip{height:96px}
+  .sw .meta{padding:11px 13px;background:var(--surface)}
+  .sw .nm{font-weight:600;font-size:.9rem}
+  .sw .hx{font-family:'DM Sans';color:var(--muted2);font-size:.8rem;letter-spacing:.04em}
+
+  table{width:100%;border-collapse:collapse;font-size:.92rem}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+  th{font-family:'Poppins';font-weight:600;font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2)}
+  .dot{width:16px;height:16px;border-radius:50%;display:inline-block;vertical-align:middle;margin-right:9px}
+
+  .ba{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .ba .card{padding:0;overflow:hidden}
+  .ba .hd{padding:11px 16px;font-family:'Poppins';font-weight:600;font-size:.76rem;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+  .ba .old .hd{color:#F87171}.ba .new .hd{color:#34D399}
+  .ba .bd{padding:20px}
+  .ba ul{margin:0;padding-left:18px;color:var(--muted)}
+  .ba li{margin:7px 0}
+
+  .type-spec{display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding:18px 0}
+  .type-spec .lbl{width:160px;color:var(--muted2);font-size:.82rem;flex:none}
+
+  .tag{font-family:'Poppins';font-weight:700;font-size:clamp(1.3rem,3vw,2rem);margin:0}
+  .tag.sub{color:var(--muted);font-weight:500;font-family:'DM Sans';font-size:1rem;margin-top:4px}
+  .msg-card{border-left:3px solid;padding:16px 20px;background:var(--surface);border-radius:0 14px 14px 0;margin-bottom:14px}
+
+  .do{color:#34D399}.dont{color:#F87171}
+  .pill{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:4px 12px;font-size:.82rem;margin:4px 6px 0 0}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--grad);color:#06121f;font-weight:700;padding:11px 20px;border-radius:999px;opacity:0;transition:.25s;pointer-events:none;font-size:.86rem}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  footer{padding:50px 0 70px;color:var(--muted2);text-align:center;font-size:.86rem;border-top:1px solid var(--border)}
+  @media(max-width:720px){.ba{grid-template-columns:1fr}.type-spec .lbl{width:100%}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <img class="hero-logo" src="assets/nerra-logo-stacked.svg" alt="Nerra Network">
+    <p class="eyebrow" style="margin-top:24px">Brand Refresh · June 2026</p>
+    <h1>One signal.<br><span class="grad-text">Every show.</span></h1>
+    <p>A systematized refresh of the Nerra Network identity — same DNA, sharpened for a network that has grown far beyond its flagship.</p>
+    <div class="stat-row">
+      <div class="stat"><b>Daily</b><span>New episodes</span></div>
+      <div class="stat"><b>900+</b><span>Episodes</span></div>
+      <div class="stat"><b>4</b><span>Languages</span></div>
+      <div class="stat"><b class="grad-text">0</b><span>Ads</span></div>
+    </div>
+  </div>
+</header>
+
+<!-- WHY -->
+<section id="why">
+  <div class="wrap">
+    <p class="eyebrow">The brief</p>
+    <h2 style="font-size:2rem;margin:0 0 16px">Refresh &amp; systematize — not reinvent</h2>
+    <p class="lead">Nerra started as Tesla Shorts Time. It's now a multi-show, multilingual daily network spanning English, French, Russian and Chinese. The existing identity has the right idea — a constellation of shows, a dark intelligent base, an electric gradient — but it drifted: the logo font didn't match the website, two different brand gradients were in use, and the system didn't visibly scale as shows were added. This refresh keeps every piece of equity and fixes the system underneath it, with one organizing feeling: <strong style="color:var(--text)">energy &amp; momentum</strong> — a network that ships something new every single day.</p>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:28px">
+      <div class="card"><div class="badge">Kept</div><p style="margin:12px 0 0;color:var(--muted)">The <strong style="color:var(--text)">Nerra Network</strong> name, the constellation mark, the dark navy base, and the violet→cyan signal gradient.</p></div>
+      <div class="card"><div class="badge" style="color:var(--cyan);border-color:#2a4a63">Fixed</div><p style="margin:12px 0 0;color:var(--muted)">One locked gradient. A wordmark that matches the site. A node system that scales to any number of shows. A unified cover template.</p></div>
+      <div class="card"><div class="badge" style="color:#34D399;border-color:#2a5a45">Added</div><p style="margin:12px 0 0;color:var(--muted)">A momentum-led voice, a tagline system, ready-to-ship banners, and a per-show color framework.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- LOGO -->
+<section id="logo">
+  <div class="wrap">
+    <p class="eyebrow">Logo system</p>
+    <h2 style="font-size:2rem;margin:0 0 10px">The mark &amp; lockups</h2>
+    <p class="lead">The mark is a <strong style="color:var(--text)">broadcast constellation</strong>: a bright hub pushing signal out to six nodes, wrapped in a pulse ring. It reads as a network <em>and</em> as energy radiating outward. The wordmark is now a single confident geometric lockup — <span style="color:#fff;font-weight:600">Nerra</span> in white, <span class="grad-text" style="font-weight:600">Network</span> in the signal gradient.</p>
+
+    <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:28px">
+      <div><div class="logo-tile"><img src="assets/nerra-logo-horizontal.svg" alt="Horizontal logo"></div><div class="cap">Primary — horizontal (dark backgrounds)</div></div>
+      <div><div class="logo-tile light"><img src="assets/nerra-logo-horizontal-light.svg" alt="Horizontal logo light"></div><div class="cap">Horizontal — light backgrounds</div></div>
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(4,1fr);margin-top:18px">
+      <div><div class="logo-tile"><img src="assets/nerra-logo-stacked.svg" alt="Stacked"></div><div class="cap">Stacked</div></div>
+      <div><div class="logo-tile"><img src="assets/nerra-mark.svg" alt="Mark" style="max-height:96px"></div><div class="cap">App mark</div></div>
+      <div><div class="logo-tile"><img src="assets/nerra-favicon.svg" alt="Favicon" style="max-height:72px"></div><div class="cap">Favicon (16px-safe)</div></div>
+      <div><div class="logo-tile" style="color:#fff"><img src="assets/nerra-mark-mono.svg" alt="Mono" style="max-height:90px;filter:none"></div><div class="cap">Monochrome</div></div>
+    </div>
+
+    <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:26px">
+      <div class="card"><h3 style="margin:0 0 10px;font-size:1.05rem" class="do">✓ Do</h3>
+        <ul style="margin:0;padding-left:18px;color:var(--muted)">
+          <li>Give the logo clear space equal to the mark's corner radius on all sides.</li>
+          <li>Use the gradient wordmark on dark; the light lockup on pale backgrounds.</li>
+          <li>Shrink to the favicon mark below ~40px.</li>
+        </ul></div>
+      <div class="card"><h3 style="margin:0 0 10px;font-size:1.05rem" class="dont">✗ Don't</h3>
+        <ul style="margin:0;padding-left:18px;color:var(--muted)">
+          <li>Recolor the gradient or swap in show colors on the network mark.</li>
+          <li>Stretch, rotate, or add drop shadows to the wordmark.</li>
+          <li>Recreate the wordmark in a system font — it's a fixed outline.</li>
+        </ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- COLOR -->
+<section id="color">
+  <div class="wrap">
+    <p class="eyebrow">Color</p>
+    <h2 style="font-size:2rem;margin:0 0 10px">One signal gradient. One locked palette.</h2>
+    <p class="lead">The old files carried two competing gradients (<code>#6B47FF→#00D4FF</code> and <code>#60A5FA→#8B5CF6</code>). We lock <strong style="color:var(--text)">one</strong>: the Nerra Signal gradient, 135°, Electric Violet → Signal Cyan. Tap any swatch to copy.</p>
+
+    <div class="card" style="margin-top:24px;padding:0;overflow:hidden">
+      <div style="height:120px;background:var(--grad);display:flex;align-items:flex-end;justify-content:space-between;padding:16px 20px">
+        <span style="font-family:'Poppins';font-weight:700;color:#06121f">Nerra Signal Gradient</span>
+        <span class="copy" data-copy="linear-gradient(135deg,#6B47FF,#00D4FF)" style="font-family:'DM Sans';font-size:.82rem;color:#06121f;cursor:pointer;font-weight:600">135° · #6B47FF → #00D4FF ⧉</span>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-top:18px">
+      <div class="sw copy" data-copy="#6B47FF"><div class="chip" style="background:#6B47FF"></div><div class="meta"><div class="nm">Electric Violet</div><div class="hx">#6B47FF · primary</div></div></div>
+      <div class="sw copy" data-copy="#00D4FF"><div class="chip" style="background:#00D4FF"></div><div class="meta"><div class="nm">Signal Cyan</div><div class="hx">#00D4FF · secondary</div></div></div>
+      <div class="sw copy" data-copy="#0B0F1A"><div class="chip" style="background:#0B0F1A;border-bottom:1px solid var(--border)"></div><div class="meta"><div class="nm">Nerra Ink</div><div class="hx">#0B0F1A · base</div></div></div>
+      <div class="sw copy" data-copy="#0F172A"><div class="chip" style="background:#0F172A"></div><div class="meta"><div class="nm">Deep Slate</div><div class="hx">#0F172A · surface</div></div></div>
+      <div class="sw copy" data-copy="#F8FAFC"><div class="chip" style="background:#F8FAFC"></div><div class="meta"><div class="nm">Paper</div><div class="hx">#F8FAFC · text on dark</div></div></div>
+      <div class="sw copy" data-copy="#9FB0C9"><div class="chip" style="background:#9FB0C9"></div><div class="meta"><div class="nm">Mist</div><div class="hx">#9FB0C9 · muted text</div></div></div>
+    </div>
+    <p class="cap" style="text-align:left;margin-top:14px">Accessibility note: the old muted greys (<code>#64748B</code>/<code>#94A3B8</code>) fall below WCAG AA as primary text on white. Use <strong style="color:var(--text)">Mist #9FB0C9</strong> on dark and <code>#475569</code> on light for body-weight muted text.</p>
+  </div>
+</section>
+
+<!-- SHOW COLORS -->
+<section id="shows">
+  <div class="wrap">
+    <p class="eyebrow">The constellation system</p>
+    <h2 style="font-size:2rem;margin:0 0 10px">Every show is a node</h2>
+    <p class="lead">The network mark stays pure gradient. But each show gets <strong style="color:var(--text)">one accent color</strong> — its node in the constellation, its cover glow, its on-air signature. Distinct, deliberately spaced hues so the family never blurs together — add the next one as the roster grows.</p>
+    <div class="card" style="margin-top:24px;padding:14px 8px">
+      <table id="showtbl"><thead><tr><th>Show</th><th>Cadence</th><th>Accent</th></tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+</section>
+
+<!-- TYPE -->
+<section id="type">
+  <div class="wrap">
+    <p class="eyebrow">Typography</p>
+    <h2 style="font-size:2rem;margin:0 0 10px">A three-voice type system</h2>
+    <p class="lead">The old logo was Helvetica while the site ran on DM Sans. We resolve it into one clear hierarchy — already 2/3 loaded on the site today.</p>
+    <div style="margin-top:24px">
+      <div class="type-spec"><div class="lbl">Display / Logo</div><div><div class="dpl" style="font-size:2.1rem;font-weight:800">Poppins</div><div style="color:var(--muted)">Headlines, the wordmark, big numbers. Geometric, confident, kinetic — the "momentum" voice.</div></div></div>
+      <div class="type-spec"><div class="lbl">UI / Body</div><div><div style="font-size:2.1rem;font-weight:700">DM Sans</div><div style="color:var(--muted)">Navigation, buttons, captions, all interface text. Already the site's font.</div></div></div>
+      <div class="type-spec"><div class="lbl">Editorial</div><div><div style="font-family:'Source Serif 4',serif;font-size:2.1rem;font-weight:600">Source Serif 4</div><div style="color:var(--muted)">Long-form blog reading. Already the site's serif. Signals "human-written," not content-mill.</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- COVER SYSTEM -->
+<section id="covers">
+  <div class="wrap">
+    <p class="eyebrow">Show artwork</p>
+    <h2 style="font-size:2rem;margin:0 0 10px">One cover template, every show</h2>
+    <p class="lead">A single repeatable cover system makes the whole catalog read as one family in Apple Podcasts and Spotify: dark base, the show's accent glow, its node accent, big Poppins title, and a fixed Nerra Network badge. Swap three variables per show.</p>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:24px">
+      <div><div class="logo-tile" style="padding:0;overflow:hidden"><img src="assets/nerra-show-cover-template.svg" alt="Cover template" style="max-height:none;width:100%"></div><div class="cap">Template (shown: Tesla Shorts Time)</div></div>
+      <div class="card" style="display:flex;flex-direction:column;justify-content:center">
+        <h3 style="margin:0 0 14px;font-size:1.05rem">Per-show variables</h3>
+        <p class="pill">SHOW-COLOR</p><p class="pill">SHOW-TITLE</p><p class="pill">SHOW-KICKER</p>
+        <p style="color:var(--muted);margin:16px 0 0">Everything else — base, badge, node motif, type — is locked. New shows inherit the family automatically.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- APPLICATIONS -->
+<section id="apps">
+  <div class="wrap">
+    <p class="eyebrow">Applications</p>
+    <h2 style="font-size:2rem;margin:0 0 10px">Ready to ship</h2>
+    <p class="lead">Every surface, drop-in. SVG sources included; rasterize to PNG/JPG at the sizes each platform needs.</p>
+    <div class="grid" style="grid-template-columns:1fr;margin-top:24px">
+      <div><div class="logo-tile" style="padding:0;overflow:hidden"><img src="assets/nerra-youtube-banner.svg" alt="YouTube banner" style="max-height:none;width:100%"></div><div class="cap">YouTube channel banner — 2560×1440, safe-area aware</div></div>
+    </div>
+    <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:18px">
+      <div><div class="logo-tile" style="padding:0;overflow:hidden"><img src="assets/nerra-og-preview.svg" alt="OG image" style="max-height:none;width:100%"></div><div class="cap">Open Graph / share card — 1200×630</div></div>
+      <div><div class="logo-tile" style="padding:0;overflow:hidden"><img src="assets/nerra-social-banner.svg" alt="Social banner" style="max-height:none;width:100%"></div><div class="cap">Social header (X / LinkedIn) — 1500×500</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- MESSAGING -->
+<section id="voice">
+  <div class="wrap">
+    <p class="eyebrow">Voice &amp; messaging</p>
+    <h2 style="font-size:2rem;margin:0 0 10px">How Nerra sounds</h2>
+    <p class="lead">Energetic, plain-spoken, trustworthy. Nerra is the daily habit that leaves you <em>more</em> informed and <em>less</em> anxious — the opposite of doomscrolling.</p>
+
+    <div style="margin:28px 0 10px">
+      <p class="tag grad-text" style="display:inline">Feed your curiosity. Not your anxiety.</p>
+      <p class="tag sub">Primary tagline — keep it. It already does the heavy lifting.</p>
+    </div>
+
+    <h3 style="margin:30px 0 14px;font-size:1.05rem;color:var(--muted2);letter-spacing:.1em;text-transform:uppercase;font-family:'Poppins'">Momentum lines (rotate by surface)</h3>
+    <div class="msg-card" style="border-color:#6B47FF"><strong>Every day. Every angle. One signal.</strong><div style="color:var(--muted)">Network breadth + cadence — banners, YouTube.</div></div>
+    <div class="msg-card" style="border-color:#00D4FF"><strong>The whole world, every morning.</strong><div style="color:var(--muted)">Daily-habit hook — app store, newsletter.</div></div>
+    <div class="msg-card" style="border-color:#8B6BFF"><strong>Independent, daily, ad-free intelligence.</strong><div style="color:var(--muted)">Trust + positioning — About, press.</div></div>
+    <div class="msg-card" style="border-color:#16A34A"><strong>Smarter in fifteen minutes.</strong><div style="color:var(--muted)">Time-value promise — social, Shorts.</div></div>
+
+    <h3 style="margin:30px 0 14px;font-size:1.05rem;color:var(--muted2);letter-spacing:.1em;text-transform:uppercase;font-family:'Poppins'">One-line boilerplate</h3>
+    <div class="card"><p style="margin:0;color:var(--text);font-size:1.05rem">Nerra Network is an independent, ad-free daily podcast network — Tesla, world news, space, science, AI, investing and more — produced in Vancouver, in English, French, Russian and Chinese. Feed your curiosity, not your anxiety.</p></div>
+
+    <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:24px">
+      <div class="card"><h3 style="margin:0 0 10px;font-size:1.05rem" class="do">Sounds like</h3><div><span class="pill">Clear</span><span class="pill">Energetic</span><span class="pill">Curious</span><span class="pill">Balanced</span><span class="pill">Unhurried confidence</span></div></div>
+      <div class="card"><h3 style="margin:0 0 10px;font-size:1.05rem" class="dont">Never sounds like</h3><div><span class="pill">Clickbait / fear</span><span class="pill">Hype-y startup jargon</span><span class="pill">Partisan</span><span class="pill">Robotic</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- BEFORE / AFTER -->
+<section id="ba">
+  <div class="wrap">
+    <p class="eyebrow">What changed</p>
+    <h2 style="font-size:2rem;margin:0 0 18px">Before → After</h2>
+    <div class="ba">
+      <div class="card old"><div class="hd">Before</div><div class="bd"><ul>
+        <li>Logo set in Helvetica — didn't match the DM Sans site</li>
+        <li>Two different "brand" gradients in circulation</li>
+        <li>Fixed 7–8 node mark; didn't map to a growing roster</li>
+        <li>Cover art inconsistent show-to-show</li>
+        <li>Muted greys failing WCAG AA on white</li>
+        <li>Taglines scattered, no system</li>
+      </ul></div></div>
+      <div class="card new"><div class="hd">After</div><div class="bd"><ul>
+        <li>Outlined Poppins wordmark; DM Sans across UI</li>
+        <li>One locked Nerra Signal gradient, everywhere</li>
+        <li>Constellation scales infinitely; one node per show</li>
+        <li>Single cover template — instant family resemblance</li>
+        <li>Contrast-corrected text tokens</li>
+        <li>Tagline + momentum-line system by surface</li>
+      </ul></div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <img src="assets/nerra-mark.svg" width="44" height="44" alt="" style="vertical-align:middle;margin-bottom:10px"><br>
+    Nerra Network — Brand Refresh 2026 · All source assets in <code>/brand-refresh-2026/assets/</code><br>
+    Built for review. Nothing here is live until you deploy it.
+  </div>
+</footer>
+
+<div class="toast" id="toast">Copied</div>
+<script>
+  const shows=[
+    ["Tesla Shorts Time","Daily","#E31937"],["Omni View","Daily","#2563EB"],
+    ["SpaceX Daily","Daily","#4F46E5"],["Fascinating Frontiers","Daily","#7C5CFF"],
+    ["Planetterrian Daily","Daily","#06B6D4"],["Models & Agents","Daily","#8B5CF6"],
+    ["Models & Agents for Beginners","Daily","#F59E0B"],["Modern Investing Techniques","Weekdays","#10B981"],
+    ["Environmental Intelligence","Odd weekdays","#1B7F3B"],["First Principles Daily","Daily","#0EA5E9"],
+    ["Unintended Consequences","Weekdays","#C2410C"],["Финансы Просто","Even days","#EC4899"],
+    ["Привет, Русский!","Even days","#F43F5E"]
+  ];
+  const tb=document.querySelector('#showtbl tbody');
+  shows.forEach(([n,c,h])=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="font-weight:600">${n}</td><td style="color:var(--muted)">${c}</td>
+      <td><span class="dot" style="background:${h}"></span><span class="copy" data-copy="${h}" style="cursor:pointer;font-family:'DM Sans';color:var(--muted)">${h}</span></td>`;
+    tb.appendChild(tr);
+  });
+  const toast=document.getElementById('toast');
+  document.addEventListener('click',e=>{
+    const el=e.target.closest('.copy, .sw');
+    if(!el)return;
+    const v=el.getAttribute('data-copy');if(!v)return;
+    navigator.clipboard?.writeText(v);
+    toast.textContent='Copied '+v;toast.classList.add('show');
+    clearTimeout(window._t);window._t=setTimeout(()=>toast.classList.remove('show'),1100);
+  });
+</script>
+</body>
+</html>
