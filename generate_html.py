@@ -3382,7 +3382,7 @@ def generate_player_page(*, dry_run=False):
     context = {
         "path_prefix": "",
         "page_title": "Player | Nerra Network",
-        "meta_description": f"Listen to all {len(NETWORK_SHOWS)} Nerra Network shows in one player. Build your queue, reorder episodes, and discover new content.",
+        "meta_description": "Listen to all Nerra Network shows in one player. Build your queue, reorder episodes, and discover new content.",
         "meta_keywords": "podcast player, Nerra Network, queue, playlist",
         "theme_color": "#6B47FF",
         "og_image": None,
