@@ -1,0 +1,107 @@
+Hey everyone, welcome to Models and Agents, episode eighty-nine. It's June twenty-second, twenty twenty-six. Monday in the A I world — which means a weekend's worth of announcements to catch up on. Let's go.
+
+Open-weight GLM-5.2 is drawing Silicon Valley attention as Chinese labs close the capability gap with a new publicly available model.
+
+GLM-5.2 arrives as the latest open-weight release from a Chinese startup, with early reports highlighting strong performance that has caught the eye of Western labs.
+
+Simon Willison shipped the sqlite-utils v4 release candidate, adding built-in migrations and nested transaction support for developers working with local data.
+
+Temporary Cloudflare accounts now let agents spin up ephemeral Workers deployments in under a minute without an account.
+
+The 7 Types of Agent Memory guide and a detailed Matrix Recurrent Units update provide concrete engineering references for builders.
+
+The Chinese A I startup behind GLM-5.2 released the open-weight model, and multiple outlets report it is attracting attention in Silicon Valley for its performance relative to current open families.
+
+The release continues the pattern of rapid iteration from labs such as those behind Qwen and Deep Seek, where new weights appear with minimal fanfare and quickly circulate through developer communities.
+
+Early coverage notes the model is being tested for both research and agent workloads, though concrete benchmark numbers and context length details remain sparse in initial reports.
+
+Builders working on cost-sensitive inference or fine-tuning experiments now have another candidate to benchmark against Llama and Mee-stral derivatives.
+
+Watch for fast inference integrations and any follow-on fine-tunes that typically appear within days of these releases.
+
+This open-weight release continues the steady narrowing of the performance gap between open and closed models that we tracked in yesterday's episode.
+
+A new open-weight model from a Chinese startup is being evaluated by researchers and labs outside China for both base capability and downstream agent use.
+
+Coverage indicates the release follows the recent pattern of weights appearing with limited official documentation yet spreading quickly through developer channels.
+
+No specific parameter count, context length, or benchmark scores are detailed in the initial reporting.
+
+Builders should test it against current open models on tasks where licensing terms or inference cost matter.
+
+Nokia is integrating Gemini-based agents directly into its autonomous network products for telecommunications infrastructure management.
+
+The partnership targets operational tasks in critical networks where agents must act on live telemetry and configuration data.
+
+No public benchmarks or deployment timelines beyond the announcement are provided.
+
+Network operators and infrastructure teams should monitor early access programs for domain-specific agent tooling.
+
+This agent integration in telecom infrastructure adds another concrete domain example to the maturing agent tooling story we covered yesterday.
+
+Cloudflare now supports fully ephemeral Workers projects that deploy via a single npx wrangler command and run for sixty minutes without requiring an account.
+
+The feature was demonstrated with a redirect-following tool built in G P T 5.5, showing agents can obtain a live URL immediately.
+
+A claim link is provided if the project needs to persist beyond the temporary window.
+
+Developers testing agent tool-calling loops or short-lived sandboxes gain a zero-setup path that avoids account creation friction.
+
+The v4 release candidate folds the previously separate sqlite-migrate tool into the core package and adds support for nested transactions.
+
+Existing users can upgrade to test migration workflows and transaction nesting without additional dependencies.
+
+The change simplifies local data tooling for scripts that previously relied on external migration packages.
+
+The post enumerates seven memory types — working, semantic, episodic, procedural, retrieval, parametric, and prospective — with storage locations and implementation notes for each.
+
+A comparison table and working Python examples are included for engineers building stateful agents.
+
+Readers implementing long-running agents gain a concrete reference for choosing memory mechanisms rather than defaulting to conversation history alone.
+
+The guide walks through how L L M's select and invoke tools, moving from data retrieval to taking actions in external systems.
+
+It focuses on the decision loop that turns stateless models into agents capable of multi-step workflows.
+
+Builders new to tool-calling patterns can use the explanations to map model outputs to concrete function calls without relying on higher-level frameworks initially.
+
+Test GLM-5.2 on agent-style tasks if you currently run Qwen or Deep Seek models and want another open-weight option to compare inference cost and output quality.
+
+Run the sqlite-utils v4 release candidate on a local project that uses migrations to see how the built-in system changes your workflow versus the standalone sqlite-migrate package.
+
+Spin up a temporary Cloudflare Worker with the npx wrangler deploy --temporary command to prototype an agent tool without creating an account.
+
+Walk through the 7 Types of Agent Memory guide and add one new memory type such as episodic or procedural to an existing LangGraph or CrewAI agent.
+
+Further GLM-5.2 fine-tunes and inference optimizations are expected within days as weights circulate.
+
+Additional Cloudflare agent tooling announcements are likely as ephemeral deployments gain adoption.
+
+Continued exploration of linear-time architectures is following the MRU update and stability experiments.
+
+OK, let's pop the hood on the Matrix Recurrent Unit update.
+
+Everyone talks about linear-time sequence models as simple drop-in replacements for attention, yet the engineering reality involves careful handling of state matrices to avoid instability.
+
+The Matrix Recurrent Unit works by reshaping token embeddings into an input state matrix, then cumulatively multiplying those matrices across the sequence so each position incorporates all prior transformations in a single associative operation.
+
+Parallel scan implementations exploit this associativity to keep training tractable on G P U's despite the sequential dependency.
+
+Early experiments showed that naive reshaping produced loss spikes on larger datasets.
+
+Switching to LDU factorization with an activation on the diagonal to enforce determinant one removed the spikes while preserving the model's ability to learn shear transformations rather than pure rotations.
+
+On the TinyStories task the MRU still trailed a comparable transformer, indicating lower storage capacity remains a core tradeoff even after stability fixes.
+
+Use MRU when cumulative per-token computation matters more than raw capacity and you can tolerate extra engineering to bound the state matrices.
+
+The obvious alternative of attention or state-space models wins when you need higher memory bandwidth across long contexts.
+
+Tomorrow, keep an eye on any early GLM-5.2 fine-tunes that surface in developer channels.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And before you go — this show is part of the Nerra Network, a family of daily podcasts covering tech, science, markets, and more.
+
+If you enjoyed today's episode, give Planetterrian Daily a listen: daily breakthroughs in science, health, and longevity. You can explore the whole lineup at nerranetwork dot com.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
