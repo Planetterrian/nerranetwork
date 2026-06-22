@@ -374,10 +374,10 @@ def _request_one_video(
 
     body = resp.json()
     try:
-        request_id = body["id"]
+        request_id = body["request_id"]
     except (KeyError, TypeError) as exc:
         raise GrokVideoError(
-            f"Grok Video response missing 'id': {body!r}"
+            f"Grok Video response missing 'request_id': {body!r}"
         ) from exc
 
     return request_id
