@@ -305,12 +305,11 @@ youtube:
   category_id: 28               # Science & Tech (algorithm performs better than 2/Autos here)
   default_language: en
   privacy_status: public        # Phase-1 validated; uploads are public
-  # June 2026 — Grok video generation experiment. When enabled, generates
-  # full-length videos from the podcast script instead of still-image
-  # slideshows. Set to null/false to revert to image-based pipeline.
-  # Pricing: $0.07/second for 720p, so a 12-min episode ≈ $50.40.
-  # Test against still-image approach to measure engagement delta.
-  video_provider: grok          # "grok" enables video, null/false reverts to images
+  # June 2026 — Grok video generation experiment. DISABLED 2026-06-23:
+  # full-length video is too expensive ($0.07/sec 720p ≈ $50/episode). The
+  # show reverts to the still-image slideshow (image_provider below). Do NOT
+  # set this back to "grok" without an explicit cost decision.
+  video_provider: null          # null/false = image slideshow (cheap); "grok" = video ($$$)
   video_resolution: "720p"
   video_aspect_ratio: "16:9"    # Full-format episodes
 

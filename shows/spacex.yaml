@@ -274,9 +274,10 @@ youtube:
   # floor from the 5.0 default so good-but-not-perfect beats still win over the
   # boilerplate voice-intro start. See engine/shorts_selector.py.
   shorts_min_score_threshold: 3.5
-  # TEMPORARY (2026-06-21): Test Grok Video pipeline for quality comparison
-  # vs image slideshow. Remove this flag after the next run to revert to images.
-  video_provider: grok
+  # Grok Video pipeline DISABLED 2026-06-23 — too expensive
+  # ($0.07/sec 720p ≈ $40-50/episode). Reverted to the image slideshow
+  # (image_provider below). Do NOT re-enable without a cost decision.
+  video_provider: null
   video_resolution: "720p"
   video_aspect_ratio: "16:9"
 
