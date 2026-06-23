@@ -39,7 +39,8 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from urllib.request import urlretrieve
+
+import requests
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
@@ -125,7 +126,14 @@ def main() -> int:
     local_mp3 = digests_dir / mp3_name
     if not local_mp3.exists():
         print(f"Downloading audio: {audio_url}")
-        urlretrieve(audio_url, local_mp3)  # noqa: S310 — known R2 URL
+        # requests bundles certifi CAs (urllib on macOS python.org has no
+        # trust store unless Install Certificates.command was run).
+        resp = requests.get(audio_url, timeout=180, stream=True)
+        resp.raise_for_status()
+        with open(local_mp3, "wb") as fh:
+            for chunk in resp.iter_content(chunk_size=8192):
+                if chunk:
+                    fh.write(chunk)
     duration = get_audio_duration(local_mp3) or 0.0
     print(f"Audio: {local_mp3.name} ({format_duration(duration)})")
 

@@ -59,7 +59,6 @@ import sys
 import tempfile
 import time
 from pathlib import Path
-from urllib.request import urlretrieve
 
 import requests
 
@@ -181,7 +180,14 @@ def _resolve_audio(audio: str, work_dir: Path) -> Path | None:
     if audio.startswith(("http://", "https://")):
         dest = work_dir / "episode_audio.mp3"
         print(f"Downloading episode audio: {audio}")
-        urlretrieve(audio, dest)  # noqa: S310 — operator-supplied URL
+        # Use requests (bundles certifi CAs) — urllib on macOS python.org
+        # builds has no trust store unless Install Certificates.command was run.
+        resp = requests.get(audio, timeout=180, stream=True)
+        resp.raise_for_status()
+        with open(dest, "wb") as fh:
+            for chunk in resp.iter_content(chunk_size=8192):
+                if chunk:
+                    fh.write(chunk)
         return dest
     p = Path(audio)
     return p if p.exists() else None
