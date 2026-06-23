@@ -73,6 +73,9 @@ from engine.grok_video import (  # noqa: E402 (after sys.path bootstrap)
     _check_video_status_once,
     _composite_video_with_audio,
     _download_video,
+    _extract_video_url,
+    _is_terminal_failure,
+    _is_terminal_success,
     _stitch_videos_ffmpeg,
 )
 
@@ -126,6 +129,35 @@ EP519_REQUESTS = [
     ("ep519_clip44", "6b7c8d3d-c4c0-94d4-a220-d9a14c31cc3b"),
     ("ep519_clip45", "03625e1c-c097-95d7-9bb9-e472eacb7715"),
 ]
+
+# SpaceX Daily Ep12 (2026-06-23) — the 12 clips submitted before that
+# pipeline timed out, in script order. From the run log.
+SPACEX_EP12_REQUESTS = [
+    ("ep012_clip00", "6b2e91d5-07e0-9133-97a2-e6f8c631f4eb"),
+    ("ep012_clip01", "e99f058c-781d-9b64-95fa-3390d9d9f307"),
+    ("ep012_clip02", "4feefd20-2a7a-9b45-933e-a176c09512c6"),
+    ("ep012_clip03", "b62a5624-e3c4-9d12-809d-5a5860a4c44b"),
+    ("ep012_clip04", "0050ff95-a20e-9508-86f9-b7623f471966"),
+    ("ep012_clip05", "53ba2b36-8d4c-9dd6-b56d-5732f239eebb"),
+    ("ep012_clip06", "bfa19b55-03c7-9e0b-8edc-9e240bd0a2a8"),
+    ("ep012_clip07", "6c552b94-f917-9217-8bf7-92a09a0db864"),
+    ("ep012_clip08", "645d6892-8e9c-9293-9204-e9236764a545"),
+    ("ep012_clip09", "757a0c39-1c31-91d6-a0ed-84196b3c490e"),
+    ("ep012_clip10", "def29b63-bdb3-93bf-b09e-ca38ab121812"),
+    ("ep012_clip11", "468520d4-b54c-9aa2-9f75-e24b52c259b6"),
+]
+
+# Episode audio (R2) for the embedded sets, for --stitch convenience.
+EMBEDDED_SETS = {
+    "tesla_ep519": (
+        EP519_REQUESTS,
+        "https://audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep519_20260623.mp3",
+    ),
+    "spacex_ep12": (
+        SPACEX_EP12_REQUESTS,
+        "https://audio.nerranetwork.com/spacex/SpaceX_Daily_Ep012_20260623.mp3",
+    ),
+}
 
 
 def _load_requests(path: Path) -> list[tuple[str, str]]:
@@ -219,13 +251,13 @@ def _run_list_all(api_key: str, out_dir: Path) -> int:
     got = 0
     for i, item in enumerate(items):
         vid = str(item.get("id") or item.get("request_id") or f"video{i:04d}")
-        url = item.get("url")
+        url = _extract_video_url(item)
         status = item.get("status", "unknown")
-        if not url and status != "completed":
+        if not url and not _is_terminal_success(status):
             # Re-poll by id to get a fresh temporary URL.
             try:
                 body = _check_video_status_once(vid, api_key=api_key)
-                url, status = body.get("url"), body.get("status", status)
+                url, status = _extract_video_url(body), body.get("status", status)
             except GrokVideoError as exc:
                 print(f"  {vid}: {exc}")
         if url:
@@ -248,6 +280,7 @@ def _retrieve(requests_list, api_key, out_dir, retries, retry_wait):
     out_dir.mkdir(parents=True, exist_ok=True)
     downloaded: list[Path] = []
     pending = failed = 0
+    dumped = False
     for clip_id, request_id in requests_list:
         body = None
         for attempt in range(max(1, retries)):
@@ -257,25 +290,34 @@ def _retrieve(requests_list, api_key, out_dir, retries, retry_wait):
                 print(f"  {clip_id} [{request_id}]: status error — {exc}")
                 body = None
                 break
-            if body.get("status") == "completed":
+            if _is_terminal_success(body.get("status")):
+                break
+            if _is_terminal_failure(body.get("status")):
                 break
             if attempt < retries - 1:
                 print(f"  {clip_id}: status={body.get('status')} — retry in {retry_wait:.0f}s")
                 time.sleep(retry_wait)
 
-        if not body or body.get("status") != "completed":
-            status = (body or {}).get("status", "unreachable")
+        status = (body or {}).get("status", "unreachable")
+        if not body or not _is_terminal_success(status):
             print(f"  {clip_id} [{request_id}]: NOT available (status={status})")
-            if status in ("failed", "unreachable"):
+            if _is_terminal_failure(status) or status == "unreachable":
                 failed += 1
             else:
                 pending += 1
             continue
 
-        url = body.get("url")
+        url = _extract_video_url(body)
         if not url:
-            print(f"  {clip_id}: completed but no URL")
             failed += 1
+            print(f"  {clip_id}: finished (status={status}) but no URL field found")
+            if not dumped:
+                # Dump one raw response so the URL field can be pinned if the
+                # shape is unexpected.
+                print("  --- raw response (for diagnosis) ---")
+                print(json.dumps(body, indent=2)[:2000])
+                print("  --- end raw response ---")
+                dumped = True
             continue
         dest = out_dir / f"{clip_id}.mp4"
         if _download_video(url, dest):
@@ -295,7 +337,9 @@ def _retrieve(requests_list, api_key, out_dir, retries, retry_wait):
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--list-all", action="store_true", help="Enumerate + download every video on the account")
-    ap.add_argument("--requests", type=Path, help="File of 'clip_id request_id' lines (default: embedded Ep519)")
+    ap.add_argument("--set", dest="embedded_set", choices=sorted(EMBEDDED_SETS),
+                    default="tesla_ep519", help="Which embedded clip set to recover (default: tesla_ep519)")
+    ap.add_argument("--requests", type=Path, help="File of 'clip_id request_id' lines (overrides --set)")
     ap.add_argument("--out-dir", type=Path, default=None, help="Directory to keep the individual clips")
     ap.add_argument("--stitch", action="store_true", help="Also concatenate the clips into one episode video")
     ap.add_argument("--audio", default="", help="Episode audio (path or URL) to composite when --stitch")
@@ -313,7 +357,12 @@ def main() -> int:
         out_dir = args.out_dir or Path("recovered_videos")
         return _run_list_all(api_key, out_dir)
 
-    requests_list = _load_requests(args.requests) if args.requests else list(EP519_REQUESTS)
+    if args.requests:
+        requests_list = _load_requests(args.requests)
+        default_audio = ""
+    else:
+        requests_list, default_audio = EMBEDDED_SETS[args.embedded_set]
+        requests_list = list(requests_list)
     if not requests_list:
         print("ERROR: no request IDs to recover.", file=sys.stderr)
         return 2
@@ -339,7 +388,7 @@ def main() -> int:
         print("ERROR: stitching failed (is ffmpeg installed?).", file=sys.stderr)
         return 1
 
-    audio_path = _resolve_audio(args.audio, out_dir)
+    audio_path = _resolve_audio(args.audio or default_audio, out_dir)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     if audio_path and audio_path.exists():
         if _composite_video_with_audio(stitched, audio_path, args.out):

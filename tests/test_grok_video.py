@@ -300,5 +300,32 @@ class TestVideoBudget:
             assert mock_status.called  # we did poll at least once
 
 
+class TestStatusVocabulary:
+    """Drift guards: the xAI API reports finished clips as 'done', not
+    'completed'. The original code only accepted 'completed', so every clip
+    polled until timeout (the real root cause of the Ep519/Ep12 timeouts)."""
+
+    def test_done_is_terminal_success(self):
+        from engine.grok_video import _is_terminal_success, _is_terminal_failure
+
+        for ok in ("done", "completed", "DONE", "Succeeded", "ready"):
+            assert _is_terminal_success(ok), ok
+        for not_ok in ("pending", "processing", "queued", "running"):
+            assert not _is_terminal_success(not_ok), not_ok
+        for bad in ("failed", "error", "cancelled"):
+            assert _is_terminal_failure(bad), bad
+        assert not _is_terminal_failure("done")
+
+    def test_extract_url_across_shapes(self):
+        from engine.grok_video import _extract_video_url
+
+        assert _extract_video_url({"url": "https://a/v.mp4"}) == "https://a/v.mp4"
+        assert _extract_video_url({"video_url": "https://b/v.mp4"}) == "https://b/v.mp4"
+        assert _extract_video_url({"result": {"url": "https://c/v.mp4"}}) == "https://c/v.mp4"
+        assert _extract_video_url({"data": [{"download_url": "https://d/v.mp4"}]}) == "https://d/v.mp4"
+        assert _extract_video_url({"status": "done"}) is None
+        assert _extract_video_url({"url": "not-a-url"}) is None
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
