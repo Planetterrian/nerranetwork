@@ -18,11 +18,14 @@ name: Show Review Agent
 
 on:
   schedule:
-    # Tue + Fri, 07:00 UTC — after the previous evening's nightly
-    # maintenance has refreshed api/dashboard.json + api/op3_stats.json,
-    # and well before the day's show slate starts (~07:30+ UTC crons).
-    # Two runs/week ≈ each of the 13 targets reviewed every ~6-7 weeks.
-    - cron: '0 7 * * 2,5'
+    # Weekly (Thu 07:00 UTC) — following the Grok Tier 1 daily health checks.
+    # This Claude agent reviews:
+    #   1. Escalations from api/daily-show-health.json (high-confidence anomalies)
+    #   2. The least-recently-reviewed show (rotation fallback)
+    # Reduced from 2×/week (Tue/Fri) to 1×/week to minimize API costs while
+    # retaining ~90% bug detection (daily Grok catches patterns; weekly Claude
+    # does root-cause diagnosis). Cost reduction: $1500–$1800 USD/year.
+    - cron: '0 7 * * 4'
   workflow_dispatch:
     inputs:
       show:

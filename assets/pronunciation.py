@@ -337,6 +337,10 @@ COMMON_ACRONYMS: Dict[str, str] = {
 
 # Proper names and terms that TTS commonly mispronounces
 WORD_PRONUNCIATIONS: Dict[str, str] = {
+    # --- Network / brand names ---
+    "Nerra Network": "NAIR-uh NET-work",
+    "Nerra": "NAIR-uh",
+
     # --- Show names ---
     # ``Planetterrian`` respelling removed (May 11 2026). Two prior
     # attempts both failed in production audio:
