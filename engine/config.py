@@ -62,6 +62,18 @@ class LLMConfig:
     # under the FULL min_podcast_words target instead of only near the
     # 60%-of-target skip floor. Costs one extra LLM call on short days.
     podcast_expand_below_target: bool = False
+    # June 2026 (First Principles quality pass): digest-stage analogue of
+    # ``podcast_expand_below_target``. When ``digest_expand_below_target`` is
+    # true AND the generated digest/brief is under ``min_digest_words``,
+    # generate_digest fires ONE deepen-the-brief retry. Opt-in (default 0 /
+    # False = byte-for-byte no-op). Added for narrative shows whose brief is
+    # the substrate the podcast expands from: FP briefs shipped 848-1116w vs
+    # the prompt's 1600 floor, capping the podcast even after the podcast-
+    # stage retry. ``min_digest_words`` is the retry trigger, NOT a hard
+    # target — set it below the observed grok-4.3 ~1200-1500w plateau so it
+    # rescues genuinely-thin briefs without fighting the ceiling.
+    min_digest_words: int = 0
+    digest_expand_below_target: bool = False
     podcast_chain: bool = False  # Two-stage generation: outline then expand
     # Model used when the primary refuses after educational retry. A
     # different model (or different variant of the same family) often

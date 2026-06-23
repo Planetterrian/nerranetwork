@@ -26,14 +26,81 @@ reviews:
           were the recent cases)
         baseline: "935-953 words (retry fired but did not lengthen)"
         expected: ">= 1100 words after the narrative-aware retry, within 2 weeks"
-        verdict: pending
-        evidence: null
+        verdict: partial
+        evidence: >-
+          Scripts now consistently EXCEED their briefs (Ep018 brief 869w ->
+          script 1190w) and the thin band lifted from 935-953w to mostly
+          1100-1400w, so the deepen-from-brief retry works. But Ep011 (1003w)
+          and Ep014 (1040w) still land below 1100 — the residual is the thin
+          BRIEF, attacked in the 2026-06-23 pass at the digest stage.
       - metric: >-
           duplicate "Introduction" chapters and missing "Closing" chapters in
           chapters_ep*.json (committed Ep001-003 each had a 2nd Introduction;
           Ep001-004 had no Closing)
         baseline: "4/5 recent episodes had broken chapter shape"
         expected: "0 duplicate Introduction + Closing present on every new episode"
+        verdict: miss
+        evidence: >-
+          Duplicate-Introduction HIT (0/18). But the Closing half MISSED:
+          Ep007/009/011/015/017 (all post-June-10) shipped with NO Closing
+          chapter for a DIFFERENT reason than the duplicate-Introduction bug
+          the where-anchors fixed — the sign-off tagline "one example or one
+          opportunity" let the body marker "The Opportunity" steal the closing
+          line. 7 of 18 episodes total. Reopened and fixed 2026-06-23 via
+          marker ordering (Closing before the body markers).
+
+  - date: 2026-06-23
+    pr: null
+    doc: docs/reviews/first_principles_review_2026_06_23.md
+    summary: >-
+      Second FP pass. P0: 7 of 18 episodes shipped with NO Closing chapter
+      (the sign-off "one example or one opportunity" / "First Principles Daily"
+      let body markers steal the closing line) — fixed by ordering Closing
+      before the body markers (EI/SpaceX rule), 18/18 after. P1: lesson-
+      template echo (the deferred ~3/5 tic grew to 12/16) de-seeded in the
+      digest prompt. P1: the deferred digest-stage expansion retry shipped
+      (opt-in, narrative-aware; verified --test 1146->1400w).
+    shipped:
+      - >-
+        Chapter marker reorder — Closing listed before The Opportunity / The
+        First Principle so the sign-off line is not stolen (metadata-only,
+        18/18 episodes get a Closing chapter).
+      - >-
+        Lesson-template de-seed — removed the verbatim "a [part] whose price
+        greatly exceeds its [materials] is announcing a design problem" example
+        from both tracks of the digest prompt; require fresh per-topic phrasing.
+      - >-
+        Digest-stage expansion retry — new opt-in llm.digest_expand_below_target
+        / llm.min_digest_words (default no-op); narrative-aware deepen-the-brief
+        retry mirroring the podcast stage. FP opts in at 1400.
+    deferred:
+      - >-
+        Garbage auto-segment chapter titles (Ep011 "Interconnection queues add
+        another layer") — shared network-wide LLM-title class. Carried forward.
+      - >-
+        Residual under-length below ~1100w on a few episodes even after both
+        retries — bounded by the grok-4.3 plateau (do_not_retry). Not a fix
+        target; the digest retry raises the substrate as far as the model goes.
+    predictions:
+      - metric: >-
+          Closing chapter present in chapters_ep*.json on every new episode
+          (especially episodes whose body does NOT trigger an "opportunity"
+          keyword, e.g. concrete_example days)
+        baseline: "7 of 18 episodes (Ep001/004/007/009/011/015/017) had NO Closing"
+        expected: "Closing present on 100% of new episodes after the marker reorder"
+        verdict: pending
+        evidence: null
+      - metric: >-
+          recurrence of the verbatim lesson formula "whose price greatly
+          exceeds its [materials/atoms] is announcing a design problem" as the
+          lesson opener in _tts.txt
+        baseline: "12 of ~16 episodes opened the lesson with the formula"
+        expected: "<= 2 of the next 10 episodes use the verbatim formula"
+        verdict: pending
+        evidence: null
+      - metric: "FP brief (.md) word count"
+        baseline: "848-1116 words (no digest expansion path)"
+        expected: ">= 1300 words median after the digest expansion retry fires"
         verdict: pending
         evidence: null
 
