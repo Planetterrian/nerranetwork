@@ -129,3 +129,107 @@ class TestNarrativeExpansionRetry:
             (_ROOT / "shows/first_principles.yaml").read_text(encoding="utf-8")
         )
         assert cfg.get("narrative_mode") is True
+
+
+class TestClosingNotStolenByBodyMarkers:
+    """June 23 2026 pass — the orphan-Closing bug the June-10 `where`
+    anchors did NOT fully fix. The sign-off tagline "one example or one
+    opportunity, every day" contains "opportunity", and the brand "First
+    Principles Daily" contains "first principle". When the body markers
+    "The Opportunity" / "The First Principle" had NOT matched earlier in the
+    episode, they stole the sign-off line, dropping the Closing chapter:
+    7 of the first 18 episodes (Ep001/004/007/009/011/015/017) shipped with
+    NO Closing. Fix: list Closing BEFORE the body markers (EI June-11 /
+    SpaceX June-18 ordering rule); `where: end` keeps it out of the body."""
+
+    def test_closing_ordered_before_colliding_body_markers(self):
+        titles = [m["title"] for m in _fp_markers()]
+        assert titles.index("Closing") < titles.index("The Opportunity"), titles
+        assert titles.index("Closing") < titles.index("The First Principle"), titles
+
+    def _ep017_style_script(self):
+        # Body deliberately AVOIDS "opportunity"/"could be"/"first principle"/
+        # "magic wand"/"atoms" so those markers stay unmatched until the
+        # sign-off line — the exact Ep017 condition that dropped Closing.
+        intro = "Welcome to First Principles Daily, episode seventeen, for June twenty-second."
+        body = ["Today we trace a cost that hides in the design, not the metal."]
+        for i in range(36):
+            body.append(
+                f"Body sentence number {i} carries the reasoning forward with "
+                f"concrete named processes and figures."
+            )
+        body.append("The idiot index here sits on the order of fifty.")
+        body.append("The redesign attacked the assembly hours directly.")
+        closing = _SHOW_PERSONALITIES["first_principles"]["closings"][0]
+        return "\n".join([intro, "", *body, "", closing])
+
+    def test_closing_present_when_body_lacks_opportunity(self):
+        chapters = parse_chapters(
+            self._ep017_style_script(), _fp_markers(),
+            show_name="First Principles Daily",
+        )
+        titles = [c.title for c in chapters]
+        assert "Closing" in titles, (
+            f"Closing chapter dropped — a body marker stole the sign-off line: {titles}"
+        )
+        assert titles[-1] == "Closing", titles
+        assert titles[0] == "Introduction", titles
+
+
+class TestLessonTemplateDeSeed:
+    """June 23 2026 pass — the lesson-echo tic the June-10 pass deferred on
+    thin evidence (~3/5). It grew to 12 of ~16 episodes opening the lesson
+    with the verbatim prompt-seeded formula "a [part] whose price greatly
+    exceeds its [materials] is announcing a design problem". Same tic class
+    as Omni View "strongest case" / Env Intel "You arrive at a…": a seeded
+    example became a fill-in-the-blank template. De-seeded in both tracks."""
+
+    def _episode_prompt(self):
+        return (_ROOT / "shows/prompts/first_principles_episode.txt").read_text(
+            encoding="utf-8"
+        )
+
+    def test_verbatim_seed_removed(self):
+        text = self._episode_prompt()
+        # The literal example lead-in must no longer be SEEDED as an example
+        # the model copies. (It may still be quoted inside a ban instruction.)
+        assert "is announcing a design problem, not a material shortage" not in text, (
+            "the seeded lesson example is still present — the model will keep "
+            "echoing it verbatim"
+        )
+
+    def test_fresh_phrasing_required(self):
+        text = self._episode_prompt()
+        assert "phrased FRESHLY" in text
+        # The ban on the stock formula must be present.
+        assert text.lower().count("stock formula") >= 1
+
+
+class TestDigestExpansionRetry:
+    def test_fp_opts_into_digest_expansion(self):
+        cfg = yaml.safe_load(
+            (_ROOT / "shows/first_principles.yaml").read_text(encoding="utf-8")
+        )
+        assert cfg["llm"]["digest_expand_below_target"] is True
+        # Trigger set below the observed grok-4.3 ~1200-1500w plateau.
+        assert 0 < cfg["llm"]["min_digest_words"] <= 1500
+
+    def test_narrative_digest_retry_deepens_not_more_stories(self):
+        from engine.generator import _build_digest_expansion_retry_prompt
+        p = _build_digest_expansion_retry_prompt(900, 1400, "BRIEF", narrative=True)
+        assert "DEEPENING" in p
+        assert "ONE subject" in p
+        assert "more stories" not in p.lower()
+
+    def test_news_digest_retry_unchanged(self):
+        from engine.generator import _build_digest_expansion_retry_prompt
+        p = _build_digest_expansion_retry_prompt(900, 1400, "DIGEST")
+        assert "under-covers" in p
+
+    def test_config_defaults_are_noop(self):
+        # The new fields must default to a byte-for-byte no-op for every
+        # show that does not opt in.
+        from engine.config import LLMConfig
+        c = LLMConfig()
+        assert c.min_digest_words == 0
+        assert c.digest_expand_below_target is False
