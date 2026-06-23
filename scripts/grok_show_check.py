@@ -25,15 +25,15 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 import argparse
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # Add repo root to path
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from engine.config import load_config
-from generate_html import NETWORK_SHOWS
+from engine.config import load_config  # noqa: E402 (after sys.path bootstrap)
+from generate_html import NETWORK_SHOWS  # noqa: E402 (after sys.path bootstrap)
 
 
 # ========================== TIER 1 CHECKS ==========================
@@ -213,7 +213,7 @@ def check_metadata_sanity(tts_txt: str, show_slug: str) -> Dict[str, Any]:
                 "type": "possible_refusal",
                 "pattern": pattern,
                 "confidence": 0.60,  # Lower confidence (could be false positive)
-                "description": f"Transcript may contain a refusal pattern"
+                "description": "Transcript may contain a refusal pattern"
             })
             break
 
@@ -234,7 +234,6 @@ def discover_episodes(date_str: Optional[str] = None, show_slug: Optional[str] =
         date_str = datetime.now().strftime("%Y%m%d")
 
     episodes = []
-    digests_dir = ROOT / "digests"
 
     # Search all show subdirectories for matching _tts.txt files
     # (output dirs may not match slug names, e.g. slug "tesla" → output_dir "digests/tesla_shorts_time")
