@@ -37,10 +37,27 @@ from dotenv import load_dotenv
 # Default 15 minutes; override with PIPELINE_TIMEOUT_SECONDS env var.
 # ---------------------------------------------------------------------------
 _PIPELINE_TIMEOUT = int(os.environ.get("PIPELINE_TIMEOUT_SECONDS", 900))
+_PIPELINE_STARTED_AT = time.monotonic()
+
+# Headroom reserved at the tail of the pipeline (commit + finalize). Optional
+# slow stages (notably Grok Video) are budgeted against the time LEFT minus
+# this reserve, so they can never trip the SIGALRM and skip the episode's git
+# commit — the partial-publish failure class that decoupled the multilingual
+# step (see the comment near the translation stage below).
+_PIPELINE_COMMIT_RESERVE_S = int(os.environ.get("PIPELINE_COMMIT_RESERVE_SECONDS", 420))
 
 
 def _timeout_handler(signum, frame):
     raise SystemExit(f"PIPELINE TIMEOUT: exceeded {_PIPELINE_TIMEOUT}s — aborting to prevent hung CI job")
+
+
+def _pipeline_budget_remaining() -> float:
+    """Seconds left before the pipeline SIGALRM fires (>= 0)."""
+    return max(0.0, _PIPELINE_TIMEOUT - (time.monotonic() - _PIPELINE_STARTED_AT))
+
+
+class _SkipVideo(Exception):
+    """Internal sentinel: bail out of the video stage to the image fallback."""
 
 
 # Only set alarm on platforms that support it (not Windows)
@@ -3831,9 +3848,23 @@ def _publish_youtube(
             resolution = getattr(yt, "video_resolution", "720p")
             aspect_ratio = getattr(yt, "video_aspect_ratio", "16:9")
 
+            # Budget the (slow, optional) video step against the time LEFT in
+            # the pipeline, holding back the commit/finalize reserve. If too
+            # little is left, skip video entirely and fall back to the image
+            # slideshow rather than risk the SIGALRM skipping the git commit.
+            _video_budget = _pipeline_budget_remaining() - _PIPELINE_COMMIT_RESERVE_S
+            if _video_budget < 60:
+                logger.warning(
+                    "Skipping Grok Video — only %.0fs left after the commit "
+                    "reserve; falling back to image slideshow",
+                    _video_budget,
+                )
+                video_provider = None  # Fall through to image provider logic
+                raise _SkipVideo()
+
             logger.info(
-                "Generating Grok Video for episode %d (%s @ %s)",
-                episode_num, resolution, aspect_ratio,
+                "Generating Grok Video for episode %d (%s @ %s, budget %.0fs)",
+                episode_num, resolution, aspect_ratio, _video_budget,
             )
 
             # Read the podcast script to use as video generation input
@@ -3858,6 +3889,7 @@ def _publish_youtube(
                 short_duration_seconds=getattr(yt, "short_duration_seconds", 40),
                 final_mp3_path=final_mp3,  # Pre-mixed audio with intro/outro/EQ
                 show_config=config,  # For show-specific video prompts
+                max_total_seconds=_video_budget,
             )
 
             if grok_video_result.full_video_path and grok_video_result.full_video_path.exists():
@@ -3875,6 +3907,8 @@ def _publish_youtube(
                     "Grok Video failed or produced no output; falling back to image slideshow"
                 )
                 video_provider = None  # Fall through to image provider logic
+        except _SkipVideo:
+            pass  # Budget guard already logged + set video_provider=None
         except Exception as exc:
             logger.warning(
                 "Grok Video generation failed: %s; falling back to image slideshow",
