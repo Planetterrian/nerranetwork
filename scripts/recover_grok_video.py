@@ -1,38 +1,59 @@
 #!/usr/bin/env python3
-"""Recover a Grok Video episode from already-submitted clip request IDs.
+"""Recover Grok Video clips that were generated but not (fully) used.
 
 When the per-episode pipeline submits its Grok Video clips but dies before
 downloading them (e.g. the 2026-06-23 Tesla Ep519 pipeline timeout), the
-clips may still be retrievable server-side: each was submitted and has a
-``request_id`` logged, and the status endpoint
-``GET https://api.x.ai/v1/videos/{request_id}`` returns the finished clip's
-(temporary) URL once it has rendered.
+clips may still be retrievable server-side. Each clip was submitted and has a
+``request_id``; the status endpoint ``GET https://api.x.ai/v1/videos/{id}``
+returns the finished clip's (temporary) URL once it has rendered.
 
-This script takes a list of ``clip_id request_id`` pairs, polls each status
-endpoint, downloads whatever has completed, stitches them in order, and (if
-given the episode audio) composites the audio onto the video — producing the
-full-length MP4 the pipeline would have made.
+Three modes:
 
-IMPORTANT — the clip result URLs are temporary. If too much time has passed
-the clips may no longer be retrievable; the script reports per-clip status so
-you can see how many survived. Nothing here is destructive.
+  1. --list-all       Enumerate EVERY video on the account via the xAI list
+                      endpoint (best-effort) and download each into --out-dir.
+                      This is the "get all clips that ran so far, across all
+                      shows" path — it doesn't need any request IDs.
 
-Usage:
-    # Use the embedded Tesla Ep519 (2026-06-23) request IDs:
+  2. --requests FILE  Retrieve a specific set of clips. FILE has one
+                      "clip_id request_id" (or bare "request_id") per line;
+                      "#" comments allowed. Harvest these from a run's logs —
+                      see HARVESTING below.
+
+  3. (default)        Retrieve the embedded Tesla Ep519 (2026-06-23) clips.
+
+By default every retrieved clip is KEPT as an individual .mp4 in the output
+dir. Pass --stitch (+ optional --audio) to also concatenate an ordered set
+into one episode video.
+
+IMPORTANT — clip result URLs are TEMPORARY. Clips from runs more than a day
+or so old are likely already gone; the script reports per-clip status so you
+can see how many survived. Nothing here is destructive.
+
+HARVESTING request IDs from a run's logs (you have `gh`; this sandbox agent
+does not have an xAI key, so run this yourself):
+
+    gh run view <RUN_ID> --repo Planetterrian/nerranetwork --log \
+      | grep -oE 'ep[0-9]+_clip[0-9]+ \(request_id=[0-9a-f-]+' \
+      | sed -E 's/ \(request_id=/ /' > ep_requests.txt
     GROK_API_KEY=... python scripts/recover_grok_video.py \
-        --audio https://audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep519_20260623.mp3 \
-        --out Tesla_Shorts_Time_Pod_Ep519_20260623_video.mp4
+      --requests ep_requests.txt --out-dir recovered/
 
-    # Or supply your own list (one "clip_id request_id" per line, "#" comments ok):
+Usage examples:
+    # Everything the account still has:
+    GROK_API_KEY=... python scripts/recover_grok_video.py --list-all --out-dir recovered/
+
+    # The embedded Ep519 set, stitched with the published audio:
     GROK_API_KEY=... python scripts/recover_grok_video.py \
-        --requests my_request_ids.txt --audio episode.mp3 --out out.mp4
+        --stitch --audio https://audio.nerranetwork.com/tesla/Tesla_Shorts_Time_Pod_Ep519_20260623.mp3 \
+        --out Ep519_video.mp4 --out-dir recovered_ep519/
 
-Requires: GROK_API_KEY (or XAI_API_KEY) in the environment, and ffmpeg on PATH.
+Requires: GROK_API_KEY (or XAI_API_KEY) in the environment. --stitch needs ffmpeg.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 import tempfile
@@ -40,11 +61,14 @@ import time
 from pathlib import Path
 from urllib.request import urlretrieve
 
+import requests
+
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from engine.grok_video import (  # noqa: E402 (after sys.path bootstrap)
+    GROK_VIDEO_STATUS_ENDPOINT,
     GrokVideoError,
     _check_video_status_once,
     _composite_video_with_audio,
@@ -53,8 +77,7 @@ from engine.grok_video import (  # noqa: E402 (after sys.path bootstrap)
 )
 
 # Tesla Shorts Time Ep519 (2026-06-23) — the 46 clips submitted before the
-# pipeline timed out, in script order (clip_id, request_id). Recovered from
-# the failed run's logs.
+# pipeline timed out, in script order (clip_id, request_id). From the run log.
 EP519_REQUESTS = [
     ("ep519_clip00", "f7c995bc-ff2e-93c1-a402-dd6b29f81cf0"),
     ("ep519_clip01", "7b47df6a-a5b0-9781-affe-11212b12019d"),
@@ -106,7 +129,7 @@ EP519_REQUESTS = [
 
 
 def _load_requests(path: Path) -> list[tuple[str, str]]:
-    """Parse a 'clip_id request_id' per-line file ('#' comments allowed)."""
+    """Parse a 'clip_id request_id' (or bare 'request_id') per-line file."""
     out: list[tuple[str, str]] = []
     for raw in path.read_text(encoding="utf-8").splitlines():
         line = raw.split("#", 1)[0].strip()
@@ -114,14 +137,13 @@ def _load_requests(path: Path) -> list[tuple[str, str]]:
             continue
         parts = line.split()
         if len(parts) == 1:
-            out.append((f"clip{len(out):02d}", parts[0]))
+            out.append((f"clip{len(out):03d}", parts[0]))
         else:
             out.append((parts[0], parts[1]))
     return out
 
 
 def _resolve_audio(audio: str, work_dir: Path) -> Path | None:
-    """Return a local path to the audio, downloading it if a URL was given."""
     if not audio:
         return None
     if audio.startswith(("http://", "https://")):
@@ -133,12 +155,151 @@ def _resolve_audio(audio: str, work_dir: Path) -> Path | None:
     return p if p.exists() else None
 
 
+def _list_all_videos(api_key: str) -> list[dict]:
+    """Best-effort enumerate every video on the account.
+
+    The xAI video API is documented only for POST .../generations and
+    GET .../{id}; a list endpoint is not guaranteed. We try GET on the
+    collection with simple pagination and accept the common response shapes
+    ({"data": [...]}, {"videos": [...]}, or a bare list). Returns [] (with a
+    clear message) if the endpoint isn't available.
+    """
+    headers = {"Authorization": f"Bearer {api_key}"}
+    items: list[dict] = []
+    url: str | None = GROK_VIDEO_STATUS_ENDPOINT
+    params = {"limit": 100}
+    seen_pages = 0
+    while url and seen_pages < 100:
+        try:
+            resp = requests.get(url, headers=headers, params=params, timeout=60)
+        except requests.RequestException as exc:
+            print(f"List endpoint unreachable: {exc}", file=sys.stderr)
+            break
+        if resp.status_code == 404:
+            print(
+                "The account-level list endpoint (GET /v1/videos) is not "
+                "available on this API. Use --requests with IDs harvested from "
+                "the run logs instead (see the script header).",
+                file=sys.stderr,
+            )
+            break
+        if resp.status_code >= 400:
+            print(f"List endpoint HTTP {resp.status_code}: {resp.text[:200]}", file=sys.stderr)
+            break
+        try:
+            body = resp.json()
+        except ValueError:
+            print("List endpoint returned non-JSON; cannot enumerate.", file=sys.stderr)
+            break
+
+        page = body.get("data") or body.get("videos") if isinstance(body, dict) else body
+        if not page:
+            break
+        items.extend(page)
+        seen_pages += 1
+
+        # Cursor pagination, if present.
+        nxt = body.get("next_cursor") or body.get("next") if isinstance(body, dict) else None
+        if not nxt:
+            break
+        params = {"limit": 100, "cursor": nxt}
+        url = GROK_VIDEO_STATUS_ENDPOINT
+
+    return items
+
+
+def _run_list_all(api_key: str, out_dir: Path) -> int:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    items = _list_all_videos(api_key)
+    if not items:
+        print("No videos enumerated (endpoint unavailable or account empty).")
+        return 1
+
+    manifest = []
+    got = 0
+    for i, item in enumerate(items):
+        vid = str(item.get("id") or item.get("request_id") or f"video{i:04d}")
+        url = item.get("url")
+        status = item.get("status", "unknown")
+        if not url and status != "completed":
+            # Re-poll by id to get a fresh temporary URL.
+            try:
+                body = _check_video_status_once(vid, api_key=api_key)
+                url, status = body.get("url"), body.get("status", status)
+            except GrokVideoError as exc:
+                print(f"  {vid}: {exc}")
+        if url:
+            dest = out_dir / f"{vid}.mp4"
+            if _download_video(url, dest):
+                got += 1
+                manifest.append({"id": vid, "status": status, "file": dest.name})
+                print(f"  {vid}: downloaded ✓")
+                continue
+        print(f"  {vid}: not downloadable (status={status})")
+        manifest.append({"id": vid, "status": status, "file": None})
+
+    (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    print(f"\nDownloaded {got}/{len(items)} videos → {out_dir} (manifest.json written)")
+    return 0 if got else 1
+
+
+def _retrieve(requests_list, api_key, out_dir, retries, retry_wait):
+    """Poll + download a list of (clip_id, request_id). Returns ordered paths."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    downloaded: list[Path] = []
+    pending = failed = 0
+    for clip_id, request_id in requests_list:
+        body = None
+        for attempt in range(max(1, retries)):
+            try:
+                body = _check_video_status_once(request_id, api_key=api_key)
+            except GrokVideoError as exc:
+                print(f"  {clip_id} [{request_id}]: status error — {exc}")
+                body = None
+                break
+            if body.get("status") == "completed":
+                break
+            if attempt < retries - 1:
+                print(f"  {clip_id}: status={body.get('status')} — retry in {retry_wait:.0f}s")
+                time.sleep(retry_wait)
+
+        if not body or body.get("status") != "completed":
+            status = (body or {}).get("status", "unreachable")
+            print(f"  {clip_id} [{request_id}]: NOT available (status={status})")
+            if status in ("failed", "unreachable"):
+                failed += 1
+            else:
+                pending += 1
+            continue
+
+        url = body.get("url")
+        if not url:
+            print(f"  {clip_id}: completed but no URL")
+            failed += 1
+            continue
+        dest = out_dir / f"{clip_id}.mp4"
+        if _download_video(url, dest):
+            downloaded.append(dest)
+            print(f"  {clip_id}: downloaded ✓")
+        else:
+            failed += 1
+            print(f"  {clip_id}: download failed")
+
+    print(
+        f"\nRecovered {len(downloaded)}/{len(requests_list)} clips "
+        f"({pending} still pending, {failed} failed) → {out_dir}"
+    )
+    return downloaded
+
+
 def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__)
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--list-all", action="store_true", help="Enumerate + download every video on the account")
     ap.add_argument("--requests", type=Path, help="File of 'clip_id request_id' lines (default: embedded Ep519)")
-    ap.add_argument("--audio", default="", help="Episode audio (local path or URL) to composite onto the video")
-    ap.add_argument("--out", type=Path, required=True, help="Output MP4 path")
-    ap.add_argument("--workdir", type=Path, default=None, help="Scratch dir for clips (default: a temp dir)")
+    ap.add_argument("--out-dir", type=Path, default=None, help="Directory to keep the individual clips")
+    ap.add_argument("--stitch", action="store_true", help="Also concatenate the clips into one episode video")
+    ap.add_argument("--audio", default="", help="Episode audio (path or URL) to composite when --stitch")
+    ap.add_argument("--out", type=Path, help="Stitched output MP4 (required with --stitch)")
     ap.add_argument("--retries", type=int, default=3, help="Status-poll retries per clip if still pending")
     ap.add_argument("--retry-wait", type=float, default=10.0, help="Seconds between status retries")
     args = ap.parse_args()
@@ -148,69 +309,37 @@ def main() -> int:
         print("ERROR: set GROK_API_KEY (or XAI_API_KEY) in the environment.", file=sys.stderr)
         return 2
 
-    requests = _load_requests(args.requests) if args.requests else list(EP519_REQUESTS)
-    if not requests:
+    if args.list_all:
+        out_dir = args.out_dir or Path("recovered_videos")
+        return _run_list_all(api_key, out_dir)
+
+    requests_list = _load_requests(args.requests) if args.requests else list(EP519_REQUESTS)
+    if not requests_list:
         print("ERROR: no request IDs to recover.", file=sys.stderr)
         return 2
 
-    work_dir = args.workdir or Path(tempfile.mkdtemp(prefix="grok_video_recover_"))
-    work_dir.mkdir(parents=True, exist_ok=True)
-    print(f"Recovering {len(requests)} clip(s) into {work_dir}")
+    out_dir = args.out_dir or Path(tempfile.mkdtemp(prefix="grok_video_recover_"))
+    print(f"Recovering {len(requests_list)} clip(s) into {out_dir}")
+    downloaded = _retrieve(requests_list, api_key, out_dir, args.retries, args.retry_wait)
 
-    downloaded: list[Path] = []
-    pending: list[str] = []
-    failed: list[str] = []
-
-    for clip_id, request_id in requests:
-        body = None
-        for attempt in range(max(1, args.retries)):
-            try:
-                body = _check_video_status_once(request_id, api_key=api_key)
-            except GrokVideoError as exc:
-                print(f"  {clip_id} [{request_id}]: status error — {exc}")
-                body = None
-                break
-            if body.get("status") == "completed":
-                break
-            if attempt < args.retries - 1:
-                print(f"  {clip_id}: status={body.get('status')} — retrying in {args.retry_wait:.0f}s")
-                time.sleep(args.retry_wait)
-
-        if not body or body.get("status") != "completed":
-            status = (body or {}).get("status", "unreachable")
-            print(f"  {clip_id} [{request_id}]: NOT available (status={status})")
-            (pending if status not in ("failed", "unreachable") else failed).append(clip_id)
-            continue
-
-        url = body.get("url")
-        if not url:
-            print(f"  {clip_id}: completed but no URL in response")
-            failed.append(clip_id)
-            continue
-
-        local = work_dir / f"{clip_id}.mp4"
-        if _download_video(url, local):
-            downloaded.append(local)
-            print(f"  {clip_id}: downloaded ✓")
-        else:
-            failed.append(clip_id)
-            print(f"  {clip_id}: download failed")
-
-    print(
-        f"\nRecovered {len(downloaded)}/{len(requests)} clips "
-        f"({len(pending)} still pending, {len(failed)} failed)."
-    )
     if not downloaded:
-        print("Nothing to stitch — the clips are no longer retrievable.", file=sys.stderr)
+        print("Nothing downloaded — the clips are no longer retrievable.", file=sys.stderr)
         return 1
 
-    # Stitch in submission order (downloaded preserves the request order).
-    stitched = work_dir / "stitched.mp4"
+    if not args.stitch:
+        print(f"Individual clips kept in {out_dir}. Pass --stitch to assemble a video.")
+        return 0
+
+    if not args.out:
+        print("ERROR: --stitch requires --out <file.mp4>.", file=sys.stderr)
+        return 2
+
+    stitched = out_dir / "stitched.mp4"
     if not _stitch_videos_ffmpeg(downloaded, stitched, cleanup=True):
         print("ERROR: stitching failed (is ffmpeg installed?).", file=sys.stderr)
         return 1
 
-    audio_path = _resolve_audio(args.audio, work_dir)
+    audio_path = _resolve_audio(args.audio, out_dir)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     if audio_path and audio_path.exists():
         if _composite_video_with_audio(stitched, audio_path, args.out):
@@ -224,9 +353,9 @@ def main() -> int:
         stitched.replace(args.out)
         print(f"\nDONE → {args.out} (video only — pass --audio to add sound)")
 
-    if len(downloaded) < len(requests):
+    if len(downloaded) < len(requests_list):
         print(
-            "NOTE: this is a PARTIAL recovery — some clips were missing, so the "
+            "NOTE: PARTIAL recovery — some clips were missing, so the stitched "
             "video is shorter than the audio (the composite uses -shortest)."
         )
     return 0
