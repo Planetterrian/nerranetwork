@@ -1,0 +1,89 @@
+Hey, welcome to Models and Agents, episode 90 for June 23, 2026. Lots of news to walk through.
+Let's start with what actually matters. Open AI just shipped a full cyber defense stack,
+GPT 5.5 cyber plus codec security and patch the planet. So defenders can now scan, validate,
+and patch a machine speed inside existing workflows. The daybreak expansion adds a dedicated GPT 5.5
+cyber model that traces vulnerabilities, validates issues, and generates patches. A codec security
+plugin runs deep scans and exports results to tools teams already use. A new cyber partner program
+pairs open AI with trail of bits and hacker 1 for direct maintainer support. The entire stack
+limits itself to authorize defensive work and requires human review before any remediation.
+Teams can now move from initial findings to merged fixes without leaving their current code
+environment. Security vendors are expected to announce integrations through the partner program
+in the coming weeks. This development lands in the ongoing safety and policy conversation
+the show has tracked since episode 89. It tests whether frontier models can deliver reliable audit
+trails in high stakes defensive settings without expanding offensive capabilities.
+Alibaba released Happy Horse 1.1, a 15 billion parameter unified self-attention transformer.
+The model processes text, image, video, and audio in a single forward pass.
+It adds multi-image reference to video support for consistent character identity across shots,
+improved motion modeling, and zero drift lip sync for up to 15 seconds of 1080p output.
+Happy Horse 1.1 sits at number two on the artificial analysis video arena leaderboards ahead of Google
+VO 3.1 in both text-to-video and image-to-video tasks. The upgrade is available now through the alibaba
+cloud model studio API with a 40% discount for the first two weeks. Builders working on advertising
+or serialized video should test the reference to video workflow to check whether identity
+consistency reduces post-production work. Sakana launched Fugu, a multi-agent orchestration system that
+roots queries across a pool of swappable models through a single open AI compatible API.
+Fugu Ultra uses fixed pricing of $5 per million input tokens and $30 per million output tokens.
+On live code bench, the system scores 92.9 to 93.2 above cloud-fable 5 at 89.8.
+On GPQA diamond, it reaches 95.5. The service remains closed source and is currently restricted
+from the EU and EEA, while GDPR alignment continues. This sits inside the frontier models arc covered on
+episode 89. It shows whether orchestration layers can match single model frontier performance without
+direct access to the highest capability endpoints. Nvidia released a set of trusted 24.7 AI privacy
+scanner for purpose built for telecom network operations. The agents run continuous monitoring,
+anomaly detection, and automated remediation inside existing network infrastructure.
+No public install commands or pricing details were shared in the announcement.
+The focus is on reliability and auditability for always on carrier environments.
+Network teams should watch for the first customer deployments to see how the agents
+handle live traffic without human intervention. Microsoft published the first two posts in its
+agent framework series showing how to build a CLI style claw agent with planning, tools,
+memory, and safe execution. The harness wraps a language model in a controllable loop and is
+demonstrated on a personal finance assistant example. No license or pricing is stated.
+The post position the framework as an open building block, developers wanting a lightweight
+alternative to heavier orchestration libraries should clone the examples and run the finance assistant
+demo locally this week. Researchers released self harness, a three-stage loop that lets an agent
+mine its own failure traces, propose minimal harness edits, and validate them through regression testing.
+On terminal dash bench dash 2.0 the system delivered 33 to 60% relative gains across minimax m2.5,
+QN3.5 to 35ba3b and GLM5 without changing the underlying model or tools.
+The method requires deterministic verifiers and is best suited to measurable environments such as
+DevOps pipelines. Teams maintaining custom agents should review the paper to see whether adding a
+weakness mining step to their evaluation harness reduces manual prompt tuning. Simon Willison
+ported the 0.2 billion Moebius image in-painting model to ONNX and web GPU so it runs entirely in
+the browser after a roughly 1.3 gigabyte download. The demo at SimonW.github.io slash
+Moebius hyphen web lets users open any image, mark regions, and run in-painting with caching via
+the cache storage API. The project was built with cloud code and publishes converted weights to
+hugging face. Anyone experimenting with client-side vision tools should open the demo in Chrome or
+Firefox and test in-painting on their own photos to judge whether the 1.3 gigabyte first load cost
+is acceptable for their use case. Niels Raga updated papers with code.co with SOTA badges and
+new trending score combining GitHub stars and hugging face artifact velocity and support for
+external third-party evaluations. New benchmarks include ImageNet 10%, 3-dimensional semantic segmentation,
+and object counting. The site now also lives at paperswithco.de. Researchers tracking SOTA should
+visit the video classification or reasoning task pages to see how the new external Eval support
+surfaces numbers beyond the original papers. Okay, let's pop the hood on the Moebius browser demo.
+Running a model entirely client-side starts with exporting a pie-torch graph to ONNX using opset 18
+so every operator becomes part of a portable computation graph. The export records dynamic axes
+so batch and spatial dimensions stay flexible, but it also drops any pie-torch specific control flow
+that cannot be expressed in the ONNX operator set. Once converted, the 1.24 gigabyte weight file
+must be fetched and cached through the cache storage API, which keeps the tensors resident across
+reloads and reduces later loads from minutes to seconds. Operators without direct web GPU equivalents
+are emulated, adding measurable latency on every forward pass. When the model stays under roughly 1.5
+gigabytes and the workload is embarrassingly parallel, such as single image in-painting,
+the approach wins on privacy and zero install deployment. The moment you need custom CUDA kernels
+or multi-gigabyte context, the same model still belongs on a server with a proper GPU runtime.
+So when should you actually reach for the browser version versus the alternative? Choose the
+browser path when the workload fits the size and parallelism constraints and you need immediate
+privacy or offline access. Open the Moebius in-painting demo and test region removal on your own photos
+to judge whether the 1.3 gigabyte download fits your client-side vision workflow.
+Root a multi-step coding task through Sikana Fugu Ultra and compare token cost and output quality
+against a direct clawed or GPT 5.5 call. Run the Microsoft agent framework, finance,
+hyphen, assistant, example locally to see how the claw harness structures tool use and memory without
+heavier frameworks. Check the updated peepers with code.co task pages for video classification
+or reasoning to see external benchmark numbers that were previously hidden. OpenAI's cyber partner
+program is expected to announce initial security vendor integrations in the coming weeks.
+Alibaba plans to roll out agent run and star ops agent platforms on its new European data centers
+later this year. Sikana will continue expanding the Fugu model pool and is working on GDPR
+compliant routing for EU and EEA availability. Tomorrow keep an eye on the first announced
+security vendor integrations from the OpenAI cyber partner program. That wraps up today's AI
+briefing. Share this with a developer or builder who wants to stay current, subscribe or every
+listen. See you tomorrow and before you go this show is part of the NIR and ERICT letter net work.
+A family of daily podcasts covering tech, science, markets and more. If you enjoyed today's episode,
+give environmental intelligence a listen. The environment and climate policy brief for Canada.
+You can explore the whole lineup at narennetwork.com. This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.
