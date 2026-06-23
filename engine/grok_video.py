@@ -63,6 +63,49 @@ DEFAULT_VIDEO_BUDGET_S = float(os.getenv("GROK_VIDEO_BUDGET_SECONDS", "1200"))
 # partial clip set would clip the episode to the stitched length).
 MIN_CLIP_COMPLETION_RATIO = 0.85
 
+# Status vocabulary. The xAI video API reports a finished clip as "done"
+# (NOT "completed" — the value the original code checked for, so every clip
+# was treated as still-pending and polled until timeout; confirmed against
+# live responses 2026-06-23). Accept the documented + observed spellings.
+_TERMINAL_SUCCESS = frozenset({"completed", "done", "succeeded", "success", "ready"})
+_TERMINAL_FAILURE = frozenset({"failed", "error", "errored", "cancelled", "canceled"})
+
+# Where the result URL can live across response shapes.
+_URL_FIELDS = ("url", "video_url", "download_url", "output_url", "result_url", "asset_url")
+_URL_CONTAINERS = ("result", "output", "video", "data", "asset", "assets")
+
+
+def _is_terminal_success(status) -> bool:
+    return str(status).lower() in _TERMINAL_SUCCESS
+
+
+def _is_terminal_failure(status) -> bool:
+    return str(status).lower() in _TERMINAL_FAILURE
+
+
+def _extract_video_url(body) -> Optional[str]:
+    """Find the downloadable video URL across known response shapes."""
+    if isinstance(body, str):
+        return body if body.startswith("http") else None
+    if not isinstance(body, dict):
+        return None
+    for key in _URL_FIELDS:
+        val = body.get(key)
+        if isinstance(val, str) and val.startswith("http"):
+            return val
+    for container in _URL_CONTAINERS:
+        child = body.get(container)
+        if isinstance(child, dict):
+            found = _extract_video_url(child)
+            if found:
+                return found
+        elif isinstance(child, list):
+            for item in child:
+                found = _extract_video_url(item)
+                if found:
+                    return found
+    return None
+
 # Pricing per second of video output
 VIDEO_COST_USD = {
     "480p": 0.05,
@@ -431,13 +474,13 @@ def _poll_video_status(
                 request_id, attempt + 1, max_attempts, status,
             )
 
-            if status == "completed":
-                logger.info("Grok Video %s completed", request_id)
+            if _is_terminal_success(status):
+                logger.info("Grok Video %s completed (status=%s)", request_id, status)
                 return body
 
-            if status == "failed":
-                error = body.get("error", {})
-                msg = error.get("message", "Unknown error")
+            if _is_terminal_failure(status):
+                error = body.get("error", {}) if isinstance(body.get("error"), dict) else {}
+                msg = error.get("message", status)
                 raise GrokVideoError(f"Grok Video generation failed: {msg}")
 
             # Still pending — wait and retry
@@ -482,10 +525,10 @@ def _check_video_status_once(
             f"Grok Video status HTTP {resp.status_code}: {resp.text[:300]}"
         )
     body = resp.json()
-    if body.get("status") == "failed":
-        error = body.get("error", {})
+    if _is_terminal_failure(body.get("status")):
+        error = body.get("error", {}) if isinstance(body.get("error"), dict) else {}
         raise GrokVideoError(
-            f"Grok Video generation failed: {error.get('message', 'Unknown error')}"
+            f"Grok Video generation failed: {error.get('message', body.get('status', 'Unknown error'))}"
         )
     return body
 
@@ -781,11 +824,11 @@ def generate_grok_videos(
                 logger.warning("Failed to complete %s: %s", clip.clip_id, exc)
                 continue
 
-            if body.get("status") != "completed":
+            if not _is_terminal_success(body.get("status")):
                 still_pending.append(clip)
                 continue
 
-            url = body.get("url")
+            url = _extract_video_url(body)
             if not url:
                 clip.status = "failed"
                 clip.error_message = f"Response missing video URL: {body}"
