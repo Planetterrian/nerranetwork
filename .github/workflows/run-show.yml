@@ -274,7 +274,7 @@ jobs:
         show: ${{ fromJson(needs.gate.outputs.shows) }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           # Shallow clone (June 2026): nothing in the pipeline reads git
           # history, and the repo carries 2.2 GB of legacy MP3 history
@@ -681,7 +681,7 @@ jobs:
       cancel-in-progress: false
     steps:
       - name: Checkout latest main
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: main
           # Shallow — finalize only regenerates pages from working-tree
