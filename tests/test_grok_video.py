@@ -300,6 +300,36 @@ class TestVideoBudget:
             assert mock_status.called  # we did poll at least once
 
 
+class TestVideoDisabledNetworkWide:
+    """Grok Video is DISABLED network-wide (2026-06-23, cost: ~$50/episode).
+
+    Every show must fall back to the image slideshow. Re-enabling video is a
+    deliberate cost decision — this guard blocks a silent regression.
+    """
+
+    def test_no_show_enables_grok_video(self):
+        import glob
+        import os
+
+        offenders = []
+        for path in sorted(glob.glob("shows/*.yaml")):
+            if os.path.basename(path).startswith("_"):
+                continue
+            cfg = load_config(path)
+            vp = (getattr(cfg.youtube, "video_provider", None) or "").lower()
+            if vp == "grok":
+                offenders.append(os.path.basename(path))
+        assert not offenders, (
+            f"Grok Video is disabled network-wide (too expensive); these shows "
+            f"re-enabled it: {offenders}. Set video_provider: null."
+        )
+
+    def test_config_default_video_provider_is_not_grok(self):
+        from engine.config import YouTubeConfig
+
+        assert (YouTubeConfig.video_provider or "").lower() != "grok"
+
+
 class TestStatusVocabulary:
     """Drift guards: the xAI API reports finished clips as 'done', not
     'completed'. The original code only accepted 'completed', so every clip
