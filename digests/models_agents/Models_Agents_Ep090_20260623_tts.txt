@@ -1,0 +1,67 @@
+Hey, welcome to Models and Agents, episode ninety, for June twenty-third, twenty twenty-six. Lots of news to walk through — let's start with what actually matters.
+
+Open A I just shipped a full cyber defense stack—G P T 5.5-Cyber plus Codex Security and Patch the Planet—so defenders can now scan, validate, and patch at machine speed inside existing workflows.
+
+The Daybreak expansion adds a dedicated G P T 5.5-Cyber model that traces vulnerabilities, validates issues, and generates patches. A Codex Security plugin runs deep scans and exports results to tools teams already use.
+
+A new Cyber Partner Program pairs Open A I with Trail of Bits and HackerOne for direct maintainer support. The entire stack limits itself to authorized defensive work and requires human review before any remediation.
+
+Teams can now move from initial findings to merged fixes without leaving their current code environment. Security vendors are expected to announce integrations through the partner program in the coming weeks.
+
+This development lands in the ongoing Safety and Policy conversation the show has tracked since episode eighty-nine. It tests whether frontier models can deliver reliable audit trails in high-stakes defensive settings without expanding offensive capabilities.
+
+Alibaba released HappyHorse 1.1, a fifteen-billion-parameter unified self-attention Transformer. The model processes text, image, video, and audio in a single forward pass.
+
+It adds multi-image reference-to-video support for consistent character identity across shots, improved motion modeling, and zero-drift lip sync for up to fifteen seconds of one thousand eighty p output. HappyHorse 1.1 sits at number two on the Artificial Analysis Video Arena leaderboards, ahead of Google Veo-3.1 in both text-to-video and image-to-video tasks.
+
+The upgrade is available now through the Alibaba Cloud Model Studio A P I with a forty percent discount for the first two weeks. Builders working on advertising or serialized video should test the reference-to-video workflow to check whether identity consistency reduces post-production work.
+
+Sakana launched Fugu, a multi-agent orchestration system that routes queries across a pool of swappable models through a single Open A I compatible A P I. Fugu Ultra uses fixed pricing of five dollars per million input tokens and thirty dollars per million output tokens.
+
+On LiveCodeBench the system scores ninety-two point nine to ninety-three point two, above Claude Fable 5 at eighty-nine point eight. On G P Q A Diamond it reaches ninety-five point five. The service remains closed-source and is currently restricted from the E U and EEA while GDPR alignment continues.
+
+This sits inside the Frontier Models arc covered on episode eighty-nine. It shows whether orchestration layers can match single-model frontier performance without direct access to the highest-capability endpoints.
+
+Nvidia released a set of trusted twenty-four seven A I agents purpose-built for telecom network operations. The agents run continuous monitoring, anomaly detection, and automated remediation inside existing network infrastructure. No public install commands or pricing details were shared in the announcement. The focus is on reliability and auditability for always-on carrier environments.
+
+Network teams should watch for the first customer deployments to see how the agents handle live traffic without human intervention.
+
+Microsoft published the first two posts in its Agent Framework series showing how to build a CLI-style claw agent with planning, tools, memory, and safe execution. The harness wraps a language model in a controllable loop and is demonstrated on a personal finance assistant example. No license or pricing is stated. The posts position the framework as an open building block.
+
+Developers wanting a lightweight alternative to heavier orchestration libraries should clone the examples and run the finance assistant demo locally this week.
+
+Researchers released Self-Harness, a three-stage loop that lets an agent mine its own failure traces, propose minimal harness edits, and validate them through regression testing. On Terminal-Bench-2.0 the system delivered thirty-three to sixty percent relative gains across Mini Max M2.5, Qwenthree point five to thirty-fiveB-A3B, and GLM-5 without changing the underlying model or tools.
+
+The method requires deterministic verifiers and is best suited to measurable environments such as coding or DevOps pipelines. Teams maintaining custom agents should review the paper to see whether adding a weakness-mining step to their evaluation harness reduces manual prompt tuning.
+
+Simon Willison ported the zero point two billion Moebius image inpainting model to ONNX and WebGPU so it runs entirely in the browser after a roughly one point three gigabyte download. The demo at simonw dot github dot io/moebius-web lets users open any image, mark regions, and run inpainting with caching via the CacheStorage A P I.
+
+The project was built with Claude Code and publishes converted weights to Hugging Face. Anyone experimenting with client-side vision tools should open the demo in Chrome or Firefox and test inpainting on their own photos to judge whether the one point three gigabyte first-load cost is acceptable for their use case.
+
+Niels Rogge updated paperswithcode dot co with SOTA badges, a new trending score combining GitHub stars and Hugging Face artifact velocity, and support for external third-party evaluations. New benchmarks include ImageNet-10 percent, three-dimensional semantic segmentation, and object counting. The site now also lives at paperswithco.de.
+
+Researchers tracking SOTA should visit the video-classification or reasoning task pages to see how the new external-eval support surfaces numbers beyond the original papers.
+
+OK, let's pop the hood on the Moebius browser demo. Running a model entirely client-side starts with exporting a Pie Torch graph to ONNX using opset eighteen so every operator becomes part of a portable computation graph.
+
+The export records dynamic axes so batch and spatial dimensions stay flexible, but it also drops any Pie Torch-specific control flow that cannot be expressed in the ONNX operator set. Once converted, the one point two four gigabyte weight file must be fetched and cached through the CacheStorage A P I, which keeps the tensors resident across reloads and reduces later loads from minutes to seconds.
+
+Operators without direct WebGPU equivalents are emulated, adding measurable latency on every forward pass. When the model stays under roughly one point five gigabytes and the workload is embarrassingly parallel, such as single-image inpainting, the approach wins on privacy and zero-install deployment.
+
+The moment you need custom CUDA kernels or multi-gigabyte context, the same model still belongs on a server with a proper G P U runtime. So when should you actually reach for the browser version versus the alternative? Choose the browser path when the workload fits the size and parallelism constraints and you need immediate privacy or offline access.
+
+Open the Moebius inpainting demo and test region removal on your own photos to judge whether the one point three gigabyte download fits your client-side vision workflow. Route a multi-step coding task through Sakana Fugu Ultra and compare token cost and output quality against a direct Claude or G P T 5.5 call.
+
+Run the Microsoft Agent Framework finance-assistant example locally to see how the claw harness structures tool use and memory without heavier frameworks. Check the updated paperswithcode dot co task pages for video classification or reasoning to see external benchmark numbers that were previously hidden.
+
+Open A I’s Cyber Partner Program is expected to announce initial security-vendor integrations in the coming weeks. Alibaba plans to roll out AgentRun and STAROps agent platforms on its new European data centers later this year.
+
+Sakana will continue expanding the Fugu model pool and is working on GDPR-compliant routing for E U and EEA availability.
+
+Tomorrow, keep an eye on the first announced security-vendor integrations from the Open A I Cyber Partner Program.
+
+That wraps up today's A I briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow. And before you go — this show is part of the NAIR-uh NET-work, a family of daily podcasts covering tech, science, markets, and more.
+
+If you enjoyed today's episode, give Environmental Intelligence a listen: the environment and climate-policy brief for Canada. You can explore the whole lineup at nerranetwork dot com.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
