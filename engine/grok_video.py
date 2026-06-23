@@ -45,7 +45,23 @@ GROK_VIDEO_ENDPOINT = "https://api.x.ai/v1/videos/generations"
 GROK_VIDEO_STATUS_ENDPOINT = "https://api.x.ai/v1/videos"
 DEFAULT_TIMEOUT_S = 60
 DEFAULT_POLL_INTERVAL_S = 3
-MAX_POLL_ATTEMPTS = 300  # 15 minutes at 3s intervals
+MAX_POLL_ATTEMPTS = 300  # 15 minutes at 3s intervals (legacy per-clip cap)
+
+# Overall wall-clock budget for the entire video step (submit + poll +
+# download + stitch). A single stuck clip must NEVER starve the others or
+# push the per-episode pipeline past its SIGALRM timeout — that fires a
+# SystemExit mid-render and skips the episode's git commit, leaving a
+# partial publish (audio on R2, nothing committed). Env-overridable; the
+# caller (run_show) additionally clamps this to the time actually left in
+# the pipeline budget. See run_show._timeout_handler + landmine notes on
+# the multilingual decoupling (same timeout class).
+DEFAULT_VIDEO_BUDGET_S = float(os.getenv("GROK_VIDEO_BUDGET_SECONDS", "1200"))
+
+# Minimum fraction of clips that must render before we use the stitched
+# full-length video. Below this we fall back to the image slideshow rather
+# than ship a truncated episode (the audio composite uses -shortest, so a
+# partial clip set would clip the episode to the stitched length).
+MIN_CLIP_COMPLETION_RATIO = 0.85
 
 # Pricing per second of video output
 VIDEO_COST_USD = {
@@ -445,6 +461,35 @@ def _poll_video_status(
     )
 
 
+def _check_video_status_once(
+    request_id: str,
+    *,
+    api_key: str,
+    timeout_s: int = DEFAULT_TIMEOUT_S,
+) -> dict:
+    """Single status GET — no internal sleep loop.
+
+    Returns the response body. ``body["status"]`` is "completed" / "pending"
+    / etc. Raises GrokVideoError on an HTTP/transport error or an API
+    "failed" status. Used by the round-robin poller in generate_grok_videos
+    so one slow clip can't block the others.
+    """
+    headers = {"Authorization": f"Bearer {api_key}"}
+    url = f"{GROK_VIDEO_STATUS_ENDPOINT}/{request_id}"
+    resp = requests.get(url, headers=headers, timeout=timeout_s)
+    if resp.status_code >= 400:
+        raise GrokVideoError(
+            f"Grok Video status HTTP {resp.status_code}: {resp.text[:300]}"
+        )
+    body = resp.json()
+    if body.get("status") == "failed":
+        error = body.get("error", {})
+        raise GrokVideoError(
+            f"Grok Video generation failed: {error.get('message', 'Unknown error')}"
+        )
+    return body
+
+
 def _download_video(url: str, output_path: Path, timeout_s: int = 120) -> bool:
     """Download a video from the temporary URL and save locally."""
     try:
@@ -553,6 +598,7 @@ def generate_grok_videos(
     short_duration_seconds: int = 40,
     final_mp3_path: Optional[Path] = None,
     show_config=None,
+    max_total_seconds: Optional[float] = None,
 ) -> GrokVideoResult:
     """Generate full-length and short videos from a podcast script.
 
@@ -578,11 +624,26 @@ def generate_grok_videos(
         short_duration_seconds: Duration in seconds for the short
         final_mp3_path: Path to pre-mixed episode audio (for composite)
         show_config: Show configuration object (has video_genre, video_mood, etc.)
+        max_total_seconds: Wall-clock budget for the whole step. Clamps the
+            module default (DEFAULT_VIDEO_BUDGET_S) — the caller passes the
+            time actually left in the pipeline so video can never trip the
+            episode SIGALRM and skip the git commit. None → module default.
 
     Returns:
         GrokVideoResult with paths to generated videos and cost tracking.
     """
     start_time = time.time()
+
+    # Resolve the wall-clock budget and deadline. The caller's value clamps
+    # the module default downward (never up) so the env knob stays a ceiling.
+    budget_s = DEFAULT_VIDEO_BUDGET_S
+    if max_total_seconds is not None and max_total_seconds > 0:
+        budget_s = (
+            min(budget_s, float(max_total_seconds))
+            if budget_s > 0
+            else float(max_total_seconds)
+        )
+    deadline = (start_time + budget_s) if budget_s > 0 else None
 
     if api_key is None:
         api_key = (
@@ -641,6 +702,17 @@ def generate_grok_videos(
     SUBMISSION_DELAY_S = 1.5
 
     for idx, clip in enumerate(clips):
+        # Stop submitting if we're already out of budget (defensive — the
+        # submission phase is short, but a tiny caller budget could exhaust
+        # here). Unsubmitted clips stay "queued" and are dropped below.
+        if deadline is not None and time.time() >= deadline:
+            logger.warning(
+                "Grok Video budget (%.0fs) exhausted during submission — "
+                "submitted %d/%d clips before stopping",
+                budget_s, idx, len(clips),
+            )
+            break
+
         # Rate limit: wait between submissions (but not before the first)
         if idx > 0:
             logger.info(
@@ -669,29 +741,57 @@ def generate_grok_videos(
             result.failures.append(f"{clip.clip_id}: {exc}")
             logger.warning("Failed to submit %s: %s", clip.clip_id, exc)
 
-    # Poll for completion and download
+    # Poll for completion and download — ROUND-ROBIN with a global deadline.
+    # Each pass checks every still-pending clip ONCE (no per-clip blocking
+    # loop), so a single stuck clip can't starve the others, and the whole
+    # phase is bounded by `deadline`. When the budget runs out we mark the
+    # stragglers failed and proceed with whatever finished so the episode
+    # pipeline can still commit.
     video_dir = work_dir / f"videos_ep{episode_num:03d}"
     video_dir.mkdir(parents=True, exist_ok=True)
 
-    completed_clips = []
-    for clip in clips:
-        if clip.status == "failed":
-            continue
-
-        try:
-            status_response = _poll_video_status(
-                clip.request_id,
-                api_key=api_key,
-            )
-
-            # Extract video URL from response
-            url = status_response.get("url")
-            if not url:
-                raise GrokVideoError(
-                    f"Response missing video URL: {status_response}"
+    pending = [c for c in clips if c.status == "pending"]
+    while pending:
+        if deadline is not None and time.time() >= deadline:
+            for clip in pending:
+                clip.status = "failed"
+                clip.error_message = "Video budget exceeded before completion"
+                result.failures.append(
+                    f"{clip.clip_id}: budget exceeded ({budget_s:.0f}s)"
                 )
+            logger.warning(
+                "Grok Video budget (%.0fs) exhausted — %d clip(s) still pending; "
+                "proceeding with completed clips so the pipeline can commit",
+                budget_s, len(pending),
+            )
+            break
 
-            # Download the video
+        still_pending = []
+        for clip in pending:
+            if deadline is not None and time.time() >= deadline:
+                still_pending.append(clip)
+                continue
+
+            try:
+                body = _check_video_status_once(clip.request_id, api_key=api_key)
+            except GrokVideoError as exc:
+                clip.status = "failed"
+                clip.error_message = str(exc)
+                result.failures.append(f"{clip.clip_id}: {exc}")
+                logger.warning("Failed to complete %s: %s", clip.clip_id, exc)
+                continue
+
+            if body.get("status") != "completed":
+                still_pending.append(clip)
+                continue
+
+            url = body.get("url")
+            if not url:
+                clip.status = "failed"
+                clip.error_message = f"Response missing video URL: {body}"
+                result.failures.append(f"{clip.clip_id}: missing video URL")
+                continue
+
             local_path = video_dir / f"{clip.clip_id}.mp4"
             if _download_video(url, local_path):
                 clip.url = url
@@ -703,8 +803,6 @@ def generate_grok_videos(
                 cost_per_sec = VIDEO_COST_USD.get(resolution, 0.07)
                 clip.cost_usd = round(duration_sec * cost_per_sec, 4)
                 result.total_cost_usd += clip.cost_usd
-
-                completed_clips.append(clip)
                 logger.info(
                     "Completed %s (duration=%ds, cost=$%.4f)",
                     clip.clip_id, duration_sec, clip.cost_usd,
@@ -714,13 +812,35 @@ def generate_grok_videos(
                 clip.error_message = "Download failed"
                 result.failures.append(f"{clip.clip_id}: Download failed")
 
-        except GrokVideoError as exc:
-            clip.status = "failed"
-            clip.error_message = str(exc)
-            result.failures.append(f"{clip.clip_id}: {exc}")
-            logger.warning("Failed to complete %s: %s", clip.clip_id, exc)
+        pending = still_pending
+        if pending:
+            time.sleep(DEFAULT_POLL_INTERVAL_S)
 
     result.clips = clips
+
+    # Recompute in script order (round-robin completes clips out of order;
+    # the stitch needs them sequential).
+    completed_clips = [c for c in clips if c.status == "completed"]
+
+    # Don't ship a truncated episode: if too few clips rendered, skip the
+    # stitch and let the caller fall back to the image slideshow. The audio
+    # composite uses -shortest, so a partial clip set would clip the episode
+    # to the (shorter) stitched length.
+    total_clips = len(clips)
+    if total_clips and len(completed_clips) < MIN_CLIP_COMPLETION_RATIO * total_clips:
+        logger.warning(
+            "Only %d/%d (%.0f%%) video clips completed (< %.0f%% required) — "
+            "skipping stitch; caller falls back to image slideshow",
+            len(completed_clips), total_clips,
+            100.0 * len(completed_clips) / total_clips,
+            100.0 * MIN_CLIP_COMPLETION_RATIO,
+        )
+        result.is_fallback = True
+        result.failures.append(
+            f"insufficient clips: {len(completed_clips)}/{total_clips}"
+        )
+        result.generation_time_s = round(time.time() - start_time, 2)
+        return result
 
     # Stitch completed clips together
     if completed_clips:

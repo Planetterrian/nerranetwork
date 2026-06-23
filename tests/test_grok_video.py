@@ -252,5 +252,53 @@ class TestGrokVideoResult:
             assert result.short_video_path == short_path
 
 
+class TestVideoBudget:
+    """Drift guards: a stuck clip must never blow the pipeline budget.
+
+    Regression: Tesla Ep519 (2026-06-23) timed out because the video step
+    polled 46 clips sequentially at 15 min/clip with no overall budget; the
+    pipeline SIGALRM fired mid-render and skipped the episode's git commit.
+    """
+
+    def test_signature_has_budget_param_defaulting_none(self):
+        from engine.grok_video import generate_grok_videos
+        import inspect
+
+        sig = inspect.signature(generate_grok_videos)
+        assert "max_total_seconds" in sig.parameters
+        assert sig.parameters["max_total_seconds"].default is None
+
+    def test_module_defines_budget_and_ratio(self):
+        import engine.grok_video as g
+
+        assert g.DEFAULT_VIDEO_BUDGET_S > 0
+        assert 0 < g.MIN_CLIP_COMPLETION_RATIO <= 1.0
+
+    def test_stuck_clips_respect_budget_and_fall_back(self):
+        """Clips that never complete must not hang past the budget; with too
+        few completed the result is a fallback (no full video path)."""
+        import engine.grok_video as g
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with patch.object(g, "_request_one_video", side_effect=lambda *a, **k: "req-123"), \
+                 patch.object(g, "_check_video_status_once", return_value={"status": "pending"}) as mock_status, \
+                 patch.object(g, "DEFAULT_POLL_INTERVAL_S", 0):
+
+                result = g.generate_grok_videos(
+                    work_dir=Path(tmpdir),
+                    episode_num=1,
+                    podcast_script="One short sentence here.",  # 1 clip
+                    hook="hook",
+                    api_key="test-key",
+                    max_total_seconds=0.5,  # clip never completes within budget
+                )
+
+            # Never produced a full video; flagged fallback so the caller
+            # uses the image slideshow instead of a truncated episode.
+            assert result.full_video_path is None
+            assert result.is_fallback is True
+            assert mock_status.called  # we did poll at least once
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
