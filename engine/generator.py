@@ -931,6 +931,54 @@ def _build_expansion_retry_prompt(
     )
 
 
+def _build_digest_expansion_retry_prompt(
+    word_count: int,
+    min_words: int,
+    draft: str,
+    *,
+    narrative: bool = False,
+) -> str:
+    """Build the one-shot expansion-retry prompt for a too-short digest/brief.
+
+    The digest is the substrate the podcast script expands from, so a thin
+    brief caps the episode no matter how well the podcast-stage retry works
+    (First Principles briefs shipped 848-1116w against a 1600-word prompt
+    floor). ``narrative=True`` shows have exactly ONE topic, so the retry
+    DEEPENS the existing segments — walk the arithmetic out number by number,
+    name the specific parts/materials/processes, address the obvious
+    objection — rather than asking for more stories. Opt-in via
+    ``llm.digest_expand_below_target``; mirrors
+    ``_build_expansion_retry_prompt`` for the podcast stage.
+    """
+    if narrative:
+        return (
+            f"\n\n---\n"
+            f"The brief you just wrote is only {word_count} words — too thin to "
+            f"produce a full long-form episode (a thin brief always makes a thin "
+            f"episode). Rewrite it to at least {min_words} words by DEEPENING the "
+            f"reasoning already present — this brief covers ONE subject, so go "
+            f"deeper, do NOT invent a second topic:\n"
+            f"- Keep the exact same structure, segment markers, and HOOK line\n"
+            f"- For each segment, walk the reasoning out further: spell the "
+            f"arithmetic out number by number, name the specific parts, materials, "
+            f"and processes, and address the obvious 'but what about...' objection\n"
+            f"- Preserve every hedge ('roughly', 'on the order of', 'a rough "
+            f"magic-wand estimate') — keep approximate figures approximate\n"
+            f"- Do NOT fabricate statistics, dates, names, or quotes, and do not "
+            f"repeat any sentence verbatim — go deeper, never pad with repetition\n\n"
+            f"Here is your short brief to expand:\n\n{draft}"
+        )
+    return (
+        f"\n\n---\n"
+        f"The digest you just wrote is only {word_count} words — it under-covers "
+        f"the day. Rewrite it to at least {min_words} words by developing each "
+        f"item to full depth (more fact-bearing sentences: numbers, names, "
+        f"sources) without inventing facts or repeating any sentence verbatim. "
+        f"Keep the same structure and headline set.\n\n"
+        f"Here is your short digest to expand:\n\n{draft}"
+    )
+
+
 def _sanitize_podcast_script(text: str) -> str:
     """Strip known LLM artifacts that break TTS quality.
 
@@ -1450,6 +1498,72 @@ def generate_digest(
                 "Repetition retry failed for '%s' (%s) — keeping original",
                 config.name, exc,
             )
+
+    # One-shot digest-length expansion retry (opt-in via
+    # llm.digest_expand_below_target). The brief is the substrate the podcast
+    # expands from, so a thin brief caps the episode even when the podcast-
+    # stage retry works. Mirrors generate_podcast_script's expansion retry;
+    # narrative shows deepen the single topic, news shows develop more depth.
+    # Default off (min_digest_words=0) → byte-for-byte no-op for every other
+    # show. Skipped when the digest was rescued by an educational fallback
+    # (template_vars may not reflect a normal brief).
+    if (
+        getattr(config.llm, "digest_expand_below_target", False)
+        and getattr(config.llm, "min_digest_words", 0) > 0
+    ):
+        min_digest_words = int(config.llm.min_digest_words)
+        word_count = len(text.split())
+        if word_count < min_digest_words:
+            logger.info(
+                "Digest for '%s' is %d words (< %d target) — firing one-shot "
+                "expansion retry", config.name, word_count, min_digest_words,
+            )
+            expansion_prompt = prompt + _build_digest_expansion_retry_prompt(
+                word_count,
+                min_digest_words,
+                text,
+                narrative=bool(getattr(config, "narrative_mode", False)),
+            )
+            try:
+                expanded, meta_exp = _call_grok(
+                    expansion_prompt,
+                    model=config.llm.model,
+                    system_prompt=system_prompt,
+                    temperature=config.llm.digest_temperature,
+                    max_tokens=config.llm.max_tokens,
+                )
+                # Validate the expanded draft is real content, not a refusal.
+                _validate_llm_output(expanded, stage="digest", show_name=config.name)
+                expanded_wc = len(expanded.split())
+                if expanded_wc > word_count:
+                    logger.info(
+                        "Digest expansion retry improved '%s' (%d -> %d words)",
+                        config.name, word_count, expanded_wc,
+                    )
+                    text = expanded
+                    if tracker and "usage" in meta_exp:
+                        try:
+                            from engine.tracking import record_llm_usage
+                            record_llm_usage(
+                                tracker,
+                                "x_thread_generation_expansion",
+                                meta_exp["usage"].get("prompt_tokens", 0),
+                                meta_exp["usage"].get("completion_tokens", 0),
+                                model=config.llm.model,
+                            )
+                        except Exception as e:
+                            logger.warning("Failed to record expansion LLM usage: %s", e)
+                else:
+                    logger.warning(
+                        "Digest expansion retry for '%s' did not lengthen "
+                        "(%d -> %d words) — keeping original",
+                        config.name, word_count, expanded_wc,
+                    )
+            except (LLMRefusalError, Exception) as exc:
+                logger.warning(
+                    "Digest expansion retry failed for '%s' (%s) — keeping original",
+                    config.name, exc,
+                )
 
     # Strip near-verbatim duplicate story blocks so the podcast script
     # generator doesn't inherit them.

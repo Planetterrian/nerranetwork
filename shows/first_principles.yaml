@@ -28,6 +28,13 @@ llm:
   podcast_max_tokens: 9000
   min_podcast_words: 1500
   podcast_expand_below_target: true
+  # Digest-stage expansion retry (June 2026 FP pass). Briefs shipped
+  # 848-1116w vs the prompt's 1600 floor, capping the podcast even after
+  # the podcast-stage retry. 1400 is the retry TRIGGER, set below the
+  # observed grok-4.3 ~1200-1500w plateau so it rescues genuinely-thin
+  # briefs (~900w) without fighting the ceiling.
+  min_digest_words: 1400
+  digest_expand_below_target: true
   podcast_chain: true
 tts: {}
 audio:
@@ -78,6 +85,19 @@ chapters:
   - pattern: Welcome.*First Principles|First Principles Daily|first episode
     title: Introduction
     where: start
+  # Closing is listed BEFORE the body markers (EI June-11 / SpaceX June-18
+  # ordering rule). The sign-off tagline "one example or one opportunity,
+  # every day" contains "opportunity", and the brand "First Principles Daily"
+  # contains "first principle" — so the body markers "The Opportunity" /
+  # "The First Principle" steal the sign-off line whenever they have not
+  # already matched in the body, dropping the Closing chapter. 7 of the
+  # first 18 episodes (Ep001/004/007/009/011/015/017) shipped with NO Closing
+  # for this reason. `where: end` keeps Closing out of the body, so listing
+  # it first only changes which marker wins the final sign-off line.
+  - pattern: that.?s.*for today|until next time|see you tomorrow|one example or one
+      opportunity
+    title: Closing
+    where: end
   - pattern: first principle|magic wand|raw material|atoms
     title: The First Principle
   - pattern: idiot index|finished part|cost of the materials|times more
@@ -88,10 +108,6 @@ chapters:
     title: The Opportunity
   - pattern: lesson|takeaway|principle to remember|what this teaches|the bigger idea
     title: The Lesson
-  - pattern: that.?s.*for today|until next time|see you tomorrow|one example or one
-      opportunity
-    title: Closing
-    where: end
 newsletter:
   enabled: true
   platform: buttondown

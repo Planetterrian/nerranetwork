@@ -530,6 +530,32 @@ TST received a full recursive improvement architecture (analogous to MIT):
   is accepted (operator confirmed grok-4.3 plateaus, resists escalation),
   not re-litigated. Retry edit changes shipped audio when it fires —
   A/B-listen per landmine #17.
+  **June 23 2026 second pass** (review:
+  [`docs/reviews/first_principles_review_2026_06_23.md`](docs/reviews/first_principles_review_2026_06_23.md);
+  drift guards: `tests/test_first_principles_quality_pass.py::TestClosingNotStolenByBodyMarkers`,
+  `TestLessonTemplateDeSeed`, `TestDigestExpansionRetry`): scored the June-10
+  predictions — the narrative retry was PARTIAL (scripts now exceed their
+  briefs but the thin brief still caps a few) and the chapter prediction
+  MISSED on its Closing half. P0: **7 of the first 18 episodes
+  (Ep001/004/007/009/011/015/017) shipped with NO Closing chapter** — the
+  June-10 `where` anchors fixed the duplicate-Introduction class but not
+  this one: the sign-off tagline "one example or one **opportunity**, every
+  day" (and the brand "**First Principles** Daily") let the body markers
+  *The Opportunity* / *The First Principle* steal the closing line whenever
+  they had not matched earlier in the body. Fixed by listing **Closing
+  before the body markers** (EI June-11 / SpaceX June-18 ordering rule);
+  `where: end` keeps it out of the body → 18/18 episodes get a Closing
+  chapter (metadata-only, no audio). P1: the June-10-deferred **lesson-
+  template echo** grew to 12 of ~16 episodes opening the lesson with the
+  verbatim seeded formula "a [part] whose price greatly exceeds its
+  [materials] is announcing a design problem" (Omni-View "strongest case"
+  class) — de-seeded both digest-prompt tracks, require fresh per-topic
+  phrasing (`--test`: formula gone). P1: shipped the June-10-deferred
+  **digest-stage expansion retry** (new opt-in `llm.digest_expand_below_target`
+  / `llm.min_digest_words`, default no-op; narrative-aware deepen-the-brief,
+  mirrors the podcast stage; FP opts in at 1400 — `--test`: a 1146w brief
+  lifted to 1400w). Prompt + digest-retry edits change shipped output —
+  A/B-listen per landmine #17; the chapter reorder does not.
 - **UC** (Unintended Consequences) runs via `run_show.py` +
   `shows/unintended_consequences.yaml`; a weekday **narrative** show
   (`narrative_mode: true`, topic-queue-driven — no news fetch). Patrick
