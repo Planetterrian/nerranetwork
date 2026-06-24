@@ -449,6 +449,26 @@ TST received a full recursive improvement architecture (analogous to MIT):
   Dive lever stays deferred pending the four-show length A/B. The `@`→"at at"
   YouTube-CTA wart in Ep103 was already fixed upstream by the June-16 FP pass.
   Prompt edit changes output — A/B-listen per landmine #17.
+  **June 24 2026 third pass** (review:
+  [`docs/reviews/fascinating_frontiers_review_2026_06_24.md`](docs/reviews/fascinating_frontiers_review_2026_06_24.md);
+  drift guards: `tests/test_fascinating_frontiers_quality_pass.py::TestChapterClosingOrdering`):
+  scored June-16 — launch-false-drop prediction HIT; the stock-filter
+  prediction PARTIAL (dailies clean, but the Sunday recap Ep108 re-surfaced
+  pre-filter Ep103 SPCX content via the content lake — `engine/weekly_recap.py`
+  bypasses the fetch filter; self-healing next cycle, deferred). Headline: the
+  orphan-Closing chapter class the snapshot's loose `chapter_issues` check
+  missed — Ep110/Ep111 shipped with NO Closing chapter (ended on Tomorrow
+  Teaser) and Ep109 shipped a spurious out-of-order Cosmic Deep Dive chapter.
+  Root cause: the sign-off "…see you next time" matches the teaser's `Next
+  time` and Teaser was listed before Closing; the real "Keep an eye on…"/
+  "Watch for…" teaser openers (6/8) matched no pattern; and bare `deep dive`
+  only ever matched the cross-promo "daily deep dive into everything Tesla".
+  Fixed (metadata-only, no audio): Closing before Tomorrow Teaser, teaser
+  broadened to line-anchored `^Keep an eye on`/`^Watch for`, bare `deep
+  dive`/`under the hood` dropped (EI June-11 / SpaceX June-18 / FP June-23
+  ordering-rule class) — verified by re-parsing real Ep108-111 (all now end
+  Tomorrow Teaser -> Closing). Chronic under-length + the digest-driven
+  mid-section chapter titles stay deferred.
 - **PR** (Привет, Русский!) runs via `run_show.py` +
   `shows/privet_russian.yaml`; bilingual Russian language learning podcast
   for English speakers. Even days only. Uses **ElevenLabs TTS**
