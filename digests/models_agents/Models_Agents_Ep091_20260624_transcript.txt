@@ -1,0 +1,103 @@
+Hey, welcome to Models & Agents episode 91 on June 24th, 2026. Let's see what shipped,
+plenty of model releases and agent benchmarks moving today.
+Claude now joins teams as a persistent org-wide Slack entity.
+The third major shift in LLM interaction after websites and desktop apps.
+Deflash delivers up to 15 times throughput on Navidia Blackwell by drafting whole token blocks in
+parallel instead of auto-regressive token by token generation.
+Quen released two new agent world MoE models trained to simulate tool, terminal, and GUI
+environments rather than chat directly. OpenAI opened applications for DevDay 2026 in San Francisco
+on September 29, with the keynote live streamed. The top story today centers on a new inference technique
+from UC San Diego that changes how speculative decoding works at scale.
+Deflash replaces standard speculative decoding with a lightweight block diffusion model that drafts
+entire token blocks in one forward pass. It conditions on target model hidden features via KV injection
+and ships with 20 checkpoints plus support for SG Lang, VLLM, and tensor RT-LLM.
+The approach reports up to 6.08 times lossless speed up on Quen3, 8B, and NVIDIA measured
+peaks of 15 times throughput on Blackwell hardware at fixed interactivity.
+Builders working on high throughput inference pipelines can now test the integration without
+custom drafting logic. This update moves forward the ongoing conversation around AI, compute,
+and inference economics that we tracked yesterday by showing measurable gains on existing serving
+frameworks rather than new hardware requirements. Watch for community benchmarks on other model families
+and whether the block diffusion drafting generalizes beyond the reported setups.
+Quen released the agent world 35BA3B model, a 35 billion parameter mixture of experts with only
+about 3 billion active parameters per token. The model was trained to predict environment responses
+after agent actions across MCP, Terminal, SWE, Android, Web, and OS GUI domains.
+It functions as a language world model for simulating the observation side of agent loops
+rather than a chat model. The release includes a hugging face checkpoint and is positioned for
+offline evaluation, synthetic trajectory generation, and sandbox testing. Builders can use it to
+generate training data or validate tool use workflows without repeatedly calling real environments.
+This release continues the open-weight models track we discussed yesterday by narrowing the gap
+and specialized agent simulation rather than general chat performance.
+Baidu open sourced unlimited OCR, a 3.3 billion multilingual model under MIT license that performs one
+shot full document parsing on single images, multi-page documents, and PDFs. It supports 32K output length
+and offers base and Gundam image modes for different layouts, with inference available via
+transformers or SG-lang, with open AI compatible streaming. The model targets deeper document
+understanding beyond cropped region OCR. Teams handling long PDFs or mixed language archives should
+tested this week against current pipelines. Quinn also released the larger agent world 397 BA-17
+B sibling model on hugging face and the Quinn blog. It maintains the same environment simulation training
+objective across agent interaction domains. Early discussion centers on its potential for higher
+fidelity trajectory synthesis at scale. No detailed benchmarks were released with the announcement.
+Expo SQL adds clause level rewards derived from execution results and error messages to reinforcement
+learning for text to SQL, replacing uniform query level rewards. It shows consistent gains over
+supervised fine tuning, prompting, and prior RL baselines on standard benchmarks. Code is available
+at the linked GitHub repository. Andre Carpathy described Claude Tag as the third major LLM UI-UX
+paradigm. A self-contained persistent asynchronous entity with org-wide tools, memory, and context
+that integrates directly into Slack. Once engineering work for security, compute, and integrations is
+complete, teams can interact with it conversationally across workloads. The approach moves beyond
+website or desktop app models toward inline team participation. This development advances the agents
+and tool use arc we covered yesterday by moving from experimental prototypes toward production team
+integration patterns. Carpathy also highlighted an enterprise grade coding system that writes the
+majority of code in team settings, deeply integrated and multiplayer inside Slack. It differs from simple
+RGAS over Slack or OpenClaw style tools by functioning as a shared workspace where participants act
+more like managers. The product has moved past hackathon stage through internal iteration and now
+supports real deployments. Circle published a USDC specification for a machine payments protocol aimed
+at AI agent transactions. The spec targets automated machine to machine payments without human
+intermediaries. Early details focus on protocol design rather than live implementations. Applications
+are now open for the September 29 open AI Dev Day event in San Francisco. With the opening keynote
+available via live stream for remote attendees, the deadline is July 10. Developers planning to attend
+or watch should apply soon. Community member on our slash local LLMA is testing a Psi E 5.0 16 times
+slot split into two slash eight configuration via riser cable. The setup aims to accommodate both an
+RTX 5070 Ti and an RTX 4070 within a single system. Daytime use focuses on agent workloads while evenings
+shift to gaming activities. Token generation speeds stay acceptable when operating at 16,000
+context length. Performance degrades noticeably when scaling context to 128,000 tokens under the split
+configuration. The discussion centers on potential effects to the primary GPU from the bandwidth
+division. This hardware experiment reflects practical considerations for multi GPU agent and
+inference setups. The Mod-G-G-C-N paper from Ericsive introduces a modularity aware graph neural
+network designed specifically for text classification tasks. It incorporates a modularity based auxiliary
+loss function that encourages the formation of class coherent document communities within the
+graph structure. The method decouples the original text G-C-N graph construction to achieve training
+speed ups ranging from two to ten times. Performance improvements are particularly noted on data sets
+exhibiting low homophiliy characteristics. This auxiliary loss helps the model better capture community
+structures aligned with classification labels. Researchers can access the full details in the R-Craft
+Preprint for implementation specifics. The approach target scenarios where standard graph neural
+networks struggle with disconnected class representations. Okay, let's pop the hood on clause
+level rewards in reinforcement learning for text to SQL. Everyone talks about reinforcement learning
+for text to SQL as simply add execution feedback and improve. In practice, the reward design itself
+determines whether the model learns to fix individual clauses or just guesses whole queries.
+Standard methods assign a single scalar reward to the entire generated SQL. So a query with one wrong
+wear clause and correct select join still receives the same penalty as a completely broken query.
+Expo underscore aql instead parses execution errors and runs incremental clause execution to tag exactly
+which clauses failed. This produces per clause learning signals that let the policy gradient update
+only the faulty parts while reinforcing correct ones. The engineering cost is extra execution traces
+per training example, but the paper shows this finer granularity outperforms both SFT and prior
+RRL baselines on standard benchmarks. The approach works best when execution feedback is cheap and
+deterministic. In domains where queries are expensive or non deterministic, the clause level signal
+becomes noisy. Teams should prefer it when they already have reliable database sandboxes and want to
+squeeze more signal from each failed generation. Test D-flash integration in VLLM or tensor RT-LLM
+on a blackwell instance if you run high volume inference and want to measure the reported 6 to 15 times
+throughput gains. Download the Quinn-Obench Quasiska even world 35ba3b checkpoint and use it to
+generate synthetic trajectories for your own agent training loop instead of calling live tools every
+time. Apply for OpenAI DevDay 2026 before the July 10 deadline if you want to attend or watch the
+keynote on new developer tooling. Try Unlimited-OCR on a multi-page mixed language PDF to compare full
+document parsing speed and accuracy against your current pipeline. Keep an eye on the OpenAI DevDay
+2026 keynote on September 29 with remote live stream option. Continued releases from the Quinn
+agent world family are expected as more environment simulation checkpoints appear. Further community
+testing of D-flash across additional model families and serving frameworks is also on the way.
+Tomorrow keep an eye on additional Quinn agent world checkpoints and early community numbers for
+D-flash on non-blackwell hardware. That's models and agents for today. If you found this useful,
+share it with someone who's trying to keep up with all these changes and subscribe so you don't miss
+tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow and before you go,
+this show is part of the near network, a family of daily podcasts covering tech, science,
+markets, and more. If you enjoyed today's episode, give models and agents for beginners a listen.
+Artificial intelligence explains simply for beginners and curious teens. You can explore the
+whole lineup at naranetwork.com. This episode used AI voice synthesis of my voice,
+editorial selection, and analysis are my own.
