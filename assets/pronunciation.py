@@ -338,8 +338,13 @@ COMMON_ACRONYMS: Dict[str, str] = {
 # Proper names and terms that TTS commonly mispronounces
 WORD_PRONUNCIATIONS: Dict[str, str] = {
     # --- Network / brand names ---
-    "Nerra Network": "NAIR-uh NET-work",
-    "Nerra": "NAIR-uh",
+    # "Nerra" / "Nerra Network" respellings moved to
+    # shows/pronunciation_map.yaml (audio-only) on 2026-06-24. This layer leaks
+    # into the saved _tts.txt → blog/RSS transcript, so the respelling was
+    # showing up as written text; the YAML map applies at synthesis time only,
+    # keeping the transcript on the clean brand while normalizing every spoken
+    # form ("Nerra Network", the "nerranetwork" URL compound, the YouTube
+    # handle) to one pronunciation. See that file for the entries.
 
     # --- Show names ---
     # ``Planetterrian`` respelling removed (May 11 2026). Two prior

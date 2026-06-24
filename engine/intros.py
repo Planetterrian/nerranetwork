@@ -923,6 +923,15 @@ def _maybe_append_youtube_cta(closing: str, handle: str, is_ru: bool = False) ->
     if "youtube" in closing.lower() or handle.lower() in closing.lower():
         return closing
     spoken_handle = handle.lstrip("@").strip()
+    # Split the English channel's CamelCase handle into the spaced brand so the
+    # TTS pronounces "Nerra Network" identically to every other brand mention in
+    # the closing. The compound "NerraNetwork" otherwise gets a guessed,
+    # drifting pronunciation (the promo also says "Nerra Network" spaced and
+    # "nerranetwork.com"), so the same segment shipped 2-3 different "Nerra"s.
+    # EN-only by design: the Russian "NerraRU" must stay one token — a blanket
+    # CamelCase split would voice it "Nerra R U" on the Olya voice.
+    if spoken_handle == "NerraNetwork":
+        spoken_handle = "Nerra Network"
     if is_ru:
         cta = (
             f" А если вам удобнее смотреть, а не только слушать — "
