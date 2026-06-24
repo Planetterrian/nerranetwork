@@ -1,0 +1,153 @@
+Hey, welcome to Models and Agents, episode ninety-one, on June twenty-fourth, twenty twenty-six. Let's see what shipped. Plenty of model releases and agent benchmarks moving today.
+
+Claude now joins teams as a persistent, org-wide Slack entity—the third major shift in L L M interaction after websites and desktop apps.
+
+DFlash delivers up to fifteen times throughput on Nvidia Blackwell by drafting whole token blocks in parallel instead of autoregressive token-by-token generation.
+
+Qwen released two new AgentWorld MoE models trained to simulate tool, terminal, and GUI environments rather than chat directly.
+
+Open A I opened applications for DevDay 2026 in San Francisco on September twenty nine, with the keynote livestreamed.
+
+The top story today centers on a new inference technique from UC San Diego that changes how speculative decoding works at scale.
+
+DFlash replaces standard speculative decoding with a lightweight block diffusion model that drafts entire token blocks in one forward pass.
+
+It conditions on target model hidden features via KV injection and ships with twenty checkpoints plus support for SGLang, vLLM, and TensorRT-L L M.
+
+The approach reports up to six point zero eight times lossless speedup on Qwen three eight B and Nvidia-measured peaks of fifteen times throughput on Blackwell hardware at fixed interactivity.
+
+Builders working on high-throughput inference pipelines can now test the integration without custom drafting logic.
+
+This update moves forward the ongoing conversation around A I compute and inference economics that we tracked yesterday by showing measurable gains on existing serving frameworks rather than new hardware requirements.
+
+Watch for community benchmarks on other model families and whether the block-diffusion drafting generalizes beyond the reported setups.
+
+Qwen released the AgentWorld thirty five B A three B model, a thirty five billion parameter mixture of experts with only about three billion active parameters per token.
+
+The model was trained to predict environment responses after agent actions across M C P, terminal, SWE, Android, web, and OS GUI domains.
+
+It functions as a language world model for simulating the observation side of agent loops rather than a chat model.
+
+The release includes a Hugging Face checkpoint and is positioned for offline evaluation, synthetic trajectory generation, and sandbox testing.
+
+Builders can use it to generate training data or validate tool-use workflows without repeatedly calling real environments.
+
+This release continues the open-weight models track we discussed yesterday by narrowing the gap in specialized agent simulation rather than general chat performance.
+
+Baidu open-sourced Unlimited-OCR, a three point three billion multilingual model under MIT license that performs one-shot full-document parsing on single images, multi-page documents, and PDFs.
+
+It supports thirty two K output length and offers base and gundam image modes for different layouts, with inference available via Transformers or SGLang with Open A I compatible streaming.
+
+The model targets deeper document understanding beyond cropped-region OCR.
+
+Teams handling long PDFs or mixed-language archives should test it this week against current pipelines.
+
+Qwen also released the larger AgentWorld three hundred ninety seven B A seventeen B sibling model on Hugging Face and the Qwen blog.
+
+It maintains the same environment-simulation training objective across agent interaction domains.
+
+Early discussion centers on its potential for higher-fidelity trajectory synthesis at scale.
+
+No detailed benchmarks were released with the announcement.
+
+EXPO-SQL adds clause-level rewards derived from execution results and error messages to reinforcement learning for Text-to-SQL, replacing uniform query-level rewards.
+
+It shows consistent gains over supervised fine-tuning, prompting, and prior RL baselines on standard benchmarks.
+
+Code is available at the linked GitHub repository.
+
+Andrej Kar-pathy described Claude Tag as the third major L L M UI UX paradigm, a self-contained, persistent, asynchronous entity with org-wide tools, memory, and context that integrates directly into Slack.
+
+Once engineering work for security, compute, and integrations is complete, teams can interact with it conversationally across workloads.
+
+The approach moves beyond website or desktop-app models toward inline team participation.
+
+This development advances the agents and tool use arc we covered yesterday by moving from experimental prototypes toward production team integration patterns.
+
+Kar-pathy also highlighted an enterprise-grade coding system that writes the majority of code in team settings, deeply integrated and multiplayer inside Slack.
+
+It differs from simple rag-over-Slack or OpenClaw-style tools by functioning as a shared workspace where participants act more like managers.
+
+The product has moved past hackathon stage through internal iteration and now supports real deployments.
+
+Circle published a USDC specification for a machine payments protocol aimed at A I agent transactions.
+
+The spec targets automated, machine-to-machine payments without human intermediaries.
+
+Early details focus on protocol design rather than live implementations.
+
+Applications are now open for the September twenty nine Open A I DevDay event in San Francisco, with the opening keynote available via livestream for remote attendees.
+
+The deadline is July ten.
+
+Developers planning to attend or watch should apply soon.
+
+Community member on r/LocalLLaMA is testing a PCIe 5.0 sixteen times slot split into 2x8 configuration via riser cable.
+
+The setup aims to accommodate both an RTX 5070 Ti and an RTX 4070 within a single system.
+
+Daytime use focuses on agent workloads while evenings shift to gaming activities.
+
+Token generation speeds stay acceptable when operating at sixteen thousand context lengths.
+
+Performance degrades noticeably when scaling context to one hundred twenty-eight thousand tokens under the split configuration.
+
+The discussion centers on potential effects to the primary G P U from the bandwidth division.
+
+This hardware experiment reflects practical considerations for multi-G P U agent and inference setups.
+
+The ModTGCN paper from arXiv introduces a modularity-aware graph neural network designed specifically for text classification tasks.
+
+It incorporates a modularity-based auxiliary loss function that encourages the formation of class-coherent document communities within the graph structure.
+
+The method decouples the original TextGCN graph construction to achieve training speedups ranging from two to ten times.
+
+Performance improvements are particularly noted on datasets exhibiting low homophily characteristics.
+
+This auxiliary loss helps the model better capture community structures aligned with classification labels.
+
+Researchers can access the full details in the arXiv preprint for implementation specifics.
+
+The approach targets scenarios where standard graph neural networks struggle with disconnected class representations.
+
+OK, let's pop the hood on clause-level rewards in reinforcement learning for Text-to-SQL.
+
+Everyone talks about reinforcement learning for Text-to-SQL as simply add execution feedback and improve.
+
+In practice, the reward design itself determines whether the model learns to fix individual clauses or just guesses whole queries.
+
+Standard methods assign a single scalar reward to the entire generated SQL, so a query with one wrong WHERE clause and correct SELECT JOIN still receives the same penalty as a completely broken query.
+
+EXPO-SQL instead parses execution errors and runs incremental clause execution to tag exactly which clauses failed.
+
+This produces per-clause learning signals that let the policy gradient update only the faulty parts while reinforcing correct ones.
+
+The engineering cost is extra execution traces per training example, but the paper shows this finer granularity outperforms both SFT and prior RL baselines on standard benchmarks.
+
+The approach works best when execution feedback is cheap and deterministic.
+
+In domains where queries are expensive or non-deterministic, the clause-level signal becomes noisy.
+
+Teams should prefer it when they already have reliable database sandboxes and want to squeeze more signal from each failed generation.
+
+Test DFlash integration in vLLM or TensorRT-L L M on a Blackwell instance if you run high-volume inference and want to measure the reported six to fifteen times throughput gains.
+
+Download the Qwen-AgentWorld thirty five B A three B checkpoint and use it to generate synthetic trajectories for your own agent training loop instead of calling live tools every time.
+
+Apply for Open A I DevDay twenty twenty six before the July ten deadline if you want to attend or watch the keynote on new developer tooling.
+
+Try Unlimited-OCR on a multi-page mixed-language PDF to compare full-document parsing speed and accuracy against your current pipeline.
+
+Keep an eye on the Open A I DevDay twenty twenty six keynote on September twenty nine with remote livestream option.
+
+Continued releases from the Qwen AgentWorld family are expected as more environment-simulation checkpoints appear.
+
+Further community testing of DFlash across additional model families and serving frameworks is also on the way.
+
+Tomorrow, keep an eye on additional Qwen AgentWorld checkpoints and early community numbers for DFlash on non-Blackwell hardware.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And before you go — this show is part of the NAIR-uh NET-work, a family of daily podcasts covering tech, science, markets, and more.
+
+If you enjoyed today's episode, give Models and Agents for Beginners a listen: artificial intelligence explained simply, for beginners and curious teens. You can explore the whole lineup at nerranetwork dot com.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
