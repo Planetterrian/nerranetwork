@@ -1,0 +1,153 @@
+Salut, bienvenue dans Modèles et Agents, épisode quatre-vingt-onze, le vingt-quatre juin deux mille vingt-six. Voyons ce qui a été lancé aujourd’hui. De nombreuses sorties de modèles et de nouveaux benchmarks pour les agents sont à l’ordre du jour.
+
+Claude rejoint désormais les équipes sous la forme d’une entité persistante présente sur l’ensemble de l’organisation dans Slack. Il s’agit du troisième grand changement dans l’interaction avec les modèles de langage après les sites web et les applications de bureau.
+
+DFlash atteint jusqu’à quinze fois le débit sur Nvidia Blackwell en générant des blocs entiers de tokens en parallèle plutôt que de produire les tokens un par un de manière autorégressive.
+
+Qwen a publié deux nouveaux modèles MoE AgentWorld entraînés pour simuler des environnements d’outils, de terminaux et d’interfaces graphiques plutôt que pour discuter directement.
+
+OpenAI a ouvert les candidatures pour DevDay deux mille vingt-six à San Francisco le vingt-neuf septembre, avec la keynote diffusée en direct.
+
+L’actualité principale du jour porte sur une nouvelle technique d’inférence mise au point par l’UC San Diego qui modifie le fonctionnement du décodage spéculatif à grande échelle.
+
+DFlash remplace le décodage spéculatif classique par un modèle de diffusion de blocs léger qui génère des blocs entiers de tokens en une seule passe avant.
+
+Le système s’appuie sur les caractéristiques cachées du modèle cible via une injection KV et s’accompagne de vingt points de contrôle ainsi que d’une prise en charge de SGLang, vLLM et TensorRT-LLM.
+
+L’approche affiche jusqu’à six virgule zéro huit fois d’accélération sans perte sur Qwen trente-huit milliards et des pics mesurés par Nvidia atteignant quinze fois le débit sur le matériel Blackwell tout en conservant une interactivité constante.
+
+Les développeurs qui travaillent sur des pipelines d’inférence à haut débit peuvent désormais tester l’intégration sans avoir à concevoir une logique de génération personnalisée.
+
+Cette mise à jour fait avancer la réflexion en cours sur la puissance de calcul et l’économie de l’inférence en intelligence artificielle que nous suivions hier en montrant des gains mesurables sur les frameworks de service existants plutôt que de nouvelles exigences matérielles.
+
+Surveillez les benchmarks communautaires sur d’autres familles de modèles et vérifiez si la génération par diffusion de blocs se généralise au-delà des configurations annoncées.
+
+Qwen a publié le modèle AgentWorld trente-cinq milliards A trois milliards, un mélange d’experts de trente-cinq milliards de paramètres dont seulement environ trois milliards sont actifs par token.
+
+Le modèle a été entraîné pour prédire les réponses de l’environnement après les actions de l’agent sur les domaines MCP, terminal, SWE, Android, web et interfaces graphiques de système d’exploitation.
+
+Il fonctionne comme un modèle de langage du monde pour simuler le côté observation des boucles d’agent plutôt que comme un modèle de discussion.
+
+La sortie comprend un point de contrôle sur Hugging Face et est destinée à l’évaluation hors ligne, à la génération de trajectoires synthétiques et aux tests en bac à sable.
+
+Les développeurs peuvent l’utiliser pour créer des données d’entraînement ou valider des flux de travail d’utilisation d’outils sans appeler sans cesse des environnements réels.
+
+Cette sortie prolonge la piste des modèles à poids ouverts dont nous parlions hier en réduisant l’écart dans la simulation spécialisée des agents plutôt que dans les performances générales de discussion.
+
+Baidu a rendu open source Unlimited-OCR, un modèle multilingue de trois virgule trois milliards de paramètres sous licence MIT capable d’effectuer une analyse complète de documents en une seule passe sur des images uniques, des documents multipages et des PDF.
+
+Il prend en charge une longueur de sortie de trente-deux mille tokens et propose des modes d’image de base et Gundam pour différents agencements, avec une inférence disponible via Transformers ou SGLang et un streaming compatible OpenAI.
+
+Le modèle vise une compréhension plus approfondie des documents au-delà de la reconnaissance optique de caractères sur des zones recadrées.
+
+Les équipes qui gèrent de longs PDF ou des archives multilingues devraient le tester cette semaine par rapport à leurs pipelines actuels.
+
+Qwen a également publié le modèle plus grand AgentWorld trois cent quatre-vingt-dix-sept milliards A dix-sept milliards, le grand frère, sur Hugging Face et le blog Qwen.
+
+Il conserve le même objectif d’entraînement à la simulation d’environnement sur les domaines d’interaction des agents.
+
+Les premières discussions portent sur son potentiel pour une synthèse de trajectoires à plus haute fidélité à grande échelle.
+
+Aucun benchmark détaillé n’a été publié avec l’annonce.
+
+EXPO-SQL ajoute des récompenses au niveau des clauses, issues des résultats d’exécution et des messages d’erreur, à l’apprentissage par renforcement pour le texte vers SQL, remplaçant ainsi les récompenses uniformes au niveau de la requête.
+
+Il affiche des gains constants par rapport à l’apprentissage supervisé fin, au prompting et aux précédents modèles de référence en apprentissage par renforcement sur les benchmarks standards.
+
+Le code est disponible dans le dépôt GitHub lié.
+
+Andrej Karpathy a décrit Claude Tag comme le troisième grand paradigme d’interface utilisateur et d’expérience utilisateur des modèles de langage, une entité autonome, persistante et asynchrone dotée d’outils, de mémoire et de contexte à l’échelle de l’organisation qui s’intègre directement dans Slack.
+
+Une fois le travail d’ingénierie sur la sécurité, la puissance de calcul et les intégrations terminé, les équipes peuvent interagir avec lui de manière conversationnelle sur l’ensemble des charges de travail.
+
+Cette approche dépasse les modèles de site web ou d’application de bureau pour aller vers une participation intégrée à l’équipe.
+
+Ce développement fait progresser l’arc des agents et de l’utilisation d’outils que nous avons couvert hier en passant de prototypes expérimentaux à des schémas d’intégration en équipe en production.
+
+Karpathy a également mis en avant un système de codage de niveau entreprise qui écrit la majorité du code dans des contextes d’équipe, profondément intégré et multijoueur au sein de Slack.
+
+Il diffère des simples outils de type RAG sur Slack ou OpenClaw en fonctionnant comme un espace de travail partagé où les participants agissent davantage comme des gestionnaires.
+
+Le produit a dépassé le stade du hackathon grâce à une itération interne et prend désormais en charge de vrais déploiements.
+
+Circle a publié une spécification USDC pour un protocole de paiements machine destiné aux transactions des agents d’intelligence artificielle.
+
+La spécification cible des paiements automatisés de machine à machine sans intermédiaires humains.
+
+Les premiers détails portent sur la conception du protocole plutôt que sur des implémentations en direct.
+
+Les candidatures sont désormais ouvertes pour l’événement DevDay d’OpenAI du vingt-neuf septembre à San Francisco, avec la keynote d’ouverture accessible en diffusion en direct pour les participants à distance.
+
+La date limite est le dix juillet.
+
+Les développeurs qui envisagent d’y assister ou de la regarder devraient postuler rapidement.
+
+Un membre de la communauté sur r/LocalLLaMA teste un emplacement PCIe cinq virgule zéro seize fois divisé en configuration deux fois huit via un câble riser.
+
+L’installation vise à accueillir à la fois une RTX cinq mille soixante-dix Ti et une RTX quatre mille soixante-dix au sein d’un même système.
+
+L’usage diurne se concentre sur les charges de travail des agents tandis que les soirées passent aux activités de jeu.
+
+Les vitesses de génération de tokens restent acceptables à seize mille tokens de contexte.
+
+Les performances se dégradent nettement lorsque le contexte passe à cent vingt-huit mille tokens sous la configuration partagée.
+
+La discussion porte sur les effets potentiels sur le processeur graphique principal dus à la division de la bande passante.
+
+Cette expérience matérielle reflète des considérations pratiques pour les configurations multi-GPU d’agents et d’inférence.
+
+L’article ModTGCN sur arXiv présente un réseau de neurones graphiques sensible à la modularité conçu spécifiquement pour les tâches de classification de texte.
+
+Il intègre une fonction de perte auxiliaire basée sur la modularité qui encourage la formation de communautés de documents cohérentes avec les classes au sein de la structure du graphe.
+
+La méthode découple la construction originale du graphe TextGCN pour obtenir des accélérations d’entraînement allant de deux à dix fois.
+
+Les améliorations de performance sont particulièrement notables sur les jeux de données présentant de faibles caractéristiques d’homophilie.
+
+Cette perte auxiliaire aide le modèle à mieux capturer les structures communautaires alignées sur les étiquettes de classification.
+
+Les chercheurs peuvent consulter les détails complets dans la prépublication arXiv pour les spécificités d’implémentation.
+
+L’approche cible les scénarios où les réseaux de neurones graphiques standards peinent avec des représentations de classes déconnectées.
+
+Bien, entrons dans le détail des récompenses au niveau des clauses dans l’apprentissage par renforcement pour le texte vers SQL.
+
+Tout le monde parle de l’apprentissage par renforcement pour le texte vers SQL comme s’il suffisait d’ajouter un retour d’exécution et d’améliorer.
+
+En pratique, la conception même de la récompense détermine si le modèle apprend à corriger des clauses individuelles ou s’il se contente de deviner des requêtes entières.
+
+Les méthodes standards attribuent une seule récompense scalaire à l’ensemble de la requête SQL générée, de sorte qu’une requête avec une clause WHERE erronée et un SELECT JOIN correct reçoit la même pénalité qu’une requête complètement cassée.
+
+EXPO-SQL, au contraire, analyse les erreurs d’exécution et exécute les clauses de manière incrémentale pour identifier précisément celles qui ont échoué.
+
+Cela produit des signaux d’apprentissage par clause qui permettent à la mise à jour du gradient de politique de ne modifier que les parties défectueuses tout en renforçant les parties correctes.
+
+Le coût d’ingénierie réside dans des traces d’exécution supplémentaires par exemple d’entraînement, mais l’article montre que cette granularité plus fine surpasse à la fois l’apprentissage supervisé fin et les précédents modèles de référence en apprentissage par renforcement sur les benchmarks standards.
+
+L’approche fonctionne mieux lorsque le retour d’exécution est peu coûteux et déterministe.
+
+Dans les domaines où les requêtes sont coûteuses ou non déterministes, le signal au niveau des clauses devient bruité.
+
+Les équipes devraient le privilégier lorsqu’elles disposent déjà de bacs à sable de bases de données fiables et souhaitent extraire davantage de signal de chaque génération échouée.
+
+Testez l’intégration de DFlash dans vLLM ou TensorRT-LLM sur une instance Blackwell si vous gérez de gros volumes d’inférence et souhaitez mesurer les gains de débit annoncés entre six et quinze fois.
+
+Téléchargez le point de contrôle Qwen AgentWorld trente-cinq milliards A trois milliards et utilisez-le pour générer des trajectoires synthétiques pour votre propre boucle d’entraînement d’agents au lieu d’appeler des outils en direct à chaque fois.
+
+Postulez pour DevDay OpenAI deux mille vingt-six avant la date limite du dix juillet si vous souhaitez assister à l’événement ou regarder la keynote sur les nouveaux outils pour développeurs.
+
+Essayez Unlimited-OCR sur un PDF multilingue multipage pour comparer la vitesse et la précision de l’analyse complète du document avec votre pipeline actuel.
+
+Gardez un œil sur la keynote de DevDay OpenAI deux mille vingt-six du vingt-neuf septembre avec l’option de diffusion en direct à distance.
+
+D’autres sorties de la famille Qwen AgentWorld sont attendues à mesure que de nouveaux points de contrôle de simulation d’environnement apparaîtront.
+
+D’autres tests communautaires de DFlash sur des familles de modèles et des frameworks de service supplémentaires sont également en route.
+
+Demain, surveillez les points de contrôle supplémentaires de Qwen AgentWorld et les premiers chiffres communautaires pour DFlash sur du matériel autre que Blackwell.
+
+Voilà pour Modèles et Agents aujourd’hui. Si vous avez trouvé cet épisode utile, partagez-le avec quelqu’un qui essaie de suivre tous ces changements et abonnez-vous pour ne pas manquer la mise à jour de demain. Le monde de l’intelligence artificielle évolue vite. Nous vous aidons à rester à jour. À demain. Et avant de partir, cette émission fait partie du réseau NAIR-uh, une famille de podcasts quotidiens couvrant la tech, la science, les marchés et bien plus encore.
+
+Si vous avez apprécié l’épisode d’aujourd’hui, écoutez Modèles et Agents pour débutants : l’intelligence artificielle expliquée simplement, pour les débutants et les adolescents curieux. Vous pouvez découvrir toute la programmation sur nerranetwork point com.
+
+Cet épisode a utilisé une synthèse vocale par intelligence artificielle de ma voix ; la sélection éditoriale et l’analyse sont les miennes.
