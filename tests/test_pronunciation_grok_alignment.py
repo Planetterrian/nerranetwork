@@ -15,6 +15,7 @@ round-trips from creeping back in and documents the one tolerated exception.
 """
 
 from assets.pronunciation import (
+    COMMON_ACRONYMS,
     WORD_PRONUNCIATIONS,
     prepare_text_for_tts as assets_prepare,
 )
@@ -31,11 +32,15 @@ _TOLERATED_ROUND_TRIPS = {"NVIDIA"}
 
 def test_no_new_garble_redundant_respellings():
     garble_keys = {k.lower() for k in _PHONETIC_GARBLES}
+    # Both script-save respelling maps run before fix_phonetic_garbles, so an
+    # entry whose value is a garble key is a dead round-trip in either dict.
     overlaps = {
-        k: v for k, v in WORD_PRONUNCIATIONS.items() if v.lower() in garble_keys
+        k: v
+        for k, v in {**COMMON_ACRONYMS, **WORD_PRONUNCIATIONS}.items()
+        if v.lower() in garble_keys
     }
     assert set(overlaps) <= _TOLERATED_ROUND_TRIPS, (
-        "These WORD_PRONUNCIATIONS entries are reverted by fix_phonetic_garbles "
+        "These respelling entries are reverted by fix_phonetic_garbles "
         f"immediately after they run (dead round-trips) — drop them: {overlaps}"
     )
 
@@ -76,6 +81,12 @@ _MOVED = {
     "Zelensky": "Zeh-len-skee",
     "AstraZeneca": "Astra-Zeneca",
     "Afeela": "ah-FEE-lah",
+    # Word-acronym guides moved from COMMON_ACRONYMS (2026-06-25).
+    "EBITDA": "ee-bit-dah",
+    "OPEC": "oh-peck",
+    "CRISPR": "crisper",
+    "JAXA": "jacksa",
+    "GAAP": "gaap",
 }
 
 

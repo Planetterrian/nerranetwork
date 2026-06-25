@@ -783,7 +783,10 @@ class TestPrepareTextForTts:
         assert "P to E" in result
         assert "E P S" in result
         assert "year over year" in result
-        assert "ee-bit-dah" in result
+        # EBITDA respelling moved to the audio-only pronunciation_map.yaml
+        # (2026-06-25) — the script-save layer now keeps the canonical acronym.
+        assert "EBITDA" in result
+        assert "ee-bit-dah" not in result
 
     def test_versus_in_pipeline(self):
         """Pipeline converts vs. to versus."""
