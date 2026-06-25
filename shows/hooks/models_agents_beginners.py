@@ -1,28 +1,32 @@
-"""Models & Agents for Beginners — pronunciation hook for Fish Audio TTS.
+"""Models & Agents for Beginners — pronunciation hook for the Grok custom voice.
 
-Fish Audio S1 is a cloud neural TTS with excellent built-in text normalization
-(0.008 WER, #1 on TTS-Arena2).  The pronunciation pipeline acts as a safety
-net — acronym expansions (AI→"A I", GPU→"G P U") are universal and help all
-providers.  Fish Audio handles standard English, proper names, and most
-technical terms correctly natively.
+MAB runs on the network's shared Grok TTS custom voice (its ``tts: {}`` block
+inherits the default — see landmines #11 / #17). The earlier Fish-Audio /
+Chatterbox premise of this hook is obsolete.
 
-**Key principle:** Keep acronym expansions and non-English name overrides.
-Do NOT add phonetic respellings for common English words — Fish Audio handles
-these natively.
+**Key principle (Grok voice):** keep acronym *letter-spellings* (AI→"A I",
+GPT-4→"G P T four") and genuinely-foreign / hard proper-name guides. Do NOT add
+phonetic respellings of common English words — the Grok voice says them
+natively, and because this hook runs at script-save time the respelling also
+leaks into the saved _tts.txt → blog/RSS transcript. Network-wide proper-name
+respellings now live in ``shows/pronunciation_map.yaml`` (audio-only); don't
+duplicate them here.
 """
 
 from __future__ import annotations
 
 
 def pronunciation_overrides() -> dict:
-    """Return Chatterbox-friendly phonetic overrides for AI/ML terms.
+    """Return MAB-specific overrides layered on the shared pipeline.
 
-    Called by ``run_show.py:_apply_pronunciation()`` to customize the
-    shared ``prepare_text_for_tts()`` pipeline.
+    Called by ``run_show.py:_apply_pronunciation()`` to customize the shared
+    ``prepare_text_for_tts()`` pipeline (merged over COMMON_ACRONYMS /
+    WORD_PRONUNCIATIONS).
     """
     return {
-        # Extra acronyms not in the shared COMMON_ACRONYMS or where
-        # Chatterbox needs a specific phonetic hint.
+        # Acronym letter-spellings + model-version names not in the shared
+        # COMMON_ACRONYMS, or where the beginner show wants AI always spelled
+        # out. These are letter expansions, not phonetic guesses.
         "extra_acronyms": {
             # AI compound forms — ensure "AI" is always spelled out
             "AI-powered": "A I powered",
@@ -56,14 +60,13 @@ def pronunciation_overrides() -> dict:
             "GPT-3": "G P T three",
             "GPT-2": "G P T two",
 
-            # Obscure acronyms that need phonetic hints
+            # Acronyms that need a phonetic / letter hint on the voice
             "SOTA": "so-tah",
             "LoRA": "laura",
             "LoRAs": "lauras",
             "QLoRA": "cue-laura",
             "GGUF": "gee-guff",
             "ONNX": "onyx",
-            "CUDA": "kooda",
             "VRAM": "vee-ram",
             "FP16": "F P sixteen",
             "FP32": "F P thirty-two",
@@ -86,40 +89,33 @@ def pronunciation_overrides() -> dict:
             "w/o": "without",
         },
 
-        # Proper names and compound words Chatterbox may mangle.
-        # NOTE: Do NOT add overrides for common English words that
-        # Chatterbox handles natively (Gemini, Claude, Llama, etc.).
+        # Genuinely-foreign / hard proper names the Grok voice mangles raw.
+        # NOTE: do NOT add common English words or camelCase brand compounds
+        # here (DeepSeek, LangChain, PyTorch, multimodal, dataset, …) — the Grok
+        # voice says them natively and the respelling leaks into the transcript.
+        # Network-wide names (Karpathy, Amodei, Mistral, Altman, …) are handled
+        # by shows/pronunciation_map.yaml — don't duplicate them here.
         "extra_words": {
-            # AI researcher names (non-English, genuinely need help)
-            "Karpathy": "Kar-pathy",
-            "Karpathy's": "Kar-pathy's",
+            # AI researcher names (non-English, genuinely need help on the voice)
             "Andrej": "On-dray",
             "Sutskever": "Suts-kever",
             "Hassabis": "Ha-sah-bis",
             "LeCun": "Luh-Kuhn",
             "Vaswani": "Vaz-wah-nee",
             "Bengio": "Ben-jee-oh",
-            "Amodei": "Ah-mo-day",
 
-            # Identity overrides — cancel shared-module WORD_PRONUNCIATIONS
-            # that Chatterbox handles natively (shared module helps ElevenLabs
-            # but hurts Chatterbox by feeding it phonetic strings it reads literally)
-            "Anthropic": "Anthropic",
-            "Anthropic's": "Anthropic's",
-            "Altman": "Altman",
+            # ``NVIDIA`` stays pinned to itself for MAB only: the shared
+            # WORD_PRONUNCIATIONS still maps NVIDIA→"En-vidia"; whether MAB
+            # should instead match the network's "Nvidia" is an audio decision
+            # left for a listen-test, so the identity override is kept for now.
             "NVIDIA": "NVIDIA",
             "Nvidia": "Nvidia",
             "Nvidia's": "Nvidia's",
-            "Mistral": "Mistral",
 
-            # Model and org names (only non-English or compound words)
+            # Model / org names (non-English or product-specific pronunciations)
             "Mixtral": "Mix-tral",
             "Groq": "Grock",
             "Groq's": "Grock's",
-            "Qwen": "Chwen",
-            "Qwen's": "Chwen's",
-            "DeepSeek": "Deep Seek",
-            "DeepSeek's": "Deep Seek's",
             "Phi-3": "Fie three",
             "Phi-4": "Fie four",
             "Midjourney": "Mid-journey",
@@ -127,39 +123,7 @@ def pronunciation_overrides() -> dict:
             "Sakana": "Sah-kah-nah",
             "Sakana's": "Sah-kah-nah's",
             "Gradio": "Grah-dee-oh",
-            "LlamaIndex": "Llama Index",
-            "LangChain": "Lang Chain",
-            "LangChain's": "Lang Chain's",
-            "LangGraph": "Lang Graph",
-            "LangGraph's": "Lang Graph's",
-            "HuggingFace": "Hugging Face",
-            "PyTorch": "Pie Torch",
-            "TensorFlow": "Tensor Flow",
             "arXiv": "archive",
             "ArXiv": "archive",
-
-            # AI/ML compound words (split for clearer TTS)
-            "tokenizer": "token-izer",
-            "tokenizers": "token-izers",
-            "tokenize": "token-ize",
-            "tokenized": "token-ized",
-            "multimodal": "multi-modal",
-            "hyperparameter": "hyper-parameter",
-            "hyperparameters": "hyper-parameters",
-            "overfitting": "over-fitting",
-            "underfitting": "under-fitting",
-            "backpropagation": "back-propagation",
-            "finetune": "fine-tune",
-            "finetuned": "fine-tuned",
-            "finetuning": "fine-tuning",
-            "fine-tuning": "fine tuning",
-            "pretraining": "pre-training",
-            "pre-trained": "pre trained",
-            "opensource": "open source",
-            "open-source": "open source",
-            "open-sourced": "open sourced",
-            "dataset": "data set",
-            "datasets": "data sets",
-            "codebase": "code base",
         },
     }
