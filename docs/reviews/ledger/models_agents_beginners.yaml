@@ -1,0 +1,51 @@
+# Review ledger for models_agents_beginners. Schema: docs/reviews/ledger/README.md
+reviews:
+  - date: 2026-06-25
+    pr: null
+    doc: docs/reviews/models_agents_beginners_review_2026_06_25.md
+    summary: >
+      First dedicated MAB pass (after the June 10 four-show pass). Scored the
+      four-show predictions: "So imagine" opener de-seed HIT (0/10); length
+      floor raise MISS (still 9/10 under 1200, digest ceiling, deferred).
+      Shipped two prompt de-seeds (A/B): the Deep Dive closer template
+      ("and that's basically what X is doing when it Y / so next time someone
+      says Z, you can tell them / not so scary, right?") echoed verbatim 9/10
+      episodes — both prompts seed it; and the new "Something [adj] just
+      happened" opener (5/10) that the model converged on from the prompt's
+      own example list after the "So imagine" fix.
+    shipped:
+      - Deep Dive closer de-seed (mab_podcast.txt, mab_digest.txt)
+      - Big Story "Something … just happened" opener de-seed (mab_podcast.txt)
+      - drift guards tests/test_mab_quality_pass.py
+    deferred:
+      - chronic under-length (digest ceiling; four-show length A/B lever)
+      - '"The Big Story" chapter missing every episode (dead big-story marker; needs digest-driven/position-aware titles)'
+      - Ep081-class auto-segment raw-sentence chapter title (same digest-driven-titles lever)
+      - MAB pronunciation-hook respelling cleanup (0/76 impact; align with sister M&A which uses no hook; A/B)
+      - Ep075-class intro rewrite → no Welcome chapter (2/76; UC-style generic opening-word fallback if it grows)
+    predictions:
+      - metric: '"not so scary, right?" occurrences in last-10 transcripts'
+        baseline: "9/10 episodes (Ep080/081/082 verbatim three-sentence formula)"
+        expected: "<= 3/10 episodes generated post-merge; no verbatim 'so next time someone says X, you can tell them' formula"
+        verdict: pending
+        evidence: null
+      - metric: 'Big Story openers using "Something [adj] just happened", last 10'
+        baseline: "5/10 (Ep073/074/075/078/080)"
+        expected: "0/10 post-merge"
+        verdict: pending
+        evidence: null
+      - metric: median _tts.txt words, last 10 eps
+        baseline: "~1085 (range 820-1470; 9/10 below 1200 floor)"
+        expected: "no regression; chronic under-length stays deferred to the four-show length A/B"
+        verdict: pending
+        evidence: null
+      - metric: 'episodes with a "The Big Story" chapter, last 10'
+        baseline: "0/10 (deferred — no shippable marker; gated on digest-driven titles)"
+        expected: "still 0/10 (documented deferral, not fixed this pass)"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: 0.02
+
+do_not_retry:
+  - idea: phonetic respellings / programmatic speech-tag injection on the custom voice
+    evidence: landmine #17 — 100% regression rate; reverted May 11 2026. (Note this pass did NOT add any; it recommends REMOVING the stale MAB hook respellings.)
