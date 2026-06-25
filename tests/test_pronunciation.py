@@ -535,25 +535,33 @@ class TestApplyPronunciationFixes:
         result = apply_pronunciation_fixes("The DOT approved it")
         assert "D O T" in result
 
-    def test_megacharger(self):
+    # Tesla product-name hyphen respellings removed 2026-06-25 — the Grok
+    # custom voice says these common compounds natively, and the respelling
+    # had been leaking into the published transcript. The raw word must now
+    # pass through unchanged (and the old hyphenated form must NOT appear).
+    def test_megacharger_unrespelled(self):
         result = apply_pronunciation_fixes("Tesla Megacharger network")
-        assert "Mega-charger" in result
+        assert "Megacharger" in result
+        assert "Mega-charger" not in result
 
-    def test_gigacasting(self):
+    def test_gigacasting_unrespelled(self):
         result = apply_pronunciation_fixes("Tesla's gigacasting technology")
-        assert "giga-casting" in result
+        assert "gigacasting" in result
+        assert "giga-casting" not in result
 
     def test_ig_metall(self):
         result = apply_pronunciation_fixes("IG Metall union conflict")
         assert "I G Metall" in result
 
-    def test_robotaxi(self):
+    def test_robotaxi_unrespelled(self):
         result = apply_pronunciation_fixes("Tesla Robotaxi service")
-        assert "Robo-taxi" in result
+        assert "Robotaxi" in result
+        assert "Robo-taxi" not in result
 
-    def test_cybertruck(self):
+    def test_cybertruck_unrespelled(self):
         result = apply_pronunciation_fixes("The Cybertruck is here")
-        assert "Cyber-truck" in result
+        assert "Cybertruck" in result
+        assert "Cyber-truck" not in result
 
     def test_planetterrian_passes_through_unchanged(self):
         """Operator caught (PT Ep060, May 11 2026 daily review) the
@@ -585,8 +593,12 @@ class TestApplyPronunciationFixes:
         assert "plan it TAIR ee uhn" not in result
 
     def test_teslarati(self):
+        # Respelling removed 2026-06-25 — the garble-repair layer reverted
+        # "Tesla-rah-tee" → "Teslarati" right after this map, so the canonical
+        # word is what reaches TTS + transcript. The map now leaves it alone.
         result = apply_pronunciation_fixes("According to Teslarati")
-        assert "Tesla-rah-tee" in result
+        assert "Teslarati" in result
+        assert "Tesla-rah-tee" not in result
 
 
 # ===================== Full Pipeline (prepare_text_for_tts) =====================
@@ -697,7 +709,7 @@ class TestPrepareTextForTts:
         assert "thirty-nine" in result        # Episode number
         assert "slash" in result               # Comet designation
         assert "Kah-see-nee" in result         # Cassini pronunciation
-        assert "En-sell-uh-dus" in result      # Enceladus pronunciation
+        assert "Enceladus" in result           # respelling removed 2026-06-25 (garble-redundant)
         assert "Phase three" in result         # Roman numeral
         assert "five hundred thousand" in result  # Large number
         assert "kilometers" in result          # Unit expansion
