@@ -167,11 +167,10 @@ def gather_show_context(slug: str, episodes: int = MAX_EPISODES) -> str:
 def gather_network_context() -> str:
     """Cross-cutting meta review: aggregate every ledger + workflow list."""
     parts: list[str] = []
+    # _claude_md_section already appends the Known Landmines block.
     section = _claude_md_section("network")
-    landmines = re.search(r"## Known Landmines.*?(?=\n## |\Z)",
-                          _read(ROOT / "CLAUDE.md"), re.DOTALL)
-    if landmines:
-        parts.append("## CLAUDE.md — Known Landmines\n" + landmines.group(0)[:8000])
+    if section:
+        parts.append("## CLAUDE.md — network notes + landmines\n" + section)
     parts.append("## Workflows\n" + "\n".join(
         f"- {p.name}" for p in sorted((ROOT / ".github" / "workflows").glob("*.yml"))))
     for ledger in sorted((ROOT / "docs" / "reviews" / "ledger").glob("*.yaml")):
