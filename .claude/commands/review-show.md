@@ -12,6 +12,17 @@ the depth and rigor expected).
 Target: **$ARGUMENTS** (a show slug matching `shows/<slug>.yaml`, or
 `network` for a cross-cutting network-wide review).
 
+> **Two execution modes.** On the schedule, this playbook is the *system
+> prompt* for `scripts/run_show_review.py`, which runs it on Grok-4.3 as a
+> single structured call: Grok analyzes the gathered context and **proposes**
+> fixes (the script writes the review doc + ledger entry and lists prompt/audio
+> proposals in the PR body under "A/B-listen required — NOT applied"; it does
+> not auto-edit prompts/code or run tools). When you run `/review-show <slug>`
+> manually in a Claude Code session, you ARE the agent — implement the
+> code-only fixes, write drift-guard tests, and exercise prompts as Phase 3
+> describes. Either way the guardrails below are absolute and the deliverable
+> is a draft PR.
+
 ## Phase 0 — Context (do this before forming any opinion)
 
 1. Read `CLAUDE.md` in full — especially the target show's sections, the

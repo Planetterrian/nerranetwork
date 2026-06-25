@@ -4,27 +4,32 @@ name: Show Review Agent
 # work previously done manually (the June 2026 Tesla / MIT / network-wide
 # quality passes). Each run reviews ONE target — the least-recently-reviewed
 # show (or the cross-cutting `network` target) per
-# docs/reviews/review_state.yaml — and opens its findings + verified fixes
-# as a DRAFT pull request. Nothing ships without the operator merging, which
-# is what preserves the A/B-listen guardrail for prompt/audio changes
-# (CLAUDE.md landmine #17).
+# docs/reviews/review_state.yaml — and opens its findings as a DRAFT pull
+# request. Nothing ships without the operator merging, which is what preserves
+# the A/B-listen guardrail for prompt/audio changes (CLAUDE.md landmine #17).
 #
-# The full playbook the agent follows lives in
-# .claude/commands/review-show.md; operator setup + tuning docs in
-# docs/REVIEW_AGENT.md.
+# RUNS ON GROK (June 2026): this job used to drive Claude Opus 4.8 via the
+# Claude Code GitHub Action, which cost ~$6-9/run (~$1,500-2,000/yr — dominated
+# by cache-reads of the 125 KB CLAUDE.md replayed across a long agentic loop,
+# and made worse by the daily-audit out-of-rotation dispatches). It now runs
+# scripts/run_show_review.py on Grok-4.3 (xAI; GROK_API_KEY, already used by the
+# podcast pipeline) for ~$0.30/run — a >95% cost cut on this line item, with no
+# Anthropic spend. The Grok script PROPOSES prompt/audio changes in the PR body
+# (it does not auto-edit them), which strengthens the landmine #17 A/B-listen
+# gate. For a deeper autonomous pass, run `/review-show <slug>` manually in a
+# Claude Code session (operator-initiated, occasional).
 #
-# Requires ONE secret: ANTHROPIC_API_KEY (or swap the auth input for
-# claude_code_oauth_token — see docs/REVIEW_AGENT.md).
+# The playbook (used as the Grok system prompt, and for manual Claude passes)
+# lives in .claude/commands/review-show.md; operator docs in docs/REVIEW_AGENT.md.
+#
+# Requires the GROK_API_KEY secret (XAI_API_KEY also honored). ANTHROPIC_API_KEY
+# is no longer used by this workflow.
 
 on:
   schedule:
-    # Weekly (Thu 07:00 UTC) — following the Grok Tier 1 daily health checks.
-    # This Claude agent reviews:
-    #   1. Escalations from api/daily-show-health.json (high-confidence anomalies)
-    #   2. The least-recently-reviewed show (rotation fallback)
-    # Reduced from 2×/week (Tue/Fri) to 1×/week to minimize API costs while
-    # retaining ~90% bug detection (daily Grok catches patterns; weekly Claude
-    # does root-cause diagnosis). Cost reduction: $1500–$1800 USD/year.
+    # Weekly (Thu 07:00 UTC) — after the daily Grok health checks. Reviews the
+    # least-recently-reviewed target (rotation). Grok is cheap enough that the
+    # daily-audit out-of-rotation dispatches no longer carry a meaningful cost.
     - cron: '0 7 * * 4'
   workflow_dispatch:
     inputs:
@@ -95,29 +100,18 @@ jobs:
             echo "::warning::No eligible review target (all candidates have open review PRs); skipping this run."
           fi
 
-      - name: Run review agent
+      - name: Run review agent (Grok)
         if: steps.pick.outputs.slug != ''
-        uses: anthropics/claude-code-action@v1
+        # Plain script step — runs identically whether dispatched by a human or
+        # by the daily-audit's dispatch_quality_reviews.py (github-actions bot).
+        # GITHUB_TOKEN authorizes git push + `gh pr create` regardless of actor,
+        # so the old Action's bot allowlist is no longer needed. GROK_API_KEY
+        # (XAI_API_KEY fallback) drives the single Grok-4.3 review call.
         env:
-          # Optional: lets the agent regenerate a digest in --test mode
-          # (fetch + LLM only, no TTS/publish) when it edits a prompt, so
-          # the PR shows before/after OUTPUT excerpts, not just the prompt
-          # diff. The playbook skips this silently when unset.
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
-        with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          prompt: "/review-show ${{ steps.pick.outputs.slug }}"
-          # The daily audit's dispatch_quality_reviews.py triggers this
-          # workflow via `gh workflow run` with GITHUB_TOKEN, so the
-          # initiating actor is github-actions (a bot). Without this
-          # allowlist the action refuses bot-initiated runs — which broke
-          # the event-driven review path (observed 2026-06-10 on the
-          # fascinating_frontiers dispatch). Human dispatches are
-          # unaffected.
-          allowed_bots: "github-actions"
-          claude_args: |
-            --model claude-opus-4-8
-            --allowedTools "Bash,Read,Write,Edit,MultiEdit,Glob,Grep,WebFetch,WebSearch"
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/run_show_review.py "${{ steps.pick.outputs.slug }}"
 
       - name: Notify operator of new review PR
         # Positive heartbeat in the spirit of post_run_summary.py — clean

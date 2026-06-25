@@ -1160,9 +1160,28 @@ this). A review PR opening pings `NOTIFICATION_WEBHOOK_URL` (no-op when
 unset). Setup + tuning: [`docs/REVIEW_AGENT.md`](docs/REVIEW_AGENT.md).
 Drift guards: `tests/test_review_agent.py` (rotation covers every show —
 scaffolded new shows must be added to the state file; playbook keeps its
-safety language; ledger schema; snapshot + dispatcher logic). Requires
-the `ANTHROPIC_API_KEY` secret + Claude GitHub App (one-time operator
-setup).
+safety language; ledger schema; snapshot + dispatcher logic).
+
+**June 2026 — scheduled job migrated to Grok (cost).** A token-usage review
+found the scheduled review agent was the network's largest Anthropic line item:
+~$6-9/run of Claude Opus 4.8 (~$1,500-2,000/yr), dominated by cache-reads of
+this 125 KB `CLAUDE.md` replayed across a long agentic loop and amplified by the
+daily-audit out-of-rotation dispatches (the podcast pipeline itself has zero
+Anthropic spend — all Grok). `show-review.yml` now runs
+[`scripts/run_show_review.py`](scripts/run_show_review.py) on **Grok-4.3** (xAI;
+`GROK_API_KEY`, already used everywhere else) instead of the Claude Code GitHub
+Action — ~$0.30/run, a >95% cut; the `ANTHROPIC_API_KEY` secret is no longer
+needed by the scheduled job. The runner gathers context (snapshot + ledger +
+last ~10 transcripts), makes ONE Grok call with the playbook as its system
+prompt, writes the review doc + ledger entry + advances rotation, and opens the
+draft PR. One deliberate behavior change: it **proposes** prompt/audio edits in
+the PR body under "⚠️ A/B-listen required — NOT applied" rather than auto-editing
+them — which *strengthens* landmine #17 (nothing audio-affecting is
+auto-committed). The fully-autonomous Claude path stays on demand: run
+`/review-show <slug>` manually in a Claude Code session for a deep, multi-file
+pass. The ledger writer appends by **text-splice** (never reserializes the
+existing file) because three committed ledgers contain unquoted `: ` inside list
+items and `safe_dump` line-wrapping can corrupt long plain scalars.
 
 ### Recursive narrative memory generalized (Phase 3, May 2026)
 

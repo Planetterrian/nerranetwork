@@ -2,10 +2,24 @@
 
 Automates the iterative quality-review work previously done manually (the
 June 2026 Tesla pass #573/#576, Modern Investing pass #574, network-wide
-pass #575). A scheduled Claude Code agent reviews one target per run, ships
-verified fixes + drift-guard tests, and opens everything as a **draft PR**
-for the operator to approve — preserving the human A/B-listen gate for
-anything that changes shipped audio (landmine #17).
+pass #575). A scheduled review job reviews one target per run, writes a review
+doc + ledger entry, and opens everything as a **draft PR** for the operator to
+approve — preserving the human A/B-listen gate for anything that changes
+shipped audio (landmine #17).
+
+> **Runs on Grok-4.3 (June 2026).** The scheduled job used to drive Claude
+> Opus 4.8 through the Claude Code GitHub Action (~$6-9/run, ~$1,500-2,000/yr —
+> dominated by cache-reads of the 125 KB `CLAUDE.md`, and amplified by the
+> daily-audit dispatches). It now runs
+> [`scripts/run_show_review.py`](../scripts/run_show_review.py) on Grok-4.3
+> (xAI; `GROK_API_KEY`) for ~$0.30/run — a >95% cost cut, no Anthropic spend.
+> One deliberate difference from the Claude agent: the Grok script **proposes**
+> prompt/audio changes in the PR body (under "⚠️ A/B-listen required — NOT
+> applied") rather than auto-editing them, which *strengthens* the landmine #17
+> gate. For a deeper, fully-autonomous pass (multi-file root-causing, written
+> drift-guard tests), run `/review-show <slug>` manually in a Claude Code
+> session — that path still exists and is the occasional, operator-initiated
+> escape hatch.
 
 ## Moving parts
 
@@ -14,7 +28,8 @@ anything that changes shipped audio (landmine #17).
 | [`.claude/commands/review-show.md`](../.claude/commands/review-show.md) | The playbook — the codified review methodology (evidence sources, P0/P1/P2 classification, hard guardrails, deliverables). This is the file to edit when you want the agent to review differently. |
 | [`docs/reviews/review_state.yaml`](reviews/review_state.yaml) | Rotation state: target → last-reviewed date. 13 targets = 12 shows + `network` (cross-cutting review). |
 | [`scripts/pick_review_target.py`](../scripts/pick_review_target.py) | Deterministic picker: least-recently-reviewed target, alphabetical tie-break, `--exclude` for in-flight reviews. |
-| [`.github/workflows/show-review.yml`](../.github/workflows/show-review.yml) | The scheduler: Tue + Fri 07:00 UTC, runs Claude Code via `anthropics/claude-code-action@v1`. |
+| [`.github/workflows/show-review.yml`](../.github/workflows/show-review.yml) | The scheduler: Thu 07:00 UTC (+ dispatch), runs `scripts/run_show_review.py` on Grok-4.3. |
+| [`scripts/run_show_review.py`](../scripts/run_show_review.py) | The Grok-powered runner: gathers context (snapshot + ledger + transcripts), makes one Grok-4.3 call using the playbook as the system prompt, writes the review doc + ledger entry, advances rotation, opens the draft PR. |
 | [`docs/reviews/ledger/`](reviews/ledger/) | The agent's memory: per-target ledgers with shipped fixes, deferred backlog, measurable predictions, and operator-rejected `do_not_retry` ideas. Schema in the [README](reviews/ledger/README.md). |
 | [`scripts/review_snapshot.py`](../scripts/review_snapshot.py) | Deterministic per-show quality snapshot (script length vs target, cross-episode boilerplate-tic detector, chapter-shape problems, cost/episode, OP3 trend). Run it yourself: `python scripts/review_snapshot.py tesla`. |
 | [`scripts/dispatch_quality_reviews.py`](../scripts/dispatch_quality_reviews.py) | Event-driven trigger: the Daily Audit dispatches an out-of-rotation review when a show ships editorial-critical issues (max 1/day; skips shows with an open review PR). |
