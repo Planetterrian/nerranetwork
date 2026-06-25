@@ -105,22 +105,24 @@ corrections:
   LLM: "L L M"
   MCP: "M C P"
 
-  # ---------------- Brand names ----------------
-  # Added 2026-06-24. The rotating closing promo says the network brand three
-  # ways in one segment — the spaced "Nerra Network", the URL "nerranetwork.com"
-  # (which strip_urls turns into "nerranetwork dot com"), and the YouTube handle
-  # — and Grok was guessing a different pronunciation for each, so listeners
-  # heard "Nerra" said 2-3 ways back to back. These entries are audio-only
-  # (applied at synthesis, after strip_urls) so the blog/RSS transcript keeps
-  # the clean brand while every spoken form normalizes to one pronunciation.
-  # Operator-chosen pronunciation: "NEH-ruh" (short e, like "Nera"). This is an
-  # explicit operator override of the "no phonetic respellings" pause above for
-  # the network's own name — A/B-listen before merge (landmine #17).
-  # Order matters (longest-first): "Nerra Network" before the "nerranetwork"
-  # URL compound before the bare "Nerra".
-  "Nerra Network": "NEH-ruh Network"
-  nerranetwork: "NEH-ruh Network"
-  Nerra: "NEH-ruh"
+  # ---------------- Brand name ----------------
+  # The rotating closing promo says the network brand three ways in one segment
+  # — the spaced "Nerra Network", the URL "nerranetwork.com" (strip_urls turns
+  # it into "nerranetwork dot com"), and the (handle-split) YouTube form — and
+  # Grok was guessing a different pronunciation for each.
+  #
+  # FIX HISTORY: a phonetic respelling was tried twice ("NAIR-uh" then
+  # "NEH-ruh") and REGRESSED badly on the Grok voice — the all-caps stressed
+  # syllable was read as an INITIALISM ("N. E. H.") and the hyphen voiced
+  # ALOUD, so the brand shipped as "N-E-H dash ruh". Per landmine #17 (no
+  # phonetic respellings on this voice — they reliably sound worse than the raw
+  # word), we do NOT respell. We only normalize the SPELLING: split the
+  # URL / handle compound "nerranetwork" into the two real words "Nerra
+  # Network" so every spoken form is identical and Grok says the natural word
+  # the same way each time. No caps, no hyphen — nothing for the voice to
+  # letter-spell or voice as "dash". The bare spaced "Nerra Network" and "Nerra"
+  # are already real words and need no entry.
+  nerranetwork: "Nerra Network"
 
   # ---------------- Proper nouns moved from WORD_PRONUNCIATIONS (2026-06-25) ----------------
   # These foreign / hard-to-say names were respelled in
