@@ -119,8 +119,10 @@ def build_network_promo(
     name = ENGLISH_SHOWS[featured]["spoken_name"]
     tagline = ENGLISH_SHOWS[featured]["tagline"]
     return (
-        "And before you go — this show is part of the Nerra Network, "
-        "a family of daily podcasts covering tech, science, markets, and more. "
-        f"If you enjoyed today's episode, give {name} a listen: {tagline}. "
-        "You can explore the whole lineup at nerranetwork.com."
+        "And before you go: this show is part of the Nerra Network — a family "
+        "of daily podcasts on tech, science, and markets, each one a short, "
+        "sharp briefing you can finish on the commute. "
+        f"If today earned its place in your feed, here's your next listen — "
+        f"{name}, {tagline}. "
+        "Find every show, free, at nerranetwork.com."
     )

@@ -105,3 +105,20 @@ corrections:
   LLM: "L L M"
   MCP: "M C P"
 
+  # ---------------- Brand names ----------------
+  # Added 2026-06-24. The rotating closing promo says the network brand three
+  # ways in one segment — the spaced "Nerra Network", the URL "nerranetwork.com"
+  # (which strip_urls turns into "nerranetwork dot com"), and the YouTube handle
+  # — and Grok was guessing a different pronunciation for each, so listeners
+  # heard "Nerra" said 2-3 ways back to back. These entries are audio-only
+  # (applied at synthesis, after strip_urls) so the blog/RSS transcript keeps
+  # the clean brand while every spoken form normalizes to one pronunciation.
+  # Operator-chosen pronunciation: "NEH-ruh" (short e, like "Nera"). This is an
+  # explicit operator override of the "no phonetic respellings" pause above for
+  # the network's own name — A/B-listen before merge (landmine #17).
+  # Order matters (longest-first): "Nerra Network" before the "nerranetwork"
+  # URL compound before the bare "Nerra".
+  "Nerra Network": "NEH-ruh Network"
+  nerranetwork: "NEH-ruh Network"
+  Nerra: "NEH-ruh"
+

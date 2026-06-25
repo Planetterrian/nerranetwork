@@ -195,7 +195,12 @@ def run_generation_phase(
         (x_thread, podcast_script, episode_chapters, effective_hook)
     """
     from engine.generator import generate_digest, generate_podcast_script
-    from engine.intros import build_intro_line, build_closing_block
+    from engine.intros import (
+        build_intro_line,
+        build_closing_block,
+        _maybe_append_youtube_cta,
+        _RUSSIAN_SPOKEN_SHOWS,
+    )
 
     extra_context = extra_context or {}
     effective_hook = hook or (x_thread.split("\n", 1)[0][:120] if x_thread else "")
@@ -263,8 +268,11 @@ def run_generation_phase(
             f"That wraps up our very first episode of {config.name}! "
             f"If you enjoyed this, please subscribe... "
         )
-        if _yt_handle:
-            _ep1_close += f" And if you'd rather watch than listen, find us on YouTube at {_yt_handle}."
+        # Route the YouTube call-out through the shared helper so the "@" is
+        # stripped (no "at at" stutter) and the EN handle is split to the spaced
+        # "Nerra Network" — matching every other episode's closing.
+        _ep1_is_ru = getattr(config, "slug", "") in _RUSSIAN_SPOKEN_SHOWS
+        _ep1_close = _maybe_append_youtube_cta(_ep1_close, _yt_handle, is_ru=_ep1_is_ru)
         pod_vars.setdefault("closing_block", _ep1_close)
     else:
         if args is not None:

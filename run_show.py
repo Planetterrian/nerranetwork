@@ -1958,7 +1958,13 @@ def run(args: argparse.Namespace) -> None:
             # listeners don't hear the exact same opening every day.
             # Episode 1 gets a special intro — the podcast prompt templates handle
             # the detailed first-episode introduction based on {episode_num}.
-            from engine.intros import build_intro_line, build_closing_block, get_show_host
+            from engine.intros import (
+                build_intro_line,
+                build_closing_block,
+                get_show_host,
+                _maybe_append_youtube_cta,
+                _RUSSIAN_SPOKEN_SHOWS,
+            )
             host = getattr(config.publishing, "host_name", None) or get_show_host(args.show)
             # Pick the YouTube channel handle so the closing line can mention
             # the right channel. Empty string means "don't mention YouTube"
@@ -1982,11 +1988,15 @@ def run(args: argparse.Namespace) -> None:
                     f"I'm {host} in Vancouver. Thanks for joining me on this journey, "
                     f"and I'll see you tomorrow for episode two."
                 )
-                if _yt_handle:
-                    _ep1_close += (
-                        f" And if you'd rather watch than listen, find us on YouTube "
-                        f"at {_yt_handle} — link's in the show notes."
-                    )
+                # Route the YouTube call-out through the shared helper so the
+                # "@" is stripped (no "at at" stutter) and the EN handle is
+                # split to the spaced "Nerra Network" — matching every other
+                # episode's closing.
+                _ep1_close = _maybe_append_youtube_cta(
+                    _ep1_close,
+                    _yt_handle,
+                    is_ru=args.show in _RUSSIAN_SPOKEN_SHOWS,
+                )
                 pod_vars.setdefault("closing_block", _ep1_close)
             else:
                 pod_vars.setdefault(

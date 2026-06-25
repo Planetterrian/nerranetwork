@@ -41,6 +41,15 @@ Thumbs.db
 digests/**/*.mp3
 digests/*.mp3
 
+# Episode video clips + raw WAV are episode media too (landmine #1: media
+# at HEAD bloats every clone). The final YouTube MP4s upload directly and
+# never need git; per-clip video (e.g. digests/spacex/videos_epNNN/*.mp4)
+# and intermediate WAVs are regenerated and must stay untracked.
+digests/**/*.mp4
+digests/*.mp4
+digests/**/*.wav
+digests/*.wav
+
 # Keep music stings tracked
 !assets/music/*.mp3
 

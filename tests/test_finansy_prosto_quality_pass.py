@@ -54,13 +54,19 @@ _RUN_SHOW = (_ROOT / "run_show.py").read_text(encoding="utf-8")
 class TestYouTubeCtaStutter:
     """The "@" sigil is voiced by the TTS as the word "at"."""
 
-    @pytest.mark.parametrize("handle", ["@NerraNetwork", "@NerraRU"])
-    def test_at_at_stutter_is_gone(self, handle):
+    # EN handle is split to the spaced brand "Nerra Network" so the TTS says
+    # it the same way as the promo brand + the .com URL; the RU "NerraRU" stays
+    # one token (a CamelCase split would voice it "Nerra R U" on the Olya voice).
+    @pytest.mark.parametrize(
+        "handle,expected_spoken",
+        [("@NerraNetwork", "nerra network"), ("@NerraRU", "nerraru")],
+    )
+    def test_at_at_stutter_is_gone(self, handle, expected_spoken):
         out = _maybe_append_youtube_cta("Patrick: Bye.", handle).lower()
         assert "at at" not in out
         assert "@" not in out
-        # The channel name (sans sigil) still spoken.
-        assert handle.lstrip("@").lower() in out
+        # The channel name (sans sigil) still spoken, in its normalized form.
+        assert expected_spoken in out
 
     def test_idempotent_when_already_mentions_youtube(self):
         closing = "Patrick: That's it. Watch us on YouTube tomorrow."

@@ -273,7 +273,11 @@ def test_closing_block_appends_youtube_cta_when_handle_set():
     # The "@" is stripped from the SPOKEN handle: the TTS voices it as the
     # word "at", which collided with the call-out's own "at" and shipped as
     # "...find us on YouTube at at Nerra Network" in 49+ episodes.
-    assert "NerraNetwork" in closing
+    # The EN CamelCase handle is also split to the spaced brand "Nerra Network"
+    # so the TTS pronounces it identically to the promo's "Nerra Network" and
+    # the "nerranetwork.com" URL (the compound "NerraNetwork" drifted).
+    assert "Nerra Network" in closing
+    assert "NerraNetwork" not in closing  # compound split into the spaced brand
     assert "@NerraNetwork" not in closing
     assert "at at" not in closing.lower()
     assert "YouTube" in closing
