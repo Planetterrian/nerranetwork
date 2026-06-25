@@ -225,10 +225,12 @@ class TestLoadPipelineCandidates:
 
     def test_includes_word_pronunciations_entries(self):
         """At least one entry that lives only in WORD_PRONUNCIATIONS
-        (e.g. Cybertruck, Gigafactory) must appear."""
+        (e.g. Cassini, DeepSeek) must appear. (The Tesla product compounds
+        Cybertruck/Gigafactory were dropped 2026-06-25 — Grok says them
+        natively.)"""
         candidates = tp._load_pipeline_candidates()
         targets = {c.target.lower() for c in candidates}
-        assert "cybertruck" in targets or "gigafactory" in targets
+        assert "cassini" in targets or "deepseek" in targets
 
     def test_case_variants_dedup_by_lowercase(self):
         """``tissue`` + ``Tissue`` + ``tissues`` + ``Tissues`` collapse

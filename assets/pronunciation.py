@@ -367,26 +367,16 @@ WORD_PRONUNCIATIONS: Dict[str, str] = {
     # into reader-facing text.
 
     # --- Tesla product names ---
-    "Robotaxis": "Robo-taxis",
-    "Robotaxi": "Robo-taxi",
-    "robotaxis": "robo-taxis",
-    "robotaxi": "robo-taxi",
-    "Cybertruck": "Cyber-truck",
-    "Cybercab": "Cyber-cab",
-    "Megapack": "Mega-pack",
-    "Megapacks": "Mega-packs",
-    "Powerwall": "Power-wall",
-    "Powerwalls": "Power-walls",
-    "Supercharger": "Super-charger",
-    "Superchargers": "Super-chargers",
-    "Gigafactory": "Giga-factory",
-    "Gigafactories": "Giga-factories",
-    "Autopilot": "Auto-pilot",
-    "Megacharger": "Mega-charger",
-    "Megachargers": "Mega-chargers",
-    "Megafactory": "Mega-factory",
-    "gigacasting": "giga-casting",
-    "Gigacasting": "Giga-casting",
+    # Hyphenated respellings (Cybertruck → "Cyber-truck", Robotaxi →
+    # "Robo-taxi", Gigafactory → "Giga-factory", Supercharger, Autopilot,
+    # Megapack, Powerwall, gigacasting, …) removed 2026-06-25. They are common
+    # English compounds the Grok custom voice says natively, and because this
+    # layer leaks into the saved _tts.txt → blog/RSS, the hyphenated forms were
+    # shipping verbatim in published transcripts ("Cyber-truck", "Robo-taxi").
+    # Per landmine #17 this changes shipped audio → A/B-listened before merge.
+    # If a specific compound ever regresses on the voice, re-add it to
+    # shows/pronunciation_map.yaml (audio-only) — NOT here — so the respelling
+    # never re-enters the transcript.
 
     # --- Tesla model names ---
     "Model 3": "Model Three",
