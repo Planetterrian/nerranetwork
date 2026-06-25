@@ -232,14 +232,36 @@ chapters:
     where: start
   - pattern: Cosmic Spotlight
     title: Cosmic Spotlight
-  - pattern: cosmic deep dive|deep dive|under the hood
+  # `deep dive` (bare) + `under the hood` dropped June 24 2026: the spoken
+  # script never announces the Cosmic Deep Dive (podcast prompt forbids it),
+  # so the only thing the bare pattern ever matched was the cross-promo
+  # "daily deep dive into everything Tesla" in the network-family closing —
+  # which created a spurious, out-of-order "Cosmic Deep Dive" chapter AFTER
+  # the sign-off (Ep109). Keep only the literal section label.
+  - pattern: cosmic deep dive
     title: Cosmic Deep Dive
-  - pattern: Before we go|Next time
-    title: Tomorrow Teaser
-    where: end
+  # Closing MUST precede Tomorrow Teaser: the sign-off line ("…I'll see you
+  # next time") matches the teaser's `Next time`, so with Teaser listed first
+  # the closing line was mis-titled "Tomorrow Teaser" and the episode shipped
+  # with NO Closing chapter (Ep110/Ep111 ended on Tomorrow Teaser). Listing
+  # Closing first lets it win the shared sign-off line (EI June-11 / SpaceX
+  # June-18 / First-Principles June-23 ordering rule). `where: end` keeps it
+  # pinned to the sign-off; the real teaser line still wins its own earlier
+  # line via the broadened pattern below.
   - pattern: That's Fascinating Frontiers|that covers today|that.?s.*for today|until
       next time
     title: Closing
+    where: end
+  # Broadened June 24 2026: 6 of the last 8 teasers open "Keep an eye on…" /
+  # "Watch for…" (podcast prompt line 122), which the old `Before we go|Next
+  # time` pattern missed — so the only Tomorrow-Teaser chapter ever created
+  # was the closing line stolen by `Next time`. The two new openers are
+  # line-anchored (`^`) so mid-body forward-looking phrasing ("…as we watch
+  # for…", "Watch for the next Ariane 6 mission" in the news body) can't
+  # claim the title; the `where: end` window already restricts to the sign-off
+  # region.
+  - pattern: Before we go|Next time|^Keep an eye on|^Watch for
+    title: Tomorrow Teaser
     where: end
 newsletter:
   enabled: true

@@ -14,10 +14,13 @@ fixes:
 """
 
 import json
+import re
 from pathlib import Path
 
 import pytest
+import yaml
 
+from engine.chapters import parse_chapters
 from engine.utils import fix_phonetic_garbles
 from engine.show_memory import (
     _self_reference_bigrams,
@@ -138,3 +141,98 @@ class TestStockMarketTitleFilter:
     def test_digest_prompt_excludes_stock_items(self):
         txt = (REPO / "shows/prompts/fascinating_frontiers_digest.txt").read_text()
         assert "NO STOCK / MARKET ITEMS" in txt
+
+
+def _ff_markers():
+    cfg = yaml.safe_load(
+        (REPO / "shows/fascinating_frontiers.yaml").read_text(encoding="utf-8")
+    )
+    return cfg["chapters"]["section_markers"]
+
+
+class TestChapterClosingOrdering:
+    """June 24 2026: the spoken sign-off ("…I'll see you next time") matches the
+    Tomorrow Teaser pattern (`Next time`). With Teaser listed before Closing the
+    sign-off line was mis-titled Tomorrow Teaser and the episode shipped with NO
+    Closing chapter (Ep110/Ep111 ended on Tomorrow Teaser). The fix: list Closing
+    before Tomorrow Teaser, broaden the teaser to its real "Keep an eye on…" /
+    "Watch for…" openers, and drop the bare `deep dive` pattern that the
+    cross-promo ("daily deep dive into everything Tesla") tripped (Ep109 spurious
+    out-of-order chapter). All metadata-only — no audio/prompt change.
+    """
+
+    def test_closing_listed_before_tomorrow_teaser(self):
+        titles = [m["title"] for m in _ff_markers()]
+        assert titles.index("Closing") < titles.index("Tomorrow Teaser"), (
+            "Closing must precede Tomorrow Teaser so the 'see you next time' "
+            "sign-off line is titled Closing, not Tomorrow Teaser"
+        )
+
+    def test_deep_dive_pattern_does_not_match_bare_deep_dive(self):
+        dd = next(m for m in _ff_markers() if m["title"] == "Cosmic Deep Dive")
+        rx = re.compile(dd["pattern"], re.IGNORECASE)
+        # The network-family cross-promo must NOT open a Cosmic Deep Dive chapter.
+        assert not rx.search(
+            "give Tesla Shorts Time a listen: your daily deep dive into everything Tesla"
+        )
+        assert not rx.search("let's pop the hood and go under the hood")
+        # The literal section label still matches when present.
+        assert rx.search("Cosmic Deep Dive: how infrared light reveals hidden stars")
+
+    def _parse(self, script):
+        return [c.title for c in parse_chapters(
+            script, _ff_markers(), show_name="Fascinating Frontiers")]
+
+    # A realistic ~1600-word body so the teaser + sign-off land in the last
+    # 15% (the `where: end` window), exactly as on a shipped episode. Each
+    # "story" sentence carries a forward-looking phrase to prove mid-body
+    # "watch for…" can't steal the Tomorrow Teaser title.
+    _BODY = "\n\n".join(
+        f"In story number {n}, astronomers used the telescope to measure the "
+        f"distance and mass of a distant object, and they will watch for "
+        f"follow-up data to confirm the result over the coming months."
+        for n in range(1, 36)
+    )
+
+    def test_keep_an_eye_teaser_plus_signoff_gets_both_chapters(self):
+        # Exact Ep110/Ep111 shape: "Keep an eye on…" teaser + "see you next
+        # time" sign-off + network-family closing.
+        script = (
+            "Good to have you on Fascinating Frontiers, episode one hundred eleven.\n\n"
+            + self._BODY + "\n\n"
+            "Keep an eye on the next Starliner readiness review as testing continues through the summer.\n\n"
+            "That's Fascinating Frontiers for today. I'm Patrick in Vancouver. "
+            "Thanks for exploring with me, and I'll see you next time. And if you'd "
+            "rather watch than listen, find us on YouTube.\n\n"
+            "And before you go — this show is part of the Nerra Network, a family "
+            "of daily podcasts. Give Planetterrian Daily a listen.\n\n"
+            "This episode used AI voice synthesis of my voice."
+        )
+        titles = self._parse(script)
+        assert "Closing" in titles, titles
+        assert "Tomorrow Teaser" in titles, titles
+        # Closing is the last semantic marker (the sign-off ends the episode).
+        assert titles.index("Tomorrow Teaser") < titles.index("Closing"), titles
+
+    def test_next_time_teaser_with_deep_dive_cross_promo_no_orphan_chapter(self):
+        # Exact Ep109 shape: "Next time, we'll be watching…" teaser + a Tesla
+        # cross-promo carrying "deep dive". The cross-promo must NOT create a
+        # spurious Cosmic Deep Dive chapter after the close.
+        script = (
+            "Good to have you on Fascinating Frontiers, episode one hundred nine.\n\n"
+            + self._BODY + "\n\n"
+            "Next time, we'll be watching for the first integration milestones on the Roman Space Telescope.\n\n"
+            "That's Fascinating Frontiers for today. I'm Patrick in Vancouver. "
+            "Thanks for exploring with me, and I'll see you next time.\n\n"
+            "And before you go — this show is part of the Nerra Network. Give "
+            "Tesla Shorts Time a listen: your daily deep dive into everything Tesla.\n\n"
+            "This episode used AI voice synthesis of my voice."
+        )
+        titles = self._parse(script)
+        assert "Closing" in titles, titles
+        assert "Tomorrow Teaser" in titles, titles
+        assert "Cosmic Deep Dive" not in titles, (
+            "the cross-promo 'deep dive into everything Tesla' must not open a "
+            f"Cosmic Deep Dive chapter: {titles}")
+        # Closing is the final chapter — nothing follows the sign-off.
+        assert titles[-1] == "Closing", titles

@@ -107,12 +107,114 @@ reviews:
           0 market-action items in any FF digest after merge; the fetch filter
           drops them (live test: 7 dropped today). SpaceX mission/launch/Dragon
           stories still appear.
-        verdict: pending
-        evidence: null
+        verdict: partial
+        evidence: >-
+          Daily digests Ep104-111 all carry 0 stock hits — the fetch filter is
+          fully effective on dailies. BUT the Sunday weekly recap Ep108
+          (2026-06-21) spoke the SPCX $85.7B funding round + greenshoe + $2.5T
+          market cap (Ep108 digest lines 7-13): the recap synthesizes from the
+          content lake (engine/weekly_recap.py), which still held the pre-filter
+          Ep103 (2026-06-16) content. The fetch filter never sees recap content.
+          Self-healing next cycle (Ep103 leaves the 7-day window 2026-06-22);
+          reopened as a deferred item with a scored prediction (Ep115 recap clean)
+          rather than patching the shared recap module on a single self-healing
+          event.
       - metric: >-
           false-positive drops of SpaceX mission/launch titles by the filter
         baseline: "the bare nasdaq pattern dropped a Falcon 9 launch (now removed)"
         expected: "0 launch/mission/Dragon/contract titles dropped on any episode"
+        verdict: hit
+        evidence: >-
+          Ep104-111 dailies kept Falcon 9, the SpaceX microgravity vehicle, the
+          Boeing satellite contract, and Starliner coverage; no legitimate
+          mission/launch story is missing. No false-positive launch drop observed.
+
+  - date: 2026-06-24
+    pr: null
+    doc: docs/reviews/fascinating_frontiers_review_2026_06_24.md
+    summary: >-
+      Third scheduled-agent FF pass. Scored June-16 stock filter: HIT (no launch
+      false-drops) + PARTIAL (dailies clean, but the Sunday recap Ep108
+      re-surfaced pre-filter Ep103 SPCX content via the content lake). Headline
+      new finding: the orphan-Closing chapter bug the snapshot's loose
+      chapter_issues check missed — Ep110/Ep111 shipped with NO Closing chapter
+      (ended on Tomorrow Teaser) and Ep109 shipped a spurious out-of-order Cosmic
+      Deep Dive chapter. Root cause: the sign-off line "…see you next time" matches
+      the teaser's `Next time` and Teaser was listed before Closing; the real
+      "Keep an eye on…"/"Watch for…" teaser openers (6/8 episodes) matched no
+      pattern; and the bare `deep dive` pattern only ever matched the cross-promo
+      "daily deep dive into everything Tesla". Fixed deterministically
+      (metadata-only, no audio): Closing before Tomorrow Teaser, teaser broadened
+      to line-anchored `^Keep an eye on`/`^Watch for`, bare `deep dive`/`under the
+      hood` dropped. Verified by re-parsing real Ep108-111 scripts — all four now
+      end Tomorrow Teaser -> Closing in order.
+    scored_prior:
+      - prior_pass: docs/reviews/fascinating_frontiers_review_2026_06_16.md
+        claim: "0 market-action items in any FF digest after merge"
+        verdict: partial
+        evidence: >-
+          Dailies clean (Ep104-111: 0 stock hits); Ep108 Sunday recap re-surfaced
+          SPCX funding/greenshoe/$2.5T from the content lake (pre-filter Ep103).
+      - prior_pass: docs/reviews/fascinating_frontiers_review_2026_06_16.md
+        claim: "0 launch/mission/Dragon/contract titles false-dropped"
+        verdict: hit
+        evidence: "Ep104-111 kept Falcon 9, microgravity vehicle, Boeing contract, Starliner."
+    shipped:
+      - >-
+        Chapter markers (shows/fascinating_frontiers.yaml): Closing listed before
+        Tomorrow Teaser (sign-off wins Closing); Tomorrow Teaser pattern broadened
+        to `Before we go|Next time|^Keep an eye on|^Watch for` (line-anchored);
+        bare `deep dive` + `under the hood` dropped from Cosmic Deep Dive marker.
+        Metadata-only, no audio/prompt change. Drift guard
+        TestChapterClosingOrdering.
+    deferred:
+      - >-
+        Sunday weekly-recap stock leak (NEW): engine/weekly_recap.py synthesizes
+        from the content lake, bypassing the fetch-time exclude_title_patterns.
+        Ep108 leaked pre-filter Ep103 SPCX content. Self-healing next cycle;
+        deferred with a scored prediction (Ep115 recap clean). If it misses, the
+        next pass adds a recap-side scope guard (shared module — defer to avoid
+        confounding / over-touching shared code on a self-healing event).
+      - >-
+        Cosmic Deep Dive length lever (carried from June 12/16) — still deferred
+        pending the operator's four-show length A/B. New evidence: the LLM pads by
+        duplicate-covering single digest items (Ep111 covered #14 Embry-Riddle and
+        #15 launch manifest twice each, violating the prompt's no-retell rule).
+        Tightening that shortens episodes further, so it stays tangled with the
+        length lever.
+      - >-
+        Mid-section chapter titles are raw auto-segment fragments because the
+        Cosmic Spotlight / Cosmic Deep Dive markers don't fire (prompt forbids
+        announcing the sections) — the network-wide digest-driven-titles lever
+        (Tesla/M&A/SpaceX-deferred). This pass repaired only the head/tail anchors.
+      - >-
+        Theme residual "science nasa" (carried) — generic adjacency / bare
+        science.nasa.gov domain, low harm.
+      - >-
+        Curated narrative-tracker status pass (carried) — operator task via
+        scripts/update_tesla_narrative.py --slug fascinating_frontiers.
+      - >-
+        META (recommendation, not shipped): scripts/review_snapshot.py
+        chapter_issues missed the orphan-Closing class ("10/10 clean" while two
+        episodes had no Closing). A network pass should add a missing-Closing /
+        wrong-last-chapter check. Shared tooling — defer to network/playbook owner.
+    predictions:
+      - metric: >-
+          presence of a "Closing" chapter in chapters_ep*.json for new FF episodes
+        baseline: "Ep110/Ep111 had NO Closing chapter; Ep109 had an out-of-order Cosmic Deep Dive"
+        expected: >-
+          every FF episode after merge has a Closing chapter as the LAST semantic
+          marker (Tomorrow Teaser immediately before it); no spurious post-sign-off
+          Cosmic Deep Dive chapter from the cross-promo.
+        verdict: pending
+        evidence: null
+      - metric: >-
+          market-action content in the next FF Sunday weekly recap (Ep115, ~2026-06-28)
+        baseline: "Ep108 (2026-06-21) recap spoke SPCX funding/greenshoe/$2.5T from pre-filter Ep103"
+        expected: >-
+          0 stock/market-action items in Ep115 — the content lake no longer
+          accumulates stock content (dailies filter at fetch) and the recap window
+          (June 22-28) excludes pre-filter Ep103. If it leaks, attack the recap path.
         verdict: pending
         evidence: null
 
