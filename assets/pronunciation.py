@@ -185,7 +185,6 @@ COMMON_ACRONYMS: Dict[str, str] = {
     # the canonical "NASA"). The garble map still catches an LLM-written "nassa".
     "SpaceX": "Space X",
     "ESA": "E S A",
-    "JAXA": "jacksa",  # phonetic guide — word-acronym
     "ISS": "I S S",
     "JWST": "J W S T",
     "HST": "H S T",
@@ -194,19 +193,21 @@ COMMON_ACRONYMS: Dict[str, str] = {
     "LRO": "L R O",
     "LEO": "L E O",
     "GEO": "G E O",
-    "OSIRIS-REx": "Osiris Rex",
-    "DART": "dart",  # phonetic guide — word-acronym
-    "PSYCHE": "Sy-key",
-    "LOFAR": "low-far",
+    # Word-acronym guides JAXA/OSIRIS-REx/LOFAR/ESCAPADE moved 2026-06-25 to
+    # shows/pronunciation_map.yaml (audio-only) so "jacksa"/"escape-ade" stop
+    # leaking into the transcript. DART + PSYCHE stay here: they're in
+    # _CASE_SENSITIVE_ACRONYMS (the lowercase words "dart"/"psyche" must not be
+    # respelled), which the case-insensitive YAML layer can't express.
+    "DART": "dart",  # phonetic guide — word-acronym (case-sensitive)
+    "PSYCHE": "Sy-key",  # case-sensitive
     "ALMA": "alma",
-    "ESCAPADE": "escape-ade",
 
     # --- Biology and health ---
     "DNA": "D N A",
     "RNA": "R N A",
     "RNAi": "R N A i",
-    "CRISPR-Cas9": "crisper Cas nine",
-    "CRISPR": "crisper",  # phonetic guide — word-acronym
+    # CRISPR / CRISPR-Cas9 ("crisper") moved 2026-06-25 to
+    # shows/pronunciation_map.yaml (audio-only) — "crisper" was leaking.
     "mRNA": "messenger R N A",
     "FDA": "F D A",
     "NIH": "N I H",
@@ -269,7 +270,7 @@ COMMON_ACRONYMS: Dict[str, str] = {
     # --- Financial / Markets ---
     "P/E": "P to E",
     "EPS": "E P S",
-    "EBITDA": "ee-bit-dah",
+    # EBITDA ("ee-bit-dah") moved 2026-06-25 to shows/pronunciation_map.yaml.
     "ROI": "R O I",
     "ROE": "R O E",
     "YoY": "year over year",
@@ -280,18 +281,16 @@ COMMON_ACRONYMS: Dict[str, str] = {
     "DCA": "D C A",
     "AUM": "A U M",
     "M&A": "M and A",
-    "SPACs": "spacks",
-    "SPAC": "spack",
-    "GAAP": "gaap",
+    # SPACs/SPAC ("spacks"/"spack") and GAAP ("gaap") moved 2026-06-25 to
+    # shows/pronunciation_map.yaml (audio-only) — the lowercase forms leaked.
     "TTM": "T T M",
     "DCF": "D C F",
 
     # --- Scientific / Environmental ---
     "USSF": "U S S F",
-    "PROTAC": "pro-tack",
-    "ARPA-H": "arpa H",
+    # PROTAC ("pro-tack"), ARPA-H ("arpa H") and CEPA ("see-pa") moved
+    # 2026-06-25 to shows/pronunciation_map.yaml (audio-only).
     "CAGR": "C A G R",
-    "CEPA": "see-pa",
     "CCME": "C C M E",
     "SVE": "S V E",
     "PFAS": "P fas",
@@ -315,7 +314,7 @@ COMMON_ACRONYMS: Dict[str, str] = {
     # ``NATO`` ("nay-toe") removed 2026-06-25: the garble layer reverts
     # "nay-toe" → "NATO" right after this map (dead round-trip). Garble map
     # still catches an LLM-written "nay-toe".
-    "OPEC": "oh-peck",  # phonetic guide — word-acronym
+    # ``OPEC`` ("oh-peck") moved 2026-06-25 to shows/pronunciation_map.yaml.
 
     # --- Vehicle / Manufacturing ---
     "VIN": "V I N",

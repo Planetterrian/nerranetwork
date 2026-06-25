@@ -81,6 +81,12 @@ _MOVED = {
     "Zelensky": "Zeh-len-skee",
     "AstraZeneca": "Astra-Zeneca",
     "Afeela": "ah-FEE-lah",
+    # Word-acronym guides moved from COMMON_ACRONYMS (2026-06-25).
+    "EBITDA": "ee-bit-dah",
+    "OPEC": "oh-peck",
+    "CRISPR": "crisper",
+    "JAXA": "jacksa",
+    "GAAP": "gaap",
 }
 
 
