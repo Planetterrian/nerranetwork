@@ -1,0 +1,103 @@
+What's up? Welcome to Models and Agents, episode 92 for June 25th, 2026. Your daily
+AI briefing. Lots of news to walk through. Let's start with what actually matters.
+GPT 5.5 Instant now handles intent and constraints more reliably while rolling out to all users
+this week. Open AI released an updated GPT 5.5 Instant that improves intent understanding,
+complex constraint handling, and recommendation quality. Open AI also announced its first custom AI
+chip, jalapeno, built with Broadcom for chat GPT and agent workloads. Several new archive papers
+introduce agent evaluation frameworks and test time adaptation techniques that address real deployment
+gaps. The updated GPT 5.5 Instant better interprets user intent and adapts responses accordingly
+while handling complex constraints more reliably. It also produces more useful and cohesive shopping
+and local recommendations. The change targets open AI's most used model and is rolling out today
+to paid users and tomorrow to free users. Builders working on recommendation or multi-constraint chat
+flows should rerun recent prompt sets to measure reduction in clarification turns. Watch how the
+update interacts with agent work flows that chain multiple tool calls. This development builds on the
+frontier model's coverage from episode 90 where closed models traded capability leads and it moves
+the open question of capability gains versus cost trajectory by tightening intent handling on the
+model developers already used most. Open AI designed and produced its first purpose built AI chip
+in partnership with Broadcom for LLM workloads powering chat GPT codex the API and future agent
+products. The move expands open AI stack from models to silicon to support larger scale. No performance
+numbers or availability details were released. Infrastructure teams should monitor future announcements
+on token cost impact once the chip enters production serving. This ties into the AI compute
+an inference thread from episode 91 where custom silicon was tracked as a lever on the inference cost
+curve. A key shoff Yael Lita is an 8 billion parameter mass diffusion language model trained
+from scratch with fully bi-directional attention on 12 trillion tokens and a 25 billion token
+instruction corpus. It improves BBH by 21.6 points, act challenge by 14.9 points, math by 14.5 points,
+and human avail by 16.5 points over the prior LLADA version. The model remains competitive with
+Gwen 2.57 billion despite its non-autoraggressive training. Teams exploring diffusion based language
+models should test the released weights for tasks where bi-directional context helps.
+This update narrows the open weight models gap discussed in episode 90 by showing non-autoraggressive
+approaches closing in on standard autoregressive baselines. A new data set of 32,534 double mark
+GCESE mock exam responses across 328 questions shows top LLMs agree with examiner consensus more
+closely than examiners agree with each other. Agreement holds on subjective English essays and
+messy handwritten math scripts. Model size shows little discrimination in agreement quality.
+Education and assessment teams can now evaluate automated marking pipelines against this frozen,
+real student distribution. Agent Odyssey procedurally generates open-ended text games with rich
+entities and long horizon tasks to evaluate test time continual learning. The framework measures
+game progress plus world knowledge acquisition, episodic memory, exploration, action diversity,
+and model cost. Even top agents remain far below human performance. Those stronger base models
+improve results and short-term memory helps multiple paradigms. Agent developers should run their
+systems on the generated games to quantify meaningful horizon length. This continues the agents and
+tool use arc from episode 91, where reliability of long horizon agents was flagged as the key open
+question. Bi-PACE replaces observation hash grouping with cosine distance clustering in the
+action-conditioned peer baselines for advantage estimation. On Alfworld with Quinn 2.57 billion,
+it raises success from 90.8 to 97.1. On the 1.5 billion variant, it reaches 93.5 versus 86.7 for
+the prior gig PO method. Overhead is 11.3% of a single training step. Agent teams using stepwise group
+based RL should test the open implementation when credit assignment currently produces singleton
+groups. Hybrid IR combines graph-based retrieval for structured knowledge with dense retrieval for
+fine-grained semantics and adds an iterative retrieve reason loop. The dual path design first
+pulls structured associations via graphs and then refines with dense vectors for local semantics.
+An iterative loop alternates retrieval and reasoning steps to recover details lost and single
+path methods. It targets complex medical QA where single path retrieval loses either global
+associations or local detail. Experiments on three standard medical QA benchmarks show effectiveness.
+Medical rag teams should compare it against their current single path setup on multi-hop clinical
+questions. The author built a frozen 240-task EVAL set sampled from real production traffic and
+roots every candidate model through the same prompt sequence via GPT Proto. Results show the leader
+board winner often differs from the model that wins on the user's distribution. Gaps between first
+and second place shrinked dramatically on the private set. One model that looks strong on public
+benchmarks had a long tail failure mode that would have caused production incidents.
+Another candidate reversed its ranking entirely once the traffic distribution was applied.
+Teams should replicate the approach of freezing and versioning their own usage distribution before
+trusting vendor reported gains. A test-time adaptation method using semi-supervised learning on
+unlabeled inference time samples maintains robustness when supervised detectors encounter adversarial
+humanization, new LLMs or temporal drift. The method clusters recent inference examples and generates
+high confidence pseudo labels inside each cluster. The commercial pangram detector drops to 24.1%
+on adversarial AI text, while the TTA approach reaches 90.5%. Code is released at the link to
+The adaptation adds one forward pass per batch and runs on a sliding window of recent samples.
+Detection teams facing distribution shift should evaluate the semi-supervised adaptation
+pipeline on their own traffic. Policy align synthesizes policy violating instructions from a
+natural language safety policy and performs on policy self-distillation. An optional policy-isensitive
+filtering step selects high impact examples for the distillation stage. It improves safety across
+multiple models while keeping over refusal low and preserving general capabilities.
+The method also generalizes to medical, legal and financial policies without requiring new preference
+data sets. Safety teams that receive new policies faster than they can collect preference data should
+test the released code. Okay, let's pop the hood on test time adaptation under distribution shift.
+Everyone talks about test time adaptation as a simple, just keep learning switch. In practice,
+it is a semi-supervised loop that treats incoming unlabeled samples as a mini-training set,
+whose homogeneity supplies the supervision signal. The method first clusters recent inference examples,
+then uses high confidence pseudo labels within each cluster to update a lightweight adapter while
+freezing the base detector. This adds roughly one forward pass per batch but avoids any labeled data
+collection after deployment. The approach shines when the shift is gradual and the model family stays
+constant. It degrades when entirely new model families appear because the homogeneity assumption breaks.
+When facing repeated adversarial humanization or daily drift and user writing style,
+run the adaptation step on a sliding window of the last few hundred samples rather than the full history.
+So when should you actually reach for this versus the alternative?
+Use it for gradual drift within a fixed model family and skip it when new model families arrive.
+Test the new GPT 5.5 instant on any multi-constraint prompts that previously required clarification
+turns to measure the intent handling improvement. Run your agent on the agent-auticy game generator to
+quantify how far its meaningful horizon extends before performance collapses. Apply the frozen 240
+task production eVAL method from the Reddit post to the next model you are considering instead of
+relying on vendor benchmarks. Try the released bypass code on your current group-based RL
+agent setup if single-ton groups are limiting credit assignment. OpenAI's jalapeno chip is expected
+to enter production serving for chat GPT and agent workloads in the coming months. More teams will
+release custom eVAL sets sampled from their own traffic distributions following the pattern described
+in the Reddit discussion. Additional papers on test time adaptation for detection and agent memory
+are likely as distribution shift robustness becomes a standard requirement. Tomorrow keep an eye
+on follow-up details around the jalapeno chip rollout timeline and any new test time adaptation code
+drops. That's models and agents for today. If you found this useful, share it with someone who's
+trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+The AI world moves fast. We'll help you keep up. See you tomorrow and before you go,
+this show is part of the NARA network, a family of daily podcasts on tech, science, and markets.
+Each want a short, sharp briefing you can finish on the commute. If today earned its place in your
+feed, here's your next listen. Modern investing techniques, modern strategies for Canadian and US
+investors. Find every show free at NARAnetwork.com. This episode used AI voice synthesis of my voice,
+editorial selection, and analysis are my own.
