@@ -14,7 +14,11 @@ Grok custom voice" policy — landmine #17). This guard blocks new dead
 round-trips from creeping back in and documents the one tolerated exception.
 """
 
-from assets.pronunciation import WORD_PRONUNCIATIONS
+from assets.pronunciation import (
+    WORD_PRONUNCIATIONS,
+    prepare_text_for_tts as assets_prepare,
+)
+from engine.tts import prepare_text_for_tts as tts_prepare
 from engine.utils import _PHONETIC_GARBLES, fix_phonetic_garbles
 
 
@@ -54,3 +58,49 @@ def test_garble_layer_still_protects_against_llm_garbles():
     assert fix_phonetic_garbles("An-thropic and Lah-mah") == "Anthropic and Llama"
     assert "Teslarati" in fix_phonetic_garbles("per Tesla-rah-tee")
     assert "Enceladus" in fix_phonetic_garbles("the moon En-sell-uh-dus")
+
+
+# --- Foreign / hard-name respellings MOVED to the audio-only YAML layer ---
+# (2026-06-25) so they stop leaking the respelling into the published
+# transcript while keeping the SAME audio. Each is verified two ways below:
+#   1. the script-save layer (assets) now leaves the canonical spelling alone
+#      -> transcript is clean,
+#   2. the synthesis layer (engine.tts, shows/pronunciation_map.yaml) still
+#      emits the respelling -> audio is unchanged.
+_MOVED = {
+    "Milei": "Mee-lay",
+    "Mistral": "Mee-stral",
+    "Cassini": "Kah-see-nee",
+    "Karpathy": "Kar-pathy",
+    "Amodei": "Ah-mo-day",
+    "Zelensky": "Zeh-len-skee",
+    "AstraZeneca": "Astra-Zeneca",
+    "Afeela": "ah-FEE-lah",
+}
+
+
+def test_moved_names_not_in_word_pronunciations():
+    for word in _MOVED:
+        assert word not in WORD_PRONUNCIATIONS, (
+            f"{word} was moved to the audio-only pronunciation_map.yaml — it "
+            "must not be back in the transcript-leaking WORD_PRONUNCIATIONS."
+        )
+
+
+def test_moved_names_clean_in_transcript_layer():
+    # assets.prepare_text_for_tts feeds the saved _tts.txt / blog / RSS.
+    for word, respelling in _MOVED.items():
+        out = assets_prepare(f"Today {word} made news.")
+        assert word in out, f"{word} should pass through the script-save layer"
+        assert respelling not in out, f"{respelling} must not leak into the transcript"
+
+
+def test_moved_names_still_respelled_for_audio():
+    # engine.tts.prepare_text_for_tts applies shows/pronunciation_map.yaml at
+    # synthesis — the Grok-bound audio must still get the pronunciation guide.
+    for word, respelling in _MOVED.items():
+        out = tts_prepare(f"Today {word} made news.")
+        assert respelling in out, (
+            f"{word} lost its audio respelling — the move to the YAML layer "
+            "must preserve the exact pronunciation Grok hears."
+        )

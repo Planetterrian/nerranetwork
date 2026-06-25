@@ -122,3 +122,45 @@ corrections:
   nerranetwork: "NEH-ruh Network"
   Nerra: "NEH-ruh"
 
+  # ---------------- Proper nouns moved from WORD_PRONUNCIATIONS (2026-06-25) ----------------
+  # These foreign / hard-to-say names were respelled in
+  # assets/pronunciation.py:WORD_PRONUNCIATIONS, which runs at SCRIPT-SAVE time
+  # and leaks the respelling into the saved _tts.txt -> blog/RSS transcript
+  # (the same class as the historical "nassa" / "koo-dah" / "An-thropic"
+  # leaks). Moved here (audio-only, applied at synthesis) so the transcript
+  # keeps the canonical spelling while Grok still receives the pronunciation
+  # guide. The audio is byte-for-byte unchanged from the WORD_PRONUNCIATIONS
+  # version, and none of these values overlap engine.utils._PHONETIC_GARBLES,
+  # so there is no double-processing. NOT phonetic respellings of common
+  # English words (those are deleted, not moved) — these are genuinely foreign
+  # / hard tokens where the guide is load-bearing on the voice.
+  # Organizations / unions
+  "IG Metall": "I G Metall"
+  "IF Metall": "I F Metall"
+  # Companies / brands / missions
+  Mistral: "Mee-stral"
+  AstraZeneca: "Astra-Zeneca"
+  Alnylam: "Al-nye-lam"
+  Roscosmos: "Ross-cosmos"
+  Hachette: "hah-SHET"
+  SoFi: "So-Fi"
+  NOIRLab: "Noir Lab"
+  Afeela: "ah-FEE-lah"
+  # Benchmark / library names with embedded letters
+  DSPy: "D S Pie"
+  HarmfulQA: "Harmful Q A"
+  TheoremQA: "Theorem Q A"
+  VideoQA: "Video Q A"
+  MedQuAD: "Med Quad"
+  # Space-mission / scientist names
+  Cassini: "Kah-see-nee"
+  Oberth: "Oh-bairt"
+  # People (longest variants first so the bare "Zelensky" can't pre-empt them)
+  Zelenskyy: "Zeh-len-skee"
+  Zelenskyj: "Zeh-len-skee"
+  Zelensky: "Zeh-len-skee"
+  Karpathy: "Kar-pathy"
+  Milei: "Mee-lay"
+  Altman: "Awlt-man"
+  Amodei: "Ah-mo-day"
+
