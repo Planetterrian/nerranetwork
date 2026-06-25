@@ -256,7 +256,35 @@ nerranetwork/
   (low risk; matches the NASA/Anthropic precedent that ships today).
 - **MAB** (Models & Agents for Beginners) runs via `run_show.py` +
   `shows/models_agents_beginners.yaml`; beginner/teen-focused version of M&A.
-  Uses **ElevenLabs TTS**. X posting disabled.
+  On the custom Grok voice `kdif6sqjcyiq` (inherits `_defaults.yaml`; the old
+  "ElevenLabs" note was stale per landmine #17). X posting disabled.
+  **June 25 2026 quality pass** (first dedicated MAB review:
+  [`docs/reviews/models_agents_beginners_review_2026_06_25.md`](docs/reviews/models_agents_beginners_review_2026_06_25.md);
+  drift guards: `tests/test_mab_quality_pass.py`): scored the June-10
+  four-show predictions — the "So imagine" opener de-seed HIT (0/10), the
+  length floor raise MISSED (9/10 still under 1200, digest ceiling, deferred).
+  Two prompt de-seeds (A/B). (1) The Deep Dive closer echoed a verbatim
+  three-sentence template every episode — "and that's basically what X is
+  doing when it Y / so next time someone says Z, you can tell them it is
+  basically W / not so scary, right?" (9/10 "not so scary right", Ep080/081/082
+  word-for-word); root cause was BOTH prompts seeding the literal sentences
+  (`mab_podcast.txt:138-139`, `mab_digest.txt:121-122`, the Omni-View
+  "strongest case" / EI deep-dive / FP lesson-template class). De-seeded both,
+  keeping the analogy method but requiring fresh per-episode phrasing and
+  naming the formulas as banned-as-verbatim (A/B render: digest now ends "…more
+  like chatting with someone who actually gets the point" instead of the
+  formula). (2) After the "So imagine" fix the model converged on a new
+  "Something [adj] just happened" opener (5/10) — straight from the prompt's
+  own example list (`mab_podcast.txt:125`); moved it from the example menu to
+  the BANNED list. Deferred: chronic under-length (digest ceiling, four-show
+  length A/B); "The Big Story" chapter missing on every episode (dead
+  `big story|biggest news` marker — host's opener is intentionally varied, no
+  anchor; digest-driven/position-aware titles is the durable lever, M&A
+  June-21 class); Ep081 auto-segment garbage title (same lever); the stale
+  Fish/Chatterbox pronunciation hook still injecting landmine-#17 respellings
+  (`CUDA→"kooda"` etc., 0/76 transcript impact — recommend aligning with
+  sister M&A which uses no hook). Prompt edits change output — A/B-listen per
+  landmine #17.
 - **FP** (Финансы Просто) runs via `run_show.py` +
   `shows/finansy_prosto.yaml`; Russian-language financial literacy podcast
   for women in Canada (even days only). Uses **Grok TTS** (Olya voice
