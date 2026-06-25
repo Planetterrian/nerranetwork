@@ -123,10 +123,12 @@ class TestPlaybookGuardrails:
 
 
 class TestWorkflowWiring:
-    def test_workflow_invokes_playbook_via_picker(self):
+    def test_workflow_runs_grok_review_via_picker(self):
         text = WORKFLOW_PATH.read_text(encoding="utf-8")
-        assert "anthropics/claude-code-action@v1" in text
-        assert "/review-show" in text
+        # Runs the Grok-powered review script, not the (retired, costly) Claude
+        # Opus claude-code-action.
+        assert "scripts/run_show_review.py" in text
+        assert "anthropics/claude-code-action" not in text
         assert "pick_review_target.py" in text
 
     def test_workflow_is_scheduled_and_dispatchable(self):
@@ -148,12 +150,14 @@ class TestWorkflowWiring:
         text = WORKFLOW_PATH.read_text(encoding="utf-8")
         assert "already has an open review PR" in text
 
-    def test_bot_dispatch_is_allowed(self):
-        # The daily audit dispatches this workflow as the github-actions
-        # bot; claude-code-action refuses bot-initiated runs unless the
-        # actor is allowlisted (broke the event-driven path 2026-06-10).
+    def test_bot_dispatch_needs_no_actor_allowlist(self):
+        # The daily audit dispatches this workflow as the github-actions bot.
+        # The review now runs as a plain `python scripts/run_show_review.py`
+        # step authorized by GITHUB_TOKEN, which works for bot-initiated runs —
+        # so the old claude-code-action `allowed_bots` allowlist is gone.
         text = WORKFLOW_PATH.read_text(encoding="utf-8")
-        assert 'allowed_bots: "github-actions"' in text
+        assert "allowed_bots" not in text
+        assert "GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}" in text
 
 
 def _load_script(name):
@@ -236,6 +240,36 @@ class TestQualityReviewDispatch:
         audit = (ROOT / ".github" / "workflows" / "daily-audit.yml").read_text(encoding="utf-8")
         assert "dispatch_quality_reviews.py" in audit
         assert "actions: write" in audit
+
+
+class TestGrokReviewScript:
+    """The Grok-powered review runner that replaced the Claude Opus agent."""
+
+    SCRIPT = ROOT / "scripts" / "run_show_review.py"
+
+    def test_script_exists_and_uses_grok(self):
+        text = self.SCRIPT.read_text(encoding="utf-8")
+        assert 'REVIEW_MODEL = "grok-4.3"' in text
+
+    def test_script_opens_draft_pr_with_review_branch_prefix(self):
+        text = self.SCRIPT.read_text(encoding="utf-8")
+        assert "--draft" in text
+        assert "agent/review-" in text
+
+    def test_script_does_not_auto_edit_prompts_or_audio(self):
+        # The safety contract: Grok PROPOSES prompt/audio changes in the PR
+        # body (A/B-listen gate, landmine #17) and never auto-applies them.
+        text = self.SCRIPT.read_text(encoding="utf-8")
+        assert "A/B-listen required" in text
+        assert "ab_listen_required" in text
+
+    def test_script_loads_without_ci_only_deps(self):
+        # Importing the module must not require the heavy engine.generator
+        # stack (tenacity/openai) — those are deferred to the Grok call so the
+        # gather/parse/write logic stays unit-testable.
+        mod = _load_script("run_show_review")
+        assert hasattr(mod, "build_pr_body")
+        assert hasattr(mod, "update_ledger")
 
 
 class TestLedger:
