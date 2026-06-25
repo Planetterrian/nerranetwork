@@ -585,8 +585,12 @@ class TestApplyPronunciationFixes:
         assert "plan it TAIR ee uhn" not in result
 
     def test_teslarati(self):
+        # Respelling removed 2026-06-25 — the garble-repair layer reverted
+        # "Tesla-rah-tee" → "Teslarati" right after this map, so the canonical
+        # word is what reaches TTS + transcript. The map now leaves it alone.
         result = apply_pronunciation_fixes("According to Teslarati")
-        assert "Tesla-rah-tee" in result
+        assert "Teslarati" in result
+        assert "Tesla-rah-tee" not in result
 
 
 # ===================== Full Pipeline (prepare_text_for_tts) =====================
@@ -697,7 +701,7 @@ class TestPrepareTextForTts:
         assert "thirty-nine" in result        # Episode number
         assert "slash" in result               # Comet designation
         assert "Kah-see-nee" in result         # Cassini pronunciation
-        assert "En-sell-uh-dus" in result      # Enceladus pronunciation
+        assert "Enceladus" in result           # respelling removed 2026-06-25 (garble-redundant)
         assert "Phase three" in result         # Roman numeral
         assert "five hundred thousand" in result  # Large number
         assert "kilometers" in result          # Unit expansion

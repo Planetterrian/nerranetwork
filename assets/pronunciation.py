@@ -397,7 +397,11 @@ WORD_PRONUNCIATIONS: Dict[str, str] = {
     "IF Metall": "I F Metall",
 
     # --- Company / brand names ---
-    "Teslarati": "Tesla-rah-tee",
+    # ``Teslarati`` respelling removed 2026-06-25: the garble-repair layer
+    # (engine.utils.fix_phonetic_garbles, run_show.py:2284) reverts
+    # "Tesla-rah-tee" → "Teslarati" immediately after this map runs, so the
+    # entry was a dead round-trip (no effect on audio OR transcript). The
+    # garble map still protects against an LLM that writes "Tesla-rah-tee".
     "CleanTechnica": "Clean Technica",
     "BrewDog": "Brew Dog",
     "AstraZeneca": "Astra-Zeneca",
@@ -407,7 +411,11 @@ WORD_PRONUNCIATIONS: Dict[str, str] = {
     "LangChain": "Lang Chain",
     "PyTorch": "Pie Torch",
     "Mistral": "Mee-stral",
-    "Anthropic": "An-thropic",
+    # ``Anthropic`` respelling removed 2026-06-25 (garble layer reverts
+    # "An-thropic" → "Anthropic" — dead round-trip). ``NVIDIA`` is kept: its
+    # garble revert lands on "Nvidia" (a DIFFERENT token), so dropping it could
+    # let an all-caps "NVIDIA" reach Grok and letter-split — deferred to the
+    # A/B-listen batch.
     "NVIDIA": "En-vidia",
     "DeepSeek": "Deep Seek",
     "MiniMax": "Mini Max",
@@ -425,7 +433,10 @@ WORD_PRONUNCIATIONS: Dict[str, str] = {
     "Afeela": "ah-FEE-lah",
 
     # --- Scientific names ---
-    "Enceladus": "En-sell-uh-dus",
+    # ``Enceladus`` respelling removed 2026-06-25 (garble layer reverts
+    # "En-sell-uh-dus" → "Enceladus" — dead round-trip). The remaining
+    # science-name respellings below are NOT garble-covered and are deferred
+    # to the A/B-listen batch.
     "Cassini": "Kah-see-nee",
     "Oberth": "Oh-bairt",
     "xenotransplantation": "zeno-transplantation",
@@ -444,19 +455,23 @@ WORD_PRONUNCIATIONS: Dict[str, str] = {
     # untouched, only the audio reflects the override.
 
     # --- AI model names ---
-    "Qwen": "Chwen",
-    "Llama": "Lah-mah",
+    # ``Qwen`` ("Chwen") and ``Llama`` ("Lah-mah") respellings removed
+    # 2026-06-25 — both are reverted by the garble-repair layer immediately
+    # after this map runs (dead round-trips).
 
     # --- People ---
+    # ``Starmer`` ("Star-mer"), ``Tianwen`` ("Tee-en-wen") and ``Hassabis``
+    # ("Hah-sah-biss") respellings removed 2026-06-25 — each is reverted by the
+    # garble-repair layer right after this map runs (dead round-trips). The
+    # foreign-name respellings kept below are NOT garble-covered (they reach
+    # both the audio and the transcript) and are deferred to the A/B-listen
+    # batch.
     "Karpathy": "Kar-pathy",
     "Milei": "Mee-lay",
-    "Starmer": "Star-mer",
     "Zelenskyy": "Zeh-len-skee",
     "Zelenskyj": "Zeh-len-skee",
     "Zelensky": "Zeh-len-skee",
-    "Tianwen": "Tee-en-wen",
     "Altman": "Awlt-man",
-    "Hassabis": "Hah-sah-biss",
     "Amodei": "Ah-mo-day",
 
     # Note: Common words like "who", "ice", "us", "led", "dot" are now
