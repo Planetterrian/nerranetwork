@@ -165,7 +165,10 @@ COMMON_ACRONYMS: Dict[str, str] = {
     "RAG": "rag",
     "LoRA": "Laura",
     "RLHF": "R L H F",
-    "CUDA": "koo-dah",
+    # ``CUDA`` ("koo-dah") removed 2026-06-25: engine.utils.fix_phonetic_garbles
+    # reverts "koo-dah" → "CUDA" right after this layer runs (run_show.py:2284),
+    # so Grok already received the canonical "CUDA" — a dead round-trip. The
+    # garble map still catches an LLM that writes "koo-dah" itself.
     "TPU": "T P U",
     "MCP": "M C P",
     "VLMs": "V L M's",
@@ -177,7 +180,9 @@ COMMON_ACRONYMS: Dict[str, str] = {
     "TF-IDF": "T F I D F",
 
     # --- Space agencies and missions ---
-    "NASA": "nassa",  # phonetic guide — prevents letter-split
+    # ``NASA`` ("nassa") removed 2026-06-25: the garble layer reverts
+    # "nassa" → "NASA" right after this map (dead round-trip — Grok already got
+    # the canonical "NASA"). The garble map still catches an LLM-written "nassa".
     "SpaceX": "Space X",
     "ESA": "E S A",
     "JAXA": "jacksa",  # phonetic guide — word-acronym
@@ -307,7 +312,9 @@ COMMON_ACRONYMS: Dict[str, str] = {
     "US": "U S",
     "USA": "U S A",
     "UN": "U N",
-    "NATO": "nay-toe",  # phonetic guide — word-acronym
+    # ``NATO`` ("nay-toe") removed 2026-06-25: the garble layer reverts
+    # "nay-toe" → "NATO" right after this map (dead round-trip). Garble map
+    # still catches an LLM-written "nay-toe".
     "OPEC": "oh-peck",  # phonetic guide — word-acronym
 
     # --- Vehicle / Manufacturing ---
