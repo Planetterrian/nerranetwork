@@ -549,9 +549,14 @@ class TestApplyPronunciationFixes:
         assert "gigacasting" in result
         assert "giga-casting" not in result
 
-    def test_ig_metall(self):
+    def test_ig_metall_moved_to_yaml(self):
+        # Letter-prefix respelling moved to shows/pronunciation_map.yaml
+        # (audio-only) 2026-06-25 — the script-save layer now leaves it alone,
+        # so "I G Metall" no longer leaks into the transcript. The audio guide
+        # is applied at synthesis instead (see test_pronunciation_grok_alignment).
         result = apply_pronunciation_fixes("IG Metall union conflict")
-        assert "I G Metall" in result
+        assert "IG Metall" in result
+        assert "I G Metall" not in result
 
     def test_robotaxi_unrespelled(self):
         result = apply_pronunciation_fixes("Tesla Robotaxi service")
@@ -708,7 +713,7 @@ class TestPrepareTextForTts:
         result = prepare_text_for_tts(text)
         assert "thirty-nine" in result        # Episode number
         assert "slash" in result               # Comet designation
-        assert "Kah-see-nee" in result         # Cassini pronunciation
+        assert "Cassini" in result             # respelling moved to pronunciation_map.yaml (audio-only) 2026-06-25
         assert "Enceladus" in result           # respelling removed 2026-06-25 (garble-redundant)
         assert "Phase three" in result         # Roman numeral
         assert "five hundred thousand" in result  # Large number

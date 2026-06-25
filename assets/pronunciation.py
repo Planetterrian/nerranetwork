@@ -383,52 +383,42 @@ WORD_PRONUNCIATIONS: Dict[str, str] = {
     "Model Y": "Model Why",
 
     # --- Organizations / unions ---
-    "IG Metall": "I G Metall",
-    "IF Metall": "I F Metall",
+    # ``IG Metall`` / ``IF Metall`` letter-prefix respellings MOVED to
+    # shows/pronunciation_map.yaml on 2026-06-25 (audio-only) so "I G Metall"
+    # stops leaking into the saved transcript; the audio is unchanged.
 
     # --- Company / brand names ---
-    # ``Teslarati`` respelling removed 2026-06-25: the garble-repair layer
-    # (engine.utils.fix_phonetic_garbles, run_show.py:2284) reverts
-    # "Tesla-rah-tee" → "Teslarati" immediately after this map runs, so the
-    # entry was a dead round-trip (no effect on audio OR transcript). The
-    # garble map still protects against an LLM that writes "Tesla-rah-tee".
+    # Foreign / hard-to-say brand, mission and person names that used to live
+    # here were MOVED to shows/pronunciation_map.yaml on 2026-06-25. That layer
+    # is applied at synthesis time only, so the audio is byte-for-byte identical
+    # (Grok still receives the respelling) while the saved _tts.txt / blog / RSS
+    # now read the canonical spelling instead of "Mee-stral" / "Kah-see-nee" /
+    # "Mee-lay" etc. Moved: Mistral, AstraZeneca, Alnylam, Roscosmos, Hachette,
+    # SoFi, NOIRLab, Afeela, DSPy, HarmfulQA, TheoremQA, VideoQA, MedQuAD,
+    # Cassini, Oberth, Karpathy, Milei, Zelensky(+yy/yj), Altman, Amodei.
+    #
+    # ``NVIDIA`` stays (its garble revert lands on the different token "Nvidia";
+    # moving it would change the audio). ``Lifespan.io`` stays (strip_urls
+    # rewrites the .io domain before this map runs, so it needs the script-save
+    # layer). The English-compound brand names that REMAIN below are removed in
+    # the companion A/B commit — the Grok voice says them natively.
     "CleanTechnica": "Clean Technica",
     "BrewDog": "Brew Dog",
-    "AstraZeneca": "Astra-Zeneca",
-    "Alnylam": "Al-nye-lam",
-    "Roscosmos": "Ross-cosmos",
     "Lifespan.io": "Life-span dot i o",
     "LangChain": "Lang Chain",
     "PyTorch": "Pie Torch",
-    "Mistral": "Mee-stral",
-    # ``Anthropic`` respelling removed 2026-06-25 (garble layer reverts
-    # "An-thropic" → "Anthropic" — dead round-trip). ``NVIDIA`` is kept: its
-    # garble revert lands on "Nvidia" (a DIFFERENT token), so dropping it could
-    # let an all-caps "NVIDIA" reach Grok and letter-split — deferred to the
-    # A/B-listen batch.
     "NVIDIA": "En-vidia",
     "DeepSeek": "Deep Seek",
     "MiniMax": "Mini Max",
-    "Hachette": "hah-SHET",
-    "SoFi": "So-Fi",
     "TradingView": "Trading View",
-    "NOIRLab": "Noir Lab",
-    "DSPy": "D S Pie",
-    "HarmfulQA": "Harmful Q A",
     "JailbreakBench": "Jailbreak Bench",
     "GeoChallenge": "Geo Challenge",
-    "TheoremQA": "Theorem Q A",
-    "VideoQA": "Video Q A",
-    "MedQuAD": "Med Quad",
-    "Afeela": "ah-FEE-lah",
 
     # --- Scientific names ---
-    # ``Enceladus`` respelling removed 2026-06-25 (garble layer reverts
-    # "En-sell-uh-dus" → "Enceladus" — dead round-trip). The remaining
-    # science-name respellings below are NOT garble-covered and are deferred
-    # to the A/B-listen batch.
-    "Cassini": "Kah-see-nee",
-    "Oberth": "Oh-bairt",
+    # ``Cassini`` / ``Oberth`` MOVED to shows/pronunciation_map.yaml on
+    # 2026-06-25 (audio-only). The plain-English science words that REMAIN
+    # below are removed in the companion A/B commit — the Grok voice says them
+    # natively.
     "xenotransplantation": "zeno-transplantation",
     "inflammaging": "inflamma-aging",
     "epigenetic": "epi-genetic",
@@ -450,19 +440,9 @@ WORD_PRONUNCIATIONS: Dict[str, str] = {
     # after this map runs (dead round-trips).
 
     # --- People ---
-    # ``Starmer`` ("Star-mer"), ``Tianwen`` ("Tee-en-wen") and ``Hassabis``
-    # ("Hah-sah-biss") respellings removed 2026-06-25 — each is reverted by the
-    # garble-repair layer right after this map runs (dead round-trips). The
-    # foreign-name respellings kept below are NOT garble-covered (they reach
-    # both the audio and the transcript) and are deferred to the A/B-listen
-    # batch.
-    "Karpathy": "Kar-pathy",
-    "Milei": "Mee-lay",
-    "Zelenskyy": "Zeh-len-skee",
-    "Zelenskyj": "Zeh-len-skee",
-    "Zelensky": "Zeh-len-skee",
-    "Altman": "Awlt-man",
-    "Amodei": "Ah-mo-day",
+    # All person-name respellings (Karpathy, Milei, Zelensky(+yy/yj), Altman,
+    # Amodei) MOVED to shows/pronunciation_map.yaml on 2026-06-25 (audio-only)
+    # — same audio, clean transcript.
 
     # Note: Common words like "who", "ice", "us", "led", "dot" are now
     # protected by case-sensitive acronym matching (_CASE_SENSITIVE_ACRONYMS)
