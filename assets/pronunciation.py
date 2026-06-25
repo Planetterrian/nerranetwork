@@ -400,29 +400,25 @@ WORD_PRONUNCIATIONS: Dict[str, str] = {
     # ``NVIDIA`` stays (its garble revert lands on the different token "Nvidia";
     # moving it would change the audio). ``Lifespan.io`` stays (strip_urls
     # rewrites the .io domain before this map runs, so it needs the script-save
-    # layer). The English-compound brand names that REMAIN below are removed in
-    # the companion A/B commit — the Grok voice says them natively.
-    "CleanTechnica": "Clean Technica",
-    "BrewDog": "Brew Dog",
+    # layer).
+    #
+    # English-compound brand names (CleanTechnica, BrewDog, LangChain, PyTorch,
+    # DeepSeek, MiniMax, TradingView, JailbreakBench, GeoChallenge) had their
+    # space-insertion respellings removed 2026-06-25: the Grok custom voice
+    # reads the camelCase compounds natively, and the split forms ("Deep Seek",
+    # "Lang Chain") were leaking into the transcript. Per landmine #17 this
+    # changes shipped audio → A/B-listened. If one regresses, re-add it to
+    # shows/pronunciation_map.yaml (audio-only), not here.
     "Lifespan.io": "Life-span dot i o",
-    "LangChain": "Lang Chain",
-    "PyTorch": "Pie Torch",
     "NVIDIA": "En-vidia",
-    "DeepSeek": "Deep Seek",
-    "MiniMax": "Mini Max",
-    "TradingView": "Trading View",
-    "JailbreakBench": "Jailbreak Bench",
-    "GeoChallenge": "Geo Challenge",
 
     # --- Scientific names ---
     # ``Cassini`` / ``Oberth`` MOVED to shows/pronunciation_map.yaml on
-    # 2026-06-25 (audio-only). The plain-English science words that REMAIN
-    # below are removed in the companion A/B commit — the Grok voice says them
-    # natively.
-    "xenotransplantation": "zeno-transplantation",
-    "inflammaging": "inflamma-aging",
-    "epigenetic": "epi-genetic",
-    "epigenetics": "epi-genetics",
+    # 2026-06-25 (audio-only). The plain-English science words that used to be
+    # here (xenotransplantation, inflammaging, epigenetic[s]) had their hyphen
+    # respellings removed 2026-06-25 — the Grok voice says them natively and the
+    # respellings ("epi-genetic", "zeno-transplantation") were leaking into the
+    # transcript. A/B-listened (landmine #17).
 
     # ``tissue`` / ``neurodegenerative`` and related respellings used to
     # live here (PR #355). Operator caught (May 11 2026 daily review)
