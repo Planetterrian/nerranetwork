@@ -4248,6 +4248,35 @@ def _publish_youtube(
     except Exception:
         _ep_duration = 0.0
 
+    # ---- Hybrid short video clips (Phase 4) — motion to complement stills ----
+    # Best-effort, gated on youtube.video_clips_enabled (pilot: Tesla + SpaceX).
+    # Falls back silently to the all-stills slideshow. Touches only visuals.
+    long_clip_paths: list = []
+    if config.youtube.publish_long_form and getattr(
+        config.youtube, "video_clips_enabled", False
+    ):
+        try:
+            from engine.grok_video_clips import generate_short_clips
+
+            clip_set = generate_short_clips(
+                work_dir=work_dir,
+                episode_num=episode_num,
+                contexts=_scene_contexts if "_scene_contexts" in locals() else [],
+                hook=hook or "",
+                show_config=config,
+                count=int(getattr(config.youtube, "video_clips_count", 3) or 3),
+                seconds=int(getattr(config.youtube, "video_clip_seconds", 5) or 5),
+                resolution=getattr(config.youtube, "video_clips_resolution", "720p"),
+                aspect="16:9",
+            )
+            long_clip_paths = list(clip_set.paths)
+            result["video_clips_generated"] = len(long_clip_paths)
+            result["video_clips_cost_usd"] = clip_set.total_cost_usd
+            if clip_set.failures:
+                result["video_clips_failures"] = clip_set.failures
+        except Exception as exc:  # noqa: BLE001 — never block a publish
+            logger.warning("Hybrid video-clip generation skipped: %s", exc)
+
     # ---- Long-form ----
     long_url = ""
     if config.youtube.publish_long_form:
@@ -4255,6 +4284,7 @@ def _publish_youtube(
             build_long_form_video(
                 final_mp3, cover_path, long_video_path,
                 scene_paths=long_scene_paths if len(long_scene_paths) >= 2 else None,
+                clip_paths=long_clip_paths or None,
                 subtitles_path=srt_path,
                 show_name=config.name,
             )

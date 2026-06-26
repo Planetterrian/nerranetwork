@@ -530,6 +530,19 @@ class YouTubeConfig:
     # This provides detailed visual direction to Grok beyond just the genre.
     video_visual_style: str = ""
 
+    # ---- Hybrid short video clips (Phase 4, June 2026) ----
+    # Interleave a few SHORT Grok clips among the still slideshow for motion
+    # (the cheap fix for YouTube's static-slideshow penalty). Distinct from
+    # video_provider="grok" (full-episode replacement, ~$50/ep). When enabled,
+    # ~video_clips_count clips of ~video_clip_seconds each are generated via
+    # engine.grok_video_clips and mixed in by engine.video.build_long_form_video.
+    # Cost ≈ count × seconds × $0.05-0.07. Best-effort: falls back to all-stills
+    # on any failure. Default off → byte-for-byte legacy behaviour.
+    video_clips_enabled: bool = False
+    video_clips_count: int = 3
+    video_clip_seconds: int = 5
+    video_clips_resolution: str = "720p"
+
     # Optional path (relative to repo root) to a text template for the
     # long-form description body. Placeholders: {hook}, {episode_num},
     # {show_name}, {today_str}. When empty, uses digest paragraphs.
