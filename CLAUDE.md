@@ -1871,6 +1871,34 @@ decision); everything else has a live status card.
       grok` is pinned, guarded by `test_all_youtube_shows_use_grok_imagine`).
       Operator one-time setup pending: create the SpaceX podcast playlist in
       Studio + flag it (landmine #15); uploads publish without it (warned).
+    - **June 26 2026 — quota raised 10k → 200k; full-network rollout.** The
+      @NerraNetwork quota increase landed, so the constrained shape above is
+      undone (full rollout doc:
+      [`docs/youtube_rollout_2026_06_25.md`](docs/youtube_rollout_2026_06_25.md)).
+      `DEFAULT_DAILY_QUOTA` is now **200k**, env-overridable per channel
+      (`YOUTUBE_DAILY_QUOTA[_EN|_RU]`, `resolve_daily_quota()`). **All 13 shows**
+      publish to YouTube: FF + MIT flipped back to long-form, FPD added Shorts,
+      MAB un-paused, and the 6 disabled shows (env_intel, planetterrian,
+      omni_view, models_agents, models_agents_beginners, unintended_consequences)
+      enabled with `image_provider: grok`. Tesla + SpaceX back to **2
+      Shorts/episode**. EN steady state ≈ **24 uploads/day, ~45k units** (vs
+      200k). Quota is no longer the constraint — **cadence is**: the preflight
+      now warns (never blocks) above `SAFE_DAILY_UPLOADS_PER_CHANNEL` (default
+      30, env `YOUTUBE_SAFE_DAILY_UPLOADS`), since YouTube's inauthentic-content
+      policy penalises mass posting. Mitigations shipped same-day: LLM-optimized
+      long-form titles separate from the spoken hook
+      (`engine/youtube_titles.py`, `youtube.optimized_titles`), hybrid short
+      Grok video clips interleaved with stills on Tesla + SpaceX
+      (`engine/grok_video_clips.py`, `youtube.video_clips_enabled`, ~$1/ep,
+      falls back to all-stills), and the slideshow still-hold cap lowered 25 →
+      15 s for more motion network-wide. None of these touch audio (outside
+      landmine #17). Enabled-set + 200k + 15 s cap pinned by
+      `tests/test_schedule.py`, `tests/test_youtube_quota.py`,
+      `tests/test_youtube_quality_pass.py`, `tests/test_config.py`. Operator
+      one-time tasks: create/flag the 6 new shows' podcast playlists (landmine
+      #15), confirm quota scope + set the env budget if EN-only, enable Studio
+      Title/Thumbnail "Test & Compare" (the runner stashes 3 title candidates),
+      and review the Tesla/SpaceX clip pilot's retention before expanding clips.
 
 21. **`min_articles_skip` is tuned per-show, not per-network (May 2026)**
     — `engine/config.py` defaults `min_articles_skip` to `3` (a show
