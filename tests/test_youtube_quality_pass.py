@@ -61,7 +61,7 @@ class TestShortsSelectorThresholdWired:
 class TestSlideshowSceneCycling:
     def test_scene_hold_cap_present(self):
         src = (_ROOT / "engine" / "video.py").read_text(encoding="utf-8")
-        assert "_MAX_SCENE_HOLD_S = 25.0" in src
+        assert "_MAX_SCENE_HOLD_S = 15.0" in src
         assert "slideshow_scenes" in src
 
 

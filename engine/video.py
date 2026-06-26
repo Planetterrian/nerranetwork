@@ -412,6 +412,14 @@ def _make_url_pill(output_path: Path,
 _SCENE_DURATION_SECONDS = 12.0
 _SHORT_SCENE_DURATION_SECONDS = 7.0
 
+# Longest a single still may hold before the scene list is cycled to bring in
+# fresh visual rhythm. Lowered 25 → 15 s (June 2026 motion pass): YouTube's
+# 2025-2026 policy + retention data both penalise long static holds, so cycling
+# the existing Grok images more often adds rhythm at zero extra image cost. The
+# Ken-Burns zoom keeps each hold watchable; flagships (Tesla/SpaceX) also get
+# real motion from the hybrid video clips. Visual-only — no audio impact.
+_MAX_SCENE_HOLD_S = 15.0
+
 
 def _slideshow_filter_graph(scene_count: int, *,
                             scene_duration: float = _SCENE_DURATION_SECONDS,
@@ -585,7 +593,7 @@ def _build_hybrid_sequence(scene_paths: Sequence[Path],
                            clip_paths: Sequence[Path],
                            clip_durations: Sequence[float],
                            *, audio_duration_s: float,
-                           max_scene_hold_s: float = 25.0) -> List[tuple]:
+                           max_scene_hold_s: float = _MAX_SCENE_HOLD_S) -> List[tuple]:
     """Interleave video clips among (cycled) stills.
 
     Stills share the audio time NOT consumed by clips, cycled so no still
@@ -1301,14 +1309,13 @@ def build_long_form_video(
         slideshow_scenes = list(scene_paths)
         if audio_duration_s > 0:
             scene_duration_s = max(8.0, audio_duration_s / len(slideshow_scenes))
-            # June 10 2026: cycle the scene list so no single image holds
-            # longer than ~25 s. The May 12 retune deliberately halved the
-            # Grok Imagine spend to 4 images/aspect, which left each scene
-            # on screen ~2-3 minutes on a full-length episode (Ep505: 4
-            # scenes over 673 s = 168 s/image) — visually static. Reusing
-            # the SAME images in rotation restores visual rhythm at zero
-            # additional image cost.
-            _MAX_SCENE_HOLD_S = 25.0
+            # Cycle the scene list so no single image holds longer than
+            # _MAX_SCENE_HOLD_S (module constant; June 2026 motion pass lowered
+            # it 25 → 15 s). The May 12 retune halved Grok spend to 4
+            # images/aspect, which left each scene on screen ~2-3 minutes on a
+            # full-length episode (Ep505: 4 scenes over 673 s = 168 s/image) —
+            # visually static. Reusing the SAME images in rotation restores
+            # visual rhythm at zero additional image cost.
             if scene_duration_s > _MAX_SCENE_HOLD_S and len(slideshow_scenes) > 1:
                 import math
                 target = math.ceil(audio_duration_s / _MAX_SCENE_HOLD_S)
