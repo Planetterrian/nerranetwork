@@ -802,29 +802,34 @@ class TestYouTubeImageProviderConfig:
         that also feed the gallery pipeline (Pexels images never reach the
         gallery R2 bucket). MAB keeps ``grok`` in its YAML even while its
         YouTube is paused, so re-enabling it stays a one-line flip."""
+        # Full-network rollout (200k quota, June 2026): every show is
+        # YouTube-enabled and on Grok Imagine.
         for slug in ("tesla", "spacex", "fascinating_frontiers",
                      "modern_investing", "finansy_prosto", "privet_russian",
-                     "first_principles"):
+                     "first_principles", "omni_view", "planetterrian",
+                     "env_intel", "models_agents", "models_agents_beginners",
+                     "unintended_consequences"):
             cfg = load_config(SHOWS_DIR / f"{slug}.yaml")
             assert cfg.youtube.image_provider == "grok", (
                 f"{slug} is YouTube-enabled but not on Grok Imagine"
             )
 
-    def test_non_youtube_shows_remain_on_pexels(self):
-        """Shows that don't publish to YouTube stay on the free Pexels
-        default — image generation only runs for YouTube-enabled shows, so
-        this just guards against accidental drift / surprise Grok cost if one
-        is later enabled without a deliberate provider choice.
-
-        (first_principles moved to the grok list above — the operator enabled
-        its YouTube, podcast-only/long-form, on Jun 14 2026.)"""
-        for slug in ("omni_view", "planetterrian", "env_intel",
-                     "models_agents", "unintended_consequences"):
-            cfg = load_config(SHOWS_DIR / f"{slug}.yaml")
-            assert cfg.youtube.image_provider == "pexels", (
-                f"{slug} drifted off pexels — would silently incur Grok "
-                f"Imagine cost if YouTube is enabled"
-            )
+    def test_every_youtube_enabled_show_is_on_grok(self):
+        """Post-full-network-rollout there are no Pexels-only shows left: any
+        show with ``youtube.enabled: true`` MUST be on Grok Imagine so it never
+        silently ships stock photos (and so the gallery pipeline populates)."""
+        import yaml as _yaml
+        for cfg_path in SHOWS_DIR.glob("*.yaml"):
+            if cfg_path.name.startswith("_"):
+                continue
+            raw = _yaml.safe_load(cfg_path.read_text(encoding="utf-8")) or {}
+            ytc = raw.get("youtube") or {}
+            if ytc.get("enabled") is True:
+                cfg = load_config(cfg_path)
+                assert cfg.youtube.image_provider == "grok", (
+                    f"{cfg_path.stem} is YouTube-enabled but image_provider="
+                    f"{cfg.youtube.image_provider!r} — must be 'grok'"
+                )
 
 
 # =========================================================================

@@ -281,11 +281,17 @@ def build_long_form_metadata(
     audio_url: str,
     chapters_path: Optional[Path] = None,
     photo_attribution: Optional[List[str]] = None,
+    optimized_title: Optional[str] = None,
 ) -> Dict:
     """Assemble the YouTube metadata payload for a long-form upload.
 
     Parameters
     ----------
+    optimized_title:
+        Optional LLM-generated, click-optimized title (from
+        ``engine.youtube_titles``). When provided it is used verbatim (capped
+        to the YouTube limit) instead of the hook-derived SEO title; the
+        hook-based path remains the fallback when it's empty.
     photo_attribution:
         Optional list of one-line photographer credits (e.g. from the
         Pexels slideshow). When non-empty, a "Photos:" block is
@@ -301,9 +307,12 @@ def build_long_form_metadata(
         getattr(config.publishing, "rss_title", "")
         or getattr(config, "name", "")
     )
-    # SEO: front-load the keyword-rich hook (was "{show} — Ep N: {hook}",
-    # which buried the topic behind the show name + episode number).
-    if hook:
+    # Prefer the LLM-optimized title (click-tuned, separate from the spoken
+    # hook). Fall back to the front-loaded keyword-rich hook, then to the
+    # generic show + episode + date title.
+    if optimized_title and optimized_title.strip():
+        title = _truncate(optimized_title.strip(), YOUTUBE_TITLE_MAX)
+    elif hook:
         title = _build_seo_title(hook, rss_title)
     else:
         title = _truncate(f"{rss_title} — Ep {episode_num} — {today_str}".strip(),
@@ -436,19 +445,27 @@ def build_short_metadata(
     today_str: str,
     hook: str,
     long_form_url: str = "",
+    optimized_title: Optional[str] = None,
 ) -> Dict:
     """Assemble the YouTube metadata payload for a Shorts upload.
 
     Title gets ``#Shorts`` appended (the most reliable way to get the
     auto-classifier to treat the upload as a Short). The description is
     deliberately brief so the disclosure footer remains visible above
-    the "Show more" fold on mobile.
+    the "Show more" fold on mobile. *optimized_title* (from
+    ``engine.youtube_titles``), when present, is used as the headline in
+    place of the spoken hook.
     """
     rss_title = (
         getattr(config.publishing, "rss_title", "")
         or getattr(config, "name", "")
     )
-    headline = hook.strip() if hook else f"Ep {episode_num} highlight"
+    if optimized_title and optimized_title.strip():
+        headline = optimized_title.strip()
+    elif hook:
+        headline = hook.strip()
+    else:
+        headline = f"Ep {episode_num} highlight"
     # Same front-loaded builder as long-form; keeps the #Shorts classifier
     # hint even when the headline is long.
     title = _build_seo_title(headline, rss_title, suffix="#Shorts")

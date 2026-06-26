@@ -429,6 +429,10 @@ class YouTubeConfig:
     privacy_status: str = "public"         # "public" | "unlisted" | "private"
     publish_long_form: bool = True
     publish_shorts: bool = True
+    # Generate a click-optimized long-form title via Grok (separate from the
+    # spoken hook) + A/B variants. One cheap LLM call/episode; pure metadata,
+    # no audio impact. Set false for a fully deterministic hook-based title.
+    optimized_titles: bool = True
     short_duration_seconds: float = 55.0
     # Seconds into the final mixed MP3 where the Shorts clip begins.
     # When unset, ``shorts_start_mode`` picks the offset (default ``voice``
