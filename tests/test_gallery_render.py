@@ -189,15 +189,14 @@ def test_gallery_enabled_requires_grok_image_provider():
         f"SpaceX expected on grok provider, got {spacex_provider!r}"
     assert spacex_enabled is True, "SpaceX gallery_enabled must be True"
 
-    # MAB's YouTube is paused — its gallery must auto-hide (no uploads → empty
-    # embed otherwise). The image_provider stays 'grok' in the YAML so
-    # re-enabling MAB later is a one-line flip that restores the gallery.
+    # MAB's YouTube is re-enabled in the full-network rollout (200k quota),
+    # and its image_provider is 'grok', so its gallery now populates.
     mab_yt = _read_show_youtube("models_agents_beginners")
     mab_enabled = (
         bool(mab_yt.get("youtube_enabled"))
         and _read_show_image_provider("models_agents_beginners") in ("grok", "hybrid")
     )
-    assert mab_enabled is False, "MAB gallery must auto-hide while YouTube is paused"
+    assert mab_enabled is True, "MAB gallery should populate now that YouTube is on"
 
 
 def test_read_show_image_provider_defaults_to_pexels_for_unknown_show():

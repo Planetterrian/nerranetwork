@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
@@ -13,7 +14,48 @@ QUOTA_VIDEO_INSERT = 1600
 QUOTA_THUMBNAIL_SET = 50
 QUOTA_PLAYLIST_INSERT = 50
 QUOTA_CAPTION_INSERT = 400
-DEFAULT_DAILY_QUOTA = 10_000
+
+# Per-channel daily quota. The operator's YouTube Data API quota was raised
+# from 10,000 → 200,000 units/day (June 2026), so the default reflects the new
+# ceiling. The exact number is env-overridable so the same code works whether
+# the grant is one shared Google-Cloud project pool or a single channel:
+#   YOUTUBE_DAILY_QUOTA         — global override (all channels)
+#   YOUTUBE_DAILY_QUOTA_EN/_RU  — per-channel override (wins over the global)
+# See resolve_daily_quota().
+DEFAULT_DAILY_QUOTA = 200_000
+
+# Authenticity guardrail (not a quota limit). YouTube's 2025-2026 "inauthentic
+# content" policy demonetises mass low-effort posting; quota is no longer the
+# binding constraint, *cadence* is. The policy targets templated, no-variation
+# mass production — not a network of editorially distinct shows — so the
+# threshold sits above the full-network steady state (≈24 EN uploads/day: ~13
+# long-form + ~13 Shorts incl. flagship multi-Shorts) and only fires on genuine
+# runaway (e.g. shorts_per_episode cranked network-wide). Env-overridable via
+# YOUTUBE_SAFE_DAILY_UPLOADS. Warning only, never blocks.
+SAFE_DAILY_UPLOADS_PER_CHANNEL = int(
+    os.getenv("YOUTUBE_SAFE_DAILY_UPLOADS", "30") or "30"
+)
+
+
+def resolve_daily_quota(channel: Optional[str] = None,
+                        override: Optional[int] = None) -> int:
+    """Resolve the daily quota budget for *channel*.
+
+    Precedence: explicit ``override`` arg → per-channel env
+    (``YOUTUBE_DAILY_QUOTA_<CH>``) → global env (``YOUTUBE_DAILY_QUOTA``) →
+    ``DEFAULT_DAILY_QUOTA``. Bad/empty env values fall through.
+    """
+    if override is not None:
+        return override
+    ch = (channel or "en").strip().lower()
+    for name in (f"YOUTUBE_DAILY_QUOTA_{ch.upper()}", "YOUTUBE_DAILY_QUOTA"):
+        raw = os.getenv(name)
+        if raw and raw.strip():
+            try:
+                return int(raw)
+            except ValueError:
+                pass
+    return DEFAULT_DAILY_QUOTA
 
 
 @dataclass
@@ -99,7 +141,7 @@ def list_youtube_enabled_slugs(shows_dir: Path) -> List[str]:
 def estimate_network_daily_units(
     shows_dir: Path,
     *,
-    daily_quota: int = DEFAULT_DAILY_QUOTA,
+    daily_quota: Optional[int] = None,
 ) -> dict:
     """Sum quota for all enabled shows (reads show YAML only).
 
@@ -109,10 +151,15 @@ def estimate_network_daily_units(
     channel exceeds its own quota". Top-level ``total_units`` keeps the
     legacy all-shows-summed meaning for dashboards; per-channel detail
     lives under ``per_channel``.
+
+    Each channel's budget is resolved via :func:`resolve_daily_quota`
+    (env-overridable, default 200k). Pass ``daily_quota`` to force the same
+    budget on every channel (used by tests).
     """
     from engine.config import discover_show_slugs, load_config
 
     per_show: dict[str, int] = {}
+    per_show_uploads: dict[str, int] = {}
     show_channel: dict[str, str] = {}
     for slug in discover_show_slugs(shows_dir):
         yaml_path = shows_dir / f"{slug}.yaml"
@@ -127,6 +174,7 @@ def estimate_network_daily_units(
                 shorts_count=getattr(yt, "shorts_per_episode", 1),
             )
             per_show[slug] = est.units
+            per_show_uploads[slug] = est.uploads
             show_channel[slug] = (getattr(yt, "channel", "en") or "en").lower()
         except Exception:
             # Fallback to raw parse
@@ -140,6 +188,7 @@ def estimate_network_daily_units(
                 shorts_count=int(yt.get("shorts_per_episode", 1) or 1),
             )
             per_show[slug] = est.units
+            per_show_uploads[slug] = est.uploads
             show_channel[slug] = str(yt.get("channel", "en") or "en").lower()
 
     per_channel: dict[str, dict] = {}
@@ -148,19 +197,26 @@ def estimate_network_daily_units(
         entry = per_channel.setdefault(ch, {
             "enabled_slugs": [],
             "total_units": 0,
-            "daily_quota": daily_quota,
+            "uploads": 0,
+            "daily_quota": resolve_daily_quota(ch, daily_quota),
         })
         entry["enabled_slugs"].append(slug)
         entry["total_units"] += units
+        entry["uploads"] += per_show_uploads[slug]
     for entry in per_channel.values():
         entry["over_quota"] = entry["total_units"] > entry["daily_quota"]
         entry["headroom_units"] = entry["daily_quota"] - entry["total_units"]
+        # Authenticity heads-up flag (cadence, not quota).
+        entry["over_safe_cadence"] = (
+            entry["uploads"] > SAFE_DAILY_UPLOADS_PER_CHANNEL
+        )
 
     total = sum(per_show.values())
     over = any(e["over_quota"] for e in per_channel.values())
+    fallback_quota = resolve_daily_quota("en", daily_quota)
     min_headroom = min(
         (e["headroom_units"] for e in per_channel.values()),
-        default=daily_quota,
+        default=fallback_quota,
     )
 
     return {
@@ -168,7 +224,7 @@ def estimate_network_daily_units(
         "per_show_units": per_show,
         "per_channel": per_channel,
         "total_units": total,
-        "daily_quota": daily_quota,
+        "daily_quota": fallback_quota,
         "over_quota": over,
         # Tightest channel's headroom — the number that matters for
         # "can I enable one more upload anywhere".

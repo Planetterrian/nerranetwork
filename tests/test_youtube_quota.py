@@ -5,7 +5,69 @@ from engine.youtube_quota import (
     estimate_episode_units,
     estimate_network_daily_units,
     format_quota_warning,
+    resolve_daily_quota,
 )
+
+
+def test_default_daily_quota_reflects_200k_grant():
+    # Operator raised the quota 10k -> 200k (June 2026).
+    assert DEFAULT_DAILY_QUOTA == 200_000
+
+
+def test_resolve_daily_quota_precedence(monkeypatch):
+    monkeypatch.delenv("YOUTUBE_DAILY_QUOTA", raising=False)
+    monkeypatch.delenv("YOUTUBE_DAILY_QUOTA_EN", raising=False)
+    # Default when nothing set.
+    assert resolve_daily_quota("en") == DEFAULT_DAILY_QUOTA
+    # Explicit override always wins.
+    assert resolve_daily_quota("en", override=5000) == 5000
+    # Global env beats default.
+    monkeypatch.setenv("YOUTUBE_DAILY_QUOTA", "150000")
+    assert resolve_daily_quota("ru") == 150000
+    # Per-channel env beats global.
+    monkeypatch.setenv("YOUTUBE_DAILY_QUOTA_EN", "300000")
+    assert resolve_daily_quota("en") == 300000
+    assert resolve_daily_quota("ru") == 150000  # ru still on global
+
+
+def test_network_estimate_resolves_env_budget(tmp_path, monkeypatch):
+    monkeypatch.setenv("YOUTUBE_DAILY_QUOTA_EN", "9000")
+    shows = tmp_path / "shows"
+    shows.mkdir()
+    # Two full-format EN shows (~3800 each = 7600) under a 9000 budget.
+    for i in range(2):
+        (shows / f"en{i}.yaml").write_text(
+            f"name: E{i}\nslug: en{i}\nyoutube:\n  enabled: true\n  channel: en\n",
+            encoding="utf-8",
+        )
+    summary = estimate_network_daily_units(shows)
+    assert summary["per_channel"]["en"]["daily_quota"] == 9000
+    assert summary["per_channel"]["en"]["over_quota"] is False
+    # A third show would bust the env budget.
+    (shows / "en2.yaml").write_text(
+        "name: E2\nslug: en2\nyoutube:\n  enabled: true\n  channel: en\n",
+        encoding="utf-8",
+    )
+    summary = estimate_network_daily_units(shows)
+    assert summary["per_channel"]["en"]["over_quota"] is True
+
+
+def test_network_estimate_tracks_uploads_and_cadence(tmp_path, monkeypatch):
+    monkeypatch.setenv("YOUTUBE_SAFE_DAILY_UPLOADS", "12")
+    # The cadence flag is read at import time, so the threshold for the flag
+    # itself comes from the module constant; this test only pins the uploads
+    # accounting and the flag wiring at a low manual count.
+    shows = tmp_path / "shows"
+    shows.mkdir()
+    (shows / "en0.yaml").write_text(
+        "name: E0\nslug: en0\nyoutube:\n  enabled: true\n  channel: en\n"
+        "  shorts_per_episode: 2\n",
+        encoding="utf-8",
+    )
+    summary = estimate_network_daily_units(shows)
+    # long-form + 2 shorts = 3 uploads.
+    assert summary["per_channel"]["en"]["uploads"] == 3
+    assert summary["per_channel"]["en"]["over_safe_cadence"] is False
 
 
 def test_estimate_episode_units_long_and_short():
