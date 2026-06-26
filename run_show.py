@@ -3729,6 +3729,36 @@ def _publish_youtube(
         logger.info("YouTube publishing skipped — no final mp3.")
         return result
 
+    # LLM-optimized YouTube title (click-tuned, separate from the spoken
+    # hook). Generated once and reused for long-form + Shorts; the extra
+    # candidates are stashed for the operator's "Test & Compare" A/B. Pure
+    # metadata (no audio impact); best-effort — falls back to the hook-based
+    # title in build_*_metadata when empty. Opt-out via youtube.optimized_titles.
+    yt_title = ""
+    yt_title_variants: list = []
+    if getattr(config.youtube, "optimized_titles", True):
+        try:
+            from engine.youtube_titles import generate_youtube_titles
+
+            yt_title_variants = generate_youtube_titles(
+                hook=hook or "",
+                digest_text=digest_text or "",
+                show_name=config.name,
+                episode_num=episode_num,
+                keywords=list(getattr(config, "keywords", []) or []),
+                n=3,
+            )
+            if yt_title_variants:
+                yt_title = yt_title_variants[0]
+                result["youtube_title"] = yt_title
+                result["youtube_title_variants"] = yt_title_variants
+                logger.info(
+                    "YouTube optimized title: %r (%d A/B variants)",
+                    yt_title, len(yt_title_variants),
+                )
+        except Exception as exc:  # noqa: BLE001 — never block a publish
+            logger.warning("Optimized title generation skipped: %s", exc)
+
     # Resolve cover image. Prefer the slug-derived name; then fall back to the
     # basename the show references in its RSS <itunes:image> (some shows name
     # the file after the title, e.g. first-principles-daily.jpg) so a YouTube-
@@ -4218,6 +4248,35 @@ def _publish_youtube(
     except Exception:
         _ep_duration = 0.0
 
+    # ---- Hybrid short video clips (Phase 4) — motion to complement stills ----
+    # Best-effort, gated on youtube.video_clips_enabled (pilot: Tesla + SpaceX).
+    # Falls back silently to the all-stills slideshow. Touches only visuals.
+    long_clip_paths: list = []
+    if config.youtube.publish_long_form and getattr(
+        config.youtube, "video_clips_enabled", False
+    ):
+        try:
+            from engine.grok_video_clips import generate_short_clips
+
+            clip_set = generate_short_clips(
+                work_dir=work_dir,
+                episode_num=episode_num,
+                contexts=_scene_contexts if "_scene_contexts" in locals() else [],
+                hook=hook or "",
+                show_config=config,
+                count=int(getattr(config.youtube, "video_clips_count", 3) or 3),
+                seconds=int(getattr(config.youtube, "video_clip_seconds", 5) or 5),
+                resolution=getattr(config.youtube, "video_clips_resolution", "720p"),
+                aspect="16:9",
+            )
+            long_clip_paths = list(clip_set.paths)
+            result["video_clips_generated"] = len(long_clip_paths)
+            result["video_clips_cost_usd"] = clip_set.total_cost_usd
+            if clip_set.failures:
+                result["video_clips_failures"] = clip_set.failures
+        except Exception as exc:  # noqa: BLE001 — never block a publish
+            logger.warning("Hybrid video-clip generation skipped: %s", exc)
+
     # ---- Long-form ----
     long_url = ""
     if config.youtube.publish_long_form:
@@ -4225,6 +4284,7 @@ def _publish_youtube(
             build_long_form_video(
                 final_mp3, cover_path, long_video_path,
                 scene_paths=long_scene_paths if len(long_scene_paths) >= 2 else None,
+                clip_paths=long_clip_paths or None,
                 subtitles_path=srt_path,
                 show_name=config.name,
             )
@@ -4237,6 +4297,7 @@ def _publish_youtube(
                 audio_url=audio_url,
                 chapters_path=chapters_path if chapters_path.exists() else None,
                 photo_attribution=pexels_attribution,
+                optimized_title=yt_title,
             )
             upload = upload_video(
                 long_video_path,

@@ -193,28 +193,28 @@ def test_daily_narrative_show_runs_daily_without_recap(slug):
 # YouTube quota cap (post-May-2026 schedule)
 # ---------------------------------------------------------------------------
 
-# June 2026 four-show expansion (operator-approved): Tesla + MAB dropped
-# from 2 Shorts to 1 each to free quota; Fascinating Frontiers + Modern
-# Investing launched Shorts-only (publish_long_form: false) on
-# @NerraNetwork while the quota-increase request is pending; both Russian
-# shows launched full-format on @NerraRU, which has its own 10k/day quota.
-# June 14 2026: SpaceX Daily took MAB's EN-channel full-format slot (long-form
-# + 1 Short); MAB YouTube paused. Same EN per-episode footprint, so the quota
-# math is unchanged by the swap. Same day later: First Principles Daily
-# enabled as PODCAST-ONLY on EN (publish_long_form: true, publish_shorts:
-# false; +~2,100 units/day) ahead of the @NerraNetwork quota approval.
+# June 2026 — full-network YouTube rollout after the @NerraNetwork quota was
+# raised 10,000 → 200,000 units/day. Every show now publishes to YouTube
+# (EN shows on @NerraNetwork, the two Russian shows on @NerraRU). The previous
+# constrained shape (Shorts-only FF/MIT, paused MAB, podcast-only FPD) was a
+# quota workaround that no longer applies. Cadence, not quota, is now the
+# guardrail — see scripts/youtube_quota_preflight.py's authenticity warning.
 YOUTUBE_ENABLED_SHOWS = {
     "tesla", "spacex", "first_principles",
     "fascinating_frontiers", "modern_investing",
+    "env_intel", "planetterrian", "omni_view",
+    "models_agents", "models_agents_beginners",
+    "unintended_consequences",
     "finansy_prosto", "privet_russian",
 }
 
 
-def test_only_tst_and_mab_enable_youtube():
-    """Pin the exact YouTube-enabled show set (quota is finite; landmine
-    #20). Any change must be deliberate: rerun the quota math in
-    scripts/youtube_quota_preflight.py (per-channel since June 2026) and
-    update YOUTUBE_ENABLED_SHOWS together with the show YAMLs."""
+def test_youtube_enabled_show_set():
+    """Pin the exact YouTube-enabled show set. Any change must be deliberate:
+    rerun the per-channel quota math in scripts/youtube_quota_preflight.py and
+    update YOUTUBE_ENABLED_SHOWS together with the show YAMLs. Post-200k this
+    is the full network; the constraint is now upload cadence (authenticity
+    policy), enforced by the preflight's soft warning."""
     enabled: set[str] = set()
     for cfg_path in SHOWS_DIR.glob("*.yaml"):
         if cfg_path.name.startswith("_"):
@@ -227,9 +227,8 @@ def test_only_tst_and_mab_enable_youtube():
         if yt.get("enabled") is True:
             enabled.add(slug)
     assert enabled == YOUTUBE_ENABLED_SHOWS, (
-        f"YouTube uploads enabled on {enabled}; only "
-        f"{YOUTUBE_ENABLED_SHOWS} should be enabled until quota strategy "
-        f"lands."
+        f"YouTube uploads enabled on {enabled}; expected the full network "
+        f"{YOUTUBE_ENABLED_SHOWS}. Update both the YAML and this set together."
     )
 
 
@@ -356,12 +355,12 @@ class TestWeeklyRecapHelper:
         assert "never read urls" in low
 
 
-def test_youtube_expansion_quota_shape():
-    """June 2026 expansion shape: while the @NerraNetwork quota-increase
-    request is pending, Tesla + MAB are capped at 1 Short each and
-    FF + MIT are Shorts-only (no long-form). A partial revert (e.g.
-    bumping Tesla back to 2 Shorts without re-disabling something else)
-    overruns the EN channel — fail loudly here instead."""
+def test_youtube_post_quota_full_format_shape():
+    """Post-200k full-network shape (June 2026): the quota workaround is
+    undone. FF + MIT now publish long-form (no longer Shorts-only), MAB is
+    re-enabled, and the two Russian shows still upload to @NerraRU (their own
+    quota), never the EN channel. A regression to the old constrained shape
+    fails loudly here."""
     import yaml as _yaml
 
     def yt(slug):
@@ -369,21 +368,16 @@ def test_youtube_expansion_quota_shape():
             encoding="utf-8")) or {}
         return cfg.get("youtube") or {}
 
-    for slug in ("tesla", "spacex"):
-        assert int(yt(slug).get("shorts_per_episode", 1)) == 1, (
-            f"{slug} must stay at 1 Short/episode until the quota "
-            f"increase is granted"
-        )
-    # MAB YouTube is paused (SpaceX took its slot) — re-enabling it without
-    # freeing a slot would overrun the EN channel.
-    assert yt("models_agents_beginners").get("enabled") is False, (
-        "MAB YouTube must stay paused while SpaceX holds the EN-channel slot"
-    )
+    # FF + MIT regained long-form once quota was no longer the constraint.
     for slug in ("fascinating_frontiers", "modern_investing"):
-        assert yt(slug).get("publish_long_form") is False, (
-            f"{slug} launched Shorts-only; long-form flips on only after "
-            f"the quota increase"
+        assert yt(slug).get("publish_long_form") is True, (
+            f"{slug} should publish long-form again post-quota-raise"
         )
+    # MAB is back on (un-paused) now that the EN channel has headroom.
+    assert yt("models_agents_beginners").get("enabled") is True, (
+        "MAB YouTube should be re-enabled in the full-network rollout"
+    )
+    # Russian shows stay on their own channel/quota.
     for slug in ("finansy_prosto", "privet_russian"):
         assert yt(slug).get("channel") == "ru", (
             f"{slug} must upload to @NerraRU (its own quota), never the "

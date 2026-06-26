@@ -412,6 +412,14 @@ def _make_url_pill(output_path: Path,
 _SCENE_DURATION_SECONDS = 12.0
 _SHORT_SCENE_DURATION_SECONDS = 7.0
 
+# Longest a single still may hold before the scene list is cycled to bring in
+# fresh visual rhythm. Lowered 25 → 15 s (June 2026 motion pass): YouTube's
+# 2025-2026 policy + retention data both penalise long static holds, so cycling
+# the existing Grok images more often adds rhythm at zero extra image cost. The
+# Ken-Burns zoom keeps each hold watchable; flagships (Tesla/SpaceX) also get
+# real motion from the hybrid video clips. Visual-only — no audio impact.
+_MAX_SCENE_HOLD_S = 15.0
+
 
 def _slideshow_filter_graph(scene_count: int, *,
                             scene_duration: float = _SCENE_DURATION_SECONDS,
@@ -491,6 +499,141 @@ def _render_slideshow(scene_paths: Sequence[Path], output: Path,
                 len(scene_paths), width, height, output.name)
     _run_ffmpeg(cmd, label="slideshow render")
     return output
+
+
+# ---------------------------------------------------------------------------
+# Hybrid slideshow (stills + short video clips) — Phase-4 motion upgrade
+# ---------------------------------------------------------------------------
+
+def _hybrid_filter_graph(visuals: Sequence[tuple], *,
+                         width: int = 1920, height: int = 1080,
+                         fps: int = 30) -> str:
+    """filter_complex mixing Ken-Burns stills with native video clips.
+
+    *visuals* is an ordered list of ``(path, is_video, duration)`` tuples.
+    Image segments get the same 1.00→1.12 zoom as the pure slideshow; video
+    segments are scaled/cropped to fill the frame and play their own frames
+    (trimmed to *duration*). Everything is normalised to ``fps`` + SAR 1 so
+    the final ``concat`` is seamless.
+    """
+    pre_w = int(width * 1.15)
+    pre_h = int(height * 1.15)
+    zoom_expr = "min(zoom+0.0006,1.12)"
+    chains: List[str] = []
+    for i, (_path, is_video, duration) in enumerate(visuals):
+        if is_video:
+            chains.append(
+                f"[{i}:v]"
+                f"scale={width}:{height}:force_original_aspect_ratio=increase,"
+                f"crop={width}:{height},setsar=1,fps={fps},"
+                f"trim=duration={float(duration):.2f},setpts=PTS-STARTPTS"
+                f"[s{i}]"
+            )
+        else:
+            frames = int(float(duration) * fps)
+            chains.append(
+                f"[{i}:v]"
+                f"scale={pre_w}:{pre_h}:force_original_aspect_ratio=increase,"
+                f"crop={pre_w}:{pre_h},setsar=1,"
+                f"zoompan=z='{zoom_expr}':d={frames}"
+                f":s={width}x{height}:fps={fps},"
+                f"trim=duration={float(duration):.2f},setpts=PTS-STARTPTS"
+                f"[s{i}]"
+            )
+    concat_in = "".join(f"[s{i}]" for i in range(len(visuals)))
+    chains.append(f"{concat_in}concat=n={len(visuals)}:v=1:a=0[v]")
+    return ";".join(chains)
+
+
+def _hybrid_slideshow_cmd(visuals: Sequence[tuple], output: Path, *,
+                          width: int = 1920, height: int = 1080,
+                          fps: int = 30) -> List[str]:
+    """ffmpeg command for a stills+clips hybrid slideshow."""
+    inputs: List[str] = []
+    for path, is_video, duration in visuals:
+        if is_video:
+            inputs.extend(["-i", str(path)])
+        else:
+            inputs.extend([
+                "-loop", "1",
+                "-framerate", str(fps),
+                "-t", f"{float(duration) + 0.5:.2f}",
+                "-i", str(path),
+            ])
+    return [
+        "ffmpeg", "-y", "-threads", "0",
+        *inputs,
+        "-filter_complex",
+        _hybrid_filter_graph(visuals, width=width, height=height, fps=fps),
+        "-map", "[v]",
+        "-r", str(fps),
+        *_VIDEO_ENCODE,
+        "-an",
+        "-movflags", "+faststart",
+        str(output),
+    ]
+
+
+def _render_hybrid_slideshow(visuals: Sequence[tuple], output: Path, *,
+                             width: int = 1920, height: int = 1080,
+                             fps: int = 30) -> Path:
+    """Render the stage-1 hybrid (stills + clips) MP4. Idempotent."""
+    if output.exists():
+        return output
+    cmd = _hybrid_slideshow_cmd(visuals, output,
+                                width=width, height=height, fps=fps)
+    n_clips = sum(1 for _p, is_v, _d in visuals if is_v)
+    logger.info("Rendering hybrid slideshow (%d segments, %d clips, %dx%d) → %s",
+                len(visuals), n_clips, width, height, output.name)
+    _run_ffmpeg(cmd, label="hybrid slideshow render")
+    return output
+
+
+def _build_hybrid_sequence(scene_paths: Sequence[Path],
+                           clip_paths: Sequence[Path],
+                           clip_durations: Sequence[float],
+                           *, audio_duration_s: float,
+                           max_scene_hold_s: float = _MAX_SCENE_HOLD_S) -> List[tuple]:
+    """Interleave video clips among (cycled) stills.
+
+    Stills share the audio time NOT consumed by clips, cycled so no still
+    holds longer than *max_scene_hold_s*. Clips are spread across the timeline
+    (first clip opens the episode). Returns the ordered ``(path, is_video,
+    duration)`` visual list.
+    """
+    import math
+
+    stills = list(scene_paths)
+    clip_total = float(sum(clip_durations))
+    remaining = max(0.0, audio_duration_s - clip_total)
+    if not stills:
+        return [(p, True, float(d)) for p, d in zip(clip_paths, clip_durations)]
+
+    if remaining > 0:
+        hold = max(6.0, remaining / len(stills))
+        if hold > max_scene_hold_s and len(stills) > 1:
+            target = max(len(stills), math.ceil(remaining / max_scene_hold_s))
+            stills = [stills[i % len(stills)] for i in range(target)]
+            hold = max(6.0, remaining / len(stills))
+    else:
+        hold = _SCENE_DURATION_SECONDS
+
+    n_clips = len(clip_paths)
+    visuals: List[tuple] = []
+    if n_clips == 0:
+        return [(s, False, hold) for s in stills]
+    # Spread clips: roughly one every `step` stills, first clip at the open.
+    step = max(1, len(stills) // n_clips)
+    ci = 0
+    for j, s in enumerate(stills):
+        if ci < n_clips and j % step == 0:
+            visuals.append((clip_paths[ci], True, float(clip_durations[ci])))
+            ci += 1
+        visuals.append((s, False, hold))
+    while ci < n_clips:  # any leftover clips tail the sequence
+        visuals.append((clip_paths[ci], True, float(clip_durations[ci])))
+        ci += 1
+    return visuals
 
 
 # ---------------------------------------------------------------------------
@@ -1036,6 +1179,7 @@ def build_long_form_video(
     *,
     fps: int = 30,
     scene_paths: Optional[Sequence[Path]] = None,
+    clip_paths: Optional[Sequence[Path]] = None,
     subtitles_path: Optional[Path] = None,
     show_name: Optional[str] = None,
 ) -> Path:
@@ -1115,17 +1259,63 @@ def build_long_form_video(
             audio_duration_s = _get_duration(str(audio_path)) or 0.0
         except Exception:
             audio_duration_s = 0.0
+
+        # Hybrid path: interleave short video clips among the stills for
+        # motion (Phase-4). Best-effort — any failure falls through to the
+        # pure-stills slideshow below.
+        usable_clips: List[Path] = [
+            Path(c) for c in (clip_paths or []) if Path(c).exists()
+        ]
+        if usable_clips and audio_duration_s > 0:
+            try:
+                clip_durs: List[float] = []
+                for c in usable_clips:
+                    try:
+                        clip_durs.append(float(_get_duration(str(c)) or 5.0))
+                    except Exception:
+                        clip_durs.append(5.0)
+                visuals = _build_hybrid_sequence(
+                    list(scene_paths), usable_clips, clip_durs,
+                    audio_duration_s=audio_duration_s,
+                )
+                hybrid_path = work_dir / f"{output_path.stem}_hybrid.mp4"
+                _render_hybrid_slideshow(visuals, hybrid_path, fps=fps)
+                bg_path = hybrid_path
+                bg_is_video = True
+            except subprocess.CalledProcessError as exc:
+                logger.warning(
+                    "Hybrid (stills+clips) render failed (%s) — falling back "
+                    "to pure-stills slideshow", exc,
+                )
+            except Exception as exc:  # noqa: BLE001 — never block the publish
+                logger.warning("Hybrid render error (%s) — using stills", exc)
+        if bg_is_video:
+            # Hybrid succeeded — skip the pure-stills slideshow render.
+            cmd = _long_form_cmd(
+                str(audio_path), str(bg_path), str(brand_path),
+                str(output_path),
+                fps=fps,
+                bg_is_video=bg_is_video,
+                subtitles_path=str(subtitles_path) if subtitles_path else None,
+                url_pill_in=str(url_pill_path) if url_pill_path else None,
+            )
+            logger.info(
+                "Building long-form video → %s (hybrid clips=%d, captions=%s)",
+                output_path.name, len(usable_clips), bool(subtitles_path),
+            )
+            _run_ffmpeg(cmd, label="long-form video")
+            return output_path
+
         slideshow_scenes = list(scene_paths)
         if audio_duration_s > 0:
             scene_duration_s = max(8.0, audio_duration_s / len(slideshow_scenes))
-            # June 10 2026: cycle the scene list so no single image holds
-            # longer than ~25 s. The May 12 retune deliberately halved the
-            # Grok Imagine spend to 4 images/aspect, which left each scene
-            # on screen ~2-3 minutes on a full-length episode (Ep505: 4
-            # scenes over 673 s = 168 s/image) — visually static. Reusing
-            # the SAME images in rotation restores visual rhythm at zero
-            # additional image cost.
-            _MAX_SCENE_HOLD_S = 25.0
+            # Cycle the scene list so no single image holds longer than
+            # _MAX_SCENE_HOLD_S (module constant; June 2026 motion pass lowered
+            # it 25 → 15 s). The May 12 retune halved Grok spend to 4
+            # images/aspect, which left each scene on screen ~2-3 minutes on a
+            # full-length episode (Ep505: 4 scenes over 673 s = 168 s/image) —
+            # visually static. Reusing the SAME images in rotation restores
+            # visual rhythm at zero additional image cost.
             if scene_duration_s > _MAX_SCENE_HOLD_S and len(slideshow_scenes) > 1:
                 import math
                 target = math.ceil(audio_duration_s / _MAX_SCENE_HOLD_S)

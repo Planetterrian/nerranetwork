@@ -429,6 +429,10 @@ class YouTubeConfig:
     privacy_status: str = "public"         # "public" | "unlisted" | "private"
     publish_long_form: bool = True
     publish_shorts: bool = True
+    # Generate a click-optimized long-form title via Grok (separate from the
+    # spoken hook) + A/B variants. One cheap LLM call/episode; pure metadata,
+    # no audio impact. Set false for a fully deterministic hook-based title.
+    optimized_titles: bool = True
     short_duration_seconds: float = 55.0
     # Seconds into the final mixed MP3 where the Shorts clip begins.
     # When unset, ``shorts_start_mode`` picks the offset (default ``voice``
@@ -525,6 +529,19 @@ class YouTubeConfig:
     #  futuristic concept renders, engineering close-ups, real-world EV footage"
     # This provides detailed visual direction to Grok beyond just the genre.
     video_visual_style: str = ""
+
+    # ---- Hybrid short video clips (Phase 4, June 2026) ----
+    # Interleave a few SHORT Grok clips among the still slideshow for motion
+    # (the cheap fix for YouTube's static-slideshow penalty). Distinct from
+    # video_provider="grok" (full-episode replacement, ~$50/ep). When enabled,
+    # ~video_clips_count clips of ~video_clip_seconds each are generated via
+    # engine.grok_video_clips and mixed in by engine.video.build_long_form_video.
+    # Cost ≈ count × seconds × $0.05-0.07. Best-effort: falls back to all-stills
+    # on any failure. Default off → byte-for-byte legacy behaviour.
+    video_clips_enabled: bool = False
+    video_clips_count: int = 3
+    video_clip_seconds: int = 5
+    video_clips_resolution: str = "720p"
 
     # Optional path (relative to repo root) to a text template for the
     # long-form description body. Placeholders: {hook}, {episode_num},

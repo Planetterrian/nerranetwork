@@ -50,8 +50,8 @@ class TestShowYaml:
         )
         # Weekday-only narrative show — no Sunday recap (queue is the input).
         assert cfg.get("weekly_recap_on_sunday", False) is False
-        # YouTube disabled — quota cap (only TST + MAB).
-        assert cfg["youtube"]["enabled"] is False
+        # YouTube enabled in the full-network rollout (200k quota, June 2026).
+        assert cfg["youtube"]["enabled"] is True
         # X posting enabled May 12 2026 — UC shares the @planetterrian
         # account (Option B from pipeline-streamline plan). UC has no
         # ``x_accounts`` configured so the X-fetch path stays empty.
