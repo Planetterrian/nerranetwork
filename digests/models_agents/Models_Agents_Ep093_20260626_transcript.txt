@@ -1,0 +1,102 @@
+Good to have you on Models and Agents Episode 93 for June 26th, 2026.
+Another day, another round of AI developments. Let's break it down. Open AI's internal rollout
+shows agents handling complex cross-functional work at scale. Giving builders an early view of
+what production agent systems will soon need to match. Open AI reports Codex Agents are already
+doing longer running cross-team tasks across every department. Yes, we hack launched autonomous
+agents for on-demand penetration testing. Nemotron 2-tower decouples auto-regressive
+context from diffusion denoising for 2.4 two times throughput at near-parad quality.
+Developers should watch how these internal patterns translate to external tooling and open-weight
+alternatives this week. Open AI stated that agents powered by Codex are now transforming work
+across every department, handling tasks that are more complex, longer running and increasingly
+cross-functional. The company positions this internal usage as an early signal of how
+agentic tools will reshape workflows once they reach broader availability. No specific benchmarks
+or model versions were shared, but the emphasis on cross-functional scope suggests agents are moving
+beyond single-user chat interfaces into multi-step, multi-stakeholder processes. Builders should note
+the implied requirements around reliability, state management, and tool interoperability
+that such deployments demand. Watch for any follow-on details on the underlying agent framework or
+evaluation methods open AI is using internally. This development continues the arc on agent reliability
+and long horizon workflows that we have tracked since yesterday, sharpening focus on exactly how
+state and tool handoffs scale beyond single-user setups. Nvidia introduced Nemotron 2-tower,
+a block-wise auto-regressive diffusion model built on Nemotron 3 Nano 30B times A3B that splits
+context representation into a frozen auto-regressive tower and a trainable bi-directional diffusion
+denoiser. The model retains 98.7% of the baseline auto-regressive quality after training on
+approximately 2.1 trillion tokens while delivering 2.42 times higher wall-clock generation throughput.
+It supports both dense 2.5 billion and mixture of experts 25 billion A2.8B scales
+with gains persisting after 80 billion token long-contacts mid-training. Builders working on high
+throughput inference should test the released weights for long context generation workloads.
+This release moves the open-weight inference cost curve forward on the same day we noted continued
+frontier model pressure. Dynamic DLLM adds dynamic cache updating and adaptive parallel
+decoding to diffusion LLMs such as LLADA.8B.instruct and Dream.v0.7.instruct. The approach
+adaptively allocates cache update budgets per layer and calibrates decoding thresholds,
+achieving more than three times average inference speed up across MMLU,
+GSME1000, and HumanEVAL while preserving benchmark performance. It requires no retraining
+and works as a plug-and-play module. Teams running diffusion-based generation should evaluate it
+against static caching baselines for latency-sensitive applications. Solar introduces an auxiliary supervised
+fine-tuning objective that aligns soft token representations across languages using English as a pivot.
+On four multilingual reasoning benchmarks, it improves accuracy by up to 17.7 points over the base
+model and 3.8 points over standard supervised fine-tuning with the largest gains on low resource
+languages. The method reduces language cluster separability in final layer embeddings.
+Developers building cross-lingual reasoning systems should experiment with the alignment loss on
+their own multilingual fine-tunes. No two-guess provides a contamination-aware multi-zone benchmark
+with 1,200 items across five domains, explicit upstension labels, and dual parsers for measuring
+answerability versus guessing in LLMs. Evaluations of Flan T5, Quen 2.5 Instruct, and Lama 3 Instruct
+show that stronger instruction-tuned models still struggle with selective abstention and calibration.
+The data set and parsers are publicly released. Researchers auditing model reliability should
+incorporate the benchmark into their evaluation suites. Yes, we hack deployed autonomous AI agents
+for on-demand penetration testing, allowing users to request security assessments without scheduling
+human testers. The system targets the growing need for continuous scalable security validation
+in agentic environments. No specific performance numbers or integration details were released.
+Security teams evaluating automated testing platforms should request early access to compare
+coverage against traditional manual pen tests. Cisco announced the acquisition of wide field security
+to address security gaps in agentic AI systems. The move targets risks arising from autonomous
+agents that interact with enterprise environments and external tools. No technical specifications or
+integration timelines were disclosed. Organizations deploying agents in production should monitor
+Cisco's forthcoming agent security offerings for policy and monitoring capabilities.
+MEMS Strata maintains a bi-temporal ledger that retires stale facts using deterministic subject
+relation object supersession rules when contradictions appear. Across six benchmarks with a 7B model,
+it matches standard retrieval augmented generation on static knowledge while reaching 0.95 to 1.00 accuracy
+on evolving knowledge where retrieval augmented generation drops to 0.20 to 0.47.
+It eliminates the 15 to 40% stale fact error rate seen in retrieval augmented
+generation at roughly 2.1 seconds retrieval latency. Agent developers handling time sensitive data should
+integrate the supersession mechanism to avoid serving outdated information. A developer using open
+router APIs is seeking affordable, controllable open source LLM deployment options that support fine
+tuning without CUDA or Transformers complexity. The post highlights ownership of the full stack
+and use case specific adaptation as primary motivations. Community responses are likely to surface
+manage platforms or simplified inference servers. Builders facing similar constraints should review
+the thread for current recommendations on private deployment paths. Context forge recycles task relevant
+information across multi-turn conversations using structured query generation, external memory
+retrieval and controlled synthesis. On a 15 turn healthcare benchmark, it improves consistency and
+reduces token consumption compared with a baseline agent while maintaining response accuracy.
+Code and evaluation artifacts are available on GitHub. Teams building long horizon agents should
+test the recycling approach to lower context window pressure. Okay, let's pop the hood on delta rule
+memory updates. Everyone talks about delta rule linear attention as a simple correct before you write
+trick. In practice, it still ties the correction to the current right address, so stale value sitting
+at other addresses stay untouched until passive decay eventually removes them. The engineering fix
+is to add an independent erase step that first suppresses outdated memory along a learn direction,
+then performs the usual delta correction at the active right location. This adds a second learned
+vector per update but keeps the core delta math intact, preserving the quality of the corrective
+right while giving the model an explicit cleanup path. In 2.5 billion and 25 billion scale pre-training
+runs, the extra path helps most when decay is weak, cutting stale factor tension without
+increasing overall memory bandwidth. The practical takeaway is to adopt the decoupled erase when your
+workload contains frequent value changes. If facts are mostly static, the added vector offers little return
+and the simpler single address delta rule remains preferable. Test Nemotron 2-tower waits on long
+context generation tasks to measure the 2.42 times throughput gain against your current auto-regressive
+baseline. Integrate MEMS stratastyle super-session rules into any retrieval augmented generation
+pipeline handling time-sensitive facts to eliminate stale value errors. Run context forge on a 10-15
+turn internal workflow to quantify token savings versus full context replay. Compare dynamic
+die systemic DLLM against static caching on your diffusion LLM workloads for latency-sensitive
+applications. Review the node-to-guest data set and parsers to add answerability and
+abstention metrics to your model evaluation harness. Further details are expected on open AI's
+internal agent tooling and evaluation methods. Additional open-weight diffusion LLM releases
+are following the Nemotron 2-tower pattern. Security tooling updates are coming from Cisco following
+the wide field acquisition. Expanded multilingual reasoning benchmarks are incorporating soft token
+alignment techniques. Tomorrow, keep an eye on any follow-up from open AI on the agent framework
+details that surfaced in today's internal rollout. That's models and agents for today. If you found
+this useful, share it with someone who's trying to keep up with all these changes, and subscribe so
+you don't miss tomorrow's update. The AI world moves fast. We'll help you keep up. See you tomorrow.
+And if you'd rather watch than listen, find us on YouTube at NARA Network, links in the show notes.
+And before you go, this show is part of the NARA Network, a family of daily podcasts on tech,
+science, and markets. Each one a short, sharp briefing you can finish on the commute.
+If today earned its place in your feed, here's your next lesson. Unintended consequences,
+true stories of good intentions that backfired. Find every show free at NARANetwork.com.
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.
