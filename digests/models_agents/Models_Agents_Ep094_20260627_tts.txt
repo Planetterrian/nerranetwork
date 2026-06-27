@@ -1,0 +1,93 @@
+Pull up a chair, this is Models and Agents, episode ninety-four. It's June twenty-seventh, twenty twenty-six. Another day, another round of A I developments. Let's break it down.
+
+Open A I’s G P T 5.6 family launches in limited preview, giving builders three new tiers for balancing capability, speed, and cost under tighter government oversight.
+
+Open A I released the G P T 5.6 series with Sol as the flagship, Terra as the balanced option, and Luna as the efficient tier.
+
+The family ships with a strengthened real-time safety stack that includes human red-teaming and more than seven hundred thousand A100-equivalent G P U hours of testing.
+
+Sol sets a new state of the art on Terminal-Bench 2.1 for complex command-line workflows.
+
+The models introduce explicit cache breakpoints and a guaranteed thirty-minute cache lifetime billed at one point two five times the uncached input rate.
+
+Access is currently limited to roughly twenty trusted partners after Open A I shared plans with the U S government, with broader release expected in the coming weeks.
+
+This release continues the frontier models track we followed yesterday, where closed labs trade capability gains against tighter regulatory coordination on phased access.
+
+Sol costs five dollars per million input tokens and thirty dollars per million output tokens while Terra is priced at two dollars fifty cents input and fifteen dollars output. Luna sits at one dollar input and six dollars output. Sol is positioned for complex coding and security research tasks. Luna is aimed at summarization and routine automation workloads.
+
+All three models carry a High cyber-risk classification according to the system card. Builders are encouraged to begin testing with Luna on high-volume internal tools to assess the updated caching costs. Source details appear on simonwillison dot net.
+
+Anthropic regained limited U S government approval to redeploy its Mythos 5 cybersecurity model to critical infrastructure operators.
+
+The clearance followed a June twelfth review process, restoring access for organizations defending critical infrastructure.
+
+Work continues to expand Fable 5 availability beyond the current scope.
+
+Open A I plans to deliver seven hundred fifty tokens per second inference for the Sol model on Cerebras hardware next month.
+
+The update targets real-time enterprise applications that need frontier-grade reasoning at low latency.
+
+Sam Altman noted improved responses from the refreshed G P T 5.5 instant model now running in ChatGPT.
+
+The change is separate from the new five point six family preview and is available for immediate testing in the ChatGPT interface.
+
+Researchers at the National University of Singapore released MRAgent, which replaces static retrieve-then-reason pipelines with dynamic Cue-Tag-Content memory reconstruction on a graph.
+
+On LongMemEval the framework used one hundred eighteen thousand prompt tokens versus three point two six million for LangMem.
+
+It also halved runtime versus A-MEM.
+
+The code is on GitHub with an automated L L M distillation pipeline to populate the graph from raw interaction histories.
+
+Coinbase introduced an agent that can execute crypto trades on behalf of users. The tool targets both retail and institutional traders seeking automated execution. Early users are advised to review custody and approval flows before granting live trading permissions. The launch was reported through Yahoo Finance and Google News feeds.
+
+The agent operates directly on user accounts for trade placement. No additional model names or benchmarks were disclosed in the announcement.
+
+AnthonyBeeblebrox released pybench, a pytest-style CLI that samples seeds, stores baselines, and flags metric regressions at a statistical level. The tool lives in a benchmarks directory and supports update and show commands for history tracking. It is available on GitHub under an open license for teams tracking training runs.
+
+The package integrates into existing M L pipelines through standard pytest workflows. Users can invoke it to compare new runs against stored statistical baselines. The project addresses silent metric drift in repeated training experiments.
+
+An ex-amateur fighter built models that detect positions, knockdowns, and takedowns in MMA fight footage and render searchable timelines. The demo is live at cagesight dot A I for practitioners examining video event detection granularity. The system processes fight video to produce labeled event sequences. Position detection covers common ground and stand-up states.
+
+Knockdown and takedown events receive explicit timeline markers. Practitioners in related domains can review the labeling choices for adaptation.
+
+OK, let's pop the hood on the new prompt caching implementation.
+
+The G P T 5.6 system lets developers insert explicit cache breakpoints and guarantees a thirty-minute minimum lifetime.
+
+It charges one point two five times the normal input rate on the initial write while subsequent reads receive the familiar ninety percent discount.
+
+The thirty-minute floor prevents indefinite cache bloat while still covering most multi-turn sessions.
+
+In practice this favors workloads that re-use the same long context within a half-hour window, such as coding agents or document analysis.
+
+The main gotcha teams encounter is forgetting to place breakpoints at stable context boundaries, which either causes misses or loses the discount through overly granular caching.
+
+Use explicit breakpoints when your agent re-processes the same system prompt or retrieved documents multiple times in quick succession.
+
+Skip them for single-shot or highly variable prompts where the write penalty outweighs any read benefit.
+
+Test G P T 5.6 Luna via the limited preview if you have partner access, since its one dollar per million input and six dollars per million output pricing offers the fastest way to compare cost and performance against current G P T 5.5 workloads.
+
+Run MRAgent on a LongMemEval-style task to check whether the one hundred eighteen thousand token regime actually changes your agent's economics versus LangMem.
+
+Add pybench to an existing training script and compare statistical regression detection against your current ad-hoc metric checks.
+
+Experiment with explicit cache breakpoints on any repeated-context agent loop to quantify the one point two five times write versus ninety percent read savings before the July seven hundred fifty tokens per second rollout.
+
+Broader G P T 5.6 Sol, Terra, and Luna availability is expected in the coming weeks once the government review window closes.
+
+Cerebras-backed seven hundred fifty tokens per second inference for G P T 5.6 Sol is targeted for July.
+
+Continued expansion of Mythos 5 access is planned beyond critical infrastructure operators.
+
+Tomorrow, keep an eye on further agent memory framework comparisons against MRAgent on the same benchmarks.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed, here's your next listen — Space X Daily, the daily companion for following Space X as a public company, from Starship to the stock ticker.
+
+Find every show, free, at nerranetwork dot com.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
