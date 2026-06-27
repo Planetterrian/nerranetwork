@@ -1,0 +1,72 @@
+# Tesla Shorts Time
+**REAL-TIME TSLA price:** $379.71 ▲ $5.31 (1.4%)
+> **NHTSA ending its power steering probe on 376,000 Teslas clears one regulatory overhang for the company.**
+---
+### Top 12 News Items
+1. **US safety agency ends power steering probe into 376,000 Tesla EVs:** June 27, 2026, Reuters
+   The National Highway Traffic Safety Administration closed its investigation into power steering loss reports affecting certain Tesla models. The probe had examined roughly 376,000 vehicles. Closure removes an active regulatory review that had been open on the issue. Listeners should watch whether similar investigations surface on other vehicle systems in coming quarters. Source: [Google News](https://news.google.com/rss/articles/CBMiygFBVV95cUxQdFp0VUdMWjBPQ2NXdEVRemwxZkx0czFWWXlISDVkNzlqOEJITVhVQUN0am4takgxUkxYc3htWG44cHYtZjZvOEJfcmhtN3l5b25abHpFb2RvSHVzaEp1bDM5YzgySHVfQ1R2bUtQZ2JNU3VKWGRPZ2FGNTNQVWZLMXFwaXhCVmtDYVBzbXNvNmxFUEpYOUMzemU2RXQ2LTNfZVNlQ1FpZEZvelFNN0dGT3ppZzhmd0kzTS1ULXZQYy1uX1VVYTUyX1Nn?oc=5)
+
+2. **Seeking Alpha Analyst Upgrades TSLA to Strong Buy Citing Cybercab and Optimus Progress:** June 27, 2026, TSLAming (X)
+   Elizabeth Pramila moved her rating from Buy to Strong Buy after previously holding a bearish stance. She points to Cybercab production starting with the unboxed process and a 2-million-unit annual target, plus Optimus scaling toward 2027 with suppliers already secured. The upgrade treats both programs as medium-term revenue drivers rather than distant speculation. Next data point to watch is any supplier confirmation or production-line video from Giga Texas. Source: [x.com](https://x.com/tslaming/status/2070785071297290494)
+
+3. **Tesla Shares Q2 2026 Consensus with 406K Deliveries Expected:** June 27, 2026, driveteslacanada.ca
+   Wall Street consensus now sits at 406,000 deliveries for the second quarter. The figure reflects modest sequential growth from Q1. Analysts are modeling continued energy-storage contribution to offset any vehicle-margin pressure. The number will be compared against actual results when Tesla reports in July. Source: [Google News](https://news.google.com/rss/articles/CBMidEFVX3lxTE01MjJ6U2Y5aWlSLXNkbFlvQkVIVHhnc1QzeUU2V3JQZm5tN1JxSlpYQ0dxZ3YwRU1zc0R3REVEZk8yT3FvRW4yVkE5UG1pNXctMjhEUW1RSHRuSzNHdXp2MklvMUNya1UxemdibkFQVnZCVDFH?oc=5)
+
+4. **Tesla quietly opens Signature Edition Model S orders in Europe:** June 27, 2026, driveteslacanada.ca
+   European buyers can now configure the Signature Edition Model S through the configurator without prior announcement. The variant carries updated interior and exterior details. Availability signals continued support for the refreshed sedan line even as focus remains on higher-volume models. European order data in coming weeks will show whether the edition moves volume. Source: [Google News](https://news.google.com/rss/articles/CBMickFVX3lxTE5UUzNpcHlIVF9DTTFxV0ZMMU9DTUl0ZXpxMUR5Yy1SRXNDV3BhQnRMbGtwdFZUeVVCdkJCYWNWdDE4NGxKbGs2ZU1GaFJCU2ZmYVc1ckhJZFJIN1p3UVlib2szcmt2TU03MlE5aDVET1pQQQ?oc=5)
+
+5. **Tesla Plans New Factory Building and Rail Hub at Giga Berlin:** June 26, 2026, Not a Tesla App
+   Tesla filed plans for an additional production building and dedicated rail terminal at the Brandenburg site. The rail connection would support higher inbound component volumes and outbound vehicle shipments. The expansion sits alongside earlier hiring increases at the same factory. Observers will watch construction permits and any announced timeline for the new infrastructure. Source: [notateslaapp.com](https://www.notateslaapp.com/news/4361/tesla-plans-new-factory-building-and-rail-hub-at-giga-berlin)
+
+6. **Tesla to Hire 1,000 More Workers at European Gigafactory as EV Demand Surges:** June 26, 2026, Tekedia
+   The company announced plans to add another 1,000 positions at Giga Berlin. The move follows rising European EV registrations and internal production targets. Hiring focuses on assembly and logistics roles tied to the new building. The increase keeps the site on a growth trajectory even as some legacy automakers announce cuts elsewhere. Source: [Google News](https://news.google.com/rss/articles/CBMiogFBVV95cUxPcXNzLWdKVW40LVlHMmdGalNaR2RDYVYtQXVHM0pOWXMwY1ExR0xPdVFXLTY2cGVfSWxWQ0VrcXJOcFZRT1FKTjJfdUpYbGROV2RvWXFQWWdES25paXpQbWNSSlNndHFqcUF2clhTVTVsOTJXV3FkOVp5T1NKYlZUSmFLNTVtWFVUZ0UtY0p2UVZNdXp0SHR1c2pJYzZXSGxReWc?oc=5)
+
+7. **Volkswagen to Cut 100,000 Jobs as Tesla and China Close In:** June 26, 2026, Not a Tesla App
+   Volkswagen outlined plans to reduce its workforce by up to 100,000 positions over several years. The cuts respond to slower EV adoption in its traditional markets and rising competition from Chinese brands. Tesla’s lower-cost production methods and Chinese manufacturers’ pricing pressure are cited as contributing factors. The scale of the reduction highlights the cost gap legacy platforms still face. Source: [notateslaapp.com](https://www.notateslaapp.com/news/4360/volkswagen-to-cut-100000-jobs-as-tesla-and-china-close-in)
+
+8. **This Regulatory Rollback For Robotaxis Is Set To Help Tesla, Amazon, Google:** June 26, 2026, Investor's Business Daily
+   Federal regulators eased certain operational rules for autonomous ride-hailing services. The change reduces the number of safety drivers required during testing in select jurisdictions. Tesla, Amazon’s Zoox, and Waymo stand to benefit from lower per-mile operating costs during early deployment. The next milestone is state-level adoption of the revised federal baseline. Source: [Google News](https://news.google.com/rss/articles/CBMikwFBVV95cUxNbkI5WS1fZ0s1S0FUWFp2OEYxaW9yTDRMNVdPUk5LeVJzX1JjcF84RjFiRG1OaXZVQVc0ZUZUTmljYTNTYUFIMXBHVzcwcXA3WlNPYXNUaDJSWXRoRHIwblVYQmVXSjQ0NjlwWWF5ek5zcGg3eHZtNTFqYlRtZjNEQl9QMGdHVlVlMUkwRGdyWm42MEU?oc=5)
+
+9. **Tesla Deployed Its 1,000th Supercharging Stall in Australia:** June 26, 2026, EVChargingStations.com
+   The network milestone was reached with the commissioning of a new stall in the country. Australia now joins a small group of markets with over 1,000 Tesla Superchargers. The addition supports longer-distance travel corridors and growing Model Y and Model 3 registrations. Future expansion will focus on regional routes still lacking coverage. Source: [Google News](https://news.google.com/rss/articles/CBMihgFBVV95cUxQc0lOa0lLVG9hdl9VeXJsRldWaTU5N1BpLUJuYmttdl9JcXQyRjVQalRaOF9yXzVHdFUxbmhScDhDV0pQTkhrcFBTUjQwSWNONEx6aDY2c2NfRmN1S0FLZ18zUXJqd2tkZlFTSUs1MWtpRmVGRjdqbmxmc1VmRjJZelRJNHE2Zw?oc=5)
+
+10. **Tesla Trademarks Megapod; Will Turn Idle Superchargers Into Distributed Compute:** June 26, 2026, Not a Tesla App
+    Tesla filed for the Megapod trademark covering a self-contained AI compute unit. The system would repurpose idle Supercharger stalls as edge data centers when vehicles are not charging. The approach leverages existing power infrastructure and real-estate footprint. Commercial deployment would depend on Dojo software optimizations and utility agreements. Source: [notateslaapp.com](https://www.notateslaapp.com/news/4337/tesla-trademarks-megapod-will-turn-idle-superchargers-into-distributed-compute)
+
+11. **Morgan Stanley Lifts Tesla Q2 Delivery Estimate, Reaffirms Price Target:** June 26, 2026, eletric-vehicles.com
+    The bank raised its second-quarter delivery forecast while keeping its price target unchanged. The adjustment reflects stronger-than-expected order momentum in Europe and North America. Analysts continue to model energy-storage growth as an offset to vehicle gross-margin compression. The revised number will be tested against Tesla’s official delivery report next month. Source: [Google News](https://news.google.com/rss/articles/CBMiqgFBVV95cUxPN21sbllkdjFENEJwSWRyanAyNFZMakdJX2s1N1NIZ21nQ0VBdnp6Q0sxbV94RXBvU1BsYnNsVGg5Y0o0ZUhPMVBiQlBxMnF0VXlidnRwakQ0V25YTEZ0YTlMTmRDdDhrNldadmhGV2ZKSjB5Q3ZaaGg3UUw0TzVMTE15RkQ5UzY3aEpZOWR1Z0w0NGJKWndHQUtBUk5rQnpRTHBFQURTTTlBQQ?oc=5)
+
+12. **Tesla Patent Application Doesn't Confirm Pump in Current Model 3/Y Hardware:** June 27, 2026, TSLAming (X)
+    A recently published patent describes a new thermal-pump architecture but does not state it is already in production vehicles. Confirmation would require teardown reports or official Tesla documentation. The filing shows Tesla continues to refine cooling systems even after the Highland and Juniper refreshes. Observers will look for any service-part updates that match the patented design. Source: [x.com](https://x.com/tslaming/status/2070811607815643599)
+---
+## Tesla X Takeover: What's Hot Right Now
+Tesla X Takeover - What's breaking in the Tesla world today! Here are the most interesting, fresh Tesla developments that have everyone talking.
+
+1. **Pennsylvania Mountain Driving Experience with Trucks** - An owner shared video of descending steep grades in Pennsylvania where tractor-trailers must use mandatory pull-off areas.
+   The footage highlights how regenerative braking and one-pedal driving handle sustained downhill loads differently than traditional trucks. Other drivers in the replies compared notes on similar routes in the Rockies and Alps. The clip underscores real-world conditions where EV torque and braking behavior stand out from ICE vehicles. Source: [x.com](https://x.com/Teslarati/status/2070612688074354899)
+
+2. **Tesla Home Charging Tip for Long Drives** - Teslarati reminded owners that preconditioning at home overnight remains the most efficient way to start a long trip.
+   The advice centers on using the vehicle’s scheduled departure feature so the battery reaches optimal temperature without drawing from Superchargers en route. Owners in northern climates noted the tip also helps with cabin preconditioning in winter. The post reflects ongoing community focus on minimizing paid charging stops. Source: [x.com](https://x.com/Teslarati/status/2070639030341873666)
+
+3. **Tesla AI4 Experience Contradicts Previous Observation** - A driver posted that their recent AI4 hardware drive performed differently than earlier hardware versions on the same route.
+   The observation centers on how the car handled a particular intersection and lane choice. Replies quickly asked whether the difference came from software version or hardware sensor calibration. The exchange shows owners actively comparing hardware generations in daily driving. Source: [x.com](https://x.com/Teslarati/status/2070612367826735254)
+
+4. **Meet the 84-year-old who became the first person to drive a Tesla to the Arctic Ocean** - An 84-year-old driver completed the trip to the Arctic Ocean in a Tesla, documenting the journey on social media.
+   The route required careful planning around charging availability in remote northern Canada. The story has circulated among owners interested in extreme-range travel. It adds another data point to real-world cold-weather and long-distance capability discussions. Source: [Google News](https://news.google.com/rss/articles/CBMi2wFBVV95cUxQUzFBc0xWaFMyUVBFMm1iS0dmOENPZ3dVWldLdkw0TmxFRXZLUW1hN2taZm1yeW5YdXV3b0RKazNDQWxfTVZtVmRaQnBCUUJDRF8yVlNDMjdRSEstaVZSS0pPOXk0V0ZvSmRRRS1sblJmZVVuaU91N0tUSjZLd25qMHZ0ZGpCQThCM2ozYjA1cGJvSU0xYk81U3JoVjY5QnpTRzgzVFA4eXU2NlpIVWVKbDhqWU1iYjJ2c3U0X0VIYkNWNVFvWHpXeVp5MnNmMlB5QXdHM25CTzJxRlU?oc=5)
+
+5. **Take a Peek Inside the 2026 Tesla Model Y** - Photos of the refreshed Model Y interior surfaced showing updated materials and layout changes.
+   The images reveal revised center console and door panel designs compared with current production cars. Owners are debating whether the changes improve perceived quality or simply refresh styling. The leak gives an early look at what buyers may see when the updated vehicle reaches showrooms. Source: [Google News](https://news.google.com/rss/articles/CBMiowFBVV95cUxOejBXOXVlSUZQRURMU3lubktfb3hCR3RGbzdNWlhCcGJrVVhISm14Q04zYnp4ODRwZEZBb2tEbmZrOGpDSDdiREd4ZDZ2cUxrcFozV1VUaHprOU9URXlLMmdPaVpyandicjBTdDB6Y2EzMGRjbU03UFo1VGowX0RKUXlmdktublQyc3lmckRlZFdGalJaWVJ4U2JGRGt5b0hQYUtF?oc=5)
+---
+## Short Spot
+**Tesla settles lawsuit over fatal ‘Full Self-Driving’ pedestrian crash:** June 26, 2026, Electrek
+The company reached a confidential settlement in the case involving a Model Y using FSD that struck a pedestrian. Details of the agreement remain private, leaving open questions about how Tesla will adjust future safety communications. The resolution avoids a public trial but does not alter the broader regulatory scrutiny surrounding driver-assistance claims. Source/Post: [Google News](https://news.google.com/rss/articles/CBMieEFVX3lxTE9OeE82SjhxQWxfZWt3Vm0yOEtLWDlPNjI2MFNzaG9RdUYzcmVIYkhWY2JFSHc5UzN2VGxyUUxSTDEwLW80T1MwWXlhRzdUSlZnWXhnWW84YVJxT09wN2thTmVTN1dZemxPTFYyWVFuRng3dF93Ri1jWg?oc=5)
+---
+### Tesla First Principles
+
+Vehicle ownership costs over a decade and a half are shaped more by energy price volatility and maintenance schedules than by the sticker price paid on day one. A direct comparison between a Tesla and a comparable Toyota gas model shows the electric car pulling ahead once electricity rates and fewer service visits are factored in, yet the gap narrows if home charging is unavailable and public rates stay high. The real variable is not the battery itself but whether owners can lock in low-cost overnight power for most of their miles.
+
+That same long-term math changes again when robotaxis enter the picture. If a personal vehicle sits idle 95 percent of the time, the capital tied up in its battery and body becomes an expensive asset with low utilization. Shifting those miles onto a shared fleet spreads the same hardware cost across many more trips per day, which is why the ownership model faces pressure even before any regulatory mandate arrives. The question is how quickly utilization rates in a mixed fleet can offset the loss of individual vehicle sales.
+
+The industry precedent that matters here is not another car company but the smartphone transition from ownership to shared data plans. Early buyers paid full price for handsets; later users accepted lower hardware margins in exchange for service contracts that guaranteed recurring revenue. Tesla’s energy and autonomy businesses sit at a similar inflection: the hardware still needs to be built, but the margin may increasingly come from the miles or electrons that flow through it rather than from the initial transaction.
+---
+Feedback welcome at [@teslashortstime](https://x.com/teslashortstime).
