@@ -1,0 +1,70 @@
+Pull up a chair. This is Models and Agents Episode 94. It's June 27, 2026. Another day, another round of AI developments. Let's break it down.
+OpenAI's GPT 5.6 family launches in limited preview, giving builders three new tiers for balancing capability, speed, and cost under tighter government oversight.
+OpenAI released the GPT 5.6 series with Sol as the flagship, Terra as the balanced option, and Luna as the efficient tier.
+The family ships with a strengthened real-time safety stack that includes human, red teaming, and more than 700,000 A100 equivalent GPU hours of testing.
+Sol sets a new state of the art on terminal bench 2.1 for complex command line workflows.
+The models introduce explicit cash breakpoints and a guaranteed 30-minute cash lifetime. Build at 1.25 times the uncashed input rate.
+Access is currently limited to roughly 20 trusted partners after OpenAI shared plans with the US government, with broader release expected in the coming weeks.
+This release continues the frontier models track we followed yesterday, where closed labs trade capability gains against tighter regulatory coordination on phased access.
+Sol costs $5 per million input tokens and $30 per million output tokens, while Terra is priced at $2.50 input and $15 output.
+Luna sits at $1 input and $6 output. Sol is positioned for complex coding and security research tasks.
+Luna is aimed at summarization and routine automation workloads. All three models carry a high cyber risk classification according to the system card.
+Builders are encouraged to begin testing with Luna on high-volume internal tools to assess the updated caching costs.
+Source details appear on SimonWillison.net.
+Anthropic regained limited US government approval to redeploy its mythos 5 cyber security model to critical infrastructure operators.
+The clearance followed a June 12 review process, restoring access for organizations defending critical infrastructure.
+Work continues to expand Fable 5 availability beyond the current scope. OpenAI plans to deliver 750 tokens per second inference for the sole model on Sarabra's hardware next month.
+The update targets real-time enterprise applications that need frontier grade reasoning at low latency.
+Sam Altman noted improved responses from the refreshed GPT 5.5 instant model, now running in Chad GPT.
+The change is separate from the new 5.6 family preview and is available for immediate testing in the Chad GPT interface.
+Researchers at the National University of Singapore released M agent, which replaces static retrieve, then reason pipelines with dynamic QTeg content memory reconstruction on a graph.
+On LongMemEVAL, the framework used 118,000 prompt tokens versus 3.26 million for LangMem.
+It also halved runtime versus A-Mem.
+The code is on GitHub with an automated LLM distillation pipeline to populate the graph from raw interaction histories.
+Coinbase introduced an agent that can execute crypto trades on behalf of users.
+The tool targets both retail and institutional traders seeking automated execution.
+Early users are advised to review custody and approval flows before granting live trading permissions.
+The launch was reported through Yahoo Finance and Google News feeds.
+The agent operates directly on user accounts for trade placement.
+No additional model names or benchmarks were disclosed in the announcement.
+Anthony Bebelbrocks released PiBench, a PiTest-style CLI that samples seeds, stores baselines, and flags metric regressions at a statistical level.
+The tool lives in a benchmarks directory and supports update and show commands for history tracking.
+It is available on GitHub under an open license for Teams tracking training runs.
+The package integrates into existing ML pipelines through standard PiTest workflows.
+Users can invoke it to compare new runs against stored statistical baselines.
+The project addresses silent metric drift in repeated training experiments.
+An X amateur fighter built models that detect positions, knock downs, and takedowns in MMA fight footage, and render searchable timelines.
+The demo is live at cagesight.ai for practitioners examining video event detection granularity.
+The system processes fight video to produce labeled event sequences.
+Position detection covers common ground and stand-up states.
+Knock down and takedown events receive explicit timeline markers.
+Practitioners in related domains can review the labeling choices for adaptation.
+Okay, let's pop the hood on the new prompt caching implementation.
+The GPT 5.6 system lets developers insert explicit cache breakpoints and guarantees a 30-minute minimum lifetime.
+It charges 1.25 times the normal input rate on the initial right, while subsequent reads receive the familiar 90% discount.
+The 30-minute floor prevents indefinite cache bloat while still covering most multi-turn sessions.
+In practice, this favors workloads that reuse the same long context within a half-hour window, such as coding agents or document analysis.
+The main gotcha teams encounter is forgetting to place breakpoints at stable context boundaries, which either causes misses or loses the discount through overly granular caching.
+Use explicit breakpoints when your agent reprocesses the same system prompt or retrieve documents multiple times in quick succession.
+Skip them for single shot or highly variable prompts where the right penalty outweighs any read benefit.
+Test GPT 5.6 Luna via the limited preview if you have partner access.
+Since its $1 per million input and $6 per million output pricing offers the fastest way to compare cost and performance against current GPT 5.5 workloads.
+Run MR agent on a long-mem eVAL style task to check whether the 118,000 token regime actually changes your agent's economics versus Langmem.
+Add PY bench to an existing training script and compare statistical regression detection against your current ad hoc metric checks.
+Experiment with explicit cash breakpoints on any repeated context agent loop to quantify the 1.25 times right versus 90% read savings before the July 750 tokens per second rollout.
+Broughter GPT 5.6 Sol, Terra and Luna availability is expected in the coming weeks once the government review window closes.
+Scarabras backed 750 tokens per second inference for GPT 5.6 all is targeted for July.
+Continued expansion of mythos 5 access is planned beyond critical infrastructure operators.
+Tomorrow keep an eye on further agent memory framework comparisons against MR agent on the same benchmarks.
+That's models and agents for today.
+If you found this useful share it with someone who's trying to keep up with all these changes and subscribe so you don't miss tomorrow's update.
+The AI world most fast will help you keep up.
+See you tomorrow.
+And if you'd rather watch then listen, find us on YouTube at NARA Network, links in the show notes.
+And before you go, this show is part of the NARA network, a family of daily podcasts on tech, science and markets.
+Each one a short, sharp briefing you can finish on the commute.
+If today earned its place in your feed, here's your next listen, SpaceX Daily.
+The daily companion for following SpaceX as a public company from Starship to the stock ticker.
+Find every show free at neuronetwork.com.
+This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.
