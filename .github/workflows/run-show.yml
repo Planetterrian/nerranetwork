@@ -86,6 +86,10 @@ on:
 
 permissions:
   contents: write
+  # Needed so the push-failure recovery fallback can open a draft PR via the
+  # gh CLI (scripts/create_recovery_pr.sh). Without this the gh call 403s and
+  # the recovery branch is pushed but no PR opens — the failure goes silent.
+  pull-requests: write
 
 jobs:
   # -----------------------------------------------------------------------
@@ -581,6 +585,16 @@ jobs:
           # Exclude MP3 files (hosted on R2, not in git)
           git reset HEAD -- '*.mp3' 2>/dev/null || true
 
+          # Exclude the regenerable CROSS-SHOW aggregate files. These are
+          # rebuilt from committed per-show data by the finalize job, which
+          # owns them exclusively. Committing them here too caused concurrent
+          # show jobs to collide on these exact files (June 27 2026: Tesla +
+          # Modern Investing lost the push race, the rebase couldn't auto-merge
+          # them, and both fell back to recovery branches). Per-show feeds /
+          # pages (podcast.rss, blog_<show>.rss, <show>.html, blog/<show>/*)
+          # are NOT aggregates and still commit normally.
+          git reset HEAD -- blog.rss network.rss blog/index.html 2>/dev/null || true
+
           # Check if there are changes to commit
           if git diff --cached --quiet; then
             echo "No changes to commit."
@@ -630,6 +644,11 @@ jobs:
             # Delegate to a dedicated script. This keeps the workflow YAML clean
             # (no nested heredocs that confuse the YAML parser) and makes the
             # recovery logic easy to test/enhance in isolation.
+            # GH_TOKEN is REQUIRED for the `gh pr create` inside the script —
+            # without it gh errors out and the recovery PR never opens (the
+            # June 2026 silent-failure bug). github.token + the pull-requests:
+            # write permission above are sufficient.
+            GH_TOKEN="${{ github.token }}" \
             SHOW="${{ matrix.show }}" \
             RUN_ID="${{ github.run_id }}" \
             REPO_URL="${{ github.server_url }}/${{ github.repository }}" \
@@ -715,6 +734,10 @@ jobs:
           # Network-wide blog index (aggregates all shows' posts)
           # Sitemap with all pages
           python generate_html.py --network --blogs --sitemap
+          # network.rss is a cross-show aggregate now owned by finalize (the
+          # per-show commit no longer includes it — see the commit step's
+          # aggregate-exclusion reset). Regenerate it here from committed data.
+          python generate_network_rss.py
           python scripts/generate_api.py
 
           # Rebuild the global search index so new episodes are immediately searchable.
@@ -738,6 +761,7 @@ jobs:
           git add sitemap.xml || true
           git add api/*.json || true
           git add blog*.rss || true
+          git add network.rss || true
           git add site/data/search-index.json || true
           git add site/data/gallery-manifest.json || true
 

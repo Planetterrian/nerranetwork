@@ -35,6 +35,11 @@ SHOW="${SHOW:-unknown}"
 RUN_ID="${RUN_ID:-${GITHUB_RUN_ID:-unknown}}"
 REPO_URL="${REPO_URL:-https://github.com/Planetterrian/nerranetwork}"
 
+# `gh` needs a token in the environment. The caller passes GH_TOKEN, but fall
+# back to GITHUB_TOKEN so the PR step never silently no-ops if only the latter
+# is present. (Missing token was the June 2026 recovery-PR silent-failure bug.)
+export GH_TOKEN="${GH_TOKEN:-${GITHUB_TOKEN:-}}"
+
 TIMESTAMP=$(date +%s)
 RECOVERY_BRANCH="recovery/${SHOW}-${RUN_ID}-${TIMESTAMP}"
 
