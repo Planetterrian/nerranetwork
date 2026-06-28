@@ -1,0 +1,147 @@
+Pull up a chair, this is Models and Agents, episode ninety-five, for June twenty-eighth, twenty twenty-six. Let's see what happened in the A I world today. And trust me, it's been busy.
+
+The week's biggest developments, pulled together — what actually moved, why it matters, and what to watch next.
+
+Open-weight releases from Chinese labs kept landing with little warning while Open A I pushed multiple G P T updates aimed at security and agent workflows.
+
+Inference techniques such as block diffusion and two-tower designs showed measurable throughput gains on existing hardware.
+
+Agent memory frameworks and environment-simulating models appeared alongside internal reports of longer-running Codex tasks inside Open A I itself.
+
+GLM-5.2 arrived as the latest open-weight release from a Chinese startup.
+
+Multiple outlets report the model is attracting attention in Silicon Valley for its performance relative to current open families.
+
+The release continues the pattern of rapid iteration from labs such as those behind Qwen and DeepSeek, where new weights appear with minimal fanfare and quickly circulate through developer communities.
+
+Early coverage notes the model is being tested for both research and agent workloads, though concrete benchmark numbers and context length details remain sparse in initial reports.
+
+Builders working on cost-sensitive inference or fine-tuning experiments now have another candidate to benchmark against Llama and Mistral derivatives.
+
+Watch for fast inference integrations and any follow-on fine-tunes that typically appear within days of these releases.
+
+Remember the ongoing story of open-weight models narrowing the gap with closed frontier systems that we tracked through last week.
+
+GLM-5.2 moves that arc forward by giving developers another immediate option without licensing friction.
+
+Open A I expanded its Daybreak program with G P T 5.5-Cyber, Codex Security, and Patch the Planet.
+
+The release includes a full G P T 5.5-Cyber model for tracing vulnerabilities, validating issues, and generating patches.
+
+A Codex Security plugin runs deep scans and exports to existing tools.
+
+It also adds a Cyber Partner Program and direct work with maintainers via Trail of Bits and HackerOne.
+
+The stack targets authorized defensive work only and keeps human review at the center of every remediation.
+
+Teams can now move from findings to merged fixes inside the same environment they already use for code.
+
+Watch for how security vendors integrate the new model through the partner program and whether open-source projects see faster patch turnaround.
+
+This fits the frontier models thread we have followed since episode ninety-four, where capability gains continue alongside tighter governance rules.
+
+UC San Diego's DFlash replaces standard speculative decoding with a lightweight block diffusion model that drafts entire token blocks in one forward pass.
+
+It conditions on target model hidden features via KV injection and ships with twenty checkpoints plus support for SGLang, vLLM, and TensorRT-L L M.
+
+The approach reports up to six point zero eight times lossless speedup on Qwen three eight B and Nvidia-measured peaks of fifteen times throughput on Blackwell hardware at fixed interactivity.
+
+Builders working on high-throughput inference pipelines can now test the integration without custom drafting logic.
+
+Watch for community benchmarks on other model families and whether the block-diffusion drafting generalizes beyond the reported setups.
+
+That development lands squarely in the A I compute and inference program we covered last week, where the focus remains on moving the cost curve without new silicon.
+
+Qwen released a thirty-five B parameter mixture of experts model with only about three B active parameters per token.
+
+The model was trained to predict environment states rather than generate chat responses directly.
+
+Two additional AgentWorld variants followed, each focused on simulating tool, terminal, and GUI interactions.
+
+Developers can now fine-tune or prompt these checkpoints to improve agent planning loops before deployment.
+
+The release keeps the open-weight families conversation moving, testing whether environment-specific pre-training closes more of the reliability gap on long-horizon tasks.
+
+Open A I released an updated G P T 5.5 Instant that improves intent understanding behind questions and adapts responses more reliably to complex constraints.
+
+The update also makes shopping and local recommendations more cohesive.
+
+It is rolling out today to paid users and tomorrow to free users.
+
+Builders should test prompts that previously produced inconsistent outputs on multi-constraint tasks to see whether the new version reduces follow-up clarification turns.
+
+Watch how the update interacts with agentic workflows that chain multiple tool calls.
+
+Open A I stated that agents powered by Codex are now transforming work across every department, handling tasks that are more complex, longer-running, and increasingly cross-functional.
+
+The company positions this internal usage as an early signal of how agentic tools will reshape workflows once they reach broader availability.
+
+No specific benchmarks or model versions were shared, but the emphasis on cross-functional scope suggests agents are moving beyond single-user chat interfaces into multi-step, multi-stakeholder processes.
+
+Builders should note the implied requirements around reliability, state management, and tool interoperability that such deployments demand.
+
+Nvidia introduced Nemotron-TwoTower, a block-wise autoregressive diffusion model built on Nemotron three Nano thirty B A three B.
+
+The architecture splits context handling from diffusion denoising and delivers two point four two times throughput at near-parity quality.
+
+The design targets the same inference economics questions we tracked earlier in the week.
+
+Open A I announced the G P T 5.6 family with Sol as the new flagship, Terra for competitive performance at half the cost of G P T 5.5, and Luna as the lowest-cost option.
+
+The family ships with a strengthened real-time safety stack that includes human red-teaming and over seven hundred thousand A one hundred equivalent G P U hours of testing.
+
+Sol sets a new state of the art on Terminal-Bench two point one for complex command-line workflows.
+
+The models introduce explicit cache breakpoints and a guaranteed thirty-minute cache lifetime billed at one point two five times the uncached input rate.
+
+The models are currently restricted to a limited preview for roughly twenty trusted partners after Open A I shared plans with the U S government.
+
+Broader release is expected in the coming weeks.
+
+Builders gain clearer tiered choices for intelligence versus cost on long-horizon tasks.
+
+Anthropic regained limited U S government approval to redeploy its Mythos five cybersecurity model to critical infrastructure operators.
+
+A new MRAgent framework cuts long-horizon agent memory costs dramatically versus LangMem.
+
+Simon Willison shipped the sqlite-utils version four release candidate, adding built-in migrations and nested transaction support for developers working with local data.
+
+Temporary Cloudflare accounts now let agents spin up ephemeral Workers deployments in under a minute without an account.
+
+The seven types of agent memory guide and a detailed Matrix Recurrent Units update provide concrete engineering references for builders.
+
+NagaTranslate demonstrates a full translation and voice pipeline for low-resource Nagaland creoles built on Whisper, VITS, and large language models.
+
+If you work with local databases, the sqlite-utils release candidate is worth installing this week to test the new migration commands on a copy of your data.
+
+Developers exploring agent environments can pull the Qwen AgentWorld checkpoints from ModelScope and run a short terminal simulation loop.
+
+Anyone testing inference speedups should add the DFlash integration to an existing SGLang or vLLM setup and measure block-level throughput on Blackwell hardware.
+
+Keep an eye on DevDay twenty twenty-six in San Francisco on September twenty-nine, where the keynote will be livestreamed.
+
+Broader access to the G P T 5.6 family is also expected in the coming weeks.
+
+OK, let's pop the hood on the inference techniques that surfaced this week.
+
+DFlash moves beyond token-by-token speculative decoding by training a lightweight block diffusion model that proposes entire blocks in a single forward pass.
+
+KV injection from the target model hidden states conditions the draft, removing the need for separate drafting logic at runtime.
+
+The reported six point zero eight times lossless gain on Qwen three eight B and fifteen times peak on Blackwell comes from amortizing the cost of the diffusion step across many tokens at once.
+
+Nemotron-TwoTower takes a different route by decoupling autoregressive context encoding from diffusion-based denoising in a two-tower layout.
+
+The split allows the context tower to run once while the diffusion tower iterates only on the denoising task, producing the measured two point four two times throughput at near-parity quality.
+
+When deciding between these approaches, reach for DFlash if you already run SGLang or vLLM and want plug-in speedups without retraining.
+
+Reach for two-tower designs when your workload benefits from explicit separation of context and generation steps on Nvidia hardware.
+
+Before we go, keep an eye on how the limited G P T 5.6 preview expands and whether follow-on fine-tunes of GLM-5.2 appear in the next few days.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed, here's your next listen — Tesla Shorts Time, your daily deep dive into everything Tesla. Find every show, free, at nerranetwork dot com.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
