@@ -87,6 +87,9 @@ BODYEOF
 
 echo "Opening draft recovery PR..."
 
+echo "Opening draft recovery PR..."
+
+PR_OPENED=false
 if gh pr create \
   --title "Recovery: ${SHOW} episode outputs (run ${RUN_ID})" \
   --body-file "${BODY_FILE}" \
@@ -94,13 +97,40 @@ if gh pr create \
   --head "${RECOVERY_BRANCH}" \
   --draft; then
   echo "Recovery PR opened successfully."
+  PR_OPENED=true
 else
-  echo "Warning: gh pr create returned non-zero (may already exist or other transient)."
+  # The common failure here is the org/repo setting "Allow GitHub Actions to
+  # create and approve pull requests" being OFF, which returns:
+  #   GraphQL: GitHub Actions is not permitted to create or approve pull requests
+  # In that case the recovery BRANCH is still safely pushed (data preserved);
+  # only the convenience PR is missing. Do not treat this as fatal — but make
+  # it LOUD via the notification webhook so the operator actually sees it
+  # (the branch alone is easy to miss; June 2026 had branches pile up unnoticed).
+  echo "::warning::gh pr create failed for ${SHOW} — likely the repo setting"
+  echo "  'Allow GitHub Actions to create and approve pull requests' is OFF"
+  echo "  (Settings -> Actions -> General -> Workflow permissions). The recovery"
+  echo "  branch '${RECOVERY_BRANCH}' is pushed and safe; open a PR from it manually,"
+  echo "  or enable that setting so future recoveries auto-PR."
 fi
 
 rm -f "${BODY_FILE}"
 
-echo "::warning::Recovery PR created for ${SHOW} (run ${RUN_ID}). Merge it to permanently save the episode artifacts that would otherwise have been lost."
+# Operator alert (best-effort) — fire regardless of whether the PR opened, so a
+# stranded episode is never silent. NOTIFICATION_WEBHOOK_URL is the same hook
+# the post-run summary uses; no-op when unset.
+WEBHOOK="${NOTIFICATION_WEBHOOK_URL:-}"
+if [ -n "${WEBHOOK}" ]; then
+  if [ "${PR_OPENED}" = "true" ]; then
+    MSG="⚠️ ${SHOW}: episode push to main failed; recovered to draft PR from branch ${RECOVERY_BRANCH}. Merge it to publish."
+  else
+    MSG="⚠️ ${SHOW}: episode push to main failed AND recovery PR could not be opened (Actions PR creation likely disabled). Episode is safe on branch ${RECOVERY_BRANCH} — open a PR from it manually to publish."
+  fi
+  curl -sS -m 15 -X POST -H 'Content-Type: application/json' \
+    -d "{\"text\": $(printf '%s' "${MSG}" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')}" \
+    "${WEBHOOK}" >/dev/null 2>&1 || echo "(recovery alert webhook failed — non-fatal)"
+fi
+
+echo "::warning::Recovery branch ${RECOVERY_BRANCH} created for ${SHOW} (run ${RUN_ID}). Merge its PR (or open one from the branch) to permanently save the episode artifacts."
 
 # Success from the perspective of "data is preserved".
 exit 0

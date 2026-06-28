@@ -26,6 +26,18 @@ class TestRunShowWorkflow:
         assert "~/.cache/huggingface" in wf
         assert "whisper-faster-base" in wf
 
+    def test_aggregate_exclusion_leaves_clean_tree(self):
+        """Per-show commits exclude the cross-show aggregates, but must use
+        `git checkout HEAD --` (reverts index + working tree), NOT `git reset
+        HEAD --` (unstages only). `reset` leaves the regenerated aggregates
+        dirty, which makes the push-retry `git pull --rebase` abort with
+        'cannot pull with rebase: you have unstaged changes' and sends shows
+        to recovery branches (the June 28 2026 regression)."""
+        wf = _read("run-show.yml")
+        assert "git checkout HEAD -- blog.rss network.rss blog/index.html" in wf
+        # The buggy reset form must not be what excludes the aggregates.
+        assert "git reset HEAD -- blog.rss network.rss blog/index.html" not in wf
+
     def test_secrets_as_env_not_dotenv_file(self):
         """Secrets go to the pipeline step's env block — no .env heredoc
         on disk, no indentation-sensitive sed hack."""
