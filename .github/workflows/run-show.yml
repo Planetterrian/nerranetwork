@@ -593,7 +593,18 @@ jobs:
           # them, and both fell back to recovery branches). Per-show feeds /
           # pages (podcast.rss, blog_<show>.rss, <show>.html, blog/<show>/*)
           # are NOT aggregates and still commit normally.
-          git reset HEAD -- blog.rss network.rss blog/index.html 2>/dev/null || true
+          #
+          # IMPORTANT: use `git checkout HEAD --`, NOT `git reset HEAD --`.
+          # The per-show steps above (Regenerate network RSS / show HTML) have
+          # already MODIFIED these files in the working tree. `git reset` only
+          # unstages — it leaves them dirty, which then makes the push-retry
+          # `git pull --rebase` abort with "cannot pull with rebase: you have
+          # unstaged changes" and the merge fallback abort with "local changes
+          # would be overwritten by network.rss". That regression (June 27)
+          # sent ~7/8 shows to recovery branches on June 28. `git checkout
+          # HEAD --` reverts index AND working tree to HEAD, leaving a clean
+          # tree so the rebase can replay onto the latest main.
+          git checkout HEAD -- blog.rss network.rss blog/index.html 2>/dev/null || true
 
           # Check if there are changes to commit
           if git diff --cached --quiet; then

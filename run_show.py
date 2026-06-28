@@ -118,6 +118,23 @@ logging.basicConfig(
 logger = logging.getLogger("run_show")
 
 
+def _alert_webhook(text: str) -> None:
+    """Best-effort operator alert via NOTIFICATION_WEBHOOK_URL.
+
+    Used for operator-actionable failures that would otherwise only surface
+    as a buried log line (e.g. a newsletter send failure). No-op when the
+    webhook is unset; never raises.
+    """
+    webhook = (os.getenv("NOTIFICATION_WEBHOOK_URL") or "").strip()
+    if not webhook:
+        return
+    try:
+        import requests
+        requests.post(webhook, json={"text": text}, timeout=15)
+    except Exception as exc:  # noqa: BLE001 — alerting must never break a run
+        logger.warning("Alert webhook failed: %s", exc)
+
+
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
@@ -3100,6 +3117,19 @@ def run(args: argparse.Namespace) -> None:
                     "engine.newsletter log line for the specific "
                     "reason (contrast block, scaffold leak, send "
                     "guardrail, or Buttondown response).",
+                )
+                # Loud alert: a configured-and-enabled newsletter that fails
+                # to send is an operator-actionable problem, not routine. The
+                # Buttondown account-disabled outage (June 19-28 2026) ran 9
+                # days unnoticed because this only logged a WARNING. Fire the
+                # notification webhook so a real send failure pages the
+                # operator immediately. Best-effort, never blocks the run.
+                _alert_webhook(
+                    f"⚠️ Newsletter NOT sent for {config.name} "
+                    f"ep{episode_num}. The Buttondown send failed (see the "
+                    f"run log for the API response — e.g. account disabled, "
+                    f"tag/recipient, or contrast/scaffold block). Newsletters "
+                    f"stay down until resolved."
                 )
 
     # 13. Post to X
