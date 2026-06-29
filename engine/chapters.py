@@ -77,6 +77,68 @@ def _first_sentence_as_title(text: str, max_chars: int = 60) -> str:
     return candidate
 
 
+# Words that carry no topical signal when matching a script segment to a
+# clean digest headline (auto-segment titling). Kept small + lowercase.
+_TITLE_MATCH_STOPWORDS = frozenset({
+    "the", "a", "an", "and", "or", "but", "of", "to", "in", "on", "for",
+    "with", "at", "by", "from", "as", "is", "are", "was", "were", "be",
+    "been", "it", "its", "this", "that", "these", "those", "into", "over",
+    "after", "before", "about", "than", "then", "so", "we", "you", "they",
+    "their", "our", "his", "her", "new", "now", "up", "out", "has", "have",
+})
+
+
+def _tokenize_for_match(text: str) -> set:
+    """Lowercase content-word token set for overlap scoring."""
+    toks = re.findall(r"[a-z0-9]{3,}", (text or "").lower())
+    return {t for t in toks if t not in _TITLE_MATCH_STOPWORDS}
+
+
+def _best_headline_for_segment(
+    seg_text: str, headlines: List[str], used: set,
+    max_chars: int = 60,
+) -> str:
+    """Pick the unused digest *headline* that best overlaps *seg_text*.
+
+    Auto-segment titles drawn from the segment's raw first sentence are
+    often mid-thought fragments ("Knowing this, when you hear claims…").
+    The episode digest already carries clean, capitalised per-story
+    headlines (``extract_story_headlines``); matching each spoken segment
+    to its originating headline by content-word overlap yields a proper
+    title ("Tesla unveils robotaxi service in Texas"). Returns "" when no
+    headline overlaps the segment meaningfully (caller falls back to the
+    first-sentence title, then ``Segment N``).
+    """
+    if not headlines:
+        return ""
+    seg_tokens = _tokenize_for_match(seg_text)
+    if not seg_tokens:
+        return ""
+    best_title = ""
+    best_score = 0
+    for h in headlines:
+        if h in used:
+            continue
+        h_tokens = _tokenize_for_match(h)
+        if not h_tokens:
+            continue
+        overlap = len(seg_tokens & h_tokens)
+        # Require ≥2 shared content words (or ≥half a short headline) so an
+        # incidental single-word match doesn't mis-title a segment.
+        if overlap > best_score and (
+            overlap >= 2 or overlap >= max(1, len(h_tokens) // 2)
+        ):
+            best_score = overlap
+            best_title = h
+    if not best_title:
+        return ""
+    used.add(best_title)  # claim the headline so the next segment can't reuse it
+    title = re.sub(r"[*_`]+", "", best_title).strip()
+    if len(title) > max_chars:
+        title = title[: max_chars - 1].rsplit(" ", 1)[0].rstrip(",;:") + "…"
+    return title
+
+
 def parse_chapters(
     script: str,
     section_markers: list,
@@ -85,6 +147,7 @@ def parse_chapters(
     min_chapters: int = 4,
     auto_segment_target_seconds: float = 90.0,
     estimated_words_per_minute: float = 165.0,
+    story_headlines: Optional[List[str]] = None,
 ) -> List[Chapter]:
     """Parse a podcast script to identify section boundaries.
 
@@ -242,6 +305,7 @@ def parse_chapters(
                     last_w = w
 
             if insertions:
+                _used_headlines: set[str] = set()
                 rebuilt: list[Chapter] = [Chapter(
                     title=head.title,
                     word_start=head.word_start,
@@ -252,11 +316,16 @@ def parse_chapters(
                 for n, (w, c) in enumerate(insertions, start=2):
                     next_w = insertions[n - 1][0] if n - 1 < len(insertions) else head_w_end
                     next_c = insertions[n - 1][1] if n - 1 < len(insertions) else head_c_end
-                    # Title from the first sentence of the segment text.
-                    # Falls back to "Segment N" if extraction fails (very
-                    # short text, no sentence-ending punctuation, etc).
+                    # Title preference: (1) matching clean digest headline
+                    # (avoids mid-sentence spoken fragments), (2) the
+                    # segment's first sentence, (3) "Segment N" placeholder.
                     seg_text = script[c:next_c]
-                    title = _first_sentence_as_title(seg_text) or f"Segment {n}"
+                    title = (
+                        _best_headline_for_segment(
+                            seg_text, story_headlines or [], _used_headlines)
+                        or _first_sentence_as_title(seg_text)
+                        or f"Segment {n}"
+                    )
                     rebuilt.append(Chapter(
                         title=title,
                         word_start=w,

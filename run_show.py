@@ -2318,12 +2318,21 @@ def run(args: argparse.Namespace) -> None:
             )
             podcast_script = podcast_script.rstrip() + "\n\n" + _disclosure
 
-            # Parse chapter markers from the cleaned script (before TTS)
+            # Parse chapter markers from the cleaned script (before TTS).
+            # Pass the digest's clean per-story headlines so the
+            # auto-segment fallback titles chapters with real headlines
+            # instead of mid-sentence spoken fragments.
             from engine.chapters import parse_chapters
+            try:
+                from engine.grok_imagine import extract_story_headlines as _ch_heads
+                _chapter_headlines = _ch_heads(x_thread or "", max_count=12)
+            except Exception:
+                _chapter_headlines = []
             episode_chapters = parse_chapters(
                 podcast_script,
                 config.chapters.section_markers,
                 show_name=config.name,
+                story_headlines=_chapter_headlines,
             ) if config.chapters.enabled and config.chapters.section_markers else []
 
             # Final defense-in-depth: strip any speaker prefixes that survived
