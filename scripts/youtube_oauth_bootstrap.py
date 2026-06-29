@@ -16,9 +16,14 @@ Usage::
 
     python scripts/youtube_oauth_bootstrap.py path/to/client_secrets.json
 
-The token is granted ``youtube.upload`` + ``youtube`` scopes (the second
-is needed for ``thumbnails.set`` and channel reads). Run once per
-channel, signing into the matching Google account each time.
+The token is granted the full ``engine.youtube.YOUTUBE_SCOPES`` set —
+``youtube.upload`` + ``youtube`` (thumbnails.set / channel reads) +
+``youtube.force-ssl`` (caption upload) + ``yt-analytics.readonly`` (the
+recursive feedback loop, ``docs/youtube_feedback_loop.md``). Run once per
+channel, signing into the matching Google account each time. If you are
+re-authorising an existing token to pick up a newly-added scope, revoke
+the old grant first at https://myaccount.google.com/permissions so Google
+re-shows the consent screen and returns a fresh refresh token.
 """
 
 from __future__ import annotations
@@ -27,13 +32,26 @@ import argparse
 import sys
 from pathlib import Path
 
-
-SCOPES = [
-    "https://www.googleapis.com/auth/youtube.upload",
-    "https://www.googleapis.com/auth/youtube",
-    # Required for captions.insert (CC track upload after long-form).
-    "https://www.googleapis.com/auth/youtube.force-ssl",
-]
+# Source the scope list from the single canonical place so this one-time
+# bootstrap can never drift from what the pipeline actually uses (it did:
+# the June 2026 yt-analytics.readonly addition for the feedback loop landed
+# in engine.youtube.YOUTUBE_SCOPES but not here, so re-auth'd tokens lacked
+# analytics). Falls back to a literal list — kept in sync — if the import
+# fails for any reason.
+_ROOT = Path(__file__).resolve().parent.parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+try:
+    from engine.youtube import YOUTUBE_SCOPES as SCOPES
+except Exception:
+    SCOPES = [
+        "https://www.googleapis.com/auth/youtube.upload",
+        "https://www.googleapis.com/auth/youtube",
+        # Required for captions.insert (CC track upload after long-form).
+        "https://www.googleapis.com/auth/youtube.force-ssl",
+        # Required for the YouTube-analytics feedback loop (June 2026).
+        "https://www.googleapis.com/auth/yt-analytics.readonly",
+    ]
 
 
 def main() -> int:
