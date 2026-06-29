@@ -158,6 +158,23 @@ jobs:
           # `</dev/null`: keep ffmpeg/ffprobe from consuming the step's stdin.
           python scripts/generate_translations.py "${{ matrix.show }}" --latest "$LATEST" --zh-approved $FORCE </dev/null
 
+      - name: Publish ${{ matrix.show }} Russian dubs to @NerraRU
+        if: always()
+        # Builds a Russian-dubbed video from the just-generated `ru` audio
+        # track (reusing the episode's gallery scene images) and uploads to
+        # the @NerraRU channel — only for shows with youtube.ru_dub_enabled.
+        # Clean no-op for every other show and when YOUTUBE_REFRESH_TOKEN_RU
+        # is unset. Off the episode critical path → no timeout risk.
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN_RU: ${{ secrets.YOUTUBE_REFRESH_TOKEN_RU }}
+        run: |
+          LATEST="${{ github.event.inputs.latest }}"
+          [ -z "$LATEST" ] && LATEST=3
+          python scripts/publish_ru_dubs.py "${{ matrix.show }}" --latest "$LATEST" </dev/null || \
+            echo "::warning::RU dub publish failed for ${{ matrix.show }} (non-fatal)"
+
       - name: Build ${{ matrix.show }} language feeds
         if: always()
         env:

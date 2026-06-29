@@ -453,6 +453,16 @@ class YouTubeConfig:
     tags: List[str] = field(default_factory=list)
     synthetic_disclosure: str = ""
     podcast_playlist_id: Optional[str] = None
+    # ---- Russian-dub YouTube (June 2026) ----
+    # When true, the decoupled multilingual flow also builds a Russian-dubbed
+    # video from the show's auto-generated `ru` audio track (reusing the same
+    # gallery scene images) and uploads it to the @NerraRU channel
+    # (channel=ru token). English upload is unaffected. Off by default →
+    # byte-for-byte no-op. See engine.ru_dub / docs/ru_youtube_dubs.md.
+    ru_dub_enabled: bool = False
+    # @NerraRU playlist for this show's RU dubs (operator creates + flags it
+    # in Studio per landmine #15; uploads still publish without it, warned).
+    ru_podcast_playlist_id: Optional[str] = None
     # ---- Slideshow imagery (Pexels search) ----
     # Curated, disambiguated search phrases. When non-empty, these are
     # used verbatim and the show's ``keywords:`` list is ignored. This
