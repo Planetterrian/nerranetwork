@@ -47,10 +47,18 @@ class TestMultilingualConfig:
         assert load_config("shows/tesla.yaml").multilingual.cloned_voice_env == "GROK_CLONED_VOICE_ID"
 
     def test_english_only_shows_disabled(self):
+        # modern_investing was enabled June 2026 (ru-only) for the @NerraRU
+        # YouTube dub — it's the one ru_dub show that needs a Russian track.
         from engine.config import load_config
-        for slug in ("modern_investing", "planetterrian", "omni_view",
+        for slug in ("planetterrian", "omni_view",
                      "models_agents_beginners", "unintended_consequences"):
             assert load_config(f"shows/{slug}.yaml").multilingual.enabled is False, slug
+
+    def test_modern_investing_ru_only(self):
+        from engine.config import load_config
+        ml = load_config("shows/modern_investing.yaml").multilingual
+        assert ml.enabled is True
+        assert ml.languages == ["ru"]  # ru-only; MIT never carried fr/zh
 
     def test_russian_shows_opt_out(self):
         from engine.config import load_config

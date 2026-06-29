@@ -109,3 +109,19 @@ class TestRealShowConfigs:
         for slug in ("omni_view", "env_intel", "planetterrian"):
             c = load_config(f"shows/{slug}.yaml")
             assert c.youtube.ru_dub_enabled is False, slug
+
+    def test_ru_dub_requires_ru_audio_track(self):
+        """A ru_dub-enabled show MUST also generate a Russian audio track
+        (multilingual.enabled + 'ru' in languages) — otherwise the dub has
+        no audio to build from. This guards the MIT-class misconfig where
+        ru_dub was on but multilingual was off (the dub silently no-ops and
+        the translate step errors)."""
+        from engine.config import discover_show_slugs
+        for slug in discover_show_slugs():
+            c = load_config(f"shows/{slug}.yaml")
+            if getattr(c.youtube, "ru_dub_enabled", False):
+                ml = c.multilingual
+                assert ml.enabled and "ru" in (ml.languages or []), (
+                    f"{slug}: ru_dub_enabled but no RU audio track "
+                    f"(multilingual.enabled={ml.enabled}, languages={ml.languages})"
+                )
