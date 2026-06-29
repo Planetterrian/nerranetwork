@@ -46,11 +46,22 @@ logger = logging.getLogger(__name__)
 
 
 # OAuth scopes required for upload + thumbnail set + channel read +
-# caption track upload (``captions.insert`` needs force-ssl).
+# caption track upload (``captions.insert`` needs force-ssl) + reading
+# back YouTube Analytics (the recursive-feedback loop —
+# ``scripts/fetch_youtube_analytics.py``).
+#
+# NOTE: adding ``yt-analytics.readonly`` here means the stored refresh
+# token must be re-authorised once (the operator re-runs
+# ``scripts/youtube_oauth_bootstrap.py`` and re-consents) before the
+# analytics fetch can read data — Google rejects a token that lacks a
+# requested scope. Upload/publish keeps working on the old token; only
+# the analytics read no-ops until the re-auth lands. See
+# ``docs/youtube_feedback_loop.md``.
 YOUTUBE_SCOPES = [
     "https://www.googleapis.com/auth/youtube.upload",
     "https://www.googleapis.com/auth/youtube",
     "https://www.googleapis.com/auth/youtube.force-ssl",
+    "https://www.googleapis.com/auth/yt-analytics.readonly",
 ]
 
 # Google's OAuth token endpoint. Held as a constant rather than an env

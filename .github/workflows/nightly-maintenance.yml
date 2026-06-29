@@ -75,6 +75,23 @@ jobs:
         # api/op3_stats.json is missing or has no entry for a show.
         run: python scripts/update_performance_trackers.py
 
+      - name: Fetch YouTube analytics + refresh title performance hints
+        # Recursive YouTube-feedback loop: reads per-video retention back
+        # from the Analytics API into api/youtube_stats.json, then distils
+        # per-show 'what's working' title hints into
+        # digests/<slug>/youtube_performance.json (title-only, no audio →
+        # outside landmine #17). Clean no-op until the stored token is
+        # re-authorised with yt-analytics.readonly AND data accrues
+        # (docs/youtube_feedback_loop.md).
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN_EN: ${{ secrets.YOUTUBE_REFRESH_TOKEN_EN }}
+          YOUTUBE_REFRESH_TOKEN_RU: ${{ secrets.YOUTUBE_REFRESH_TOKEN_RU }}
+        run: |
+          python scripts/fetch_youtube_analytics.py --out api/youtube_stats.json --days 90 || true
+          python scripts/update_youtube_performance.py || true
+
       - name: Refresh SpaceX launch dashboard data
         # Next/previous launch, 12-month cadence, and stats for
         # spacex-dashboard.html (The Space Devs Launch Library 2). Keeps
