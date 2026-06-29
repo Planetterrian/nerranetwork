@@ -1,0 +1,161 @@
+Glad you're here — welcome to Models and Agents, episode ninety-six, for June twenty-ninth, twenty twenty-six. Your daily A I briefing. Monday in the A I world — which means a weekend's worth of announcements to catch up on. Let's go.
+
+Open A I's twenty billion dollar Cerebras chip purchase has effectively removed high-throughput ASIC inference capacity from the market for everyone else.
+
+Cerebras near-term inference supply is now pre-allocated to a single hyperscaler.
+
+That pushes smaller teams off the waitlist indefinitely.
+
+New agent memory runtimes and research agents launched today show continued movement on the tooling side.
+
+Watch how teams adapt their inference strategies as custom silicon access tightens.
+
+Cerebras struck a roughly twenty billion dollar deal to supply Open A I with large volumes of its inference-focused ASICs.
+
+The agreement has pre-allocated the majority of Cerebras near-term capacity.
+
+This leaves the public A P I waitlist effectively closed for non-hyperscale customers.
+
+A small startup building a real-time coding agent reports needing sustained one to two thousand tokens per second throughput.
+
+The team now sees no realistic path to access.
+
+The development highlights how concentrated demand for specialized inference hardware can sideline smaller production workloads that do not require training-scale clusters.
+
+Teams relying on Cerebras-class latency should evaluate alternative providers or on-prem options immediately.
+
+This moves the inference supply constraints question forward because smaller production workloads now face longer lead times than frontier training runs.
+
+Yuvion L L M is a new model family trained with adversarially aware data construction.
+
+It uses knowledge-enhanced pretraining and policy-grounded safety post-training that includes risk-aware supervised fine-tuning plus reinforcement learning for tool use.
+
+The eight billion parameter variant reportedly outperforms several larger baselines including G P T five point four and Qwen three MAX on multiple safety benchmarks.
+
+It ships with the Yuvion L L M RiskEval suite spanning ninety three benchmarks focused on adversarial robustness and real-world safety scenarios.
+
+Builders working on agentic systems that must resist jailbreaks should test the eight billion checkpoint this week against their current safety stack.
+
+The context-ready transformer adds a lightweight correction network that pre-contextualizes each token before it enters the main D-layer transformer block.
+
+The change turns the architecture into a recurrent model at inference time.
+
+A D equals five configuration beats a standard twelve-layer transformer while running one point seven times faster on an A one hundred.
+
+A single-layer version with K equals ten unrolling matches a six-layer baseline at two point six times speedup.
+
+The approach works by caching a summary of prior context and combining it with the current token embedding via a zero-initialized correction FFN during fine-tuning.
+
+Teams running long-context inference on limited hardware should experiment with converting existing checkpoints using the described adaptation path.
+
+EntMTP introduces a training-free scheduler that switches between different tree-based attention topologies for multi-token prediction.
+
+The switch is based on a running estimate of local generation entropy.
+
+It delivers a one point one five times average speedup over Hydra and up to one point three six times over Medusa across Humaneval, ShareGPT, GSM eight K, and Litbench while preserving output quality.
+
+The method avoids the fixed speculation depth of prior MTP approaches by matching draft length to context predictability.
+
+Developers using speculative decoding today can drop the scheduler into existing Hydra or Medusa setups with minimal changes.
+
+CoreWeave released ARIA, an agent designed for autonomous research and collaborative intelligence.
+
+The system can iterate on research tasks without constant human direction.
+
+It emphasizes multi-agent coordination and is positioned for workloads that benefit from sustained self-directed exploration.
+
+Early users can access it through CoreWeave's platform.
+
+Organizations running large-scale research experiments should evaluate whether ARIA reduces the need for manual orchestration compared with current LangGraph or CrewAI setups.
+
+EverOS stores agent memory as plain Markdown files indexed by SQLite and LanceDB.
+
+It combines BM twenty five with vector retrieval plus multimodal ingestion and self-evolving skills under an Apache two point zero license.
+
+The runtime is local-first and includes a runnable code walkthrough plus interactive demo.
+
+It targets developers who want transparent editable memory without vendor lock-in.
+
+Teams building agents that must retain long-term context should test the hybrid retrieval against their current vector-only setup.
+
+Microsoft's Agent Framework tutorial continues with guidance on safely connecting agents to personal data sources after establishing basic tool use and planning in part one.
+
+The harness adds controls that prevent unrestricted data access while still allowing the agent to reason over user information.
+
+Developers already using the framework can follow the incremental rollout to production-grade data handling.
+
+Tecan added agentic A I capabilities to its Introspect lab analytics platform.
+
+The integration enables more autonomous data analysis workflows in laboratory settings.
+
+It focuses on turning raw experimental data into actionable insights with reduced manual intervention.
+
+Labs already running Tecan hardware should check whether the new agent layer changes their current analysis pipelines.
+
+RAGless replaces standard document retrieval with question-to-question matching.
+
+An L L M generates three to five variants per answer at ingestion.
+
+Each variant gets its own embedding and query-time scores are aggregated by answer ID using dual thresholds of zero point seven zero aggregated and zero point eight two single-hit fallback.
+
+The GitHub repo provides the implementation under an open license.
+
+It targets closed-domain FAQ systems where the answer space is finite and eliminates the generation step entirely.
+
+Teams maintaining internal knowledge bases should compare precision against their current rag pipeline on a held-out set of questions.
+
+Supersede introduces an RL environment that rewards agents for using the current value of a fact and penalizes stale information.
+
+The environment directly targets the memory-update gap observed on LongMemEval.
+
+Fine-tuning Qwen two point five three B with GRPO on this environment raised held-out supersession accuracy from nine point zero percent to sixteen point seven percent.
+
+The benchmark and training stack are released publicly.
+
+Agent developers dealing with multi-session conversations where facts change should add the Supersede verifier to their evaluation harness.
+
+OK, let's pop the hood on the EntMTP approach for a moment.
+
+Everyone talks about multi-token prediction as a simple way to speed up generation.
+
+In practice EntMTP shows it is a dynamic scheduling problem where speculation depth must track local entropy.
+
+Low-entropy regions support deeper drafts with high acceptance rates.
+
+High-entropy regions require shallower trees to avoid wasted verification compute.
+
+The scheduler maintains a running entropy estimate and switches among a small set of precomputed Pareto-optimal trees.
+
+It adds negligible overhead while lifting average accepted tokens per step.
+
+On the tested benchmarks the approach yields one point one five to one point three six times speedups without quality loss because it avoids the fixed-depth penalty that hurts earlier static MTP methods.
+
+The key engineering decision is keeping the tree library small and task-specific rather than attempting online tree search.
+
+Use entropy-guided scheduling when your workload contains mixed predictability such as code mixed with open text or structured JSON with occasional free-form fields.
+
+Fall back to standard speculative decoding only if your generation distribution is uniformly high-entropy.
+
+Test the EverOS Markdown memory runtime on a local agent that needs editable long-term context without vendor databases.
+
+Run the Yuvion eight billion checkpoint on safety-critical agent tasks to measure jailbreak resistance versus your current model.
+
+Add the RAGless Q-Q retrieval pattern to any closed-domain FAQ system and compare precision against your existing chunk-based rag.
+
+Experiment with EntMTP scheduling on top of an existing Hydra or Medusa speculative decoder for mixed-entropy workloads.
+
+More open-weight models are expected to adopt vocabulary-aligned sparse autoencoder techniques for interpretable features.
+
+Additional agent memory frameworks will likely appear as teams seek alternatives to vector-only stores.
+
+Further papers on memory-update training signals are anticipated following the Supersede release.
+
+Continued focus on entropy-aware inference schedulers as teams optimize for variable generation difficulty.
+
+Tomorrow keep an eye on any follow-up announcements around Cerebras capacity allocation and how other inference providers respond.
+
+That's Models and Agents for today. If you found this useful, share it with someone who's trying to keep up with all these changes, and subscribe so you don't miss tomorrow's update. The A I world moves fast. We'll help you keep up. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed, here's your next listen — Omni View, a balanced daily world-news briefing that takes every side seriously. Find every show, free, at nerranetwork dot com.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
