@@ -2318,12 +2318,21 @@ def run(args: argparse.Namespace) -> None:
             )
             podcast_script = podcast_script.rstrip() + "\n\n" + _disclosure
 
-            # Parse chapter markers from the cleaned script (before TTS)
+            # Parse chapter markers from the cleaned script (before TTS).
+            # Pass the digest's clean per-story headlines so the
+            # auto-segment fallback titles chapters with real headlines
+            # instead of mid-sentence spoken fragments.
             from engine.chapters import parse_chapters
+            try:
+                from engine.grok_imagine import extract_story_headlines as _ch_heads
+                _chapter_headlines = _ch_heads(x_thread or "", max_count=12)
+            except Exception:
+                _chapter_headlines = []
             episode_chapters = parse_chapters(
                 podcast_script,
                 config.chapters.section_markers,
                 show_name=config.name,
+                story_headlines=_chapter_headlines,
             ) if config.chapters.enabled and config.chapters.section_markers else []
 
             # Final defense-in-depth: strip any speaker prefixes that survived
@@ -3777,6 +3786,7 @@ def _publish_youtube(
                 episode_num=episode_num,
                 keywords=list(getattr(config, "keywords", []) or []),
                 n=3,
+                perf_dir=digests_dir,
             )
             if yt_title_variants:
                 yt_title = yt_title_variants[0]
@@ -4342,6 +4352,25 @@ def _publish_youtube(
             )
             long_url = upload.watch_url
             result["long_url"] = long_url
+            # Record in the network video→episode index so the YouTube
+            # analytics-feedback loop can attribute retention/CTR back to
+            # this show + episode (best-effort; never blocks publish).
+            try:
+                from engine.youtube_index import record_video as _yt_record
+                _yt_record(
+                    video_id=upload.video_id,
+                    show_slug=getattr(config, "slug", ""),
+                    episode=episode_num,
+                    kind="long",
+                    title=meta.get("title", ""),
+                    hook=hook,
+                    published=f"{today:%Y-%m-%d}",
+                    watch_url=long_url,
+                    channel=(getattr(config.youtube, "channel", "en") or "en"),
+                    index_path=digests_dir / "youtube_videos.json",
+                )
+            except Exception as _exc:
+                logger.debug("video index (long) skipped: %s", _exc)
             playlist_id = (
                 getattr(config.youtube, "podcast_playlist_id", None) or ""
             ).strip()
@@ -4654,6 +4683,22 @@ def _publish_youtube(
                     )
                     short_urls_out.append(this_upload.watch_url)
                     short_video_ids_out.append(this_upload.video_id)
+                    try:
+                        from engine.youtube_index import record_video as _yt_record
+                        _yt_record(
+                            video_id=this_upload.video_id,
+                            show_slug=getattr(config, "slug", ""),
+                            episode=episode_num,
+                            kind="short",
+                            title=meta.get("title", ""),
+                            hook=(this_hook or hook),
+                            published=f"{today:%Y-%m-%d}",
+                            watch_url=this_upload.watch_url,
+                            channel=(getattr(config.youtube, "channel", "en") or "en"),
+                            index_path=digests_dir / "youtube_videos.json",
+                        )
+                    except Exception as _exc:
+                        logger.debug("video index (short) skipped: %s", _exc)
                     playlist_id = (
                         getattr(config.youtube, "podcast_playlist_id", None) or ""
                     ).strip()

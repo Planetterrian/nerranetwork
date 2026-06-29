@@ -21,6 +21,7 @@ from engine.chapters import (
     Chapter,
     parse_chapters,
     _first_sentence_as_title,
+    _best_headline_for_segment,
 )
 
 
@@ -150,6 +151,76 @@ def test_auto_segment_titles_derive_from_content():
         f"At least one auto-segment should have a content-derived title; "
         f"got {auto_titles!r}"
     )
+
+
+def test_auto_segment_prefers_clean_digest_headlines():
+    """When the digest's clean per-story headlines are supplied, the
+    auto-segment fallback titles chapters with the matching headline
+    (not the spoken first-sentence fragment)."""
+    # Each story paragraph is padded past the ~120-word segment floor so
+    # the splitter lands one break per story (mirrors a real episode).
+    robotaxi = (
+        "Knowing this context, the big news is that Tesla just launched its "
+        "robotaxi service across three Texas cities this morning. " +
+        "The pilot fleet operates in Austin, Houston, and Dallas with riders "
+        "hailing autonomous trips through the existing mobile application. " * 6
+    )
+    semi = (
+        "Shifting gears to the trucking side of the business now. "
+        "California regulators disclosed the Tesla Semi battery pack sizes in "
+        "a routine safety filing today. " +
+        "The larger pack supports long-haul routes while the smaller pack "
+        "targets regional fleet operators running shorter distances. " * 6
+    )
+    script = (
+        "Welcome back to the show, everybody.\n\n"
+        f"{robotaxi}\n\n"
+        f"{semi}\n\n"
+        "That wraps up today's show. Thanks for listening, see you tomorrow."
+    )
+    headlines = [
+        "Tesla unveils robotaxi service in Texas",
+        "California discloses Tesla Semi battery sizes",
+    ]
+    chapters = parse_chapters(
+        script,
+        section_markers=[
+            {"pattern": r"\bWelcome back\b", "title": "Introduction"},
+        ],
+        show_name="TestShow",
+        min_chapters=4,
+        auto_segment_target_seconds=40.0,
+        estimated_words_per_minute=165.0,
+        story_headlines=headlines,
+    )
+    titles = [c.title for c in chapters]
+    # At least one auto-segment chapter should carry a verbatim headline.
+    assert any(t in headlines for t in titles[1:]), (
+        f"Expected a clean headline title; got {titles!r}"
+    )
+    # And no clean-headline chapter should reuse the same headline twice.
+    headline_hits = [t for t in titles if t in headlines]
+    assert len(headline_hits) == len(set(headline_hits))
+
+
+def test_best_headline_for_segment_requires_real_overlap():
+    """A segment that shares no topical words with any headline yields ""
+    so the caller can fall back to the first-sentence title."""
+    used: set = set()
+    seg = "The weather today is mild and pleasant across the region."
+    headlines = ["Tesla unveils robotaxi service in Texas"]
+    assert _best_headline_for_segment(seg, headlines, used) == ""
+    assert not used  # nothing claimed when no match
+
+
+def test_best_headline_for_segment_claims_match_once():
+    used: set = set()
+    headlines = ["Tesla unveils robotaxi service in Texas"]
+    seg = "Tesla just launched its robotaxi service across Texas cities."
+    title = _best_headline_for_segment(seg, headlines, used)
+    assert title == "Tesla unveils robotaxi service in Texas"
+    # Second segment can't reuse the claimed headline.
+    assert _best_headline_for_segment(seg, headlines, used) == ""
 
 
 def test_auto_segment_falls_back_to_segment_n_when_text_unusable():

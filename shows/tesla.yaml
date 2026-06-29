@@ -313,15 +313,14 @@ youtube:
   video_resolution: "720p"
   video_aspect_ratio: "16:9"    # Full-format episodes
 
-  # ---- Hybrid short video clips (Phase 4, June 2026 pilot) ----
-  # A few SHORT Grok clips interleaved with the still slideshow for motion
-  # (NOT full-episode video). ~3 × 5 s × $0.07 ≈ $1.05/episode. Best-effort:
-  # falls back to all-stills on any failure. Tesla + SpaceX pilot; review
-  # retention before expanding network-wide.
-  video_clips_enabled: true
-  video_clips_count: 3
-  video_clip_seconds: 5
-  video_clips_resolution: "720p"
+  # ---- Hybrid short video clips — RETIRED June 2026 ----
+  # The Grok text-to-video clip pilot was removed network-wide: ~33% clip
+  # success rate (1/3 per episode), ~$0.35/ep for a single 5 s clip among ~48
+  # slideshow segments (the most expensive component for the weakest payoff),
+  # and the extra render pushed Tesla near the 40-min pipeline timeout. Visual
+  # appeal is now driven by free slideshow motion (crossfades + varied Ken
+  # Burns) over Grok Imagine stills. Leave disabled.
+  video_clips_enabled: false
 
   # ---- Show-specific video prompt customization ----
   # Genre/mood guide the visual generation. Keywords are shown to Grok

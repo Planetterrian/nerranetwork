@@ -51,6 +51,33 @@ def _clean_title(line: str) -> str:
     return t.strip()
 
 
+def _performance_hint(perf_dir: Optional[Path]) -> str:
+    """A one-paragraph 'what's been working' steer from past YouTube
+    retention, or "" when there's no data yet (the loop is dormant until
+    the operator re-auths the analytics scope and a few weeks accrue).
+
+    Read from ``<perf_dir>/youtube_performance.json`` — *perf_dir* is the
+    show's own output dir (slug != dir for some shows, e.g. tesla →
+    digests/tesla_shorts_time), written by
+    ``scripts/update_youtube_performance.py``. Pure best-effort — title
+    generation must never depend on it. Title-only signal, no audio impact.
+    """
+    if not perf_dir:
+        return ""
+    try:
+        import json
+        path = Path(perf_dir) / "youtube_performance.json"
+        if not path.exists():
+            return ""
+        data = json.loads(path.read_text(encoding="utf-8"))
+        hint = (data.get("title_hint") or "").strip()
+        return ("\nWHAT'S WORKING (from this show's recent YouTube retention — "
+                "lean toward these angles/keywords if they fit honestly):\n"
+                f"{hint}\n") if hint else ""
+    except Exception:
+        return ""
+
+
 def generate_youtube_titles(
     *,
     hook: str,
@@ -60,6 +87,7 @@ def generate_youtube_titles(
     keywords: Optional[List[str]] = None,
     n: int = 3,
     model: str = "grok-4.3",
+    perf_dir: Optional[Path] = None,
 ) -> List[str]:
     """Return up to *n* click-optimized title candidates, best first.
 
@@ -76,6 +104,7 @@ def generate_youtube_titles(
                 "hook": (hook or "").strip(),
                 "keywords": ", ".join(keywords or []),
                 "digest_excerpt": (digest_text or "")[:2000],
+                "performance_hint": _performance_hint(perf_dir),
                 "n": n,
             },
         )
@@ -113,6 +142,7 @@ def best_youtube_title(
     episode_num: int,
     keywords: Optional[List[str]] = None,
     model: str = "grok-4.3",
+    perf_dir: Optional[Path] = None,
 ) -> Optional[str]:
     """Convenience: the single best candidate, or ``None`` on failure."""
     cands = generate_youtube_titles(
@@ -123,5 +153,6 @@ def best_youtube_title(
         keywords=keywords,
         n=1,
         model=model,
+        perf_dir=perf_dir,
     )
     return cands[0] if cands else None

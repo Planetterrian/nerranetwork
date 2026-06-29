@@ -364,10 +364,16 @@ def run_generation_phase(
             and getattr(config.chapters, "enabled", False)
             and getattr(config.chapters, "section_markers", None)):
         from engine.chapters import parse_chapters
+        try:
+            from engine.grok_imagine import extract_story_headlines as _ch_heads
+            _chapter_headlines = _ch_heads(x_thread or "", max_count=12)
+        except Exception:
+            _chapter_headlines = []
         episode_chapters = parse_chapters(
             podcast_script,
             config.chapters.section_markers,
             show_name=config.name,
+            story_headlines=_chapter_headlines,
         )
 
     return x_thread, podcast_script, episode_chapters, effective_hook

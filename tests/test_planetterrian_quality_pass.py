@@ -146,7 +146,7 @@ class TestMissingClosingGuard:
         def fake_generate(template_vars, config, tracker=None):
             return script
 
-        def fake_parse(podcast_script, markers, show_name=""):
+        def fake_parse(podcast_script, markers, show_name="", **kwargs):
             captured["script"] = podcast_script
             return []
 

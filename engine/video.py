@@ -70,6 +70,19 @@ _VIDEO_ENCODE: List[str] = [
     "-force_key_frames", "expr:gte(t,n_forced*2)",
 ]
 
+# Fast profile for the STAGE-1 slideshow, which is an *intermediate* file —
+# stage 2 (the composite) re-encodes it with the full _VIDEO_ENCODE profile, so
+# stage-1 quality barely reaches the final pixels. Using a fast preset here cut
+# the slideshow render from ~10 min toward ~2-3 min on Tesla/SpaceX, which is
+# the main reason those clip-era runs crept toward the 40-min pipeline timeout.
+# No keyframe args needed (it's not the delivered file). June 2026 render pass.
+_VIDEO_ENCODE_FAST: List[str] = [
+    "-c:v", "libx264",
+    "-pix_fmt", "yuv420p",
+    "-preset", "veryfast",
+    "-crf", "20",          # slightly higher quality to offset the re-encode loss
+]
+
 _AUDIO_ENCODE: List[str] = [
     "-c:a", "aac",
     "-b:a", "192k",
@@ -421,20 +434,39 @@ _SHORT_SCENE_DURATION_SECONDS = 7.0
 _MAX_SCENE_HOLD_S = 15.0
 
 
+# Crossfade between scenes for a more dynamic, modern slideshow (June 2026
+# visual pass — replaces hard cuts). Rotating tasteful transition types add
+# variety at zero cost. Set to 0.0 to disable (plain hard cuts). The render
+# path falls back to hard-cut concat if the xfade chain ever fails, so this
+# can never make a render fail outright.
+_SLIDESHOW_XFADE_S = 0.6
+_XFADE_TRANSITIONS = [
+    "fade", "dissolve", "smoothleft", "fadeblack", "smoothright", "fade",
+]
+
+
 def _slideshow_filter_graph(scene_count: int, *,
                             scene_duration: float = _SCENE_DURATION_SECONDS,
                             width: int = 1920, height: int = 1080,
-                            fps: int = 30) -> str:
-    """Build the filter_complex for a Ken Burns slideshow with hard cuts.
+                            fps: int = 30,
+                            crossfade: float = _SLIDESHOW_XFADE_S) -> str:
+    """Build the filter_complex for a Ken Burns slideshow.
 
-    Each scene gets a 1.00 → 1.12 zoom over its window. Hard cuts
-    between scenes (no crossfade) — the spectrum + brand pill + caption
-    motion in stage 2 hides any visual jump.
+    Each scene gets a 1.00 → 1.12 zoom over its window. When *crossfade* > 0
+    and there are ≥2 scenes, consecutive scenes are joined with a rotating
+    ``xfade`` transition (more dynamic than the old hard cut); otherwise scenes
+    are hard-cut via ``concat``. Each scene clip is rendered ``scene_duration +
+    crossfade`` long so the xfade overlap doesn't shorten the per-scene visible
+    time, and the xfade offset for scene k is ``k * scene_duration`` — keeping
+    total runtime ≈ ``scene_count * scene_duration`` (slightly longer, never
+    shorter, than the audio it backs).
     """
     pre_w = int(width * 1.15)
     pre_h = int(height * 1.15)
     zoom_expr = "min(zoom+0.0006,1.12)"
-    frames_per_scene = int(scene_duration * fps)
+    use_xfade = crossfade and crossfade > 0 and scene_count >= 2
+    clip_len = scene_duration + (crossfade if use_xfade else 0.0)
+    frames_per_scene = int(clip_len * fps)
 
     chains: List[str] = []
     for i in range(scene_count):
@@ -444,29 +476,48 @@ def _slideshow_filter_graph(scene_count: int, *,
             f"crop={pre_w}:{pre_h},setsar=1,"
             f"zoompan=z='{zoom_expr}':d={frames_per_scene}"
             f":s={width}x{height}:fps={fps},"
-            f"trim=duration={scene_duration:.2f},setpts=PTS-STARTPTS"
+            f"trim=duration={clip_len:.2f},setpts=PTS-STARTPTS"
             f"[s{i}]"
         )
-    concat_in = "".join(f"[s{i}]" for i in range(scene_count))
-    chains.append(f"{concat_in}concat=n={scene_count}:v=1:a=0[v]")
+
+    if not use_xfade:
+        concat_in = "".join(f"[s{i}]" for i in range(scene_count))
+        chains.append(f"{concat_in}concat=n={scene_count}:v=1:a=0[v]")
+        return ";".join(chains)
+
+    # Chain xfades: [s0][s1]->[x1], [x1][s2]->[x2], ... last -> [v].
+    prev = "[s0]"
+    for k in range(1, scene_count):
+        trans = _XFADE_TRANSITIONS[(k - 1) % len(_XFADE_TRANSITIONS)]
+        offset = k * scene_duration
+        out = "[v]" if k == scene_count - 1 else f"[x{k}]"
+        chains.append(
+            f"{prev}[s{k}]xfade=transition={trans}"
+            f":duration={crossfade:.2f}:offset={offset:.2f}{out}"
+        )
+        prev = out
     return ";".join(chains)
 
 
 def _slideshow_cmd(scene_paths: Sequence[Path], output: Path,
                    *, scene_duration: float = _SCENE_DURATION_SECONDS,
                    width: int = 1920, height: int = 1080,
-                   fps: int = 30) -> List[str]:
+                   fps: int = 30,
+                   crossfade: float = _SLIDESHOW_XFADE_S) -> List[str]:
     """ffmpeg command for stage 1 (slideshow render).
 
     *width* and *height* default to 1920x1080 for the long-form path;
-    pass 1080x1920 for the vertical Shorts variant.
+    pass 1080x1920 for the vertical Shorts variant. Uses the fast encode
+    profile (this is an intermediate re-encoded by stage 2).
     """
+    use_xfade = crossfade and crossfade > 0 and len(scene_paths) >= 2
+    per_input_t = scene_duration + (crossfade if use_xfade else 0.0) + 0.5
     inputs: List[str] = []
     for path in scene_paths:
         inputs.extend([
             "-loop", "1",
             "-framerate", str(fps),
-            "-t", f"{scene_duration + 0.5:.2f}",
+            "-t", f"{per_input_t:.2f}",
             "-i", str(path),
         ])
     return [
@@ -475,10 +526,11 @@ def _slideshow_cmd(scene_paths: Sequence[Path], output: Path,
         "-filter_complex",
         _slideshow_filter_graph(len(scene_paths),
                                 scene_duration=scene_duration,
-                                width=width, height=height, fps=fps),
+                                width=width, height=height, fps=fps,
+                                crossfade=crossfade),
         "-map", "[v]",
         "-r", str(fps),
-        *_VIDEO_ENCODE,
+        *_VIDEO_ENCODE_FAST,
         "-an",
         "-movflags", "+faststart",
         str(output),
@@ -489,15 +541,32 @@ def _render_slideshow(scene_paths: Sequence[Path], output: Path,
                       *, scene_duration: float = _SCENE_DURATION_SECONDS,
                       width: int = 1920, height: int = 1080,
                       fps: int = 30) -> Path:
-    """Render the stage-1 slideshow MP4. Idempotent (skips if output exists)."""
+    """Render the stage-1 slideshow MP4. Idempotent (skips if output exists).
+
+    Tries the crossfade graph first; if ffmpeg rejects it for any reason,
+    retries once with plain hard-cut concat so a transition bug can never
+    block a render (worst case = the pre-June-2026 hard-cut look).
+    """
     if output.exists():
         return output
-    cmd = _slideshow_cmd(scene_paths, output,
-                         scene_duration=scene_duration,
-                         width=width, height=height, fps=fps)
-    logger.info("Rendering slideshow (%d scenes, %dx%d) → %s",
-                len(scene_paths), width, height, output.name)
-    _run_ffmpeg(cmd, label="slideshow render")
+    logger.info("Rendering slideshow (%d scenes, %dx%d, crossfade=%.1fs) → %s",
+                len(scene_paths), width, height, _SLIDESHOW_XFADE_S, output.name)
+    try:
+        cmd = _slideshow_cmd(scene_paths, output,
+                             scene_duration=scene_duration,
+                             width=width, height=height, fps=fps)
+        _run_ffmpeg(cmd, label="slideshow render (crossfade)")
+    except subprocess.CalledProcessError as exc:
+        logger.warning(
+            "Crossfade slideshow render failed (%s) — retrying with hard cuts.",
+            exc,
+        )
+        output.unlink(missing_ok=True)
+        cmd = _slideshow_cmd(scene_paths, output,
+                             scene_duration=scene_duration,
+                             width=width, height=height, fps=fps,
+                             crossfade=0.0)
+        _run_ffmpeg(cmd, label="slideshow render (hard cut fallback)")
     return output
 
 

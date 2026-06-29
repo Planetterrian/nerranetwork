@@ -19,6 +19,7 @@ from engine.video import (
     _AUDIO_ENCODE,
     _SUBTITLES_FORCE_STYLE,
     _VIDEO_ENCODE,
+    _VIDEO_ENCODE_FAST,
     _drawtext_escape,
     _long_form_cmd,
     _long_form_filter_graph,
@@ -561,11 +562,28 @@ def test_wrap_caption_default_budget_fits_realistic_hook():
 
 def test_slideshow_filter_graph_has_per_scene_chains():
     graph = _slideshow_filter_graph(scene_count=4)
-    # One zoompan chain per scene, then a final concat.
+    # One zoompan chain per scene, then a rotating xfade chain (≥2 scenes).
     assert graph.count("zoompan") == 4
     assert graph.count("[s0]") >= 1
     assert graph.count("[s3]") >= 1
+    # Crossfade transitions replace the old hard-cut concat for ≥2 scenes.
+    assert "concat=" not in graph
+    assert graph.count("xfade=transition=") == 3  # N-1 joins for 4 scenes
+    assert graph.endswith("[v]")
+
+
+def test_slideshow_filter_graph_hard_cut_fallback():
+    """crossfade=0 (the ffmpeg-failure retry path) hard-cuts via concat."""
+    graph = _slideshow_filter_graph(scene_count=4, crossfade=0.0)
     assert "concat=n=4:v=1:a=0[v]" in graph
+    assert "xfade" not in graph
+    assert graph.endswith("[v]")
+
+
+def test_slideshow_filter_graph_single_scene_uses_concat():
+    """A lone scene can't xfade — it must still terminate at [v]."""
+    graph = _slideshow_filter_graph(scene_count=1)
+    assert "xfade" not in graph
     assert graph.endswith("[v]")
 
 
@@ -586,9 +604,11 @@ def test_slideshow_cmd_has_one_input_per_scene(tmp_path):
     assert cmd.count("-loop") == 3
     # No audio in slideshow output.
     assert "-an" in cmd
-    # Encoding profile applies (keyframe args present).
-    for token in _VIDEO_ENCODE:
+    # Stage-1 slideshow is an intermediate → fast encode profile (re-encoded
+    # by the stage-2 composite, which carries the full keyframe profile).
+    for token in _VIDEO_ENCODE_FAST:
         assert token in cmd
+    assert "veryfast" in cmd
     assert cmd[-1] == str(out)
 
 
@@ -810,7 +830,9 @@ def test_slideshow_filter_graph_supports_vertical_dimensions():
     assert "1080:1920" in graph or "s=1080x1920" in graph
     # Per-scene zoompan still drives motion.
     assert graph.count("zoompan") == 3
-    assert "concat=n=3:v=1:a=0[v]" in graph
+    # ≥2 scenes → rotating xfade transitions (concat is the crossfade=0 fallback).
+    assert graph.count("xfade=transition=") == 2
+    assert graph.endswith("[v]")
 
 
 def test_slideshow_cmd_accepts_width_height(tmp_path):
