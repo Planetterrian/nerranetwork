@@ -71,14 +71,21 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FORCED: ${{ inputs.show }}
         run: |
-          # A target with an open review PR (branch agent/review-<slug>-<date>)
-          # is skipped so the operator never gets two PRs for the same show.
+          # A target with an in-flight review — an open review PR OR a pushed
+          # agent/review-<slug>-<date> branch — is skipped so the operator
+          # never gets two reviews for the same show. Branch-awareness matters
+          # because `gh pr create` is blocked in some org configs: review runs
+          # then land as orphan branches with no PR, and PR-only dedupe kept
+          # re-reviewing the same show (FF dispatched 4x, Jun-Jul 2026).
           # This applies to forced targets too (manual dispatch + the daily
-          # audit's dispatch_quality_reviews.py): close the existing review
-          # PR first if you really want a fresh pass.
-          mapfile -t EXCLUDES < <(gh pr list --state open --json headRefName \
-            --jq '.[].headRefName' \
-            | sed -n 's#^agent/review-\(.*\)-[0-9]\{8\}$#\1#p' | sort -u)
+          # audit's dispatch_quality_reviews.py): delete the existing review
+          # branch / close its PR first if you really want a fresh pass.
+          mapfile -t EXCLUDES < <(
+            {
+              gh pr list --state open --json headRefName --jq '.[].headRefName'
+              git ls-remote --heads origin 'refs/heads/agent/review-*' 2>/dev/null \
+                | sed 's#.*refs/heads/##'
+            } | sed -n 's#^agent/review-\(.*\)-[0-9]\{8\}$#\1#p' | sort -u)
           echo "In-flight review targets excluded: ${EXCLUDES[*]:-none}"
           if [ -n "$FORCED" ]; then
             for inflight in "${EXCLUDES[@]}"; do
@@ -111,6 +118,9 @@ jobs:
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The script alerts here when `gh pr create` fails (org-blocked PR
+          # creation), so a review stranded on its branch is never silent.
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
         run: python scripts/run_show_review.py "${{ steps.pick.outputs.slug }}"
 
       - name: Notify operator of new review PR

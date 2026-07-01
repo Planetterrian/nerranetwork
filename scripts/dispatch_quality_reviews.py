@@ -12,8 +12,10 @@ Deliberately conservative:
     re-runs those; a missed episode needs a retry, not a review).
   - At most ONE dispatch per audit run (the show with the most criticals;
     alphabetical tie-break) to bound agent spend.
-  - A show with an open agent/review-<slug>-* PR is skipped — the existing
-    PR already owns that show's problems.
+  - A show with an open agent/review-<slug>-* PR OR a pushed
+    agent/review-<slug>-* branch is skipped — the existing review already
+    owns that show's problems (branches without PRs happen when `gh pr
+    create` is org-blocked).
   - Never fails the audit: every error path exits 0.
 
 Lives outside the workflow YAML for the same reason as
@@ -54,6 +56,19 @@ def _open_review_branches() -> list[str]:
     return [line.strip() for line in result.stdout.splitlines() if line.strip()]
 
 
+def _remote_review_branch_exists(slug: str) -> bool:
+    """A pushed agent/review-<slug>-* branch counts as a review in flight even
+    with no PR: `gh pr create` is blocked in some org configs, so review runs
+    land as orphan branches — the open-PR-only dedupe then re-dispatched the
+    same show repeatedly (FF 4x, Jun 26 - Jul 1 2026)."""
+    result = subprocess.run(
+        ["git", "ls-remote", "--heads", "origin",
+         f"refs/heads/agent/review-{slug}-*"],
+        check=True, capture_output=True, text=True,
+    )
+    return bool(result.stdout.strip())
+
+
 def main() -> None:
     review_path = Path("api/daily-review.json")
     if not review_path.exists():
@@ -82,6 +97,16 @@ def main() -> None:
         return
     if any(b.startswith(f"agent/review-{slug}-") for b in branches):
         print(f"{slug}: review PR already open — skipping dispatch")
+        return
+
+    try:
+        if _remote_review_branch_exists(slug):
+            print(f"{slug}: review branch agent/review-{slug}-* already pushed "
+                  f"(PR creation may be org-blocked) — skipping dispatch")
+            return
+    except subprocess.CalledProcessError as exc:
+        print(f"Could not list remote review branches "
+              f"({exc.stderr.strip() or exc}) — skipping dispatch")
         return
 
     cmd = ["gh", "workflow", "run", "show-review.yml",

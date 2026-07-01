@@ -60,7 +60,10 @@ on:
 # reviews ALL of the day's committed episodes via discover_episodes().
 
 permissions:
-  contents: read
+  # write: the persist step commits api/daily-review.json back to main via the
+  # safe-commit-push composite (a bare read-token push never landed a single
+  # daily-review.json commit — July 2026 reliability pass).
+  contents: write
   issues: write
   # `gh workflow run` (missed-show auto-retry + the out-of-rotation Show
   # Review Agent dispatch on editorial criticals) requires actions: write.
@@ -197,6 +200,10 @@ jobs:
         if: always()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The dispatcher alerts (instead of re-running) when a "missed" show
+          # is actually stranded on a same-day recovery/* branch — a re-run
+          # would duplicate the already-uploaded YouTube/R2 assets.
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
         run: python scripts/dispatch_audit_retries.py
 
       - name: Dispatch out-of-rotation show review on editorial criticals
@@ -204,13 +211,26 @@ jobs:
         # rotation: a show that shipped an episode with editorial-CRITICAL
         # issues today gets reviewed now, not when the calendar comes
         # around. At most one dispatch per day; shows with an open
-        # agent/review-* PR are skipped. See docs/REVIEW_AGENT.md.
+        # agent/review-* PR or a pushed agent/review-* branch are skipped.
+        # See docs/REVIEW_AGENT.md.
         if: always()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python scripts/dispatch_quality_reviews.py
 
-      - name: Notify + Persist Audit Artifacts
+      # Always commit the structured audit JSON so dashboard / operators can
+      # consume it. Uses the safe-commit-push composite (rebase + retry) — the
+      # previous bare `git push origin main` from a job-start checkout was
+      # always non-fast-forward on this push-busy repo and never landed.
+      - name: Persist Audit Artifacts
+        if: always()
+        uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: |
+            api/daily-review.json
+          commit-message: "Daily audit artifacts"
+
+      - name: Notify on operational problems
         if: always()
         env:
           DAILY_REVIEW_WEBHOOK_URL: ${{ secrets.DAILY_REVIEW_WEBHOOK_URL || '' }}
@@ -218,17 +238,6 @@ jobs:
           SUMMARY: ${{ steps.audit.outputs.summary || '' }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          # Always commit the structured audit JSON so dashboard / operators can consume it
-          git add api/daily-review.json 2>/dev/null || true
-          if git diff --cached --quiet; then
-            echo "No new audit artifacts to persist"
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git commit -m "Daily audit artifacts for $(date +%Y-%m-%d)" || true
-            git push origin main || echo "Push of audit artifacts failed (non-blocking)"
-          fi
-
           # Webhook notification ONLY on operational problems (exit 1 = a
           # missed episode). Editorial-quality notes (exit 2) are recorded in
           # the GitHub issue + JSON and must not ping — that daily noise is
