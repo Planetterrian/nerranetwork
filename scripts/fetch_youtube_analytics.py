@@ -203,6 +203,9 @@ def fetch(digests_dir: Path, days: int) -> Optional[dict]:
             "show_slug": v.get("show_slug", ""),
             "episode": v.get("episode"),
             "kind": v.get("kind"),
+            # Carried through so the performance updater can keep RU-dub
+            # retention out of the EN title hints (and vice versa).
+            "channel": (v.get("channel") or "en").lower(),
             "title": v.get("title", ""),
             "hook": v.get("hook", ""),
             "published": v.get("published", ""),

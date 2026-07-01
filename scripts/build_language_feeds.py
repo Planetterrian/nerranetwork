@@ -94,6 +94,12 @@ def build_for_show(
         translate_fn = translate_metadata
 
     base_url = config.publishing.base_url.rstrip("/")
+    # Same OP3 analytics prefix the English feed's enclosures get
+    # (engine/pipeline.py) — without it FR/RU/ZH plays are invisible to OP3.
+    analytics_prefix_url = (
+        config.analytics.prefix_url
+        if getattr(config.analytics, "enabled", False) else ""
+    )
     urls: List[str] = []
     for lang in langs:
         ch_title, ch_desc = language_feeds.resolve_channel_i18n(
@@ -120,6 +126,7 @@ def build_for_show(
             channel_category=config.publishing.rss_category,
             channel_subcategory=getattr(config.publishing, "rss_subcategory", ""),
             base_url=base_url,
+            analytics_prefix_url=analytics_prefix_url,
         )
         if result:
             urls.append(f"{base_url}/{out_path.name}")

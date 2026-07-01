@@ -183,6 +183,17 @@ def _enclosure_length(track: dict) -> str:
         return "0"
 
 
+def _normalize_for_compare(feed_bytes: bytes) -> bytes:
+    """Feed bytes with the ``<lastBuildDate>`` element blanked.
+
+    ``lastBuildDate`` is the only per-rebuild-varying element, so comparing
+    normalized old vs new tells us whether a rebuild carries real content
+    (June 2026: every sweep rewrote it, producing ~35-42 pure-churn commits
+    a day of which only ~7 carried content)."""
+    import re
+    return re.sub(rb"<lastBuildDate>[^<]*</lastBuildDate>", b"", feed_bytes)
+
+
 def build_language_feed(
     *,
     slug: str,
@@ -199,12 +210,19 @@ def build_language_feed(
     channel_category: str = "Technology",
     channel_subcategory: str = "",
     base_url: str = "https://nerranetwork.com",
+    analytics_prefix_url: str = "",
 ) -> Optional[Tuple[Path, int]]:
     """Write ``out_path`` as a podcast RSS feed of *lang* tracks.
 
     Returns ``(out_path, episode_count)`` on success, or ``None`` when the
     show has no episodes translated into *lang* yet (no feed is written —
-    we never publish an empty feed).
+    we never publish an empty feed). When the rendered feed differs from
+    the existing file only by ``<lastBuildDate>``, the file is left
+    untouched so a no-content rebuild never produces a commit.
+
+    ``analytics_prefix_url`` (the show's OP3 prefix, same value the English
+    feed uses) wraps each enclosure URL so per-language plays show up in
+    analytics; GUIDs are unaffected.
     """
     from feedgen.feed import FeedGenerator
 
@@ -260,7 +278,11 @@ def build_language_feed(
         desc = track.get("description") or title
         fe.title(title)
         fe.description(_markdown_to_rss_html(desc))
-        fe.enclosure(track["audio_url"], _enclosure_length(track), "audio/mpeg")
+        enclosure_url = track["audio_url"]
+        if analytics_prefix_url:
+            from engine.publisher import apply_op3_prefix
+            enclosure_url = apply_op3_prefix(enclosure_url, analytics_prefix_url)
+        fe.enclosure(enclosure_url, _enclosure_length(track), "audio/mpeg")
         fe.published(pub)
         fe.podcast.itunes_title(title)
         fe.podcast.itunes_summary(desc)
@@ -284,6 +306,13 @@ def build_language_feed(
     try:
         fg.rss_file(tmp_path, pretty=True)
         _inject_podcast_locked_tag(Path(tmp_path), channel_email or "patrick@planetterrian.com")
+        if out_path.exists():
+            new_bytes = Path(tmp_path).read_bytes()
+            old_bytes = out_path.read_bytes()
+            if _normalize_for_compare(new_bytes) == _normalize_for_compare(old_bytes):
+                logger.info("[%s/%s] %s unchanged (%d episodes) — skipping write",
+                            slug, lang, out_path.name, len(targets))
+                return out_path, len(targets)
         os.replace(tmp_path, str(out_path))
     finally:
         if os.path.exists(tmp_path):

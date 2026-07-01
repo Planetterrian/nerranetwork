@@ -3768,37 +3768,6 @@ def _publish_youtube(
         logger.info("YouTube publishing skipped — no final mp3.")
         return result
 
-    # LLM-optimized YouTube title (click-tuned, separate from the spoken
-    # hook). Generated once and reused for long-form + Shorts; the extra
-    # candidates are stashed for the operator's "Test & Compare" A/B. Pure
-    # metadata (no audio impact); best-effort — falls back to the hook-based
-    # title in build_*_metadata when empty. Opt-out via youtube.optimized_titles.
-    yt_title = ""
-    yt_title_variants: list = []
-    if getattr(config.youtube, "optimized_titles", True):
-        try:
-            from engine.youtube_titles import generate_youtube_titles
-
-            yt_title_variants = generate_youtube_titles(
-                hook=hook or "",
-                digest_text=digest_text or "",
-                show_name=config.name,
-                episode_num=episode_num,
-                keywords=list(getattr(config, "keywords", []) or []),
-                n=3,
-                perf_dir=digests_dir,
-            )
-            if yt_title_variants:
-                yt_title = yt_title_variants[0]
-                result["youtube_title"] = yt_title
-                result["youtube_title_variants"] = yt_title_variants
-                logger.info(
-                    "YouTube optimized title: %r (%d A/B variants)",
-                    yt_title, len(yt_title_variants),
-                )
-        except Exception as exc:  # noqa: BLE001 — never block a publish
-            logger.warning("Optimized title generation skipped: %s", exc)
-
     # Resolve cover image. Prefer the slug-derived name; then fall back to the
     # basename the show references in its RSS <itunes:image> (some shows name
     # the file after the title, e.g. first-principles-daily.jpg) so a YouTube-
@@ -3858,6 +3827,40 @@ def _publish_youtube(
             config.youtube.channel,
         )
         return result
+
+    # LLM-optimized YouTube title (click-tuned, separate from the spoken
+    # hook). Used by the LONG-FORM upload only (Shorts titles come from
+    # build_short_metadata's per-window headline); the extra candidates are
+    # stashed for the operator's "Test & Compare" A/B. Pure metadata (no
+    # audio impact); best-effort — falls back to the hook-based title in
+    # build_long_form_metadata when empty. Opt-out via
+    # youtube.optimized_titles. Runs AFTER the credentials early-return so a
+    # cred-less environment never pays the Grok call for titles it can't use.
+    yt_title = ""
+    yt_title_variants: list = []
+    if getattr(config.youtube, "optimized_titles", True):
+        try:
+            from engine.youtube_titles import generate_youtube_titles
+
+            yt_title_variants = generate_youtube_titles(
+                hook=hook or "",
+                digest_text=digest_text or "",
+                show_name=config.name,
+                episode_num=episode_num,
+                keywords=list(getattr(config, "keywords", []) or []),
+                n=3,
+                perf_dir=digests_dir,
+            )
+            if yt_title_variants:
+                yt_title = yt_title_variants[0]
+                result["youtube_title"] = yt_title
+                result["youtube_title_variants"] = yt_title_variants
+                logger.info(
+                    "YouTube optimized title: %r (%d A/B variants)",
+                    yt_title, len(yt_title_variants),
+                )
+        except Exception as exc:  # noqa: BLE001 — never block a publish
+            logger.warning("Optimized title generation skipped: %s", exc)
 
     work_dir = digests_dir / "youtube_tmp"
     work_dir.mkdir(parents=True, exist_ok=True)

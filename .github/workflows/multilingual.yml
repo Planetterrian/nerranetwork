@@ -17,10 +17,11 @@ name: Generate Multilingual Audio
 on:
   # Fire right after an episode publishes so the latest episode is translated
   # within minutes (not hours). The episode pipeline ("Run Podcast Show") is a
-  # separate workflow; its completion triggers a sweep here. The sweep is
-  # idempotent (skips already-translated episodes), so the once-per-show-run
-  # fan-out is mostly fast no-ops, and the concurrency group below serializes
-  # them. The scheduled passes stay as a safety net for any run this misses.
+  # separate workflow; its completion triggers a sweep here. The resolve job
+  # narrows the matrix to the show the triggering run published (parsed from
+  # its "Auto-generated: <show> <date>" head commit) — the old all-7-show
+  # fan-out per episode run was ~35 mostly-no-op jobs/day. The scheduled
+  # passes below stay full-fan-out catch-alls for anything this misses.
   workflow_run:
     workflows: ["Run Podcast Show"]
     types: [completed]
@@ -56,6 +57,11 @@ concurrency:
 
 permissions:
   contents: write
+  # Needed so the push-failure recovery fallback can open a draft PR via the
+  # gh CLI (scripts/create_recovery_pr.sh) — without it the RU-dub upload
+  # records in a lost commit would be discarded and the next sweep would
+  # re-upload duplicate public videos.
+  pull-requests: write
 
 jobs:
   # Decide which shows to translate, then fan out one job per show. Splitting
@@ -87,19 +93,18 @@ jobs:
       - name: Resolve shows to translate
         id: resolve
         shell: python3 {0}
+        env:
+          # Passed via env (not inline substitution) so a commit message can't
+          # inject into the script. May be empty on non-workflow_run events.
+          HEAD_COMMIT_MESSAGE: ${{ github.event.workflow_run.head_commit.message }}
         run: |
-          import json, os, sys
+          import json, os, re, sys
           # `shell: python3 {0}` runs this from a temp file, so the repo root
           # isn't on sys.path — add the workspace (cwd) so `engine` imports.
           sys.path.insert(0, os.getcwd())
           from engine.config import discover_show_slugs, load_config
 
-          dispatch = "${{ github.event.inputs.show }}".strip()
-          if dispatch and dispatch not in ("", "all"):
-              # Explicit single-show dispatch — honor it even if auto is off.
-              shows = [dispatch]
-          else:
-              # Scheduled / "all": every show that opts into auto multilingual.
+          def auto_enabled_shows():
               shows = []
               for slug in discover_show_slugs():
                   try:
@@ -109,6 +114,32 @@ jobs:
                   ml = getattr(cfg, "multilingual", None)
                   if ml and ml.enabled and getattr(ml, "auto", False):
                       shows.append(slug)
+              return shows
+
+          dispatch = "${{ github.event.inputs.show }}".strip()
+          event = "${{ github.event_name }}"
+          if dispatch and dispatch not in ("", "all"):
+              # Explicit single-show dispatch — honor it even if auto is off.
+              shows = [dispatch]
+          elif event == "workflow_run":
+              # Triggered by one episode publish — sweep only the show it
+              # published instead of fanning out all 7 matrix jobs. The
+              # episode commit is "Auto-generated: <show> <YYYY-MM-DD>"
+              # (run-show.yml); a show that isn't multilingual-enabled
+              # resolves to []. When the head commit doesn't name a show
+              # (e.g. the run started on an unrelated tip), fall back to the
+              # full idempotent sweep — the cron passes remain the catch-all.
+              head_msg = (os.environ.get("HEAD_COMMIT_MESSAGE") or "").strip()
+              m = re.match(r"Auto-generated: (\S+) \d{4}-\d{2}-\d{2}",
+                           head_msg.splitlines()[0] if head_msg else "")
+              if m:
+                  enabled = auto_enabled_shows()
+                  shows = [m.group(1)] if m.group(1) in enabled else []
+              else:
+                  shows = auto_enabled_shows()
+          else:
+              # Scheduled / "all": every show that opts into auto multilingual.
+              shows = auto_enabled_shows()
           print("Multilingual shows:", shows)
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
               f.write(f"shows={json.dumps(shows)}\n")
@@ -164,9 +195,11 @@ jobs:
           # (e.g. to refresh them after a translation-prompt change).
           FORCE=""
           [ "${{ github.event.inputs.force }}" = "true" ] && FORCE="--force"
-          # --zh-approved: operator approved all four languages including ZH.
+          # --zh-approved is per-show now (multilingual.zh_approved in the show
+          # YAML) — the old blanket flag defeated the listen-first ZH gate.
+          ZH_FLAG=$(python -c "from engine.config import load_config; print('--zh-approved' if getattr(load_config('shows/${{ matrix.show }}.yaml').multilingual, 'zh_approved', False) else '')")
           # `</dev/null`: keep ffmpeg/ffprobe from consuming the step's stdin.
-          python scripts/generate_translations.py "${{ matrix.show }}" --latest "$LATEST" --zh-approved $FORCE </dev/null
+          python scripts/generate_translations.py "${{ matrix.show }}" --latest "$LATEST" $ZH_FLAG $FORCE </dev/null
 
       - name: Publish ${{ matrix.show }} Russian dubs to @NerraRU
         if: always()
@@ -231,5 +264,17 @@ jobs:
             git rebase --abort 2>/dev/null || true
             [ $attempt -lt 8 ] && sleep $((attempt * 4))
           done
-          echo "::warning::Could not push ${{ matrix.show }} translations after 8 attempts — next sweep will retry (idempotent)."
-          exit 0
+
+          # NOT safe to drop this commit: the RU-dub YouTube uploads already
+          # happened and their only dedupe record (youtube_videos.ru.json) is
+          # in it — discarding it makes the next sweep re-upload duplicate
+          # public videos. Preserve the commit via a recovery branch + draft
+          # PR, exactly like run-show.yml's commit step.
+          echo "::warning::Could not push ${{ matrix.show }} translations after 8 attempts — preserving the commit (it may hold RU-dub upload records whose loss would cause duplicate uploads) via a recovery PR."
+          GH_TOKEN="${{ github.token }}" \
+          SHOW="multilingual-${{ matrix.show }}" \
+          RUN_ID="${{ github.run_id }}" \
+          REPO_URL="${{ github.server_url }}/${{ github.repository }}" \
+          NOTIFICATION_WEBHOOK_URL="${{ secrets.NOTIFICATION_WEBHOOK_URL }}" \
+          scripts/create_recovery_pr.sh
+          exit $?

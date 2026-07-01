@@ -121,6 +121,68 @@ class TestGuards:
         assert ru_dub.publish_ru_dub(cfg, 999)["status"] in ("skip", "no_record")
 
 
+class TestShortFailureIndex:
+    """publish_ru_dubs.py: a failed Short can't be retried alone (publish_ru_dub
+    has no short-only path — a retry would re-upload a duplicate long), so the
+    failure must at least be recorded durably in the index instead of living
+    only in a runner log."""
+
+    def _driver(self):
+        import importlib.util
+        path = _ROOT / "scripts" / "publish_ru_dubs.py"
+        spec = importlib.util.spec_from_file_location("publish_ru_dubs", path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+    def _cfg(self, tmp_path):
+        return SimpleNamespace(
+            episode=SimpleNamespace(output_dir=str(tmp_path)),
+        )
+
+    def test_records_failure_row_without_video_id(self, tmp_path):
+        drv = self._driver()
+        cfg = self._cfg(tmp_path)
+        drv._record_short_failure(cfg, 7, "ffmpeg exploded")
+        data = json.loads((tmp_path / "youtube_videos.ru.json").read_text())
+        rows = [v for v in data["videos"]
+                if v.get("episode") == 7 and v.get("status") == "failed"]
+        assert len(rows) == 1
+        assert rows[0]["kind"] == "short"
+        assert "ffmpeg exploded" in rows[0]["error"]
+        assert "video_id" not in rows[0]  # analytics/done-check both skip it
+
+    def test_repeat_failure_keeps_single_row(self, tmp_path):
+        drv = self._driver()
+        cfg = self._cfg(tmp_path)
+        drv._record_short_failure(cfg, 7, "first")
+        drv._record_short_failure(cfg, 7, "second")
+        data = json.loads((tmp_path / "youtube_videos.ru.json").read_text())
+        rows = [v for v in data["videos"] if v.get("status") == "failed"]
+        assert len(rows) == 1 and rows[0]["error"] == "second"
+
+    def test_failure_row_does_not_mark_episode_done(self, tmp_path):
+        drv = self._driver()
+        cfg = self._cfg(tmp_path)
+        drv._record_short_failure(cfg, 7, "boom")
+        # No long row yet → NOT done (the failed episode's long can retry).
+        assert drv._already_done(cfg, 7) is False
+        # Long recorded → done, even alongside the failed-short row.
+        idx = tmp_path / "youtube_videos.ru.json"
+        data = json.loads(idx.read_text())
+        data["videos"].append({"video_id": "v1", "episode": 7, "kind": "long"})
+        idx.write_text(json.dumps(data), encoding="utf-8")
+        assert drv._already_done(cfg, 7) is True
+
+    def test_clear_removes_stale_failure_row(self, tmp_path):
+        drv = self._driver()
+        cfg = self._cfg(tmp_path)
+        drv._record_short_failure(cfg, 7, "boom")
+        drv._clear_short_failure(cfg, 7)
+        data = json.loads((tmp_path / "youtube_videos.ru.json").read_text())
+        assert [v for v in data["videos"] if v.get("status") == "failed"] == []
+
+
 class TestRealShowConfigs:
     def test_four_shows_enabled(self):
         for slug in ("tesla", "spacex", "fascinating_frontiers", "modern_investing"):

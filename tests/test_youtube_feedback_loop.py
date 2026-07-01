@@ -121,6 +121,38 @@ class TestPerformanceHint:
         assert "WHAT'S WORKING" in out
 
 
+class TestTitleVariantsRecorded:
+    """run_show stashes the optimized title + its A/B candidates on the
+    publish result; record_youtube_outcomes must persist them to metrics —
+    otherwise the Studio 'Test & Compare' variants exist only in the
+    Actions log (the gap found 2026-07-01)."""
+
+    def _record(self, youtube_urls):
+        from types import SimpleNamespace
+        from engine.pipeline import record_youtube_outcomes
+        recorded = {}
+        metrics = SimpleNamespace(record=lambda k, v: recorded.__setitem__(k, v))
+        cfg = SimpleNamespace(youtube=SimpleNamespace(enabled=True))
+        record_youtube_outcomes(metrics, youtube_urls, 1.0, config=cfg)
+        return recorded
+
+    def test_title_and_variants_persisted(self):
+        recorded = self._record({
+            "long_url": "https://youtu.be/x",
+            "youtube_title": "Tesla's Wireless BMS Explained",
+            "youtube_title_variants": ["Tesla's Wireless BMS Explained",
+                                       "Variant B", "Variant C"],
+        })
+        assert recorded["youtube_title"] == "Tesla's Wireless BMS Explained"
+        assert recorded["youtube_title_variants"] == [
+            "Tesla's Wireless BMS Explained", "Variant B", "Variant C"]
+
+    def test_absent_title_records_nothing(self):
+        recorded = self._record({"long_url": "https://youtu.be/x"})
+        assert "youtube_title" not in recorded
+        assert "youtube_title_variants" not in recorded
+
+
 class TestUpdaterHint:
     def test_build_hint_needs_minimum_videos(self):
         uyp = _load_script("update_youtube_performance.py")
@@ -145,6 +177,35 @@ class TestUpdaterHint:
         assert "robotaxi" in hint.lower()
         assert "Median retention" in hint
 
+    def test_build_hint_ignores_ru_channel_rows(self):
+        # RU-dub retention must not skew the EN title hints or quote Russian
+        # titles as exemplars in English prompts (the gap found 2026-07-01).
+        uyp = _load_script("update_youtube_performance.py")
+        en = [
+            {"title": "Tesla Robotaxi Launch Texas", "hook": "robotaxi",
+             "average_view_percentage": 62, "channel": "en"},
+            {"title": "Tesla Robotaxi Expands Cities", "hook": "robotaxi",
+             "average_view_percentage": 58},  # legacy row, no channel → en
+            {"title": "Tesla Semi Battery", "hook": "semi",
+             "average_view_percentage": 40, "channel": "en"},
+            {"title": "Tesla Earnings", "hook": "earnings",
+             "average_view_percentage": 30, "channel": "en"},
+            {"title": "Tesla FSD", "hook": "fsd",
+             "average_view_percentage": 25, "channel": "en"},
+        ]
+        ru = [{"title": "Робота́кси Теслы в Техасе", "hook": "роботакси",
+               "average_view_percentage": 95, "channel": "ru"}] * 4
+        hint = uyp._build_hint(en + ru)
+        assert hint  # EN rows alone clear the minimum
+        assert "Робота́кси" not in hint  # no Russian exemplar
+        assert "роботакси" not in hint
+
+    def test_build_hint_ru_only_is_empty(self):
+        uyp = _load_script("update_youtube_performance.py")
+        ru = [{"title": "Русский заголовок", "hook": "х",
+               "average_view_percentage": 90, "channel": "ru"}] * 6
+        assert uyp._build_hint(ru) == ""
+
 
 class TestBothChannelsCovered:
     """The analytics loop must read BOTH the EN index (youtube_videos.json)
@@ -163,6 +224,30 @@ class TestBothChannelsCovered:
         channels = {r.get("channel") for r in rows}
         assert channels == {"en", "ru"}, channels
         assert {r["video_id"] for r in rows} == {"en1", "ru1"}
+
+    def test_fetch_propagates_channel_into_stats_rows(self, tmp_path, monkeypatch):
+        # The assembled per-show stats rows must carry `channel` so the
+        # performance updater can keep RU-dub retention out of EN hints.
+        fya = _load_script("fetch_youtube_analytics.py")
+        show = tmp_path / "tesla_shorts_time"
+        show.mkdir()
+        (show / "youtube_videos.json").write_text(json.dumps({"videos": [
+            {"video_id": "en1"}]}), encoding="utf-8")  # legacy row, no channel
+        (show / "youtube_videos.ru.json").write_text(json.dumps({"videos": [
+            {"video_id": "ru1", "channel": "ru"}]}), encoding="utf-8")
+
+        import engine.youtube as ey
+        monkeypatch.setattr(ey, "get_channel_credentials_from_env",
+                            lambda channel: object())
+        monkeypatch.setattr(fya, "_analytics_service", lambda creds: object())
+        monkeypatch.setattr(fya, "_query_batch", lambda svc, ids, s, e: {
+            vid: {"views": 5, "estimatedMinutesWatched": 1.0,
+                  "averageViewDuration": 30.0, "averageViewPercentage": 40.0}
+            for vid in ids})
+        payload = fya.fetch(tmp_path, days=30)
+        rows = payload["shows"]["tesla_shorts_time"]["videos"]
+        by_id = {r["video_id"]: r["channel"] for r in rows}
+        assert by_id == {"en1": "en", "ru1": "ru"}  # missing channel → en
 
 
 class TestScriptsAreCleanNoOps:

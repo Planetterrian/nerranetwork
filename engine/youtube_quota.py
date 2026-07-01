@@ -161,11 +161,31 @@ def estimate_network_daily_units(
     per_show: dict[str, int] = {}
     per_show_uploads: dict[str, int] = {}
     show_channel: dict[str, str] = {}
+
+    def _add_ru_dub(slug: str, publish_shorts: bool) -> None:
+        # RU-dub uploads (July 2026 fix): shows with youtube.ru_dub_enabled
+        # push 1 long + 1 Short per episode to @NerraRU via the decoupled
+        # multilingual flow — previously invisible to the estimate because
+        # only youtube.channel was bucketed. No caption track is inserted on
+        # the dub; the thumbnail/playlist paper costs match the main model.
+        est = estimate_episode_units(
+            publish_long_form=True,
+            publish_shorts=publish_shorts,
+            shorts_count=1,
+            with_caption_track=False,
+        )
+        key = f"{slug} (ru dub)"
+        per_show[key] = est.units
+        per_show_uploads[key] = est.uploads
+        show_channel[key] = "ru"
+
     for slug in discover_show_slugs(shows_dir):
         yaml_path = shows_dir / f"{slug}.yaml"
         try:
             cfg = load_config(yaml_path)
             yt = getattr(cfg, "youtube", None)
+            if getattr(yt, "ru_dub_enabled", False):
+                _add_ru_dub(slug, bool(getattr(yt, "publish_shorts", True)))
             if not getattr(yt, "enabled", False):
                 continue
             est = estimate_episode_units(
@@ -180,6 +200,8 @@ def estimate_network_daily_units(
             # Fallback to raw parse
             raw = yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
             yt = raw.get("youtube") or {}
+            if yt.get("ru_dub_enabled") is True:
+                _add_ru_dub(slug, bool(yt.get("publish_shorts", True)))
             if yt.get("enabled") is not True:
                 continue
             est = estimate_episode_units(

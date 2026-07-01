@@ -64,6 +64,14 @@ def record_youtube_outcomes(
         if youtube_urls.get("short_error"):
             metrics.record("youtube_short_error", youtube_urls["short_error"])
 
+        # Optimized title + its A/B candidates (June 2026). Persisted so the
+        # operator's Studio "Test & Compare" variants survive past the
+        # Actions log (previously they existed nowhere else).
+        if youtube_urls.get("youtube_title"):
+            metrics.record("youtube_title", str(youtube_urls["youtube_title"]))
+        if youtube_urls.get("youtube_title_variants"):
+            metrics.record("youtube_title_variants", list(youtube_urls["youtube_title_variants"]))
+
         # Rich YouTube feature metrics (May 2026 improvements observability)
         metrics.record("pexels_photos_filtered", int(youtube_urls.get("pexels_photos_filtered", 0) or 0))
         metrics.record("grok_image_cost_usd", float(youtube_urls.get("grok_image_cost_usd", 0.0) or 0.0))

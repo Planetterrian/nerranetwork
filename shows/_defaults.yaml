@@ -150,20 +150,21 @@ storage:
 # Multilingual *audio* (June 2026). When enabled, the post-hoc translation
 # stage (scripts/generate_translations.py) can render FR/RU/ES/ZH tracks of
 # an English episode with the operator's cloned Grok voice, surfaced on the
-# website (English stays canonical + the podcast-RSS feed). All English
-# shows inherit this; the two Russian shows opt OUT (their source is already
-# Russian). The cloned voice ID lives in .env (GROK_CLONED_VOICE_ID), never
-# in git.
+# website (English stays canonical + the podcast-RSS feed). The cloned voice
+# ID lives in .env (GROK_CLONED_VOICE_ID), never in git.
 multilingual:
-  enabled: true
-  # Auto-generate the languages below for every newly published episode
-  # (operator decision, June 2026 — "all English shows, all languages,
-  # automatic"). Best-effort + non-blocking in run_show.py. By default the
-  # translated tracks reuse the show's EXISTING Grok voice (tts.voice_id,
-  # kdif6sqjcyiq) — Grok carries one voice across languages, so the host
-  # sounds like the operator in every language with no extra setup. Russian
-  # shows set enabled:false so this never runs for them. ~$0.18/episode
-  # (≈4× English TTS chars + translation).
+  # OFF by default (July 2026): the old inherited-on default silently gave a
+  # newly scaffolded show auto-on all-4-languages (bit env_intel, commit
+  # 211308de). Every show now pins `enabled` in its own YAML — the 7 opted-in
+  # shows pin enabled + auto + an explicit languages list, so this default
+  # flip changed nothing in production; a new show must opt in deliberately.
+  enabled: false
+  # Auto-generate the show's languages for every newly published episode
+  # (best-effort + non-blocking). By default the translated tracks reuse the
+  # show's EXISTING Grok voice (tts.voice_id, kdif6sqjcyiq) — Grok carries
+  # one voice across languages, so the host sounds like the operator in
+  # every language with no extra setup. ~$0.18/episode (≈4× English TTS
+  # chars + translation).
   auto: true
   languages: [fr, ru, es, zh]
   # Optional override: name of an env var holding a DIFFERENT cloned voice ID
