@@ -605,6 +605,24 @@ class TestApplyPronunciationFixes:
         assert "Teslarati" in result
         assert "Tesla-rah-tee" not in result
 
+    def test_tesla_model_names_moved_to_yaml(self):
+        """``Model 3``/``Model Y`` respellings moved to
+        shows/pronunciation_map.yaml (audio-only) 2026-07-01 — the script-save
+        layer had been leaking "Model Why" into published blog transcripts
+        (blog/tesla/ep528.html ×9). The transcript layer must now pass the real
+        product names through; the synthesis layer must still emit the exact
+        respelling Grok always heard (audio byte-for-byte unchanged)."""
+        result = apply_pronunciation_fixes("The Model 3 and Model Y lead sales")
+        assert "Model 3" in result
+        assert "Model Y" in result
+        assert "Model Three" not in result
+        assert "Model Why" not in result
+        # Audio layer (shows/pronunciation_map.yaml via engine.tts) unchanged.
+        from engine.tts import prepare_text_for_tts as tts_prepare
+        audio = tts_prepare("The Model 3 and Model Y lead sales")
+        assert "Model Three" in audio
+        assert "Model Why" in audio
+
 
 # ===================== Full Pipeline (prepare_text_for_tts) =====================
 

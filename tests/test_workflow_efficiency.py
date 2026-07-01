@@ -32,9 +32,17 @@ class TestRunShowWorkflow:
         HEAD --` (unstages only). `reset` leaves the regenerated aggregates
         dirty, which makes the push-retry `git pull --rebase` abort with
         'cannot pull with rebase: you have unstaged changes' and sends shows
-        to recovery branches (the June 28 2026 regression)."""
+        to recovery branches (the June 28 2026 regression).
+
+        July 2026: the restore must also be PER-FILE — a single multi-path
+        checkout is all-or-nothing (any one path missing from HEAD rejects
+        the whole pathspec, the 2>/dev/null hides it, and the dirty tree
+        re-triggers the same stranding mode)."""
         wf = _read("run-show.yml")
-        assert "git checkout HEAD -- blog.rss network.rss blog/index.html" in wf
+        assert "for aggregate in blog.rss network.rss blog/index.html" in wf
+        assert 'git checkout HEAD -- "$aggregate" 2>/dev/null || true' in wf
+        # The buggy all-or-nothing multi-path form must not come back.
+        assert "git checkout HEAD -- blog.rss network.rss blog/index.html" not in wf
         # The buggy reset form must not be what excludes the aggregates.
         assert "git reset HEAD -- blog.rss network.rss blog/index.html" not in wf
 
@@ -112,7 +120,20 @@ class TestNoEpisodeMediaAtHead:
         ).stdout.strip()
         assert out == "", f"episode media tracked at HEAD: {out[:200]}"
 
+    def test_no_episode_pngs_tracked(self):
+        """youtube_tmp PNG intermediates (thumbnails, end cards, hook
+        overlays) grew ~140 MB/month at HEAD because .gitignore covered
+        mp4/jpg/srt/ass but not *.png while run-show.yml does
+        `git add -A digests/` (landmine #1 regression, June 2026)."""
+        import subprocess
+        out = subprocess.run(
+            ["git", "ls-files", "digests/*/youtube_tmp/*.png"],
+            capture_output=True, text=True, cwd=_ROOT,
+        ).stdout.strip()
+        assert out == "", f"youtube_tmp PNGs tracked at HEAD: {out[:200]}"
+
     def test_gitignore_guards_present(self):
         gi = (_ROOT / ".gitignore").read_text(encoding="utf-8")
         assert "digests/**/*.mp3" in gi
         assert "!assets/music/*.mp3" in gi
+        assert "digests/*/youtube_tmp/*.png" in gi
