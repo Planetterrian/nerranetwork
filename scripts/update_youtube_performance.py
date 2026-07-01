@@ -57,8 +57,15 @@ def _keywords(text: str) -> List[str]:
 
 
 def _build_hint(videos: List[dict]) -> str:
-    """Compose a short natural-language steer from the best performers."""
-    rated = [v for v in videos if v.get("average_view_percentage")]
+    """Compose a short natural-language steer from the best performers.
+
+    EN-channel rows only (rows without a ``channel`` predate the field and
+    are all EN): the title hint feeds the ENGLISH title generator, and mixing
+    in @NerraRU dub retention skews the median and can quote Russian titles
+    as exemplars in English prompts."""
+    rated = [v for v in videos
+             if v.get("average_view_percentage")
+             and (v.get("channel") or "en").lower() == "en"]
     if len(rated) < _MIN_VIDEOS:
         return ""
     rated.sort(key=lambda v: v.get("average_view_percentage", 0), reverse=True)

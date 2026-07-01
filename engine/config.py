@@ -288,6 +288,11 @@ class MultilingualConfig:
     # BCP-47 codes to render. Default empty; the driver also accepts a
     # ``--languages`` override so a show with no block can still be run.
     languages: List[str] = field(default_factory=list)
+    # Operator has listened to a ZH sample for THIS show and approved batch
+    # Chinese (generate_translations.py's --zh-approved checkpoint). The
+    # multilingual workflow reads this per-show instead of passing the flag
+    # blanket for every show, which defeated the listen-first gate.
+    zh_approved: bool = False
     # Name of the env var holding the cloned Grok voice ID. The ID itself
     # is NEVER stored in YAML/git — it's pasted into ``.env``. The TTS
     # call reads it at runtime and fails loud if unset.

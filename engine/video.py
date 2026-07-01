@@ -429,8 +429,9 @@ _SHORT_SCENE_DURATION_SECONDS = 7.0
 # fresh visual rhythm. Lowered 25 → 15 s (June 2026 motion pass): YouTube's
 # 2025-2026 policy + retention data both penalise long static holds, so cycling
 # the existing Grok images more often adds rhythm at zero extra image cost. The
-# Ken-Burns zoom keeps each hold watchable; flagships (Tesla/SpaceX) also get
-# real motion from the hybrid video clips. Visual-only — no audio impact.
+# Ken-Burns zoom + slideshow crossfades keep each hold watchable (the hybrid
+# Grok video clips were retired June 29 2026 — images-only pipeline).
+# Visual-only — no audio impact.
 _MAX_SCENE_HOLD_S = 15.0
 
 

@@ -20,6 +20,7 @@ Usage:
 """
 
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -107,7 +108,9 @@ def check_phonetic_garbles(tts_txt: str, _transcript_txt: str) -> Dict[str, Any]
         r"\b[Tt]esla-rah-tee\b": ("Teslarati", 0.95),
         r"\b[Aa]n-thropic\b": ("Anthropic", 0.90),
         r"\b[Ll]ah-mah\b": ("Llama", 0.88),
-        r"\b[Hh]assabis\b": ("Hassabis", 0.85),
+        # The garble form only — bare "Hassabis" is the CORRECT spelling and
+        # must not be flagged (July 2026 fix; the leak was "Hah-sah-biss").
+        r"\b[Hh]ah-sah-biss\b": ("Hassabis", 0.85),
         r"\bkoo-dah\b": ("CUDA", 0.92),
         r"\b[Tt]ee[- ]?eff\b": ("TF", 0.80),  # "tee-eff" or "T F"
     }
@@ -156,7 +159,17 @@ def check_word_count(tts_txt: str, show_slug: str) -> Dict[str, Any]:
 
     floor = floors.get(show_slug, 900)
 
-    if word_count < floor:
+    # Severe branch first — anything < 0.9*floor also satisfies < floor, so
+    # the old (< floor, elif < 0.9*floor) ordering made this unreachable.
+    if word_count < floor * 0.9:
+        findings.append({
+            "type": "significantly_short",
+            "word_count": word_count,
+            "target_percentage": word_count / floor * 100,
+            "confidence": 0.80,
+            "description": f"Episode is {word_count / floor * 100:.0f}% of target"
+        })
+    elif word_count < floor:
         confidence = min(0.95, 0.70 + (floor - word_count) / floor * 0.25)
         findings.append({
             "type": "below_target_length",
@@ -165,14 +178,6 @@ def check_word_count(tts_txt: str, show_slug: str) -> Dict[str, Any]:
             "deficit": floor - word_count,
             "confidence": confidence,
             "description": f"Episode {word_count}w (floor {floor}w, -{floor - word_count}w)"
-        })
-    elif word_count < floor * 0.9:
-        findings.append({
-            "type": "significantly_short",
-            "word_count": word_count,
-            "target_percentage": word_count / floor * 100,
-            "confidence": 0.80,
-            "description": f"Episode is {word_count / floor * 100:.0f}% of target"
         })
 
     return {
@@ -224,6 +229,11 @@ def check_metadata_sanity(tts_txt: str, show_slug: str) -> Dict[str, Any]:
 
 
 # ========================== MAIN ORCHESTRATOR ==========================
+
+# Shows scoring above this get flagged for the weekly Claude deep-dive review
+# (and posted to NOTIFICATION_WEBHOOK_URL so the operator actually sees it).
+ESCALATION_THRESHOLD = 0.60
+
 
 def discover_episodes(date_str: Optional[str] = None, show_slug: Optional[str] = None) -> List[Dict[str, Any]]:
     """
@@ -329,6 +339,38 @@ def compute_escalation_score(result: Dict[str, Any]) -> float:
     return escalation_score
 
 
+def _post_escalation_webhook(escalations: List[Dict[str, Any]], date_str: str) -> None:
+    """Alert the operator when shows cross the escalation threshold.
+
+    Same webhook contract as scripts/post_run_summary.py: clean no-op when
+    NOTIFICATION_WEBHOOK_URL is unset, warns loudly but never raises.
+    """
+    webhook = (os.getenv("NOTIFICATION_WEBHOOK_URL") or "").strip()
+    if not webhook:
+        print("(NOTIFICATION_WEBHOOK_URL unset — escalation not posted)", file=sys.stderr)
+        return
+
+    lines = [
+        f"🩺 Daily show health check ({date_str}): {len(escalations)} show(s) "
+        f"over the {ESCALATION_THRESHOLD} escalation threshold — flag for Claude deep-review"
+    ]
+    for esc in escalations:
+        lines.append(
+            f"• {esc['slug']}: score {esc['escalation_score']} "
+            f"({', '.join(esc['flagged_checks'])})"
+        )
+    text = "\n".join(lines)
+
+    try:
+        import requests
+        resp = requests.post(webhook, json={"text": text}, timeout=15)
+        if resp.status_code >= 300:
+            print(f"::warning::Health-check webhook returned {resp.status_code} (non-blocking)",
+                  file=sys.stderr)
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::Health-check webhook failed: {exc} (non-blocking)", file=sys.stderr)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Daily show health check (Grok Tier 1)")
     parser.add_argument("--date", help="Target date (YYYYMMDD, default today)", default=None)
@@ -354,7 +396,7 @@ def main():
         results.append(result)
 
         score = compute_escalation_score(result)
-        if score > 0.60:
+        if score > ESCALATION_THRESHOLD:
             escalations.append({
                 "slug": result["slug"],
                 "show_name": result["show_name"],
@@ -384,6 +426,7 @@ def main():
         print(f"⚠️  {len(escalations)} escalation(s) required", file=sys.stderr)
         for esc in escalations:
             print(f"  - {esc['slug']} (score {esc['escalation_score']})", file=sys.stderr)
+        _post_escalation_webhook(escalations, output["date"])
 
     sys.exit(0)
 

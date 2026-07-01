@@ -1,0 +1,70 @@
+# Tesla Shorts Time
+**REAL-TIME TSLA price:** $411.84 ▲ $32.13 (8.5%)
+> **Rows of new Teslas waiting in Japan signal a stronger Q3 start than recent quarters showed.**
+---
+### Top 12 News Items
+1. **Tesla vehicles stockpiled for delivery in Japan:** June 30, 2026, TSLAming (X)
+   Rows of brand-new Teslas sit ready for handover in Japan. The visible inventory points to improved availability heading into the third quarter. Local demand appears to be absorbing supply faster than earlier in the year. Observers will watch whether this pattern holds through the next earnings update. Source: [x.com](https://x.com/tslaming/status/2071840803388051468)
+
+2. **Discussion on government subsidies consistency across sectors:** June 30, 2026, TSLAming (X)
+   Governments already extend support to oil, gas, and farming alongside autos. The core issue raised is whether incentives produce measurable improvements in each sector. Consistency across industries determines whether the approach favors one technology unfairly. Follow-up comments focus on results rather than the existence of the programs themselves. Source: [x.com](https://x.com/tslaming/status/2071843008966991973)
+
+3. **Man who's owned Tesla Model 3 for 4 years and 60,000 miles breaks down its costs and compares it to a gas car:** June 30, 2026, supercarblondie.com
+   The owner tracked electricity, maintenance, tires, and insurance over the full period. Total operating costs came in well below equivalent gasoline sedans of similar age and mileage. The comparison highlights lower per-mile expenses once the vehicle is out of warranty. The article includes line-item breakdowns rather than summary claims. Source: [Google News](https://news.google.com/rss/articles/CBMiaEFVX3lxTE0wR3RtN3ZzZmxYQ3E0ZUJjQ2ZjU1BkMU05bjdTS2NKa3YzVEJsMnJJY0dlZ2JqdkxUSGI4Mzkxc1o5aUd3bkE4VTdiSzBzV09TWk92amVRQ2l0WjFPYnJOdVJ0eUtaVWNT?oc=5)
+
+4. **Here's why the Mazda 6e's quirky feel makes it a contender against EV greats from Tesla and Mercedes:** June 30, 2026, stuff.tv
+   The review emphasizes steering feel and chassis tuning that differ from typical EV setups. Range and charging performance are positioned as competitive without matching the longest-range Teslas. Pricing and interior layout receive direct comparison to the Model 3 and E-Class equivalents. The piece frames the car as an alternative for drivers prioritizing engagement over maximum efficiency. Source: [Google News](https://news.google.com/rss/articles/CBMiyAFBVV95cUxOMzdQTkZzLUNBd25fU0Q5M1hlYmd1TGR5RWdRaWg0MTBtNkNRVXYxcU55ZHZJLUJSMkZwcEJtNHZ1RmI5TW1MSUZRNjJjRVZlWjdCMkFaZm1Yd0h3RG5MRmVLMl9OTU9sellMODdMQmZzQ08zT3oyRzkzX04xeUEtcmxISExMeE5tYkxzNEVzOUhILUtucjFQOGJQZ1B0N2x1S0x5a3owYVpfZnhoTmhsWnVmM0NPbDBVS3dDeDFEdVJTRHNEUlhjNA?oc=5)
+
+5. **Why Rivian CEO RJ Scaringe wants his EV company to be compared to Apple, not Tesla:** June 30, 2026, Fortune
+   Scaringe stated the goal is to build a premium software and hardware ecosystem rather than compete solely on vehicle volume. The comment separates Rivian’s product philosophy from Tesla’s scale-focused approach. It comes as both companies expand truck and SUV lineups. The distinction matters for how each brand positions future software features and service models. Source: [Google News](https://news.google.com/rss/articles/CBMieEFVX3lxTE5vMlpHblNGVVZjR2ZpcjViN2FWX1NOQTZqelZPZWUwX2wyU2NUekt3b3JkNlFLdzRCdjBvWjJreVl3TUdvalJyekM5UFFMbW5PZ2ZUenpNeUFJeEpBTUo5TUx1V3ZuZXhpdm1YanhQWTJZekQtOWoydA?oc=5)
+
+6. **Ferrari and BMW join Tesla, China in switch from copper to cheaper aluminium:** June 30, 2026, The Economic Times
+   Multiple manufacturers are moving wiring and structural components to aluminium to cut material costs. Tesla began the shift earlier; Ferrari and BMW are now following the same path. The change reduces exposure to copper price swings while maintaining conductivity targets. Supply-chain teams at each company are tracking weight and corrosion trade-offs during the transition. Source: [Google News](https://news.google.com/rss/articles/CBMi7gFBVV95cUxPbVBtaDIySE1jM0R1S0VrNXZlaTRSTjFvcXVVb3k0UUgxdFFrUUdHaVpMeXR0dHJxeUtPaDFkNGRRZF9PdVQ4T042MTNTZFV5MF9XSThaaEFsdGlYZmdYaUY5NVRSbTFoZ3BnY2lmUkFpSlZldjBhbUFUVXhCajVxY2pPR1hRUkF4blMwVU5DSkJydEFuSUZ4aXZ5VWc2NXJYb2FpRHBhc2JNd3g4VnphaExubkhLV2tqU1BmUXoydFBJdjdRU2JEdGp1UG9QSFVPR245SUdobEZVRVZLOFFtemlEM1RxMFlseFVyb0l30gHzAUFVX3lxTE44UndWQlY2bHFWUTdyQkxLTFNiQ0U0aS1LZ1laZmtfa1ZSNkZERzRHM0RsUEJmYVp6aWZlOUh6WWx0eFFTN2xaQ0NqZUZxeTM5Q0M4SzJDdHU2YUxKamFRWWFmRUE4N0tjOEMtV1U4SDcxdWRldGFyMlgzTTQ1Sk1qSURUOUd6c3A2SUg2bzg3WVVEcGEzc0NIX1I1X2VjUGJnUUtBTnJRYk0tb0QyM3lVUnhGaEljczNZQzY1bzNuWlBwV0RuN0lLeGRQU2sxNEtxdVJtU1lKQ1dlX0ktTVFhSDU3TTlFNEtwQ3F5RElBX2hxaw?oc=5)
+
+7. **Tesla has a battery theft problem:** June 30, 2026, Digital Trends
+   Reports document rising incidents of high-voltage battery packs being removed from parked vehicles. The thefts target both salvage yards and street-parked cars in multiple regions. Replacement costs and parts availability create extended downtime for affected owners. Security teams are evaluating new mounting and tracking measures in response. Source: [Google News](https://news.google.com/rss/articles/CBMieEFVX3lxTE5ldC1WSk1aQWhNVWc4a1V1akowSkZZX2dIcjRLZE1ySUQ2QjVud2hlVEdtMkJMcFU5ZlMwMVBIdmpJQ1NqcUhDQUlxNS10bWhkeXhBUTdZRUdVRVFoelZiT1dRS3k4MWlYT2tqeXc1dWtTOWNveXNlLQ?oc=5)
+
+8. **Tesla’s first 500 kW superchargers deployed outside of US:** June 30, 2026, thedriven.io
+   The initial units outside North America have entered service in a single market. Peak power exceeds previous V3 and V4 hardware ratings. Site selection focuses on corridors with high long-distance travel. Operators will monitor session times and thermal performance under sustained high loads. Source: [Google News](https://news.google.com/rss/articles/CBMikwFBVV95cUxOWTFnSld5R3d6MWNMMTctbE50dGRNN1d2UUVuanh6R3lKcUVrN2c2aFo4Y055TmdnVWtnZHo0dm13ZWE1OUVvZXNXaTh6SFlqeEVxVVNGelBWeVhFZlRMSmRoXzNVTnhrYlZJUTFMem9QaW9KSGFKbzlLcnJhMS1lenRfOEhsUEtMZ3ZXS1doUER0RDg?oc=5)
+
+9. **Tesla Teases Launch in Uruguay As South American Expansion Continues:** June 30, 2026, driveteslacanada.ca
+   The company posted a brief notice about upcoming market entry. Uruguay becomes the next country after recent additions in the region. Local infrastructure and regulatory steps are still being finalized. Timing of first customer deliveries remains subject to those approvals. Source: [Google News](https://news.google.com/rss/articles/CBMid0FVX3lxTE1GdFBaT1FQVURaVDNNbzlMajROVmhiNVZpUnB5ZGRfbVFST1B2UGtFWFlMckU5QWdITTFjUTlNRHJLX2JkOXk0ZTEtbWJIS2NJUjRTeHpjbGZzWkd2RnRScjlYYnhjYlM3NnZoS3A2cWM3ZTdBTUk0?oc=5)
+
+10. **Cupra launching its cheapest EV yet in Australia, undercutting Tesla Model Y:** June 30, 2026, CarExpert
+    The new model arrives with a lower starting price than the current Model Y in that market. Cupra positions it as a direct volume competitor in the compact SUV segment. Range and charging specs are listed alongside pricing details. Local dealers will begin taking orders later this year. Source: [Google News](https://news.google.com/rss/articles/CBMiswFBVV95cUxPSEgxa0FnU1FRRmxheGVyNDN5cjltQTFwMkIzQW5QaG1DdXFlaE96VHlud3Z6c1FkQUd6bjBiUXp2R294czBvMkgwNVRnQXF0MGJxRTBybTRTMWpvd1NqSnhtbjdGd3lyX3lfcFEwYzVVNk04cXBKejVsamhzblJrTnhhRUJGeWxRa1dobjlpcXQ0eGZtSkZ0Tm5yZ1hBTFlSamZpYVZsVTVVNGpOOWFKR3BlMA?oc=5)
+
+11. **China's sodium-ion battery could upend EV prices as VW-backed company says it's matched Tesla cells:** June 29, 2026, The Cool Down
+    A Chinese supplier claims energy density now equals certain Tesla 4680 cells at lower material cost. The sodium-ion chemistry avoids lithium and nickel price volatility. Volkswagen-backed research supports the performance numbers released this week. Volume production timelines will determine whether the cost advantage reaches customer vehicles. Source: [Google News](https://news.google.com/rss/articles/CBMikgFBVV95cUxNUjF0dG1tTmRWMlhMN2hEQ0xqY3lSSnJoX1ZTTnpUbk1pWkNBQ1BsQWxhTDRhNjhnYnlZa0J5V0pCNTJ1bnV2a3NlVmtKQkRrUTI3NU40ZFdFOGZROU5wYTVvT0FPZ0E2b0s4dTdnbjlOZnJucXZkdy00a2lqLWY2WHh1UEZTSW9DOHBqS0U2eWo5Zw?oc=5)
+
+12. **CATL hits 0.051 USD benchmark with 175 Wh/kg Changan sodium cells:** June 29, 2026, r/electricvehicles
+    The cell price target translates to roughly $4,500 for a 90 kWh pack before pack integration. Lower temperature-management needs are cited as a potential secondary saving. The chemistry remains in testing with vehicle-level validation still ahead. Cost curves for sodium-ion will be compared against ongoing 4680 improvements at Tesla factories. Source: [reddit.com](https://www.reddit.com/r/electricvehicles/comments/1uj7ebf/catl_hits_0051_usd_benchmark_with_175_whkg/)
+---
+## Tesla X Takeover: What's Hot Right Now
+Tesla X Takeover - What's breaking in the Tesla world today! Here are the most interesting, fresh Tesla developments that have everyone talking.
+
+1. **Three best things about owning a Tesla** - Owners highlight daily driving differences
+   The post lists specific ownership perks that repeat across multiple replies. Real-world feedback centers on software updates, charging access, and build consistency rather than range alone. Community members add their own ranked lists in the thread. The conversation shows what long-term drivers value after initial purchase excitement fades. Source: [x.com](https://x.com/Teslarati/status/2071716389304295880)
+
+2. **FSD v14.3.4 missed exit on first try, required 2-mile detour** - Owner shares navigation behavior
+   The driver notes the system ignored a mapped exit on the initial attempt. A second run the following week captured the correct exit on video. The clip illustrates how route adherence can vary between drives on the same road. Owners are comparing notes on whether later software versions reduce these misses. Source: [x.com](https://x.com/Teslarati/status/2071689914706509935)
+
+3. **v14 Lite review** - Early impressions from HW3 vehicles
+   The review covers how the lighter version performs on older hardware compared with full v14 builds. Drivers note changes in lane positioning and intersection handling. The rollout targets cars that previously ran earlier supervised stacks. Testers are tracking whether the reduced compute load affects smoothness on familiar routes. Source: [x.com](https://x.com/Tesla/status/2071658498086322651)
+
+4. **In Norway, Tesla's cheapest Model 3 gets massive mileage, then hits a 177-kW peak during recharge** - Real-world efficiency and charging data
+   The test recorded high efficiency on mixed roads before a fast-charging session. Peak rate reached 177 kW under cool ambient conditions. The numbers come from the base Model 3 variant sold in that market. Owners are comparing these figures against warmer-climate results shared earlier this month. Source: [Google News](https://news.google.com/rss/articles/CBMihgFBVV95cUxOMDlIUVljei15eUVqMTVoTTNMUVJNUXA2d0hGYWVJSTcxTnVxdXEyZUZEYk5QUlI0cV9yVHFDUTEyWVkxbkFIeXQ2QnNwNjFpdkl1cF95M0htM1pXRlVTN2dwMHJTLVgtb1RMaEY3ZTZBeGFESGdSZXRJLUR0M1QwVGxkZ3NDUQ?oc=5)
+
+5. **Cybercab vs Consumer Teslas: Door, Window, and Seat Controls** - Interior hardware differences detailed
+   The comparison shows simplified controls inside the purpose-built robotaxi. Manual overrides and physical switches are reduced relative to current Model 3 and Y layouts. The design choices reflect expected unsupervised operation without a driver present. Owners are discussing how these changes might influence future consumer vehicle interiors. Source: [notateslaapp.com](https://www.notateslaapp.com/news/4371/cybercab-vs-consumer-teslas-door-window-and-seat-controls)
+---
+## Short Spot
+**Tesla has a battery theft problem:** June 30, 2026, Digital Trends
+Theft of high-voltage packs from parked Teslas is rising in multiple regions, creating long repair waits and high replacement costs. Parts scarcity and specialized labor requirements extend downtime beyond typical collision repairs. Tesla is evaluating reinforced mounting hardware and tracking systems, though widespread adoption timelines remain unclear. Owners in affected areas are adding aftermarket security while waiting for factory solutions. Source/Post: [Google News](https://news.google.com/rss/articles/CBMieEFVX3lxTE5ldC1WSk1aQWhNVWc4a1V1akowSkZZX2dIcjRLZE1ySUQ2QjVud2hlVEdtMkJMcFU5ZlMwMVBIdmpJQ1NqcUhDQUlxNS10bWhkeXhBUTdZRUdVRVFoelZiT1dRS3k4MWlYT2tqeXc1dWtTOWNveXNlLQ?oc=5)
+---
+### Tesla First Principles
+
+Material substitution in high-voltage wiring and structural elements follows a straightforward cost-and-supply logic. Copper prices have historically driven volatility in automotive bills of materials; aluminium offers a lower and more stable alternative once conductivity and corrosion requirements are met. Tesla began this transition earlier than most peers, and Ferrari and BMW are now aligning on the same path. The move directly reduces exposure to one commodity while requiring updated joining processes and thermal management calculations inside the vehicle.
+
+The practical limit appears in weight-sensitive areas where aluminium’s lower conductivity forces thicker sections or additional cooling. Manufacturers must therefore decide where the cost saving outweighs any efficiency penalty and where copper remains the better engineering choice. Early data from Tesla’s fleet will show whether real-world durability matches laboratory projections under varied climates and duty cycles. If the substitution holds, gross margin on each vehicle improves without requiring changes to selling price.
+
+Over time the industry-wide shift also changes supplier relationships and recycling streams. Aluminium scrap loops are already mature in aerospace and beverage cans; automakers can tap those channels once volumes scale. The question becomes how quickly secondary markets for reclaimed automotive aluminium develop and whether they further compress material costs. That feedback loop, rather than any single model launch, will determine whether the substitution becomes permanent across the sector.

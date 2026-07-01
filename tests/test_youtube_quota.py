@@ -137,6 +137,54 @@ def test_network_estimate_splits_channels(tmp_path):
     assert per_channel["en"]["total_units"] < summary["total_units"]
 
 
+def test_ru_dub_shows_count_against_ru_channel(tmp_path):
+    # ru_dub_enabled shows upload 1 long + 1 Short/day to @NerraRU via the
+    # decoupled multilingual flow — that spend must land in the ru bucket
+    # (it was invisible before July 2026: only youtube.channel was bucketed).
+    shows = tmp_path / "shows"
+    shows.mkdir()
+    (shows / "flag.yaml").write_text(
+        "name: F\nslug: flag\nyoutube:\n  enabled: true\n  channel: en\n"
+        "  ru_dub_enabled: true\n",
+        encoding="utf-8",
+    )
+    summary = estimate_network_daily_units(shows)
+    assert "ru" in summary["per_channel"]
+    ru = summary["per_channel"]["ru"]
+    assert "flag (ru dub)" in ru["enabled_slugs"]
+    assert ru["uploads"] == 2  # dub long + dub Short count toward ru cadence
+    # 2 video inserts + thumbnail/playlist each; no caption track on the dub.
+    assert ru["total_units"] == 2 * (1600 + 50 + 50)
+    # The dub never leaks into the EN bucket.
+    assert summary["per_channel"]["en"]["enabled_slugs"] == ["flag"]
+
+
+def test_ru_dub_counts_even_when_main_channel_disabled(tmp_path):
+    # publish_ru_dubs.py gates on ru_dub_enabled alone, not youtube.enabled.
+    shows = tmp_path / "shows"
+    shows.mkdir()
+    (shows / "quiet.yaml").write_text(
+        "name: Q\nslug: quiet\nyoutube:\n  enabled: false\n"
+        "  ru_dub_enabled: true\n",
+        encoding="utf-8",
+    )
+    summary = estimate_network_daily_units(shows)
+    assert list(summary["per_channel"]) == ["ru"]
+    assert summary["per_channel"]["ru"]["enabled_slugs"] == ["quiet (ru dub)"]
+
+
+def test_real_ru_dub_shows_visible_in_ru_bucket():
+    # Drift guard on the live configs: the four ru_dub shows contribute to
+    # the ru channel bucket.
+    from pathlib import Path
+
+    shows_dir = Path(__file__).resolve().parent.parent / "shows"
+    summary = estimate_network_daily_units(shows_dir)
+    ru_slugs = summary["per_channel"].get("ru", {}).get("enabled_slugs", [])
+    for slug in ("tesla", "spacex", "fascinating_frontiers", "modern_investing"):
+        assert f"{slug} (ru dub)" in ru_slugs, ru_slugs
+
+
 def test_over_quota_is_per_channel(tmp_path):
     shows = tmp_path / "shows"
     shows.mkdir()

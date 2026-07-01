@@ -299,7 +299,7 @@ jobs:
         # episode (unauthenticated, rate-limited, occasionally flaky —
         # an HF hiccup degrades transcripts → captions → Shorts).
         # The model is pinned ("base"), so a static cache key is safe.
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/huggingface
           key: whisper-faster-base-v1
@@ -443,6 +443,10 @@ jobs:
           # photos keyed off each show's keywords). Missing → falls back
           # to single-cover Ken Burns. Free tier covers our usage.
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          # run_show.py:_alert_webhook reads this for in-pipeline alerts
+          # (e.g. newsletter send failure). Without it here those alerts
+          # were silently dead (July 2026 reliability pass).
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
           PIPELINE_TIMEOUT_SECONDS: '2400'
 
       - name: Validate output
@@ -533,6 +537,11 @@ jobs:
         # matrix jobs. On final exhaustion we create a recovery/* branch + draft
         # PR so the generated artifacts are NEVER lost in the ephemeral runner.
         if: always() && steps.pipeline.outcome == 'success' && steps.pipeline.outputs.skipped != 'true'
+        env:
+          # scripts/create_recovery_pr.sh posts a stranded-episode alert to
+          # this webhook. It was reading the var but the step never passed it
+          # (July 2026 reliability pass) — so every stranded episode was silent.
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
         run: |
           # Use the standard GitHub Actions bot identity (consistent with
           # the safe-commit-push composite and other automation).
@@ -604,7 +613,15 @@ jobs:
           # sent ~7/8 shows to recovery branches on June 28. `git checkout
           # HEAD --` reverts index AND working tree to HEAD, leaving a clean
           # tree so the rebase can replay onto the latest main.
-          git checkout HEAD -- blog.rss network.rss blog/index.html 2>/dev/null || true
+          #
+          # Restore each aggregate INDIVIDUALLY (July 2026): a single
+          # multi-path `git checkout HEAD -- a b c` is all-or-nothing — if any
+          # one path is absent from HEAD, git rejects the whole pathspec, the
+          # 2>/dev/null hides it, and the tree stays dirty → the exact June 28
+          # mass-stranding mode above re-triggers.
+          for aggregate in blog.rss network.rss blog/index.html; do
+            git checkout HEAD -- "$aggregate" 2>/dev/null || true
+          done
 
           # Check if there are changes to commit
           if git diff --cached --quiet; then

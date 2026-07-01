@@ -1,0 +1,95 @@
+Hey, everyone. Welcome to Models and Agents Episode 98 for July 1, 2020.
+6. Your Daily AI Briefing.
+Their signal and noise in AI every day. Let's get to the signal.
+Export Controls lifted on Clawed Fable 5 and Mythos 5,
+letting Anthropic restore global access tomorrow with tighter cybersecurity classifiers.
+Anthropic is redeploying Clawed Fable 5 globally after U.S. government talks,
+routing some coding tasks back to Opus 4.8 while new classifiers block more misuse.
+Open AI introduced Gene Bench underscore Pro, a benchmark focused on agents
+navigating messy biological data and making real research judgments.
+Simon Willison added video recording to Shot Scraper so builders can generate demos from YAML
+storyboards. Anthropic announced that the Department of Commerce has lifted export controls
+on Clawed Fable 5 and Mythos 5 with access restoration beginning tomorrow.
+The company is also redeploying Fable 5 with updated classifiers that target additional
+cybersecurity tasks after discussions with the U.S. government.
+Routine coding and debugging will temporarily fall back to Opus 4.8 while the new safeguards
+are refined. Anthropic has started drafting a consensus framework on jailbreak severity with
+Amazon, Microsoft, Google, and other partners. Builders working with frontier models should watch
+how the new classifiers affect legitimate agent workflows over the coming weeks.
+This development follows the safety and policy conversations from earlier this week by showing
+how export controls are being adjusted through direct government talks. It also ties into the
+ongoing frontier model cadence we tracked yesterday where capability access and safeguards continue
+to shift in tandem. The new Clawed Sonnet 5 tokenizer increases costs roughly 1.4 times for English
+text and 1.33 times for Spanish while leaving simplified Mandarin pricing essentially unchanged.
+Simon Willison notes the shift in a post that also links to his full write-up on the model.
+Builders running high-volume English or Spanish workloads will see the impact immediately in their
+token budgets. The change highlights how tokenizer design now directly affects operating costs for
+production deployments. Open AI released GeneBench Pro, a research-level benchmark that tests how well
+agents handle messy biological data. Select analysis paths and make the judgment calls required an
+actual computational biology work. The benchmark moves beyond clean academic tasks to reflect the noisy,
+iterative nature of real lab pipelines. Teams building scientific agents now have a concrete
+way to measure progress on this harder class of problems. Watch for early results as groups begin
+reporting scores on the new suite. A new analysis from business standard examines why different benchmarks
+continue to rank Fugu, GLM 5.2, and Mithos in varying orders depending on the evaluation suite.
+The piece underscores that no single leaderboard yet captures the full picture of model strengths
+across domains. It shows that the three models shift positions when the underlying tests change
+from one suite to another. Practitioners comparing these models for specific workloads should run
+targeted tests rather than relying on headline rankings. The analysis makes clear that domain coverage
+differs enough across suites to produce inconsistent orderings. Builders evaluating Fugu, GLM 5.2,
+or Mithos, therefore, need workloads specific checks before committing to any one model.
+Simon Willison extended his shot scraper browser automation tool with video recording driven by
+YAML storyboards. Users or coding agents can now generate demo videos of web application features by
+defining a sequence of steps in a simple config file. The update pairs naturally with tools like Codex
+Desktop and GPT 5.5 for storyboard creation. Teams documenting new interfaces or building agent-driven
+demos gain a lightweight way to produce consistent recordings without manual screen capture.
+A new mild-aware layer called Sentinel Gateway enforces strict separation between trusted
+instruction channels and untrusted data channels in LLM agents. Every tool call now requires a
+signed, scoped runtime authorization token, decoupling observation from execution. The implementation
+includes fast API middleware, token-based gating, audit logging, and support for multi-agent patterns
+with either local or post-gress persistence. The approach targets structural causes of injection
+rather than relying solely on input filtering or model alignment. The article outlines how IT leaders
+should govern headless AI agents before they create uncontrolled enterprise risk. It focuses on
+visibility, policy enforcement, and oversight mechanisms needed as autonomous agents proliferate
+inside organizations. Teams running production agents should review the recommended controls against
+their current deployment patterns. Carapathy highlighted the low-voltage, high-current cluster-scale
+memory techniques used to maximize tokens per watt in frontier LLM inference. The discussion contrasts
+this regime with traditional power transmission engineering and underscores the specialized hardware
+work required for interactive serving. Builders optimizing inference costs should track similar systems
+level innovations as they become public. The recap from the AI engineer world's fair covers discussions
+on agent loops, software factories, and the role of open models in production workflows.
+Attendees explored how forward-deployed engineers and structured agent patterns are changing
+development practices. Teams experimenting with long-running agents will find the reported patterns
+relevant for their own architectures. A new system uses a semantic model query intermediate
+representation, so agents reason over curated semantics instead of raw enterprise schemas.
+A deterministic compiler then emits dialect-specific SQL for skew-light, big query, or snowflake.
+The approach achieved 94.15% execution accuracy on the Spider-2 snow benchmark using Gemini 3 pro.
+Developers facing complex enterprise schemas can examine the released code for the constrained
+think-act loop and semantic model query design. Okay, let's pop the hood on resolution adaptive KV
+cache approaches. Everyone talks about KV cache compression as if it is a simple eviction problem.
+In practice, CKV treats context as entropy-guided semantic spans stored across a GPU CPU hierarchy
+instead of discarding tokens outright. Each span keeps a lightweight summary vector on GPU
+for fast routing while a low-rank SVD basis lives on CPU for on-demand reconstruction of individual
+tokens. A trained zoom-in step selectively materializes only the spans relevant to the current
+query, avoiding full cache reloads. This design trades a small amount of added latency for the
+ability to handle 128,000 contexts with 53% less GPU memory than full caching. The quality gain
+comes from preserving information that pure eviction methods lose permanently once a token is dropped.
+Teams running long-context agents should test resolution adaptive approaches when memory pressure
+is the binding constraint rather than raw throughput. Testshot scrapers new YAML-driven video mode
+on a web app you are documenting to see how quickly you can produce consistent feature demos.
+Review the Sentinel Gateway repo if you are building tool-using agents and want to add signed
+authorization tokens between instruction and data channels. Run genebench-pro tasks against
+your current biology or data analysis agents to establish a baseline before the benchmark sees wider
+adoption. Compare Claude Sonnet 5 tokenizer costs on your English heavy workloads against your
+existing setup to decide whether prompt compression or model switching is warranted. Japan's planned
+sovereign AI model and 10 million robot initiative will likely surface more details on training
+scale and robotics integration in the coming months. Further refinements to Fable 5 classifiers are
+expected as anthropic works to reduce false positives on legitimate coding requests. Tomorrow,
+keep an eye on early gene bench Converse Pro scores as more teams publish their first results on
+the new benchmark. That wraps up today's AI briefing. Share this with a developer or builder who
+wants to stay current. Subscribe wherever you listen, see you tomorrow, and if you'd rather watch
+than listen, find us on YouTube at Narra Network links in the show notes. And before you go,
+this show is part of the Narra Network, a family of daily podcasts on tech, science, and markets.
+Each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed,
+here's your next listen. Planetarian daily daily breakthroughs in science, health, and longevity.
+Find every show free at Narra Network.com. This episode used AI voice synthesis of my voice,
+editorial selection, and analysis are my own.

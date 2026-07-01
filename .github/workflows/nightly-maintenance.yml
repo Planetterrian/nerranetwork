@@ -109,8 +109,10 @@ jobs:
 
       - name: Daily Show Health Check (Grok Tier 1)
         # Pattern-based surface checks (chapters, phonetic garbles, word count).
-        # Outputs api/daily-show-health.json. Escalations (score >0.6) auto-flag
-        # for manual Claude deep-review. Non-fatal.
+        # Outputs api/daily-show-health.json. Escalations (score >0.6) post to
+        # NOTIFICATION_WEBHOOK_URL for manual Claude deep-review. Non-fatal.
+        env:
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
         run: python scripts/grok_show_check.py --out api/daily-show-health.json || echo "::warning::Show health check failed (non-fatal)"
 
       - name: Backfill Content Lake (required for search index)
@@ -167,6 +169,9 @@ jobs:
             *_podcast.*.rss
             digests/**/channel_i18n.json
             api/dashboard.json
+            api/daily-show-health.json
+            api/youtube_stats.json
+            digests/**/youtube_performance.json
             api/op3_stats.json
             api/buttondown_stats.json
             digests/tesla_shorts_time/tesla_performance_tracker.json

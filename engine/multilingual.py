@@ -28,6 +28,12 @@ logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
+# A language whose translation keeps failing validation is retried at most
+# this many times TOTAL (across sweeps — the attempt count is persisted on the
+# track record). Without the cap, every idempotent sweep re-paid the full
+# translation LLM call for a permanently-failing (episode, language) pair.
+_MAX_TRANSLATION_ATTEMPTS = 2
+
 
 def grok_api_key() -> str:
     key = (os.getenv("GROK_API_KEY") or os.getenv("XAI_API_KEY") or "").strip()
@@ -127,8 +133,14 @@ def generate_for_episode(
     Re-reads the summaries record fresh, finds the finalized ``_tts.txt``, and
     for each language translates → validates → TTS → uploads → upserts the
     track. Returns a ``{lang: status}`` map where status is one of
-    ``done`` / ``skip`` / ``rejected`` / ``dryrun`` / ``no_audio_url``. A
-    per-language failure never aborts the others.
+    ``done`` / ``skip`` / ``rejected`` / ``rejected_skip`` / ``dryrun`` /
+    ``no_audio_url``. A per-language failure never aborts the others.
+
+    A validation-rejected language persists a ``{"status": "rejected",
+    "attempts": N}`` marker on the track record (no ``audio_url``, so feeds /
+    blog switchers ignore it) and is retried on later sweeps only until
+    ``_MAX_TRANSLATION_ATTEMPTS`` — otherwise every sweep re-spends the
+    translation LLM call forever.
     """
     output_dir = PROJECT_ROOT / config.episode.output_dir
     summaries_path = PROJECT_ROOT / config.publishing.summaries_json
@@ -158,8 +170,23 @@ def generate_for_episode(
     ml_chars = 0
     ml_langs_done: list[str] = []
     for lang in languages:
+        prior = existing.get(lang) if isinstance(existing.get(lang), dict) else {}
         if lang in existing and not force:
-            results[lang] = "skip"
+            if prior.get("status") != "rejected":
+                results[lang] = "skip"
+                continue
+            if int(prior.get("attempts") or 0) >= _MAX_TRANSLATION_ATTEMPTS:
+                logger.info("Ep%s [%s]: rejected %s time(s) — not retrying "
+                            "(use --force to override)", episode_num, lang,
+                            prior.get("attempts"))
+                results[lang] = "rejected_skip"
+                continue
+        # Check placement BEFORE the translation LLM call: an episode with no
+        # English audio_url can never place a track, so translating it first
+        # burned 1-2 full-script LLM calls per sweep for nothing.
+        if not english_url:
+            logger.warning("Ep%s [%s]: no English audio_url — cannot place track", episode_num, lang)
+            results[lang] = "no_audio_url"
             continue
         try:
             translated = translate.translate_script(english_script, lang)
@@ -167,14 +194,17 @@ def generate_for_episode(
         except translate.TranslationError as exc:
             logger.error("Ep%s [%s]: translation rejected — %s", episode_num, lang, exc)
             results[lang] = "rejected"
+            if not dry_run:
+                upsert_translation(summaries_path, episode_num, lang, {
+                    "status": "rejected",
+                    "attempts": int(prior.get("attempts") or 0) + 1,
+                    "error": str(exc)[:300],
+                    "generated_at": datetime.now(timezone.utc).isoformat(),
+                })
             continue
 
         if dry_run:
             results[lang] = "dryrun"
-            continue
-        if not english_url:
-            logger.warning("Ep%s [%s]: no English audio_url — cannot place track", episode_num, lang)
-            results[lang] = "no_audio_url"
             continue
 
         local_mp3 = output_dir / f"{tts_file.stem.replace('_tts', '')}.{lang}.mp3"

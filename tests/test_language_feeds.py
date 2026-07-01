@@ -70,11 +70,11 @@ def _two_lang_records():
     ]
 
 
-def _build(tmp_path, lang="fr"):
+def _build(tmp_path, lang="fr", records=None, **kwargs):
     from engine import language_feeds
 
     summaries = tmp_path / "summaries_demo.json"
-    _write_summaries(summaries, _two_lang_records())
+    _write_summaries(summaries, records if records is not None else _two_lang_records())
     out = tmp_path / language_feeds.feed_filename("demo_podcast.rss", lang)
     result = language_feeds.build_language_feed(
         slug="demo",
@@ -88,6 +88,7 @@ def _build(tmp_path, lang="fr"):
         channel_author="Patrick",
         channel_email="patrick@planetterrian.com",
         channel_image="https://nerranetwork.com/cover.jpg",
+        **kwargs,
     )
     return out, result
 
@@ -205,6 +206,77 @@ class TestBuildFeed:
         root = ET.parse(out).getroot()  # raises on invalid XML
         PODCAST = "https://podcastindex.org/namespace/1.0"
         assert root.find(f"channel/{{{PODCAST}}}locked") is not None
+
+
+class TestNoChurnRebuild:
+    """A no-content rebuild must not rewrite the file — every sweep used to
+    bump <lastBuildDate> and produce a pure-churn commit (764 in 16 days)."""
+
+    def test_rebuild_without_changes_leaves_file_untouched(self, tmp_path):
+        import os
+
+        out, _ = _build(tmp_path)
+        first_bytes = out.read_bytes()
+        os.utime(out, (1_000_000_000, 1_000_000_000))  # sentinel mtime
+        out2, result = _build(tmp_path)  # identical content
+        assert result is not None and out2 == out
+        assert out.stat().st_mtime == 1_000_000_000  # file NOT rewritten
+        assert out.read_bytes() == first_bytes
+
+    def test_rebuild_with_new_track_rewrites_file(self, tmp_path):
+        import os
+
+        out, _ = _build(tmp_path)
+        os.utime(out, (1_000_000_000, 1_000_000_000))
+        records = _two_lang_records()
+        records.insert(0, {
+            "date": "2026-06-16",
+            "episode_num": 5,
+            "episode_title": "Ep 5: English title",
+            "audio_url": "https://audio.nerranetwork.com/demo/Ep005.mp3",
+            "translations": {
+                "fr": {
+                    "audio_url": "https://audio.nerranetwork.com/demo/Ep005.fr.mp3",
+                    "title": "Ép 5 : titre français",
+                    "duration_sec": 300.0,
+                },
+            },
+        })
+        _, result = _build(tmp_path, records=records)
+        assert result[1] == 3
+        assert out.stat().st_mtime != 1_000_000_000  # rewritten
+        items = ET.parse(out).getroot().find("channel").findall("item")
+        assert len(items) == 3
+
+
+class TestOp3Prefix:
+    """Language-feed enclosures get the same OP3 analytics prefix the English
+    feed uses — without it FR/RU/ZH plays are invisible to analytics."""
+
+    def test_enclosures_prefixed_and_guids_stable(self, tmp_path):
+        out, _ = _build(tmp_path)
+        guids_plain = [
+            it.find("guid").text
+            for it in ET.parse(out).getroot().find("channel").findall("item")
+        ]
+        out, _ = _build(tmp_path, analytics_prefix_url="https://op3.dev/e/")
+        root = ET.parse(out).getroot()
+        for it in root.find("channel").findall("item"):
+            url = it.find("enclosure").get("url")
+            assert url.startswith("https://op3.dev/e/audio.nerranetwork.com/"), url
+            assert url.endswith(".fr.mp3")
+        # GUIDs must not change when the analytics prefix is applied.
+        guids_prefixed = [
+            it.find("guid").text for it in root.find("channel").findall("item")
+        ]
+        assert guids_prefixed == guids_plain
+
+    def test_no_prefix_when_unset(self, tmp_path):
+        out, _ = _build(tmp_path)
+        root = ET.parse(out).getroot()
+        for it in root.find("channel").findall("item"):
+            assert it.find("enclosure").get("url").startswith(
+                "https://audio.nerranetwork.com/")
 
 
 # ---------------------------------------------------------------------------

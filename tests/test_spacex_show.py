@@ -414,7 +414,12 @@ class TestLaunchDashboard:
                 {"net": "2026-05-02T00:00:00Z"}]
         cad = mod._monthly_cadence(prev)
         assert len(cad) == 12
-        assert cad[-1] == {"month": "2026-06", "count": 2}
+        # _monthly_cadence buckets against the real current month, so assert
+        # by month key (not position) — cad[-1] shifts on every rollover and
+        # made this test a time bomb that broke on the 1st of each month.
+        by_month = {b["month"]: b["count"] for b in cad}
+        assert by_month.get("2026-06") == 2
+        assert by_month.get("2026-05") == 1
         # stats
         st = mod._stats(prev, now)
         assert st["launches_ytd"] == 3

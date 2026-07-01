@@ -87,8 +87,6 @@ BODYEOF
 
 echo "Opening draft recovery PR..."
 
-echo "Opening draft recovery PR..."
-
 PR_OPENED=false
 if gh pr create \
   --title "Recovery: ${SHOW} episode outputs (run ${RUN_ID})" \

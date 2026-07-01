@@ -34,6 +34,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import json
+import os
 import re
 import subprocess
 import sys
@@ -518,13 +519,21 @@ def open_draft_pr(slug: str, files: list[Path], pr_body: str,
                   today: datetime.date) -> None:
     branch = f"agent/review-{slug}-{today.strftime('%Y%m%d')}"
     title = f"[show-review] {slug} quality pass ({today.isoformat()})"
+    # Commit the PR body into the review branch BEFORE attempting gh pr create:
+    # it holds the ONLY copy of the proposed A/B prompt edits, and `gh pr
+    # create` is org-blocked in some configs — without this, a failed PR open
+    # unlinked the body and the proposals were lost (Jun-Jul 2026).
+    pending = (ROOT / "docs" / "reviews" / "pending"
+               / f"{slug}_{today.strftime('%Y_%m_%d')}_pr_body.md")
+    pending.parent.mkdir(parents=True, exist_ok=True)
+    pending.write_text(pr_body, encoding="utf-8")
     body_file = ROOT / f".pr_body_{slug}.md"
     body_file.write_text(pr_body, encoding="utf-8")
     try:
         _git("config", "user.name", "github-actions[bot]")
         _git("config", "user.email", "github-actions[bot]@users.noreply.github.com")
         _git("checkout", "-b", branch)
-        _git("add", *[str(f.relative_to(ROOT)) for f in files])
+        _git("add", *[str(f.relative_to(ROOT)) for f in [*files, pending]])
         _git("commit", "-m", title)
         _git("push", "-u", "origin", branch)
         proc = subprocess.run(
@@ -536,8 +545,30 @@ def open_draft_pr(slug: str, files: list[Path], pr_body: str,
         if proc.returncode != 0:
             print("::warning::gh pr create returned non-zero "
                   "(branch is pushed; open the PR manually if needed)")
+            _post_webhook(
+                f"⚠️ Show Review Agent: gh pr create failed for {slug} — the "
+                f"review is stranded on branch {branch}. Proposals are saved "
+                f"at docs/reviews/pending/{pending.name} on that branch; open "
+                f"a PR from it manually."
+            )
     finally:
         body_file.unlink(missing_ok=True)
+
+
+def _post_webhook(text: str) -> None:
+    """Best-effort operator alert (post_run_summary.py contract): clean no-op
+    when NOTIFICATION_WEBHOOK_URL is unset, warns loudly but never raises."""
+    webhook = (os.getenv("NOTIFICATION_WEBHOOK_URL") or "").strip()
+    if not webhook:
+        print("(NOTIFICATION_WEBHOOK_URL unset — stranded-review alert not posted)")
+        return
+    try:
+        import requests
+        resp = requests.post(webhook, json={"text": text}, timeout=15)
+        if resp.status_code >= 300:
+            print(f"::warning::Review webhook returned {resp.status_code} (non-blocking)")
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::Review webhook failed: {exc} (non-blocking)")
 
 
 def _git(*args: str) -> None:

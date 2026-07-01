@@ -56,8 +56,18 @@ def _ru_dub_shows() -> List[str]:
     return out
 
 
+def _index_path(config) -> Path:
+    return PROJECT_ROOT / config.episode.output_dir / "youtube_videos.ru.json"
+
+
 def _already_done(config, episode_num: int) -> bool:
-    idx = PROJECT_ROOT / config.episode.output_dir / "youtube_videos.ru.json"
+    # Keyed on the LONG upload only: engine.ru_dub.publish_ru_dub has no
+    # short-only path (it always renders + uploads the long first), so
+    # retrying an episode whose Short failed would re-upload a duplicate
+    # public long-form video. A failed Short is therefore NOT retried; it is
+    # recorded durably in the index by _record_short_failure so the gap is
+    # visible (re-publish with --force after fixing the cause).
+    idx = _index_path(config)
     if not idx.exists():
         return False
     try:
@@ -66,6 +76,63 @@ def _already_done(config, episode_num: int) -> bool:
         return False
     return any(v.get("episode") == episode_num and v.get("kind") == "long"
                for v in data.get("videos", []))
+
+
+def _record_short_failure(config, episode_num: int, error: str) -> None:
+    """Durably note a failed Short in the per-show RU index.
+
+    The row has no ``video_id`` (nothing was uploaded), so every consumer
+    that walks the index — the analytics fetch, the long-done check above —
+    skips it; it exists purely so the operator can see which episodes shipped
+    long-form-only instead of the failure living only in a runner log."""
+    import datetime as _dt
+    idx = _index_path(config)
+    try:
+        data = json.loads(idx.read_text(encoding="utf-8")) if idx.exists() else {}
+    except Exception:  # noqa: BLE001
+        data = {}
+    videos = data.setdefault("videos", [])
+    # Replace any previous failure row for this episode (keep one, latest).
+    videos[:] = [v for v in videos
+                 if not (v.get("episode") == episode_num
+                         and v.get("kind") == "short"
+                         and v.get("status") == "failed")]
+    videos.append({
+        "episode": episode_num,
+        "kind": "short",
+        "status": "failed",
+        "error": (error or "")[:300],
+        "recorded": _dt.datetime.now(_dt.timezone.utc).isoformat(),
+    })
+    try:
+        idx.parent.mkdir(parents=True, exist_ok=True)
+        idx.write_text(json.dumps(data, ensure_ascii=False, indent=2),
+                       encoding="utf-8")
+    except OSError as exc:
+        logger.warning("Could not record short failure in %s: %s", idx, exc)
+
+
+def _clear_short_failure(config, episode_num: int) -> None:
+    """Drop a stale failure row once a --force re-publish ships the Short."""
+    idx = _index_path(config)
+    if not idx.exists():
+        return
+    try:
+        data = json.loads(idx.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return
+    videos = data.get("videos", [])
+    kept = [v for v in videos
+            if not (v.get("episode") == episode_num
+                    and v.get("kind") == "short"
+                    and v.get("status") == "failed")]
+    if len(kept) != len(videos):
+        data["videos"] = kept
+        try:
+            idx.write_text(json.dumps(data, ensure_ascii=False, indent=2),
+                           encoding="utf-8")
+        except OSError as exc:
+            logger.warning("Could not clear short failure in %s: %s", idx, exc)
 
 
 def _select_episodes(config, latest: int, episode: Optional[int]) -> List[int]:
@@ -115,6 +182,12 @@ def main() -> int:
             res = ru_dub.publish_ru_dub(
                 config, ep, build_short=not args.no_short, dry_run=args.dry_run)
             logger.info("%s Ep%s: %s", slug, ep, res.get("status"))
+            if res.get("short_error") and not args.dry_run:
+                logger.warning("%s Ep%s: Short failed (long uploaded): %s",
+                               slug, ep, res["short_error"])
+                _record_short_failure(config, ep, str(res["short_error"]))
+            elif res.get("short_url"):
+                _clear_short_failure(config, ep)
             if res.get("status") in ("done", "dryrun"):
                 total += 1
     logger.info("RU dubs processed: %d", total)

@@ -68,6 +68,16 @@ corrections:
   HW5: "H W five"
   AI5: "A I five"
 
+  # Model names moved from assets/pronunciation.py:WORD_PRONUNCIATIONS on
+  # 2026-07-01 (same script-save leak class as the 2026-06-25 moves below):
+  # the respelling was shipping verbatim in published blog transcripts
+  # (blog/tesla/ep528.html carried "Model Why" x9). Audio-only here: Grok
+  # still receives "Model Three" / "Model Why" at synthesis, byte-for-byte
+  # the pronunciation it got before, while the saved _tts.txt -> blog/RSS
+  # transcript keeps the real product names.
+  "Model 3": "Model Three"
+  "Model Y": "Model Why"
+
   # Operator caught (Tesla Ep468, May 10 2026) the show name
   # "Tesla Shorts Time Daily" being mispronounced — Grok TTS glides
   # the /m/ at the end of "Time" into the /d/ of "Daily" and the

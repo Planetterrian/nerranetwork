@@ -79,7 +79,7 @@ nerranetwork/
 ├── engine/                        # Shared modules
 │   ├── __init__.py
 │   ├── utils.py                   # Env helpers, text processing, similarity, dedup
-│   ├── tts.py                     # ElevenLabs TTS (auth, chunking, synthesis)
+│   ├── tts.py                     # Multi-provider TTS (Grok primary; legacy ElevenLabs path retained) — auth, chunking, synthesis
 │   ├── audio.py                   # mix_with_music (3 modes), normalize_voice, duration helpers
 │   ├── publisher.py               # RSS feeds, X posting, GitHub Pages summaries, digest formatting
 │   ├── content_tracker.py         # Cross-episode dedup (per-show section patterns)
@@ -499,8 +499,9 @@ TST received a full recursive improvement architecture (analogous to MIT):
   mid-section chapter titles stay deferred.
 - **PR** (Привет, Русский!) runs via `run_show.py` +
   `shows/privet_russian.yaml`; bilingual Russian language learning podcast
-  for English speakers. Even days only. Uses **ElevenLabs TTS**
-  (`eleven_flash_v2_5` with `language_code: ru`). X posting disabled.
+  for English speakers. Even days only. Uses **Grok TTS** (custom Olya voice
+  `0b875ae2`, `language_code: ru` — `shows/privet_russian.yaml`). X posting
+  disabled.
 - **June 10 2026 Planetterrian pass** (review:
   [`docs/planetterrian_review_2026_06_10.md`](docs/planetterrian_review_2026_06_10.md);
   drift guards: `tests/test_planetterrian_quality_pass.py`): NEW
@@ -712,9 +713,9 @@ Use `python scripts/scaffold_show.py` to generate YAML, prompts, output dirs, an
 
 - All secrets come from `.env` (local) or GitHub Actions secrets
 - `GROK_API_KEY` — primary xAI key (all shows)
-- `ELEVENLABS_API_KEY` — ElevenLabs TTS (all shows)
+- `ELEVENLABS_API_KEY` — ElevenLabs TTS (legacy/rollback only — no show uses ElevenLabs in production)
 - `X_*` / `PLANETTERRIAN_X_*` — two separate X accounts
-- Voice IDs: **All 12 shows are on Grok TTS** as of the May 2026 full-network migration. The 10 English shows (including Tesla Shorts Time) share the operator's custom-trained voice `kdif6sqjcyiq`. Russian shows (FP/PR) use the custom Olya voice `0b875ae2`. ElevenLabs is no longer used in production but the API key + legacy settings stay in `_defaults.yaml` for emergency rollback. See landmine #17.
+- Voice IDs: **All 13 shows are on Grok TTS** as of the May 2026 full-network migration. The 10 English shows (including Tesla Shorts Time) share the operator's custom-trained voice `kdif6sqjcyiq`. Russian shows (FP/PR) use the custom Olya voice `0b875ae2`. ElevenLabs is no longer used in production but the API key + legacy settings stay in `_defaults.yaml` for emergency rollback. See landmine #17.
 - See `docs/env_var_inventory.md` for the complete inventory
 
 ### RSS Feeds
@@ -1128,7 +1129,7 @@ The manual quality-pass workflow (Tesla #573/#576, MIT #574, network #575)
 is now automated and reproducible. A scheduled Claude Code agent
 ([`.github/workflows/show-review.yml`](.github/workflows/show-review.yml),
 Tue + Fri 07:00 UTC) reviews ONE target per run — the least-recently-
-reviewed of the 12 shows + a cross-cutting `network` target, per
+reviewed of the 13 shows + a cross-cutting `network` target, per
 [`docs/reviews/review_state.yaml`](docs/reviews/review_state.yaml) /
 `scripts/pick_review_target.py` — following the codified playbook in
 [`.claude/commands/review-show.md`](.claude/commands/review-show.md)
@@ -1311,6 +1312,59 @@ operator checklist). Shipped, all no-ops when secrets unset:
   `_AI_DISCLOSURE_RU` is a one-liner in `run_show.py` but changes shipped
   audio → landmine #17 A/B-listen first.
 
+### Multilingual + international distribution (late June 2026)
+
+Three additive, off-critical-path systems that turn each English episode into a
+multi-language, multi-channel property. English stays the canonical master and
+the fallback everywhere; every piece is best-effort and non-blocking.
+
+- **Multilingual translation tracks (FR / RU / ES / ZH).** A post-hoc stage
+  (`engine/multilingual.py`, `engine/translate.py`) translates a finalized
+  English `_tts.txt` + title/description via Grok, re-voices it with the show's
+  **existing** cloned Grok voice (`kdif6sqjcyiq` — one voice across languages;
+  `GROK_CLONED_VOICE_ID` optional override), validates the result (rejects
+  refusals / English echoes / wrong-script ZH), and uploads to R2 as
+  `…/<file>.<lang>.mp3`. Enabled network-wide via `multilingual.auto: true` in
+  `_defaults.yaml` (the two RU shows opt out); ~$0.18/ep (~$50-55/mo). The blog
+  page renders a language switcher + inline player only when a track exists.
+  Each language also gets a real subscribable **per-language podcast feed**
+  (`podcast.{fr,ru,es,zh}.rss`) built fresh from `summaries_<slug>.json` by
+  `engine/language_feeds.py` (deterministic per-lang GUIDs; channel
+  title/description translated once + cached in
+  `digests/<slug>/channel_i18n.json` so nightly rebuilds cost no credits).
+  Per-language pronunciation lives in `shows/translation_overrides.yaml`
+  (language-scoped; never touches the English path). Orchestrated by
+  `.github/workflows/multilingual.yml` (its own workflow so RU TTS + a second
+  render can never delay/break the English publish). Docs:
+  [`docs/multilingual.md`](docs/multilingual.md). Drift guards:
+  `tests/test_multilingual.py`, `tests/test_language_feeds.py`.
+- **RU YouTube dubs → @NerraRU.** For a show with
+  `youtube.ru_dub_enabled: true`, the same multilingual workflow reuses the
+  already-generated RU audio track **and** the episode's existing Grok gallery
+  scene images (from the R2 manifest — **$0 extra image cost**) to render a
+  long-form + 1 Short and upload them to @NerraRU with Russian metadata +
+  disclosure (`engine/ru_dub.py`, `scripts/publish_ru_dubs.py`). Enabled for
+  `tesla`, `spacex`, `fascinating_frontiers`, `modern_investing`. Idempotent via
+  a per-show `digests/<slug>/youtube_videos.ru.json` index (per-show → no
+  cross-show push contention). RU Shorts reached EN-channel parity (per-word
+  Cyrillic ASS captions, smart-start, end-card CTA) in PR #748. Needs
+  `YOUTUBE_REFRESH_TOKEN_RU` (no-ops with a log line until set). Docs:
+  [`docs/ru_youtube_dubs.md`](docs/ru_youtube_dubs.md). Drift guards:
+  `tests/test_ru_dub.py`.
+- **Recursive YouTube → titles feedback loop.** Mirrors the OP3 audio loop:
+  `scripts/fetch_youtube_analytics.py` reads each show's
+  `digests/<slug>/youtube_videos.json`, queries the YouTube Analytics API for
+  retention (`averageViewPercentage` — the strongest public content-quality
+  signal; CTR is Studio-only), and `scripts/update_youtube_performance.py`
+  distils a per-show `title_hint` into `youtube_performance.json` that
+  `engine/youtube_titles.generate_youtube_titles` injects into the title prompt
+  (nightly). It touches ONLY the YouTube title (visual metadata, not the spoken
+  hook) so it sits **outside** the landmine #17 A/B gate, and ships **dormant**
+  — a clean no-op until the operator re-auths the OAuth token with the
+  `yt-analytics.readonly` scope and a few weeks of data accrue. Docs:
+  [`docs/youtube_feedback_loop.md`](docs/youtube_feedback_loop.md). Drift
+  guards: `tests/test_youtube_feedback_loop.py`.
+
 ## Current Refactoring Goal
 
 **Extract duplicated code from the show scripts into `engine/` modules.**
@@ -1336,7 +1390,7 @@ Phase 2 (complete):
   `record_tts_usage`, `record_x_post`, `save_usage`
 
 Phase 3 (current):
-- All 12 shows now run via `run_show.py` + YAML configs in production (CI/CD).
+- All 13 shows now run via `run_show.py` + YAML configs in production (CI/CD).
 - Legacy scripts (`digests/{tesla_shorts_time,omni_view,fascinating_frontiers,
   planetterrian}.py`) are **deprecated** — retained for reference only.
 - `run_show.py` is the canonical entry point; legacy scripts are not called
@@ -1389,7 +1443,10 @@ decision); everything else has a live status card.
     "Commit and push output" step (the finalize shared-pages push has a 5-attempt
     loop + warning but no recovery PR because those pages are fully regenerable).
     The `safe-commit-push` composite used by nightly + 8 other workflows does not
-    yet have the recovery escape hatch (lower risk callers). Drift guard:
+    yet have the recovery escape hatch (lower risk callers). The multilingual
+    sweep's commit step (`.github/workflows/multilingual.yml`) also uses the
+    recovery-PR escape hatch now, since it commits large translation-track +
+    per-language-feed diffs on the same push-contended `main`. Drift guard:
     the recovery script + the warning annotation in the Actions log.
 
 24. **Schedule punctuality: exact-time dispatcher + duplicate guard (June
@@ -1887,18 +1944,25 @@ decision); everything else has a live status card.
       30, env `YOUTUBE_SAFE_DAILY_UPLOADS`), since YouTube's inauthentic-content
       policy penalises mass posting. Mitigations shipped same-day: LLM-optimized
       long-form titles separate from the spoken hook
-      (`engine/youtube_titles.py`, `youtube.optimized_titles`), hybrid short
-      Grok video clips interleaved with stills on Tesla + SpaceX
-      (`engine/grok_video_clips.py`, `youtube.video_clips_enabled`, ~$1/ep,
-      falls back to all-stills), and the slideshow still-hold cap lowered 25 →
-      15 s for more motion network-wide. None of these touch audio (outside
-      landmine #17). Enabled-set + 200k + 15 s cap pinned by
+      (`engine/youtube_titles.py`, `youtube.optimized_titles`) and the
+      slideshow still-hold cap lowered 25 → 15 s for more motion network-wide
+      (commit `6559b3a9`). None of these touch audio (outside landmine #17).
+      **The hybrid Grok video-clip pilot on Tesla + SpaceX has since been
+      REMOVED network-wide (commit `72d81cce`, June 29 2026): the Ep526 pilot
+      showed ~1/3 clip success at ~$0.35/ep for the weakest payoff and pushed
+      the render toward the 40-min pipeline timeout — the most expensive
+      component for the least value (full Grok Video was already disabled
+      June 23, commit `08021ebe`, as ~$40-50/ep). `video_clips_enabled` is
+      `false` everywhere; motion now comes entirely from slideshow crossfades
+      + varied Ken Burns over Grok Imagine stills. Recovery scripts
+      (`scripts/recover_grok_video.py` et al.) still exist for any
+      already-generated clips.** Enabled-set + 200k + 15 s cap pinned by
       `tests/test_schedule.py`, `tests/test_youtube_quota.py`,
       `tests/test_youtube_quality_pass.py`, `tests/test_config.py`. Operator
       one-time tasks: create/flag the 6 new shows' podcast playlists (landmine
-      #15), confirm quota scope + set the env budget if EN-only, enable Studio
-      Title/Thumbnail "Test & Compare" (the runner stashes 3 title candidates),
-      and review the Tesla/SpaceX clip pilot's retention before expanding clips.
+      #15), confirm quota scope + set the env budget if EN-only, and enable
+      Studio Title/Thumbnail "Test & Compare" (the runner stashes 3 title
+      candidates).
 
 21. **`min_articles_skip` is tuned per-show, not per-network (May 2026)**
     — `engine/config.py` defaults `min_articles_skip` to `3` (a show
