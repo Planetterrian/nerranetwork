@@ -558,6 +558,46 @@ class YouTubeConfig:
     video_clip_seconds: int = 5
     video_clips_resolution: str = "720p"
 
+    # ---- Visual reuse + chapter-aligned scenes (June 2026) ----
+    # These gate engine/visual_reuse.py, the composition layer over
+    # engine.gallery_library + engine.scene_scheduler. All default ON and
+    # all are render/metadata-only (no audio → outside landmine #17);
+    # every path is best-effort and degrades to the legacy render.
+    #
+    # Blend already-generated gallery scenes (pulled from the nerra-gallery
+    # R2 bucket via the committed manifest) into the fresh per-episode
+    # Grok Imagine sets, ranked by hook/chapter-title relevance. Zero new
+    # image-generation cost; caps below bound the download volume.
+    gallery_blend_enabled: bool = True
+    gallery_blend_max_long: int = 8    # 16:9 library scenes per long-form
+    gallery_blend_max_short: int = 4   # 9:16 library scenes per Short
+    # Align long-form scene switches with the episode's chapters.json
+    # boundaries (engine.scene_scheduler.plan_chapter_schedule) instead of
+    # the uniform timer. <2 usable chapters falls back to uniform.
+    chapter_aligned_scenes: bool = True
+    # Use the episode's first fresh 16:9 scene as the long-form thumbnail
+    # base (cover fallback), and render up to `thumbnail_variants` extra
+    # composites from OTHER scenes for the operator's Studio
+    # "Test & Compare" A/B (uploaded to the gallery R2 bucket, tiny files).
+    long_form_thumbnail_from_scene: bool = True
+    thumbnail_variants: int = 2
+    # Sunday weekly recaps reuse the past week's gallery scenes (both
+    # aspects) instead of generating new imagery — the recap summarises
+    # stories whose imagery the network already paid for. Requires ≥2
+    # pooled images per aspect; below that, generates as usual.
+    recap_reuse_scenes: bool = True
+    # When Grok Imagine produces <2 usable scenes, fall back to the show's
+    # historical gallery scenes before degrading to the static cover.
+    gallery_fallback_enabled: bool = True
+    # Snap Shorts scene changes to sentence boundaries from the Whisper
+    # word-level transcript (engine.scene_scheduler.sentence_cut_times)
+    # instead of the flat 7 s grid.
+    shorts_sentence_cuts: bool = True
+    # Interleave curated evergreen b-roll clips (digests/<dir>/broll.json,
+    # published by scripts/build_broll_pool.py) into the long-form
+    # slideshow. A clean no-op until the operator publishes a pool.
+    evergreen_broll: bool = True
+
     # Optional path (relative to repo root) to a text template for the
     # long-form description body. Placeholders: {hook}, {episode_num},
     # {show_name}, {today_str}. When empty, uses digest paragraphs.

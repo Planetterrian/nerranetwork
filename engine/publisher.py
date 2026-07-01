@@ -18,7 +18,7 @@ import re
 import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Sequence
 
 logger = logging.getLogger(__name__)
 
@@ -1467,6 +1467,52 @@ def generate_episode_thumbnail(
     # the decision for observability of the May 2026 thumbnail improvements.
     final_hook_font = font_size if 'font_size' in locals() else None
     return output_path, final_hook_font
+
+
+def generate_thumbnail_variants(
+    scene_paths: "Sequence[Path]",
+    *,
+    episode_num: int,
+    date_str: str,
+    output_dir: Path,
+    base_name: str,
+    hook: str = "",
+    show_name: str = "",
+    count: int = 2,
+) -> "list[Path]":
+    """Render extra long-form thumbnail composites from alternate scenes.
+
+    WHY: YouTube Studio's "Test & Compare" A/B needs up to three thumbnail
+    candidates, but the pipeline historically produced exactly one (always
+    over the static show cover). Each variant here reuses the exact
+    :func:`generate_episode_thumbnail` composition (same hook text, same
+    autofit) over a DIFFERENT episode scene, so the only variable the A/B
+    measures is the background imagery — the signal the gallery-retention
+    join (scripts/build_gallery_retention.py) wants to learn from.
+
+    Variant files are named ``<base_name>_thumb_v2.jpg``, ``_v3.jpg``, …
+    (``v1`` is the primary thumbnail). Best-effort per scene: a failed
+    render is logged and skipped, never raised — variants are optional
+    garnish on the publish path.
+    """
+    out: "list[Path]" = []
+    for idx, scene in enumerate(scene_paths):
+        if len(out) >= max(0, int(count)):
+            break
+        try:
+            dest = Path(output_dir) / f"{base_name}_thumb_v{idx + 2}.jpg"
+            path, _font = generate_episode_thumbnail(
+                Path(scene),
+                episode_num,
+                date_str,
+                dest,
+                hook=hook,
+                show_name=show_name,
+            )
+            out.append(path)
+        except Exception as exc:  # noqa: BLE001 — variants are optional
+            logger.warning("Thumbnail variant v%d failed: %s", idx + 2, exc)
+    return out
 
 
 def generate_shorts_thumbnail(
