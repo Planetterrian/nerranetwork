@@ -146,6 +146,25 @@ class TestUpdaterHint:
         assert "Median retention" in hint
 
 
+class TestBothChannelsCovered:
+    """The analytics loop must read BOTH the EN index (youtube_videos.json)
+    and the @NerraRU dubs (youtube_videos.ru.json) — otherwise the RU channel
+    is invisible to the loop (the gap found 2026-07-01)."""
+
+    def test_load_index_includes_ru_dubs(self, tmp_path):
+        fya = _load_script("fetch_youtube_analytics.py")
+        show = tmp_path / "tesla_shorts_time"
+        show.mkdir()
+        (show / "youtube_videos.json").write_text(json.dumps({"videos": [
+            {"video_id": "en1", "channel": "en"}]}), encoding="utf-8")
+        (show / "youtube_videos.ru.json").write_text(json.dumps({"videos": [
+            {"video_id": "ru1", "channel": "ru"}]}), encoding="utf-8")
+        rows = fya._load_index(tmp_path)
+        channels = {r.get("channel") for r in rows}
+        assert channels == {"en", "ru"}, channels
+        assert {r["video_id"] for r in rows} == {"en1", "ru1"}
+
+
 class TestScriptsAreCleanNoOps:
     def test_fetch_no_data(self, tmp_path):
         fya = _load_script("fetch_youtube_analytics.py")
