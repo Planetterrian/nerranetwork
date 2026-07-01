@@ -199,7 +199,7 @@ jobs:
           # YAML) — the old blanket flag defeated the listen-first ZH gate.
           ZH_FLAG=$(python -c "from engine.config import load_config; print('--zh-approved' if getattr(load_config('shows/${{ matrix.show }}.yaml').multilingual, 'zh_approved', False) else '')")
           # `</dev/null`: keep ffmpeg/ffprobe from consuming the step's stdin.
-          python scripts/generate_translations.py "${{ matrix.show }}" --latest "$LATEST" $ZH_FLAG $FORCE </dev/null
+          python scripts/generate_translations.py "${{ matrix.show }}" --latest "$LATEST" ${ZH_FLAG:+"$ZH_FLAG"} ${FORCE:+"$FORCE"} </dev/null
 
       - name: Publish ${{ matrix.show }} Russian dubs to @NerraRU
         if: always()
