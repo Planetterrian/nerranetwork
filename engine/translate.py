@@ -157,7 +157,11 @@ def apply_overrides(text: str, lang: str) -> str:
     """Post-process: enforce per-language phonetic spellings in *text*.
 
     Belt-and-suspenders over the prompt instruction. Word-boundary,
-    case-insensitive — only rewrites whole-word matches of the English term.
+    CASE-SENSITIVE — only rewrites whole-word matches of the English term
+    exactly as cased in translation_overrides.yaml. Deliberate: the override
+    keys are proper nouns / cased acronyms (Tesla, Musk, TSLA, xAI), and
+    insensitive matching would rewrite unrelated lowercase words (e.g. the
+    noun "musk").
     """
     if not text:
         return text

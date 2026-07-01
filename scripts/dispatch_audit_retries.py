@@ -10,11 +10,58 @@ workflow YAML. This completely avoids noisy SC2086 reports from actionlint's
 embedded shellcheck when processing large `run: |` blocks.
 """
 
+import datetime
 import json
 import os
 import subprocess
 import sys
 from pathlib import Path
+
+
+def _post_webhook(text: str) -> None:
+    """Best-effort operator alert (post_run_summary.py contract): clean no-op
+    when NOTIFICATION_WEBHOOK_URL is unset, warns loudly but never raises."""
+    webhook = (os.environ.get("NOTIFICATION_WEBHOOK_URL") or "").strip()
+    if not webhook:
+        return
+    try:
+        import requests
+        resp = requests.post(webhook, json={"text": text}, timeout=15)
+        if resp.status_code >= 300:
+            print(f"::warning::Audit webhook returned {resp.status_code} (non-blocking)")
+    except Exception as exc:  # noqa: BLE001
+        print(f"::warning::Audit webhook failed: {exc} (non-blocking)")
+
+
+def _same_day_recovery_branch(show: str,
+                              now: datetime.datetime | None = None) -> str | None:
+    """Return a recovery/<show>-* branch pushed TODAY (UTC), if any.
+
+    A stranded episode (push to main failed → recovery branch) already ran its
+    full pipeline, INCLUDING the YouTube/R2 uploads — re-dispatching the show
+    duplicates public videos (happened Jun 25 2026: models_agents + tesla).
+    Branch names end in the recovery script's unix timestamp
+    (recovery/<show>-<run_id>-<epoch>), so "same day" is decidable offline.
+    """
+    now = now or datetime.datetime.now(datetime.timezone.utc)
+    try:
+        result = subprocess.run(
+            ["git", "ls-remote", "--heads", "origin",
+             f"refs/heads/recovery/{show}-*"],
+            check=True, capture_output=True, text=True,
+        )
+    except subprocess.CalledProcessError:
+        return None  # best-effort guard; the dispatch itself stays possible
+    for line in result.stdout.splitlines():
+        ref = line.split("\t")[-1].strip()
+        branch = ref.removeprefix("refs/heads/")
+        epoch = branch.rsplit("-", 1)[-1]
+        if not epoch.isdigit():
+            continue
+        pushed = datetime.datetime.fromtimestamp(int(epoch), tz=datetime.timezone.utc)
+        if pushed.date() == now.date():
+            return branch
+    return None
 
 
 def main() -> None:
@@ -44,6 +91,15 @@ def main() -> None:
 
     failed = []
     for show in shows:
+        stranded = _same_day_recovery_branch(show)
+        if stranded:
+            msg = (f"{show}: today's episode is STRANDED on branch {stranded} "
+                   f"(pipeline succeeded and already uploaded to YouTube/R2) — "
+                   f"it needs a merge, NOT a re-run. Skipping dispatch to avoid "
+                   f"duplicate public uploads.")
+            print(f"::warning::{msg}")
+            _post_webhook(f"⚠️ Daily audit: {msg}")
+            continue
         cmd = [
             "gh", "workflow", "run", "run-show.yml",
             "-f", f"show={show}",

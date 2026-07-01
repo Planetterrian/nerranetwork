@@ -159,6 +159,22 @@ class TestWorkflowWiring:
         assert "allowed_bots" not in text
         assert "GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}" in text
 
+    def test_pick_step_excludes_pushed_review_branches(self):
+        # gh pr create is org-blocked in some configs, so review runs land as
+        # orphan agent/review-* branches with no PR. The pick-target exclusion
+        # must treat a pushed branch as an in-flight review — the open-PR-only
+        # dedupe kept re-reviewing the same show (FF 4x, Jun-Jul 2026).
+        text = WORKFLOW_PATH.read_text(encoding="utf-8")
+        assert "git ls-remote --heads origin 'refs/heads/agent/review-*'" in text
+
+    def test_review_step_carries_notification_webhook(self):
+        # run_show_review.py alerts this webhook when gh pr create fails, so
+        # a review stranded on its branch is never silent.
+        data = yaml.safe_load(WORKFLOW_PATH.read_text(encoding="utf-8"))
+        steps = data["jobs"]["review"]["steps"]
+        run_step = next(s for s in steps if s.get("name") == "Run review agent (Grok)")
+        assert "NOTIFICATION_WEBHOOK_URL" in run_step.get("env", {})
+
 
 def _load_script(name):
     spec = importlib.util.spec_from_file_location(name, ROOT / "scripts" / f"{name}.py")
@@ -241,6 +257,35 @@ class TestQualityReviewDispatch:
         assert "dispatch_quality_reviews.py" in audit
         assert "actions: write" in audit
 
+    def test_pushed_review_branch_counts_as_in_flight(self, monkeypatch):
+        # PR-only dedupe re-dispatched FF 4x while its review sat on orphan
+        # branches (gh pr create org-blocked). A pushed agent/review-<slug>-*
+        # branch must dedupe too.
+        mod = _load_script("dispatch_quality_reviews")
+        calls = []
+
+        class Proc:
+            stdout = "abc123\trefs/heads/agent/review-fascinating_frontiers-20260626\n"
+            stderr = ""
+
+        def fake_run(cmd, **kwargs):
+            calls.append(cmd)
+            return Proc()
+
+        monkeypatch.setattr(mod.subprocess, "run", fake_run)
+        assert mod._remote_review_branch_exists("fascinating_frontiers") is True
+        assert calls and "ls-remote" in calls[0]
+
+    def test_no_remote_branch_means_not_in_flight(self, monkeypatch):
+        mod = _load_script("dispatch_quality_reviews")
+
+        class Proc:
+            stdout = ""
+            stderr = ""
+
+        monkeypatch.setattr(mod.subprocess, "run", lambda cmd, **kw: Proc())
+        assert mod._remote_review_branch_exists("tesla") is False
+
 
 class TestGrokReviewScript:
     """The Grok-powered review runner that replaced the Claude Opus agent."""
@@ -270,6 +315,42 @@ class TestGrokReviewScript:
         mod = _load_script("run_show_review")
         assert hasattr(mod, "build_pr_body")
         assert hasattr(mod, "update_ledger")
+
+    def test_pr_body_committed_to_branch_and_gh_failure_alerts(self, tmp_path, monkeypatch):
+        # The PR body carries the ONLY copy of the proposed A/B prompt edits.
+        # It must be committed into the review branch BEFORE `gh pr create`
+        # (org-blocked in some configs) so proposals survive a failed PR open,
+        # and the failure must alert the operator webhook with the branch name.
+        import datetime as dt
+
+        mod = _load_script("run_show_review")
+        monkeypatch.setattr(mod, "ROOT", tmp_path)
+        git_calls = []
+        monkeypatch.setattr(mod, "_git", lambda *args: git_calls.append(args))
+
+        class FailedProc:
+            returncode = 1
+            stdout = ""
+            stderr = "GraphQL: GitHub Actions is not permitted to create or approve pull requests"
+
+        monkeypatch.setattr(mod.subprocess, "run", lambda *a, **kw: FailedProc())
+        alerts = []
+        monkeypatch.setattr(mod, "_post_webhook", lambda text: alerts.append(text))
+
+        today = dt.date(2026, 7, 1)
+        doc = tmp_path / "docs" / "reviews" / "tesla_review_2026_07_01.md"
+        doc.parent.mkdir(parents=True)
+        doc.write_text("review", encoding="utf-8")
+
+        mod.open_draft_pr("tesla", [doc], "PR BODY with A/B proposals", today)
+
+        pending = tmp_path / "docs" / "reviews" / "pending" / "tesla_2026_07_01_pr_body.md"
+        assert pending.exists()
+        assert "A/B proposals" in pending.read_text(encoding="utf-8")
+        add_call = next(c for c in git_calls if c[0] == "add")
+        assert any("pending" in arg for arg in add_call), \
+            "pending PR body must be part of the review-branch commit"
+        assert alerts and "agent/review-tesla-20260701" in alerts[0]
 
 
 class TestLedger:

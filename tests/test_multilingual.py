@@ -27,7 +27,7 @@ TESLA_DIGESTS = PROJECT_ROOT / "digests" / "tesla_shorts_time"
 # ---------------------------------------------------------------------------
 
 class TestMultilingualConfig:
-    def test_per_show_languages(self):
+    def test_per_show_languages(self, tmp_path):
         # June 2026 per-show language sets (Spanish dropped network-wide):
         # flagships get fr/ru/zh, lighter shows fr-only, the rest English-only.
         from engine.config import load_config
@@ -45,6 +45,29 @@ class TestMultilingualConfig:
             assert cfg.multilingual.languages == langs, slug
             assert "es" not in cfg.multilingual.languages, slug
         assert load_config("shows/tesla.yaml").multilingual.cloned_voice_env == "GROK_CLONED_VOICE_ID"
+
+        # July 2026: a scaffolded/unknown show (no multilingual block of its
+        # own) must inherit DISABLED from _defaults.yaml — the old inherited-on
+        # default silently gave new shows auto-on all-4-languages.
+        import shutil
+        shows = tmp_path / "shows"
+        shows.mkdir()
+        shutil.copy(PROJECT_ROOT / "shows" / "_defaults.yaml", shows / "_defaults.yaml")
+        (shows / "newshow.yaml").write_text("name: New Show\nslug: newshow\n",
+                                            encoding="utf-8")
+        cfg = load_config(shows / "newshow.yaml")
+        assert cfg.multilingual.enabled is False
+
+    def test_zh_approved_pinned_per_show(self):
+        # The workflow reads multilingual.zh_approved per show (the blanket
+        # --zh-approved flag defeated the listen-first ZH gate). Only the
+        # shows that ship zh tracks carry the approval.
+        from engine.config import load_config
+        for slug in ("tesla", "spacex", "fascinating_frontiers"):
+            assert load_config(f"shows/{slug}.yaml").multilingual.zh_approved is True, slug
+        for slug in ("first_principles", "models_agents", "env_intel",
+                     "modern_investing"):
+            assert load_config(f"shows/{slug}.yaml").multilingual.zh_approved is False, slug
 
     def test_english_only_shows_disabled(self):
         # modern_investing was enabled June 2026 (ru-only) for the @NerraRU
@@ -104,7 +127,7 @@ class TestMultilingualCostTracking:
         # the round-trip is faithful.
         from engine.config import MultilingualConfig
         fields = set(MultilingualConfig.__dataclass_fields__)
-        assert {"enabled", "languages", "cloned_voice_env"} <= fields
+        assert {"enabled", "languages", "cloned_voice_env", "zh_approved"} <= fields
 
 
 # ---------------------------------------------------------------------------
@@ -493,6 +516,65 @@ class TestAutoGeneration:
         assert tr["fr"]["audio_url"].endswith("X_Ep005_20260101.fr.mp3")
         assert tr["ru"]["title"] == "Tru"
 
+    def test_no_audio_url_short_circuits_before_translation_llm(self, tmp_path, monkeypatch):
+        # The english_url check must run BEFORE the translation call —
+        # episodes with no audio_url used to pay 1-2 full-script LLM calls
+        # per sweep forever, then be discarded as unplaceable.
+        from engine import multilingual, translate
+        (tmp_path / "X_Ep005_20260101_tts.txt").write_text("English script.", encoding="utf-8")
+        (tmp_path / "s.json").write_text(json.dumps({"podcast": "t", "summaries": [
+            {"episode_num": 5, "episode_title": "Title"}]}), encoding="utf-8")  # no audio_url
+        cfg = self._fake_config(tmp_path)
+        monkeypatch.setattr(multilingual, "PROJECT_ROOT", Path("/"))
+
+        def _boom(*a, **k):
+            raise AssertionError("translate_script called despite missing audio_url")
+
+        monkeypatch.setattr(translate, "translate_script", _boom)
+        res = multilingual.generate_for_episode(
+            cfg, 5, ["fr"], voice_id="vid", api_key="k")
+        assert res == {"fr": "no_audio_url"}
+
+    def test_rejected_translation_persists_marker_and_caps_retries(self, tmp_path, monkeypatch):
+        # A validation-rejected language writes a status/attempts marker on
+        # the track record and stops retrying after 2 total attempts —
+        # previously every idempotent sweep re-spent the LLM call forever.
+        from engine import multilingual, translate
+        self._lay_episode(tmp_path)
+        cfg = self._fake_config(tmp_path)
+        monkeypatch.setattr(multilingual, "PROJECT_ROOT", Path("/"))
+        calls = []
+
+        def _reject(*a, **k):
+            calls.append(1)
+            raise translate.TranslationError("zh: wrong script")
+
+        monkeypatch.setattr(translate, "translate_script", _reject)
+
+        def run():
+            return multilingual.generate_for_episode(
+                cfg, 5, ["zh"], voice_id="vid", api_key="k")
+
+        assert run() == {"zh": "rejected"}
+        rec = json.loads((tmp_path / "s.json").read_text(encoding="utf-8"))["summaries"][0]
+        marker = rec["translations"]["zh"]
+        assert marker["status"] == "rejected"
+        assert marker["attempts"] == 1
+        assert "audio_url" not in marker  # never surfaces in feeds/switchers
+
+        assert run() == {"zh": "rejected"}  # second (final) attempt
+        rec = json.loads((tmp_path / "s.json").read_text(encoding="utf-8"))["summaries"][0]
+        assert rec["translations"]["zh"]["attempts"] == 2
+
+        assert run() == {"zh": "rejected_skip"}  # capped — no LLM spend
+        assert len(calls) == 2
+
+        # --force overrides the cap (operator retry after a prompt fix).
+        res = multilingual.generate_for_episode(
+            cfg, 5, ["zh"], voice_id="vid", api_key="k", force=True)
+        assert res == {"zh": "rejected"}
+        assert len(calls) == 3
+
     def test_auto_skips_when_disabled(self, tmp_path):
         from engine import multilingual
         cfg = self._fake_config(tmp_path, enabled=False)
@@ -609,4 +691,27 @@ class TestMultilingualDecoupled:
         assert wf.exists(), "decoupled multilingual workflow missing"
         text = wf.read_text(encoding="utf-8")
         assert "scripts/generate_translations.py" in text
-        assert "--zh-approved" in text  # operator approved all four languages
+        # ZH approval is per-show (multilingual.zh_approved), never a blanket
+        # flag on the driver invocation (that defeated the listen-first gate).
+        assert "zh_approved" in text
+        assert "--latest \"$LATEST\" --zh-approved" not in text
+
+    def test_workflow_run_trigger_narrows_matrix(self):
+        # A "Run Podcast Show" completion sweeps only the show it published
+        # (parsed from the "Auto-generated: <show> <date>" head commit) —
+        # the old all-7-show fan-out per episode run was ~35 no-op jobs/day.
+        text = (PROJECT_ROOT / ".github" / "workflows" / "multilingual.yml").read_text(
+            encoding="utf-8")
+        assert "HEAD_COMMIT_MESSAGE" in text
+        assert "Auto-generated:" in text
+
+    def test_push_exhaustion_preserves_commit_via_recovery_pr(self):
+        # RU-dub uploads' only dedupe record (youtube_videos.ru.json) lives in
+        # the commit — dropping it on push failure caused duplicate public
+        # uploads on the next sweep. The workflow must escalate to the
+        # recovery-PR script instead (and hold the PR-creation permission).
+        text = (PROJECT_ROOT / ".github" / "workflows" / "multilingual.yml").read_text(
+            encoding="utf-8")
+        assert "scripts/create_recovery_pr.sh" in text
+        assert "pull-requests: write" in text
+        assert "next sweep will retry (idempotent)" not in text  # the old lie

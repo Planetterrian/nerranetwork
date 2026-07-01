@@ -385,8 +385,14 @@ WORD_PRONUNCIATIONS: Dict[str, str] = {
     # never re-enters the transcript.
 
     # --- Tesla model names ---
-    "Model 3": "Model Three",
-    "Model Y": "Model Why",
+    # ``Model 3`` / ``Model Y`` respellings MOVED to
+    # shows/pronunciation_map.yaml on 2026-07-01 (audio-only). Running here at
+    # script-save time leaked "Model Three" / "Model Why" into the saved
+    # _tts.txt -> blog/RSS transcript (blog/tesla/ep528.html shipped
+    # "Model Why" x9 — the same leak class as "Mee-stral" / "I G Metall").
+    # The audio is byte-for-byte unchanged: Grok still receives the respelling
+    # at synthesis time; only the published text now reads the real product
+    # names.
 
     # --- Organizations / unions ---
     # ``IG Metall`` / ``IF Metall`` letter-prefix respellings MOVED to

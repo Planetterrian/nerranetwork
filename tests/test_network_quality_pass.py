@@ -166,8 +166,14 @@ class TestPromptTicBans:
 
 
 class TestNarrativeQueueRunway:
+    # NOTE: topic-queue restocks are MANUAL (no auto-generation), and a breach
+    # here fails the full -x suite and thus blocks unrelated PRs — restock the
+    # shows/topic_queues/ YAML before the runway runs out.
+    # unintended_consequences runs 7 days/week (cron "1 9 * * *", a daily
+    # narrative show per DAILY_NARRATIVE_SHOWS in test_schedule.py); per_week
+    # was corrected 5→7 July 2026 to match the real cadence.
     @pytest.mark.parametrize("slug,per_week,min_weeks", [
-        ("unintended_consequences", 5, 4.0),
+        ("unintended_consequences", 7, 4.0),
         ("first_principles", 7, 3.0),
     ])
     def test_queue_has_runway(self, slug, per_week, min_weeks):
