@@ -33,9 +33,10 @@ the rendition with "video can't play".
 from __future__ import annotations
 
 import logging
+import math
 import subprocess
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import List, Optional, Sequence, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -448,6 +449,7 @@ _XFADE_TRANSITIONS = [
 
 def _slideshow_filter_graph(scene_count: int, *,
                             scene_duration: float = _SCENE_DURATION_SECONDS,
+                            scene_durations: Optional[Sequence[float]] = None,
                             width: int = 1920, height: int = 1080,
                             fps: int = 30,
                             crossfade: float = _SLIDESHOW_XFADE_S) -> str:
@@ -461,16 +463,39 @@ def _slideshow_filter_graph(scene_count: int, *,
     time, and the xfade offset for scene k is ``k * scene_duration`` — keeping
     total runtime ≈ ``scene_count * scene_duration`` (slightly longer, never
     shorter, than the audio it backs).
+
+    ``scene_durations`` (June 2026 chapter-aware pass) gives each scene its
+    OWN visible duration — the vehicle for chapter-aligned scene switches
+    planned by :mod:`engine.scene_scheduler`. Scene ``i`` is rendered
+    ``scene_durations[i] + crossfade`` long, and the xfade offset for join
+    ``k`` generalizes to the cumulative visible time ``sum(durations[:k])``
+    (with per-clip length ``d_k + crossfade`` this IS the standard xfade
+    chaining formula ``sum(clip_lens[:k]) - k*crossfade``). A uniform
+    durations list reproduces the legacy graph exactly (``math.fsum`` of
+    ``k`` equal floats rounds identically to ``k * scene_duration``); the
+    hard-cut ``concat`` fallback likewise honours per-scene durations via
+    each clip's own ``trim``.
     """
+    if scene_durations is not None and len(scene_durations) != scene_count:
+        raise ValueError(
+            f"scene_durations length {len(scene_durations)} != "
+            f"scene_count {scene_count}"
+        )
     pre_w = int(width * 1.15)
     pre_h = int(height * 1.15)
     zoom_expr = "min(zoom+0.0006,1.12)"
     use_xfade = crossfade and crossfade > 0 and scene_count >= 2
-    clip_len = scene_duration + (crossfade if use_xfade else 0.0)
-    frames_per_scene = int(clip_len * fps)
+    xfade_pad = crossfade if use_xfade else 0.0
+    durs: List[float] = (
+        [float(d) for d in scene_durations]
+        if scene_durations is not None
+        else [scene_duration] * scene_count
+    )
 
     chains: List[str] = []
     for i in range(scene_count):
+        clip_len = durs[i] + xfade_pad
+        frames_per_scene = int(clip_len * fps)
         chains.append(
             f"[{i}:v]"
             f"scale={pre_w}:{pre_h}:force_original_aspect_ratio=increase,"
@@ -490,7 +515,10 @@ def _slideshow_filter_graph(scene_count: int, *,
     prev = "[s0]"
     for k in range(1, scene_count):
         trans = _XFADE_TRANSITIONS[(k - 1) % len(_XFADE_TRANSITIONS)]
-        offset = k * scene_duration
+        offset = (
+            k * scene_duration if scene_durations is None
+            else math.fsum(durs[:k])
+        )
         out = "[v]" if k == scene_count - 1 else f"[x{k}]"
         chains.append(
             f"{prev}[s{k}]xfade=transition={trans}"
@@ -502,6 +530,7 @@ def _slideshow_filter_graph(scene_count: int, *,
 
 def _slideshow_cmd(scene_paths: Sequence[Path], output: Path,
                    *, scene_duration: float = _SCENE_DURATION_SECONDS,
+                   scene_durations: Optional[Sequence[float]] = None,
                    width: int = 1920, height: int = 1080,
                    fps: int = 30,
                    crossfade: float = _SLIDESHOW_XFADE_S) -> List[str]:
@@ -510,15 +539,25 @@ def _slideshow_cmd(scene_paths: Sequence[Path], output: Path,
     *width* and *height* default to 1920x1080 for the long-form path;
     pass 1080x1920 for the vertical Shorts variant. Uses the fast encode
     profile (this is an intermediate re-encoded by stage 2).
+
+    ``scene_durations`` gives each scene its own visible duration (the
+    chapter-aware schedule path); each looped image input's ``-t`` then
+    covers its OWN clip length instead of the shared uniform one. A
+    uniform list reproduces the legacy command exactly.
     """
     use_xfade = crossfade and crossfade > 0 and len(scene_paths) >= 2
-    per_input_t = scene_duration + (crossfade if use_xfade else 0.0) + 0.5
+    input_pad = (crossfade if use_xfade else 0.0) + 0.5
+    durs: List[float] = (
+        [float(d) for d in scene_durations]
+        if scene_durations is not None
+        else [scene_duration] * len(scene_paths)
+    )
     inputs: List[str] = []
-    for path in scene_paths:
+    for i, path in enumerate(scene_paths):
         inputs.extend([
             "-loop", "1",
             "-framerate", str(fps),
-            "-t", f"{per_input_t:.2f}",
+            "-t", f"{durs[i] + input_pad:.2f}",
             "-i", str(path),
         ])
     return [
@@ -527,6 +566,7 @@ def _slideshow_cmd(scene_paths: Sequence[Path], output: Path,
         "-filter_complex",
         _slideshow_filter_graph(len(scene_paths),
                                 scene_duration=scene_duration,
+                                scene_durations=scene_durations,
                                 width=width, height=height, fps=fps,
                                 crossfade=crossfade),
         "-map", "[v]",
@@ -540,13 +580,18 @@ def _slideshow_cmd(scene_paths: Sequence[Path], output: Path,
 
 def _render_slideshow(scene_paths: Sequence[Path], output: Path,
                       *, scene_duration: float = _SCENE_DURATION_SECONDS,
+                      scene_durations: Optional[Sequence[float]] = None,
                       width: int = 1920, height: int = 1080,
                       fps: int = 30) -> Path:
     """Render the stage-1 slideshow MP4. Idempotent (skips if output exists).
 
     Tries the crossfade graph first; if ffmpeg rejects it for any reason,
     retries once with plain hard-cut concat so a transition bug can never
-    block a render (worst case = the pre-June-2026 hard-cut look).
+    block a render (worst case = the pre-June-2026 hard-cut look). The
+    retry also catches the ``RuntimeError`` that :func:`_run_ffmpeg` wraps
+    around ffmpeg failures (June 2026 fix — the original
+    ``CalledProcessError``-only clause never matched the wrapped error,
+    so the documented hard-cut fallback couldn't actually fire).
     """
     if output.exists():
         return output
@@ -555,9 +600,10 @@ def _render_slideshow(scene_paths: Sequence[Path], output: Path,
     try:
         cmd = _slideshow_cmd(scene_paths, output,
                              scene_duration=scene_duration,
+                             scene_durations=scene_durations,
                              width=width, height=height, fps=fps)
         _run_ffmpeg(cmd, label="slideshow render (crossfade)")
-    except subprocess.CalledProcessError as exc:
+    except (subprocess.CalledProcessError, RuntimeError) as exc:
         logger.warning(
             "Crossfade slideshow render failed (%s) — retrying with hard cuts.",
             exc,
@@ -565,6 +611,7 @@ def _render_slideshow(scene_paths: Sequence[Path], output: Path,
         output.unlink(missing_ok=True)
         cmd = _slideshow_cmd(scene_paths, output,
                              scene_duration=scene_duration,
+                             scene_durations=scene_durations,
                              width=width, height=height, fps=fps,
                              crossfade=0.0)
         _run_ffmpeg(cmd, label="slideshow render (hard cut fallback)")
@@ -704,6 +751,81 @@ def _build_hybrid_sequence(scene_paths: Sequence[Path],
         visuals.append((clip_paths[ci], True, float(clip_durations[ci])))
         ci += 1
     return visuals
+
+
+# Evergreen-B-roll cap: more than ~3 clips per episode stops feeling like
+# accent motion and starts fighting the chapter-aligned still rhythm.
+_MAX_BROLL_CLIPS = 3
+
+
+def _interleave_broll_into_schedule(
+    schedule: Sequence[Tuple[Path, float]],
+    clip_paths: Sequence[Path],
+    clip_durations: Sequence[float],
+) -> List[tuple]:
+    """Interleave B-roll clips among the SCHEDULED stills.
+
+    Counterpart of :func:`_build_hybrid_sequence` for the chapter-aware
+    path: the stills keep their planned ORDER (so scene topicality still
+    tracks the chapters) but their holds shrink proportionally to make
+    room for the clips, keeping total runtime ≈ the scheduled total
+    (which the scheduler pinned to the audio length). Clips are spread
+    at roughly even positions, first clip at the open — same placement
+    rhythm as the uniform hybrid path.
+    """
+    total = math.fsum(d for _, d in schedule)
+    clip_total = math.fsum(float(d) for d in clip_durations)
+    factor = (max(0.0, total - clip_total) / total) if total > 0 else 1.0
+    stills = [(path, max(1.0, dur * factor)) for path, dur in schedule]
+
+    n_clips = len(clip_paths)
+    if n_clips == 0:
+        return [(path, False, dur) for path, dur in stills]
+    visuals: List[tuple] = []
+    step = max(1, len(stills) // n_clips)
+    ci = 0
+    for j, (path, dur) in enumerate(stills):
+        if ci < n_clips and j % step == 0:
+            visuals.append((clip_paths[ci], True, float(clip_durations[ci])))
+            ci += 1
+        visuals.append((path, False, dur))
+    while ci < n_clips:
+        visuals.append((clip_paths[ci], True, float(clip_durations[ci])))
+        ci += 1
+    return visuals
+
+
+def _short_segment_durations(cut_times: Sequence[float],
+                             duration: float,
+                             *, min_segment_s: float = 0.5) -> List[float]:
+    """Turn Shorts scene-change times into per-segment durations.
+
+    ``cut_times`` are seconds relative to the clip start (the
+    :func:`engine.scene_scheduler.sentence_cut_times` contract). Cuts
+    are sorted, deduped, and dropped when they'd create a segment
+    shorter than *min_segment_s* or land within *min_segment_s* of the
+    clip end. The last segment runs to the clip end, so the durations
+    always sum to *duration* exactly. Returns ``[]`` when no usable cut
+    survives — the caller keeps the legacy flat-pace path.
+    """
+    cuts: List[float] = []
+    last = 0.0
+    for t in sorted(float(t) for t in cut_times or []):
+        if t - last < min_segment_s:
+            continue
+        if t > duration - min_segment_s:
+            break
+        cuts.append(t)
+        last = t
+    if not cuts:
+        return []
+    durations: List[float] = []
+    prev = 0.0
+    for t in cuts:
+        durations.append(t - prev)
+        prev = t
+    durations.append(duration - prev)
+    return durations
 
 
 # ---------------------------------------------------------------------------
@@ -1165,13 +1287,17 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
                     end_card_sub_text: str = "Tap Subscribe ↗",
                     end_card_duration: float = 3.0,
                     end_card_image_in: Optional[str] = None,
-                    caption_margin_v: Optional[int] = None) -> List[str]:
+                    caption_margin_v: Optional[int] = None,
+                    bg_loop: bool = True) -> List[str]:
     """ffmpeg command for the 1080x1920 Shorts build.
 
     When *bg_is_video* is True, *bg_in* is a pre-rendered vertical
     slideshow MP4; we ``-stream_loop -1`` it so it loops to match the
     Shorts clip length, and we drop the ``-loop 1 -framerate``
-    image-input flags.
+    image-input flags. ``bg_loop=False`` (June 2026 sentence-cut pass)
+    drops the ``-stream_loop`` too — used when the slideshow was built
+    to the clip's FULL length from explicit scene-change times, so
+    looping it would restart the visuals mid-clip.
 
     When *url_pill_in* is provided, a 4th input is added (the
     ``nerranetwork.com`` URL pill PNG) and overlaid at bottom-center.
@@ -1185,7 +1311,10 @@ def _short_form_cmd(audio_in: str, bg_in: str, brand_in: str,
     (y≈1820).
     """
     if bg_is_video:
-        bg_input = ["-stream_loop", "-1", "-i", bg_in]
+        if bg_loop:
+            bg_input = ["-stream_loop", "-1", "-i", bg_in]
+        else:
+            bg_input = ["-i", bg_in]
     else:
         bg_input = ["-loop", "1", "-framerate", str(fps), "-i", bg_in]
 
@@ -1252,6 +1381,8 @@ def build_long_form_video(
     clip_paths: Optional[Sequence[Path]] = None,
     subtitles_path: Optional[Path] = None,
     show_name: Optional[str] = None,
+    scene_schedule: Optional[Sequence[Tuple[Path, float]]] = None,
+    broll_clips: Optional[Sequence[Path]] = None,
 ) -> Path:
     """Render a 1920x1080 long-form podcast video.
 
@@ -1282,6 +1413,20 @@ def build_long_form_video(
         top-right. When ``None``: legacy single "Nerra Network" pill
         in the top-left only. Tests + back-compat callers omit this
         kwarg and keep the legacy behaviour.
+    scene_schedule:
+        Optional explicit ``[(scene_path, hold_seconds), …]`` plan
+        (June 2026 — produced by
+        ``engine.scene_scheduler.plan_chapter_schedule`` so scene
+        switches land on chapter boundaries). With ≥2 entries the
+        slideshow uses these per-scene durations (cumulative xfade
+        offsets) instead of the uniform timer; ``None`` (or <2
+        entries) keeps the legacy uniform behaviour byte-for-byte.
+    broll_clips:
+        Optional already-local evergreen 16:9 silent MP4s. Up to
+        ``_MAX_BROLL_CLIPS`` (3) are interleaved at roughly even
+        positions between the stills via the hybrid renderer;
+        any failure degrades to the pure slideshow. Purely a
+        consumer of existing files — this never generates clips.
 
     Returns
     -------
@@ -1312,9 +1457,16 @@ def build_long_form_video(
         _make_brand_pill(brand_path)
         url_pill_path = None
 
+    # Chapter-aware schedule (June 2026): an explicit per-scene plan wins
+    # over the uniform timer. Normalized once so every branch below sees
+    # clean (Path, float) pairs; <2 entries keeps legacy behaviour.
+    schedule: Optional[List[Tuple[Path, float]]] = None
+    if scene_schedule and len(scene_schedule) >= 2:
+        schedule = [(Path(p), float(d)) for p, d in scene_schedule]
+
     bg_path: Path = cover_path
     bg_is_video = False
-    if scene_paths and len(scene_paths) >= 2:
+    if schedule or (scene_paths and len(scene_paths) >= 2):
         slideshow_path = work_dir / f"{output_path.stem}_slides.mp4"
         # Stretch each scene so the slideshow naturally spans the full
         # audio duration. Operator caught (May 8 2026) the previous
@@ -1332,10 +1484,16 @@ def build_long_form_video(
 
         # Hybrid path: interleave short video clips among the stills for
         # motion (Phase-4). Best-effort — any failure falls through to the
-        # pure-stills slideshow below.
+        # pure-stills slideshow below. ``broll_clips`` (June 2026) feeds
+        # the same renderer with already-local evergreen clips, capped at
+        # _MAX_BROLL_CLIPS so accents stay accents.
         usable_clips: List[Path] = [
             Path(c) for c in (clip_paths or []) if Path(c).exists()
         ]
+        usable_clips.extend(
+            Path(c) for c in list(broll_clips or [])[:_MAX_BROLL_CLIPS]
+            if Path(c).exists()
+        )
         if usable_clips and audio_duration_s > 0:
             try:
                 clip_durs: List[float] = []
@@ -1344,10 +1502,15 @@ def build_long_form_video(
                         clip_durs.append(float(_get_duration(str(c)) or 5.0))
                     except Exception:
                         clip_durs.append(5.0)
-                visuals = _build_hybrid_sequence(
-                    list(scene_paths), usable_clips, clip_durs,
-                    audio_duration_s=audio_duration_s,
-                )
+                if schedule:
+                    visuals = _interleave_broll_into_schedule(
+                        schedule, usable_clips, clip_durs,
+                    )
+                else:
+                    visuals = _build_hybrid_sequence(
+                        list(scene_paths), usable_clips, clip_durs,
+                        audio_duration_s=audio_duration_s,
+                    )
                 hybrid_path = work_dir / f"{output_path.stem}_hybrid.mp4"
                 _render_hybrid_slideshow(visuals, hybrid_path, fps=fps)
                 bg_path = hybrid_path
@@ -1376,40 +1539,60 @@ def build_long_form_video(
             _run_ffmpeg(cmd, label="long-form video")
             return output_path
 
-        slideshow_scenes = list(scene_paths)
-        if audio_duration_s > 0:
-            scene_duration_s = max(8.0, audio_duration_s / len(slideshow_scenes))
-            # Cycle the scene list so no single image holds longer than
-            # _MAX_SCENE_HOLD_S (module constant; June 2026 motion pass lowered
-            # it 25 → 15 s). The May 12 retune halved Grok spend to 4
-            # images/aspect, which left each scene on screen ~2-3 minutes on a
-            # full-length episode (Ep505: 4 scenes over 673 s = 168 s/image) —
-            # visually static. Reusing the SAME images in rotation restores
-            # visual rhythm at zero additional image cost.
-            if scene_duration_s > _MAX_SCENE_HOLD_S and len(slideshow_scenes) > 1:
-                import math
-                target = math.ceil(audio_duration_s / _MAX_SCENE_HOLD_S)
-                slideshow_scenes = [
-                    slideshow_scenes[i % len(slideshow_scenes)]
-                    for i in range(target)
-                ]
-                scene_duration_s = max(
-                    8.0, audio_duration_s / len(slideshow_scenes),
+        if schedule:
+            # Chapter-aware plan: the scheduler already decided both the
+            # scene ORDER and each scene's hold, so we render the
+            # slideshow with per-scene durations (cumulative xfade
+            # offsets) instead of the uniform timer. Distinct filename —
+            # a persistent work dir may hold a stale uniform render
+            # under the legacy name.
+            slideshow_path = work_dir / f"{output_path.stem}_slides_sched.mp4"
+            try:
+                _render_slideshow(
+                    [p for p, _ in schedule], slideshow_path,
+                    scene_durations=[d for _, d in schedule], fps=fps,
+                )
+                bg_path = slideshow_path
+                bg_is_video = True
+            except (subprocess.CalledProcessError, RuntimeError) as exc:
+                logger.warning(
+                    "Scheduled slideshow render failed (%s) — falling back "
+                    "to single cover", exc,
                 )
         else:
-            scene_duration_s = _SCENE_DURATION_SECONDS  # legacy 12 s
-        try:
-            _render_slideshow(
-                slideshow_scenes, slideshow_path,
-                scene_duration=scene_duration_s, fps=fps,
-            )
-            bg_path = slideshow_path
-            bg_is_video = True
-        except subprocess.CalledProcessError as exc:
-            logger.warning(
-                "Slideshow render failed (%s) — falling back to single cover",
-                exc,
-            )
+            slideshow_scenes = list(scene_paths)
+            if audio_duration_s > 0:
+                scene_duration_s = max(8.0, audio_duration_s / len(slideshow_scenes))
+                # Cycle the scene list so no single image holds longer than
+                # _MAX_SCENE_HOLD_S (module constant; June 2026 motion pass lowered
+                # it 25 → 15 s). The May 12 retune halved Grok spend to 4
+                # images/aspect, which left each scene on screen ~2-3 minutes on a
+                # full-length episode (Ep505: 4 scenes over 673 s = 168 s/image) —
+                # visually static. Reusing the SAME images in rotation restores
+                # visual rhythm at zero additional image cost.
+                if scene_duration_s > _MAX_SCENE_HOLD_S and len(slideshow_scenes) > 1:
+                    target = math.ceil(audio_duration_s / _MAX_SCENE_HOLD_S)
+                    slideshow_scenes = [
+                        slideshow_scenes[i % len(slideshow_scenes)]
+                        for i in range(target)
+                    ]
+                    scene_duration_s = max(
+                        8.0, audio_duration_s / len(slideshow_scenes),
+                    )
+            else:
+                scene_duration_s = _SCENE_DURATION_SECONDS  # legacy 12 s
+            try:
+                _render_slideshow(
+                    slideshow_scenes, slideshow_path,
+                    scene_duration=scene_duration_s, fps=fps,
+                )
+                bg_path = slideshow_path
+                bg_is_video = True
+            except subprocess.CalledProcessError as exc:
+                logger.warning(
+                    "Slideshow render failed (%s) — falling back to single cover",
+                    exc,
+                )
 
     cmd = _long_form_cmd(
         str(audio_path), str(bg_path), str(brand_path),
@@ -1440,7 +1623,8 @@ def build_short_video(audio_path: Path, cover_path: Path,
                       end_card_duration: float = 3.0,
                       end_card_image_path: Optional[Path] = None,
                       drop_url_pill: bool = False,
-                      caption_margin_v: Optional[int] = None) -> Path:
+                      caption_margin_v: Optional[int] = None,
+                      scene_change_times: Optional[Sequence[float]] = None) -> Path:
     """Render a 1080x1920 vertical YouTube Shorts video.
 
     ``drop_url_pill`` / ``caption_margin_v`` support the multi-platform
@@ -1480,6 +1664,17 @@ def build_short_video(audio_path: Path, cover_path: Path,
         ``_SHORTS_SUBTITLES_FORCE_STYLE``. The cues sit between the
         static hook (above) and the URL pill (below) so all three
         overlays are visible together without overlap.
+    scene_change_times:
+        Optional scene-cut times in seconds RELATIVE to the clip start
+        (June 2026 — produced by
+        ``engine.scene_scheduler.sentence_cut_times`` so background
+        changes land between sentences instead of on the flat 7 s
+        grid). When provided with ≥2 scene images, the vertical
+        slideshow is built to the clip's FULL length with those
+        per-segment durations and the composite drops the
+        ``-stream_loop`` (looping a full-length background would
+        restart the visuals mid-clip). ``None`` keeps the legacy
+        flat-pace loop path unchanged.
     """
     if duration >= 60:
         raise ValueError(
@@ -1509,21 +1704,56 @@ def build_short_video(audio_path: Path, cover_path: Path,
 
     bg_path: Path = cover_path
     bg_is_video = False
+    bg_full_length = False
     if scene_paths and len(scene_paths) >= 2:
-        slideshow_path = work_dir / f"{output_path.stem}_short_slides.mp4"
-        try:
-            _render_slideshow(
-                scene_paths, slideshow_path,
-                scene_duration=_SHORT_SCENE_DURATION_SECONDS,
-                width=1080, height=1920, fps=fps,
+        if scene_change_times:
+            # Sentence-snapped cuts (June 2026): build the vertical
+            # slideshow to the clip's FULL length with per-segment
+            # durations — no -stream_loop needed downstream. Scenes
+            # rotate through the pool per segment, mirroring the flat
+            # path's cycling. Any failure falls through to the legacy
+            # flat-pace loop below.
+            seg_durations = _short_segment_durations(
+                scene_change_times, duration,
             )
-            bg_path = slideshow_path
-            bg_is_video = True
-        except subprocess.CalledProcessError as exc:
-            logger.warning(
-                "Shorts slideshow render failed (%s) — falling back to cover",
-                exc,
-            )
+            if seg_durations:
+                seg_scenes = [
+                    scene_paths[i % len(scene_paths)]
+                    for i in range(len(seg_durations))
+                ]
+                slideshow_path = (
+                    work_dir / f"{output_path.stem}_short_slides_sched.mp4"
+                )
+                try:
+                    _render_slideshow(
+                        seg_scenes, slideshow_path,
+                        scene_durations=seg_durations,
+                        width=1080, height=1920, fps=fps,
+                    )
+                    bg_path = slideshow_path
+                    bg_is_video = True
+                    bg_full_length = True
+                except (subprocess.CalledProcessError, RuntimeError) as exc:
+                    logger.warning(
+                        "Scheduled Shorts slideshow render failed (%s) — "
+                        "falling back to the flat %.0fs pace",
+                        exc, _SHORT_SCENE_DURATION_SECONDS,
+                    )
+        if not bg_is_video:
+            slideshow_path = work_dir / f"{output_path.stem}_short_slides.mp4"
+            try:
+                _render_slideshow(
+                    scene_paths, slideshow_path,
+                    scene_duration=_SHORT_SCENE_DURATION_SECONDS,
+                    width=1080, height=1920, fps=fps,
+                )
+                bg_path = slideshow_path
+                bg_is_video = True
+            except subprocess.CalledProcessError as exc:
+                logger.warning(
+                    "Shorts slideshow render failed (%s) — falling back to cover",
+                    exc,
+                )
 
     cmd = _short_form_cmd(
         str(audio_path), str(bg_path), str(brand_path),
@@ -1543,6 +1773,7 @@ def build_short_video(audio_path: Path, cover_path: Path,
             else None
         ),
         caption_margin_v=caption_margin_v,
+        bg_loop=not bg_full_length,
     )
     logger.info(
         "Building Shorts video (%.1fs from %.1fs) → %s "
