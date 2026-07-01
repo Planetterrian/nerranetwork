@@ -8,7 +8,10 @@ images) and uploads it to the @NerraRU channel. See ``engine.ru_dub`` /
 ``docs/ru_youtube_dubs.md``.
 
 Idempotent: skips episodes whose RU video is already recorded in the per-show
-``youtube_videos.ru.json`` index unless ``--force``.
+``youtube_videos.ru.json`` index unless ``--force``. A ``no_scenes_yet``
+deferral (fresh episode whose gallery scenes haven't reached the committed
+manifest yet) is recorded as a status-only row and does NOT count as done —
+the next sweep retries it with the real scenes.
 
 Usage::
 
@@ -67,6 +70,12 @@ def _already_done(config, episode_num: int) -> bool:
     # public long-form video. A failed Short is therefore NOT retried; it is
     # recorded durably in the index by _record_short_failure so the gap is
     # visible (re-publish with --force after fixing the cause).
+    #
+    # The row must carry a video_id: status-only rows (a short-failure row
+    # or a no_scenes_yet deferral row) mean nothing was uploaded, so the
+    # episode is NOT done and the next sweep retries it — that's the whole
+    # point of the deferral (the gallery-manifest rebuild lags the newest
+    # episode; retrying later picks up the real scenes).
     idx = _index_path(config)
     if not idx.exists():
         return False
@@ -75,6 +84,7 @@ def _already_done(config, episode_num: int) -> bool:
     except Exception:  # noqa: BLE001
         return False
     return any(v.get("episode") == episode_num and v.get("kind") == "long"
+               and v.get("video_id")
                for v in data.get("videos", []))
 
 
@@ -110,6 +120,64 @@ def _record_short_failure(config, episode_num: int, error: str) -> None:
                        encoding="utf-8")
     except OSError as exc:
         logger.warning("Could not record short failure in %s: %s", idx, exc)
+
+
+def _record_scenes_deferral(config, episode_num: int) -> None:
+    """Durably note a ``no_scenes_yet`` deferral in the per-show RU index.
+
+    Same conventions as ``_record_short_failure``: no ``video_id`` (nothing
+    was uploaded — so ``_already_done`` treats the episode as NOT done and
+    the next sweep retries once the gallery-manifest rebuild catches up),
+    one row per episode (latest wins), and the row exists so the operator
+    can see WHY an episode's RU dub hasn't shipped yet instead of the
+    deferral living only in a runner log."""
+    import datetime as _dt
+    idx = _index_path(config)
+    try:
+        data = json.loads(idx.read_text(encoding="utf-8")) if idx.exists() else {}
+    except Exception:  # noqa: BLE001
+        data = {}
+    videos = data.setdefault("videos", [])
+    videos[:] = [v for v in videos
+                 if not (v.get("episode") == episode_num
+                         and v.get("kind") == "long"
+                         and v.get("status") == "deferred")]
+    videos.append({
+        "episode": episode_num,
+        "kind": "long",
+        "status": "deferred",
+        "reason": "no_scenes_yet",
+        "recorded": _dt.datetime.now(_dt.timezone.utc).isoformat(),
+    })
+    try:
+        idx.parent.mkdir(parents=True, exist_ok=True)
+        idx.write_text(json.dumps(data, ensure_ascii=False, indent=2),
+                       encoding="utf-8")
+    except OSError as exc:
+        logger.warning("Could not record scenes deferral in %s: %s", idx, exc)
+
+
+def _clear_scenes_deferral(config, episode_num: int) -> None:
+    """Drop a stale deferral row once the episode's long-form ships."""
+    idx = _index_path(config)
+    if not idx.exists():
+        return
+    try:
+        data = json.loads(idx.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return
+    videos = data.get("videos", [])
+    kept = [v for v in videos
+            if not (v.get("episode") == episode_num
+                    and v.get("kind") == "long"
+                    and v.get("status") == "deferred")]
+    if len(kept) != len(videos):
+        data["videos"] = kept
+        try:
+            idx.write_text(json.dumps(data, ensure_ascii=False, indent=2),
+                           encoding="utf-8")
+        except OSError as exc:
+            logger.warning("Could not clear scenes deferral in %s: %s", idx, exc)
 
 
 def _clear_short_failure(config, episode_num: int) -> None:
@@ -182,6 +250,16 @@ def main() -> int:
             res = ru_dub.publish_ru_dub(
                 config, ep, build_short=not args.no_short, dry_run=args.dry_run)
             logger.info("%s Ep%s: %s", slug, ep, res.get("status"))
+            if res.get("status") == "no_scenes_yet" and not args.dry_run:
+                # Fresh episode whose gallery scenes aren't in the manifest
+                # yet — record the deferral (visible + NOT done) so the next
+                # sweep retries with the real scenes instead of the first
+                # scene-less cover upload becoming final.
+                logger.info("%s Ep%s: scenes not in gallery manifest yet — "
+                            "deferred for the next sweep", slug, ep)
+                _record_scenes_deferral(config, ep)
+            elif res.get("status") == "done":
+                _clear_scenes_deferral(config, ep)
             if res.get("short_error") and not args.dry_run:
                 logger.warning("%s Ep%s: Short failed (long uploaded): %s",
                                slug, ep, res["short_error"])

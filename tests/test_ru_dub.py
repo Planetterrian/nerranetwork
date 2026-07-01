@@ -15,8 +15,8 @@ _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from engine import ru_dub
-from engine.config import load_config
+from engine import ru_dub  # noqa: E402
+from engine.config import load_config  # noqa: E402
 
 
 def _cfg(**yt):
@@ -181,6 +181,245 @@ class TestShortFailureIndex:
         drv._clear_short_failure(cfg, 7)
         data = json.loads((tmp_path / "youtube_videos.ru.json").read_text())
         assert [v for v in data["videos"] if v.get("status") == "failed"] == []
+
+
+class TestFreshEpisode:
+    """_is_fresh_episode decides defer-vs-cover for scene-less episodes."""
+
+    def test_today_and_yesterday_are_fresh(self):
+        import datetime
+        today = datetime.date(2026, 7, 1)
+        assert ru_dub._is_fresh_episode("2026-07-01", today=today) is True
+        assert ru_dub._is_fresh_episode("2026-06-30", today=today) is True
+
+    def test_older_episodes_are_not_fresh(self):
+        import datetime
+        today = datetime.date(2026, 7, 1)
+        assert ru_dub._is_fresh_episode("2026-06-29", today=today) is False
+        assert ru_dub._is_fresh_episode("2026-01-01", today=today) is False
+
+    def test_unparsable_dates_count_as_old(self):
+        # Malformed record must PUBLISH (with cover), never stall forever.
+        assert ru_dub._is_fresh_episode("") is False
+        assert ru_dub._is_fresh_episode("soonish") is False
+
+    def test_datetime_prefix_accepted(self):
+        import datetime
+        today = datetime.date(2026, 7, 1)
+        assert ru_dub._is_fresh_episode("2026-07-01T09:00:00+00:00",
+                                        today=today) is True
+
+
+class TestManifestRefresh:
+    """_fresh_manifest_path: best-effort origin/main refresh, checked-out
+    fallback on ANY failure — the sweep's checkout can lag the manifest
+    rebuild workflow, so fresh episodes' scenes only exist on origin/main."""
+
+    def _fake_run(self, show_rc=0, show_stdout=b'{"images": []}'):
+        calls = []
+
+        def run(cmd, **kwargs):
+            calls.append(cmd)
+            assert kwargs.get("timeout"), "git calls must carry a timeout"
+            if cmd[:2] == ["git", "fetch"]:
+                return SimpleNamespace(returncode=0, stdout=b"")
+            if cmd[:2] == ["git", "show"]:
+                return SimpleNamespace(returncode=show_rc, stdout=show_stdout)
+            raise AssertionError(f"unexpected command {cmd}")
+
+        return run, calls
+
+    def test_refresh_writes_origin_copy(self, tmp_path, monkeypatch):
+        run, calls = self._fake_run(
+            show_stdout=b'{"images": [{"image_id": "x"}]}')
+        monkeypatch.setattr(ru_dub.subprocess, "run", run)
+        p = ru_dub._fresh_manifest_path(tmp_path)
+        assert p.parent == tmp_path
+        assert json.loads(p.read_text(encoding="utf-8"))["images"]
+        assert [c[:2] for c in calls] == [["git", "fetch"], ["git", "show"]]
+
+    def test_git_failure_falls_back_to_checkout(self, tmp_path, monkeypatch):
+        run, _ = self._fake_run(show_rc=128, show_stdout=b"")
+        monkeypatch.setattr(ru_dub.subprocess, "run", run)
+        assert ru_dub._fresh_manifest_path(tmp_path) == ru_dub._MANIFEST
+
+    def test_corrupt_origin_blob_falls_back(self, tmp_path, monkeypatch):
+        run, _ = self._fake_run(show_stdout=b"{truncated")
+        monkeypatch.setattr(ru_dub.subprocess, "run", run)
+        assert ru_dub._fresh_manifest_path(tmp_path) == ru_dub._MANIFEST
+
+    def test_subprocess_exception_falls_back(self, tmp_path, monkeypatch):
+        def boom(*a, **k):
+            raise OSError("no git binary")
+        monkeypatch.setattr(ru_dub.subprocess, "run", boom)
+        assert ru_dub._fresh_manifest_path(tmp_path) == ru_dub._MANIFEST
+
+    def test_non_repo_manifest_skips_git(self, tmp_path, monkeypatch):
+        def never(*a, **k):
+            raise AssertionError("git must not run for a non-repo manifest")
+        monkeypatch.setattr(ru_dub.subprocess, "run", never)
+        outside = tmp_path / "m.json"
+        assert ru_dub._fresh_manifest_path(
+            tmp_path, manifest_path=outside) == outside
+
+
+class TestNoScenesYetGate:
+    """A FRESH scene-less episode defers (no_scenes_yet) instead of shipping
+    a cover-only dub; an OLD scene-less episode still publishes with the
+    cover (no scenes are ever coming for it)."""
+
+    def _cfg_with_summaries(self, tmp_path, date_str):
+        summaries = tmp_path / "summaries.json"
+        summaries.write_text(json.dumps({"podcast": "TST", "summaries": [{
+            "episode_num": 5,
+            "date": date_str,
+            "episode_title": "Ep 5",
+            "translations": {"ru": {"title": "Заголовок", "description": "Оп",
+                                    "audio_url": ""}},
+        }]}), encoding="utf-8")
+        cfg = _cfg()
+        cfg.publishing.summaries_json = str(summaries)
+        cfg.episode.output_dir = str(tmp_path / "out")
+        return cfg
+
+    def _arm(self, monkeypatch, tmp_path, scene_urls):
+        import engine.youtube as yt_mod
+        monkeypatch.setattr(yt_mod, "get_channel_credentials_from_env",
+                            lambda channel="en": object())
+        cover = tmp_path / "cover.jpg"
+        cover.write_bytes(b"jpg")
+        monkeypatch.setattr(ru_dub, "_cover_path", lambda config: cover)
+        # No real git: the "refreshed" manifest is the checked-in stub.
+        manifest = tmp_path / "manifest.json"
+        manifest.write_text(json.dumps({"images": [
+            {"show_slug": "tesla", "episode_id": "ep005",
+             "intended_use": "segment_card", "original_url": u}
+            for u in scene_urls
+        ]}), encoding="utf-8")
+        monkeypatch.setattr(ru_dub, "_fresh_manifest_path",
+                            lambda dest_dir, **kw: manifest)
+        # Stop the proceed-path before any render/network work.
+        monkeypatch.setattr(ru_dub, "_resolve_ru_audio",
+                            lambda *a, **k: None)
+
+    def test_fresh_episode_without_scenes_defers(self, tmp_path, monkeypatch):
+        import datetime
+        today = datetime.datetime.now(datetime.timezone.utc).date().isoformat()
+        cfg = self._cfg_with_summaries(tmp_path, today)
+        self._arm(monkeypatch, tmp_path, scene_urls=[])
+        res = ru_dub.publish_ru_dub(cfg, 5)
+        assert res["status"] == "no_scenes_yet"
+        assert res["scene_count"] == 0
+
+    def test_fresh_episode_with_one_scene_defers(self, tmp_path, monkeypatch):
+        import datetime
+        today = datetime.datetime.now(datetime.timezone.utc).date().isoformat()
+        cfg = self._cfg_with_summaries(tmp_path, today)
+        self._arm(monkeypatch, tmp_path, scene_urls=["https://r2/a.jpg"])
+        res = ru_dub.publish_ru_dub(cfg, 5)
+        assert res["status"] == "no_scenes_yet"
+        assert res["scene_count"] == 1
+
+    def test_old_episode_without_scenes_proceeds_with_cover(
+            self, tmp_path, monkeypatch):
+        cfg = self._cfg_with_summaries(tmp_path, "2026-01-01")
+        self._arm(monkeypatch, tmp_path, scene_urls=[])
+        res = ru_dub.publish_ru_dub(cfg, 5)
+        # Past the scene gate — stopped by the armed no-audio stub instead.
+        assert res["status"] == "no_ru_audio"
+
+    def test_fresh_episode_with_scenes_proceeds(self, tmp_path, monkeypatch):
+        import datetime
+        today = datetime.datetime.now(datetime.timezone.utc).date().isoformat()
+        cfg = self._cfg_with_summaries(tmp_path, today)
+        self._arm(monkeypatch, tmp_path,
+                  scene_urls=["https://r2/a.jpg", "https://r2/b.jpg"])
+        res = ru_dub.publish_ru_dub(cfg, 5)
+        assert res["status"] == "no_ru_audio"
+
+
+class TestScenesDeferralIndex:
+    """publish_ru_dubs.py retry semantics: a no_scenes_yet deferral is
+    recorded like the short-failure rows (status row, no video_id) and the
+    episode stays NOT done so the next sweep retries it."""
+
+    def _driver(self):
+        import importlib.util
+        path = _ROOT / "scripts" / "publish_ru_dubs.py"
+        spec = importlib.util.spec_from_file_location("publish_ru_dubs", path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+    def _cfg(self, tmp_path):
+        return SimpleNamespace(
+            episode=SimpleNamespace(output_dir=str(tmp_path)),
+        )
+
+    def test_deferral_row_matches_index_conventions(self, tmp_path):
+        drv = self._driver()
+        cfg = self._cfg(tmp_path)
+        drv._record_scenes_deferral(cfg, 5)
+        data = json.loads((tmp_path / "youtube_videos.ru.json").read_text())
+        rows = [v for v in data["videos"]
+                if v.get("episode") == 5 and v.get("status") == "deferred"]
+        assert len(rows) == 1
+        assert rows[0]["kind"] == "long"
+        assert rows[0]["reason"] == "no_scenes_yet"
+        assert "video_id" not in rows[0]
+        assert rows[0]["recorded"]
+
+    def test_deferred_episode_is_not_done(self, tmp_path):
+        drv = self._driver()
+        cfg = self._cfg(tmp_path)
+        drv._record_scenes_deferral(cfg, 5)
+        assert drv._already_done(cfg, 5) is False  # next sweep retries
+
+    def test_absent_entry_is_not_done(self, tmp_path):
+        drv = self._driver()
+        assert drv._already_done(self._cfg(tmp_path), 5) is False
+
+    def test_repeat_deferral_keeps_single_row(self, tmp_path):
+        drv = self._driver()
+        cfg = self._cfg(tmp_path)
+        drv._record_scenes_deferral(cfg, 5)
+        drv._record_scenes_deferral(cfg, 5)
+        data = json.loads((tmp_path / "youtube_videos.ru.json").read_text())
+        assert len([v for v in data["videos"]
+                    if v.get("status") == "deferred"]) == 1
+
+    def test_real_long_row_is_done_and_clear_drops_deferral(self, tmp_path):
+        drv = self._driver()
+        cfg = self._cfg(tmp_path)
+        drv._record_scenes_deferral(cfg, 5)
+        idx = tmp_path / "youtube_videos.ru.json"
+        data = json.loads(idx.read_text())
+        data["videos"].append({"video_id": "v1", "episode": 5, "kind": "long"})
+        idx.write_text(json.dumps(data), encoding="utf-8")
+        assert drv._already_done(cfg, 5) is True
+        drv._clear_scenes_deferral(cfg, 5)
+        data = json.loads(idx.read_text())
+        assert [v for v in data["videos"]
+                if v.get("status") == "deferred"] == []
+        assert drv._already_done(cfg, 5) is True  # real row survives
+
+    def test_status_only_long_row_never_counts_as_done(self, tmp_path):
+        # Defensive: a long row WITHOUT video_id (nothing uploaded) must not
+        # gate the retry, whatever its status says.
+        drv = self._driver()
+        cfg = self._cfg(tmp_path)
+        idx = tmp_path / "youtube_videos.ru.json"
+        idx.write_text(json.dumps({"videos": [
+            {"episode": 5, "kind": "long", "status": "whatever"}]}),
+            encoding="utf-8")
+        assert drv._already_done(cfg, 5) is False
+
+    def test_main_loop_wires_deferral_recording(self):
+        src = (_ROOT / "scripts" / "publish_ru_dubs.py").read_text(
+            encoding="utf-8")
+        assert '== "no_scenes_yet"' in src
+        assert "_record_scenes_deferral(config, ep)" in src
+        assert "_clear_scenes_deferral(config, ep)" in src
 
 
 class TestRealShowConfigs:
