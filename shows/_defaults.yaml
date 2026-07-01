@@ -315,3 +315,34 @@ youtube:
   video_mood: ""
   video_keywords: []
   video_visual_style: ""
+
+  # ---- Visual reuse + chapter-aligned scenes (June 2026) ----
+  # Gates for engine/visual_reuse.py (gallery reuse + scene scheduling).
+  # All render/metadata-only (no audio → outside landmine #17); every path
+  # is best-effort and degrades to the legacy render on any failure.
+  # Blend already-generated gallery scenes (nerra-gallery R2, via the
+  # committed manifest) into the fresh Grok Imagine sets — zero new
+  # image-generation cost; the caps bound the per-episode downloads.
+  gallery_blend_enabled: true
+  gallery_blend_max_long: 8     # 16:9 library scenes per long-form video
+  gallery_blend_max_short: 4    # 9:16 library scenes per Short
+  # Scene switches land on chapters.json boundaries instead of the
+  # uniform timer (<2 usable chapters falls back to uniform).
+  chapter_aligned_scenes: true
+  # Long-form thumbnail uses the episode's first fresh 16:9 scene as its
+  # base (cover fallback); `thumbnail_variants` extra composites from
+  # other scenes feed the operator's Studio "Test & Compare" A/B.
+  long_form_thumbnail_from_scene: true
+  thumbnail_variants: 2
+  # Sunday recaps reuse the week's gallery scenes (both aspects) instead
+  # of regenerating imagery for stories already illustrated this week.
+  recap_reuse_scenes: true
+  # <2 usable fresh scenes → historical gallery scenes before the static
+  # cover (the old degraded path).
+  gallery_fallback_enabled: true
+  # Shorts scene changes snap to sentence ends from the Whisper word
+  # transcript instead of the flat 7 s grid.
+  shorts_sentence_cuts: true
+  # Interleave curated evergreen b-roll (digests/<dir>/broll.json via
+  # scripts/build_broll_pool.py). Clean no-op until a pool is published.
+  evergreen_broll: true

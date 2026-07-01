@@ -132,6 +132,13 @@ jobs:
           python scripts/build_gallery_manifest.py --out site/data/gallery-manifest.json
           python scripts/build_search_index.py --out site/data/search-index.json
 
+      - name: Join gallery images with YouTube retention
+        # Imagery data flywheel: joins the fresh gallery manifest with the
+        # per-video retention fetched above (api/youtube_stats.json) into
+        # api/gallery_retention.json — which imagery styles keep viewers
+        # watching. Clean no-op (empty JSON) until analytics data accrues.
+        run: python scripts/build_gallery_retention.py --out api/gallery_retention.json || echo "::warning::Gallery retention join failed (non-fatal)"
+
       - name: Generate MIT Performance Page + Tesla Narrative Page + Main Site
         # Ensures dedicated transparency pages (MIT performance + TST narrative tracker)
         # and other pages that depend on fresh data stay up to date.
@@ -171,6 +178,7 @@ jobs:
             api/dashboard.json
             api/daily-show-health.json
             api/youtube_stats.json
+            api/gallery_retention.json
             digests/**/youtube_performance.json
             api/op3_stats.json
             api/buttondown_stats.json

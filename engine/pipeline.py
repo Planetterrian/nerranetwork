@@ -108,6 +108,23 @@ def record_youtube_outcomes(
         metrics.record("shorts_end_card_enabled", bool(youtube_urls.get("shorts_end_card_enabled", True)))
         if youtube_urls.get("shorts_end_card_generated") is not None:
             metrics.record("shorts_end_card_generated", bool(youtube_urls["shorts_end_card_generated"]))
+
+        # Visual reuse + chapter-aligned scenes (June 2026 — engine/visual_reuse).
+        # visual_mode ∈ chapter_schedule | uniform | cover | library_fallback |
+        # recap_pool; the counts let the dashboard plot how much of each
+        # episode's imagery was fresh vs recycled from the gallery.
+        if youtube_urls.get("visual_mode"):
+            metrics.record("visual_mode", str(youtube_urls["visual_mode"]))
+        if "scene_fresh_count" in youtube_urls:
+            metrics.record("scene_fresh_count", int(youtube_urls.get("scene_fresh_count", 0) or 0))
+        if "scene_library_count" in youtube_urls:
+            metrics.record("scene_library_count", int(youtube_urls.get("scene_library_count", 0) or 0))
+        if "broll_clips_used" in youtube_urls:
+            metrics.record("broll_clips_used", int(youtube_urls.get("broll_clips_used", 0) or 0))
+        if youtube_urls.get("thumbnail_base"):
+            metrics.record("thumbnail_base", str(youtube_urls["thumbnail_base"]))
+        if youtube_urls.get("thumbnail_variant_urls"):
+            metrics.record("thumbnail_variant_urls", list(youtube_urls["thumbnail_variant_urls"]))
     except Exception:
         # Never let metrics recording break a publish
         logger = __import__("logging").getLogger(__name__)

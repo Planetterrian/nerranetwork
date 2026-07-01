@@ -22,7 +22,9 @@ See ``docs/ru_youtube_dubs.md``.
 
 from __future__ import annotations
 
+import datetime
 import logging
+import subprocess
 import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -49,6 +51,62 @@ def _episode_id(episode_num: int) -> str:
     return f"ep{episode_num:03d}"
 
 
+def _is_fresh_episode(date_str: str, *, today: Optional[datetime.date] = None) -> bool:
+    """True when the episode aired today or yesterday (UTC).
+
+    Used to decide whether a scene-less episode should be DEFERRED (fresh —
+    the gallery-manifest rebuild simply hasn't caught up yet) or published
+    with the cover anyway (old — no scenes are ever coming, and deferring
+    forever would silently drop the episode). Unparsable/empty dates count
+    as old so a malformed record still publishes rather than stalls.
+    """
+    try:
+        ep_date = datetime.date.fromisoformat((date_str or "")[:10])
+    except ValueError:
+        return False
+    now = today or datetime.datetime.now(datetime.timezone.utc).date()
+    return datetime.timedelta(0) <= (now - ep_date) <= datetime.timedelta(days=1)
+
+
+def _fresh_manifest_path(dest_dir: Path, *,
+                         manifest_path: Path = _MANIFEST) -> Path:
+    """Best-effort refresh of the gallery manifest from ``origin/main``.
+
+    The RU-dub sweep runs from a checkout whose manifest can LAG the newest
+    episode (the manifest is rebuilt by a separate workflow that commits to
+    main after the episode publishes) — so a fresh episode's scenes exist on
+    R2 + origin/main but not in this working tree. ``git fetch`` + ``git
+    show origin/main:<manifest>`` pulls the newest committed copy into
+    *dest_dir* without touching the working tree. Any failure (offline,
+    shallow clone without the ref, corrupt blob) falls back to the
+    checked-out file — never raises.
+    """
+    try:
+        rel = manifest_path.relative_to(PROJECT_ROOT).as_posix()
+    except ValueError:
+        return manifest_path  # non-repo path (tests) — nothing to refresh
+    try:
+        subprocess.run(["git", "fetch", "origin", "main"],
+                       cwd=PROJECT_ROOT, capture_output=True,
+                       timeout=60, check=False)
+        show = subprocess.run(["git", "show", f"origin/main:{rel}"],
+                              cwd=PROJECT_ROOT, capture_output=True,
+                              timeout=30, check=False)
+        if show.returncode == 0 and show.stdout:
+            import json
+            json.loads(show.stdout)  # validate before trusting the blob
+            fresh = Path(dest_dir) / "gallery-manifest.origin.json"
+            fresh.write_bytes(show.stdout)
+            logger.info("ru_dub: using origin/main gallery manifest")
+            return fresh
+        logger.info("ru_dub: origin/main manifest unavailable (rc=%s) — "
+                    "using checked-out copy", show.returncode)
+    except Exception as exc:  # noqa: BLE001 — refresh is best-effort
+        logger.info("ru_dub: manifest refresh failed (%s) — "
+                    "using checked-out copy", exc)
+    return manifest_path
+
+
 def gallery_images_for_episode(
     show_slug: str, episode_num: int, *,
     intended_use: str = "segment_card",
@@ -59,8 +117,10 @@ def gallery_images_for_episode(
     Filters the committed gallery manifest by ``show_slug`` + ``episode_id``
     + ``intended_use`` (``segment_card`` = the 16:9 long-form scenes;
     ``social`` = the 9:16 Shorts scenes). Empty list when the manifest has no
-    entry yet (the manifest rebuild can lag the newest episode — caller falls
-    back to the cover image, and a later sweep picks up the real scenes).
+    entry yet (the manifest rebuild can lag the newest episode —
+    ``publish_ru_dub`` defers a FRESH scene-less episode as ``no_scenes_yet``
+    so a later sweep retries with the real scenes; genuinely old episodes
+    fall back to the cover image).
     """
     import json
     try:
@@ -209,6 +269,30 @@ def publish_ru_dub(
         result["status"] = "no_cover"
         return result
 
+    # Scene availability gate. The checked-out manifest lags the newest
+    # episode (rebuilt by a separate workflow), so refresh from origin/main
+    # first; if a FRESH episode still has <2 long-form scenes, defer instead
+    # of shipping a cover-only dub — the recording sweep (publish_ru_dubs)
+    # marks it not-done so the next sweep retries once the manifest catches
+    # up. Old scene-less episodes still publish with the cover (no scenes
+    # are ever coming for them).
+    date_str = (rec.get("date") or "")[:10]
+    with tempfile.TemporaryDirectory() as mtd:
+        manifest_path = _fresh_manifest_path(Path(mtd))
+        long_urls = gallery_images_for_episode(
+            config.slug, episode_num, intended_use="segment_card",
+            manifest_path=manifest_path)
+        short_urls = gallery_images_for_episode(
+            config.slug, episode_num, intended_use="social",
+            manifest_path=manifest_path)
+    if len(long_urls) < 2 and _is_fresh_episode(date_str):
+        logger.info("ru_dub: %s Ep%s has %d gallery scene(s) and is fresh — "
+                    "deferring until the manifest rebuild catches up",
+                    config.slug, episode_num, len(long_urls))
+        result["status"] = "no_scenes_yet"
+        result["scene_count"] = len(long_urls)
+        return result
+
     from engine.video import build_long_form_video, build_short_video
     from engine.youtube import upload_video, add_video_to_playlist
     from engine.youtube_index import record_video
@@ -220,11 +304,9 @@ def publish_ru_dub(
             result["status"] = "no_ru_audio"
             return result
 
-        # Reuse the episode's already-generated 16:9 scene images (zero cost).
-        long_urls = gallery_images_for_episode(
-            config.slug, episode_num, intended_use="segment_card")
+        # Reuse the episode's already-generated 16:9 scene images (zero
+        # cost; URLs resolved above from the refreshed manifest).
         long_scenes = _download_images(long_urls, tmp) if long_urls else []
-        date_str = (rec.get("date") or "")[:10]
 
         # --- Long-form ---
         try:
@@ -290,8 +372,6 @@ def publish_ru_dub(
         # --- Short (best-effort; failure never blocks the long-form result) ---
         if build_short and getattr(yt, "publish_shorts", True):
             try:
-                short_urls = gallery_images_for_episode(
-                    config.slug, episode_num, intended_use="social")
                 short_scenes = _download_images(short_urls, tmp) if short_urls else []
                 short_mp4 = tmp / f"ru_short_ep{episode_num:03d}.mp4"
                 short_dur = float(getattr(yt, "short_duration_seconds", 55.0))

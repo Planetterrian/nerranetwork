@@ -1437,3 +1437,534 @@ def test_generate_shorts_end_card_custom_text(tmp_path):
         sub_text="Подписывайтесь ↗",
     )
     assert out.exists()
+
+
+# ---------------------------------------------------------------------------
+# Chapter-aware scene schedule (June 2026) — per-scene slideshow durations
+# ---------------------------------------------------------------------------
+#
+# engine.scene_scheduler plans [(scene, hold_seconds), …] so scene
+# switches land on chapter boundaries. The renderer consumes the plan
+# via scene_durations= (graph/cmd level) and scene_schedule= (public
+# API). The invariant that matters most: a UNIFORM schedule reproduces
+# the legacy graph/command byte-for-byte, and None keeps every legacy
+# path untouched.
+
+def test_slideshow_filter_graph_schedule_uses_cumulative_offsets():
+    """Variable durations → xfade offsets are the CUMULATIVE visible
+    time (sum(durations[:k])), not k * uniform_duration."""
+    graph = _slideshow_filter_graph(
+        scene_count=3, scene_durations=[10.0, 14.0, 8.0],
+    )
+    # Join 1 starts after scene 0's 10 s; join 2 after 10 + 14 = 24 s.
+    assert "offset=10.00" in graph
+    assert "offset=24.00" in graph
+    # Each clip renders its OWN duration + the 0.6 s crossfade pad.
+    assert "trim=duration=10.60" in graph
+    assert "trim=duration=14.60" in graph
+    assert "trim=duration=8.60" in graph
+    assert graph.endswith("[v]")
+
+
+def test_slideshow_filter_graph_uniform_schedule_matches_legacy():
+    """A uniform durations list must reproduce the legacy graph EXACTLY
+    (math.fsum of k equal floats rounds identically to k * duration) —
+    the drift fence that says the schedule path is a strict superset."""
+    for dur in (10.0, 13.85, 12.0):
+        legacy = _slideshow_filter_graph(scene_count=4, scene_duration=dur)
+        sched = _slideshow_filter_graph(
+            scene_count=4, scene_durations=[dur] * 4,
+        )
+        assert sched == legacy
+
+
+def test_slideshow_filter_graph_schedule_hard_cut_uses_per_scene_trims():
+    """The crossfade=0 fallback (ffmpeg-failure retry) must keep the
+    per-scene durations via each clip's own trim in the concat chain."""
+    graph = _slideshow_filter_graph(
+        scene_count=3, scene_durations=[10.0, 14.0, 8.0], crossfade=0.0,
+    )
+    assert "concat=n=3:v=1:a=0[v]" in graph
+    assert "xfade" not in graph
+    assert "trim=duration=10.00" in graph
+    assert "trim=duration=14.00" in graph
+    assert "trim=duration=8.00" in graph
+
+
+def test_slideshow_filter_graph_schedule_length_mismatch_raises():
+    with pytest.raises(ValueError, match="scene_durations length"):
+        _slideshow_filter_graph(scene_count=3, scene_durations=[10.0, 14.0])
+
+
+def test_slideshow_cmd_schedule_sets_per_input_duration(tmp_path):
+    paths = [tmp_path / f"scene{i}.jpg" for i in range(3)]
+    out = tmp_path / "slides.mp4"
+    cmd = _slideshow_cmd(paths, out, scene_durations=[10.0, 14.0, 8.0])
+    # Each looped image input's -t covers its own clip: dur + 0.6 + 0.5.
+    t_indices = [i for i, x in enumerate(cmd) if x == "-t"]
+    t_values = [cmd[i + 1] for i in t_indices]
+    assert t_values == ["11.10", "15.10", "9.10"]
+
+
+def test_slideshow_cmd_uniform_schedule_matches_legacy(tmp_path):
+    paths = [tmp_path / f"scene{i}.jpg" for i in range(3)]
+    out = tmp_path / "slides.mp4"
+    legacy = _slideshow_cmd(paths, out, scene_duration=13.85)
+    sched = _slideshow_cmd(paths, out, scene_durations=[13.85] * 3)
+    assert sched == legacy
+
+
+def test_render_slideshow_schedule_hard_cut_fallback(tmp_path, monkeypatch):
+    """When the crossfade render fails, the hard-cut retry must carry
+    the SAME per-scene durations (concat with per-scene trims)."""
+    import subprocess as _subprocess
+
+    from engine.video import _render_slideshow
+
+    scenes = []
+    for i in range(3):
+        s = tmp_path / f"scene{i}.jpg"
+        s.write_bytes(b"\xFF\xD8")
+        scenes.append(s)
+    out = tmp_path / "slides.mp4"
+
+    calls = []
+
+    def fake_run(cmd, **kw):
+        calls.append(list(cmd))
+        if len(calls) == 1:
+            raise _subprocess.CalledProcessError(1, cmd, stderr="xfade broke")
+        Path(cmd[-1]).write_bytes(b"\x00")
+        return type("R", (), {"returncode": 0})()
+
+    monkeypatch.setattr("engine.video.subprocess.run", fake_run)
+    _render_slideshow(scenes, out, scene_durations=[10.0, 14.0, 8.0])
+    assert len(calls) == 2
+    retry_graph = calls[1][calls[1].index("-filter_complex") + 1]
+    assert "concat=n=3" in retry_graph
+    assert "xfade" not in retry_graph
+    assert "trim=duration=10.00" in retry_graph
+    assert "trim=duration=14.00" in retry_graph
+    assert "trim=duration=8.00" in retry_graph
+
+
+def test_build_long_form_video_uses_scene_schedule(tmp_path, monkeypatch):
+    """scene_schedule= drives the stage-1 slideshow: scheduled scene
+    order, per-scene -t inputs, cumulative xfade offsets."""
+    audio = tmp_path / "voice.mp3"
+    audio.write_bytes(b"\x00")
+    cover = tmp_path / "cover.jpg"
+    cover.write_bytes(b"\xFF\xD8")
+    scenes = []
+    for i in range(3):
+        s = tmp_path / f"scene{i}.jpg"
+        s.write_bytes(b"\xFF\xD8")
+        scenes.append(s)
+    out = tmp_path / "out.mp4"
+
+    captured_cmds = []
+
+    def fake_run(cmd, **kw):
+        captured_cmds.append(list(cmd))
+        if "-an" in cmd:
+            Path(cmd[-1]).write_bytes(b"\x00")
+        return type("R", (), {"returncode": 0})()
+
+    monkeypatch.setattr("engine.video.subprocess.run", fake_run)
+    monkeypatch.setattr("engine.audio.get_audio_duration", lambda _p: 32.0)
+    schedule = [(scenes[0], 10.0), (scenes[2], 14.0), (scenes[1], 8.0)]
+    build_long_form_video(audio, cover, out, scene_schedule=schedule)
+
+    assert len(captured_cmds) == 2
+    stage1 = captured_cmds[0]
+    assert stage1[-1].endswith("_slides_sched.mp4")
+    # Scheduled ORDER (scene2 before scene1), not the input list order.
+    i_indices = [i for i, x in enumerate(stage1) if x == "-i"]
+    input_paths = [stage1[i + 1] for i in i_indices]
+    assert input_paths == [str(scenes[0]), str(scenes[2]), str(scenes[1])]
+    graph = stage1[stage1.index("-filter_complex") + 1]
+    assert "offset=10.00" in graph
+    assert "offset=24.00" in graph
+    # Stage 2 still loops the slideshow background.
+    assert "-stream_loop" in captured_cmds[1]
+
+
+def test_build_long_form_video_short_schedule_keeps_legacy_path(tmp_path,
+                                                                monkeypatch):
+    """A degenerate 1-entry schedule must NOT flip the pipeline — the
+    legacy uniform slideshow (from scene_paths) still runs."""
+    audio = tmp_path / "voice.mp3"
+    audio.write_bytes(b"\x00")
+    cover = tmp_path / "cover.jpg"
+    cover.write_bytes(b"\xFF\xD8")
+    scenes = []
+    for i in range(3):
+        s = tmp_path / f"scene{i}.jpg"
+        s.write_bytes(b"\xFF\xD8")
+        scenes.append(s)
+    out = tmp_path / "out.mp4"
+
+    captured_cmds = []
+
+    def fake_run(cmd, **kw):
+        captured_cmds.append(list(cmd))
+        if "-an" in cmd:
+            Path(cmd[-1]).write_bytes(b"\x00")
+        return type("R", (), {"returncode": 0})()
+
+    monkeypatch.setattr("engine.video.subprocess.run", fake_run)
+    monkeypatch.setattr("engine.audio.get_audio_duration", lambda _p: 36.0)
+    build_long_form_video(audio, cover, out, scene_paths=scenes,
+                          scene_schedule=[(scenes[0], 36.0)])
+    assert len(captured_cmds) == 2
+    assert captured_cmds[0][-1].endswith("_slides.mp4")
+    assert not captured_cmds[0][-1].endswith("_slides_sched.mp4")
+
+
+def test_build_long_form_video_none_schedule_is_byte_identical(tmp_path,
+                                                               monkeypatch):
+    """scene_schedule=None / broll_clips=None must produce EXACTLY the
+    same ffmpeg command as omitting the kwargs (legacy fence)."""
+    audio = tmp_path / "voice.mp3"
+    audio.write_bytes(b"\x00")
+    cover = tmp_path / "cover.jpg"
+    cover.write_bytes(b"\xFF\xD8")
+    out = tmp_path / "out.mp4"
+
+    captured_cmds = []
+    monkeypatch.setattr(
+        "engine.video.subprocess.run",
+        lambda cmd, **kw: (captured_cmds.append(list(cmd)),
+                           type("R", (), {"returncode": 0})())[1],
+    )
+    build_long_form_video(audio, cover, out)
+    build_long_form_video(audio, cover, out,
+                          scene_schedule=None, broll_clips=None)
+    assert len(captured_cmds) == 2
+    assert captured_cmds[0] == captured_cmds[1]
+
+
+# ---------------------------------------------------------------------------
+# Shorts sentence-cut background (June 2026) — full-length, no loop
+# ---------------------------------------------------------------------------
+
+def test_short_segment_durations_sum_to_clip_length():
+    from engine.video import _short_segment_durations
+    durs = _short_segment_durations([6.5, 13.9, 21.0], 30.0)
+    assert durs == pytest.approx([6.5, 7.4, 7.1, 9.0])
+    assert sum(durs) == pytest.approx(30.0)
+
+
+def test_short_segment_durations_drops_end_hugging_and_bunched_cuts():
+    from engine.video import _short_segment_durations
+    # 29.9 hugs the 30 s end; 6.6 is within 0.5 s of 6.5.
+    durs = _short_segment_durations([6.5, 6.6, 29.9], 30.0)
+    assert durs == [6.5, 23.5]
+    # Nothing usable → empty (caller keeps the legacy flat path).
+    assert _short_segment_durations([29.9], 30.0) == []
+    assert _short_segment_durations([], 30.0) == []
+
+
+def test_build_short_video_scene_change_times_drops_stream_loop(tmp_path,
+                                                                monkeypatch):
+    """Explicit cut times cover the whole clip → the slideshow is built
+    full-length and the composite must NOT -stream_loop it."""
+    audio = tmp_path / "voice.mp3"
+    audio.write_bytes(b"\x00")
+    cover = tmp_path / "cover.jpg"
+    cover.write_bytes(b"\xFF\xD8")
+    scenes = []
+    for i in range(3):
+        s = tmp_path / f"scene{i}.jpg"
+        s.write_bytes(b"\xFF\xD8")
+        scenes.append(s)
+    out = tmp_path / "short.mp4"
+
+    captured_cmds = []
+
+    def fake_run(cmd, **kw):
+        captured_cmds.append(list(cmd))
+        if "-an" in cmd:
+            Path(cmd[-1]).write_bytes(b"\x00")
+        return type("R", (), {"returncode": 0})()
+
+    monkeypatch.setattr("engine.video.subprocess.run", fake_run)
+    build_short_video(audio, cover, out, duration=55.0,
+                      scene_paths=scenes,
+                      scene_change_times=[6.8, 14.0, 21.5, 29.0, 36.5, 44.0])
+    assert len(captured_cmds) == 2
+    stage1, stage2 = captured_cmds
+    # Stage 1: full-length scheduled slideshow (7 segments summing 55 s),
+    # cumulative xfade offsets at the requested cut times.
+    assert stage1[-1].endswith("_short_slides_sched.mp4")
+    graph1 = stage1[stage1.index("-filter_complex") + 1]
+    assert "offset=6.80" in graph1
+    assert "offset=14.00" in graph1
+    assert "offset=44.00" in graph1
+    # Stage 2: bg is the slideshow, WITHOUT the loop.
+    assert "-stream_loop" not in stage2
+    assert stage1[-1] in stage2
+    # Only the brand pill remains a looped image input.
+    assert stage2.count("-loop") == 1
+
+
+def test_build_short_video_cut_times_scenes_rotate_across_segments(tmp_path,
+                                                                   monkeypatch):
+    """6 segments from a 3-scene pool → the pool cycles in order."""
+    audio = tmp_path / "voice.mp3"
+    audio.write_bytes(b"\x00")
+    cover = tmp_path / "cover.jpg"
+    cover.write_bytes(b"\xFF\xD8")
+    scenes = []
+    for i in range(3):
+        s = tmp_path / f"scene{i}.jpg"
+        s.write_bytes(b"\xFF\xD8")
+        scenes.append(s)
+    out = tmp_path / "short.mp4"
+
+    captured_cmds = []
+
+    def fake_run(cmd, **kw):
+        captured_cmds.append(list(cmd))
+        if "-an" in cmd:
+            Path(cmd[-1]).write_bytes(b"\x00")
+        return type("R", (), {"returncode": 0})()
+
+    monkeypatch.setattr("engine.video.subprocess.run", fake_run)
+    build_short_video(audio, cover, out, duration=55.0,
+                      scene_paths=scenes,
+                      scene_change_times=[8.0, 16.0, 24.0, 32.0, 40.0])
+    stage1 = captured_cmds[0]
+    i_indices = [i for i, x in enumerate(stage1) if x == "-i"]
+    input_paths = [stage1[i + 1] for i in i_indices]
+    assert input_paths == [str(scenes[i % 3]) for i in range(6)]
+
+
+def test_build_short_video_none_cut_times_is_byte_identical(tmp_path,
+                                                            monkeypatch):
+    """scene_change_times=None must produce EXACTLY the legacy command."""
+    audio = tmp_path / "voice.mp3"
+    audio.write_bytes(b"\x00")
+    cover = tmp_path / "cover.jpg"
+    cover.write_bytes(b"\xFF\xD8")
+    out = tmp_path / "short.mp4"
+
+    captured_cmds = []
+    monkeypatch.setattr(
+        "engine.video.subprocess.run",
+        lambda cmd, **kw: (captured_cmds.append(list(cmd)),
+                           type("R", (), {"returncode": 0})())[1],
+    )
+    build_short_video(audio, cover, out, duration=55.0)
+    build_short_video(audio, cover, out, duration=55.0,
+                      scene_change_times=None)
+    assert len(captured_cmds) == 2
+    assert captured_cmds[0] == captured_cmds[1]
+
+
+def test_build_short_video_unusable_cut_times_keep_flat_loop_path(tmp_path,
+                                                                  monkeypatch):
+    """Cut times that all fall inside the end guard produce no usable
+    segments → the legacy flat-pace loop path still ships."""
+    audio = tmp_path / "voice.mp3"
+    audio.write_bytes(b"\x00")
+    cover = tmp_path / "cover.jpg"
+    cover.write_bytes(b"\xFF\xD8")
+    scenes = []
+    for i in range(2):
+        s = tmp_path / f"scene{i}.jpg"
+        s.write_bytes(b"\xFF\xD8")
+        scenes.append(s)
+    out = tmp_path / "short.mp4"
+
+    captured_cmds = []
+
+    def fake_run(cmd, **kw):
+        captured_cmds.append(list(cmd))
+        if "-an" in cmd:
+            Path(cmd[-1]).write_bytes(b"\x00")
+        return type("R", (), {"returncode": 0})()
+
+    monkeypatch.setattr("engine.video.subprocess.run", fake_run)
+    build_short_video(audio, cover, out, duration=55.0,
+                      scene_paths=scenes, scene_change_times=[54.9])
+    assert len(captured_cmds) == 2
+    assert captured_cmds[0][-1].endswith("_short_slides.mp4")
+    assert "-stream_loop" in captured_cmds[1]
+
+
+# ---------------------------------------------------------------------------
+# Evergreen B-roll interleave (June 2026) — local clips only, soft-fail
+# ---------------------------------------------------------------------------
+
+def _make_broll(tmp_path, n):
+    clips = []
+    for i in range(n):
+        c = tmp_path / f"broll{i}.mp4"
+        c.write_bytes(b"\x00\x00\x00\x18ftypmp42")
+        clips.append(c)
+    return clips
+
+
+def _make_long_form_fixtures(tmp_path):
+    audio = tmp_path / "voice.mp3"
+    audio.write_bytes(b"\x00")
+    cover = tmp_path / "cover.jpg"
+    cover.write_bytes(b"\xFF\xD8")
+    scenes = []
+    for i in range(4):
+        s = tmp_path / f"scene{i}.jpg"
+        s.write_bytes(b"\xFF\xD8")
+        scenes.append(s)
+    return audio, cover, scenes
+
+
+def test_build_long_form_video_broll_uses_hybrid_renderer(tmp_path,
+                                                          monkeypatch):
+    audio, cover, scenes = _make_long_form_fixtures(tmp_path)
+    clips = _make_broll(tmp_path, 2)
+    out = tmp_path / "out.mp4"
+
+    captured_cmds = []
+
+    def fake_run(cmd, **kw):
+        captured_cmds.append(list(cmd))
+        if "-an" in cmd:
+            Path(cmd[-1]).write_bytes(b"\x00")
+        return type("R", (), {"returncode": 0})()
+
+    monkeypatch.setattr("engine.video.subprocess.run", fake_run)
+    monkeypatch.setattr(
+        "engine.audio.get_audio_duration",
+        lambda p: 5.0 if str(p).endswith(".mp4") else 120.0,
+    )
+    build_long_form_video(audio, cover, out, scene_paths=scenes,
+                          broll_clips=clips)
+    # Stage 1 = hybrid render (stills + clips), stage 2 = composite.
+    assert len(captured_cmds) == 2
+    hybrid = captured_cmds[0]
+    assert hybrid[-1].endswith("_hybrid.mp4")
+    # Both clips appear as plain (non-looped) inputs.
+    for clip in clips:
+        assert str(clip) in hybrid
+    graph = hybrid[hybrid.index("-filter_complex") + 1]
+    assert "concat=" in graph
+    assert "-stream_loop" in captured_cmds[1]
+
+
+def test_build_long_form_video_broll_caps_at_three(tmp_path, monkeypatch):
+    audio, cover, scenes = _make_long_form_fixtures(tmp_path)
+    clips = _make_broll(tmp_path, 5)
+    out = tmp_path / "out.mp4"
+
+    captured_cmds = []
+
+    def fake_run(cmd, **kw):
+        captured_cmds.append(list(cmd))
+        if "-an" in cmd:
+            Path(cmd[-1]).write_bytes(b"\x00")
+        return type("R", (), {"returncode": 0})()
+
+    monkeypatch.setattr("engine.video.subprocess.run", fake_run)
+    monkeypatch.setattr(
+        "engine.audio.get_audio_duration",
+        lambda p: 5.0 if str(p).endswith(".mp4") else 120.0,
+    )
+    build_long_form_video(audio, cover, out, scene_paths=scenes,
+                          broll_clips=clips)
+    hybrid = captured_cmds[0]
+    used = [c for c in clips if str(c) in hybrid]
+    assert len(used) == 3
+    assert used == clips[:3]
+
+
+def test_build_long_form_video_broll_failure_degrades_to_slideshow(tmp_path,
+                                                                   monkeypatch):
+    """Any ffmpeg failure on the hybrid render must degrade to the pure
+    slideshow — same soft-fallback philosophy as the crossfade retry."""
+    import subprocess as _subprocess
+
+    audio, cover, scenes = _make_long_form_fixtures(tmp_path)
+    clips = _make_broll(tmp_path, 2)
+    out = tmp_path / "out.mp4"
+
+    captured_cmds = []
+
+    def fake_run(cmd, **kw):
+        captured_cmds.append(list(cmd))
+        if cmd[-1].endswith("_hybrid.mp4"):
+            raise _subprocess.CalledProcessError(1, cmd, stderr="boom")
+        if "-an" in cmd:
+            Path(cmd[-1]).write_bytes(b"\x00")
+        return type("R", (), {"returncode": 0})()
+
+    monkeypatch.setattr("engine.video.subprocess.run", fake_run)
+    monkeypatch.setattr(
+        "engine.audio.get_audio_duration",
+        lambda p: 5.0 if str(p).endswith(".mp4") else 120.0,
+    )
+    build_long_form_video(audio, cover, out, scene_paths=scenes,
+                          broll_clips=clips)
+    # hybrid (failed) → pure slideshow → composite.
+    assert len(captured_cmds) == 3
+    assert captured_cmds[0][-1].endswith("_hybrid.mp4")
+    assert captured_cmds[1][-1].endswith("_slides.mp4")
+    assert "-stream_loop" in captured_cmds[2]
+    # No clip reaches the fallback slideshow.
+    for clip in clips:
+        assert str(clip) not in captured_cmds[1]
+
+
+def test_build_long_form_video_broll_with_schedule_keeps_scene_order(
+    tmp_path, monkeypatch,
+):
+    """B-roll + chapter schedule: scheduled stills keep their planned
+    order in the hybrid sequence, with clips interleaved among them."""
+    audio, cover, scenes = _make_long_form_fixtures(tmp_path)
+    clips = _make_broll(tmp_path, 1)
+    out = tmp_path / "out.mp4"
+
+    captured_cmds = []
+
+    def fake_run(cmd, **kw):
+        captured_cmds.append(list(cmd))
+        if "-an" in cmd:
+            Path(cmd[-1]).write_bytes(b"\x00")
+        return type("R", (), {"returncode": 0})()
+
+    monkeypatch.setattr("engine.video.subprocess.run", fake_run)
+    monkeypatch.setattr(
+        "engine.audio.get_audio_duration",
+        lambda p: 5.0 if str(p).endswith(".mp4") else 40.0,
+    )
+    schedule = [(scenes[2], 10.0), (scenes[0], 15.0), (scenes[1], 15.0)]
+    build_long_form_video(audio, cover, out, scene_schedule=schedule,
+                          broll_clips=clips)
+    hybrid = captured_cmds[0]
+    assert hybrid[-1].endswith("_hybrid.mp4")
+    i_indices = [i for i, x in enumerate(hybrid) if x == "-i"]
+    input_paths = [hybrid[i + 1] for i in i_indices]
+    # Clip opens the sequence; scheduled still order preserved after it.
+    assert input_paths[0] == str(clips[0])
+    assert [p for p in input_paths if p != str(clips[0])] == [
+        str(scenes[2]), str(scenes[0]), str(scenes[1]),
+    ]
+
+
+def test_interleave_broll_into_schedule_scales_holds():
+    """Unit-level: still order preserved, holds scaled so total stays
+    ≈ the scheduled total after the clips take their share."""
+    from engine.video import _interleave_broll_into_schedule
+
+    schedule = [(Path("/s/a.png"), 20.0), (Path("/s/b.png"), 20.0),
+                (Path("/s/c.png"), 20.0)]
+    visuals = _interleave_broll_into_schedule(
+        schedule, [Path("/c/x.mp4")], [6.0],
+    )
+    stills = [(path, dur) for path, is_video, dur in visuals if not is_video]
+    clips = [(path, dur) for path, is_video, dur in visuals if is_video]
+    assert [p for p, _ in stills] == [Path("/s/a.png"), Path("/s/b.png"),
+                                      Path("/s/c.png")]
+    assert clips == [(Path("/c/x.mp4"), 6.0)]
+    total = sum(d for _, d in stills) + sum(d for _, d in clips)
+    assert abs(total - 60.0) < 1e-6

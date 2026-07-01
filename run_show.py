@@ -613,6 +613,11 @@ def run(args: argparse.Namespace) -> None:
     digest_md = None
     extra_context: dict = {}
     articles: list = []
+    # Default for the resume-publish path (which skips the generation
+    # branch where the Sunday flag is resolved). Resumed runs generate
+    # imagery as usual — the recap-reuse optimisation only applies to
+    # first-pass Sunday runs where the flag is known.
+    is_weekly_recap = False
 
     if resume_publish:
         args = apply_resume_args(args)
@@ -2727,6 +2732,7 @@ def run(args: argparse.Namespace) -> None:
         chapters_path=chapters_path_for_yt,
         digests_dir=digests_dir,
         args=args,
+        is_weekly_recap=is_weekly_recap,
     )
     youtube_long_url = youtube_urls.get("long_url", "")
     youtube_short_url = youtube_urls.get("short_url", "")
@@ -2823,15 +2829,23 @@ def run(args: argparse.Namespace) -> None:
             if _imgs < 2:
                 _why = "; ".join(youtube_urls.get("grok_image_failures") or []) \
                     or "no failure detail captured"
+                # Which degraded path actually shipped (June 2026): the
+                # gallery-library fallback rescues most degraded days now;
+                # the static cover is the last resort.
+                _fb = (
+                    "the show's gallery-library scenes"
+                    if youtube_urls.get("visual_fallback") == "library"
+                    else "the static cover"
+                )
                 print(
                     f"::warning::Grok Imagine produced only {_imgs} image(s) "
-                    f"for {args.show} — the video shipped with the static cover "
+                    f"for {args.show} — the video shipped with {_fb} "
                     f"as a fallback. Cause: {_why}",
                     flush=True,
                 )
                 logger.warning(
                     "Grok slideshow degraded for %s: %d images (fell back to "
-                    "cover). Cause: %s", args.show, _imgs, _why,
+                    "%s). Cause: %s", args.show, _imgs, _fb, _why,
                 )
     except Exception:
         logger.warning("post-publish step failed (non-fatal)", exc_info=True)
@@ -3748,6 +3762,7 @@ def _publish_youtube(
     chapters_path: "Path",
     digests_dir: "Path",
     args,
+    is_weekly_recap: bool = False,
 ) -> dict:
     """Render long-form + Shorts video assets and upload them to YouTube.
 
@@ -4023,6 +4038,12 @@ def _publish_youtube(
     gallery_uploaded = 0
     gallery_attempted = 0
     gallery_skipped_reason = ""
+    # Path → Grok Imagine prompt for THIS episode's fresh scenes, so the
+    # chapter-aware scene scheduler can score fresh images against chapter
+    # titles the same way library images are scored via the manifest.
+    # Populated by _run_grok_path (filenames are grok_<NN>.<ext> where NN is
+    # the prompt index — same pairing the gallery uploader relies on).
+    fresh_scene_prompts: dict = {}
 
     def _run_pexels_path(into_long: bool, into_short: bool):
         nonlocal pexels_attribution, pexels_filtered
@@ -4139,6 +4160,13 @@ def _publish_youtube(
                     prompts=prompts,
                     aspect=aspect,
                 )
+                # Pair each scene back with its prompt (grok_NN filename ↔
+                # prompt index) for the chapter-aware scene scheduler.
+                import re as _re_ctx
+                for _sp in result.scene_set.paths():
+                    _m = _re_ctx.match(r"grok_(\d+)\.", Path(_sp).name)
+                    if _m and 0 <= int(_m.group(1)) < len(prompts):
+                        fresh_scene_prompts[Path(_sp)] = prompts[int(_m.group(1))]
                 return result.scene_set.paths()
         except Exception as exc:  # pragma: no cover — best-effort
             logger.warning("Grok Imagine scene fetch failed: %s", exc)
@@ -4257,8 +4285,44 @@ def _publish_youtube(
             first_failure or None,
         )
 
-    # Skip image provider logic if video_provider is enabled (videos replace slides)
-    if video_provider != "grok":
+    # ---- Sunday recap: reuse the week's gallery scenes (June 2026) ----
+    # A weekly recap re-tells this week's stories, whose imagery already
+    # exists in the gallery R2 bucket — regenerating with Grok Imagine
+    # would pay twice for pictures of the same stories. When BOTH aspects
+    # have ≥2 pooled scenes, skip scene generation entirely; below that,
+    # generate as on any other day. Best-effort + gated on
+    # youtube.recap_reuse_scenes (visual_reuse returns empty pools when
+    # disabled or on any failure).
+    recap_pool_used = False
+    if is_weekly_recap and video_provider != "grok":
+        try:
+            from engine.visual_reuse import recap_scene_pool
+            _recap_pool = recap_scene_pool(
+                config,
+                show_slug=config.slug,
+                episode_id=f"ep{episode_num:03d}",
+                end_date=f"{today:%Y-%m-%d}",
+            )
+            if (len(_recap_pool.get("long") or []) >= 2
+                    and len(_recap_pool.get("short") or []) >= 2):
+                long_scene_paths = list(_recap_pool["long"])
+                short_scene_paths = list(_recap_pool["short"])
+                recap_pool_used = True
+                pexels_attribution.append(
+                    "Imagery generated by Grok Imagine (xAI)."
+                )
+                logger.info(
+                    "Recap scene reuse: %d long / %d short gallery scenes — "
+                    "skipping scene generation.",
+                    len(long_scene_paths), len(short_scene_paths),
+                )
+        except Exception as exc:  # pragma: no cover — best-effort
+            logger.warning("Recap scene reuse failed: %s — generating "
+                           "scenes as usual", exc)
+
+    # Skip image provider logic if video_provider is enabled (videos replace
+    # slides) or the recap pool already supplied both scene sets.
+    if video_provider != "grok" and not recap_pool_used:
         if image_provider == "grok":
             long_scene_paths = _run_grok_path(aspect="16:9", label_suffix="")
             short_scene_paths = _run_grok_path(aspect="9:16", label_suffix="_short")
@@ -4267,6 +4331,142 @@ def _publish_youtube(
             short_scene_paths = _run_grok_path(aspect="9:16", label_suffix="_short")
         else:  # pexels (default)
             _run_pexels_path(into_long=True, into_short=True)
+
+    # ---- Fresh-scene bookkeeping + degraded gallery fallback (June 2026) ----
+    # "Fresh" = generated for THIS episode (recap-pool scenes are recycled,
+    # so they don't count). When generation degraded (<2 usable scenes —
+    # previously a straight fall-back to the static cover), pull the show's
+    # historical gallery scenes first and only degrade to the cover when
+    # the gallery is also empty (e.g. Pexels-only shows have no gallery).
+    if recap_pool_used:
+        fresh_long_scenes: "list[Path]" = []
+        fresh_short_scenes: "list[Path]" = []
+    else:
+        fresh_long_scenes = (
+            [Path(p) for p in long_scene_paths if Path(p) != Path(cover_path)]
+            if len(long_scene_paths) >= 2 else []
+        )
+        fresh_short_scenes = (
+            [Path(p) for p in short_scene_paths if Path(p) != Path(cover_path)]
+            if len(short_scene_paths) >= 2 else []
+        )
+    visual_fallback = ""
+    scene_library_count = 0
+    if not recap_pool_used and video_provider != "grok":
+        try:
+            from engine.visual_reuse import fallback_scene_pool
+            if len(long_scene_paths) < 2:
+                _fb_long = fallback_scene_pool(
+                    config, show_slug=config.slug,
+                    episode_id=f"ep{episode_num:03d}",
+                    aspect="16:9", context_text=hook or "",
+                )
+                if len(_fb_long) >= 2:
+                    long_scene_paths = list(_fb_long)
+                    scene_library_count += len(_fb_long)
+                    visual_fallback = "library"
+                elif image_provider in ("grok", "hybrid"):
+                    visual_fallback = "cover"
+            if len(short_scene_paths) < 2:
+                _fb_short = fallback_scene_pool(
+                    config, show_slug=config.slug,
+                    episode_id=f"ep{episode_num:03d}",
+                    aspect="9:16", context_text=hook or "",
+                )
+                if len(_fb_short) >= 2:
+                    short_scene_paths = list(_fb_short)
+                    scene_library_count += len(_fb_short)
+                    visual_fallback = visual_fallback or "library"
+                elif image_provider in ("grok", "hybrid"):
+                    visual_fallback = visual_fallback or "cover"
+        except Exception as exc:  # pragma: no cover — best-effort
+            logger.warning("Gallery fallback pool failed: %s", exc)
+        if visual_fallback:
+            result["visual_fallback"] = visual_fallback
+            logger.warning(
+                "Scene generation degraded for %s ep%s — fell back to the "
+                "%s.", config.slug, episode_num,
+                "gallery library" if visual_fallback == "library"
+                else "static cover",
+            )
+
+    # ---- Long-form thumbnail from a fresh scene + A/B variants ----
+    # The static cover made every episode's thumbnail identical; a fresh
+    # 16:9 scene gives each upload a distinct, episode-specific preview.
+    # The cover-based render above stays as the fallback when this fails.
+    result["thumbnail_base"] = "cover"
+    if getattr(yt, "long_form_thumbnail_from_scene", True) and fresh_long_scenes:
+        try:
+            _scene_thumb_out = work_dir / f"{base_name}_thumb.jpg"
+            _t_path, _t_font = generate_episode_thumbnail(
+                fresh_long_scenes[0],
+                episode_num=episode_num,
+                date_str=today_str,
+                output_path=_scene_thumb_out,
+                hook=hook,
+                show_name=show_label,
+            )
+            thumbnail_path = _scene_thumb_out
+            result["thumbnail_base"] = "scene"
+            if _t_font is not None:
+                result["thumbnail_autofit_font_size"] = int(_t_font)
+        except Exception as exc:  # pragma: no cover — best-effort
+            logger.warning(
+                "Scene-based thumbnail failed: %s — keeping the cover-based "
+                "thumbnail.", exc,
+            )
+    # Extra thumbnail composites from OTHER scenes (same hook/autofit) for
+    # the operator's Studio "Test & Compare" A/B. Uploaded to the gallery
+    # R2 bucket (tiny files; clean no-op when unconfigured) so their URLs
+    # survive past the ephemeral work dir.
+    _n_thumb_variants = int(getattr(yt, "thumbnail_variants", 2) or 0)
+    if (result["thumbnail_base"] == "scene" and _n_thumb_variants > 0
+            and len(fresh_long_scenes) > 1):
+        try:
+            from engine.publisher import generate_thumbnail_variants
+            _variant_paths = generate_thumbnail_variants(
+                fresh_long_scenes[1:],
+                episode_num=episode_num,
+                date_str=today_str,
+                output_dir=work_dir,
+                base_name=base_name,
+                hook=hook,
+                show_name=show_label,
+                count=_n_thumb_variants,
+            )
+            _variant_urls: "list[str]" = []
+            if _variant_paths:
+                from engine.gallery_uploader import (
+                    ImageMetadata as _VariantMeta,
+                    gallery_config_from_env as _variant_gconfig,
+                    upload_image as _variant_upload,
+                )
+                _vg = _variant_gconfig()
+                if _vg.is_configured:
+                    for _vp in _variant_paths:
+                        _vres = _variant_upload(
+                            Path(_vp).read_bytes(),
+                            _VariantMeta(
+                                image_id="",
+                                show_slug=config.slug,
+                                show_name=config.name,
+                                episode_id=f"ep{episode_num:03d}",
+                                episode_title=(
+                                    f"Ep {episode_num}: {hook}".strip(": ")
+                                    if hook else f"Ep {episode_num}"
+                                ),
+                                episode_date=today.strftime("%Y-%m-%d"),
+                                intended_use="thumbnail_variant",
+                                tags=[config.slug, "thumbnail_variant"],
+                            ),
+                            gallery_config=_vg,
+                        )
+                        if _vres is not None:
+                            _variant_urls.append(_vres.original_url)
+            if _variant_urls:
+                result["thumbnail_variant_urls"] = _variant_urls
+        except Exception as exc:  # pragma: no cover — best-effort
+            logger.warning("Thumbnail variants skipped: %s", exc)
 
     # Shorts thumbnail: vertical crop from cover or first vertical scene.
     shorts_thumb_base = cover_path
@@ -4290,6 +4490,42 @@ def _publish_youtube(
         _ep_duration = _audio_dur(str(final_mp3)) or 0.0
     except Exception:
         _ep_duration = 0.0
+
+    # ---- Long-form visual plan (June 2026 — engine/visual_reuse) ----
+    # Chapter-aligned scene schedule + gallery blending + evergreen b-roll.
+    # Best-effort: the planner never raises, and a legacy-shaped plan
+    # (scene_schedule=None) keeps build_long_form_video byte-for-byte on
+    # today's uniform path. Skipped entirely under the Grok Video path
+    # (videos replace slides).
+    _visual_plan: dict = {
+        "scene_schedule": None, "broll_clips": None, "scene_paths": None,
+        "fresh_count": len(fresh_long_scenes), "library_count": 0,
+        "mode": "uniform" if len(long_scene_paths) >= 2 else "cover",
+    }
+    if config.youtube.publish_long_form and video_provider != "grok":
+        try:
+            from engine.visual_reuse import long_form_visual_plan
+            _visual_plan = long_form_visual_plan(
+                config,
+                show_slug=config.slug,
+                episode_id=f"ep{episode_num:03d}",
+                hook=hook or "",
+                # On recap days the pooled week scenes take the fresh slot
+                # (they ARE the episode's imagery) and re-blending is off —
+                # the pool already came from the library.
+                fresh_scenes=(
+                    long_scene_paths if recap_pool_used else fresh_long_scenes
+                ),
+                chapters_path=chapters_path if chapters_path.exists() else None,
+                audio_duration_s=_ep_duration,
+                digests_dir=digests_dir,
+                fresh_scene_context=fresh_scene_prompts,
+                blend_library=False if recap_pool_used else None,
+            )
+            scene_library_count += int(_visual_plan.get("library_count") or 0)
+        except Exception as exc:  # pragma: no cover — never block a publish
+            logger.warning("Long-form visual plan failed: %s — legacy "
+                           "visuals", exc)
 
     # ---- Hybrid short video clips (Phase 4) — motion to complement stills ----
     # Best-effort, gated on youtube.video_clips_enabled (pilot: Tesla + SpaceX).
@@ -4326,10 +4562,15 @@ def _publish_youtube(
         try:
             build_long_form_video(
                 final_mp3, cover_path, long_video_path,
-                scene_paths=long_scene_paths if len(long_scene_paths) >= 2 else None,
+                scene_paths=(
+                    _visual_plan.get("scene_paths")
+                    or (long_scene_paths if len(long_scene_paths) >= 2 else None)
+                ),
                 clip_paths=long_clip_paths or None,
                 subtitles_path=srt_path,
                 show_name=config.name,
+                scene_schedule=_visual_plan.get("scene_schedule"),
+                broll_clips=_visual_plan.get("broll_clips"),
             )
             meta = build_long_form_metadata(
                 config,
@@ -4548,6 +4789,20 @@ def _publish_youtube(
                 getattr(config.audio, "voice_intro_delay", 0.0) or 0.0
             )
 
+            # Whisper word-level timings for sentence-snapped scene cuts
+            # (June 2026 — engine/visual_reuse). Loaded once per episode;
+            # [] (older transcripts without word data, or any failure)
+            # keeps the legacy flat 7 s scene grid.
+            _transcript_words: "list[dict]" = []
+            if transcript_path is not None and getattr(
+                _yt, "shorts_sentence_cuts", True
+            ):
+                try:
+                    from engine.visual_reuse import load_transcript_words
+                    _transcript_words = load_transcript_words(transcript_path)
+                except Exception as exc:  # pragma: no cover — best-effort
+                    logger.debug("Transcript word load skipped: %s", exc)
+
             # ---- Per-Short loop ----
             short_urls_out: "list[str]" = []
             short_video_ids_out: "list[str]" = []
@@ -4644,14 +4899,57 @@ def _publish_youtube(
                                 short_idx + 1, exc,
                             )
 
+                    # Per-Short visual extras (June 2026): 9:16 gallery
+                    # blending + sentence-snapped scene cuts. The legacy
+                    # scene list / flat grid takes over whenever the
+                    # extras come back empty (disabled flags, no library,
+                    # no word data, or any internal failure).
+                    _short_visuals: dict = {
+                        "scene_paths": None, "scene_change_times": None,
+                    }
+                    try:
+                        from engine.visual_reuse import short_visual_extras
+                        _short_visuals = short_visual_extras(
+                            config,
+                            show_slug=config.slug,
+                            episode_id=f"ep{episode_num:03d}",
+                            fresh_short_scenes=(
+                                short_scene_paths if recap_pool_used
+                                else fresh_short_scenes
+                            ),
+                            transcript_words=_transcript_words,
+                            # Words live on the voice-only Whisper
+                            # timeline; the final mix prepends the music
+                            # intro — same offset the captions apply.
+                            window_start_s=this_offset - _caption_offset,
+                            clip_duration_s=duration,
+                            context_text=(this_hook or hook or ""),
+                            blend_library=(
+                                False if recap_pool_used else None
+                            ),
+                        )
+                        if short_idx == 0:
+                            scene_library_count += int(
+                                _short_visuals.get("library_count") or 0
+                            )
+                    except Exception as exc:  # pragma: no cover
+                        logger.warning(
+                            "Shorts visual extras #%d failed: %s — legacy "
+                            "visuals", short_idx + 1, exc,
+                        )
+
                     build_short_video(
                         final_mp3, cover_path, this_short_video_path,
                         start_offset=this_offset,
                         duration=duration,
                         hook=this_hook or None,
                         scene_paths=(
-                            short_scene_paths
-                            if len(short_scene_paths) >= 2 else None
+                            _short_visuals.get("scene_paths")
+                            or (short_scene_paths
+                                if len(short_scene_paths) >= 2 else None)
+                        ),
+                        scene_change_times=_short_visuals.get(
+                            "scene_change_times"
                         ),
                         show_name=config.name,
                         subtitles_path=this_srt_path,
@@ -4817,6 +5115,23 @@ def _publish_youtube(
     except OSError:
         pass
 
+    # Visual reuse observability (June 2026). visual_mode is the single
+    # dashboard signal for how the episode's imagery was assembled:
+    # recap_pool (Sunday reuse) > library_fallback (degraded generation
+    # rescued by the gallery) > chapter_schedule / uniform / cover from
+    # the long-form plan.
+    if recap_pool_used:
+        result["visual_mode"] = "recap_pool"
+    elif visual_fallback == "library":
+        result["visual_mode"] = "library_fallback"
+    else:
+        result["visual_mode"] = str(_visual_plan.get("mode") or "cover")
+    result["scene_fresh_count"] = len(fresh_long_scenes) + len(fresh_short_scenes)
+    result["scene_library_count"] = (
+        scene_library_count + (len(long_scene_paths) + len(short_scene_paths)
+                               if recap_pool_used else 0)
+    )
+    result["broll_clips_used"] = len(_visual_plan.get("broll_clips") or [])
     # Surface the Pexels safety-filter count so the caller can record
     # it as a metric. A spike here is the operator's signal that the
     # show's image_queries / safe_skip_terms need tightening.
