@@ -72,8 +72,13 @@ _BATCH = 200
 
 
 def _load_index(digests_dir: Path) -> List[dict]:
-    """Collect rows from every ``digests/<slug>/youtube_videos.json``."""
+    """Collect rows from every per-show video index — the EN channel
+    (``youtube_videos.json``) AND the @NerraRU dubs
+    (``youtube_videos.ru.json``). Each row carries its own ``channel`` field,
+    so the fetch groups them onto the right channel token; without the RU
+    files the analytics loop was EN-only and never read the RU channel."""
     files = sorted(digests_dir.glob("*/youtube_videos.json"))
+    files += sorted(digests_dir.glob("*/youtube_videos.ru.json"))
     if not files:
         logger.info("No per-show video indexes under %s — nothing to fetch "
                     "(clean no-op)", digests_dir)
