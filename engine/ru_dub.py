@@ -39,6 +39,11 @@ _AI_DISCLOSURE_RU = (
     "а озвучка создаётся с помощью ИИ-синтеза голоса."
 )
 
+# Russian end-card call-to-action for the Shorts (parity with the EN
+# "WATCH FULL EPISODE" / "Tap Subscribe ↗" card).
+_RU_END_CARD_MAIN = "СМОТРЕТЬ ВЫПУСК"
+_RU_END_CARD_SUB = "Подпишись ↗"
+
 
 def _episode_id(episode_num: int) -> str:
     return f"ep{episode_num:03d}"
@@ -289,13 +294,72 @@ def publish_ru_dub(
                     config.slug, episode_num, intended_use="social")
                 short_scenes = _download_images(short_urls, tmp) if short_urls else []
                 short_mp4 = tmp / f"ru_short_ep{episode_num:03d}.mp4"
+                short_dur = float(getattr(yt, "short_duration_seconds", 55.0))
+
+                # Parity with the EN shorts: transcribe the RU dub audio
+                # (Russian Whisper, word timestamps) → smart engaging-beat
+                # start + Russian burned-in per-word captions. DejaVu Sans
+                # (the caption font) covers Cyrillic. Every piece is
+                # best-effort — the short still ships without them.
+                start_offset = float(getattr(yt, "shorts_start_offset", 0.0) or 0.0)
+                ass_path = None
+                try:
+                    from engine.transcripts import generate_transcript
+                    from engine.captions import transcript_to_ass_window
+                    from engine.shorts_selector import pick_engaging_window
+                    from engine.audio import get_audio_duration
+                    tr = generate_transcript(
+                        audio, tmp, f"ru_ep{episode_num:03d}", language="ru")
+                    if tr and tr.json_path.exists():
+                        total_dur = get_audio_duration(audio) or 0.0
+                        win = pick_engaging_window(
+                            tr.json_path, audio_offset=start_offset,
+                            audio_duration=total_dur, window_duration=short_dur,
+                            min_start_final=start_offset)
+                        if win is not None:
+                            start_offset = win.start_seconds
+                        ass_candidate = tmp / f"ru_short_ep{episode_num:03d}.ass"
+                        transcript_to_ass_window(
+                            tr.json_path, ass_candidate,
+                            window_start_seconds=start_offset,
+                            window_duration_seconds=short_dur,
+                            audio_offset_seconds=0.0)
+                        if (ass_candidate.exists()
+                                and ass_candidate.stat().st_size > 0
+                                and "Dialogue:" in ass_candidate.read_text(
+                                    encoding="utf-8", errors="replace")):
+                            ass_path = ass_candidate
+                            result["ru_short_captions"] = "ass"
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("ru_dub: RU transcript/captions failed (%s) — "
+                                   "short without captions", exc)
+
+                # End-card CTA (Russian) — reuse the RU long-form thumbnail.
+                end_card_png = None
+                try:
+                    from engine.publisher import generate_shorts_end_card
+                    if thumb_path is not None:
+                        ec = tmp / f"ru_short_ep{episode_num:03d}_endcard.png"
+                        generate_shorts_end_card(
+                            thumb_path, ec, show_name=config.name,
+                            main_text=_RU_END_CARD_MAIN, sub_text=_RU_END_CARD_SUB)
+                        if ec.exists():
+                            end_card_png = ec
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("ru_dub: end-card render failed (%s)", exc)
+
                 build_short_video(
                     audio, cover, short_mp4,
-                    start_offset=float(getattr(yt, "shorts_start_offset", 0.0) or 0.0),
-                    duration=float(getattr(yt, "short_duration_seconds", 55.0)),
+                    start_offset=start_offset,
+                    duration=short_dur,
                     hook=ru_title,
                     scene_paths=short_scenes if len(short_scenes) >= 2 else None,
-                    show_name=config.name)
+                    show_name=config.name,
+                    subtitles_path=ass_path,
+                    end_card=True,
+                    end_card_main_text=_RU_END_CARD_MAIN,
+                    end_card_sub_text=_RU_END_CARD_SUB,
+                    end_card_image_path=end_card_png)
                 sup = upload_video(
                     short_mp4, credentials=creds,
                     title=_cap_title(ru_title, 90) + " #Shorts",
