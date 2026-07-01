@@ -81,6 +81,29 @@ class TestTextHelpers:
         assert "#Tesla" in out  # keyword hashtag
 
 
+class TestShortParity:
+    """RU shorts reach EN parity: Russian captions (transcribe the RU audio) +
+    smart engaging-beat start + end-card CTA. Full render needs ffmpeg+creds,
+    so pin the wiring structurally so it can't silently regress."""
+
+    def test_russian_end_card_text_is_cyrillic(self):
+        assert ru_dub._RU_END_CARD_MAIN and ru_dub._RU_END_CARD_SUB
+        # Contains Cyrillic (not the English EN defaults).
+        assert any("Ѐ" <= ch <= "ӿ" for ch in ru_dub._RU_END_CARD_MAIN)
+
+    def test_short_path_wires_transcript_captions_and_endcard(self):
+        src = (Path(ru_dub.__file__)).read_text(encoding="utf-8")
+        # Transcribe the RU audio in Russian.
+        assert "generate_transcript(" in src and 'language="ru"' in src
+        # Smart engaging-beat start + per-word ASS captions.
+        assert "pick_engaging_window(" in src
+        assert "transcript_to_ass_window(" in src
+        assert "subtitles_path=ass_path" in src
+        # End-card CTA on the short.
+        assert "generate_shorts_end_card(" in src
+        assert "end_card=True" in src
+
+
 class TestGuards:
     def test_skip_when_not_enabled(self):
         cfg = _cfg()

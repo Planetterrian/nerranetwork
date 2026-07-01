@@ -81,13 +81,31 @@ python scripts/publish_ru_dubs.py tesla --episode <N>
 Idempotent: an episode already in `youtube_videos.ru.json` is skipped unless
 `--force`.
 
+## Shorts parity with the EN channel (July 2026)
+
+The RU Shorts now match the EN Shorts' polish. The RU dub audio is
+transcribed with faster-whisper (`language="ru"`, word timestamps), then:
+
+- **Russian burned-in captions** — per-word ASS captions via
+  `transcript_to_ass_window` (the caption font, DejaVu Sans, covers Cyrillic).
+- **Smart engaging-beat start** — `pick_engaging_window` on the RU transcript
+  picks where the Short begins (falls back to the configured offset when no
+  beat scores above threshold; the scorer's cue phrases are English, so RU
+  falls back more often — the captions are the bigger win).
+- **End-card CTA** — a Russian "СМОТРЕТЬ ВЫПУСК / Подпишись ↗" card on the last
+  3 s, same as the EN "WATCH FULL EPISODE" card.
+
+Every piece is best-effort — the Short still ships if transcription or a caption
+step fails. The multilingual workflow caches the Whisper model
+(`whisper-faster-base-v1`, same key as `run-show.yml`) so the download is
+one-time. The EN Shorts already carried crossfades (PR #733), per-word
+captions, smart-start, end cards, and entity hashtags — this brings RU up to
+that bar.
+
 ## Deliberately left for later
 
-- **Russian chapters / burned-in captions** — the English chapter markers don't
-  match the Russian script, so v1 ships without chapters on the RU long-form.
-  A Russian-aware chapter pass (or a Whisper transcript of the RU audio) is the
-  follow-up.
-- **Smart Shorts window** — without a Russian transcript the Short starts at the
-  configured offset rather than the most-engaging beat.
+- **Russian chapters** on the RU long-form — the English chapter markers don't
+  match the Russian script; a Russian-aware chapter pass (reusing the same RU
+  Whisper transcript) is the next follow-up.
 
 Drift guards: `tests/test_ru_dub.py`.
