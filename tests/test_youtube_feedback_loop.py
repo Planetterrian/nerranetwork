@@ -35,6 +35,20 @@ def _load_script(name: str):
     return mod
 
 
+class TestNightlyPersistsLoopOutputs:
+    """The nightly job PRODUCES api/youtube_stats.json + per-show
+    youtube_performance.json but commits via an explicit add-paths allowlist.
+    If the loop outputs aren't in that list they're generated then discarded —
+    the loop can never persist (the bug found 2026-07-01)."""
+
+    def test_add_paths_includes_loop_outputs(self):
+        wf = (_ROOT / ".github" / "workflows" / "nightly-maintenance.yml").read_text(
+            encoding="utf-8")
+        # Both must appear in the workflow's commit allowlist.
+        assert "api/youtube_stats.json" in wf
+        assert "digests/**/youtube_performance.json" in wf
+
+
 class TestScope:
     def test_analytics_scope_present(self):
         assert any("yt-analytics.readonly" in s for s in YOUTUBE_SCOPES), (
