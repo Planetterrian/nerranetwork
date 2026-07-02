@@ -351,6 +351,7 @@ def run_generation_phase(
         template_vars.setdefault("recent_deep_dive_topics", "")
         template_vars.setdefault("slow_news_context", "")
         template_vars.setdefault("cross_show_context", "")
+        template_vars.setdefault("nerra_network_context", "")
         if getattr(config, "narrative_mode", False):
             # Minimal narrative fallbacks; real values should come from caller
             template_vars.setdefault("topic_title", "")
@@ -430,6 +431,7 @@ def run_generation_phase(
             pod_vars.setdefault("closing_block", "Thanks for listening.")
 
     pod_vars.setdefault("tone_hint", "natural and conversational")
+    pod_vars.setdefault("nerra_network_context", "")
 
     # Append the rotating Nerra Network cross-promo to the spoken closing.
     # Done HERE (after closing_block is resolved from any source) so it covers

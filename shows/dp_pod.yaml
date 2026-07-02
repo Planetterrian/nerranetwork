@@ -104,7 +104,10 @@ tts:
   dialogue_voices:
     PATRICK: kdif6sqjcyiq   # the network's custom English voice (Patrick)
     DAN: 0vscf8u8yrxc       # Dan's custom Grok voice
-  dialogue_pause_ms: 300
+  # 300 -> 220 after the Ep001 listen: the flat 300 ms gap on every handoff
+  # read as robotic turn-taking; 220 keeps handoffs breathing without the
+  # dead air. Tune further by ear (landmine #17 A/B).
+  dialogue_pause_ms: 220
   # Dialogue mode never applies the speech wrap (per-turn wraps are exactly
   # the landmine-#17 "Fast." leak shape multiplied by every handoff). Pin
   # empty so the config states reality instead of relying on the runtime
@@ -113,12 +116,16 @@ tts:
   speech_wrap_close: ""
 
 audio:
-  # Launch music: the shared network theme (same starting point the
-  # scaffold uses; TST/EI/M&A also share it). Replace with a dedicated
-  # assets/music/dp_pod.mp3 when the operator produces one — A/B-listen
-  # the first mixed episode either way (landmine #17).
-  music_file: assets/music/tesla_shorts_time.mp3
+  # "Do Positive" — the show's own anthem (operator-produced, July 2026).
+  # Used as the intro/outro bed on every episode via the standard mix.
+  music_file: assets/music/dp_pod.mp3
   transition_sting: assets/music/transition_sting.mp3
+  # Episode 1 only: after the closing ("...Do something about it."), the
+  # FULL song plays the debut out — the script introduces it on air and
+  # run_show appends the audio after chapter timestamps are computed.
+  # No-op for every other episode.
+  debut_song_file: assets/music/dp_pod.mp3
+  debut_song_episode: 1
 
 publishing:
   rss_file: dp_pod_podcast.rss

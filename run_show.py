@@ -2094,6 +2094,7 @@ def run(args: argparse.Namespace) -> None:
                     ),
                 )
             pod_vars.setdefault("tone_hint", "natural and conversational")
+            pod_vars.setdefault("nerra_network_context", "")
 
             # === Generation Phase ===
             from engine.pipeline import run_generation_phase
@@ -2828,6 +2829,32 @@ def run(args: argparse.Namespace) -> None:
                         chapters_json_path,
                         episode_title=ep_title,
                     )
+
+                # 10a-bis. Debut full-song outro (The DP Pod Ep1): append the
+                # full theme song once, AFTER chapter timestamps are computed
+                # from the spoken mix (the song would otherwise stretch the
+                # proportional chapter math across four extra minutes). The
+                # closing introduces the song on air. Config-gated no-op for
+                # every other show/episode; failure never blocks publish.
+                _debut_song = getattr(config.audio, "debut_song_file", None)
+                _debut_ep = getattr(config.audio, "debut_song_episode", 0) or 0
+                if _debut_song and episode_num == _debut_ep:
+                    _song_path = PROJECT_ROOT / _debut_song
+                    if _song_path.exists():
+                        try:
+                            from engine.audio import append_full_song
+                            append_full_song(final_mp3, _song_path)
+                            audio_duration = get_audio_duration(final_mp3) or audio_duration
+                            metrics.record("debut_song_appended", True)
+                            logger.info(
+                                "Debut outro: appended full song %s (final %.0fs)",
+                                _song_path.name, audio_duration,
+                            )
+                        except Exception as exc:
+                            metrics.record("debut_song_appended", False)
+                            logger.warning("Debut song append failed (non-fatal): %s", exc)
+                    else:
+                        logger.warning("Debut song file not found: %s", _song_path)
 
                 # NOTE: raw MP3 cleanup is deferred until after post-validation
                 # passes, so we have recovery if the mix is corrupt (see #20).

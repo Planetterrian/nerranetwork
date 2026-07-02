@@ -721,6 +721,25 @@ TST received a full recursive improvement architecture (analogous to MIT):
   `dialogue_mode is False`), `tests/test_dp_pod_show.py` (launch shape).
   Prompt edits change shipped audio — A/B-listen per landmine #17; the first
   episodes are the calibration set for `dialogue_pause_ms` handoff pacing.
+  **July 2 2026 Ep1 rework (operator listened: "terrible and robotic"):**
+  theme song `assets/music/dp_pod.mp3` ("Do Positive", 4.5 min Suno track)
+  is the intro/outro bed; NEW `audio.debut_song_file`/`debut_song_episode`
+  (AudioConfig, generic no-op default) appends the FULL song after the
+  closing on Episode 1 only via `engine.audio.append_full_song` (after
+  chapter timestamps — the song must not stretch the proportional chapter
+  math); the debut is a DESIGNED episode via per-show overrides in
+  `engine/first_episode.py` (`_SHOW_DIGEST_EP1`/`_SHOW_PODCAST_EP1`:
+  founding statement → anchor discussion from the network's own First
+  Principles material → network tour → starter lever → on-air song intro);
+  `shows/hooks/dp_pod.py` supplies `{nerra_network_context}` (sibling-show
+  catalog + latest FP brief; setdefault-ed in pipeline/run_show so a hook
+  failure can't KeyError); the podcast prompt gained a DELIVERY — WRITE THE
+  ENERGY IN block (spoken-English volleys, ≥⅓ one-sentence turns, no
+  news-anchor phrasing — the anti-robotic levers) + a one-mention-max
+  cross-promo rule; `dialogue_pause_ms` 300→220. The shipped Ep001 was
+  retired (artifacts deleted, RSS items stripped, numbering back to 1) —
+  regenerate via workflow_dispatch; the schedule-event duplicate guard
+  doesn't apply to manual dispatch.
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:
