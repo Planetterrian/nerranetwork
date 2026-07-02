@@ -207,16 +207,27 @@ class TestNarrativeQueueRunway:
 
     def test_first_principles_unproduced_alternates(self):
         """July 2 2026 hygiene pass: the unproduced FP queue was
-        re-sequenced to alternate concrete_example / opportunity_area. The
-        produced tail ended on an opportunity_area (recycling-economics), so
-        the first unproduced entry must be a concrete_example, and adjacent
-        same-category pairs must stay at the theoretical minimum (the
-        |#C - #O| overflow that can't be interleaved away)."""
+        re-sequenced to alternate concrete_example / opportunity_area.
+
+        The original assertion hardcoded ``seq[0] == "concrete_example"``,
+        which was only true on the day it was written — FP produces one
+        topic per day, so the expected head category flips daily and the
+        test broke the same afternoon (the 08:31 UTC episode consumed the
+        next concrete_example). The durable invariant is that alternation
+        CONTINUES from the produced tail: the first unproduced entry
+        differs from the last produced entry's category, and adjacent
+        same-category pairs stay at the theoretical minimum (the |#C - #O|
+        overflow that can't be interleaved away)."""
         q = yaml.safe_load(
             (_ROOT / "shows" / "topic_queues" / "first_principles.yaml").read_text(
                 encoding="utf-8"))["queue"]
         seq = [e.get("category") for e in q if not e.get("produced")]
-        assert seq[0] == "concrete_example", seq[:3]
+        produced_cats = [e.get("category") for e in q if e.get("produced")]
+        if produced_cats and seq:
+            assert seq[0] != produced_cats[-1], (
+                f"FP alternation broken at the produced/unproduced boundary: "
+                f"last produced was {produced_cats[-1]!r}, next up is {seq[0]!r}"
+            )
         n_c = seq.count("concrete_example")
         n_o = seq.count("opportunity_area")
         same_adj = sum(1 for a, b in zip(seq, seq[1:]) if a == b)
