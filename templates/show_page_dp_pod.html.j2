@@ -132,6 +132,39 @@
   .dpc-wall .member b { color:var(--dp-gold); font-weight:700; margin-right:0.4rem; }
   .dpc-wall .member.you { border-style:dashed; color:#7ba893; }
 
+  /* Patron tiers */
+  .dpc-tiers { display:grid; grid-template-columns:repeat(3,1fr); gap:1.1rem; margin-top:2rem; }
+  .dpc-tier { background:rgba(18,183,106,0.05); border:1px solid var(--dp-line);
+    border-radius:18px; padding:1.7rem 1.5rem; display:flex; flex-direction:column; gap:0.9rem;
+    text-align:left; }
+  .dpc-tier--featured { border-color:rgba(232,196,104,0.5);
+    background:linear-gradient(180deg, rgba(232,196,104,0.08), rgba(18,183,106,0.05));
+    position:relative; }
+  .dpc-tier--featured .tier-flag { position:absolute; top:-0.7rem; left:50%;
+    transform:translateX(-50%); background:var(--dp-gold); color:#241b06; font-size:0.66rem;
+    font-weight:700; letter-spacing:0.1em; text-transform:uppercase; padding:0.25rem 0.8rem;
+    border-radius:999px; white-space:nowrap; }
+  .dpc-tier .tier-name { font-size:0.72rem; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--dp-green); font-weight:700; }
+  .dpc-tier--featured .tier-name { color:var(--dp-gold); }
+  .dpc-tier .tier-price { font-family:'Source Serif 4',Georgia,serif; font-size:1.9rem;
+    color:var(--dp-cream); }
+  .dpc-tier .tier-price small { font-size:0.85rem; color:var(--nn-text-muted,#9aa7b8); }
+  .dpc-tier ul { margin:0; padding:0; list-style:none; flex:1; display:flex;
+    flex-direction:column; gap:0.55rem; }
+  .dpc-tier li { font-size:0.88rem; color:var(--nn-text-muted,#9aa7b8); line-height:1.5;
+    padding-left:1.3rem; position:relative; }
+  .dpc-tier li::before { content:"✓"; position:absolute; left:0; color:var(--dp-green);
+    font-weight:700; }
+  .dpc-tier--featured li::before { color:var(--dp-gold); }
+  .dpc-tier .tier-cta { display:block; text-align:center; padding:0.75rem 1rem;
+    border-radius:999px; font-weight:700; font-size:0.92rem; text-decoration:none; }
+  .dpc-tier .tier-cta--free { border:1px solid var(--dp-line); color:var(--dp-cream); }
+  .dpc-tier .tier-cta--paid { background:var(--dp-green); color:#06130b; }
+  .dpc-tier .tier-cta--soon { border:1px dashed rgba(232,196,104,0.45); color:#c9b98a;
+    cursor:default; }
+  .dpc-tiers-fine { margin-top:1.4rem; font-size:0.85rem; color:#7ba893; }
+
   /* Lever board */
   .dpc-levers { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
     gap:1.1rem; margin-top:2rem; }
@@ -196,7 +229,7 @@
   @media (max-width: 860px) {
     .dpc-hero-inner { grid-template-columns:1fr; }
     .dpc-membercard { margin:0 auto; transform:rotate(0); }
-    .dpc-steps, .dpc-grammar, .dpc-hosts { grid-template-columns:1fr; }
+    .dpc-steps, .dpc-grammar, .dpc-hosts, .dpc-tiers { grid-template-columns:1fr; }
     .dpc-ep { flex-wrap:wrap; }
   }
 </style>
@@ -211,7 +244,7 @@
   <section class="dpc-hero">
     <div class="dpc-hero-inner">
       <div>
-        <span class="dpc-eyebrow" style="justify-content:flex-start;">The Do Positive Club · Est. 2026 · Free forever</span>
+        <span class="dpc-eyebrow" style="justify-content:flex-start;">The Do Positive Club · A Nerra Network Original</span>
         <h1>Most media tells you what's wrong.<br>This club <em>does something about it.</em></h1>
         <p class="dpc-hero-desc">
           The DP Pod is a ten-minute daily briefing of genuinely good news in science and
@@ -229,7 +262,7 @@
         <div class="dpc-membercard" aria-label="The Do Positive Club membership card">
           <div class="mc-top">
             <span class="mc-club">The Do Positive Club</span>
-            <span class="mc-free">Free forever</span>
+            <span class="mc-free">Est. 2026</span>
           </div>
           <div class="mc-name">Member: <span>you, hopefully</span></div>
           <div class="mc-bottom">
@@ -299,8 +332,8 @@
     <div class="dpc-section dpc-center">
       <span class="dpc-eyebrow">Membership</span>
       <h2 class="dpc-h2">Take the Do Positive Pledge.</h2>
-      <p class="dpc-sub">Joining isn't a subscription — it's a pledge. It costs nothing and it
-        never will. It just asks something of you.</p>
+      <p class="dpc-sub">Joining isn't a subscription — it's a pledge. It's free, and it asks
+        for something better than money: action.</p>
       <div class="dpc-pledge-card">
         <span class="pl-label">The Pledge</span>
         <p class="dpc-pledge-text">“I'll take ten minutes a day for the good news —
@@ -310,7 +343,7 @@
           <input type="email" name="email" required placeholder="you@example.com" aria-label="Email address">
           <button type="submit">Sign the pledge — join the club</button>
         </form>
-        <p class="dpc-pledge-fine">Free forever. Your email is the membership card — episode
+        <p class="dpc-pledge-fine">Joining is free. Your email is the membership card — episode
           alerts and the club dispatch, no spam, leave anytime.</p>
         <div class="dpc-founding">
           ⭐ <b>Founding Members:</b> everyone who signs before Episode 100 is a Founding
@@ -323,6 +356,62 @@
         <span class="member you"><b>№ 003</b> your name goes here</span>
       </div>
     </div>
+  </section>
+
+  <!-- ================= Patrons ================= -->
+  {%- set patron_url = patron_url | default('') -%}
+  <section class="dpc-section dpc-center" id="patrons">
+    <span class="dpc-eyebrow">Patrons</span>
+    <h2 class="dpc-h2">The club runs on patrons.</h2>
+    <p class="dpc-sub">Every episode is free, and stays free. But Nerra runs without ads,
+      sponsors, or data games — so the club runs on members who chip in. One hundred percent
+      of patron support funds the show and the network that makes it. That's the honest number.</p>
+    <div class="dpc-tiers">
+      <div class="dpc-tier">
+        <span class="tier-name">Member</span>
+        <span class="tier-price">Free</span>
+        <ul>
+          <li>The daily briefing, every day</li>
+          <li>The Do Positive Pledge + episode alerts</li>
+          <li>Your dispatches read on the show</li>
+          <li>A founding number if you join before Episode 100</li>
+        </ul>
+        <a class="tier-cta tier-cta--free" href="#pledge">Take the Pledge</a>
+      </div>
+      <div class="dpc-tier dpc-tier--featured">
+        <span class="tier-flag">Keeps the lights on</span>
+        <span class="tier-name">Patron</span>
+        <span class="tier-price">$5 <small>/ month</small></span>
+        <ul>
+          <li>Everything in Member</li>
+          <li>Your name on the Patron Wall</li>
+          <li>A numbered Do Positive Club patron card</li>
+          <li>Thanked by name in the monthly patron roll on air</li>
+        </ul>
+        {% if patron_url %}
+        <a class="tier-cta tier-cta--paid" href="{{ patron_url }}">Become a Patron</a>
+        {% else %}
+        <span class="tier-cta tier-cta--soon">Patron doors open with Episode 1</span>
+        {% endif %}
+      </div>
+      <div class="dpc-tier">
+        <span class="tier-name">Founding Patron</span>
+        <span class="tier-price">$15 <small>/ month</small></span>
+        <ul>
+          <li>Everything in Patron</li>
+          <li>Founding Patron number, locked forever</li>
+          <li>Vote on which Lever the club pulls each month</li>
+          <li>First access to whatever the club builds next</li>
+        </ul>
+        {% if patron_url %}
+        <a class="tier-cta tier-cta--paid" href="{{ patron_url }}">Become a Founding Patron</a>
+        {% else %}
+        <span class="tier-cta tier-cta--soon">Patron doors open with Episode 1</span>
+        {% endif %}
+      </div>
+    </div>
+    <p class="dpc-tiers-fine">Patronage is support, not access — nothing on this page ever
+      moves behind a paywall. Cancel anytime, stay a member forever.</p>
   </section>
 
   <!-- ================= The Lever Board ================= -->
@@ -400,8 +489,9 @@
     <span class="dpc-eyebrow">The Club Charter</span>
     <h2 class="dpc-h2">Five things we'll never break.</h2>
     <div class="dpc-charter" style="text-align:left;">
-      <div class="dpc-tenet"><h4>Free forever</h4>
-        <p>Membership never costs money. The club asks for action, not dollars.</p></div>
+      <div class="dpc-tenet"><h4>Free to join</h4>
+        <p>The daily briefing and membership cost nothing. Patrons keep the club
+        running — by choice, never by paywall.</p></div>
       <div class="dpc-tenet"><h4>Honest numbers</h4>
         <p>Every claim gets its caveat. Every lever states its real cost and payback.</p></div>
       <div class="dpc-tenet"><h4>No guilt</h4>

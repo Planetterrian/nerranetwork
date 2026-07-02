@@ -119,9 +119,25 @@ class TestClubPage:
         # Mechanic 2: constrained Dispatch grammar with a real submission path
         assert "mailto:" in html and "Do%20Positive%20Dispatch" in html
         assert "The honest numbers" in html
-        # Mechanic 3/4: starter levers pre-launch + free-forever charter
-        assert "Free forever" in html
+        # Mechanic 3/4: starter levers pre-launch; charter promises free
+        # JOINING, never "free forever" (operator decision, July 2026 —
+        # patron tiers fund Nerra; episodes stay un-paywalled)
+        assert "Free to join" in html
+        assert "Free forever" not in html
         assert "Do something about it" in html
+
+    def test_patron_tiers_present_with_placeholder_until_url_set(self):
+        import generate_html as gh
+
+        html = (PROJECT_ROOT / "thedppod.html").read_text(encoding="utf-8")
+        # Belonging-framed patronage (MaxFun/Defector/RtbC model): support,
+        # not access — three tiers, nothing paywalled.
+        assert "The club runs on patrons" in html
+        assert "Become a Patron" in html or "Patron doors open" in html
+        assert "Founding Patron" in html
+        assert "paywall" in html  # the "never moves behind a paywall" promise
+        # Registry carries the pluggable checkout URL field.
+        assert "patron_url" in gh.NETWORK_SHOWS["dp_pod"]
 
     def test_lever_board_extracts_from_digest(self, tmp_path, monkeypatch):
         import generate_html as gh
