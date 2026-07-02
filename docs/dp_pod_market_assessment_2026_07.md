@@ -141,6 +141,36 @@ compromise.
   only becomes a relationship when something arrives; recommend enabling
   once Ep1 ships so joining triggers the welcome + daily episode email.
 
+## 5a. Monetization addendum (operator decision, July 2 2026)
+
+The launch page's "free forever" promise was dropped — Nerra has to make
+money eventually, and promising forever-free forecloses the option. The
+replacement model (operator-selected from the three researched options):
+
+- **Patron tiers — belonging, not access.** Member (free: pledge, daily
+  briefing, dispatches, founding number) / **Patron $5/mo** (name on the
+  Patron Wall, numbered patron card, monthly on-air patron roll) /
+  **Founding Patron $15/mo** (locked founding number, monthly vote on which
+  Lever the club pulls, first access to what the club builds next). Nothing
+  is ever paywalled — this is the exact posture the verified evidence
+  supports (Maximum Fun's co-op CTA; Defector's 10k day-one belonging-framed
+  subscriptions and ~95%-subscription revenue; Reasons to be Cheerful
+  selling the wall + card at $1/mo).
+- **100% funds Nerra**, stated plainly on the page ("that's the honest
+  number") — no charity slice at launch; the Fix The News 30%-to-charity
+  model can be layered on later when revenue justifies it.
+- **Payment rail deferred**: the tier cards read from a `patron_url`
+  registry field (`shows/network_meta.yaml`); empty = "Patron doors open
+  with Episode 1" placeholder. Recommended rail when ready: Buttondown paid
+  subscriptions (one system for membership email + patronage); Stripe
+  payment links or Patreon plug into the same field.
+- Charter tenet reworded **"Free forever" → "Free to join"**; the promise
+  that survives is "never by paywall", which the model genuinely keeps.
+
+New promises the show must eventually honor (operator ops, post-revenue):
+the Patron Wall, numbered patron cards, the monthly on-air patron roll, and
+the Founding-Patron lever vote.
+
 ## 6. Sources (all fetched + adversarially verified July 2026)
 
 - https://fixthenews.com/
