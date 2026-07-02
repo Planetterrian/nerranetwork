@@ -52,22 +52,27 @@ format entirely and structure the brief as:
    one concrete action a week (The Lever), and proof it works (the Do
    Positive Dispatch). Where to learn more: the show page at nerranetwork
    dot com — take the pledge, join the club.
-2. **The anchor discussion** — take the First Principles Daily material in
+2. **### Think Positive** — the debut mindset principle. Best fit for
+   episode one: motivation follows action (behavioral activation / Tony
+   Robbins' massive-action frame) or Viktor Frankl's chosen response —
+   attributed, paraphrased (no invented quotes), with one concrete mental
+   rep, non-clinical framing.
+3. **The anchor discussion** — take the First Principles Daily material in
    the NERRA NETWORK section and prepare it as a SPRINGBOARD, not a summary
    to recite: 2-3 sentences on the core idea and its single most surprising
    number, then the OPEN QUESTIONS the hosts should argue about — how far
    the pattern stretches, what a builder listening today would do with it,
    where it breaks. The hosts' own analysis is the episode; don't pre-write
    their conclusions.
-3. **The network tour material** — at most THREE sibling shows from the
+4. **The network tour material** — at most THREE sibling shows from the
    catalog, one-phrase pitch each. No editorial-standards boilerplate
    ("measured result", "number and a source") — those phrases are BANNED
    from the brief.
-4. **The Lever** — one starter action tied to agency: take the pledge on the
+5. **The Lever** — one starter action tied to agency: take the pledge on the
    show page and send this episode to one person who's been doomscrolling.
    Honest numbers: it costs about one minute; it's how a zero-listener show
    becomes a club.
-5. **### Sources** — the First Principles material and anything else referenced.
+6. **### Sources** — the First Principles material and anything else referenced.
 """,
 }
 
@@ -75,7 +80,7 @@ _SHOW_PODCAST_EP1 = {
     "dp_pod": """
 ### FIRST EPISODE — THE DEBUT SCRIPT (series premiere of {show_name})
 This is a designed founding episode, not a news day. Total target stays
-~1,400-1,600 words; the shape (segment names still spoken so chapters latch):
+~1,500-1,700 words; the shape (segment names still spoken so chapters latch):
 
 1. **[Cold Open — the founding conversation, 500-650 WORDS, the heart of the
    episode]** After the supplied intro line, Dan and Patrick introduce the
@@ -98,7 +103,14 @@ This is a designed founding episode, not a news day. Total target stays
      ("nerra network dot com", said naturally, once).
    - WHAT THEY HOPE TO INSPIRE: a daily habit of acting instead of
      doomscrolling.
-2. **[The Positive Papers — the anchor DISCUSSION, not a recap]** ONE piece:
+2. **[Think Positive — introduce the segment, ~60 seconds]** Announced BY
+   NAME. Debut the show's mindset segment: why a show about doing positive
+   starts in the head — action-orientation, creativity, and individual
+   accountability as a path to good mental health (this is the first show
+   to treat mental health as seriously as science and tech). Use the
+   briefing's Think Positive principle with its named thinker; land the
+   concrete mental rep; never invent quotes, never clinical advice.
+3. **[The Positive Papers — the anchor DISCUSSION, not a recap]** ONE piece:
    the First Principles Daily material from the briefing — but the source
    material is a SPRINGBOARD, not the content. Maximum three sentences
    total restating what the source says; everything else is Dan and
@@ -108,19 +120,19 @@ This is a designed founding episode, not a news day. Total target stays
    this goes in twenty years. What does this idea mean for a builder
    listening right now? Where do they genuinely disagree about how far it
    stretches? Land somewhere better than either started.
-3. **[The network tour — 30 seconds MAXIMUM, strict]** Name at most THREE
+4. **[The network tour — 30 seconds MAXIMUM, strict]** Name at most THREE
    sibling shows, EXACTLY ONE conversational sentence each, every sentence
    shaped differently ("if you build with AI, Models and Agents is your
    morning"; "Fascinating Frontiers is our space-nerd fix"). HARD BANS: no
    repeated sentence shapes, no editorial-standards boilerplate ("measured
    result", "number and a source", "evidentiary bar"), no corporate voice.
    It's a friend saying "you'd like this one", not a catalog read.
-4. **[The Lever]** The starter lever from the brief: take the pledge, send
+5. **[The Lever]** The starter lever from the brief: take the pledge, send
    this episode to one doomscroller. Honest numbers, no guilt.
-5. **[Do Positive Dispatch]** No mail yet — it's Episode 1 and say so with a
+6. **[Do Positive Dispatch]** No mail yet — it's Episode 1 and say so with a
    smile. Invite the first dispatches; one host commits to pulling this
    week's lever and reporting back on air.
-6. **[Sign-Off + the song]** IMMEDIATELY BEFORE the supplied closing, one
+7. **[Sign-Off + the song]** IMMEDIATELY BEFORE the supplied closing, one
    host introduces the show's theme song in their own words: we made an
    anthem for this club, it's called "Do Positive", and we're playing the
    whole thing to close the very first episode — stay for it. Then the

@@ -84,7 +84,8 @@ class TestChapterMarkers:
             "Sign-Off must precede the body markers (EI June-11 ordering "
             "rule) so a merged final line is titled Sign-Off, not The Lever"
         )
-        for expected in ("The Positive Papers", "The Lever", "Do Positive Dispatch"):
+        for expected in ("The Positive Papers", "Think Positive", "The Lever",
+                         "Do Positive Dispatch"):
             assert expected in titles
 
     def test_positional_anchors(self):
@@ -264,6 +265,50 @@ class TestDebutRework:
         prompt = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_podcast.txt").read_text(
             encoding="utf-8")
         assert "THE ANALYSIS IS THE SHOW" in prompt
+
+
+class TestThinkPositiveSegment:
+    """July 2026: the mindset segment — mental health via action-orientation,
+    creativity, and individual accountability (Robbins/Sinek et al.), the
+    first show to treat mental health alongside science and tech."""
+
+    def test_digest_prompt_has_the_section_with_guardrails(self):
+        prompt = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_digest.txt").read_text(
+            encoding="utf-8")
+        assert "### Think Positive" in prompt
+        assert "Robbins" in prompt and "Sinek" in prompt
+        # Editorial guardrails: attribution without fabrication, non-clinical.
+        assert "never invent" in prompt
+        assert "not therapy" in prompt or "never substitutes for professional" in prompt
+
+    def test_podcast_prompt_has_the_spoken_segment(self):
+        prompt = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_podcast.txt").read_text(
+            encoding="utf-8")
+        assert "[Think Positive]" in prompt
+        assert "time to Think Positive" in prompt
+        # The marker-theft guard: the phrase is banned before the announcement.
+        assert "Do NOT speak the phrase" in prompt
+
+    def test_chapter_marker_between_papers_and_lever(self):
+        titles = [m.title for m in CFG.chapters.section_markers]
+        assert titles.index("The Positive Papers") < titles.index("Think Positive") < titles.index("The Lever")
+
+    def test_word_target_raised_for_the_extra_segment(self):
+        assert CFG.llm.min_podcast_words == 1550
+
+    def test_debut_includes_the_segment(self):
+        from engine.first_episode import (
+            first_episode_digest_appendix,
+            first_episode_podcast_appendix,
+        )
+
+        assert "Think Positive" in first_episode_digest_appendix(1, CFG.name, show_slug="dp_pod")
+        assert "[Think Positive" in first_episode_podcast_appendix(1, CFG.name, show_slug="dp_pod")
+
+    def test_club_page_shows_the_mindset_step(self):
+        html = (PROJECT_ROOT / "thedppod.html").read_text(encoding="utf-8")
+        assert "Think Positive" in html
+        assert "You get the mindset" in html
 
     def test_pipeline_ep1_block_is_dialogue_aware(self):
         # BOTH Ep001 renders aired pipeline.py's truncated generic closing —
