@@ -1,0 +1,135 @@
+Hey, welcome to Models and Agents Episode 99.
+It's July 2nd, 2026.
+Let's see what happened in the AI world today.
+And trust me, it's been busy.
+Chinese labs just shipped a free, open-weight coding agent
+that undercuts Western tools on price
+while removing export control risk.
+Z.AI released Z-code, a desktop-agentic IDE
+built around the newly open-sourced GLM 5.2 model.
+With cross-device remote control via WeChat and FaceU.
+Since Nova, you want to 8B model EF, ENEFT slash V2
+arrived as an Apache 2.0 image model
+specialized for dense infographics.
+Several agent security and legacy hardware tools
+also dropped today.
+Watch how quickly self-hosting options gain traction
+after last month's export control scare.
+Z.AI launched Z-code, a free desktop-agentic development
+environment purpose-built for its GLM 5.2 model,
+and available on macOS, Windows, and Linux.
+The tool treats long horizon coding tasks
+as multi-step agent workflows where the user states an outcome.
+The agent plans, edits files, runs checks,
+and iterates until completion.
+Confirmation gates appear on sensitive actions.
+Z-code supports bring your own key for third-party models
+and offers 1.5 times quota bonuses on GLM coding plan
+subscriptions that start at $16.20 per month.
+Continuous workspace sync across desktop,
+mobile, and messaging bots lets developers steer work from WeChat
+or FaceU while the agent runs.
+The release coincides with GLM 5.2's
+MIT licensed open weights, a 744 billion mixture of experts model
+with 1 million context trained on Huawei Silicon.
+This gives teams a fully self-hostable stack
+that sidesteps both US export controls
+and Chinese data sovereignty rules.
+This development continues the recent narrowing
+of the open-weight performance gap while advancing autonomous
+agent reliability on long horizon tasks.
+Builders should test Z-code this week on any project
+where they want to avoid vendor lock-in
+after the recent Fable 5 ban episode.
+Since Nova released the 50-step base version
+of its 8-billion mixture of Transformers model,
+specialized for dense, infographic generation
+and editing under an Apache 2.0 license.
+The model produces high-quality charts, diagrams,
+and layouts that rival Ideogram 4
+while remaining fully open for commercial use.
+Users can wrap it in a fast API server to expose both image generation
+and image editing endpoints compatible with open AI clients.
+The 8-step Laura variant trades some quality for speed.
+The interleaved images variant supports consistent
+multi-image outputs for slide decks or storybooks.
+A controlled test on Max Studio M3 Ultra plus RTX Pro 6000
+via Lama.CPP RPC showed 14.8% faster pre-fill
+with 15-20% model sharding and only 4.2% decode improvement.
+The 432GB Q3K XL model ran at roughly 18 tokens per second decode once split.
+The 432GB Q3K XL model confirmed that RPC helps capacity
+more than raw speed on this interconnect.
+The test used 15-20% model sharding across the Max Studio M3 Ultra
+and RTX Pro 6000 hardware.
+Decode speed reached only 4.2% improvement despite the pre-fill gains.
+The setup ran the full Kimmy K27 code model through Lama.CPP RPC connections.
+Results showed 14.8% faster pre-fill under the controlled sharding conditions.
+They here introduced a multi-agent system designed to triage and reduce security alert overload
+while improving analyst decision quality.
+The agents coordinate to filter noise, correlate events, and surface only high confidence incidents.
+Early users report fewer false positives and faster mean time to response in production SOC
+environments. Beyond trust, shipped a beta solution that adds policy controls, session recording,
+and least privilege enforcement around autonomous AI agents.
+The tool targets enterprise environments where agents may execute privileged actions across
+multiple systems. Reviewers note it addresses credential handling risks highlighted in recent
+agent framework audits. The latest update to simple LLM chat adds user configurable reasoning
+depth and the ability for tool packages to inject information into the system prompt.
+This extends agentic capabilities to .net 4.0 legacy machines.
+The project remains available on GitHub for anyone maintaining older industrial or embedded
+Windows environments. Simple LLM chat version 1.2.5 now lets users adjust reasoning depth directly
+in the interface. Tool packages can inject additional context into the system prompt during
+agent runs. The changes specifically target .net 4.0 environments on Windows XP hardware.
+Maintainers of industrial or embedded legacy systems can download the update from the public GitHub
+repository. The release focuses on extending modern agent behaviors to machines that cannot run
+newer frameworks. GHealth is a single go binary that exposes 40 Fitbit air data types as agent
+ready JSON via the Google Health API. It is a community project, not an official Google release,
+and requires careful OAuth scoping before use. The command line tool converts Fitbit air data
+streams into structured JSON output. 40 distinct data types become accessible without manual CSV
+export steps. Users must apply precise OAuth permissions before connecting the binary to any
+Google Health endpoint. The single executable runs independently and feeds agent ready data
+directly into local workflows. A five-stream Tesseract voting system plus post-processing pipeline
+reduced character error rate from 2.34% to 0.70% on a 422 paragraph maltees benchmark.
+The approach is portable to other low resource languages that lack large labeled PDF corpora.
+The LV rover ensemble combines five separate Tesseract streams with a dedicated post-processing
+stage. Character error rate fell from 2.34% to 0.70% on the 422 paragraph test set.
+Training relied entirely on synthetic data rather than large labeled corpora.
+The same pipeline can transfer to additional low resource languages facing similar data constraints.
+The new Serendube print pairs 8,240 instructor annotations with college writing assignments across
+multiple genres. UniMatch provides a reference-based scoring method that segments feedback and
+measures semantic correspondence. No current LLM configuration exceeds 0.4 F1 on the benchmark.
+Sephora supplies 8,240 instructor written annotations paired with real college assignments.
+The annotations span multiple writing genres and serve as ground truth references. UniMatch
+segments model feedback and calculates semantic alignment against those references.
+Current large language models remain below 0.4 F1 on the UniMatch evaluation.
+The benchmark underscores the remaining distance between generated feedback and instructor quality
+output. Okay, let's pop the hood on self-conditioning in continuous diffusion language models.
+Everyone talks about self-conditioning in flow-based language models as if it were a simple
+quality boost. In practice, it creates a fixed point iteration inside the denoising loop,
+where each step feeds the model's own clean estimate back as additional context.
+The core insight is that this feedback quickly collapses toward a low-dimensional attractor.
+When that direction encodes repetition, perplexity drops while diversity collapses.
+The contraction is one-dimensional, so subtracting a single estimated vector from the feedback
+at every step removes the attractor without retraining.
+On the 105 million model, this cut repetition to human levels and transferred unchanged to 342 million
+and 652 million scales. The practical trade-off is roughly 1.5 to 5 times more compute to reach
+human clean text, but the method stays training-free and works across samplers. Use it when generation
+diversity matters more than raw token throughput. Skip it for short, factual outputs where repetition is
+unlikely anyway. The gacha most teams miss is that standard GenPPL metrics reward the very repetition
+the attractor produces, so always measure against a human reference corpus instead. Download Z-code
+and point it at GLM, hyphen 5.2, or your own keys for any multi-file refactoring task where you
+want remote steering from a phone. Wrap sense NOVA you want to 8B motif infographic V2
+in a fast API open AI compatible endpoint if you need license safe infographic generation inside
+existing chat clients. Test the g-health CLI on a scoped Fitbit token to feed personal health data
+into local agents without manual CSV wrangling. Run the LV rover ensemble on any low resource language
+OCR project that currently relies on single-pass Tesseract. Continued refinement of Anthropics
+Fable 5 classifiers is expected over the next several weeks. More Chinese labs are likely to follow
+z.ai's open weight plus first party IDE pattern. Additional agent governance betas from security vendors
+are responding to enterprise demand. Tomorrow keep an eye on the next wave of open weight releases
+expected from labs following the GLM 5.2 pattern. That wraps up today's AI briefing.
+Share this with a developer or builder who wants to stay current. Subscribe wherever you listen.
+See you tomorrow and if you'd rather watch then listen, find us on youtube at nera network
+links in the show notes. And before you go, this show is part of the nera network, a family of daily
+podcasts on tech, science and markets. Each one a short sharp briefing you can finish on the commute.
+If today earned its place in your feed, here's your next listen. Environmental intelligence,
+the environment and climate policy brief for Canada. Find every show free at nera network.com.
+This episode used AI voice synthesis of my voice. Editorial selection and analysis are my own.
