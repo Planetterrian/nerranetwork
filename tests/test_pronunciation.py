@@ -475,6 +475,35 @@ class TestReplaceRomanNumerals:
         result = replace_roman_numerals("Generation IV reactor")
         assert "Generation four" in result
 
+    # ---- Pronoun-collision guards (DP Pod Ep001, July 2026) ----
+    # "the part I want" / "that part I'll give you" shipped as "part one
+    # want" / "part one'll" — the bare-I numeral matched the pronoun after
+    # a context word. Bare "I" now converts only in title-like position.
+
+    def test_part_i_pronoun_untouched(self):
+        text = "That's the part I want to dig into today."
+        assert replace_roman_numerals(text) == text
+
+    def test_part_i_contraction_untouched(self):
+        text = "Okay, that part I'll give you."
+        assert replace_roman_numerals(text) == text
+
+    def test_section_i_wrote_untouched(self):
+        text = "the section I wrote yesterday"
+        assert replace_roman_numerals(text) == text
+
+    def test_part_i_of_still_converts(self):
+        assert "Part one of" in replace_roman_numerals("Part I of the series")
+
+    def test_part_i_before_punctuation_still_converts(self):
+        assert "Part one." in replace_roman_numerals("Read Part I.")
+
+    def test_act_i_at_end_still_converts(self):
+        assert replace_roman_numerals("Act I") == "Act one"
+
+    def test_mark_v_still_converts(self):
+        assert "Mark five" in replace_roman_numerals("Mark V engine")
+
 
 class TestReplaceQuarterNotation:
     def test_quarter_with_year(self):

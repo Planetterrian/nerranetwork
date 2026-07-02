@@ -1165,7 +1165,17 @@ def replace_ordinal_numbers(text: str) -> str:
 
 
 def replace_roman_numerals(text: str) -> str:
-    """Convert Roman numerals in context: 'Phase III' -> 'Phase three'."""
+    """Convert Roman numerals in context: 'Phase III' -> 'Phase three'.
+
+    The bare numeral "I" collides with the pronoun after context words —
+    "the part I want to dig into" and "that part I'll give you" shipped as
+    "part one want" / "part one'll" in DP Pod Ep001 (July 2026), a spoken
+    garble the two-host dialogue format makes common. Bare "I" therefore
+    only converts in title-like position — followed by punctuation, "of",
+    or end of line — and never before an apostrophe (I'll, I've, I'm) or
+    another running word. Multi-character numerals (II, IV, X, ...) have
+    no pronoun collision and keep the original behaviour.
+    """
     # Only convert when preceded by a context word to avoid false positives
     context_words = r"(?:Phase|Part|Chapter|Section|Act|Type|Class|Mark|Version|Vol|Volume|Title|Book|Level|Stage|Grade|Tier|Step|Round|Series|Season|Episode|Generation|Gen)"
 
@@ -1177,8 +1187,16 @@ def replace_roman_numerals(text: str) -> str:
             return f"{prefix}{number_to_words(val)}"
         return m.group(0)
 
+    # Multi-character numerals + bare V/X: no pronoun ambiguity.
     text = re.sub(
-        rf"({context_words}\s+)(I{{1,4}}V?|VI{{0,4}}|IX|X{{1,3}}I{{0,4}}V?)\b",
+        rf"({context_words}\s+)(I{{2,4}}V?|IV|VI{{0,4}}|IX|X{{1,3}}I{{0,4}}V?|V)\b",
+        _roman,
+        text,
+        flags=re.IGNORECASE,
+    )
+    # Bare "I": title-like position only.
+    text = re.sub(
+        rf"({context_words}\s+)(I)(?!['’])(?=\s*(?:$|[,.:;!?)\]]|of\b))",
         _roman,
         text,
         flags=re.IGNORECASE,
