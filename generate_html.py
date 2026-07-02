@@ -1532,6 +1532,55 @@ _SHOW_PICKER_TAGS = {
 _merge_scaffolded_network_registry()
 
 
+def _collect_dp_levers(limit: int = 6) -> list:
+    """Extract recent "The Lever" actions from The DP Pod's digests.
+
+    Each episode's digest carries a ``### The Lever`` section — one concrete
+    individual action with honest numbers. The club page surfaces the most
+    recent ones as an action board. Returns newest-first
+    ``{episode_num, hook, lever_text, blog_url}`` dicts; empty list when no
+    episodes exist yet (pre-launch) or parsing fails (never blocks the page).
+    """
+    import re as _re
+
+    levers = []
+    try:
+        from engine.blog import extract_blog_metadata
+        digest_dir = ROOT / "digests" / "dp_pod"
+        if not digest_dir.exists():
+            return []
+        seen: dict[int, dict] = {}
+        for md_file in sorted(digest_dir.glob("*.md")):
+            text = md_file.read_text(encoding="utf-8")
+            m = _re.search(
+                r"###\s*The Lever\s*\n(.*?)(?:\n[━#]|\Z)", text, _re.DOTALL,
+            )
+            if not m:
+                continue
+            lever_text = " ".join(m.group(1).split())
+            # Strip markdown bold/links for the card blurb; keep it short.
+            lever_text = _re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", lever_text)
+            lever_text = lever_text.replace("**", "").strip()
+            if len(lever_text) > 340:
+                cut = lever_text[:340]
+                lever_text = cut[: cut.rfind(" ")] + "…"
+            meta = extract_blog_metadata(text, "dp_pod", md_file.name, file_path=md_file)
+            ep = meta.get("episode_num", 0)
+            entry = {
+                "episode_num": ep,
+                "hook": meta.get("hook", ""),
+                "lever_text": lever_text,
+                "blog_url": f"blog/dp_pod/ep{ep:03d}.html",
+                "filename": md_file.name,
+            }
+            if ep not in seen or md_file.name > seen[ep]["filename"]:
+                seen[ep] = entry
+        levers = sorted(seen.values(), key=lambda e: e["episode_num"], reverse=True)[:limit]
+    except Exception as e:
+        print(f"Warning: could not collect DP Pod levers: {e}")
+    return levers
+
+
 def _newsletter_tag_for_slug(slug: str, fallback_name: str) -> str:
     """Return the Buttondown tag for a show.
 
@@ -2078,10 +2127,17 @@ def generate_all_narrative_pages(*, dry_run=False):
 
 
 def generate_show_page(slug, *, dry_run=False):
-    """Render and write a show page for a single show."""
+    """Render and write a show page for a single show.
+
+    A show can declare ``show_page_template`` in its registry entry
+    (``shows/network_meta.yaml`` or the hardcoded dict) to swap the shared
+    template for a bespoke one — same context, different presentation.
+    The DP Pod's club-styled page (``show_page_dp_pod.html.j2``) is the
+    first user.
+    """
     cfg = NETWORK_SHOWS[slug]
     env = _get_jinja_env()
-    template = env.get_template("show_page.html.j2")
+    template = env.get_template(cfg.get("show_page_template", "show_page.html.j2"))
 
     podcast_image_url = cfg["podcast_image"]
 
@@ -2206,6 +2262,14 @@ def generate_show_page(slug, *, dry_run=False):
     if slug == "modern_investing":
         performance_data = _load_mit_performance_data()
 
+    # The DP Pod: extract recent "The Lever" actions from committed digests
+    # so the club page can render a live action board ("pull a lever, write
+    # in"). Empty list pre-launch — the template renders a founding-era
+    # empty state.
+    dp_levers = []
+    if slug == "dp_pod":
+        dp_levers = _collect_dp_levers()
+
     is_russian = slug in ("finansy_prosto", "privet_russian")
 
     yt_meta = _read_show_youtube(slug)
@@ -2276,6 +2340,7 @@ def generate_show_page(slug, *, dry_run=False):
         "blog_page": f"blog/{cfg['slug']}/index.html",
         "latest_blog_posts": latest_blog_posts,
         "static_episodes": static_episodes,
+        "dp_levers": dp_levers,
         "newsletter_tag": _newsletter_tag_for_slug(cfg["slug"], cfg["name"]),
         "all_shows": _build_all_shows_list(),
         "performance_data": performance_data,

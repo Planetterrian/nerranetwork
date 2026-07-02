@@ -1,0 +1,471 @@
+{% extends "base.html.j2" %}
+{#-
+  The DP Pod club page (July 2026 redesign).
+
+  Bespoke template selected via the registry's `show_page_template` override
+  — same generate_show_page context as every other show, different
+  presentation. Design decisions trace to the verified market assessment in
+  docs/dp_pod_market_assessment_2026_07.md:
+
+  * pledge-led join (Giving What We Can: public pledge + wall; +24pp uptake
+    with visible social proof; 83-99% follow-through on non-binding pledges)
+  * seeded member wall (hosts are members #001/#002 — pledger-majority
+    sequencing)
+  * constrained Dispatch grammar: what I did / honest numbers / a shoutout
+    (Buy Nothing's three-post-type structure → broad, reciprocal
+    participation)
+  * low-barrier starter levers (parkrun's "you just need to smile a bit"
+    contribution on-ramp)
+  * free-forever charter + club/patronage language, never "content"/
+    "audience" (parkrun, Maximum Fun, Defector)
+  * membership-card artifact (Reasons to be Cheerful's card + wall,
+    validated at $1/mo — ours are free)
+-#}
+
+{% block og_type %}website{% endblock %}
+
+{% block head_extra %}
+<style>
+  /* ---- The Do Positive Club design system (scoped .dpc-) ---- */
+  .dpc-page { --dp-green:#12B76A; --dp-green-deep:#0B7A45; --dp-ink:#07130C;
+              --dp-cream:#F4FBF7; --dp-gold:#E8C468; --dp-line:rgba(18,183,106,0.25); }
+  .dpc-page { font-family:'DM Sans',system-ui,sans-serif; }
+  .dpc-serif { font-family:'Source Serif 4',Georgia,serif; }
+
+  .dpc-section { max-width:1060px; margin:0 auto; padding:4.5rem 1.25rem; }
+  .dpc-eyebrow { display:inline-flex; align-items:center; gap:0.6rem;
+    font-size:0.72rem; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--dp-green); }
+  .dpc-eyebrow::before, .dpc-eyebrow::after { content:""; height:1px; width:34px;
+    background:var(--dp-line); }
+  .dpc-h2 { font-family:'Source Serif 4',Georgia,serif; font-size:clamp(1.7rem,3.6vw,2.5rem);
+    line-height:1.15; margin:0.65rem 0 0.9rem; color:var(--dp-cream); }
+  .dpc-sub { color:var(--nn-text-muted,#9aa7b8); max-width:46rem; margin:0 auto;
+    font-size:1.02rem; line-height:1.65; }
+
+  /* Hero */
+  .dpc-hero { position:relative; overflow:hidden;
+    background:
+      radial-gradient(1100px 500px at 70% -10%, rgba(18,183,106,0.16), transparent 60%),
+      radial-gradient(700px 420px at 10% 110%, rgba(232,196,104,0.07), transparent 60%),
+      linear-gradient(180deg, #07130C 0%, #0B0F1A 100%);
+    border-bottom:1px solid var(--dp-line); }
+  .dpc-hero-inner { max-width:1060px; margin:0 auto; padding:5rem 1.25rem 4.2rem;
+    display:grid; grid-template-columns:1.25fr 0.85fr; gap:3rem; align-items:center; }
+  .dpc-hero h1 { font-family:'Source Serif 4',Georgia,serif;
+    font-size:clamp(2.3rem,5.4vw,3.7rem); line-height:1.08; margin:1rem 0 1.1rem;
+    color:var(--dp-cream); }
+  .dpc-hero h1 em { font-style:italic; color:var(--dp-green); }
+  .dpc-hero-desc { color:#b8c6bd; font-size:1.1rem; line-height:1.7; max-width:34rem; }
+  .dpc-hero-ctas { display:flex; gap:0.8rem; flex-wrap:wrap; margin-top:1.7rem; }
+  .dpc-cta { display:inline-flex; align-items:center; gap:0.5rem; padding:0.85rem 1.5rem;
+    border-radius:999px; font-weight:700; font-size:0.98rem; text-decoration:none;
+    transition:transform .15s ease, box-shadow .15s ease; }
+  .dpc-cta--primary { background:var(--dp-green); color:#06130b;
+    box-shadow:0 8px 28px rgba(18,183,106,0.35); }
+  .dpc-cta--primary:hover { transform:translateY(-2px); box-shadow:0 12px 34px rgba(18,183,106,0.45); }
+  .dpc-cta--ghost { border:1px solid var(--dp-line); color:var(--dp-cream); background:rgba(18,183,106,0.06); }
+  .dpc-cta--ghost:hover { background:rgba(18,183,106,0.12); }
+  .dpc-hero-note { margin-top:1.1rem; font-size:0.85rem; color:#7ba893; }
+
+  /* Membership card */
+  .dpc-card-wrap { perspective:1000px; }
+  .dpc-membercard { position:relative; border-radius:18px; padding:1.6rem 1.7rem;
+    background:linear-gradient(135deg,#0E2418 0%,#0A1A11 55%,#123A24 100%);
+    border:1px solid rgba(232,196,104,0.35);
+    box-shadow:0 24px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
+    transform:rotate(2.5deg); transition:transform .3s ease; aspect-ratio:1.586; max-width:400px;
+    display:flex; flex-direction:column; justify-content:space-between; margin-left:auto; }
+  .dpc-membercard:hover { transform:rotate(0deg) scale(1.02); }
+  .dpc-membercard .mc-top { display:flex; justify-content:space-between; align-items:flex-start; }
+  .dpc-membercard .mc-club { font-size:0.68rem; letter-spacing:0.18em; text-transform:uppercase;
+    color:var(--dp-gold); font-weight:700; }
+  .dpc-membercard .mc-free { font-size:0.62rem; letter-spacing:0.12em; text-transform:uppercase;
+    color:#7ba893; border:1px solid rgba(123,168,147,0.4); border-radius:999px; padding:0.2rem 0.6rem; }
+  .dpc-membercard .mc-name { font-family:'Source Serif 4',Georgia,serif; font-size:1.5rem;
+    color:var(--dp-cream); }
+  .dpc-membercard .mc-name span { color:var(--dp-green); }
+  .dpc-membercard .mc-bottom { display:flex; justify-content:space-between; align-items:flex-end; }
+  .dpc-membercard .mc-motto { font-size:0.78rem; color:#9db8a8; font-style:italic; }
+  .dpc-membercard .mc-num { font-size:0.9rem; color:var(--dp-gold); font-weight:700;
+    font-variant-numeric:tabular-nums; }
+
+  /* Steps */
+  .dpc-steps { display:grid; grid-template-columns:repeat(3,1fr); gap:1.1rem; margin-top:2rem; }
+  .dpc-step { background:rgba(18,183,106,0.05); border:1px solid var(--dp-line);
+    border-radius:16px; padding:1.5rem; position:relative; }
+  .dpc-step .num { position:absolute; top:1.1rem; right:1.2rem;
+    font-family:'Source Serif 4',Georgia,serif; font-size:2rem; color:rgba(18,183,106,0.35);
+    font-weight:700; }
+  .dpc-step h3 { margin:0 0 0.5rem; color:var(--dp-cream); font-size:1.08rem; }
+  .dpc-step .tag { display:inline-block; font-size:0.68rem; letter-spacing:0.12em;
+    text-transform:uppercase; color:var(--dp-green); font-weight:700; margin-bottom:0.55rem; }
+  .dpc-step p { margin:0; color:var(--nn-text-muted,#9aa7b8); font-size:0.92rem; line-height:1.6; }
+
+  /* Pledge */
+  .dpc-pledge { background:
+      radial-gradient(700px 340px at 50% 0%, rgba(18,183,106,0.13), transparent 65%);
+    border-top:1px solid var(--dp-line); border-bottom:1px solid var(--dp-line); }
+  .dpc-pledge-card { max-width:640px; margin:2.2rem auto 0; border-radius:20px;
+    background:linear-gradient(180deg,#0E2418,#0A160F); border:1px solid rgba(232,196,104,0.28);
+    padding:2.3rem 2.2rem; box-shadow:0 24px 70px rgba(0,0,0,0.45); text-align:center; }
+  .dpc-pledge-card .pl-label { font-size:0.7rem; letter-spacing:0.2em; text-transform:uppercase;
+    color:var(--dp-gold); font-weight:700; }
+  .dpc-pledge-text { font-family:'Source Serif 4',Georgia,serif; font-size:1.35rem;
+    line-height:1.55; color:var(--dp-cream); margin:1.1rem 0 1.4rem; font-style:italic; }
+  .dpc-pledge-form { display:flex; gap:0.6rem; flex-wrap:wrap; justify-content:center; }
+  .dpc-pledge-form input[type=email] { flex:1 1 240px; max-width:330px; padding:0.85rem 1.1rem;
+    border-radius:999px; border:1px solid var(--dp-line); background:rgba(7,19,12,0.8);
+    color:var(--dp-cream); font-size:0.95rem; }
+  .dpc-pledge-form button { padding:0.85rem 1.5rem; border-radius:999px; border:none;
+    background:var(--dp-green); color:#06130b; font-weight:700; font-size:0.95rem; cursor:pointer; }
+  .dpc-pledge-form button:hover { filter:brightness(1.08); }
+  .dpc-pledge-fine { margin-top:1rem; font-size:0.8rem; color:#7ba893; }
+  .dpc-founding { margin-top:1.3rem; padding-top:1.2rem; border-top:1px dashed rgba(232,196,104,0.25);
+    font-size:0.88rem; color:#c9b98a; }
+
+  /* Member wall (seeded) */
+  .dpc-wall { display:flex; gap:0.6rem; flex-wrap:wrap; justify-content:center; margin-top:1.6rem; }
+  .dpc-wall .member { border:1px solid var(--dp-line); border-radius:999px; padding:0.45rem 1rem;
+    font-size:0.85rem; color:var(--dp-cream); background:rgba(18,183,106,0.06);
+    font-variant-numeric:tabular-nums; }
+  .dpc-wall .member b { color:var(--dp-gold); font-weight:700; margin-right:0.4rem; }
+  .dpc-wall .member.you { border-style:dashed; color:#7ba893; }
+
+  /* Lever board */
+  .dpc-levers { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:1.1rem; margin-top:2rem; }
+  .dpc-lever { background:rgba(18,183,106,0.05); border:1px solid var(--dp-line);
+    border-radius:16px; padding:1.4rem; display:flex; flex-direction:column; gap:0.7rem; }
+  .dpc-lever .lv-ep { font-size:0.68rem; letter-spacing:0.12em; text-transform:uppercase;
+    color:var(--dp-green); font-weight:700; }
+  .dpc-lever h3 { margin:0; font-size:1rem; color:var(--dp-cream); line-height:1.4; }
+  .dpc-lever p { margin:0; color:var(--nn-text-muted,#9aa7b8); font-size:0.88rem; line-height:1.6; flex:1; }
+  .dpc-lever .lv-actions { display:flex; gap:0.55rem; flex-wrap:wrap; }
+  .dpc-lever .lv-btn { font-size:0.82rem; font-weight:700; padding:0.5rem 0.95rem; border-radius:999px;
+    text-decoration:none; }
+  .dpc-lever .lv-did { background:var(--dp-green); color:#06130b; }
+  .dpc-lever .lv-listen { border:1px solid var(--dp-line); color:var(--dp-cream); }
+
+  /* Dispatch */
+  .dpc-grammar { display:grid; grid-template-columns:repeat(3,1fr); gap:1.1rem; margin:2rem 0; }
+  .dpc-grammar .g { border:1px dashed rgba(232,196,104,0.35); border-radius:14px; padding:1.2rem;
+    text-align:center; }
+  .dpc-grammar .g .gt { font-family:'Source Serif 4',Georgia,serif; color:var(--dp-gold);
+    font-size:1.05rem; margin-bottom:0.4rem; }
+  .dpc-grammar .g p { margin:0; font-size:0.85rem; color:var(--nn-text-muted,#9aa7b8); line-height:1.55; }
+
+  /* Charter */
+  .dpc-charter { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:1rem;
+    margin-top:2rem; counter-reset:tenet; }
+  .dpc-tenet { border-left:2px solid var(--dp-green); padding:0.2rem 0 0.2rem 1.1rem; }
+  .dpc-tenet h4 { margin:0 0 0.3rem; color:var(--dp-cream); font-size:0.98rem; }
+  .dpc-tenet p { margin:0; font-size:0.84rem; color:var(--nn-text-muted,#9aa7b8); line-height:1.55; }
+
+  /* Hosts */
+  .dpc-hosts { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; margin-top:2rem; }
+  .dpc-host { background:rgba(18,183,106,0.05); border:1px solid var(--dp-line); border-radius:16px;
+    padding:1.6rem; }
+  .dpc-host .hn { font-family:'Source Serif 4',Georgia,serif; font-size:1.25rem; color:var(--dp-cream); }
+  .dpc-host .hr { font-size:0.78rem; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--dp-green); font-weight:700; margin:0.25rem 0 0.7rem; }
+  .dpc-host p { margin:0; font-size:0.92rem; color:var(--nn-text-muted,#9aa7b8); line-height:1.65; }
+  .dpc-nerra { text-align:center; margin-top:1.6rem; font-size:0.9rem; color:#7ba893; }
+  .dpc-nerra b { color:var(--dp-gold); }
+
+  /* Episodes */
+  .dpc-latest { max-width:760px; margin:2rem auto 0; background:rgba(18,183,106,0.05);
+    border:1px solid var(--dp-line); border-radius:18px; padding:1.8rem; }
+  .dpc-latest .lt-label { font-size:0.7rem; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--dp-green); font-weight:700; }
+  .dpc-latest h3 { margin:0.5rem 0 1rem; color:var(--dp-cream);
+    font-family:'Source Serif 4',Georgia,serif; font-size:1.25rem; line-height:1.4; }
+  .dpc-latest audio { width:100%; }
+  .dpc-eplist { max-width:760px; margin:1.4rem auto 0; }
+  .dpc-ep { display:flex; align-items:center; gap:1rem; padding:0.9rem 0.4rem;
+    border-bottom:1px solid rgba(18,183,106,0.14); }
+  .dpc-ep .ed { font-size:0.78rem; color:#7ba893; min-width:120px; font-variant-numeric:tabular-nums; }
+  .dpc-ep .et { flex:1; font-size:0.92rem; color:var(--dp-cream); line-height:1.45; }
+  .dpc-ep audio { max-width:230px; height:36px; }
+  .dpc-sub-chips { display:flex; gap:0.6rem; flex-wrap:wrap; justify-content:center; margin-top:1.6rem; }
+  .dpc-sub-chips a { border:1px solid var(--dp-line); border-radius:999px; padding:0.5rem 1.05rem;
+    font-size:0.85rem; color:var(--dp-cream); text-decoration:none; }
+  .dpc-sub-chips a:hover { background:rgba(18,183,106,0.1); }
+
+  .dpc-center { text-align:center; }
+  @media (max-width: 860px) {
+    .dpc-hero-inner { grid-template-columns:1fr; }
+    .dpc-membercard { margin:0 auto; transform:rotate(0); }
+    .dpc-steps, .dpc-grammar, .dpc-hosts { grid-template-columns:1fr; }
+    .dpc-ep { flex-wrap:wrap; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% from "_macros.html.j2" import ai_badge %}
+{%- set dispatch_mailto = "mailto:patrick@planetterrian.com?subject=Do%20Positive%20Dispatch%20%E2%80%94%20what%20I%20did&body=WHAT%20I%20DID%3A%0A%0ATHE%20HONEST%20NUMBERS%20(cost%2C%20time%2C%20impact%20%E2%80%94%20rough%20is%20fine)%3A%0A%0ASHOUTOUT%20(who%20helped%2C%20or%20who%20should%20try%20it%20next)%3A%0A%0AFirst%20name%20%2B%20city%20(how%20we%27ll%20read%20it%20on%20air)%3A%0A" -%}
+<div class="dpc-page">
+
+  <!-- ================= Hero ================= -->
+  <section class="dpc-hero">
+    <div class="dpc-hero-inner">
+      <div>
+        <span class="dpc-eyebrow" style="justify-content:flex-start;">The Do Positive Club · Est. 2026 · Free forever</span>
+        <h1>Most media tells you what's wrong.<br>This club <em>does something about it.</em></h1>
+        <p class="dpc-hero-desc">
+          The DP Pod is a ten-minute daily briefing of genuinely good news in science and
+          tech — with honest numbers, healthy disagreement, and one concrete action a
+          regular person can take. Members don't just listen. They pull the lever, write
+          in, and get read on the show.
+        </p>
+        <div class="dpc-hero-ctas">
+          <a class="dpc-cta dpc-cta--primary" href="#pledge">Take the Pledge</a>
+          <a class="dpc-cta dpc-cta--ghost" href="#briefing">▶ Today's briefing</a>
+        </div>
+        <p class="dpc-hero-note">No paywall. No guilt. Just the good news and something to do about it.</p>
+      </div>
+      <div class="dpc-card-wrap">
+        <div class="dpc-membercard" aria-label="The Do Positive Club membership card">
+          <div class="mc-top">
+            <span class="mc-club">The Do Positive Club</span>
+            <span class="mc-free">Free forever</span>
+          </div>
+          <div class="mc-name">Member: <span>you, hopefully</span></div>
+          <div class="mc-bottom">
+            <span class="mc-motto">“Do something about it.”</span>
+            <span class="mc-num">№ ____</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= Today's briefing ================= -->
+  <section class="dpc-section dpc-center" id="briefing">
+    <span class="dpc-eyebrow">Today's briefing</span>
+    <h2 class="dpc-h2">Ten minutes of things going right.</h2>
+    <p class="dpc-sub">Dan and Patrick, every day: The Positive Papers, The Lever, and the Do Positive Dispatch.</p>
+    {% if static_episodes %}
+    <div class="dpc-latest">
+      <span class="lt-label">Latest episode</span>
+      <h3>{{ static_episodes[0].title }}</h3>
+      <audio controls preload="none" src="{{ static_episodes[0].audio_url }}">
+        Your browser does not support the audio element.
+      </audio>
+    </div>
+    {% else %}
+    <div class="dpc-latest">
+      <span class="lt-label">Episode one</span>
+      <h3>The first briefing drops soon. Founding members hear it first — take the pledge below.</h3>
+    </div>
+    {% endif %}
+    <div class="dpc-sub-chips">
+      <a href="{{ rss_url }}">RSS feed</a>
+      <a href="{{ path_prefix }}{{ blog_page }}">Episode notes &amp; transcripts</a>
+      <a href="#archive">All episodes</a>
+    </div>
+    <div style="margin-top:1.2rem;">{{ ai_badge(path_prefix=path_prefix) }}</div>
+  </section>
+
+  <!-- ================= How the club works ================= -->
+  <section class="dpc-section dpc-center">
+    <span class="dpc-eyebrow">How the club works</span>
+    <h2 class="dpc-h2">Briefing. Assignment. Proof.</h2>
+    <div class="dpc-steps" style="text-align:left;">
+      <div class="dpc-step"><span class="num">1</span>
+        <span class="tag">The Positive Papers</span>
+        <h3>You get the briefing</h3>
+        <p>Two or three real developments that are legitimately good news — the result,
+        the mechanism, the honest caveat, and the source. No fluff, no hype, no doom.</p>
+      </div>
+      <div class="dpc-step"><span class="num">2</span>
+        <span class="tag">The Lever</span>
+        <h3>You get one assignment</h3>
+        <p>One action with outsized impact, with honest numbers: what it costs in dollars
+        and hours, what it returns, and what it adds up to if the club pulls it together.</p>
+      </div>
+      <div class="dpc-step"><span class="num">3</span>
+        <span class="tag">The Do Positive Dispatch</span>
+        <h3>You send the proof</h3>
+        <p>Did it? Write in. Dispatches get read on the show — real ones only, that's the
+        whole point. The club runs on receipts, not intentions.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= The Pledge ================= -->
+  <section class="dpc-pledge" id="pledge">
+    <div class="dpc-section dpc-center">
+      <span class="dpc-eyebrow">Membership</span>
+      <h2 class="dpc-h2">Take the Do Positive Pledge.</h2>
+      <p class="dpc-sub">Joining isn't a subscription — it's a pledge. It costs nothing and it
+        never will. It just asks something of you.</p>
+      <div class="dpc-pledge-card">
+        <span class="pl-label">The Pledge</span>
+        <p class="dpc-pledge-text">“I'll take ten minutes a day for the good news —
+          and once a week, I'll do one positive thing about it.”</p>
+        <form class="dpc-pledge-form" action="https://buttondown.com/api/emails/embed-subscribe/patricknovak1" method="post" target="popupwindow">
+          <input type="hidden" name="tag" value="{{ newsletter_tag }}">
+          <input type="email" name="email" required placeholder="you@example.com" aria-label="Email address">
+          <button type="submit">Sign the pledge — join the club</button>
+        </form>
+        <p class="dpc-pledge-fine">Free forever. Your email is the membership card — episode
+          alerts and the club dispatch, no spam, leave anytime.</p>
+        <div class="dpc-founding">
+          ⭐ <b>Founding Members:</b> everyone who signs before Episode 100 is a Founding
+          Member — numbered in order of joining, first on the wall, permanently.
+        </div>
+      </div>
+      <div class="dpc-wall" aria-label="Member wall">
+        <span class="member"><b>№ 001</b> Dan Perra — co-founder</span>
+        <span class="member"><b>№ 002</b> Patrick Novak — co-founder</span>
+        <span class="member you"><b>№ 003</b> your name goes here</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= The Lever Board ================= -->
+  <section class="dpc-section dpc-center" id="levers">
+    <span class="dpc-eyebrow">The Lever Board</span>
+    <h2 class="dpc-h2">This week's assignments.</h2>
+    <p class="dpc-sub">Every episode leaves one lever on the board. Pull one, then tell the club.</p>
+    <div class="dpc-levers" style="text-align:left;">
+      {% if dp_levers %}
+        {% for lv in dp_levers %}
+        <div class="dpc-lever">
+          <span class="lv-ep">Lever № {{ '%03d' % lv.episode_num }}{% if lv.hook %} · Ep {{ lv.episode_num }}{% endif %}</span>
+          {% if lv.hook %}<h3>{{ lv.hook }}</h3>{% endif %}
+          <p>{{ lv.lever_text }}</p>
+          <div class="lv-actions">
+            <a class="lv-btn lv-did" href="{{ dispatch_mailto }}">I did this →</a>
+            <a class="lv-btn lv-listen" href="{{ path_prefix }}{{ lv.blog_url }}">Episode notes</a>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="dpc-lever">
+          <span class="lv-ep">Starter lever № 001</span>
+          <h3>Recruit one doomscroller</h3>
+          <p>Know someone drowning in bad news? Send them this page. One message, thirty
+          seconds — that's how the club grows and how their feed gets better.</p>
+          <div class="lv-actions">
+            <a class="lv-btn lv-did" href="{{ dispatch_mailto }}">I did this →</a>
+          </div>
+        </div>
+        <div class="dpc-lever">
+          <span class="lv-ep">Starter lever № 002</span>
+          <h3>Send us the good news you saw</h3>
+          <p>Spotted genuinely good news this week — a result, a recovery, a price drop
+          that matters? Send it in. The best submissions make The Positive Papers.</p>
+          <div class="lv-actions">
+            <a class="lv-btn lv-did" href="mailto:patrick@planetterrian.com?subject=Good%20news%20for%20The%20DP%20Pod">Send it →</a>
+          </div>
+        </div>
+        <div class="dpc-lever">
+          <span class="lv-ep">Starter lever № 003</span>
+          <h3>Take the pledge</h3>
+          <p>The easiest lever on the board. Sign the pledge above and you're a Founding
+          Member — Episode 1's levers land in your inbox the moment they drop.</p>
+          <div class="lv-actions">
+            <a class="lv-btn lv-did" href="#pledge">Sign it →</a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- ================= The Dispatch ================= -->
+  <section class="dpc-section dpc-center" id="dispatch">
+    <span class="dpc-eyebrow">The Do Positive Dispatch</span>
+    <h2 class="dpc-h2">Did something? Get read on the show.</h2>
+    <p class="dpc-sub">Dispatches follow the club format — three parts, honest numbers, real
+      actions only. We will never invent listener mail, which means every dispatch we read
+      is a real member doing a real thing.</p>
+    <div class="dpc-grammar">
+      <div class="g"><div class="gt">1 · What you did</div>
+        <p>The action, plainly. “Sealed the three worst drafts in my house.”</p></div>
+      <div class="g"><div class="gt">2 · The honest numbers</div>
+        <p>Cost, hours, savings, impact — rough is fine, honest is required.</p></div>
+      <div class="g"><div class="gt">3 · A shoutout</div>
+        <p>Who helped, or who should try it next. Gratitude fuels the club.</p></div>
+    </div>
+    <a class="dpc-cta dpc-cta--primary" href="{{ dispatch_mailto }}">Send your dispatch</a>
+    <p class="dpc-hero-note" style="margin-top:1rem;">New members and first dispatches get
+      welcomed on the show by first name — tell us how to read yours.</p>
+  </section>
+
+  <!-- ================= Club charter ================= -->
+  <section class="dpc-section dpc-center">
+    <span class="dpc-eyebrow">The Club Charter</span>
+    <h2 class="dpc-h2">Five things we'll never break.</h2>
+    <div class="dpc-charter" style="text-align:left;">
+      <div class="dpc-tenet"><h4>Free forever</h4>
+        <p>Membership never costs money. The club asks for action, not dollars.</p></div>
+      <div class="dpc-tenet"><h4>Honest numbers</h4>
+        <p>Every claim gets its caveat. Every lever states its real cost and payback.</p></div>
+      <div class="dpc-tenet"><h4>No guilt</h4>
+        <p>Empowerment, not obligation. Miss a week? The next lever is tomorrow.</p></div>
+      <div class="dpc-tenet"><h4>Real actions only</h4>
+        <p>No performative gestures, no fabricated mail. The Dispatch runs on receipts.</p></div>
+      <div class="dpc-tenet"><h4>Do something about it</h4>
+        <p>Every episode ends the same way, and it means you.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= Hosts ================= -->
+  <section class="dpc-section dpc-center">
+    <span class="dpc-eyebrow">Your co-founders</span>
+    <h2 class="dpc-h2">Two friends with genuine skin in the game.</h2>
+    <div class="dpc-hosts" style="text-align:left;">
+      <div class="dpc-host">
+        <div class="hn">Dan Perra</div>
+        <div class="hr">Member № 001 · Airline pilot · Systems thinker</div>
+        <p>A commercial airline pilot and longtime technology enthusiast, Dan brings the
+        operator's perspective — what works in the real world, at altitude, under
+        pressure. Grounded skepticism that resolves into optimism when the numbers hold.</p>
+      </div>
+      <div class="dpc-host">
+        <div class="hn">Patrick Novak</div>
+        <div class="hr">Member № 002 · Physical chemist · Sci-fi novelist</div>
+        <p>A Vancouver-based entrepreneur, published science fiction novelist, and physical
+        chemist by training, Patrick brings the “why this actually matters” layer —
+        mechanisms, magnitudes, and whether a number survives scrutiny.</p>
+      </div>
+    </div>
+    <p class="dpc-nerra">Novak + Perra = <b>Nerra</b>. They built the Nerra Network together —
+      this is the show where they step in front of the microphone.</p>
+  </section>
+
+  <!-- ================= Archive ================= -->
+  {% if static_episodes and static_episodes|length > 1 %}
+  <section class="dpc-section dpc-center" id="archive">
+    <span class="dpc-eyebrow">The archive</span>
+    <h2 class="dpc-h2">Every briefing so far.</h2>
+    <div class="dpc-eplist" style="text-align:left;">
+      {% for ep in static_episodes %}
+      <div class="dpc-ep">
+        <span class="ed">{{ ep.date_display }}</span>
+        <span class="et">{{ ep.title }}</span>
+        <audio controls preload="none" src="{{ ep.audio_url }}"></audio>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="dpc-sub-chips">
+      <a href="{{ path_prefix }}{{ blog_page }}">Full archive with notes &amp; transcripts →</a>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ================= Final CTA ================= -->
+  <section class="dpc-section dpc-center" style="padding-bottom:6rem;">
+    <h2 class="dpc-h2 dpc-serif" style="font-style:italic;">“Do something about it.”</h2>
+    <p class="dpc-sub">It's exactly what it sounds like.</p>
+    <div class="dpc-hero-ctas" style="justify-content:center;">
+      <a class="dpc-cta dpc-cta--primary" href="#pledge">Take the Pledge</a>
+      <a class="dpc-cta dpc-cta--ghost" href="{{ dispatch_mailto }}">Send a dispatch</a>
+    </div>
+  </section>
+
+</div>
+{% endblock %}
