@@ -287,41 +287,61 @@ chapters:
     - pattern: "(?:This is|Welcome to) Environmental Intelligence"
       title: "Introduction"
       where: start
+    # July 2 2026 pass: Closing + Tomorrow Teaser now come BEFORE all body
+    # markers (the EI June-11 / SpaceX June-18 / FF June-24 ordering class).
+    # Ep049/050/051 shipped with NO Closing chapter because (a) unconsumed
+    # BODY markers ate the closing paragraph — `science|technical` matched
+    # the network promo "…covering tech, science, markets" (Ep049/051) and
+    # bare `deep dive` matched the Tesla cross-promo "daily deep dive into
+    # everything Tesla" (Ep050) — and (b) the parser's `where: end` window
+    # (last 15%) EXCLUDED the closing line itself on these short episodes:
+    # EI's closing block (sign-off + YouTube CTA + network promo + AI
+    # disclosure) runs ~120-140 words on a ~650-870-word episode, so the
+    # sign-off sentence lands at ~82-84% (Ep049 word 539 vs window 555;
+    # Ep050 730 vs 738; Ep051 676 vs 685). The Closing marker therefore
+    # drops `where: end` and relies on its brand-anchored pattern instead
+    # ("That's/That covers today's Environmental Intelligence" only ever
+    # occurs in the closing pool — engine/intros.py); listing it first plus
+    # once-per-title keeps the June-11 merged-line behaviour (Closing wins
+    # a fused teaser+closing paragraph; separate lines still yield both).
+    # `.?s` tolerates curly apostrophes.
+    - pattern: "That.?s Environmental Intelligence|That covers today.?s environmental intelligence"
+      title: "Closing"
+    - pattern: "Before we wrap|Tomorrow"
+      title: "Tomorrow Teaser"
+      where: end
     - pattern: "executive summary|here's what matters"
       title: "Executive Summary"
     - pattern: "lead story|centrepiece|most significant"
       title: "Lead Story"
     - pattern: "regulatory|policy watch"
       title: "Regulatory & Policy Watch"
-    - pattern: "science|technical"
+    # July 2 2026: word-bounded + a no-following-punctuation guard so the
+    # marker can't match the closing promos ("…covering tech, science,
+    # markets", "…on tech, science, and markets", "…in science, health, and
+    # longevity", "…news from space and science.") or "geotechnical"
+    # mid-story (Ep047/Ep050 false chapters). The real spoken section label
+    # ("In Science and Technical, …") still matches on "Science and".
+    - pattern: "\\b(?:science|technical)\\b(?![,.])"
       title: "Science & Technical"
     # "industry" never appears in practice; bare "practice" was matching
     # the closing's "useful to your practice" and stealing the final
     # segment's title (Ep040). Exclude that phrase with a lookbehind.
     - pattern: "industry|(?<!your )practice"
       title: "Industry & Practice"
-    - pattern: "practitioner deep dive|deep dive|under the hood"
+    # July 2 2026: bare `deep dive` + `under the hood` dropped (the FF
+    # June-24 class) — the spoken script never announces the deep dive
+    # (the prompt rotates its entry point), so the bare pattern only ever
+    # matched the Tesla cross-promo. Anchor on the section's signature
+    # "most common mistake + fix" beat instead (present in 7/7 recent
+    # episodes: "The mistake I see most often…" / "the most common
+    # mistake…").
+    - pattern: "practitioner deep dive|mistake I see most often|most common mistake"
       title: "Practitioner Deep Dive"
     - pattern: "action items|if you're working on"
       title: "Action Items"
     - pattern: "week ahead|mark your calendar"
       title: "Week Ahead"
-    # June 11 2026 follow-up: Closing is listed BEFORE Tomorrow Teaser so
-    # that when the LLM merges the teaser sentence and the {closing_block}
-    # into ONE paragraph (Ep044, 2026-06-11 — "Tomorrow, watch for… That's
-    # Environmental Intelligence for today…" on a single line), the
-    # line-level "first marker wins" rule titles that line "Closing" rather
-    # than "Tomorrow Teaser", so the episode still gets its standard final
-    # Closing chapter. When the two sentences land on SEPARATE lines (the
-    # normal case) both chapters are produced as before — the closing
-    # pattern doesn't match the teaser-only line. The June 10 anchors +
-    # once-per-title dedup keep the positions correct regardless of order.
-    - pattern: "That's Environmental Intelligence|That covers today.?s environmental intelligence"
-      title: "Closing"
-      where: end
-    - pattern: "Before we wrap|Tomorrow"
-      title: "Tomorrow Teaser"
-      where: end
 
 slow_news:
   enabled: true

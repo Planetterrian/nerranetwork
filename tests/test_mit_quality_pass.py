@@ -78,16 +78,21 @@ class TestNaNImmunity:
         assert s["cumulative_alpha_vs_nasdaq"] == 3.0
         assert s["trades_with_alpha"] == 2
 
-    def test_close_trade_rejects_nan_prices(self):
+    def test_close_trade_voids_on_nan_prices(self):
+        # July 2026: a data-fetch failure now VOIDS the trade instead of
+        # recording a $0.00 breakeven close (which was counted in the
+        # record and later narrated as a real market outcome).
         trade = {"symbol": "DELL", "trade_type": "flash"}
         tracker = _tracker_with_trades([])
         with patch.object(mi, "_fetch_trade_prices",
                           return_value=(426.15, NAN)):
             mi._close_trade(trade, tracker)
-        assert trade["status"] == "closed"
+        assert trade["status"] == "voided"
+        assert trade["void_reason"] == "market_data_unavailable"
         assert trade["exit_price"] is None
-        assert trade["pnl_dollars"] == 0.0
-        assert "unavailable" in trade["lesson"].lower()
+        assert trade["pnl_pct"] is None
+        assert trade["pnl_dollars"] is None
+        assert "voided" in trade["lesson"].lower()
 
     def test_sector_exposure_finite(self):
         tracker = _tracker_with_trades([
@@ -96,6 +101,111 @@ class TestNaNImmunity:
         ])
         sectors = mi._compute_sector_exposure(tracker)
         assert math.isfinite(sectors["other"]["cumulative_pnl"])
+
+
+def _voided(symbol, sector="tech"):
+    return {
+        "symbol": symbol, "status": "voided",
+        "void_reason": "market_data_unavailable",
+        "entry_price": None, "exit_price": None,
+        "pnl_pct": None, "pnl_dollars": None, "alpha_pct": None,
+    }
+
+
+class TestVoidedTradesExcluded:
+    """July 2026 review: four trades (Ep74 XLF / Ep75 KO / Ep77 ROKU /
+    Ep79 ION) closed with null prices as $0.00 breakevens — counted in the
+    spoken record and later narrated as real market outcomes. Voided trades
+    must be excluded from every aggregation."""
+
+    def test_recompute_summary_ignores_voided(self):
+        tracker = _tracker_with_trades([
+            _closed("AAA", 10.0, 100.0, alpha=5.0),
+            _voided("XLF"),
+            _closed("CCC", -4.0, -40.0, alpha=-2.0),
+            _voided("KO"),
+        ])
+        mi._recompute_summary(tracker)
+        s = tracker["summary"]
+        # Only the two real closed trades count — not the voided pair.
+        assert s["total_trades"] == 2
+        assert s["breakeven"] == 0
+        assert s["cumulative_pnl"] == 60.0
+
+    def test_sector_exposure_ignores_voided(self):
+        tracker = _tracker_with_trades([
+            _closed("AAA", 5.0, 50.0, sector="tech"),
+            _voided("XLF", sector="financials"),
+        ])
+        sectors = mi._compute_sector_exposure(tracker)
+        assert "financials" not in sectors
+        assert sectors["tech"]["trade_count"] == 1
+
+    def test_trade_review_never_narrates_voided(self):
+        # The most recent trade is voided → it must not become the review.
+        tracker = _tracker_with_trades([
+            _closed("AAA", 8.0, 80.0, alpha=4.0),
+            _voided("ROKU"),
+        ])
+        # AAA is the only real closed trade; it becomes the review, not ROKU.
+        review = mi._build_trade_review(tracker, episode_num=90)
+        assert "ROKU" not in review
+        assert "AAA" in review
+
+    def test_committed_tracker_has_four_voided_and_37_closed(self):
+        import json
+        d = json.loads(
+            (_ROOT / "digests/modern_investing/investment_tracker.json").read_text())
+        voided = [t for t in d["trades"] if t.get("status") == "voided"]
+        closed = [t for t in d["trades"] if t.get("status") == "closed"]
+        voided_ids = {(t["episode_num"], t["symbol"]) for t in voided}
+        assert {(74, "XLF"), (75, "KO"), (77, "ROKU"), (79, "ION")} <= voided_ids
+        assert d["summary"]["total_trades"] == len(closed) == 37
+        # The migration recomputed derived numbers, not hand-edited them.
+        assert d["summary"]["breakeven"] == 3
+        for t in voided:
+            assert t["pnl_pct"] is None and t["pnl_dollars"] is None
+
+
+class TestDoubleReviewPrevented:
+    """The MU flash trade was re-narrated as 'yesterday's' on Ep089/091/093
+    because the review always picked the latest closed trade. Each result is
+    now reviewed exactly once via ``reviewed_in_episode``."""
+
+    def test_stamps_on_first_review(self):
+        tracker = _tracker_with_trades([_closed("MU", 3.0, 30.0, alpha=1.0)])
+        review = mi._build_trade_review(tracker, episode_num=89)
+        assert "MU" in review
+        assert tracker["trades"][-1]["reviewed_in_episode"] == 89
+
+    def test_no_re_review_next_episode(self):
+        trade = _closed("MU", 3.0, 30.0, alpha=1.0)
+        trade["reviewed_in_episode"] = 89
+        tracker = _tracker_with_trades([trade])
+        review = mi._build_trade_review(tracker, episode_num=91)
+        assert "MU" not in review
+        assert "pending" in review.lower()
+
+    def test_same_episode_rerun_still_reviews(self):
+        # Regenerating the SAME episode must still produce the review.
+        trade = _closed("MU", 3.0, 30.0, alpha=1.0)
+        trade["reviewed_in_episode"] = 91
+        tracker = _tracker_with_trades([trade])
+        review = mi._build_trade_review(tracker, episode_num=91)
+        assert "MU" in review
+
+    def test_open_hold_update_when_latest_already_reviewed(self):
+        reviewed = _closed("MU", 3.0, 30.0, alpha=1.0)
+        reviewed["reviewed_in_episode"] = 89
+        hold = {
+            "symbol": "NVDA", "status": "open",
+            "strategy": "momentum", "entry_price": 100.0,
+            "current_price": 105.0,
+        }
+        tracker = _tracker_with_trades([reviewed, hold])
+        review = mi._build_trade_review(tracker, episode_num=91)
+        assert "NVDA" in review
+        assert "Holding until Friday" in review
 
 
 class TestRecursiveLearningLoopAlive:

@@ -66,6 +66,38 @@ class TestConfigLoads:
         assert "starlink" in mem.default_programs
 
 
+class TestJunkTitleFilter:
+    """July 2 2026: a pirate soccer-stream SEO title was laundered into an
+    on-air 'fact' — Ep18 shipped "SpaceX Falcon 9 Launches Starlink 6-103
+    Fiorentina Vs Genoa (RvpT3PF26j)" and the host spoke "designated
+    Fiorentina versus Genoa". The stream-spam class appends a YouTube-style
+    video ID in trailing parens; the exclude pattern drops that while
+    keeping "(video)" and legit "… vs …" comparison articles."""
+
+    @staticmethod
+    def _pats():
+        cfg = yaml.safe_load((_ROOT / "shows/spacex.yaml").read_text(encoding="utf-8"))
+        return cfg.get("exclude_title_patterns", []) or []
+
+    def test_drops_the_pirate_stream_title(self):
+        from engine.utils import drop_excluded_titles
+        arts = [{"title": "SpaceX Falcon 9 Launches Starlink 6-103 Fiorentina Vs Genoa (RvpT3PF26j)"}]
+        kept, dropped = drop_excluded_titles(arts, self._pats())
+        assert dropped == 1 and not kept
+
+    def test_keeps_legit_titles(self):
+        from engine.utils import drop_excluded_titles
+        keep = [
+            "SpaceX's next Starship breathes fire for 1st time in prelaunch test (video)",
+            "Starship vs Falcon 9: a full comparison of the two rockets",
+            "SpaceX launches 24 Starlink satellites from California, sticks landing",
+            "SPCX: Should you Buy the Dip?",
+        ]
+        kept, dropped = drop_excluded_titles([{"title": t} for t in keep], self._pats())
+        survivors = [a["title"] for a in kept]
+        assert dropped == 0, f"over-dropped: {[t for t in keep if t not in survivors]}"
+
+
 class TestChapterPositionalAnchors:
     def test_introduction_anchored_to_start(self):
         by_title = {m["title"]: m for m in _spacex_markers()}

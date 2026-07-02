@@ -132,6 +132,57 @@ class TestVocabTracker:
     def test_empty_state_is_noop(self, tmp_path):
         assert vocab_tracker.build_review_section(tmp_path, 5) == ""
 
+    def test_no_reteach_window_is_a_full_theme_cycle(self):
+        # July 2 2026: raised 3 -> 8 (Food/Animals/Weather looped 2.3× in 8
+        # episodes; 3 was one cycle short).
+        assert vocab_tracker._RECENT_EPISODES_NO_RETEACH >= 8
+
+
+class TestVocabThemeAndWordOfDay:
+    """July 2 2026 PR vocabulary-loop fixes: permanent Word-of-the-Day
+    exclusion (хлеб was WotD 3× in 12 days) + recent-theme rotation."""
+
+    FOOD = (
+        "> **Today we feast on everyday Russian food words.**\n\n"
+        "### Word of the Day\n**хлеб**\nхлеб хлеб молоко молоко сыр сыр"
+    )
+    WEATHER = (
+        "> **Let's explore sunny Russian weather words!**\n\n"
+        "### Word of the Day\n**Russian (Cyrillic):** солнце\n"
+        "солнце солнце дождь дождь ветер ветер"
+    )
+
+    def test_extract_word_of_day_section_and_label(self):
+        assert vocab_tracker.extract_word_of_day(self.FOOD) == "хлеб"
+        # tolerates the "Russian (Cyrillic):" label
+        assert vocab_tracker.extract_word_of_day(self.WEATHER) == "солнце"
+        # inline lesson-prose phrasing
+        assert vocab_tracker.extract_word_of_day(
+            "Our word of the day is яблоко.") == "яблоко"
+
+    def test_extract_theme_from_hook(self):
+        assert "food" in vocab_tracker.extract_theme(self.FOOD).lower()
+        assert "weather" in vocab_tracker.extract_theme(self.WEATHER).lower()
+
+    def test_word_of_day_history_dedups_and_persists(self, tmp_path):
+        vocab_tracker.record_episode_vocab(tmp_path, 43, self.FOOD)
+        vocab_tracker.record_episode_vocab(tmp_path, 45, self.WEATHER)
+        vocab_tracker.record_episode_vocab(tmp_path, 46, self.FOOD)  # хлеб again
+        data = json.loads((tmp_path / vocab_tracker.VOCAB_FILENAME).read_text())
+        # Recorded once each, no duplicate хлеб.
+        assert data["word_of_day_history"] == ["хлеб", "солнце"]
+
+    def test_review_section_excludes_used_wotd_and_lists_recent_themes(self, tmp_path):
+        vocab_tracker.record_episode_vocab(tmp_path, 43, self.FOOD)
+        vocab_tracker.record_episode_vocab(tmp_path, 45, self.WEATHER)
+        section = vocab_tracker.build_review_section(tmp_path, 47)
+        assert "WORD OF THE DAY" in section.upper()
+        assert "хлеб" in section  # named in the never-again list
+        assert "RECENT THEMES" in section
+        # both recent theme domains present so the LLM rotates away
+        assert "food" in section.lower()
+        assert "weather" in section.lower()
+
     def test_prompts_carry_placeholder(self):
         for f in ("shows/prompts/privet_russian_podcast.txt",
                   "shows/prompts/privet_russian_digest.txt"):

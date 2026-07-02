@@ -93,6 +93,45 @@ x_accounts:
 
 min_articles_skip: 2
 
+# July 2 2026 scope-drift backstop: Planetterrian is a life-science show
+# (longevity / neuroscience / microbiome / cellular biology), but the
+# shared science RSS feeds (Phys.org, ScienceDaily, Science Magazine)
+# push pure-astronomy items that the LLM selection didn't reject —
+# Ep094-107 shipped exoplanet clouds, galaxy clusters, black holes,
+# GRBs, Mars magma, comets, and Swift-telescope reboost, several of them
+# DUPLICATING Fascinating Frontiers the same day. This deterministic
+# fetch-side filter drops unambiguous astronomy/space-physics titles.
+# Deliberately CONSERVATIVE (under-filter): it excludes only terms with
+# no life-science reading. Notably NOT filtered: "mercury" (a toxin in
+# health contexts), "ISS/space station" (plant/bio experiments aboard
+# are legit PT content — e.g. the grape-seed study), "meteorite" and
+# "extraterrestrial life"/"Fermi paradox" (origin-of-life/astrobiology
+# is borderline-legit). Verified against all 189 story titles in the
+# June 18-July 2 digests: 14 astronomy items dropped, zero health/
+# longevity/neuro/microbiome titles matched.
+exclude_title_patterns:
+- \bexoplanets?\b
+- \bgalax(y|ies)\b
+- \bblack hole\b
+- \bquasars?\b
+- \bsupernovae?\b
+- \bgamma-ray burst\b
+- \bGRB\b
+- \bcomets?\b
+- ^asteroid\b
+- \bjames webb\b
+- \bjwst\b
+- \bhubble\b
+- \btelescope\b
+- \bspacecraft\b
+- \brover\b
+- \borbiter\b
+- \bsolar wind\b
+- \bsolar storms?\b
+- \bsuperstorm\b
+- \bspace weather\b
+- \b(mars|jupiter|saturn|venus|neptune|uranus)\b
+
 keywords:
   - longevity
   - anti-aging

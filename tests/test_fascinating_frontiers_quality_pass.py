@@ -143,6 +143,74 @@ class TestStockMarketTitleFilter:
         assert "NO STOCK / MARKET ITEMS" in txt
 
 
+class TestEphemerisTitleFilterAndFreshness:
+    """July 2 2026 pass. (1) Nightly-ephemeris almanac items kept slipping
+    past the calendar/sky-tonight filters — "Moon Passes Near the Sickle of
+    Leo Tonight" (Ep105), "Mars passes within 5 degrees of the Pleiades"
+    (Ep114), "Neptune reaches 30 degrees altitude before dawn" (Ep117),
+    "Venus Shines Beneath Leo's Sickle This Evening" (Ep118). The new
+    pattern anchors on a planet/Moon SUBJECT + almanac verb; verified
+    against all 180 story titles in the June 18-July 2 digests (5 drops,
+    all ephemeris; zero real-news drops). (2) content_freshness
+    lookback_days 2 -> 7: the 2-day window let Ep116 re-run 4 stories
+    already aired within the week."""
+
+    @staticmethod
+    def _cfg():
+        return yaml.safe_load(
+            (REPO / "shows/fascinating_frontiers.yaml").read_text(encoding="utf-8")
+        )
+
+    EPHEMERIS_TITLES = [
+        "Moon Passes Near the Sickle of Leo Tonight — Astronomy Magazine",
+        "Mars passes within 5 degrees of the Pleiades cluster",
+        "Neptune reaches 30 degrees altitude before dawn in Pisces",
+        "Venus Shines Beneath Leo’s Sickle This Evening — Astronomy Magazine",
+        # Same almanac class, shipped Ep112:
+        "Saturn’s moon Iapetus passes north of the ringed planet — Astronomy Magazine",
+    ]
+
+    KEEP_TITLES = [
+        # subject is not a planet — real news (FF June-16 false-drop lesson:
+        # never use a bare "passes near").
+        "A sizable asteroid is set to pass Earth this weekend",
+        # planet subject but not an almanac verb — real science.
+        "Mars may host large subsurface magma systems",
+        "Uranus and Neptune May Contain Magma Oceans Instead of Icy Mantles — Universe Today",
+        "Perseverance confirms organic carbon in Bright Angel rocks on Mars — Phys.org",
+        # planet mid-title with an almanac-ish verb elsewhere — anchor must hold.
+        "NASA Shares Stunning New View of Jupiter's Aurora",
+        "Star TOI-5882 shows evidence it recently swallowed a planet — Universe Today",
+    ]
+
+    def test_drops_ephemeris_titles(self):
+        from engine.utils import drop_excluded_titles
+        pats = self._cfg().get("exclude_title_patterns", [])
+        kept, dropped = drop_excluded_titles(
+            [{"title": t} for t in self.EPHEMERIS_TITLES], pats)
+        assert dropped == len(self.EPHEMERIS_TITLES), (
+            f"survivors: {[a['title'] for a in kept]}"
+        )
+
+    def test_keeps_real_news_titles(self):
+        from engine.utils import drop_excluded_titles
+        pats = self._cfg().get("exclude_title_patterns", [])
+        kept, dropped = drop_excluded_titles(
+            [{"title": t} for t in self.KEEP_TITLES], pats)
+        survivors = [a["title"] for a in kept]
+        assert dropped == 0, (
+            "ephemeris filter over-dropped real news: "
+            f"{[t for t in self.KEEP_TITLES if t not in survivors]}"
+        )
+
+    def test_content_freshness_lookback_is_a_week(self):
+        cf = self._cfg().get("content_freshness", {})
+        assert cf.get("lookback_days", 0) >= 7, (
+            "lookback_days regressed below 7 — a 2-day window let Ep116 "
+            "re-run 4 stories already aired within the week"
+        )
+
+
 def _ff_markers():
     cfg = yaml.safe_load(
         (REPO / "shows/fascinating_frontiers.yaml").read_text(encoding="utf-8")
