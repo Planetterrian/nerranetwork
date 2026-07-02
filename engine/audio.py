@@ -988,3 +988,42 @@ def mix_with_music(
 
     logger.info("Final mix complete: %s", output_path)
     return output_path
+
+
+def append_full_song(
+    episode_mp3: Path,
+    song_path: Path,
+    *,
+    gap_seconds: float = 1.2,
+    timeout_seconds: int = 600,
+) -> Path:
+    """Append a full song after the finished episode mix, in place.
+
+    Debut-episode outro (July 2026, The DP Pod Ep1): the closing introduces
+    the show's theme song on air and the full track plays the episode out.
+    A short silence gap separates the outro's fade from the song's first
+    beat; one re-encode at the archival ``-q:a 0`` setting used everywhere
+    else in the pipeline.
+    """
+    episode_mp3 = Path(episode_mp3)
+    song_path = Path(song_path)
+    tmp_out = episode_mp3.with_name(episode_mp3.stem + "_withsong.mp3")
+    cmd = [
+        "ffmpeg", "-y",
+        "-i", str(episode_mp3),
+        "-i", str(song_path),
+        "-filter_complex",
+        (
+            f"[0:a]apad=pad_dur={gap_seconds:.2f},"
+            "aformat=sample_rates=44100:channel_layouts=stereo[ep];"
+            "[1:a]aformat=sample_rates=44100:channel_layouts=stereo[song];"
+            "[ep][song]concat=n=2:v=0:a=1[out]"
+        ),
+        "-map", "[out]",
+        "-c:a", "libmp3lame", "-q:a", "0",
+        str(tmp_out),
+    ]
+    subprocess.run(cmd, check=True, capture_output=True, timeout=timeout_seconds)
+    tmp_out.replace(episode_mp3)
+    logger.info("Appended full song %s to %s", song_path.name, episode_mp3.name)
+    return episode_mp3

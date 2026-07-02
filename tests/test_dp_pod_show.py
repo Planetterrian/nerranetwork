@@ -190,6 +190,63 @@ class TestEp001Fixes:
         assert "forward commitment" in prompt
 
 
+class TestDebutRework:
+    """July 2 2026 Ep1 rework (operator verdict on the shipped debut:
+    robotic, no founding story). Pins the designed-debut machinery."""
+
+    def test_theme_song_is_the_music_bed(self):
+        assert CFG.audio.music_file == "assets/music/dp_pod.mp3"
+        assert (PROJECT_ROOT / "assets" / "music" / "dp_pod.mp3").exists()
+
+    def test_full_song_outro_on_episode_one_only(self):
+        assert CFG.audio.debut_song_file == "assets/music/dp_pod.mp3"
+        assert CFG.audio.debut_song_episode == 1
+
+    def test_debut_song_fields_default_noop(self):
+        from engine.config import AudioConfig
+
+        cfg = AudioConfig()
+        assert cfg.debut_song_file is None
+        assert cfg.debut_song_episode == 0
+
+    def test_append_full_song_exists(self):
+        from engine.audio import append_full_song  # noqa: F401
+
+    def test_snappier_handoffs(self):
+        assert CFG.tts.dialogue_pause_ms == 220
+
+    def test_hook_supplies_network_context(self):
+        import importlib
+
+        hook = importlib.import_module("shows.hooks.dp_pod")
+        ctx = hook.pre_fetch(CFG, episode_num=2, today_str="July 3, 2026")
+        assert "nerra_network_context" in ctx
+        assert "First Principles Daily" in ctx["nerra_network_context"]
+
+    def test_first_episode_overrides_are_dp_pod_specific(self):
+        from engine.first_episode import (
+            first_episode_digest_appendix,
+            first_episode_podcast_appendix,
+        )
+
+        digest = first_episode_digest_appendix(1, CFG.name, show_slug="dp_pod")
+        podcast = first_episode_podcast_appendix(1, CFG.name, show_slug="dp_pod")
+        assert "FOUNDING BRIEF" in digest
+        assert "First Principles Daily" in digest
+        assert "Do Positive" in podcast and "song" in podcast.lower()
+        assert "write NOTHING" in podcast
+        # Other shows keep the generic debut guidance.
+        generic = first_episode_podcast_appendix(1, "SpaceX Daily", show_slug="spacex")
+        assert "FOUNDING" not in generic
+
+    def test_podcast_prompt_has_energy_and_crosspromo_blocks(self):
+        prompt = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_podcast.txt").read_text(
+            encoding="utf-8")
+        assert "WRITE THE ENERGY IN" in prompt
+        assert "{nerra_network_context}" in prompt
+        assert "CROSS-PROMO" in prompt
+
+
 class TestIntrosPersonality:
     def test_intro_is_dan_labeled_dialogue(self):
         from engine.intros import build_intro_line

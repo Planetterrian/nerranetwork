@@ -1334,7 +1334,9 @@ def generate_digest(
     ep_num = int(template_vars.get("episode_num") or 0)
     if ep_num == 1:
         from engine.first_episode import first_episode_digest_appendix
-        appendix = first_episode_digest_appendix(ep_num, config.name)
+        appendix = first_episode_digest_appendix(
+            ep_num, config.name, show_slug=getattr(config, "slug", ""),
+        )
         if appendix:
             prompt += "\n\n" + appendix
 
@@ -1843,7 +1845,9 @@ def generate_podcast_script(
     ep_num = int(template_vars.get("episode_num") or 0)
     if ep_num == 1:
         from engine.first_episode import first_episode_podcast_appendix
-        appendix = first_episode_podcast_appendix(ep_num, config.name)
+        appendix = first_episode_podcast_appendix(
+            ep_num, config.name, show_slug=getattr(config, "slug", ""),
+        )
         if appendix:
             prompt += "\n\n" + appendix
 

@@ -178,6 +178,13 @@ class AudioConfig:
     music_file: Optional[str] = None
     background_music_file: Optional[str] = None
     transition_sting: Optional[str] = None
+    # ---- Debut full-song outro (July 2026, The DP Pod Ep1) ----
+    # When ``debut_song_file`` is set AND the episode number equals
+    # ``debut_song_episode``, the full song is appended once after the
+    # normal outro (the script's closing introduces it on air). Defaults
+    # are a no-op for every show/episode.
+    debut_song_file: Optional[str] = None
+    debut_song_episode: int = 0
     # Music timing — May 13 2026 outro retune (intro shape unchanged
     # from May 12). Operator listened to TST Ep471 and asked for the
     # outro to "let music run by itself for 20 seconds more and fade
