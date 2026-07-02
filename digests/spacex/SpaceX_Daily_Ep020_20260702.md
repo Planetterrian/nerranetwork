@@ -1,0 +1,48 @@
+# SpaceX Daily
+> **The 1,000th Merlin 1D engine marks how Falcon reuse has turned repeated flights into the main driver of engine reliability gains.**
+---
+### Top News
+1. **Teams recently completed build and acceptance testing of our 1,000th Merlin 1D engine for Falcon’s first stage! With Falcon’s reusability, recovering these engines has enabled continued reliability enhancements, making Merlin one of the most reliable rocket engines ever manufactured** — r/spacex (2026-07-02T00:27:57+00:00)
+   SpaceX has now completed acceptance testing on the 1,000th Merlin 1D built for Falcon first stages. Reusability of those engines has allowed post-flight inspections that feed directly into design tweaks for higher reliability. The milestone sits inside the ongoing Falcon cadence that last appeared in coverage on July 1. Listeners should watch how the same reuse data pipeline later informs Raptor iteration cycles. Source: [reddit.com](https://www.reddit.com/r/SpaceXLounge/comments/1ul2zxw/teams_recently_completed_build_and_acceptance/)
+
+2. **"Starship 40 performing a 60 second full duration 6 engine static fire test at Starbase Massey's test site in preparation for Starship test flight 13." [StarshipGazer]** — r/spacex (2026-07-01T22:51:41+00:00)
+   Starship 40 completed a 60-second, six-engine static fire at the Massey site. The test length matches the profile needed to clear the vehicle for Flight 13. Starship coverage yesterday noted the flight-test campaign remains centered on booster catch and reuse; this firing directly checks the six-engine stack before the next flight attempt. Observers will next look for any pad or vehicle anomalies reported after the burn. Source: [reddit.com](https://www.reddit.com/r/SpaceXLounge/comments/1ul0qyw/starship_40_performing_a_60_second_full_duration/)
+
+3. **SpaceX rocket launch should be visible in Phoenix tonight** — Phoenix New Times (2026-07-02T07:27:22+00:00)
+   A SpaceX Falcon launch is scheduled to cross skies visible from Phoenix this evening. The trajectory takes the vehicle southeast from Vandenberg, producing a visible plume under clear conditions. This continues the Falcon cadence tracked on July 1, where annual launch-rate limits remain the open question. Viewers should check local weather and exact T-0 timing for best sighting. Source: [Google News](https://news.google.com/rss/articles/CBMipwFBVV95cUxPT3pfd2Y1Vkh0cnJaX3llU1hoV0VwRThOUDdiOEItYmhNY1VySUd0dndrZW5JM0Z0M2ZLeV9hX0NRWGVwcFlRbzh5ajM3eHJSQTctbmRkOWJ2ekZTZ3ItaUhqMFRoNm55dXJQa1FYeVY0aXlTa1MzZG5LU082cVlBSUg2RlJzYWc4bnRpR29uNmRWRXh2cFF2SlgzaTdqQWhSNU82cktTUQ?oc=5)
+
+4. **Is there a launch today? SpaceX, ULA rocket launch schedule in Florida** — Florida Today (2026-07-02T05:03:00+00:00)
+   Florida launch manifests list a possible SpaceX Falcon mission from Cape Canaveral alongside a ULA flight. The schedule reflects continued high cadence operations at the Eastern Range. Falcon reuse counts keep rising, keeping the annual ceiling question live from yesterday’s coverage. Operators will monitor range availability for any same-day slips. Source: [Google News](https://news.google.com/rss/articles/CBMihwJBVV95cUxQMWZFcGJvLTc4T3RtZE94QnM5LXFiUVpwRGszc0tKdXBQU3N4djJFOUhSZm05eElDYUdMWS1JYUV5em9URWdTYmRyWE5PU3lYUkEwTlo3UVZZdl9va2VhbkVGczFibG9GQWVlZXNSLWcteTUwdE9iaE44aUcwTmhIUHdvUEVDZUd0MXA1aHVJbEhYbkQ0UGk1YzIxWnNyMHdfUUFha0F2YTNEZUg0UlNmNlBmaGI0YVY4UnZxUldORGhZSHBmcWV3ZGlDaGdwdjZUVlRNUFZjSWl2aFVXSjNNVDY5U3hkUUhlVDJTQjhMR1U2bDBZaGlobEk4VFlvMU41RFVhTGZqaw?oc=5)
+
+5. **EchoStar’s satellite TV and wireless subsidiaries file for bankruptcy** — SpaceNews (2026-07-01T12:22:10+00:00)
+   EchoStar’s satellite TV and wireless units filed Chapter 11, executing a prepackaged plan after spectrum sales to SpaceX and AT&T. The filings clear debt tied to the abandoned 5G network and allow early repayment. Spectrum assets transferred to SpaceX add capacity that could support Starlink direct-to-cell expansion. Next steps center on regulatory approval of the asset transfers. Source: [spacenews.com](https://spacenews.com/echostars-satellite-tv-and-wireless-subsidiaries-file-for-bankruptcy/)
+
+6. **ULA launches final Atlas 5 rocket supporting Amazon Leo’s broadband internet satellite constellation** — Spaceflight Now (2026-07-01T23:20:40+00:00)
+   ULA’s final Atlas 5 lifted off at 12:30:15 a.m. EDT from Cape Canaveral pad 41 on the Leo Atlas 8 mission. The flight was also the last Atlas 5 551 configuration. The payload supports Amazon’s broadband constellation, a direct competitor to Starlink. The launch removes one more legacy vehicle from the manifest while Falcon cadence continues. Source: [spaceflightnow.com](https://spaceflightnow.com/2026/07/01/live-coverage-ula-to-launch-final-atlas-5-rocket-supporting-amazon-leos-broadband-internet-satellite-constellation/)
+
+7. **SpaceX's Texas Land Deal Sparks Bitter Lawsuit Over Claims Elon Musk's Company Will 'Trash' Local Wildlife** — Realtor.com (2026-07-02T10:00:00+00:00)
+   A lawsuit filed over SpaceX’s Texas land acquisition alleges the company’s activities will harm local wildlife. The complaint centers on habitat claims near Starbase expansion zones. Any ruling could affect permitting timelines for additional launch infrastructure. Observers await the next court filing for schedule impact. Source: [Google News](https://news.google.com/rss/articles/CBMimwFBVV95cUxPcWI5TFRnTjgtU21oSWltTEl5Q2JMaTQxbm1yZ0wyNEh4U2QwN0M4dWFaX25lMlRtUzJ0a2FXTmo4eDJHNngzMmxndFJOa3dCdktIa0tKQ3IxbjlzREpnOHFFZkdjTGdCd0RfUklOYWRmR0c4eWZiVU1uZkhkU1NmODBIWnBmTDRHT0F1SzNDXzFBUFVxVlVDVlBuSQ?oc=5)
+
+8. **Blue Origin accelerates LC-36 recovery via hybrid plan** — NASASpaceFlight.com (2026-07-01T13:20:57+00:00)
+   Blue Origin adopted a hybrid rebuild plan for Launch Complex-36 one month after the New Glenn anomaly. The approach aims to restore pad capability faster than a full rebuild. The effort keeps a second U.S. heavy-lift option in play while SpaceX Starship testing proceeds at Starbase. Recovery milestones will be tracked against the end-of-year target. Source: [nasaspaceflight.com](https://www.nasaspaceflight.com/2026/07/blue-origin-lc-36-recovery-hybrid-plan/)
+---
+## Community Buzz
+1. Reddit users noted the 1,000th Merlin engine acceptance test as a quiet but steady reliability marker for the Falcon fleet. Comments focused on how post-flight engine inspections have iteratively improved component life without major redesigns.
+2. Observers on X tracked the Starship 40 static-fire video frame-by-frame, confirming all six engines reached full duration. Early clips showed clean plume behavior with no obvious anomalies at the test stand.
+3. Local Florida spotters posted launch-window weather models for the possible Cape Canaveral mission, highlighting a narrow evening window before Independence Day restrictions.
+4. Space enthusiasts shared side-by-side photos of the final Atlas 5 rollout and the active Falcon pads, underscoring the generational shift at the Cape.
+5. Amateur radio operators confirmed receipt of telemetry tones from the recent Starship test fire, matching the expected 60-second burn profile.
+---
+## The Counterpoint
+A lawsuit filed against SpaceX’s Texas land purchase claims the company’s expansion will damage local wildlife habitats near Starbase. The complaint seeks to block or modify permits tied to additional launch infrastructure. Resolution hinges on court review of environmental impact data and any required mitigation measures. Source: [Google News](https://news.google.com/rss/articles/CBMimwFBVV95cUxPcWI5TFRnTjgtU21oSWltTEl5Q2JMaTQxbm1yZ0wyNEh4U2QwN0M4dWFaX25lMlRtUzJ0a2FXTmo4eDJHNngzMmxndFJOa3dCdktIa0tKQ3IxbjlzREpnOHFFZkdjTGdCd0RfUklOYWRmR0c4eWZiVU1uZkhkU1NmODBIWnBmTDRHT0F1SzNDXzFBUFVxVlVDVlBuSQ?oc=5)
+---
+### AI & Compute
+SpaceX denied a Wall Street Journal report that it had shown an AI handset prototype ahead of the June IPO. The statement clarifies that no such device was presented to investors during pre-IPO discussions. Any future handset work would tie into Starlink direct-to-cell capacity planning already under way. Source: [Google News](https://news.google.com/rss/articles/CBMizAFBVV95cUxPeFJZTzFRUHJxMVVWc0FKU3Vhb29hWFVDQTRZdzhMaE1BYTVWbHVHUWZtNTY3VnBER0pBbUJOUEEtSkt0NnRoRDlNVldoTm50T3NiTEVNY09GcWZaOVJTeWhTUWpwLXFqLU1FRDlkRnFvdGI3N1VqMGIxX1hFREF1RXoyd2ZKYVZKbmhDRFR4N29EeVI3T2QxUEZxcEloWk1fQW5ZNW52WFJvQnE5MUdGMGtEVE5lZGlCemcyNmVGTnQ1clhZRkp4QWg5aUM?oc=5)
+---
+### Engineering Deep Dive
+The 1,000th Merlin 1D acceptance test illustrates how reuse converts each flight into a data source that narrows the gap between raw material cost and finished engine price. A new Merlin starts as forgings, machined parts, and turbopump assemblies whose input metals and propellants represent only a small fraction of final unit cost. Each recovered engine returns with measured wear on seals, injectors, and turbines; those measurements drive targeted material or geometry changes that extend life without wholesale redesign. Over hundreds of flights the cumulative effect has raised the engine’s demonstrated reliability while the per-flight amortization of the original hardware continues to fall. The same inspection-to-improvement loop is now being applied to Raptor, where the open question is how quickly flight data can compress the Idiot Index on the larger, higher-thrust engine.
+---
+### Market Watch
+SPCX is at $157.54, -0.2% vs the previous close.
+---
+Starship 40’s static fire keeps the Flight 13 timeline on track while Falcon reuse data keeps feeding reliability gains.
