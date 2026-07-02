@@ -25,21 +25,60 @@ reviews:
       - metric: episodes with an Introduction chapter at word 0, last 10
         baseline: "6/10 (Ep085/086/088/093 missed — non-Welcome greetings)"
         expected: "10/10 within 2 weeks of post-merge episodes"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-02 network pass: chapter shape holds — Introduction
+          present on post-merge episodes across all greeting variants."
       - metric: episodes shipping with no Closing chapter, last 10
         baseline: "Ep086 + Ep090 (teaser stole the sign-off line)"
         expected: "0/10 post-merge (Closing precedes teaser; real teaser line now matches)"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-02 network pass: no missing-Closing episodes
+          post-merge; ordering fix holding."
       - metric: episodes with a real Science Deep Dive chapter (when a deep dive aired)
         baseline: "0/10 (literal-label marker never matched; section fell to auto-segment)"
         expected: ">= 1 per episode that contains a deep-dive opener"
-        verdict: pending
-        evidence: "Re-parse of Ep090-093 with the new marker yields a Science Deep Dive chapter."
+        verdict: hit
+        evidence: "Re-parse of Ep090-093 yielded the chapter at fix time;
+          2026-07-02 network pass confirms deep-dive chapters on post-merge
+          episodes (chapter shape holds)."
       - metric: median _tts.txt words, last 10 eps
         baseline: "~1272 (snapshot 2026-06-18); floor 1600, target 1,800-2,100"
         expected: "no regression below baseline; length stays deferred (digest ceiling)"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
+  - date: 2026-07-02
+    pr: null
+    doc: docs/reviews/network_review_2026_07_02.md
+    reviewer: claude-code (network editorial pass)
+    summary: >
+      Network editorial pass. Scored June-18: chapter shape holds (all three
+      chapter predictions HIT). Headline finding — the biggest positioning
+      problem in the network: a longevity/health brand shipping a
+      general-science firehose, duplicating Fascinating Frontiers' astronomy
+      stories verbatim on 6 consecutive days. Health-claim hedging is
+      exemplary and must be preserved.
+    shipped:
+      - astronomy fetch filter (exclude_title_patterns; verified against the
+        window's titles — kills the 6-day FF duplication; the single
+        highest-leverage fix of this review)
+    deferred:
+      - "A/B proposals (NOT applied): digest-prompt scope guard + >= 8/15
+        life-science floor; trim bare science/research/study/discovery
+        keywords (monitor volume vs min_articles_skip 2); explicit prompt
+        rule preserving the exemplary health-claim hedging"
+      - chronic under-length (carried; digest ceiling, four-show length A/B)
+      - garbage mid-body auto-segment chapter titles (carried, shared lever)
+    predictions:
+      - metric: pure-astronomy items per PT episode digest
+        baseline: "~2-3/day (6 consecutive days duplicating FF verbatim)"
+        expected: "0 post-merge (fetch filter)"
+        verdict: pending
+        evidence: null
+      - metric: article volume vs min_articles_skip (2) after the filter
+        baseline: "no skip days in the window"
+        expected: "no filter-induced skip days (monitor)"
         verdict: pending
         evidence: null
     agent_cost_usd: null

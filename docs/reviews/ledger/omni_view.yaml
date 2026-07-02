@@ -23,26 +23,70 @@ reviews:
       - metric: episodes (last 10) with a Closing chapter in chapters_ep*.json
         baseline: "3 of 10"
         expected: "10 of 10 within 2 weeks"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-02 network pass: Closing chapter present on window
+          episodes; where-anchors holding."
       - metric: chapters with sentence-fragment / ellipsis titles (last 10 eps)
         baseline: ">=2 (ep061, ep068)"
         expected: "0"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-02 network pass: 0 fragment/ellipsis chapter titles
+          in the window."
       - metric: max "the strongest case" count in any single episode (last 10)
         baseline: 20
         expected: "<= 1"
-        verdict: pending
-        evidence: null
+        verdict: partial
+        evidence: "2026-07-02 network pass: SCRIPT clean — 0 uses in 15 window
+          episodes (the podcast-side ban held). But the DIGEST regressed:
+          Ep085 shipped 'the strongest case' x24, 8 days after the ban.
+          Mechanical digest lint on template saturation proposed."
       - metric: episodes opening stories with anonymous "one side frames / the other side frames" (last 10)
         baseline: ">=1 (ep077, 6x)"
         expected: "0"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-02 network pass: 0 anonymous 'one side frames'
+          openers in the window; advocates named."
       - metric: median _tts.txt words (last 10 eps)
         baseline: 1150
         expected: ">= 1600 within 2 weeks"
+        verdict: miss
+        evidence: "2026-07-02 network pass: median still well under 1600 —
+          digest ceiling class; stays deferred behind the four-show length
+          A/B (not re-litigated)."
+    agent_cost_usd: null
+
+  - date: 2026-07-02
+    pr: null
+    doc: docs/reviews/network_review_2026_07_02.md
+    reviewer: claude-code (network editorial pass)
+    summary: >
+      Network editorial pass. Scored June-10: Closing HIT, fragments HIT,
+      anonymity HIT, strongest-case PARTIAL (script 0/15 — the podcast ban
+      held — but digest Ep085 shipped it x24, 8 days after the ban), length
+      MISS (deferred). The neutrality promise HOLDS (3-story audit clean),
+      but steel-manning is now simulated by formula: "Both sides agree X;
+      they differ on whether Y" at saturation — 12/12 stories in Ep099,
+      including manufactured "sides" on a shark attack, an earthquake, and a
+      celebrity outfit. Depth vs breadth conflict: prompt demands 6-7
+      stories x 6-8 sentences; window ships 12-13 x ~5. June-19
+      double-publish Ep086+Ep087 (operator item).
+    shipped:
+      - none show-specific (network-wide expansion-retry dedup + Source-line
+        scrub apply to OV)
+    deferred:
+      - "A/B proposals (NOT applied): remove the literal 'Both sides agree
+        on [X]; they differ on [Y]' seed from omni_view_digest.txt; cap the
+        construction <= 2/episode; disasters/tragedies/obituaries/celebrity
+        items get facts + coverage framing, never manufactured sides; select
+        6-8 stories and deepen"
+      - mechanical digest lint on template saturation (tooling proposal)
+      - chronic under-length (carried; digest ceiling, four-show length A/B)
+      - "operator: June-19 double-publish forensics"
+    predictions:
+      - metric: '"Both sides agree" constructions per episode digest'
+        baseline: "12/12 stories in Ep099 (saturation)"
+        expected: "<= 2/episode once the proposed de-seed ships; unchanged
+          until then (scores the proposal's urgency)"
         verdict: pending
         evidence: null
     agent_cost_usd: null

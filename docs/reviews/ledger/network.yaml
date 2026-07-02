@@ -1,0 +1,73 @@
+# Review ledger for the cross-cutting `network` target.
+# Schema: docs/reviews/ledger/README.md. Feeds the meta-review (verdict
+# rates by finding category) per the README.
+reviews:
+  - date: 2026-07-02
+    pr: null
+    doc: docs/reviews/network_review_2026_07_02.md
+    reviewer: claude-code (network editorial pass)
+    summary: >
+      Full network editorial review — every transcript in the
+      2026-06-18..07-02 window (~150 episodes, all 13 shows) scored for
+      fit / interest / content / positioning. Four cross-cutting classes:
+      (1) number/name normalization garbles in flagship positions
+      (Tesla/SpaceX comma-number hooks — fixed); (2) guard/retry mechanisms
+      degrading the audio they protect (MAB double-spoken closing;
+      M&A/MAB/UC expansion-retry paraphrase padding — both fixed);
+      (3) third-generation seeded-template convergence (OV/EI/MAB/FP/MIT/
+      SpaceX — all prompt de-seeds PROPOSED under A/B, not applied);
+      (4) same-day sibling overlap / beat encroachment (PT astronomy filter
+      shipped — the review's highest-leverage fix; FF lookback + ephemeris;
+      Tesla/SpaceX beat rules proposed). Plus scheduler anomalies: three
+      same-day double-publishes + one silently missed SpaceX recap
+      (operator forensics).
+    shipped:
+      - comma-number normalization (assets/pronunciation.py; all five
+        shipped garble forms regression-tested)
+      - closing-guard fuzzy signature match (engine/pipeline.py)
+      - expansion-retry near-duplicate sentence stripping with
+        fallback-to-original
+      - Source-line scrub in the script-save path (spoken scaffold class)
+      - EI Closing/Teaser-before-body chapter reorder; PT astronomy + FF
+        ephemeris/lookback-7 + SpaceX junk-title fetch filters; M&A
+        duplicate-feed removal + network no-duplicate-feeds guard
+      - MIT voided-trade status + 37-trade migration + review-once guard
+      - PR vocab no-reteach 8 / WOTD never-repeat / theme-gap enforcement
+      - UC + FPD topic-queue hygiene (interleave, dedup, alternation)
+      - review_snapshot.py Unicode-aware tic detector +
+        missing-final-Closing chapter check (two tooling blind spots that
+        let shipped defects pass three snapshots)
+    deferred:
+      - "all seeded-template de-seeds (the 12-show A/B list in the review
+        doc) — PROPOSED, NOT applied (landmine #17; no GROK_API_KEY here to
+        render before/after)"
+      - "playbook meta-lesson (recorded, not yet applied to
+        .claude/commands/review-show.md): never put a quotable example
+        phrase in a rotation menu — three shows elected the first menu item
+        as their next tic; de-seed by shape"
+      - "operator: double-publish forensics (Tesla 6/23, PR 6/22, OV 6/19);
+        SpaceX 6/28 missed recap; FP cadence alignment; M&A x_enabled
+        mismatch vs CLAUDE.md"
+    predictions:
+      - metric: guard/retry-inflicted audio defects network-wide
+          (double-spoken closings, verbatim-doubled sentences)
+        baseline: "MAB 5/15 double closings; M&A Ep087 doubled sentences"
+        expected: "0 across the next 2 weeks of episodes"
+        verdict: pending
+        evidence: null
+      - metric: snapshot visibility of Cyrillic tics + missing-final-Closing
+          chapter shapes
+        baseline: "snapshot cleared FP while a template ran 7/8, and cleared
+          EI while 3/5 shipped orphaned Closings"
+        expected: "the next FP/EI snapshots surface these classes
+          mechanically (no hand-reading required)"
+        verdict: pending
+        evidence: null
+      - metric: same-day sibling story duplication (PT vs FF lead stories)
+        baseline: "6 consecutive days of verbatim astronomy duplication"
+        expected: "0 after the PT fetch filter"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
+do_not_retry: []

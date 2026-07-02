@@ -27,8 +27,9 @@ reviews:
       - metric: "fraction of last-10 episodes shipping 'That wraps today's case' as the sign-off"
         baseline: "5/10"
         expected: "0/10 (phrase removed from pool)"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-02 network pass: 'That wraps today's case' absent
+          in 13/13 window episodes."
       - metric: "distinct closing variants across the last 10 episodes"
         baseline: "2"
         expected: ">= 3"
@@ -37,6 +38,41 @@ reviews:
       - metric: "median _tts.txt words, last 10 episodes (under-length; NOT fixed this pass)"
         baseline: "~903"
         expected: "still < 1300 — re-confirms the digest lever is the open problem"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
+  - date: 2026-07-02
+    pr: null
+    doc: docs/reviews/network_review_2026_07_02.md
+    reviewer: claude-code (network editorial pass)
+    summary: >-
+      Network editorial pass. Scored June-12: "That wraps today's case"
+      absent 13/13 (HIT). Empathy discipline + mechanism depth intact
+      (content 8.5). Findings: topic-queue category-clustering (8 straight
+      medicine episodes); expansion-retry arithmetic filler ("one hundred
+      vehicles… eighty-five vehicles" restate-percentage-as-count); a
+      likely-wrong $50/life-saved stat (Ep038, operator item); June-23/24
+      episodes shipped the since-reverted brand garble in audio
+      (regenerate-or-accept, operator).
+    shipped:
+      - >-
+        Queue hygiene — category interleave + one miscategorized entry fixed
+        in shows/topic_queues/unintended_consequences.yaml.
+      - >-
+        Expansion-retry near-duplicate sentence stripping (network-wide)
+        curbs the restatement-padding class.
+    deferred:
+      - >-
+        A/B proposals (NOT applied): cap the restate-percentage-as-count
+        device and "One might ask/object" at <= 1/episode; forbid absolute
+        cost-effectiveness claims without units sanity.
+      - >-
+        Chronic under-length (carried; digest lever, grok plateau accepted).
+    predictions:
+      - metric: consecutive same-category episodes in produced queue order
+        baseline: "8 straight medicine episodes in the window"
+        expected: "no 3+ consecutive same-category episodes after interleave"
         verdict: pending
         evidence: null
     agent_cost_usd: null

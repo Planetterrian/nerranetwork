@@ -1,0 +1,48 @@
+# Review ledger for modern_investing. Schema: docs/reviews/ledger/README.md
+# Created by the 2026-07-02 network editorial pass (first scored MIT entry;
+# the June 2026 flagship pass predates the ledger system for this show).
+reviews:
+  - date: 2026-07-02
+    pr: null
+    doc: docs/reviews/network_review_2026_07_02.md
+    reviewer: claude-code (network editorial pass)
+    summary: >
+      Network editorial pass — first ledger entry. Most actionable show in
+      the network, but its worst-possible error class shipped: PHANTOM
+      (data-failure) trades narrated as market outcomes ("ROKU closed
+      flat…", "KO closed flat today" — no price was ever fetched; 4 of the
+      spoken "7 breakeven outcomes" were data failures). The MU trade was
+      reviewed as "yesterday's flash trade" three times. Also: the seeded
+      callback sentence colonized 9/10 episodes; two irreconciled alphas
+      spoken (+11% daily vs -13.1% Sunday — the Sunday honesty is a strength
+      to keep); Ep093 amplified an investing.com promo headline ("Qualys
+      surged 65%") with invented same-day framing (operator item).
+    shipped:
+      - voided-trade status for data-failure closes — excluded from every
+        aggregate / review / lookback (deterministic)
+      - one-time tracker migration to the honest 37-trade record (was 41
+        with 4 phantoms)
+      - review-once guard (each closed trade reviewed exactly once)
+    deferred:
+      - "A/B proposals (NOT applied): de-seed the 'This is the exact
+        scenario where our earlier rule…' callback; retire 'closing-price
+        confirmation' as a teachable lesson (it describes the pipeline's own
+        former price-fetch bug); label the two alpha metrics whenever
+        spoken; Saturday scripts say 'Friday's close'"
+      - "operator: demote the investing.com promo tier / require a second
+        source for >20% single-day move claims"
+    predictions:
+      - metric: spoken closed-trade record vs tracker after migration
+        baseline: "41 spoken incl. 4 phantom data-failure 'breakeven' trades"
+        expected: "spoken record excludes voided trades (37 honest trades);
+          no data-failure close ever narrated as a market outcome"
+        verdict: pending
+        evidence: null
+      - metric: times a single closed trade is reviewed on air
+        baseline: "MU reviewed as 'yesterday's flash trade' 3x"
+        expected: "exactly once per closed trade (review-once guard)"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
+do_not_retry: []

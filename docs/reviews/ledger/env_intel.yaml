@@ -129,11 +129,52 @@ reviews:
       - metric: episodes shipping with no Introduction chapter, last 10
         baseline: "4/10 (Ep037/038/042/046 — the 'Welcome to' greeting variant)"
         expected: "0/10 post-merge — all three greeting shapes now title an Introduction chapter"
-        verdict: pending
-        evidence: "Drift guards pass: test_introduction_pattern_matches_every_greeting_variant + test_welcome_to_opener_yields_introduction_chapter. Re-score on next 2-3 'Welcome to' episodes."
+        verdict: hit
+        evidence: "2026-07-02 network pass: every window episode (incl. the
+          'Welcome to' greeting variant) has an Introduction chapter."
       - metric: deep-dive opener "There's a nuance here worth understanding" (potential new tic)
         baseline: "1/1 post-merge episode (Ep046)"
         expected: "openers rotate; this lead-in does not become a 5+/10 template echo"
+        verdict: miss
+        evidence: "2026-07-02 network pass: exactly as feared — 'There's a
+          nuance here worth understanding' opened the deep dive in 6/6 window
+          episodes; the replacement became the template (third-generation
+          tic). Reopened; menu removal + rotation memory proposed under A/B."
+    agent_cost_usd: null
+
+  - date: 2026-07-02
+    pr: null
+    doc: docs/reviews/network_review_2026_07_02.md
+    reviewer: claude-code (network editorial pass)
+    summary: >
+      Network editorial pass. Scored June-17: Introduction HIT; nuance-tic
+      MISS (6/6 — the ledger predicted exactly this; reopened, menu removal
+      proposed). P0: orphan-Closing chapters RETURNED (variant 3) — 3/5
+      window episodes ended on a promo-collision body chapter. Also: thin
+      days triple-tell one story (Ep047/049 told one story 4x); "federal
+      register" spoken instead of "Canada Gazette" (Ep051 x4); "Tomorrow,
+      watch for…" on an every-other-day show. The Practitioner Deep Dive
+      remains the network's best B2B content.
+    shipped:
+      - chapter reorder — Closing/Tomorrow Teaser ordered before ALL body
+        markers; bare "deep dive" dropped; science|technical marker
+        promo-proofed; re-parsed all five real window episodes to verify
+        (metadata-only, no audio)
+    deferred:
+      - "A/B proposals (NOT applied): thin-day rule (a 1-2-story day tells
+        the story ONCE; Regulatory Watch/Industry from the forward
+        calendar); remove 'There's a nuance here worth understanding' from
+        the menu (prefer rotation memory over another menu); 'Next briefing,
+        watch for…'; always 'Canada Gazette'; spoken script carries cited
+        instrument references"
+      - chronic under-length (carried; digest ceiling, four-show length A/B)
+      - "operator: verify Ep050's 'coordinated federal-provincial
+        permitting' claim; QC/SK/Atlantic got ZERO mentions despite the
+        Phase-4 queries — French-language sources or soften the RSS promise"
+    predictions:
+      - metric: episodes whose LAST chapter is Closing (chapters_ep*.json)
+        baseline: "2 of 5 in the window (3/5 ended on a promo-collision body chapter)"
+        expected: "all of the next 5 episodes end with a Closing chapter"
         verdict: pending
         evidence: null
     agent_cost_usd: null

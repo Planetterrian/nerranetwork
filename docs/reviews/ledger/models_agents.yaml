@@ -16,7 +16,9 @@ reviews:
     deferred:
       - digest-driven / position-aware mid-section chapter titles (medium effort, shared; Ep078 residual)
       - expand Under the Hood section for length, after the four-show length A/B settles
-      - "let's pop the hood on" opener tic — not changed (signature phrase, audio-change risk); revisit only with A/B evidence
+      - >-
+        "let's pop the hood on" opener tic — not changed (signature phrase,
+        audio-change risk); revisit only with A/B evidence
     predictions:
       - metric: '"An-thropic" occurrences in last-10 _tts.txt (sum)'
         baseline: "94 (snapshot 2026-06-14; 6 in Ep080)"
@@ -67,8 +69,9 @@ reviews:
       - metric: '"koo-dah" occurrences in published blog transcripts of post-merge CUDA episodes'
         baseline: "shipped in 12 episodes since Ep040 (23 total occurrences); live in Ep086 (2), Ep088 (2)"
         expected: "0 in any episode generated post-merge that mentions CUDA (CUDA appears instead)"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-02 network pass: 'koo-dah' absent from all post-merge
+          transcripts; CUDA appears instead."
       - metric: 'custom voice still reads CUDA cleanly (Whisper of next post-merge CUDA episode)'
         baseline: 'current "koo-dah" audio reads as ~CUDA (Whisper Ep088: "a CUDA kernel")'
         expected: 'Whisper transcript shows "CUDA"; no "C U D A" letter-split (matches NASA/Anthropic precedent)'
@@ -77,6 +80,41 @@ reviews:
       - metric: median _tts.txt words, last 10 eps
         baseline: "~1300 (range 1067-1582; 9/10 below 1500 floor)"
         expected: "no regression; chronic under-length stays deferred to the four-show length A/B"
+        verdict: hit
+        evidence: "2026-07-02 network pass: median steady ~1300, no regression.
+          Under-length stays deferred (digest ceiling)."
+    agent_cost_usd: null
+
+  - date: 2026-07-02
+    pr: null
+    doc: docs/reviews/network_review_2026_07_02.md
+    reviewer: claude-code (network editorial pass)
+    summary: >
+      Network editorial pass. Scored June-21 (koo-dah HIT; length
+      no-regression HIT). Findings: arXiv cs.CL was subscribed TWICE — the
+      preprint flood crowded out the fortnight's two biggest builder stories
+      (Codex Record Replay + Gemini Computer Use aired on the BEGINNER show,
+      never here); the expand-below-target retry pads by
+      paraphrase-duplication (Ep087 shipped verbatim doubled sentences);
+      continuity-callback tic ("...tracked since episode eighty six" — the
+      banned phrase reborn).
+    shipped:
+      - duplicate arXiv cs.CL feed removed + network-wide no-duplicate-feeds
+        guard
+      - expansion-retry near-duplicate sentence stripping with
+        fallback-to-original (network-wide, engine-side)
+    deferred:
+      - "A/B proposals (NOT applied): selection rebalance (lab
+        product/feature announcements outrank preprints; arXiv items <= 40%);
+        continuity-callback cap (<= 1 spoken callback/episode, never episode
+        numbers); recap must synthesize, not splice (Ep095 reused dailies'
+        sentences verbatim; Ep088 proves the model can)"
+      - digest-driven / position-aware chapter titles (carried)
+      - chronic under-length = digest ceiling (carried; four-show length A/B)
+    predictions:
+      - metric: verbatim-doubled sentence pairs in shipped _tts.txt scripts
+        baseline: "Ep087 shipped verbatim doubled sentences (retry padding)"
+        expected: "0 post-merge (near-duplicate stripping in the retry)"
         verdict: pending
         evidence: null
     agent_cost_usd: null

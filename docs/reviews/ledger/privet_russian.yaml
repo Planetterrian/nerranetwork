@@ -1,0 +1,45 @@
+# Review ledger for privet_russian. Schema: docs/reviews/ledger/README.md
+# Created by the 2026-07-02 network editorial pass (first scored PR entry).
+reviews:
+  - date: 2026-07-02
+    pr: null
+    doc: docs/reviews/network_review_2026_07_02.md
+    reviewer: claude-code (network editorial pass)
+    summary: >
+      Network editorial pass — first dedicated ledger entry. Great pedagogy
+      architecture, but two content P0s: Ep043 taught ungrammatical Russian
+      as model sentences («Я есть хлеб», «Моя яблоко») and Ep050 fabricated
+      an etymology as fact (чемодан/valise). Curriculum loop was stuck:
+      «хлеб» was Word-of-the-Day 3x in 12 days, only 27 of 87 taught
+      word-slots were new, and 3 themes looped for two weeks. June-22
+      double-publish (Ep046+Ep047) + skipped June 26/28 (operator item).
+    shipped:
+      - vocab no-reteach window 3 -> 8 episodes
+      - Word-of-the-Day never-repeat rule
+      - theme-gap enforcement (no theme re-run inside the rotation window)
+    deferred:
+      - "A/B proposals (NOT applied): grammar-correctness rule (model
+        sentences fully conjugated/agreeing; never 'Я + infinitive');
+        etymologies must be standard/verifiable or hedged; stop narrating
+        plan-field labels ('The memory hook notes that…'); English AI
+        disclosure for the English-speaking audience"
+      - "operator: June-22 double-publish + June 26/28 skip forensics"
+    predictions:
+      - metric: distinct themes across the next 8 episodes
+        baseline: "4 themes looped over the two-week window"
+        expected: ">= 6 distinct themes (theme-gap enforcement)"
+        verdict: pending
+        evidence: null
+      - metric: repeated Word-of-the-Day within any 12-day span
+        baseline: "«хлеб» was WOTD 3x in 12 days"
+        expected: "0 repeats (never-repeat rule)"
+        verdict: pending
+        evidence: null
+      - metric: share of taught word-slots that are NEW words
+        baseline: "27 of 87 in the window"
+        expected: "majority new per episode (no-reteach window 8)"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
+do_not_retry: []

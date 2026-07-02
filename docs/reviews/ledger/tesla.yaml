@@ -61,16 +61,67 @@ reviews:
       - metric: '"Tesla-rah-tee" occurrences in last-10 _tts.txt scripts'
         baseline: "5 of last 10 episodes (Ep500/505/512/516 + more)"
         expected: "0 of 10 — every instance restored to 'Teslarati'"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-02 network pass: zero 'Tesla-rah-tee' in any
+          window _tts.txt (2026-06-18..07-02)."
       - metric: episodes whose spoken intro says "Tesla Shorts Time Daily"
         baseline: "10 of 10 (Ep506-516)"
         expected: "0 of 10 — normalizer drops the stray 'Daily'"
-        verdict: pending
-        evidence: null
+        verdict: miss
+        evidence: "Still spoken in 14/14 window episodes. Root-caused
+          2026-07-02: a SECOND normalizer in run_show.py
+          (_normalize_tst_opening) kept rewriting TOWARD the old brand,
+          undoing the June-20 generator fix. Fixed in the network pass."
       - metric: 13F institutional-filing items in the digest
         baseline: "up to 3/episode on thin days (Ep516)"
         expected: "0 — filtered at fetch via exclude_title_patterns"
+        verdict: hit
+        evidence: "2026-07-02 network pass: no 13F institutional-filing items
+          in any window digest; fetch filter holding."
+    agent_cost_usd: null
+
+  - date: 2026-07-02
+    pr: null
+    doc: docs/reviews/network_review_2026_07_02.md
+    reviewer: claude-code (network editorial pass)
+    summary: >
+      Network editorial pass (all 13 shows). Scored June-20 (Teslarati HIT,
+      13F HIT, brand-"Daily" MISS — root-caused to a SECOND normalizer).
+      Findings: comma-blind number formatting shipped hook garbles
+      ("fifty-nine dollars,990", "1,zeroth") in 4 episodes, twice in the
+      HOOK; spoken brand still "Tesla Shorts Time Daily" 14/14; SpaceX
+      corporate-finance drift (Ep518's first two minutes were "a worse
+      SpaceX Daily"); weak recaps (Ep517 covered the Dojo patent 3x, read
+      raw headlines + "EtherType 0x9AC6" hex on air); June-23 double-publish
+      Ep519+Ep520 (operator item).
+    shipped:
+      - "comma-number normalization fix (assets/pronunciation.py) — kills the
+        'dollars,990' / '1,zeroth' hook-garble class; regression tests for
+        all five shipped forms"
+      - "second brand normalizer in run_show.py (_normalize_tst_opening)
+        fixed — it kept rewriting TOWARD 'Tesla Shorts Time Daily', undoing
+        the June-20 generator fix; completes the approved June-10 decision
+        (quick A/B-listen advised)"
+    deferred:
+      - "chronic under-length: digest ceiling (carried; four-show length A/B)"
+      - digest-driven chapter titles (carried, shared network lever)
+      - "A/B proposals (NOT applied): recap hardening (one story once, no
+        Title-Case headlines or patent/hex minutiae, transition variety);
+        ban standalone dateline-filler sentences; require named entities;
+        counterpoint-section enforcement (5/14 misses); SpaceX/xAI corporate
+        items are SpaceX Daily's beat — never Tesla's hook/lead"
+      - "operator: June-23 double-publish forensics; narrative-tracker
+        curated status texts lag the show's own reporting by months
+        (scripts/update_tesla_narrative.py)"
+    predictions:
+      - metric: episodes whose spoken intro says "Tesla Shorts Time Daily"
+        baseline: "14 of 14 (window 2026-06-18..07-02)"
+        expected: "0 of next 10 — the second normalizer no longer re-adds it"
+        verdict: pending
+        evidence: null
+      - metric: comma-number hook garbles ("dollars,990"-class) in new _tts.txt
+        baseline: "4 episodes in the window, twice in the HOOK"
+        expected: "0 post-merge (deterministic formatter fix)"
         verdict: pending
         evidence: null
     agent_cost_usd: null
