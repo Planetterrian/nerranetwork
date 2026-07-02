@@ -717,6 +717,80 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
             ),
         ],
     },
+    # The network's two-host dialogue show (tts.dialogue_mode). The host
+    # field is the UPPERCASE speaker label so the assembled intro line is
+    # already in the DAN:/PATRICK: turn format engine/tts_dialogue.py routes
+    # to per-speaker voices. Closings are labeled dialogue and every variant
+    # MUST end with the exact sign-off "Do something about it." (the show's
+    # Sign-Off chapter marker and brand promise key off it).
+    "dp_pod": {
+        "host": "DAN",
+        "show_name": "The DP Pod",
+        "greetings": [
+            "Hey, welcome to",
+            "Welcome back to",
+            "Good to have you on",
+            "Glad you're here — this is",
+            "Thanks for tuning in to",
+            "It's a new day on",
+        ],
+        "openers": [
+            "the Do Positive Podcast, episode {ep}. I'm Dan Perra, he's Patrick Novak. It's {date}.",
+            "the Do Positive Podcast, episode {ep}. Dan here, Patrick's across the mic. Today is {date}.",
+            "the Do Positive Podcast, episode {ep} for {date}. I'm Dan, and as always, Patrick's with me.",
+            "the Do Positive Podcast, episode {ep}. I'm Dan Perra, joined by Patrick Novak. It's {date}.",
+        ],
+        "framings": [
+            "It's exactly what it sounds like — the good news, the honest numbers, and something to do about it.",
+            "Good news in science and tech today, and one action that actually moves a number.",
+            "The antidote to doomscrolling starts now.",
+            "We've got genuinely good news today — and as always, something you can do about it.",
+            "Real progress today, real numbers, and one lever worth pulling.",
+        ],
+        "day_colors": {
+            0: {  # Monday
+                "framings": [
+                    "New week, new good news — and one action to start it right.",
+                    "Let's start the week with proof that things are moving the right way.",
+                ],
+            },
+            4: {  # Friday
+                "framings": [
+                    "Let's send you into the weekend with good news and something to do about it.",
+                    "Friday edition — good news, honest numbers, weekend-sized action.",
+                ],
+            },
+        },
+        "closings": [
+            (
+                "That's The DP Pod for today. If it left you a little more hopeful, "
+                "send it to someone who's been doomscrolling — that's how this grows.\n\n"
+                "PATRICK: And tell us what you actually did — we read every dispatch on the show. "
+                "I'm Patrick Novak.\n\n"
+                "DAN: I'm Dan Perra. Do something about it."
+            ),
+            (
+                "That's the show. The good news is real, and so is your lever — "
+                "you know what to do this week.\n\n"
+                "PATRICK: A rating or review genuinely helps new listeners find us. "
+                "I'm Patrick Novak.\n\n"
+                "DAN: I'm Dan Perra. Do something about it."
+            ),
+            (
+                "That wraps today's DP Pod. Subscribe wherever you listen so tomorrow's "
+                "good news finds you.\n\n"
+                "PATRICK: And when you pull today's lever, write in and tell us — "
+                "the dispatch only works if you do. I'm Patrick Novak.\n\n"
+                "DAN: I'm Dan Perra. Do something about it."
+            ),
+            (
+                "That's it for today — positive vibes, positive science, and one honest number "
+                "to act on.\n\n"
+                "PATRICK: Thanks for spending ten minutes on the good news. I'm Patrick Novak.\n\n"
+                "DAN: I'm Dan Perra. Do something about it."
+            ),
+        ],
+    },
 }
 
 

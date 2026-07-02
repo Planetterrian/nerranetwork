@@ -56,7 +56,7 @@ def test_cron_minutes_off_peak():
 def test_worker_slots_match_cron_map():
     cron_map = _cron_map()
     slots = _worker_slots()
-    assert len(cron_map) == 13, f"CRON_MAP parse drift: {sorted(cron_map)}"
+    assert len(cron_map) == 14, f"CRON_MAP parse drift: {sorted(cron_map)}"
     assert slots == cron_map, (
         "workers/scheduler SLOTS desynced from run-show.yml CRON_MAP:\n"
         f"  worker-only/changed: { {k: v for k, v in slots.items() if cron_map.get(k) != v} }\n"

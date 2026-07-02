@@ -1,0 +1,198 @@
+# The DP Pod: The Do Positive Podcast — the network's two-host dialogue show
+# (July 2026). Dan Perra + Patrick Novak, daily ~10 minutes: genuinely good
+# news in science and tech, then one concrete individual action with honest
+# numbers. Sign-off: "Do something about it."
+#
+# This is the first show on the two-voice dialogue TTS path
+# (tts.dialogue_mode + engine/tts_dialogue.py) — scripts are speaker-labeled
+# DAN:/PATRICK: turns, each synthesised with that host's Grok voice.
+name: "The DP Pod: The Do Positive Podcast"
+slug: dp_pod
+description: "Daily good news with Dan and Patrick: real progress in science and technology, healthy disagreement about what it means, and one concrete action a regular person can take — with honest numbers on its impact. The antidote to doomscrolling that actually asks something of you. Do something about it."
+
+# Fresh episode every day including Sunday (operator decision — no Sunday
+# recap branch; do NOT add this show to DAILY_SHOWS in tests/test_schedule.py,
+# that list is only for recap-flagged shows).
+weekly_recap_on_sunday: false
+
+sources:
+  - url: "https://www.sciencedaily.com/rss/top/science.xml"
+    label: ScienceDaily Top Science
+  - url: "https://www.goodnewsnetwork.org/category/news/feed/"
+    label: Good News Network
+  - url: "https://www.positive.news/feed/"
+    label: Positive News
+  - url: "https://reasonstobecheerful.world/feed/"
+    label: Reasons to be Cheerful
+  - url: "https://grist.org/feed/"
+    label: Grist (solutions journalism)
+  - url: "https://spectrum.ieee.org/feeds/topic/energy.rss"
+    label: IEEE Spectrum Energy
+  - url: "https://phys.org/rss-feed/breaking/"
+    label: Phys.org Breaking
+  - url: "https://news.google.com/rss/search?q=scientific+breakthrough+OR+%22clinical+trial%22+success&hl=en-US&gl=US&ceid=US:en"
+    label: "Google News — breakthroughs & trial results"
+  - url: "https://news.google.com/rss/search?q=%22clean+energy%22+record+OR+milestone+OR+%22first+time%22&hl=en-US&gl=US&ceid=US:en"
+    label: "Google News — clean energy milestones"
+  - url: "https://news.google.com/rss/search?q=conservation+species+recovery+OR+rebound+OR+restored&hl=en-US&gl=US&ceid=US:en"
+    label: "Google News — conservation wins"
+
+web_search_queries:
+  - "good news science breakthrough this week"
+  - "clean energy record milestone announcement"
+  - "medical breakthrough clinical trial positive results"
+  - "conservation species recovery success story"
+  - "individual action climate impact study numbers"
+
+keywords:
+  - breakthrough
+  - milestone
+  - first time
+  - record
+  - approved
+  - cure
+  - vaccine
+  - treatment
+  - renewable
+  - solar
+  - battery
+  - heat pump
+  - recovery
+  - restored
+  - rebound
+  - cheaper
+  - efficiency
+  - success
+  - progress
+  - open source
+
+min_articles: 5
+min_articles_skip: 3
+
+multilingual:
+  enabled: false
+  auto: false
+  languages: []
+
+llm:
+  provider: xai
+  system_prompt_file: shows/prompts/dp_pod_system.txt
+  digest_prompt_file: shows/prompts/dp_pod_digest.txt
+  podcast_prompt_file: shows/prompts/dp_pod_podcast.txt
+  digest_temperature: 0.5
+  # Banter needs looseness — a notch above the 0.7 network default.
+  podcast_temperature: 0.8
+  max_tokens: 4000
+  podcast_max_tokens: 8000
+  # ONE length target: ~10 minutes of two-host dialogue ≈ 1,400–1,600 words
+  # at ~145 wpm. Floor sits just under it so the expand-retry fires on
+  # anything short of a full episode; soft skip floor 0.6 × 1450 = 870.
+  min_podcast_words: 1450
+  min_podcast_word_floor: 1000
+  podcast_expand_below_target: true
+  # The podcast tracks the digest ~1:1 network-wide (FF/UC/PT root cause),
+  # so keep the digest from capping the episode.
+  min_digest_words: 700
+  digest_expand_below_target: true
+
+tts:
+  # Two-host dialogue mode: DAN:/PATRICK: labeled turns, one Grok voice per
+  # host (engine/tts_dialogue.py). voice_id stays the inherited network
+  # voice (kdif6sqjcyiq) as the single-voice FALLBACK if a script ever
+  # arrives unlabeled.
+  dialogue_mode: true
+  dialogue_voices:
+    PATRICK: kdif6sqjcyiq   # the network's custom English voice (Patrick)
+    DAN: 0vscf8u8yrxc       # Dan's custom Grok voice
+  dialogue_pause_ms: 300
+  # Dialogue mode never applies the speech wrap (per-turn wraps are exactly
+  # the landmine-#17 "Fast." leak shape multiplied by every handoff). Pin
+  # empty so the config states reality instead of relying on the runtime
+  # refusing to apply it.
+  speech_wrap_open: ""
+  speech_wrap_close: ""
+
+audio:
+  # Launch music: the shared network theme (same starting point the
+  # scaffold uses; TST/EI/M&A also share it). Replace with a dedicated
+  # assets/music/dp_pod.mp3 when the operator produces one — A/B-listen
+  # the first mixed episode either way (landmine #17).
+  music_file: assets/music/tesla_shorts_time.mp3
+  transition_sting: assets/music/transition_sting.mp3
+
+publishing:
+  rss_file: dp_pod_podcast.rss
+  rss_title: "The DP Pod: The Do Positive Podcast"
+  rss_description: "Dan and Patrick's daily antidote to doomscrolling: two or three genuinely good developments in science and tech with sources, honest disagreement about what they mean, and one concrete action with real numbers on its impact — The Lever. Plus the Do Positive Dispatch: what listeners actually did. Do something about it."
+  rss_link: https://nerranetwork.com/thedppod.html
+  rss_author: "Dan Perra & Patrick Novak"
+  rss_email: patrick@planetterrian.com
+  rss_image: https://nerranetwork.com/assets/covers/dp-pod.jpg
+  rss_category: Science
+  rss_keywords: "good news, optimism, positive news, science news, climate solutions, individual action, progress"
+  guid_prefix: dppod
+  base_url: https://nerranetwork.com
+  audio_subdir: digests/dp_pod
+  summaries_json: digests/dp_pod/summaries_dp_pod.json
+  summaries_podcast_name: dp_pod
+  player_html: thedppod.html
+  summaries_html: thedppod-summaries.html
+  # RSS + site page only at launch (operator decision).
+  x_enabled: false
+  x_env_prefix: ""
+  # Used for the labeled AI-disclosure line and single-host fallbacks;
+  # the intros personality carries both hosts.
+  host_name: Patrick
+
+episode:
+  prefix: DP_Pod
+  filename_pattern: "{prefix}_Ep{num:03d}_{date:%Y%m%d}.mp3"
+  output_dir: digests/dp_pod
+  mp3_glob: "DP_Pod_Ep*.mp3"
+
+chapters:
+  enabled: true
+  # Network chapter lessons baked in at launch: positional `where` anchors
+  # (Tesla/EI/PT orphan-chapter class) and the Sign-Off listed BEFORE the
+  # body markers (EI June-11 ordering rule — first-marker-per-line would
+  # otherwise let a body marker steal a merged final line). The podcast
+  # prompt requires the hosts to announce each segment name verbatim so
+  # these markers latch.
+  section_markers:
+    - pattern: "[Ww]elcome to [Tt]he DP Pod|the Do Positive Podcast"
+      title: "Cold Open"
+      where: start
+    - pattern: "[Dd]o something about it"
+      title: "Sign-Off"
+      where: end
+    - pattern: "[Tt]he Positive Papers"
+      title: "The Positive Papers"
+    - pattern: "[Tt]he Lever"
+      title: "The Lever"
+    - pattern: "Do Positive Dispatch"
+      title: "Do Positive Dispatch"
+
+newsletter:
+  enabled: false
+  short_label: "DP Pod"
+  emoji: "🌱"
+
+content_tracking:
+  section_patterns: {}
+
+youtube:
+  # Off at launch (RSS + site page only). image_provider is pre-set to grok
+  # so a future one-line enable doesn't trip the drift guard
+  # (tests/test_config.py::test_youtube_enabled_shows_use_grok_image_provider).
+  enabled: false
+  channel: en
+  category_id: 28               # Science & Technology
+  image_provider: grok
+  # Required ≥3 even while YouTube is disabled
+  # (tests/test_visual_assets.py::test_every_show_yaml_has_image_queries).
+  image_queries:
+    - solar panel installation on a home roof
+    - scientists celebrating in a laboratory
+    - volunteers planting trees reforestation
+    - electric vehicle charging at sunset
+    - community garden neighbors working together
