@@ -2250,6 +2250,11 @@ def run(args: argparse.Namespace) -> None:
                     "(%d chars) — scaffold no longer published.", len(x_thread),
                 )
 
+            # Defensive scrub: drop raw "Source:" / "Источник:" scaffold
+            # lines BEFORE pronunciation — FP Ep059 voiced "Сорс MoneySense…"
+            # because a digest "Source:" line reached TTS.
+            podcast_script = _strip_source_scaffold_lines(podcast_script)
+
             # Apply pronunciation fixes
             podcast_script = _apply_pronunciation(podcast_script, args.show)
 
@@ -2350,6 +2355,23 @@ def run(args: argparse.Namespace) -> None:
                 podcast_script = _re.sub(r"^" + _esc + r"\s*", "", podcast_script, flags=_re.MULTILINE)
                 podcast_script = _re.sub(r"(?<=[.!?])\s+" + _esc + r"\s*", " ", podcast_script)
             podcast_script = _re.sub(r"\n{3,}", "\n\n", podcast_script).strip()
+
+            # Spoken-URL tripwire (MAB Ep081 read a Reddit permalink on air):
+            # warn loudly + record a metric when the final script contains a
+            # spoken-form URL ("reddit dot com/r/…"). Detection only — the
+            # content is NOT rewritten (that's an A/B-gated editorial change).
+            _spoken_url_count = _count_spoken_urls(podcast_script)
+            if _spoken_url_count:
+                logger.warning(
+                    "Final script contains %d spoken URL pattern(s) "
+                    "('X dot com…') — the prompt's spoken-URL ban failed; "
+                    "content left unchanged (rewrite is A/B-gated)",
+                    _spoken_url_count,
+                )
+            try:
+                metrics.record("spoken_url_count", _spoken_url_count)
+            except Exception:  # noqa: BLE001 — tripwire must never break a run
+                pass
 
             # Save TTS-ready script for debugging pronunciation/intro issues
             from engine.utils import strip_lone_surrogates as _scrub
@@ -3660,6 +3682,16 @@ def _normalize_tst_opening(script: str) -> str:
     produces variants like "Tesla Short's Time", "Tesla Shorts Time. Daily",
     or drops the canonical framing line. This post-processing normalizer
     makes the spoken intro bulletproof.
+
+    July 2026 (network editorial pass): the target brand is "Tesla Shorts
+    Time" — WITHOUT "Daily". This normalizer was the missed second half of
+    the June-10 brand decision: the June-20 generator fix
+    (``_correct_common_llm_text_mistakes``) drops the LLM-appended "Daily",
+    but this runner-side normalizer ran AFTER it and rewrote the intro back
+    TOWARD "Tesla Shorts Time Daily" — so "Daily" still shipped spoken in
+    14/14 post-fix episodes. The optional ``Daily`` (with any separating
+    punctuation) is consumed by the match so no ", episode"-style artifacts
+    are left behind.
     """
     import re
 
@@ -3670,15 +3702,77 @@ def _normalize_tst_opening(script: str) -> str:
     # Fix common show name variants in the first ~4 lines (the welcome block)
     for i in range(min(4, len(lines))):
         original = lines[i]
-        # Normalize all common manglings of the show name
+        # Normalize all common manglings of the show name; consume a stray
+        # trailing "Daily" (and the punctuation gluing it on) so the spoken
+        # brand matches the listing brand "Tesla Shorts Time".
         fixed = re.sub(
-            r"(?i)\bTesla\s+Short'?s?\s+Time(?:\s*\.?\s*Daily)?\b",
-            "Tesla Shorts Time Daily",
+            r"(?i)\bTesla\s+Short'?s?\s+Time(?:[.,;\s]*Daily)?\b",
+            "Tesla Shorts Time",
             original,
         )
         lines[i] = fixed
 
     return "".join(lines)
+
+
+# "Source:" / "Sources:" / "Источник(и):" scaffold labels at line start
+# (with optional markdown bullet / bold prefixes). A line BEGINNING with a
+# source label inside a spoken script is always digest scaffold, never
+# prose — FP Ep059 voiced "Сорс MoneySense…" because a raw "Source:
+# MoneySense" line from the digest reached TTS on the Olya voice.
+_SOURCE_SCAFFOLD_RE = re.compile(
+    r"^\s*(?:[-*•>]\s*)*(?:\*\*|__)?\s*(?:sources?|источники?)\s*:",
+    re.IGNORECASE,
+)
+
+
+def _strip_source_scaffold_lines(text: str) -> str:
+    """Drop raw 'Source:'-label scaffold lines from the spoken script.
+
+    Defensive scrub in the script-save path (July 2026 network editorial
+    pass) — runs BEFORE pronunciation so the label never reaches TTS,
+    the transcript, or the blog. Deterministic line-level drop; never
+    touches prose (a sentence merely *containing* the word "source" does
+    not start with the label + colon).
+    """
+    lines = text.split("\n")
+    kept = [ln for ln in lines if not _SOURCE_SCAFFOLD_RE.match(ln)]
+    dropped = len(lines) - len(kept)
+    if dropped:
+        logger.warning(
+            "Stripped %d 'Source:' scaffold line(s) from the spoken script "
+            "(digest scaffold leaked into the podcast — FP Ep059 class)",
+            dropped,
+        )
+        return re.sub(r"\n{3,}", "\n\n", "\n".join(kept))
+    return text
+
+
+# Spoken-URL tripwire (July 2026): MAB Ep081 read a full Reddit permalink
+# letter-by-letter on air. The prompts ban spoken URLs but the ban fails
+# silently; this detector makes failures visible (warning + metric only —
+# rewriting spoken content is an A/B-gated editorial change, NOT done here).
+_SPOKEN_URL_RE = re.compile(
+    r"\b[\w-]+\s+dot\s+(?:com|net|org|io|ai|ca|de)\b(?:\s*(?:/|slash\s+)\S+)*",
+    re.IGNORECASE,
+)
+
+
+def _count_spoken_urls(text: str) -> int:
+    """Count spoken-form URL patterns ("reddit dot com/r/…") in a script.
+
+    Matches near the network's own CTA domain ("nerra network dot com" /
+    "nerranetwork dot com" — injected deliberately by intros/promo and
+    converted to spoken form by the pronunciation layer) are excluded so
+    the tripwire only fires on LLM-written URLs.
+    """
+    count = 0
+    for m in _SPOKEN_URL_RE.finditer(text):
+        context = text[max(0, m.start() - 24):m.end()].lower()
+        if "nerra" in context:
+            continue
+        count += 1
+    return count
 
 
 def _strip_post_pronunciation_artifacts(text: str) -> str:

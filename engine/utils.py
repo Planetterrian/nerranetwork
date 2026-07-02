@@ -693,6 +693,18 @@ _PHONETIC_GARBLES = {
     # has no legitimate English use, so no collision (unlike RAG→"rag" /
     # LoRA→"Laura", which are left alone).
     "koo-dah": "CUDA",
+    # July 2026 network editorial pass — all Whisper/transcript-evidenced,
+    # collision-safe (the hyphenated respellings have no legitimate English
+    # use; the correct spellings never match):
+    # "Mee-stral" → Mistral (M&A Ep089), "Kar-pathy" → Karpathy (M&A Ep091
+    # ×2), "Mid-journey" → Midjourney (MAB Ep075 ×3 / Ep079 — the product
+    # name is one word; the hyphen forces an audible break), and
+    # "Notpower" → NatPower, the UK-Italian energy developer the Tesla show
+    # covers (Tesla Ep519 audio + Ep525 recap; "notpower" is not a word).
+    "mee-stral": "Mistral",
+    "kar-pathy": "Karpathy",
+    "mid-journey": "Midjourney",
+    "notpower": "NatPower",
 }
 
 _PHONETIC_GARBLE_RE = re.compile(

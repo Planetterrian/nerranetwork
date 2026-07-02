@@ -870,9 +870,12 @@ def _year_to_words(year: int) -> str:
 def replace_currency(text: str) -> str:
     """Convert currency values to spoken form."""
     # Large currency first: "$3 Trillion", "$2.5 Billion", etc.
+    # Comma-grouped amounts ("$1,200 million") are accepted \u2014 commas are
+    # stripped before conversion. See the July 2026 comma-blindness fix on
+    # _currency_whole below for the shipped-audio bugs this class caused.
     def _large_currency(m: re.Match) -> str:
         symbol = m.group(1)
-        num_str = m.group(2)
+        num_str = m.group(2).replace(",", "")
         unit = m.group(3).lower()
         currency = {"$": "dollars", "\u20ac": "euros", "\u00a3": "pounds"}.get(symbol, "dollars")
         try:
@@ -882,7 +885,7 @@ def replace_currency(text: str) -> str:
             return m.group(0)
 
     text = re.sub(
-        r"([$\u20ac\u00a3])(\d+\.?\d*)\s*(trillion|billion|million)\b",
+        r"([$\u20ac\u00a3])(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+\.?\d*)\s*(trillion|billion|million)\b",
         _large_currency,
         text,
         flags=re.IGNORECASE,
@@ -891,7 +894,7 @@ def replace_currency(text: str) -> str:
     # Regular currency with cents: "$417.44" -> "four hundred seventeen dollars and forty-four cents"
     def _currency_with_cents(m: re.Match) -> str:
         symbol = m.group(1)
-        whole = m.group(2)
+        whole = m.group(2).replace(",", "")
         frac = m.group(3)
         currency = {"$": "dollars", "\u20ac": "euros", "\u00a3": "pounds"}.get(symbol, "dollars")
         sub_unit = {"$": "cents", "\u20ac": "cents", "\u00a3": "pence"}.get(symbol, "cents")
@@ -906,19 +909,29 @@ def replace_currency(text: str) -> str:
         except ValueError:
             return m.group(0)
 
-    text = re.sub(r"([$\u20ac\u00a3])(\d+)\.(\d{1,2})\b", _currency_with_cents, text)
+    text = re.sub(
+        r"([$\u20ac\u00a3])(\d{1,3}(?:,\d{3})+|\d+)\.(\d{1,2})\b",
+        _currency_with_cents,
+        text,
+    )
 
     # Whole currency: "$500" -> "five hundred dollars"
+    # Comma-grouped amounts are accepted (July 2026): the old ``(\d+)\b``
+    # matched only the digits before the comma, so "$59,990" shipped as
+    # "fifty-nine dollars,990" (Tesla Ep515 hook), "$20,000" as
+    # "twenty dollars,000" (Ep523 \u2014 Whisper: "under $20 in $1000"), and
+    # "$80,000" the same way (Ep521). Same comma tolerance the Canadian-
+    # dollar path (replace_canadian_currency) has carried since May 2026.
     def _currency_whole(m: re.Match) -> str:
         symbol = m.group(1)
-        num_str = m.group(2)
+        num_str = m.group(2).replace(",", "")
         currency = {"$": "dollars", "\u20ac": "euros", "\u00a3": "pounds"}.get(symbol, "dollars")
         try:
             return f"{number_to_words(int(num_str))} {currency}"
         except ValueError:
             return m.group(0)
 
-    text = re.sub(r"([$\u20ac\u00a3])(\d+)\b", _currency_whole, text)
+    text = re.sub(r"([$\u20ac\u00a3])(\d{1,3}(?:,\d{3})+|\d+)\b", _currency_whole, text)
     return text
 
 
@@ -1121,7 +1134,25 @@ def replace_episode_numbers(text: str) -> str:
 
 
 def replace_ordinal_numbers(text: str) -> str:
-    """Convert '7th' to 'seventh', '10th' to 'tenth', etc."""
+    """Convert '7th' to 'seventh', '10th' to 'tenth', etc.
+
+    Comma-grouped ordinals are handled first (July 2026): the plain
+    ``\\b(\\d+)…`` pattern used to match only the digits after the comma,
+    so "1,000th" shipped as "1,zeroth" (Tesla Ep518/524) and "1,500th" as
+    "1,five hundredth" (SpaceX Ep10). The grouped handler strips commas
+    before conversion so "1,000th" → "one thousandth".
+    """
+    def _ordinal_grouped(m: re.Match) -> str:
+        num_str = m.group(1).replace(",", "")
+        try:
+            return _number_to_ordinal(int(num_str))
+        except ValueError:
+            return m.group(0)
+
+    text = re.sub(
+        r"\b(\d{1,3}(?:,\d{3})+)(?:st|nd|rd|th)\b", _ordinal_grouped, text
+    )
+
     def _ordinal(m: re.Match) -> str:
         num_str = m.group(1)
         try:

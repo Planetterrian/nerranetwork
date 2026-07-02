@@ -931,6 +931,62 @@ def _build_expansion_retry_prompt(
     )
 
 
+_EXPANSION_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
+
+
+def _dedup_expansion_sentences(
+    script: str,
+    *,
+    threshold: float = 0.85,
+    min_words: int = 6,
+) -> tuple:
+    """Strip near-duplicate sentences from an expansion-retry script.
+
+    July 2026 (network editorial pass): the ``podcast_expand_below_target``
+    retry sometimes "expands" by RE-STATING sentences it already wrote —
+    M&A Ep087 shipped verbatim doubled sentences in audio ("Sui deployed
+    Seal MPC on mainnet…" twice), and MAB Quick Bits ballooned with
+    restatements. This intra-script dedup drops any sentence that is a
+    near-duplicate (``calculate_similarity`` >= *threshold*) of an EARLIER
+    kept sentence in the same script, preserving order and paragraph
+    structure. Sentences shorter than *min_words* words are never dropped
+    (and never used as dedup anchors) — short rhetorical beats ("Right?",
+    "Let's dig in.") are legitimate repeats.
+
+    Returns ``(deduped_script, removed_count)``.
+    """
+    from engine.utils import calculate_similarity
+
+    if not script:
+        return script, 0
+
+    kept_anchors: list = []
+    out_lines: list = []
+    removed = 0
+    for line in script.split("\n"):
+        if not line.strip():
+            out_lines.append(line)
+            continue
+        kept_sentences = []
+        for sentence in _EXPANSION_SENTENCE_SPLIT_RE.split(line):
+            stripped = sentence.strip()
+            if len(stripped.split()) >= min_words:
+                if any(
+                    calculate_similarity(stripped, prev) >= threshold
+                    for prev in kept_anchors
+                ):
+                    removed += 1
+                    continue
+                kept_anchors.append(stripped)
+            kept_sentences.append(sentence)
+        if kept_sentences:
+            out_lines.append(" ".join(kept_sentences))
+        # A line whose every sentence was a duplicate is dropped entirely.
+    deduped = "\n".join(out_lines)
+    deduped = re.sub(r"\n{3,}", "\n\n", deduped).strip("\n")
+    return deduped, removed
+
+
 def _build_digest_expansion_retry_prompt(
     word_count: int,
     min_words: int,
@@ -2002,11 +2058,28 @@ def generate_podcast_script(
             except Exception as e:
                 logger.warning("Failed to record retry LLM usage: %s", e)
 
+        # July 2026 (network editorial pass): the retry sometimes pads by
+        # re-stating sentences it already wrote (M&A Ep087 shipped verbatim
+        # doubled sentences in audio; MAB Quick Bits ballooned with
+        # restatements). Strip intra-script near-duplicates from the
+        # expanded script BEFORE deciding whether to accept it, and only
+        # accept when the deduped expansion is meaningfully (>=5%) longer
+        # than the original \u2014 paraphrase padding stripped back to the
+        # original length is not an expansion.
+        text2, _dup_removed = _dedup_expansion_sentences(text2)
+        if _dup_removed:
+            logger.warning(
+                "Expansion retry for '%s' repeated itself \u2014 stripped %d "
+                "near-duplicate sentence(s) from the expanded script",
+                config.name, _dup_removed,
+            )
         word_count2 = len(text2.split())
-        if word_count2 > word_count:
+        if word_count2 >= int(word_count * 1.05) and word_count2 > word_count:
             logger.info(
-                "Retry produced longer script for '%s' (%d \u2192 %d words)",
+                "Retry produced longer script for '%s' (%d \u2192 %d words%s)",
                 config.name, word_count, word_count2,
+                f", {_dup_removed} duplicate sentence(s) stripped"
+                if _dup_removed else "",
             )
             text = text2
             _rep_count = _validate_llm_output(text, stage="podcast_script",
@@ -2014,8 +2087,8 @@ def generate_podcast_script(
                                               min_podcast_words=min_words)
         else:
             logger.warning(
-                "Retry did not improve script length for '%s' (%d \u2192 %d words), "
-                "keeping original",
+                "Retry did not meaningfully improve script length for '%s' "
+                "(%d \u2192 %d words after dedup, <5%% gain), keeping original",
                 config.name, word_count, word_count2,
             )
 
