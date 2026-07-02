@@ -153,6 +153,25 @@ class TTSConfig:
     # calibrated on real episodes for that voice/show.
     tag_leak_hard_block: bool = False
 
+    # ---- Two-host dialogue mode (July 2026, dp_pod) ----
+    # When True, the podcast script is speaker-labeled dialogue (one turn
+    # per paragraph, e.g. ``DAN: ...`` / ``PATRICK: ...``) and TTS routes
+    # each speaker's turns to that speaker's Grok voice via
+    # ``engine.tts_dialogue.synthesize_dialogue``. The three pipeline
+    # layers that strip host prefixes are gated on this flag so the
+    # labels survive to synthesis. Dialogue mode never applies
+    # ``speech_wrap_*`` (per-turn wraps are the historical "Fast." leak
+    # shape multiplied by every speaker handoff). Default False is a
+    # byte-for-byte no-op for single-host shows.
+    dialogue_mode: bool = False
+    # Uppercase speaker label -> Grok voice ID, e.g.
+    # ``{PATRICK: kdif6sqjcyiq, DAN: 0vscf8u8yrxc}``. ``voice_id`` above
+    # stays the single-voice fallback when a script arrives unlabeled.
+    dialogue_voices: dict = field(default_factory=dict)
+    # Trailing silence (ms) padded onto each speaker turn-group so
+    # handoffs breathe instead of crossfading mid-word.
+    dialogue_pause_ms: int = 300
+
 
 @dataclass
 class AudioConfig:

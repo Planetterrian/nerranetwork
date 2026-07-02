@@ -3,29 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Live SpaceX launch dashboard — countdown to the next launch, time since the last one, launch cadence, the upcoming manifest, and the SPCX market picture. The companion to the SpaceX Daily podcast.">
+    <meta name="description" content="The DP Pod — the Do Positive Podcast with Dan and Patrick. Daily good news in science and tech plus one concrete individual action with honest numbers. Do something about it.">
     
-    
-    <title>SpaceX Launch Dashboard | Nerra Network</title>
-    <meta name="theme-color" content="#1A5CFF">
+    <meta name="keywords" content="good news, positive news, optimism, science podcast, climate solutions, individual action, do positive, dp pod">
+    <title>The DP Pod: The Do Positive Podcast | Summaries</title>
+    <meta name="theme-color" content="#0B7A45">
 
     <!-- Open Graph -->
-    <meta property="og:title" content="SpaceX Launch Dashboard | Nerra Network">
-    <meta property="og:description" content="Live SpaceX launch dashboard — countdown to the next launch, time since the last one, launch cadence, the upcoming manifest, and the SPCX market picture. The companion to the SpaceX Daily podcast.">
+    <meta property="og:title" content="The DP Pod: The Do Positive Podcast | Summaries">
+    <meta property="og:description" content="The DP Pod — the Do Positive Podcast with Dan and Patrick. Daily good news in science and tech plus one concrete individual action with honest numbers. Do something about it.">
     <meta property="og:type" content="website">
-    <meta property="og:image" content="https://nerranetwork.com/assets/covers/spacex.jpg">
-    <meta property="og:url" content="https://nerranetwork.com/spacex-dashboard.html">
+    <meta property="og:image" content="https://nerranetwork.com/assets/covers/dp-pod.jpg">
+    <meta property="og:url" content="https://nerranetwork.com/thedppod-summaries.html">
     <meta property="og:site_name" content="Nerra Network">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="SpaceX Launch Dashboard | Nerra Network">
-    <meta name="twitter:description" content="Live SpaceX launch dashboard — countdown to the next launch, time since the last one, launch cadence, the upcoming manifest, and the SPCX market picture. The companion to the SpaceX Daily podcast.">
-    <meta name="twitter:image" content="https://nerranetwork.com/assets/covers/spacex.jpg">
+    <meta name="twitter:title" content="The DP Pod: The Do Positive Podcast | Summaries">
+    <meta name="twitter:description" content="The DP Pod — the Do Positive Podcast with Dan and Patrick. Daily good news in science and tech plus one concrete individual action with honest numbers. Do something about it.">
+    <meta name="twitter:image" content="https://nerranetwork.com/assets/covers/dp-pod.jpg">
 
-    <link rel="canonical" href="https://nerranetwork.com/spacex-dashboard.html">
+    <link rel="canonical" href="https://nerranetwork.com/thedppod-summaries.html">
     
-    <link rel="alternate" type="application/rss+xml" title="SpaceX Daily RSS" href="spacex_podcast.rss">
+    <link rel="alternate" type="application/rss+xml" title="The DP Pod: The Do Positive Podcast RSS" href="dp_pod_podcast.rss">
     
     
     
@@ -62,154 +62,14 @@
     <link rel="stylesheet" href="styles/main.css">
 
     
-<style>
-  /* ---- SpaceX Launch Dashboard (scoped under .spx-dash) ---- */
-  .spx-dash {
-    --spx-blue: #1A5CFF;
-    --spx-cyan: #00D4FF;
-    --spx-ink: #0a1020;
-    position: relative;
-    color: #eaf0ff;
-  }
-  .spx-hero-wrap {
-    position: relative;
-    overflow: hidden;
-    background:
-      radial-gradient(1200px 600px at 50% -10%, rgba(26,92,255,0.28), transparent 60%),
-      linear-gradient(180deg, #05080f 0%, #0a1124 60%, #0a0f1e 100%);
-    border-bottom: 1px solid rgba(120,160,255,0.15);
-  }
-  .spx-stars {
-    position: absolute; inset: 0; z-index: 0; pointer-events: none;
-  }
-  .spx-container {
-    position: relative; z-index: 1;
-    max-width: 1120px; margin: 0 auto;
-    padding: calc(var(--nav-height) + 2.5rem) 1.25rem 2rem;
-  }
-  .spx-kicker {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase;
-    color: var(--spx-cyan); font-weight: 700; margin-bottom: 0.6rem;
-  }
-  .spx-kicker .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--spx-cyan);
-    box-shadow: 0 0 10px var(--spx-cyan); animation: spx-pulse 1.8s infinite; }
-  @keyframes spx-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
-  .spx-h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); line-height: 1.05; margin: 0 0 0.4rem; font-weight: 800; letter-spacing: -0.02em; }
-  .spx-sub { color: #aebbe0; font-size: 1.02rem; max-width: 62ch; margin: 0 0 1.6rem; }
 
-  .spx-countdown {
-    display: flex; gap: 0.6rem; flex-wrap: wrap; margin: 0.4rem 0 1.2rem;
-  }
-  .spx-cd-unit {
-    min-width: 78px; text-align: center;
-    background: rgba(13,22,46,0.7); border: 1px solid rgba(120,160,255,0.22);
-    border-radius: 14px; padding: 0.7rem 0.5rem;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 30px rgba(0,0,0,0.35);
-    backdrop-filter: blur(6px);
-  }
-  .spx-cd-num { font-size: clamp(1.6rem, 4.5vw, 2.6rem); font-weight: 800; font-variant-numeric: tabular-nums;
-    background: linear-gradient(180deg, #fff, #9fc0ff); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-  .spx-cd-label { font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: #8ea3d6; margin-top: 2px; }
-
-  .spx-status {
-    display:inline-flex; align-items:center; gap:7px; font-weight:700; font-size:0.82rem;
-    padding: 4px 12px; border-radius: 999px; border:1px solid transparent;
-  }
-  .spx-status.go   { color:#7efbb0; background:rgba(40,200,120,0.12); border-color:rgba(40,200,120,0.35); }
-  .spx-status.tbd  { color:#ffd27a; background:rgba(255,180,40,0.12); border-color:rgba(255,180,40,0.32); }
-  .spx-status.hold { color:#ff9a9a; background:rgba(255,80,80,0.12); border-color:rgba(255,80,80,0.32); }
-
-  .spx-launchcard {
-    background: rgba(11,18,38,0.66); border: 1px solid rgba(120,160,255,0.2);
-    border-radius: 18px; padding: 1.1rem 1.2rem; backdrop-filter: blur(8px);
-  }
-  .spx-launchcard h3 { margin: 0.2rem 0 0.5rem; font-size: 1.25rem; }
-  .spx-meta { display:grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 0.6rem 1rem; margin-top: 0.6rem; }
-  .spx-meta .k { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.1em; color:#8ea3d6; }
-  .spx-meta .v { font-size:0.95rem; color:#eaf0ff; font-weight:600; }
-  .spx-btn {
-    display:inline-flex; align-items:center; gap:8px; margin-top: 0.9rem;
-    background: linear-gradient(135deg, var(--spx-blue), #3f7bff); color:#fff; font-weight:700;
-    padding: 0.6rem 1.1rem; border-radius: 12px; text-decoration:none; font-size:0.92rem;
-    box-shadow: 0 8px 24px rgba(26,92,255,0.4);
-  }
-  .spx-btn.ghost { background: transparent; border:1px solid rgba(120,160,255,0.4); box-shadow:none; }
-
-  .spx-grid { max-width:1120px; margin: 1.5rem auto; padding: 0 1.25rem; display:grid; gap:1.1rem; grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
-  @media (max-width: 760px){ .spx-grid{ grid-template-columns:minmax(0,1fr); } }
-  .spx-panel {
-    background: var(--nn-surface, #0f1830); border:1px solid rgba(120,160,255,0.16);
-    border-radius:16px; padding:1.1rem 1.2rem;
-  }
-  .spx-panel h2 { font-size:1.05rem; margin:0 0 0.9rem; letter-spacing:-0.01em; }
-
-  .spx-stats { display:grid; grid-template-columns: repeat(auto-fit,minmax(120px,1fr)); gap:0.8rem; }
-  .spx-stat { text-align:center; padding:0.6rem; border-radius:12px; background:rgba(26,92,255,0.08); border:1px solid rgba(120,160,255,0.14); }
-  .spx-stat .n { font-size:1.7rem; font-weight:800; color:#fff; font-variant-numeric:tabular-nums; }
-  .spx-stat .l { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:#8ea3d6; margin-top:2px; }
-
-  /* cadence chart */
-  .spx-cadence { display:flex; align-items:flex-end; gap:6px; height:160px; padding-top:8px; overflow:hidden; }
-  .spx-bar-wrap { flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
-  .spx-bar {
-    width:100%; border-radius:6px 6px 2px 2px; min-height:3px;
-    background: linear-gradient(180deg, var(--spx-cyan), var(--spx-blue));
-    transition: height .6s cubic-bezier(.2,.7,.2,1);
-    position:relative;
-  }
-  .spx-bar .cnt { position:absolute; top:-18px; left:0; right:0; text-align:center; font-size:0.7rem; color:#cfe0ff; font-weight:700; }
-  .spx-bar-label { font-size:0.58rem; color:#7f93c4; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:clip; }
-  @media (max-width: 520px){ .spx-bar-label { font-size:0.5rem; letter-spacing:-0.03em; } .spx-cadence{ gap:4px; } }
-
-  /* cumulative growth area chart */
-  .spx-area-wrap { position:relative; }
-  .spx-area-svg { width:100%; height:200px; display:block; overflow:visible; }
-  .spx-area-svg .grid { stroke:rgba(120,160,255,0.12); stroke-width:1; }
-  .spx-area-svg .gridlabel { fill:#7f93c4; font-size:10px; }
-  .spx-area-svg .xlabel { fill:#7f93c4; font-size:10px; text-anchor:middle; }
-  .spx-area-svg .areapath { transition: opacity .8s ease; }
-  .spx-area-svg .linepath { fill:none; stroke:var(--spx-cyan); stroke-width:2.5;
-    stroke-linejoin:round; stroke-linecap:round;
-    filter: drop-shadow(0 2px 8px rgba(0,212,255,0.4)); }
-  .spx-area-svg .dot { fill:#fff; stroke:var(--spx-blue); stroke-width:2; }
-
-  /* vehicle-mix segmented bar */
-  .spx-mixbar { display:flex; height:26px; border-radius:8px; overflow:hidden; margin:4px 0 10px; }
-  .spx-mixseg { height:100%; min-width:2px; }
-  .spx-mixlegend { display:flex; flex-wrap:wrap; gap:10px 18px; font-size:0.8rem; }
-  .spx-mixlegend .it { display:flex; align-items:center; gap:6px; color:#cfe0ff; }
-  .spx-mixlegend .sw { width:11px; height:11px; border-radius:3px; flex:0 0 auto; }
-  .spx-mixlegend .ct { color:#8ea3d6; font-variant-numeric:tabular-nums; }
-
-  /* recently flown */
-  .spx-rl { display:flex; align-items:center; gap:10px; padding:0.5rem 0; border-bottom:1px solid rgba(120,160,255,0.12); font-size:0.88rem; }
-  .spx-rl:last-child{ border-bottom:none; }
-  .spx-rl .nm { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .spx-rl .badge { font-size:0.64rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding:2px 7px; border-radius:999px; white-space:nowrap; }
-  .spx-rl .badge.ok { color:#7efbb0; background:rgba(40,200,120,0.14); }
-  .spx-rl .badge.bad { color:#ff9a9a; background:rgba(255,80,80,0.14); }
-  .spx-rl .badge.tbd { color:#ffd27a; background:rgba(255,180,40,0.14); }
-  .spx-rl .dt { color:#8ea3d6; white-space:nowrap; font-variant-numeric:tabular-nums; font-size:0.78rem; }
-
-  .spx-since { font-size: clamp(1.4rem,3.5vw,2rem); font-weight:800; font-variant-numeric:tabular-nums; color:#fff; }
-  .spx-upcoming-item { display:flex; justify-content:space-between; gap:10px; padding:0.55rem 0; border-bottom:1px solid rgba(120,160,255,0.12); font-size:0.9rem; }
-  .spx-upcoming-item:last-child{ border-bottom:none; }
-  .spx-upcoming-item .when { color:#8ea3d6; white-space:nowrap; font-variant-numeric:tabular-nums; }
-  .spx-watch { display:inline-flex; align-items:center; gap:4px; margin-left:8px; font-size:0.72rem; font-weight:700; color:#031018; background:linear-gradient(135deg,var(--spx-cyan),#5ad0ff); padding:2px 9px; border-radius:999px; text-decoration:none; white-space:nowrap; vertical-align:middle; }
-  .spx-watch:hover { filter:brightness(1.08); }
-  .spx-watch.replay { color:var(--spx-cyan); background:transparent; border:1px solid rgba(120,160,255,0.35); }
-  .spx-upcoming-item .nmw { min-width:0; overflow:hidden; }
-
-  .spx-spcx { display:flex; align-items:baseline; gap:12px; }
-  .spx-spcx .px { font-size:2rem; font-weight:800; color:#fff; }
-  .spx-spcx .ch.up { color:#5ef0a0; } .spx-spcx .ch.down{ color:#ff8a8a; }
-  .spx-muted { color:#8ea3d6; font-size:0.82rem; }
-  .spx-foot-note { max-width:1120px; margin:0 auto 2rem; padding:0 1.25rem; color:#7f93c4; font-size:0.78rem; }
-  .spx-disclaimer { color:#7f93c4; font-size:0.74rem; margin-top:0.4rem; }
-</style>
-
-
+    
+    
+    <style>:root {
+      --show-color: #0B7A45;
+      --show-color-dark: #0B7A45;
+      --show-color-text: color-mix(in srgb, #0B7A45, white 35%);
+    }</style>
     
     <style>
         @media (max-width: 768px) {
@@ -439,12 +299,16 @@
                     </div>
                 </li>
                 
-                <li><a href="start-here.html">Start Here</a></li>
-                <li><a href="how-to-listen.html">Listen</a></li>
-                <li><a href="about.html">About</a></li>
-                <li><a href="player.html">Player</a></li>
-                <li><a href="index.html">Home</a></li>
-                
+<li><a href="start-here.html">Start Here</a></li>
+<li><a href="how-to-listen.html">Listen</a></li>
+<li><a href="about.html">About</a></li>
+<li><a href="player.html">Player</a></li>
+
+<li><a href="blog/dp_pod/index.html">Blog</a></li>
+<li><a href="thedppod-summaries.html">Summaries</a></li>
+<li><a href="dp_pod_podcast.rss">RSS</a></li>
+
+
             </ul>
 
             <button class="nn-hamburger" aria-label="Toggle menu" aria-expanded="false" onclick="var m=document.getElementById('mobileMenu');m.classList.toggle('open');this.setAttribute('aria-expanded',m.classList.contains('open'));document.body.classList.toggle('menu-open')">&#9776;</button>
@@ -454,12 +318,16 @@
     <!-- Mobile Menu -->
     <div id="mobileMenu" class="nn-mobile-menu">
         
-        <a href="start-here.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">Start Here</a>
-        <a href="how-to-listen.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">How to Listen</a>
-        <a href="about.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">About</a>
-        <a href="player.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">Player</a>
-        <a href="index.html" onclick="document.getElementById('mobileMenu').classList.remove('open');document.body.classList.remove('menu-open')">Home</a>
-        
+<a href="start-here.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">Start Here</a>
+<a href="how-to-listen.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">Listen</a>
+<a href="about.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">About</a>
+<a href="player.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">Player</a>
+<a href="thedppod.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">The DP Pod: The Do Positive Podcast</a>
+<a href="blog/dp_pod/index.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">Blog</a>
+<a href="thedppod-summaries.html" onclick="document.getElementById('mobileMenu').classList.remove('open')">Summaries</a>
+<a href="dp_pod_podcast.rss" onclick="document.getElementById('mobileMenu').classList.remove('open')">RSS</a>
+
+
         <div class="nn-mobile-shows">
             <div class="nn-mobile-shows-title">All Shows</div>
             
@@ -615,166 +483,283 @@
 
     <main id="main-content">
     
-<div class="spx-dash">
-  <div class="spx-hero-wrap">
-    <canvas class="spx-stars" id="spxStars"></canvas>
-    <div class="spx-container">
-      <div class="spx-kicker"><span class="dot"></span> SpaceX Launch Dashboard · Live</div>
-      <h1 class="spx-h1">Next SpaceX Launch</h1>
-      <p class="spx-sub">A live countdown to the next launch, time since the last one, cadence, and the SPCX market picture — the companion dashboard to <a href="spacex.html" style="color:var(--spx-cyan);">SpaceX Daily</a>.</p>
-
-      <div id="spxNext">
-        <div class="spx-countdown" id="spxCountdown">
-          <div class="spx-cd-unit"><div class="spx-cd-num" id="cd-d">--</div><div class="spx-cd-label">Days</div></div>
-          <div class="spx-cd-unit"><div class="spx-cd-num" id="cd-h">--</div><div class="spx-cd-label">Hours</div></div>
-          <div class="spx-cd-unit"><div class="spx-cd-num" id="cd-m">--</div><div class="spx-cd-label">Min</div></div>
-          <div class="spx-cd-unit"><div class="spx-cd-num" id="cd-s">--</div><div class="spx-cd-label">Sec</div></div>
+    <!-- Sticky Player -->
+    <div id="stickyPlayer" class="nn-sticky-player hidden" aria-live="polite">
+        <div class="nn-sticky-player-inner">
+            <div class="nn-sticky-meta">
+                <div id="stickyNow" class="nn-sticky-title">Now playing</div>
+                <div id="stickySub" class="nn-sticky-sub"></div>
+            </div>
+            <audio id="stickyAudio" class="nn-sticky-audio" controls preload="none" aria-label="Episode player"></audio>
+            <div class="nn-speed-control">
+                <button class="nn-speed-btn" data-speed="0.75">0.75x</button>
+                <button class="nn-speed-btn active" data-speed="1">1x</button>
+                <button class="nn-speed-btn" data-speed="1.25">1.25x</button>
+                <button class="nn-speed-btn" data-speed="1.5">1.5x</button>
+                <button class="nn-speed-btn" data-speed="2">2x</button>
+            </div>
+            <button id="stickyClose" class="nn-sticky-close" aria-label="Close player">&times;</button>
         </div>
-        <div class="spx-launchcard">
-          <span class="spx-status tbd" id="spxStatus">Loading…</span>
-          <h3 id="spxMission">Fetching the latest launch manifest…</h3>
-          <div class="spx-meta">
-            <div><div class="k">Vehicle</div><div class="v" id="spxRocket">—</div></div>
-            <div><div class="k">Booster</div><div class="v" id="spxBooster">—</div></div>
-            <div><div class="k">Launch Pad</div><div class="v" id="spxPad">—</div></div>
-            <div><div class="k">Location</div><div class="v" id="spxLoc">—</div></div>
-            <div><div class="k">Target (your time)</div><div class="v" id="spxLocal">—</div></div>
-          </div>
-          <p class="spx-muted" id="spxDesc" style="margin:0.7rem 0 0;"></p>
-          <a class="spx-btn" id="spxWebcast" href="#" target="_blank" rel="noopener" style="display:none;">▶ Watch the webcast</a>
-          <a class="spx-btn ghost" id="spxMore" href="#" target="_blank" rel="noopener" style="display:none;">Mission details</a>
+    </div>
+
+    <!-- Hero -->
+    <section class="summaries-hero">
+        <div class="summaries-hero-bg"></div>
+        <div class="summaries-hero-inner container">
+            
+            
+            <picture style="display:inline-block;">
+                <source type="image/webp" srcset="https://nerranetwork.com/assets/covers/dp-pod-400.webp">
+                <img src="https://nerranetwork.com/assets/covers/dp-pod.jpg" alt="The DP Pod: The Do Positive Podcast cover art" width="80" height="80"
+                     style="width:80px;height:80px;border-radius:14px;object-fit:cover;margin:0 auto var(--sp-4);box-shadow:0 8px 30px rgba(0,0,0,0.3);"
+                     onerror="this.style.display='none'">
+            </picture>
+            
+            <h1>The DP Pod: The Do Positive Podcast</h1>
+            <p>Complete archive of The DP Pod: The Do Positive Podcast episode summaries.</p>
+            <p id="heroEpisodeCount" style="color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.88rem;margin-top:var(--sp-2);opacity:0;transition:opacity 0.3s;"></p>
         </div>
-      </div>
-    </div>
-  </div>
+    </section>
 
-  <div class="spx-grid">
-    <div class="spx-panel">
-      <h2>Time since last launch</h2>
-      <div class="spx-since" id="spxSince">—</div>
-      <p class="spx-muted" id="spxLast" style="margin:0.4rem 0 0;">—</p>
+    <!-- Subscribe Buttons -->
+    <div class="nn-subscribe-bar">
+        
+        
+        <a href="dp_pod_podcast.rss" target="_blank" rel="noopener" class="nn-subscribe-btn nn-subscribe-rss" aria-label="Subscribe via RSS">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/></svg>
+            RSS Feed
+        </a>
+        
     </div>
-    <div class="spx-panel">
-      <h2>SPCX</h2>
-      <div class="spx-spcx"><span class="px" id="spxPx">—</span><span class="ch" id="spxChg"></span></div>
-      <p class="spx-muted" id="spxPxNote" style="margin:0.4rem 0 0;">Nasdaq: SPCX</p>
-      <p class="spx-disclaimer">Not financial advice.</p>
-    </div>
-  </div>
 
-  <div class="spx-grid" style="grid-template-columns:minmax(0,1fr);">
-    <div class="spx-panel">
-      <h2>Launch cadence — last 12 months</h2>
-      <div class="spx-cadence" id="spxCadence"></div>
-      <div class="spx-stats" style="margin-top:1.2rem;">
-        <div class="spx-stat"><div class="n" id="stYtd">—</div><div class="l">Launches YTD</div></div>
-        <div class="spx-stat"><div class="n" id="st30">—</div><div class="l">Last 30 days</div></div>
-        <div class="spx-stat"><div class="n" id="stAvg">—</div><div class="l">Avg days apart</div></div>
-        <div class="spx-stat"><div class="n" id="stStar">—</div><div class="l">Starlink YTD</div></div>
-        <div class="spx-stat"><div class="n" id="stTotal">—</div><div class="l">Total launches</div></div>
-      </div>
+    
+    <div style="text-align:center;margin-bottom:var(--sp-6);">
+        <a href="blog/dp_pod/index.html" style="display:inline-flex;align-items:center;gap:var(--sp-2);font-family:var(--font-ui);font-size:0.88rem;font-weight:500;color:var(--show-color-text, var(--show-color));text-decoration:none;padding:var(--sp-2) var(--sp-5);border:1px solid color-mix(in srgb, var(--show-color) 30%, transparent);border-radius:100px;transition:all var(--duration) var(--ease);" onmouseover="this.style.background='color-mix(in srgb, var(--show-color) 12%, transparent)'" onmouseout="this.style.background='transparent'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Read in-depth articles on our blog
+        </a>
     </div>
-  </div>
+    
 
-  <div class="spx-grid" style="grid-template-columns:minmax(0,1fr);">
-    <div class="spx-panel">
-      <h2>Launches per year <span class="spx-muted" style="font-size:0.7rem;font-weight:400;">(the growth story)</span></h2>
-      <div class="spx-cadence" id="spxAnnual"></div>
-      <p class="spx-disclaimer">SpaceX orbital launches by year — from 26 in 2020 to a record cadence today. The live monthly chart above covers the recent window; this is the long arc. Operator-maintained as the current year accrues.</p>
+    <!-- Search & Filter Controls -->
+    <div class="nn-controls">
+        <input type="text" class="nn-search" id="searchBox" placeholder="Search episodes..." aria-label="Search episodes">
+        <button class="nn-filter-btn active" data-filter="all">All</button>
+        <button class="nn-filter-btn" data-filter="week">This Week</button>
+        <button class="nn-filter-btn" data-filter="month">This Month</button>
+        <label class="nn-year-select-wrap" style="display:inline-flex;align-items:center;gap:var(--sp-2);">
+            <span class="visually-hidden" id="yearFilterLabel">Filter by year</span>
+            <select id="yearFilter" class="nn-filter-btn" aria-labelledby="yearFilterLabel" style="min-width:120px;background-image:none;appearance:none;-webkit-appearance:none;padding-right:var(--sp-4);">
+                <option value="">All years</option>
+            </select>
+        </label>
+        <span class="nn-episode-count" id="episodeCount"></span>
     </div>
-  </div>
 
-  <div class="spx-grid" style="grid-template-columns:minmax(0,1fr);">
-    <div class="spx-panel">
-      <h2>Launches by site <span class="spx-muted" style="font-size:0.7rem;font-weight:400;">(last 12 months)</span></h2>
-      <div id="spxPads"></div>
-      <p class="spx-disclaimer">Where SpaceX flew over the past year, from the launch record — the West Coast (Vandenberg) and Florida (Cape Canaveral SLC-40, Kennedy LC-39A) pads plus Starbase, TX for Starship.</p>
-    </div>
-  </div>
-
-  <div class="spx-grid" style="grid-template-columns:minmax(0,1fr);">
-    <div class="spx-panel">
-      <h2>Mass to orbit — last 12 months <span class="spx-muted" style="font-size:0.7rem;font-weight:400;">(estimated, tonnes)</span></h2>
-      <div class="spx-cadence" id="spxMass"></div>
-      <div class="spx-stats" style="margin-top:1.2rem;">
-        <div class="spx-stat"><div class="n" id="flStarlinkActive">—</div><div class="l">Active Starlink satellites (live)</div></div>
-        <div class="spx-stat"><div class="n" id="flActiveSats">—</div><div class="l">All active satellites (live)</div></div>
-        <div class="spx-stat"><div class="n" id="flStarlinkOfActive">—</div><div class="l">Starlink % of all active sats</div></div>
-        <div class="spx-stat"><div class="n" id="flMass">—</div><div class="l">Est. mass to orbit, 12 mo (t)</div></div>
-        <div class="spx-stat"><div class="n" id="flSats">—</div><div class="l">Est. satellites deployed, 12 mo</div></div>
-        <div class="spx-stat"><div class="n" id="flStarShare">—</div><div class="l">Starlink launch share</div></div>
-        <div class="spx-stat"><div class="n" id="flSuccess">—</div><div class="l">Success rate</div></div>
-      </div>
-      <div id="flVehicles" style="margin-top:1rem;"></div>
-      <p class="spx-disclaimer">Mass and satellite figures are estimates from public per-vehicle averages (SpaceX doesn't publish per-flight mass); launch counts and vehicle mix are from the launch record. These metrics are logged to a growing time-series so the trends lengthen over time.</p>
-    </div>
-  </div>
-
-  <div class="spx-grid" style="grid-template-columns:minmax(0,1fr);">
-    <div class="spx-panel">
-      <h2>Constellation growth — est. satellites to orbit <span class="spx-muted" style="font-size:0.7rem;font-weight:400;">(cumulative, tracked window)</span></h2>
-      <div class="spx-area-wrap"><svg class="spx-area-svg" id="spxArea" preserveAspectRatio="none" role="img" aria-label="Cumulative estimated satellites to orbit"></svg></div>
-      <p class="spx-disclaimer">Cumulative estimate over the months this dashboard has tracked — it extends to the left automatically as the dataset grows month over month.</p>
-    </div>
-  </div>
-
-  <div class="spx-grid" style="grid-template-columns:minmax(0,1fr);">
-    <div class="spx-panel">
-      <h2>Starship flight-test tracker 🚀 <span class="spx-muted" style="font-size:0.7rem;font-weight:400;">(integrated flight tests)</span></h2>
-      <div style="display:flex; gap:1.4rem; flex-wrap:wrap; margin-bottom:0.9rem;">
-        <div class="spx-stat"><div class="n" id="ssTotal">—</div><div class="l">Integrated flights</div></div>
-        <div class="spx-stat"><div class="n" id="ssCatches">—</div><div class="l">Booster tower catches</div></div>
-        <div class="spx-stat"><div class="n" id="ssLatest">—</div><div class="l">Latest flight</div></div>
-      </div>
-      <div id="ssTimeline"><p class="spx-muted">Loading…</p></div>
-      <p class="spx-disclaimer">Curated record of Starship's integrated flight tests (Super Heavy + Ship). Outcome reflects the primary test objectives; "partial" means key milestones were hit even where a stage was lost. The path to a fully reusable, rapidly-flown super-heavy-lift vehicle.</p>
-    </div>
-  </div>
-
-  <div class="spx-grid">
-    <div class="spx-panel">
-      <h2>Booster reuse — record watch 🏆</h2>
-      <div style="display:flex; align-items:baseline; gap:12px; margin-bottom:0.6rem;">
-        <span id="brRecordN" style="font-size:2.4rem; font-weight:800; color:#fff;">—</span>
-        <span class="spx-muted">flights — fleet record (<span id="brRecordS">—</span>)</span>
-      </div>
-      <div id="brLeaders"></div>
-      <p class="spx-disclaimer">Falcon 9 boosters are reflown and landed; the leaders below are the most-flown cores. The Space Shuttle orbiter record was 39 flights.</p>
-    </div>
-    <div class="spx-panel">
-      <h2>Landing success</h2>
-      <div style="display:flex; align-items:baseline; gap:12px;">
-        <span id="brLandPct" class="spx-since">—</span>
-        <span class="spx-muted">recent landing attempts (<span id="brLandN">—</span>)</span>
-      </div>
-      <div style="margin-top:0.8rem;">
-        <div style="height:10px; border-radius:999px; background:rgba(255,255,255,0.08); overflow:hidden;">
-          <div id="brLandBar" style="height:100%; width:0; background:linear-gradient(90deg,var(--spx-cyan),#5ef0a0); transition:width .8s ease;"></div>
+    <!-- Summaries -->
+    <section style="padding:var(--sp-4) 0 var(--sp-12);">
+        <div class="container">
+            <div id="summaries-container">
+                <div style="text-align:center;color:var(--nn-text-muted);padding:3rem;font-style:italic;">Loading The DP Pod: The Do Positive Podcast summaries...</div>
+            </div>
         </div>
-      </div>
-      <div class="spx-stat" style="margin-top:1rem;"><div class="n" id="brFleet">—</div><div class="l">Active boosters in rotation (window)</div></div>
-    </div>
-  </div>
+    </section>
 
-  <div class="spx-grid">
-    <div class="spx-panel">
-      <h2>Recently flown</h2>
-      <div id="spxRecent"><p class="spx-muted">Loading…</p></div>
-    </div>
-    <div class="spx-panel">
-      <h2>Upcoming manifest</h2>
-      <div id="spxUpcoming"><p class="spx-muted">Loading…</p></div>
-      <p class="spx-muted" style="margin-top:0.8rem; font-size:0.78rem;">Watch live on
-        <a href="https://www.spacex.com/launches/" target="_blank" rel="noopener" style="color:var(--spx-cyan);">spacex.com/launches</a> ·
-        <a href="https://x.com/SpaceX" target="_blank" rel="noopener" style="color:var(--spx-cyan);">@SpaceX on X</a> ·
-        <a href="https://www.youtube.com/@SpaceX/streams" target="_blank" rel="noopener" style="color:var(--spx-cyan);">YouTube</a>. Webcasts usually go live ~15 minutes before liftoff.</p>
-    </div>
-  </div>
-
-  <p class="spx-foot-note">
-    Launch data from <a href="https://thespacedevs.com/" target="_blank" rel="noopener" style="color:var(--spx-cyan);">The Space Devs</a> Launch Library 2 (updated each pipeline run). Times are “no earlier than” and slip often — always confirm against the official <a href="https://www.spacex.com/launches/" target="_blank" rel="noopener" style="color:var(--spx-cyan);">SpaceX launch schedule</a> and webcast. Full source links live on the <a href="spacex.html#resources" style="color:var(--spx-cyan);">SpaceX Daily resources</a> page. Explore every dashboard at the <a href="data.html" style="color:var(--spx-cyan);">Nerra data hub</a>.
-  </p>
-</div>
+    <!-- More from Nerra Network -->
+    <section class="cross-network nn-section">
+        <div class="container">
+            <div class="nn-section-header">
+                <h2>More from Nerra Network</h2>
+            </div>
+            <div class="cross-network-grid">
+                
+                
+                <a href="models-agents-summaries.html" class="cross-network-card">
+                    
+                    <picture>
+                        <source type="image/webp" srcset="assets/covers/models-agents-400.webp">
+                        <img src="assets/covers/models-agents.jpg" alt="Models & Agents cover art" width="1400" height="1400" loading="lazy">
+                    </picture>
+                    <div class="cross-network-card-info">
+                        <div class="cross-network-card-name">Models & Agents</div>
+                        <div class="cross-network-card-tagline">Daily AI models, agents, and practical developments.</div>
+                    </div>
+                </a>
+                
+                
+                
+                <a href="planetterrian-summaries.html" class="cross-network-card">
+                    
+                    <picture>
+                        <source type="image/webp" srcset="assets/covers/planetterrian-daily-400.webp">
+                        <img src="assets/covers/planetterrian-daily.jpg" alt="Planetterrian Daily cover art" width="1400" height="1400" loading="lazy">
+                    </picture>
+                    <div class="cross-network-card-info">
+                        <div class="cross-network-card-name">Planetterrian Daily</div>
+                        <div class="cross-network-card-tagline">Science, longevity, and the frontier of human health.</div>
+                    </div>
+                </a>
+                
+                
+                
+                <a href="omni-view-summaries.html" class="cross-network-card">
+                    
+                    <picture>
+                        <source type="image/webp" srcset="assets/covers/omni-view-400.webp">
+                        <img src="assets/covers/omni-view.jpg" alt="Omni View cover art" width="1400" height="1400" loading="lazy">
+                    </picture>
+                    <div class="cross-network-card-info">
+                        <div class="cross-network-card-name">Omni View</div>
+                        <div class="cross-network-card-tagline">See every side. Decide for yourself.</div>
+                    </div>
+                </a>
+                
+                
+                
+                <a href="models-agents-beginners-summaries.html" class="cross-network-card">
+                    
+                    <picture>
+                        <source type="image/webp" srcset="assets/covers/models-agents-beginners-400.webp">
+                        <img src="assets/covers/models-agents-beginners.jpg" alt="Models & Agents for Beginners cover art" width="1400" height="1400" loading="lazy">
+                    </picture>
+                    <div class="cross-network-card-info">
+                        <div class="cross-network-card-name">Models & Agents for Beginners</div>
+                        <div class="cross-network-card-tagline">AI explained simply — for beginners and teens.</div>
+                    </div>
+                </a>
+                
+                
+                
+                <a href="fascinating-frontiers-summaries.html" class="cross-network-card">
+                    
+                    <picture>
+                        <source type="image/webp" srcset="assets/covers/fascinating-frontiers-400.webp">
+                        <img src="assets/covers/fascinating-frontiers.jpg" alt="Fascinating Frontiers cover art" width="1400" height="1400" loading="lazy">
+                    </picture>
+                    <div class="cross-network-card-info">
+                        <div class="cross-network-card-name">Fascinating Frontiers</div>
+                        <div class="cross-network-card-tagline">Journey to the stars with today's discoveries.</div>
+                    </div>
+                </a>
+                
+                
+                
+                <a href="modern-investing-summaries.html" class="cross-network-card">
+                    
+                    <picture>
+                        <source type="image/webp" srcset="assets/covers/modern-investing-400.webp">
+                        <img src="assets/covers/modern-investing.jpg" alt="Modern Investing Techniques cover art" width="1400" height="1400" loading="lazy">
+                    </picture>
+                    <div class="cross-network-card-info">
+                        <div class="cross-network-card-name">Modern Investing Techniques</div>
+                        <div class="cross-network-card-tagline">AI-Powered Market Intelligence</div>
+                    </div>
+                </a>
+                
+                
+                
+                <a href="tesla-summaries.html" class="cross-network-card">
+                    
+                    <picture>
+                        <source type="image/webp" srcset="assets/covers/tesla-shorts-time-400.webp">
+                        <img src="assets/covers/tesla-shorts-time.jpg" alt="Tesla Shorts Time cover art" width="1400" height="1400" loading="lazy">
+                    </picture>
+                    <div class="cross-network-card-info">
+                        <div class="cross-network-card-name">Tesla Shorts Time</div>
+                        <div class="cross-network-card-tagline">Shorting Tesla? Time's Up.</div>
+                    </div>
+                </a>
+                
+                
+                
+                <a href="env-intel-summaries.html" class="cross-network-card">
+                    
+                    <picture>
+                        <source type="image/webp" srcset="assets/covers/environmental-intelligence-400.webp">
+                        <img src="assets/covers/environmental-intelligence.jpg" alt="Environmental Intelligence cover art" width="1400" height="1400" loading="lazy">
+                    </picture>
+                    <div class="cross-network-card-info">
+                        <div class="cross-network-card-name">Environmental Intelligence</div>
+                        <div class="cross-network-card-tagline">Environmental regulatory and compliance briefing.</div>
+                    </div>
+                </a>
+                
+                
+                
+                <a href="ru/finansy-prosto-summaries.html" class="cross-network-card">
+                    
+                    <picture>
+                        <source type="image/webp" srcset="assets/covers/finansy-prosto-400.webp">
+                        <img src="assets/covers/finansy-prosto.jpg" alt="Финансы Просто cover art" width="1400" height="1400" loading="lazy">
+                    </picture>
+                    <div class="cross-network-card-info">
+                        <div class="cross-network-card-name">Финансы Просто</div>
+                        <div class="cross-network-card-tagline">Finances Made Simple.</div>
+                    </div>
+                </a>
+                
+                
+                
+                <a href="ru/privet-russian-summaries.html" class="cross-network-card">
+                    
+                    <picture>
+                        <source type="image/webp" srcset="assets/covers/privet-russian-400.webp">
+                        <img src="assets/covers/privet-russian.jpg" alt="Привет, Русский! cover art" width="1400" height="1400" loading="lazy">
+                    </picture>
+                    <div class="cross-network-card-info">
+                        <div class="cross-network-card-name">Привет, Русский!</div>
+                        <div class="cross-network-card-tagline">Learn Russian — Привет means hello!</div>
+                    </div>
+                </a>
+                
+                
+                
+                <a href="unintended-consequences-summaries.html" class="cross-network-card">
+                    
+                    <picture>
+                        <source type="image/webp" srcset="assets/covers/unintended-consequences-400.webp">
+                        <img src="assets/covers/unintended-consequences.jpg" alt="Unintended Consequences cover art" width="1400" height="1400" loading="lazy">
+                    </picture>
+                    <div class="cross-network-card-info">
+                        <div class="cross-network-card-name">Unintended Consequences</div>
+                        <div class="cross-network-card-tagline">Good intentions. Surprising results. Real lessons.</div>
+                    </div>
+                </a>
+                
+                
+                
+                <a href="first-principles-summaries.html" class="cross-network-card">
+                    
+                    <picture>
+                        <source type="image/webp" srcset="assets/covers/first-principles-daily-400.webp">
+                        <img src="assets/covers/first-principles-daily.jpg" alt="First Principles Daily cover art" width="1400" height="1400" loading="lazy">
+                    </picture>
+                    <div class="cross-network-card-info">
+                        <div class="cross-network-card-name">First Principles Daily</div>
+                        <div class="cross-network-card-tagline">Reason from raw materials, not analogy.</div>
+                    </div>
+                </a>
+                
+                
+                
+                
+                
+                <a href="spacex-summaries.html" class="cross-network-card">
+                    
+                    <picture>
+                        <source type="image/webp" srcset="assets/covers/spacex-400.webp">
+                        <img src="assets/covers/spacex.jpg" alt="SpaceX Daily cover art" width="1400" height="1400" loading="lazy">
+                    </picture>
+                    <div class="cross-network-card-info">
+                        <div class="cross-network-card-name">SpaceX Daily</div>
+                        <div class="cross-network-card-tagline">Follow SpaceX as a public company — launches, Starlink, Starship, and the SPCX market picture, every day.</div>
+                    </div>
+                </a>
+                
+                
+            </div>
+        </div>
+    </section>
 
     </main>
 
@@ -976,405 +961,441 @@
     }
     </script>
     
-<script>
-(function(){
-  // ---- Starfield ----
-  const cv = document.getElementById('spxStars');
-  if (cv) {
-    const ctx = cv.getContext('2d');
-    let stars = [];
-    function resize(){
-      cv.width = cv.offsetWidth; cv.height = cv.offsetHeight;
-      stars = Array.from({length: Math.min(180, Math.floor(cv.width/8))}, () => ({
-        x: Math.random()*cv.width, y: Math.random()*cv.height,
-        r: Math.random()*1.4+0.2, a: Math.random()*0.6+0.2, tw: Math.random()*0.02+0.005
-      }));
-    }
-    function draw(){
-      if(!ctx) return;
-      ctx.clearRect(0,0,cv.width,cv.height);
-      for(const s of stars){
-        s.a += s.tw; const al = 0.3+Math.abs(Math.sin(s.a))*0.7;
-        ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,7); ctx.fillStyle='rgba(180,205,255,'+al+')'; ctx.fill();
-      }
-      requestAnimationFrame(draw);
-    }
-    resize(); draw(); window.addEventListener('resize', resize);
-  }
+    <script>
+        const JSON_URL = 'digests/dp_pod/summaries_dp_pod.json';
+        const JSON_FORMAT = 'wrapped';
+        const SHOW_NAME = "The DP Pod: The Do Positive Podcast";
 
-  const pad = n => String(n).padStart(2,'0');
-  function fmtLocal(iso){
-    try { return new Date(iso).toLocaleString([], {weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}); }
-    catch(_) { return iso || '—'; }
-  }
-  function statusClass(abbr){
-    const a = (abbr||'').toUpperCase();
-    if(a==='GO') return 'go';
-    if(a.includes('HOLD')||a.includes('FAIL')||a==='TBC') return 'hold';
-    return 'tbd';
-  }
+        document.addEventListener('DOMContentLoaded', function() {
+            // Speed controls
+            document.querySelectorAll('.nn-speed-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const speed = parseFloat(btn.dataset.speed);
+                    const audio = document.getElementById('stickyAudio');
+                    if (audio) audio.playbackRate = speed;
+                    document.querySelectorAll('.nn-speed-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                });
+            });
 
-  let nextNet = null, lastNet = null;
+            // Search & filter
+            const searchBox = document.getElementById('searchBox');
+            const yearFilter = document.getElementById('yearFilter');
+            const filterBtns = document.querySelectorAll('.nn-filter-btn[data-filter]');
+            let currentFilter = 'all';
 
-  function tick(){
-    const now = Date.now();
-    if(nextNet){
-      let diff = Math.max(0, nextNet - now);
-      const d = Math.floor(diff/86400000); diff -= d*86400000;
-      const h = Math.floor(diff/3600000); diff -= h*3600000;
-      const m = Math.floor(diff/60000); diff -= m*60000;
-      const s = Math.floor(diff/1000);
-      const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=v;};
-      set('cd-d', d); set('cd-h', pad(h)); set('cd-m', pad(m)); set('cd-s', pad(s));
-    }
-    if(lastNet){
-      let diff = Math.max(0, now - lastNet);
-      const d = Math.floor(diff/86400000); diff -= d*86400000;
-      const h = Math.floor(diff/3600000); diff -= h*3600000;
-      const m = Math.floor(diff/60000);
-      const el = document.getElementById('spxSince');
-      if(el) el.textContent = (d>0? d+'d ':'') + pad(h)+'h '+pad(m)+'m ago';
-    }
-  }
+            searchBox.addEventListener('input', applyFilters);
+            if (yearFilter) yearFilter.addEventListener('change', applyFilters);
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentFilter = btn.dataset.filter;
+                    applyFilters();
+                });
+            });
 
-  function renderBars(elId, months, key){
-    const wrap = document.getElementById(elId);
-    if(!wrap || !months || !months.length) return;
-    const max = Math.max(1, ...months.map(x=>x[key]||0));
-    wrap.innerHTML = months.map(x=>{
-      const v = x[key]||0;
-      const h = Math.round((v/max)*130)+3;
-      const lab = x.month.slice(2).replace('-','/'); // YY/MM
-      return '<div class="spx-bar-wrap"><div class="spx-bar" style="height:0" data-h="'+h+'"><span class="cnt">'+v.toLocaleString()+'</span></div><div class="spx-bar-label">'+lab+'</div></div>';
-    }).join('');
-    requestAnimationFrame(()=>{ wrap.querySelectorAll('.spx-bar').forEach(b=>{ b.style.height=b.dataset.h+'px'; }); });
-  }
+            function applyFilters() {
+                const query = (searchBox.value || '').toLowerCase();
+                const yearValue = yearFilter ? yearFilter.value : '';
+                const items = document.querySelectorAll('.nn-summary-item');
+                const now = new Date();
+                let visible = 0;
 
-  function renderPads(pads){
-    var list = pads||[];
-    var wrap = document.getElementById('spxPads');
-    if(!wrap || !list.length) return;
-    var max = Math.max(1, ...list.map(function(x){ return x.count||0; }));
-    wrap.innerHTML = list.map(function(x){
-      var pct = 100*(x.count||0)/max;
-      return '<div style="display:flex;align-items:center;gap:10px;margin:7px 0;">'+
-        '<span style="width:160px;flex:0 0 160px;color:#cfe0ff;font-size:0.86rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+x.site+'</span>'+
-        '<span style="flex:1;min-width:0;height:16px;border-radius:8px;background:rgba(255,255,255,0.06);overflow:hidden;"><span style="display:block;height:100%;width:0;background:linear-gradient(90deg,var(--spx-cyan),var(--spx-blue));transition:width .7s cubic-bezier(.2,.7,.2,1);" data-w="'+pct+'"></span></span>'+
-        '<span style="width:34px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums;">'+x.count+'</span></div>';
-    }).join('');
-    requestAnimationFrame(function(){ wrap.querySelectorAll('span[data-w]').forEach(function(b){ b.style.width=b.dataset.w+'%'; }); });
-  }
+                items.forEach(item => {
+                    const text = (item.textContent || '').toLowerCase();
+                    const dateStr = item.dataset.date || '';
+                    let dateMatch = true;
 
-  function renderAnnual(al){
-    var years = ((al||{}).years)||[];
-    var wrap = document.getElementById('spxAnnual');
-    if(!wrap || !years.length) return;
-    var max = Math.max(1, ...years.map(function(x){ return x.launches||0; }));
-    wrap.innerHTML = years.map(function(x){
-      var v = x.launches||0;
-      var h = Math.round((v/max)*130)+3;
-      return '<div class="spx-bar-wrap"><div class="spx-bar" style="height:0" data-h="'+h+'"><span class="cnt">'+v+'</span></div><div class="spx-bar-label">'+x.year+'</div></div>';
-    }).join('');
-    requestAnimationFrame(function(){ wrap.querySelectorAll('.spx-bar').forEach(function(b){ b.style.height=b.dataset.h+'px'; }); });
-  }
+                    if (currentFilter === 'week') {
+                        const d = new Date(dateStr);
+                        dateMatch = (now - d) <= 7 * 86400000;
+                    } else if (currentFilter === 'month') {
+                        const d = new Date(dateStr);
+                        dateMatch = (now - d) <= 31 * 86400000;
+                    }
 
-  function renderCadence(months){
-    const wrap = document.getElementById('spxCadence');
-    if(!wrap || !months || !months.length) return;
-    const max = Math.max(1, ...months.map(x=>x.count));
-    wrap.innerHTML = months.map(x=>{
-      const h = Math.round((x.count/max)*130)+3;
-      const lab = x.month.slice(2).replace('-','/'); // YY/MM
-      return '<div class="spx-bar-wrap"><div class="spx-bar" style="height:0" data-h="'+h+'"><span class="cnt">'+x.count+'</span></div><div class="spx-bar-label">'+lab+'</div></div>';
-    }).join('');
-    requestAnimationFrame(()=>{ wrap.querySelectorAll('.spx-bar').forEach(b=>{ b.style.height=b.dataset.h+'px'; }); });
-  }
+                    const yearMatch = !yearValue || dateStr.startsWith(yearValue);
 
-  function renderNext(n){
-    if(!n){ document.getElementById('spxMission').textContent='No upcoming launch on the manifest right now.'; return; }
-    nextNet = n.net ? new Date(n.net).getTime() : null;
-    const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=v||'—';};
-    const st = document.getElementById('spxStatus');
-    st.textContent = n.status_name || n.status || 'Scheduled';
-    st.className = 'spx-status '+statusClass(n.status);
-    set('spxMission', n.name || n.mission || 'Upcoming SpaceX launch');
-    set('spxRocket', n.rocket);
-    set('spxBooster', n.booster && n.booster.serial ? (n.booster.serial + (n.booster.flight_number ? ' · flight ' + n.booster.flight_number : '')) : '—');
-    set('spxPad', n.pad);
-    set('spxLoc', n.location);
-    set('spxLocal', n.net ? fmtLocal(n.net) : 'TBD');
-    document.getElementById('spxDesc').textContent = n.mission_description || '';
-    // Always give a watch destination: the launch webcast once posted,
-    // else SpaceX's official launches hub (which carries the live stream).
-    const w=document.getElementById('spxWebcast');
-    if(w){ w.href=n.webcast || 'https://www.spacex.com/launches/';
-      w.textContent = n.webcast ? '▶ Watch the webcast' : '▶ Where to watch';
-      w.style.display='inline-flex'; }
-    const more = n.info_url || 'https://www.spacex.com/launches/';
-    const mEl=document.getElementById('spxMore'); mEl.href=more; mEl.style.display='inline-flex';
-  }
+                    const show = text.includes(query) && dateMatch && yearMatch;
+                    item.style.display = show ? '' : 'none';
+                    if (show) visible++;
+                });
 
-  function renderPrev(p){
-    if(!p) return;
-    lastNet = p.net ? new Date(p.net).getTime() : null;
-    const el=document.getElementById('spxLast');
-    if(el) el.textContent = (p.name||'Last launch') + (p.net ? ' · '+fmtLocal(p.net) : '');
-  }
+                const countEl = document.getElementById('episodeCount');
+                if (countEl) countEl.textContent = `${visible} episode${visible !== 1 ? 's' : ''}`;
 
-  // Animated count-up for a stat number. Respects reduced-motion.
-  function countUp(id, target, suffix){
-    const el=document.getElementById(id); if(!el || target==null) return;
-    suffix = suffix||'';
-    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const isFloat = !Number.isInteger(target);
-    if(reduce){ el.textContent=(isFloat?target.toFixed(1):Math.round(target).toLocaleString())+suffix; return; }
-    const dur=900, t0=performance.now();
-    function step(t){
-      const k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,3), v=target*e;
-      el.textContent=(isFloat?v.toFixed(1):Math.round(v).toLocaleString())+suffix;
-      if(k<1) requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
-  }
+                // Empty state when filters yield zero results
+                renderEmptyState(visible, items.length, query, currentFilter);
+            }
 
-  function renderStats(s, total){
-    const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=(v==null?'—':v);};
-    if(s){ countUp('stYtd', s.launches_ytd); countUp('st30', s.launches_last_30d);
-           set('stAvg', s.avg_days_between_last_365d); countUp('stStar', s.starlink_launches_ytd); }
-    if(total!=null) countUp('stTotal', total); else set('stTotal','—');
-  }
+            function renderEmptyState(visible, total, query, filter) {
+                const container = document.getElementById('summaries-container');
+                let empty = document.getElementById('filter-empty-state');
+                if (visible === 0 && total > 0) {
+                    if (!empty) {
+                        empty = document.createElement('div');
+                        empty.id = 'filter-empty-state';
+                        empty.style.cssText = 'text-align:center;padding:3rem 1.5rem;color:var(--nn-text-muted);';
+                        container.prepend(empty);
+                    }
+                    const filterLabel = filter === 'week' ? 'this week' : (filter === 'month' ? 'this month' : '');
+                    const msg = query
+                        ? `<strong style="color:var(--nn-text);font-family:var(--font-heading);font-size:1.05rem;">No episodes match "${escapeHtml(query)}"${filterLabel ? ' in ' + filterLabel : ''}</strong>`
+                        : `<strong style="color:var(--nn-text);font-family:var(--font-heading);font-size:1.05rem;">No episodes ${filterLabel}</strong>`;
+                    empty.innerHTML = `
+                        ${msg}
+                        <p style="margin:0.5rem 0 1.5rem;">Try a different search term or filter.</p>
+                        <button type="button" id="clearFiltersBtn" class="nn-filter-btn active" style="border-color:var(--show-color);color:var(--show-color-text, var(--show-color));">Clear filters</button>
+                    `;
+                    const clearBtn = document.getElementById('clearFiltersBtn');
+                    if (clearBtn) {
+                        clearBtn.addEventListener('click', () => {
+                            searchBox.value = '';
+                            if (yearFilter) yearFilter.value = '';
+                            currentFilter = 'all';
+                            filterBtns.forEach(b => b.classList.toggle('active', b.dataset.filter === 'all'));
+                            applyFilters();
+                        });
+                    }
+                } else if (empty) {
+                    empty.remove();
+                }
+            }
 
-  // SVG area+line chart of a cumulative series [{month,total}].
-  function renderArea(series){
-    const svg=document.getElementById('spxArea');
-    if(!svg || !series || series.length<2) return;
-    const W=1000, H=200, padL=44, padR=8, padT=12, padB=22;
-    const xs=W-padL-padR, ys=H-padT-padB;
-    const vals=series.map(p=>p.total);
-    const max=Math.max(...vals), min=Math.min(0, ...vals);
-    const n=series.length;
-    const X=i=> padL + (n===1?0:(i/(n-1))*xs);
-    const Y=v=> padT + ys - ((v-min)/((max-min)||1))*ys;
-    let line='', area='M'+X(0)+','+(padT+ys);
-    series.forEach((p,i)=>{ const x=X(i),y=Y(p.total); line+=(i?'L':'M')+x+','+y+' '; area+='L'+x+','+y+' '; });
-    area+='L'+X(n-1)+','+(padT+ys)+'Z';
-    // y gridlines (0, mid, max)
-    let grid='';
-    [0,0.5,1].forEach(f=>{ const v=min+(max-min)*f, y=Y(v);
-      grid+='<line class="grid" x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'"/>'+
-            '<text class="gridlabel" x="0" y="'+(y+3)+'">'+Math.round(v).toLocaleString()+'</text>'; });
-    // a few x labels
-    let xl=''; const step=Math.max(1,Math.floor(n/4));
-    for(let i=0;i<n;i+=step){ xl+='<text class="xlabel" x="'+X(i)+'" y="'+(H-6)+'">'+series[i].month.slice(2).replace('-','/')+'</text>'; }
-    const last=series[n-1];
-    svg.setAttribute('viewBox','0 0 '+W+' '+H);
-    svg.innerHTML =
-      '<defs><linearGradient id="spxAreaGrad" x1="0" y1="0" x2="0" y2="1">'+
-      '<stop offset="0%" stop-color="rgba(0,212,255,0.45)"/><stop offset="100%" stop-color="rgba(26,92,255,0.02)"/>'+
-      '</linearGradient></defs>'+grid+
-      '<path class="areapath" d="'+area+'" fill="url(#spxAreaGrad)"/>'+
-      '<path class="linepath" d="'+line+'"/>'+
-      '<circle class="dot" cx="'+X(n-1)+'" cy="'+Y(last.total)+'" r="4"/>'+
-      '<text x="'+X(n-1)+'" y="'+(Y(last.total)-10)+'" text-anchor="end" fill="#fff" font-size="12" font-weight="700">'+last.total.toLocaleString()+'</text>'+
-      xl;
-  }
+            loadSummaries();
+        });
 
-  function renderRecent(list){
-    const wrap=document.getElementById('spxRecent');
-    if(!wrap) return;
-    if(!list || !list.length){ wrap.innerHTML='<p class="spx-muted">No recent launches.</p>'; return; }
-    const cls=a=>{ a=(a||'').toLowerCase(); if(a==='success') return 'ok'; if(a.includes('fail')) return 'bad'; return 'tbd'; };
-    wrap.innerHTML = list.map(x=>{
-      const st=x.status||'—';
-      const replay = x.webcast ? '<a class="spx-watch replay" href="'+x.webcast+'" target="_blank" rel="noopener">▶ Replay</a>' : '';
-      return '<div class="spx-rl"><span class="badge '+cls(st)+'">'+st+'</span>'+
-             '<span class="nm">'+(x.name||'Launch')+'</span>'+replay+
-             '<span class="dt">'+(x.net?fmtLocal(x.net):'')+'</span></div>';
-    }).join('');
-  }
+        async function loadSummaries() {
+            try {
+                let response;
+                try {
+                    response = await fetch(JSON_URL);
+                    if (!response.ok) throw new Error(`Direct fetch failed: ${response.status}`);
+                } catch (directErr) {
+                    console.warn(`[Nerra] Direct fetch failed for ${SHOW_NAME}, trying CORS proxy...`, directErr);
+                    const proxyUrl = 'https://api.allorigins.win/raw?url=';
+                    const fullUrl = new URL(JSON_URL, window.location.href).href;
+                    response = await fetch(proxyUrl + encodeURIComponent(fullUrl));
+                    if (!response.ok) throw new Error(`Proxy fetch failed: ${response.status}`);
+                }
 
-  function renderUpcoming(list){
-    const wrap=document.getElementById('spxUpcoming');
-    if(!wrap) return;
-    if(!list || !list.length){ wrap.innerHTML='<p class="spx-muted">No upcoming launches listed.</p>'; return; }
-    // Webcasts post ~24h out; until then link to SpaceX's official launches
-    // hub so every upcoming launch has a working "watch" destination.
-    const watchUrl=x=> x.webcast || x.info_url || 'https://www.spacex.com/launches/';
-    wrap.innerHTML = list.map(x=>{
-      const live = !!x.webcast;
-      return '<div class="spx-upcoming-item"><span class="nmw">'+(x.name||'Launch')+
-        '<a class="spx-watch'+(live?'':' replay')+'" href="'+watchUrl(x)+'" target="_blank" rel="noopener">'+(live?'▶ Watch live':'▶ Watch')+'</a></span>'+
-        '<span class="when">'+(x.net?fmtLocal(x.net):'TBD')+'</span></div>';
-    }).join('');
-  }
+                const data = await response.json();
+                const container = document.getElementById('summaries-container');
 
-  var VEHICLE_COLORS = {'Falcon 9':'#1A5CFF','Starship':'#00D4FF','Falcon Heavy':'#8ab4ff'};
-  var VEHICLE_FALLBACK = ['#a78bfa','#7efbb0','#ffd27a','#ff9a9a'];
+                const summaries = (JSON_FORMAT === 'array') ? (Array.isArray(data) ? data : [])
+                    : (data.summaries || []);
 
-  function renderFleet(f){
-    if(!f) return;
-    const set=(id,v)=>{const e=document.getElementById(id); if(e) e.textContent=(v==null?'—':v);};
-    // Real active-Starlink count from CelesTrak (falls back to the
-    // cumulative estimate if the live count is unavailable).
-    if(f.starlink_active!=null) countUp('flStarlinkActive', f.starlink_active);
-    else if(f.cumulative_satellites_est!=null) countUp('flStarlinkActive', f.cumulative_satellites_est);
-    // Real total active-satellite population + Starlink's share of it (CelesTrak).
-    if(f.total_active_satellites!=null) countUp('flActiveSats', f.total_active_satellites);
-    if(f.total_active_satellites>0 && f.starlink_active!=null){
-      set('flStarlinkOfActive', Math.round(100*f.starlink_active/f.total_active_satellites)+'%');
-    }
-    countUp('flMass', f.est_mass_to_orbit_tonnes);
-    countUp('flSats', f.est_satellites_deployed);
-    set('flStarShare', f.starlink_share_pct!=null ? f.starlink_share_pct+'%' : '—');
-    set('flSuccess', f.success_rate_pct!=null ? f.success_rate_pct+'%' : '—');
-    const bv = f.by_vehicle || {};
-    const wrap = document.getElementById('flVehicles');
-    if(wrap){
-      const entries = Object.entries(bv).sort((a,b)=>b[1]-a[1]);
-      const total = entries.reduce((s,[,v])=>s+v,0) || 1;
-      if(entries.length){
-        const color=(k,i)=>VEHICLE_COLORS[k]||VEHICLE_FALLBACK[i%VEHICLE_FALLBACK.length];
-        const segs = entries.map(([k,v],i)=>'<div class="spx-mixseg" style="width:'+(100*v/total)+'%;background:'+color(k,i)+';" title="'+k+': '+v+'"></div>').join('');
-        const legend = entries.map(([k,v],i)=>'<span class="it"><span class="sw" style="background:'+color(k,i)+'"></span>'+k+' <span class="ct">'+v+'</span></span>').join('');
-        wrap.innerHTML = '<div class="spx-muted" style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Launches by vehicle</div>' +
-          '<div class="spx-mixbar">'+segs+'</div><div class="spx-mixlegend">'+legend+'</div>';
-      }
-    }
-  }
+                if (!summaries.length) {
+                    container.innerHTML = '<div style="text-align:center;color:var(--nn-text-muted);padding:3rem;font-style:italic;">No summaries available yet. Check back after the next daily update!</div>';
+                    return;
+                }
 
-  function renderBoosters(f){
-    var b = (f||{}).boosters; if(!b) return;
-    var set=function(id,v){var e=document.getElementById(id); if(e) e.textContent=(v==null?'—':v);};
-    if(b.most_flown){ countUp('brRecordN', b.most_flown.flights); set('brRecordS', b.most_flown.serial); }
-    var wrap=document.getElementById('brLeaders');
-    if(wrap && b.fleet_leaders && b.fleet_leaders.length){
-      var max=b.fleet_leaders[0].flights||1;
-      wrap.innerHTML=b.fleet_leaders.map(function(x){
-        return '<div style="display:flex;align-items:center;gap:10px;margin:5px 0;">'+
-          '<span style="width:54px;font-weight:700;color:#cfe0ff;">'+x.serial+'</span>'+
-          '<span style="flex:1;height:14px;border-radius:7px;background:rgba(255,255,255,0.06);overflow:hidden;"><span style="display:block;height:100%;width:'+(100*x.flights/max)+'%;background:linear-gradient(90deg,var(--spx-cyan),var(--spx-blue));"></span></span>'+
-          '<span style="width:34px;text-align:right;font-variant-numeric:tabular-nums;font-weight:700;">'+x.flights+'</span></div>';
-      }).join('');
-    }
-    if(b.landing_success_pct!=null){
-      set('brLandPct', b.landing_success_pct+'%'); set('brLandN', b.landings_window);
-      var bar=document.getElementById('brLandBar'); if(bar) requestAnimationFrame(function(){ bar.style.width=b.landing_success_pct+'%'; });
-    }
-    countUp('brFleet', b.active_boosters_window);
-  }
+                summaries.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  function renderStarship(s){
-    var flights = ((s||{}).flights)||[];
-    if(!flights.length) return;
-    var ch = {success:'#5ef0a0', partial:'var(--spx-cyan)', failure:'#ff7a7a'};
-    var lbl = {success:'Success', partial:'Partial', failure:'Failure'};
-    countUp('ssTotal', flights.length);
-    var catches = flights.filter(function(f){ return f.booster_caught===true; }).length;
-    countUp('ssCatches', catches);
-    var last = flights[flights.length-1];
-    var el = document.getElementById('ssLatest'); if(el) el.textContent = last.flight||'—';
-    var wrap = document.getElementById('ssTimeline'); if(!wrap) return;
-    // Newest first for the timeline.
-    var rows = flights.slice().reverse();
-    wrap.innerHTML = rows.map(function(f){
-      var c = ch[f.outcome]||'#cfe0ff';
-      return '<div style="display:flex; gap:12px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06);">'+
-        '<span style="flex:0 0 8px; width:8px; border-radius:4px; background:'+c+'; align-self:stretch;"></span>'+
-        '<div style="flex:1; min-width:0;">'+
-          '<div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;">'+
-            '<span style="font-weight:800; color:#fff;">'+(f.flight||'')+'</span>'+
-            '<span class="spx-muted" style="font-size:0.8rem;">'+(f.date||'')+'</span>'+
-            '<span style="font-size:0.72rem; font-weight:700; color:'+c+'; border:1px solid '+c+'; border-radius:999px; padding:1px 8px;">'+(lbl[f.outcome]||f.outcome||'')+'</span>'+
-          '</div>'+
-          '<div style="color:#cfe0ff; font-size:0.9rem; margin-top:3px;">'+(f.milestone||'')+'</div>'+
-        '</div></div>';
-    }).join('');
-  }
+                const PAGE_SIZE = 20;
+                let visibleCount = PAGE_SIZE;
 
-  function applyLaunches(data){
-    if(!data) return;
-    renderNext(data.next);
-    if(data.starship) renderStarship(data.starship);
-    if(data.fleet) renderBoosters(data.fleet);
-    renderPrev(data.previous);
-    renderStats(data.stats, data.total_launches);
-    renderCadence(data.cadence_monthly);
-    renderAnnual(data.annual_launches);
-    renderPads(data.pads);
-    renderBars('spxMass', data.mass_monthly, 'tonnes');
-    renderArea(data.sats_cumulative_monthly);
-    renderFleet(data.fleet);
-    renderRecent(data.recent);
-    renderUpcoming(data.upcoming);
-  }
+                function renderSummaryCard(s) {
+                    const audioUrl = s.audio_url || '';
+                    const content = s.content || s.summary || '';
+                    const title = s.episode_title || '';
+                    const date = s.date || '';
 
-  // SPCX price — show the cached pipeline snapshot immediately, then upgrade
-  // to a LIVE Yahoo quote so the dashboard reflects the current price during
-  // the trading day instead of the pre-market run's closing snapshot. Mirrors
-  // the Tesla page's cache-primary + Yahoo-fallback widget.
-  function applyPrice(d, marketState){
-    if(!d || !(d.price>0)) return;
-    document.getElementById('spxPx').textContent='$'+Number(d.price).toFixed(2);
-    const prev=Number(d.prev_close)||0;
-    if(prev>0){
-      const ch=(d.price-prev), pct=(ch/prev*100);
-      const up=ch>=0; const el=document.getElementById('spxChg');
-      el.textContent=(up?'+':'')+ch.toFixed(2)+' ('+(up?'+':'')+pct.toFixed(2)+'%)';
-      el.className='ch '+(up?'up':'down');
-    }
-    const note=document.getElementById('spxPxNote');
-    if(note){
-      const ms=String(marketState||'').toUpperCase();
-      let suffix='';
-      if(ms==='PRE') suffix=' · Pre-Market';
-      else if(ms.includes('POST')) suffix=' · After Hours';
-      else if(ms==='REGULAR') suffix=' · Live';
-      note.textContent='Nasdaq: SPCX'+suffix;
-    }
-  }
-  async function loadSpcx(){
-    // PRIMARY: same-origin snapshot written each pipeline run (no CORS).
-    try{
-      const r=await fetch('/api/spcx.json',{cache:'no-cache',signal:AbortSignal.timeout(4000)});
-      if(r.ok){ const c=await r.json(); if(c.price>0) applyPrice(c, c.market_state||null); }
-    }catch(_){}
-    // UPGRADE: live Yahoo v8 chart quote via CORS proxies (current price +
-    // marketState). Only overwrites when it returns a valid quote.
-    const chartUrl='https://query2.finance.yahoo.com/v8/finance/chart/SPCX?interval=1d&range=5d';
-    const proxies=[u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
-                   u=>'https://corsproxy.io/?'+encodeURIComponent(u), u=>u];
-    for(const mk of proxies){
-      try{
-        const resp=await fetch(mk(chartUrl),{signal:AbortSignal.timeout(8000)});
-        if(!resp.ok) continue;
-        const meta=(await resp.json())?.chart?.result?.[0]?.meta;
-        if(!meta) continue;
-        const price=meta.regularMarketPrice, prev=meta.chartPreviousClose||meta.previousClose;
-        if(price>0 && prev>0){ applyPrice({price:price, prev_close:prev}, meta.marketState||null); return; }
-      }catch(_){}
-    }
-  }
+                    const epNum = s.episode_num;
+                    const transcriptHtml = epNum ? `
+                        <a class="nn-summary-link" href="blog/dp_pod/ep${String(epNum).padStart(3, '0')}.html" aria-label="Read full transcript and article for episode ${epNum}">Read transcript</a>
+                    ` : '';
 
-  // PRIMARY: same-origin cache written by the pipeline. Fallback: live API.
-  fetch('/api/spacex_launches.json',{cache:'no-cache'})
-    .then(r=>r.ok?r.json():Promise.reject())
-    .then(applyLaunches)
-    .catch(()=>{
-      // Client-side fallback straight to Launch Library 2 (CORS-enabled).
-      fetch('https://ll.thespacedevs.com/2.3.0/launches/upcoming/?lsp__id=121&limit=1&ordering=net&mode=detailed')
-        .then(r=>r.json()).then(d=>{ const r=(d.results||[])[0]; if(r) renderNext({
-          name:r.name, net:r.net, status:(r.status||{}).abbrev, status_name:(r.status||{}).name,
-          rocket:((r.rocket||{}).configuration||{}).name, pad:(r.pad||{}).name,
-          location:((r.pad||{}).location||{}).name, webcast:((r.vidURLs||[])[0]||{}).url
-        }); }).catch(()=>{ document.getElementById('spxMission').textContent='Launch data is temporarily unavailable — check spacex.com/launches.'; });
-    });
+                    const audioHtml = audioUrl ? `
+                        <div class="nn-summary-actions">
+                            <audio class="nn-summary-audio" controls preload="none" src="${escapeAttr(audioUrl)}" aria-label="${escapeAttr(title || 'Episode')} audio"
+                                   onerror="this.replaceWith(Object.assign(document.createElement('div'),{innerHTML:'<span style=&quot;color:var(--nn-text-muted);font-family:var(--font-ui);font-size:0.85rem;&quot;>Audio unavailable. <a href=&quot;${escapeAttr(audioUrl)}&quot; style=&quot;color:var(--show-color-text, var(--show-color));&quot;>Try download</a>.</span>'}))"></audio>
+                            <a class="nn-summary-link" href="${escapeAttr(audioUrl)}" target="_blank" rel="noopener">Download</a>
+                            ${transcriptHtml}
+                            <button class="nn-summary-link" data-share-url="${escapeAttr(audioUrl)}" title="Copy link">Share</button>
+                        </div>
+                    ` : '';
 
-  loadSpcx();
-  setInterval(loadSpcx, 300000);  // refresh live price every 5 min during the session
+                    const titleHtml = title ? `<div class="nn-summary-title" style="font-weight:600;color:var(--show-color-text, var(--show-color));font-family:var(--font-ui);font-size:0.88rem;">${escapeHtml(title)}</div>` : '<div class="nn-summary-title" hidden></div>';
 
-  tick(); setInterval(tick, 1000);
-})();
-</script>
+                    // Multilingual language buttons (June 2026): the episode's
+                    // per-language tracks. Clicking one swaps this card's title +
+                    // summary + audio to that language and sets the site-wide
+                    // preference; English is always offered. Driven by the global
+                    // `nn-pref-lang` so a choice sticks across the list + site.
+                    const LANG_LABELS = { en: 'EN', fr: 'FR', ru: 'RU', es: 'ES', zh: '中文' };
+                    const tr = (s.translations && typeof s.translations === 'object') ? s.translations : {};
+                    const langs = Object.keys(tr).filter(k => tr[k] && tr[k].audio_url);
+                    // i18n payload the apply fn reads: English baseline + each track.
+                    const i18n = { en: { title: title, summary: content, url: audioUrl } };
+                    langs.forEach(k => { i18n[k] = { title: tr[k].title || title, summary: tr[k].description || '', url: tr[k].audio_url || audioUrl }; });
+                    const pillStyle = 'font-family:var(--font-ui);font-size:0.66rem;font-weight:600;padding:1px 8px;border-radius:100px;cursor:pointer;border:1px solid color-mix(in srgb, var(--show-color) 35%, transparent);color:var(--show-color-text, var(--show-color));background:color-mix(in srgb, var(--show-color) 10%, transparent);';
+                    const order = langs.length ? ['en'].concat(langs) : [];
+                    const langsHtml = order.length ? `<span class="nn-summary-langs" role="group" aria-label="Listen and read in another language" style="display:inline-flex;gap:4px;margin-top:4px;">${order.map(k => `<button type="button" class="nn-summary-lang" data-lang="${k}" style="${pillStyle}">${LANG_LABELS[k] || k.toUpperCase()}</button>`).join('')}</span>` : '';
+
+                    return `
+                        <div class="nn-summary-item" data-date="${escapeAttr(date)}" data-i18n='${escapeAttr(JSON.stringify(i18n))}'>
+                            <div class="nn-summary-header">
+                                <div>
+                                    <div class="nn-summary-date">${formatDate(date)}</div>
+                                    ${titleHtml}
+                                    ${langsHtml}
+                                </div>
+                                ${audioHtml}
+                            </div>
+                            <div class="nn-summary-content">${renderMarkdown(content)}</div>
+                        </div>
+                    `;
+                }
+
+                // Apply the site-wide language preference to one card: swap its
+                // title + summary + audio to the chosen language (falling back to
+                // English for any piece the episode doesn't have translated).
+                function applyCardLang(card, code) {
+                    let data;
+                    try { data = JSON.parse(card.getAttribute('data-i18n') || '{}'); } catch (e) { return; }
+                    const t = data[code] || data.en;
+                    if (!t) return;
+                    const titleEl = card.querySelector('.nn-summary-title');
+                    const contentEl = card.querySelector('.nn-summary-content');
+                    const audioEl = card.querySelector('.nn-summary-audio');
+                    if (titleEl && t.title) titleEl.textContent = t.title;
+                    if (contentEl) contentEl.innerHTML = renderMarkdown((t.summary && t.summary.trim()) ? t.summary : data.en.summary);
+                    if (audioEl && t.url) { const playing = !audioEl.paused; audioEl.src = t.url; if (playing) audioEl.play().catch(() => {}); }
+                    card.querySelectorAll('.nn-summary-lang').forEach(b => {
+                        b.setAttribute('aria-pressed', b.dataset.lang === code ? 'true' : 'false');
+                        b.style.outline = b.dataset.lang === code ? '2px solid var(--show-color)' : 'none';
+                    });
+                }
+                function savedLangPref() { try { return localStorage.getItem('nn-pref-lang') || 'en'; } catch (e) { return 'en'; } }
+                function applyAllCardsLang(code) {
+                    document.querySelectorAll('.nn-summary-item[data-i18n]').forEach(card => {
+                        const data = (() => { try { return JSON.parse(card.getAttribute('data-i18n') || '{}'); } catch (e) { return {}; } })();
+                        applyCardLang(card, (code === 'en' || data[code]) ? code : 'en');
+                    });
+                }
+
+                function renderPage() {
+                    const visible = summaries.slice(0, visibleCount);
+                    const remaining = summaries.length - visibleCount;
+                    let html = visible.map(renderSummaryCard).join('');
+                    if (remaining > 0) {
+                        html += `<div style="text-align:center;padding:var(--sp-6) 0;">
+                            <button id="loadMoreBtn" class="nn-btn" style="--show-color:var(--show-color);">
+                                Load more (${remaining} remaining)
+                            </button>
+                        </div>`;
+                    }
+                    container.innerHTML = html;
+                    initAudioUX(container);
+                    initShareButtons(container);
+                    applyAllCardsLang(savedLangPref());
+                    const loadMoreBtn = document.getElementById('loadMoreBtn');
+                    if (loadMoreBtn) {
+                        loadMoreBtn.addEventListener('click', () => {
+                            visibleCount += PAGE_SIZE;
+                            renderPage();
+                        });
+                    }
+                }
+
+                renderPage();
+
+                // Per-card language buttons: set the site-wide preference, swap
+                // every card live, and notify the rest of the page/site.
+                container.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.nn-summary-lang');
+                    if (!btn) return;
+                    const code = btn.dataset.lang || 'en';
+                    try { localStorage.setItem('nn-pref-lang', code); } catch (err) {}
+                    applyAllCardsLang(code);
+                    try { document.dispatchEvent(new CustomEvent('nn-langchange', { detail: { lang: code } })); } catch (err) {}
+                });
+                // React to the global header language control.
+                document.addEventListener('nn-langchange', (e) => {
+                    applyAllCardsLang((e.detail && e.detail.lang) || 'en');
+                });
+
+                // Populate year filter from available summary dates (newest first)
+                if (yearFilter) {
+                    const years = Array.from(new Set(
+                        summaries.map(s => (s.date || '').slice(0, 4)).filter(Boolean)
+                    )).sort().reverse();
+                    // Keep the "All years" option, remove any prior dynamic entries
+                    yearFilter.querySelectorAll('option[data-dynamic]').forEach(o => o.remove());
+                    for (const y of years) {
+                        const opt = document.createElement('option');
+                        opt.value = y;
+                        opt.textContent = y;
+                        opt.dataset.dynamic = '1';
+                        yearFilter.appendChild(opt);
+                    }
+                }
+
+                // Update episode counts
+                const countEl = document.getElementById('episodeCount');
+                if (countEl) countEl.textContent = `${summaries.length} episode${summaries.length !== 1 ? 's' : ''}`;
+                const heroCount = document.getElementById('heroEpisodeCount');
+                if (heroCount) {
+                    heroCount.textContent = `${summaries.length} episode${summaries.length !== 1 ? 's' : ''} and counting`;
+                    heroCount.style.opacity = '1';
+                }
+
+            } catch (error) {
+                console.error('Error loading summaries:', error);
+                document.getElementById('summaries-container').innerHTML =
+                    '<div style="text-align:center;color:var(--nn-text-muted);padding:3rem;font-style:italic;">Unable to load summaries. Please check back later.</div>';
+            }
+        }
+
+        function formatDate(dateString) {
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', {
+                    year: 'numeric', month: 'long', day: 'numeric',
+                    weekday: 'long', timeZone: 'UTC'
+                });
+            } catch { return dateString; }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text ?? '';
+            return div.innerHTML;
+        }
+
+        function escapeAttr(text) {
+            return String(text ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        function linkify(text) {
+            text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+                '<a href="$2" target="_blank" rel="noopener">$1</a>');
+            text = text.replace(/(https?:\/\/[^\s<]+)/g,
+                '<a href="$1" target="_blank" rel="noopener">$1</a>');
+            return text;
+        }
+
+        function renderMarkdown(md) {
+            const safe = escapeHtml(md).replace(/\r\n/g, '\n');
+            const lines = safe.split('\n');
+            let out = '';
+            let inList = false;
+
+            const flush = () => { if (inList) { out += '</ul>'; inList = false; } };
+
+            for (const rawLine of lines) {
+                const trimmed = rawLine.trim();
+
+                if (!trimmed) { flush(); out += '<p></p>'; continue; }
+
+                if (/^-{3,}$/.test(trimmed) || /^\u2014{3,}$/.test(trimmed) || /^\u2501{3,}$/.test(trimmed)) { flush(); out += '<hr style="border:none;border-top:1px solid var(--nn-border);margin:1rem 0;">'; continue; }
+                if (trimmed.startsWith('&gt; ')) { flush(); const hookText = trimmed.slice(5).replace(/\*\*([^*]+)\*\*/g, '$1'); out += `<p style="border-left:3px solid var(--show-color, var(--nn-purple));padding-left:0.75rem;font-weight:600;">${linkify(hookText)}</p>`; continue; }
+                if (trimmed.startsWith('### ')) { flush(); out += `<h3>${linkify(trimmed.slice(4))}</h3>`; continue; }
+                if (trimmed.startsWith('## '))  { flush(); out += `<h2>${linkify(trimmed.slice(3))}</h2>`; continue; }
+                if (trimmed.startsWith('# '))   { flush(); out += `<h1>${linkify(trimmed.slice(2))}</h1>`; continue; }
+
+                if (/^[-\u2022]\s+/.test(trimmed)) {
+                    if (!inList) { out += '<ul>'; inList = true; }
+                    out += `<li>${linkify(trimmed.replace(/^[-\u2022]\s+/, ''))}</li>`;
+                    continue;
+                }
+
+                flush();
+                let p = trimmed.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+                p = linkify(p);
+                out += `<p>${p}</p>`;
+            }
+
+            flush();
+            return out.replace(/<p><\/p>/g, '<div style="height:0.6rem"></div>');
+        }
+
+        // Sticky player + per-card audio UX
+        function initAudioUX(container) {
+            const stickyPlayer = document.getElementById('stickyPlayer');
+            const stickyAudio = document.getElementById('stickyAudio');
+            const stickyNow = document.getElementById('stickyNow');
+            const stickySub = document.getElementById('stickySub');
+            const stickyClose = document.getElementById('stickyClose');
+
+            let activeCardAudio = null;
+
+            const cardAudios = Array.from(container.querySelectorAll('audio.nn-summary-audio'));
+
+            function pauseAllCardAudios() {
+                for (const a of cardAudios) { try { a.pause(); } catch {} }
+            }
+
+            function setSticky(meta, audioEl) {
+                activeCardAudio = audioEl;
+                stickyNow.textContent = meta?.title || 'Now playing';
+                stickySub.textContent = meta?.date || '';
+                if (audioEl?.src && stickyAudio.src !== audioEl.src) {
+                    stickyAudio.src = audioEl.src;
+                }
+                stickyPlayer.classList.remove('hidden');
+            }
+
+            for (const audioEl of cardAudios) {
+                const card = audioEl.closest('.nn-summary-item');
+                const dateText = card?.querySelector('.nn-summary-date')?.textContent?.trim() || '';
+                const titleGuess =
+                    card?.querySelector('.nn-summary-content h1, .nn-summary-content h2, .nn-summary-content h3')?.textContent?.trim() ||
+                    'Episode';
+                const meta = { date: dateText, title: titleGuess };
+
+                audioEl.addEventListener('play', (e) => {
+                    e.preventDefault();
+                    pauseAllCardAudios();
+                    setSticky(meta, audioEl);
+                    try { audioEl.pause(); } catch {}
+                    try { stickyAudio.currentTime = audioEl.currentTime || 0; } catch {}
+                    stickyAudio.play().catch(() => {});
+                });
+            }
+
+            stickyAudio.addEventListener('timeupdate', () => {
+                if (activeCardAudio) {
+                    try { activeCardAudio.currentTime = stickyAudio.currentTime; } catch {}
+                }
+            });
+
+            stickyClose?.addEventListener('click', () => {
+                try { stickyAudio.pause(); } catch {}
+                stickyPlayer.classList.add('hidden');
+                activeCardAudio = null;
+            });
+        }
+
+        // Share buttons
+        function initShareButtons(container) {
+            container.querySelectorAll('[data-share-url]').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const url = btn.dataset.shareUrl;
+                    try {
+                        await navigator.clipboard.writeText(url);
+                        btn.textContent = 'Copied!';
+                        setTimeout(() => { btn.textContent = 'Share'; }, 2000);
+                    } catch {
+                        const input = document.createElement('input');
+                        input.value = url;
+                        document.body.appendChild(input);
+                        input.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(input);
+                        btn.textContent = 'Copied!';
+                        setTimeout(() => { btn.textContent = 'Share'; }, 2000);
+                    }
+                });
+            });
+        }
+    </script>
 
 
     <!-- Centralized, improved global search -->

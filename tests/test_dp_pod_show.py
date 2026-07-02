@@ -1,0 +1,132 @@
+"""Drift guards for The DP Pod (July 2026 launch shape).
+
+Pins the launch decisions so a partial revert or config drift fails CI:
+- two-host dialogue TTS wiring (voices, no speech wrap, Patrick fallback)
+- daily cadence with NO Sunday recap (operator decision: fresh episode daily)
+- main-site registration under show_page thedppod.html + network.rss feed
+- chapter markers: Sign-Off listed before the body markers (EI June-11
+  ordering rule) with where anchors
+- intros personality emits speaker-labeled dialogue whose every closing
+  variant ends with the exact sign-off "Do something about it."
+"""
+
+from __future__ import annotations
+
+import datetime
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from engine.config import load_config  # noqa: E402
+
+CFG = load_config(PROJECT_ROOT / "shows" / "dp_pod.yaml")
+
+
+class TestDialogueTTSWiring:
+    def test_dialogue_mode_with_both_hosts(self):
+        assert CFG.tts.dialogue_mode is True
+        assert CFG.tts.dialogue_voices.get("PATRICK") == "kdif6sqjcyiq"
+        assert CFG.tts.dialogue_voices.get("DAN") == "0vscf8u8yrxc"
+
+    def test_no_speech_wrap_in_dialogue_mode(self):
+        # Per-turn wraps are the landmine-#17 "Fast." leak shape multiplied
+        # by every speaker handoff — dp_pod pins the wrap empty.
+        assert CFG.tts.speech_wrap_open == ""
+        assert CFG.tts.speech_wrap_close == ""
+
+    def test_single_voice_fallback_stays_on_network_voice(self):
+        assert CFG.tts.voice_id == "kdif6sqjcyiq"
+
+
+class TestCadence:
+    def test_daily_no_sunday_recap(self):
+        # Operator decision: fresh episode every day including Sunday.
+        assert CFG.weekly_recap_on_sunday is False
+
+
+class TestLaunchDistribution:
+    def test_rss_only_at_launch(self):
+        assert CFG.publishing.x_enabled is False
+        assert CFG.youtube.enabled is False
+        assert CFG.newsletter.enabled is False
+        assert CFG.multilingual.enabled is False
+
+    def test_future_youtube_enable_is_one_line(self):
+        # image_provider pre-set to grok so flipping youtube.enabled doesn't
+        # trip test_config.py::test_youtube_enabled_shows_use_grok_image_provider.
+        assert CFG.youtube.image_provider == "grok"
+        assert len(CFG.youtube.image_queries) >= 3
+
+
+class TestSiteRegistration:
+    def test_registered_with_thedppod_page(self):
+        from generate_html import NETWORK_SHOWS
+
+        assert "dp_pod" in NETWORK_SHOWS
+        assert NETWORK_SHOWS["dp_pod"]["show_page"] == "thedppod.html"
+        assert NETWORK_SHOWS["dp_pod"]["rss_file"] == "dp_pod_podcast.rss"
+
+    def test_in_network_rss_feeds(self):
+        src = (PROJECT_ROOT / "generate_network_rss.py").read_text(encoding="utf-8")
+        assert '"dp_pod_podcast.rss"' in src
+
+    def test_rss_link_points_at_thedppod_page(self):
+        assert CFG.publishing.rss_link.endswith("/thedppod.html")
+
+
+class TestChapterMarkers:
+    def test_sign_off_listed_before_body_markers(self):
+        titles = [m.title for m in CFG.chapters.section_markers]
+        assert titles[0] == "Cold Open"
+        assert titles[1] == "Sign-Off", (
+            "Sign-Off must precede the body markers (EI June-11 ordering "
+            "rule) so a merged final line is titled Sign-Off, not The Lever"
+        )
+        for expected in ("The Positive Papers", "The Lever", "Do Positive Dispatch"):
+            assert expected in titles
+
+    def test_positional_anchors(self):
+        by_title = {m.title: m for m in CFG.chapters.section_markers}
+        assert by_title["Cold Open"].where == "start"
+        assert by_title["Sign-Off"].where == "end"
+
+
+class TestIntrosPersonality:
+    def test_intro_is_dan_labeled_dialogue(self):
+        from engine.intros import build_intro_line
+
+        intro = build_intro_line(
+            "dp_pod", episode_num=5, today_str="July 10, 2026",
+            date=datetime.date(2026, 7, 10),
+        )
+        assert intro.startswith("DAN: ")
+        assert "The DP Pod" in intro
+
+    def test_every_closing_ends_with_sign_off_and_labels(self):
+        from engine.intros import _SHOW_PERSONALITIES
+
+        closings = _SHOW_PERSONALITIES["dp_pod"]["closings"]
+        assert len(closings) >= 3
+        for closing in closings:
+            assert closing.rstrip().endswith("Do something about it."), (
+                "every dp_pod closing must end with the exact sign-off — "
+                "the Sign-Off chapter marker and brand promise key off it"
+            )
+            assert "PATRICK:" in closing, (
+                "dp_pod closings are two-host dialogue — Patrick needs a turn"
+            )
+
+    def test_closing_parses_as_dialogue(self):
+        from engine.intros import build_closing_block
+        from engine.tts_dialogue import parse_dialogue_turns
+
+        closing = build_closing_block(
+            "dp_pod", episode_num=5, today_str="July 10, 2026",
+            date=datetime.date(2026, 7, 10),
+        )
+        groups = parse_dialogue_turns(closing, CFG.tts.dialogue_voices)
+        speakers = [g[0] for g in groups]
+        assert speakers[0] == "DAN"
+        assert "PATRICK" in speakers

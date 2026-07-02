@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Automated daily podcast generation system running 13 shows via a unified
+Automated daily podcast generation system running 14 shows via a unified
 `run_show.py` runner + per-show YAML configs, plus 4 legacy standalone scripts
 (deprecated — see note below). Shows use **Grok TTS** (`engine.tts.grok_speak_chunk`)
 and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
@@ -22,6 +22,7 @@ and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
 | Unintended Consequences | — | `shows/unintended_consequences.yaml` | Daily | — (X disabled) | Grok TTS (custom) |
 | First Principles Daily | — | `shows/first_principles.yaml` | Daily | — (X disabled) | Grok TTS (custom) |
 | SpaceX Daily | — | `shows/spacex.yaml` | Daily | — (X disabled) | Grok TTS (custom) |
+| The DP Pod | — | `shows/dp_pod.yaml` | Daily | — (X disabled) | Grok TTS (two-voice: Patrick + Dan) |
 
 > Sunday recap: shows on a daily cadence with `weekly_recap_on_sunday: true`
 > in their YAML have their Sunday slot rewritten as a weekly-recap episode
@@ -695,6 +696,31 @@ TST received a full recursive improvement architecture (analogous to MIT):
   respelling) but changes spoken output — A/B-listen per landmine #17. The
   deep-dive length lever + price-spoken-twice (8/8) stay deferred (reasons
   hold); tomorrow-teaser "watch for the [next] <test>" frame now 6/8 (P2 monitor).
+- **DP** (The DP Pod: The Do Positive Podcast) runs via `run_show.py` +
+  `shows/dp_pod.yaml`; the network's **two-host dialogue** show (July 2026
+  launch) — Dan Perra + Patrick Novak, daily ~10 min of good news in science/
+  tech plus one individual action with honest numbers ("The Lever"). Segments:
+  Cold Open → The Positive Papers → The Lever → Do Positive Dispatch →
+  sign-off "Do something about it." Fresh episode all 7 days (NO Sunday
+  recap — deliberately absent from `DAILY_SHOWS` in `tests/test_schedule.py`).
+  First show on the **two-voice dialogue TTS path**: `tts.dialogue_mode: true`
+  + `tts.dialogue_voices` (`PATRICK: kdif6sqjcyiq`, `DAN: 0vscf8u8yrxc`) make
+  the pipeline preserve `DAN:`/`PATRICK:` speaker labels (three legacy
+  prefix-strippers are gated on the flag — `engine/generator.py`
+  `_sanitize_podcast_script`, run_show's `_clean_podcast_script` + final
+  defense strip) and synthesize per-speaker via `engine/tts_dialogue.py`
+  (turn-group parsing, per-group Grok calls, pause padding, shared WAV
+  crossfade → single MP3 encode). Dialogue mode NEVER applies the `<fast>`
+  wrap (per-turn wraps are the landmine-#17 leak shape ×30 handoffs) and
+  supersedes section-TTS. An unlabeled script falls back to single-voice
+  `tts.voice_id` with a loud warning + `dialogue_fallback_single_voice`
+  metric. Show page is `thedppod.html` (registered via
+  `shows/network_meta.yaml` `show_page` override). RSS + site only at launch
+  (X/YouTube/newsletter/multilingual off). Drift guards:
+  `tests/test_tts_dialogue.py` (engine; existing shows pinned to
+  `dialogue_mode is False`), `tests/test_dp_pod_show.py` (launch shape).
+  Prompt edits change shipped audio — A/B-listen per landmine #17; the first
+  episodes are the calibration set for `dialogue_pause_ms` handoff pacing.
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:

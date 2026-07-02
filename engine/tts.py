@@ -750,6 +750,62 @@ def grok_speak_chunk(
                 f.write(data)
 
 
+def _crossfade_wavs_to_mp3(
+    wav_files: List[Path],
+    filename: str | Path,
+    tmp_dir: Path,
+    *,
+    xfade_secs: str = "0.05",
+) -> None:
+    """Crossfade *wav_files* in order and encode to MP3 once at the end.
+
+    Shared tail of the Grok WAV pipeline: lossless PCM crossfades between
+    consecutive chunks, then a single ``libmp3lame -q:a 0`` encode pass.
+    Used by ``_speak_with_grok`` (single-voice chunk concat) and
+    ``engine.tts_dialogue.synthesize_dialogue`` (per-speaker turn concat).
+    Intermediate ``tts_xfade_*.wav`` / ``tts_merged.wav`` files are written
+    to *tmp_dir*; callers own their cleanup (both callers already glob
+    those names in their ``finally`` blocks).
+    """
+    if len(wav_files) == 1:
+        merged_wav = wav_files[0]
+    elif len(wav_files) == 2:
+        merged_wav = tmp_dir / "tts_merged.wav"
+        subprocess.run(
+            [
+                "ffmpeg", "-y",
+                "-i", str(wav_files[0]), "-i", str(wav_files[1]),
+                "-filter_complex", f"acrossfade=d={xfade_secs}:c1=tri:c2=tri",
+                str(merged_wav),
+            ],
+            check=True, capture_output=True, timeout=300,
+        )
+    else:
+        merged_wav = wav_files[0]
+        for idx in range(1, len(wav_files)):
+            step_out = tmp_dir / f"tts_xfade_{idx:03d}.wav"
+            subprocess.run(
+                [
+                    "ffmpeg", "-y",
+                    "-i", str(merged_wav), "-i", str(wav_files[idx]),
+                    "-filter_complex", f"acrossfade=d={xfade_secs}:c1=tri:c2=tri",
+                    str(step_out),
+                ],
+                check=True, capture_output=True, timeout=300,
+            )
+            merged_wav = step_out
+
+    subprocess.run(
+        [
+            "ffmpeg", "-y",
+            "-i", str(merged_wav),
+            "-c:a", "libmp3lame", "-q:a", "0",
+            str(filename),
+        ],
+        check=True, capture_output=True, timeout=300,
+    )
+
+
 def _speak_with_grok(
     text: str,
     voice_id: str,
@@ -876,42 +932,7 @@ def _speak_with_grok(
                 i + 1, len(chunks), len(chunk_text_str),
             )
 
-        _XFADE_SECS = "0.05"
-        if len(wav_files) == 2:
-            merged_wav = tmp_dir / "tts_merged.wav"
-            subprocess.run(
-                [
-                    "ffmpeg", "-y",
-                    "-i", str(wav_files[0]), "-i", str(wav_files[1]),
-                    "-filter_complex", f"acrossfade=d={_XFADE_SECS}:c1=tri:c2=tri",
-                    str(merged_wav),
-                ],
-                check=True, capture_output=True, timeout=300,
-            )
-        else:
-            merged_wav = wav_files[0]
-            for idx in range(1, len(wav_files)):
-                step_out = tmp_dir / f"tts_xfade_{idx:03d}.wav"
-                subprocess.run(
-                    [
-                        "ffmpeg", "-y",
-                        "-i", str(merged_wav), "-i", str(wav_files[idx]),
-                        "-filter_complex", f"acrossfade=d={_XFADE_SECS}:c1=tri:c2=tri",
-                        str(step_out),
-                    ],
-                    check=True, capture_output=True, timeout=300,
-                )
-                merged_wav = step_out
-
-        subprocess.run(
-            [
-                "ffmpeg", "-y",
-                "-i", str(merged_wav),
-                "-c:a", "libmp3lame", "-q:a", "0",
-                str(filename),
-            ],
-            check=True, capture_output=True, timeout=300,
-        )
+        _crossfade_wavs_to_mp3(wav_files, filename, tmp_dir)
         logger.info(
             "Grok TTS: Concatenated %d chunks via WAV intermediates "
             "(single MP3 encode)", len(chunks),

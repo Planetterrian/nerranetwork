@@ -290,6 +290,21 @@ def _preflight_checks(config, *, dry_run: bool = False) -> None:
             "(supported: 'elevenlabs', 'grok')"
         )
 
+    # Dialogue mode needs usable per-speaker voices before any credits are
+    # spent (a placeholder ID would otherwise only fail at the TTS stage).
+    if getattr(config.tts, "dialogue_mode", False):
+        if config.tts.provider != "grok":
+            issues.append("tts.dialogue_mode requires tts.provider: grok")
+        voices = getattr(config.tts, "dialogue_voices", {}) or {}
+        if not voices:
+            issues.append("tts.dialogue_mode is on but tts.dialogue_voices is empty")
+        for label, vid in voices.items():
+            if not vid or not str(vid).strip() or "REPLACE" in str(vid).upper():
+                issues.append(
+                    f"tts.dialogue_voices[{label}] is a placeholder/empty "
+                    f"voice ID: {vid!r}"
+                )
+
     # Check critical API key env vars are populated. For TTS, only require
     # the key matching the configured provider — shows on Grok TTS don't
     # need ELEVENLABS_API_KEY and vice versa.
@@ -2190,7 +2205,11 @@ def run(args: argparse.Namespace) -> None:
                     logger.warning("Content lake script update failed (non-fatal): %s", exc)
 
             # Clean podcast script: strip speaker prefixes and stage directions
-            podcast_script = _clean_podcast_script(podcast_script, host_name=host)
+            # (dialogue-mode shows keep their real DAN:/PATRICK: turn labels)
+            podcast_script = _clean_podcast_script(
+                podcast_script, host_name=host,
+                dialogue_mode=config.tts.dialogue_mode,
+            )
 
             # TST-specific branding normalization for the opening welcome.
             # The model occasionally still mangles the exact required phrasing
@@ -2316,6 +2335,10 @@ def run(args: argparse.Namespace) -> None:
             _disclosure = (
                 _AI_DISCLOSURE_RU if args.show in _RUSSIAN_SHOWS else _AI_DISCLOSURE
             )
+            if config.tts.dialogue_mode:
+                # Unlabeled text inherits the previous speaker's voice —
+                # make the disclosure explicitly the host's line.
+                _disclosure = f"{(config.publishing.host_name or 'PATRICK').upper()}: {_disclosure}"
             podcast_script = podcast_script.rstrip() + "\n\n" + _disclosure
 
             # Parse chapter markers from the cleaned script (before TTS).
@@ -2339,11 +2362,14 @@ def run(args: argparse.Namespace) -> None:
             # all prior cleaning passes.  This catches edge cases where the LLM
             # output format, retry expansion, or paragraph breaking unexpectedly
             # places a prefix at a line/sentence start.
+            # Dialogue-mode shows skip this entirely — their DAN:/PATRICK:
+            # labels ARE the synthesis routing and must reach engine.tts_dialogue.
             import re as _re
-            for _pfx in ("Host:", f"{host}:", "Patrick:", "Ведущая:", "Ведущий:", "Narrator:", "Speaker:"):
-                _esc = _re.escape(_pfx)
-                podcast_script = _re.sub(r"^" + _esc + r"\s*", "", podcast_script, flags=_re.MULTILINE)
-                podcast_script = _re.sub(r"(?<=[.!?])\s+" + _esc + r"\s*", " ", podcast_script)
+            if not config.tts.dialogue_mode:
+                for _pfx in ("Host:", f"{host}:", "Patrick:", "Ведущая:", "Ведущий:", "Narrator:", "Speaker:"):
+                    _esc = _re.escape(_pfx)
+                    podcast_script = _re.sub(r"^" + _esc + r"\s*", "", podcast_script, flags=_re.MULTILINE)
+                    podcast_script = _re.sub(r"(?<=[.!?])\s+" + _esc + r"\s*", " ", podcast_script)
             podcast_script = _re.sub(r"\n{3,}", "\n\n", podcast_script).strip()
 
             # Save TTS-ready script for debugging pronunciation/intro issues
@@ -2396,12 +2422,62 @@ def run(args: argparse.Namespace) -> None:
                 # #17 + the TTSConfig docstring.
                 use_section_tts = (
                     getattr(config.tts, "use_section_tts", True)
+                    and not config.tts.dialogue_mode
                     and episode_chapters
                     and len(episode_chapters) >= 2
                     and sting_path
                 )
 
-                if use_section_tts:
+                # Two-host dialogue synthesis (The DP Pod): route each
+                # speaker's turns to that speaker's Grok voice. Supersedes
+                # section-TTS (turn-level synthesis and per-section stings
+                # are incompatible) and never applies the speech wrap
+                # (per-turn wraps are the landmine-#17 leak shape).
+                use_dialogue_tts = (
+                    config.tts.dialogue_mode and tts_provider == "grok"
+                )
+                if use_dialogue_tts:
+                    from engine.tts_dialogue import (
+                        dialogue_stats,
+                        parse_dialogue_turns,
+                        synthesize_dialogue,
+                    )
+                    _dlg_voices = config.tts.dialogue_voices or {}
+                    _dlg_stats = dialogue_stats(podcast_script, _dlg_voices)
+                    for _k, _v in _dlg_stats.items():
+                        metrics.record(_k, _v)
+                    if parse_dialogue_turns(podcast_script, _dlg_voices):
+                        metrics.record("dialogue_fallback_single_voice", False)
+                        synthesize_dialogue(
+                            podcast_script, _dlg_voices, raw_mp3,
+                            api_key=api_key,
+                            max_chars=config.tts.max_chars,
+                            language_code=config.tts.language_code,
+                            pause_ms=config.tts.dialogue_pause_ms,
+                        )
+                    else:
+                        logger.warning(
+                            "Dialogue TTS: no %s speaker labels found in the "
+                            "script — falling back to single-voice synthesis "
+                            "with tts.voice_id so the episode still ships. "
+                            "Check the podcast prompt's label rules.",
+                            sorted(_dlg_voices),
+                        )
+                        metrics.record("dialogue_fallback_single_voice", True)
+                        synthesize(
+                            podcast_script, config.tts.voice_id, raw_mp3,
+                            api_key=api_key, provider=tts_provider,
+                            max_chars=config.tts.max_chars,
+                            model_id=config.tts.model, stability=config.tts.stability,
+                            similarity_boost=config.tts.similarity_boost,
+                            style=config.tts.style,
+                            language_code=config.tts.language_code,
+                            speed=config.tts.speed,
+                            apply_text_normalization=config.tts.apply_text_normalization,
+                            speech_wrap_open=config.tts.speech_wrap_open,
+                            speech_wrap_close=config.tts.speech_wrap_close,
+                        )
+                elif use_section_tts:
                     from engine.chapters import split_script_at_chapters
                     from engine.audio import generate_transition_sting, concatenate_with_stings
 
@@ -3518,19 +3594,29 @@ def _clean_digest_for_podcast(digest: str) -> str:
     return cleaned
 
 
-def _clean_podcast_script(script: str, host_name: str = "Patrick") -> str:
+def _clean_podcast_script(
+    script: str, host_name: str = "Patrick", dialogue_mode: bool = False,
+) -> str:
     """Strip speaker prefixes (Host:, <host_name>:) and stage directions from podcast script.
 
     This produces clean text suitable for TTS synthesis.
+
+    ``dialogue_mode=True`` (two-host shows, e.g. The DP Pod) keeps the real
+    speaker labels (``PATRICK:`` / ``DAN:``) that ``engine.tts_dialogue``
+    routes to per-speaker voices — only generic scaffolding prefixes
+    (``Host:``, ``Narrator:``, …) are stripped in that mode. All other
+    cleaning (metadata lines, stage directions, leaked targets) still runs.
     """
     import re
 
     host_prefix = f"{host_name}:"
     # Common speaker/stage-direction prefixes that LLMs generate.
     # These must be stripped so TTS doesn't try to voice them.
+    # In dialogue mode the host's own name is a REAL turn label, not
+    # scaffolding — leave it (and every other configured speaker) intact.
     _SPEAKER_PREFIXES = [
         "Host:",
-        host_prefix,
+    ] + ([] if dialogue_mode else [host_prefix]) + [
         # Russian (Финансы Просто)
         "Ведущая:",
         "Ведущий:",

@@ -232,7 +232,7 @@ _ALL_SHOWS = [
     "tesla", "omni_view", "fascinating_frontiers", "planetterrian",
     "env_intel", "models_agents", "models_agents_beginners",
     "finansy_prosto", "privet_russian", "modern_investing",
-    "unintended_consequences",
+    "unintended_consequences", "dp_pod",
 ]
 
 @pytest.mark.parametrize("show_slug", _ALL_SHOWS)

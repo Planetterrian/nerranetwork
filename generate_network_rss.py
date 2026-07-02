@@ -18,6 +18,7 @@ FEEDS = [
     "privet_russian_podcast.rss",
     "modern_investing_podcast.rss",
     "unintended_consequences_podcast.rss",
+    "dp_pod_podcast.rss",
 ]
 
 MAX_EPISODES = 50

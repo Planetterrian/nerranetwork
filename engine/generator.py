@@ -979,8 +979,14 @@ def _build_digest_expansion_retry_prompt(
     )
 
 
-def _sanitize_podcast_script(text: str) -> str:
+def _sanitize_podcast_script(text: str, preserve_speaker_labels: bool = False) -> str:
     """Strip known LLM artifacts that break TTS quality.
+
+    ``preserve_speaker_labels=True`` (dialogue-mode shows, e.g. The DP Pod)
+    keeps legitimate ``PATRICK:`` / ``DAN:`` turn labels — the speaker-prefix
+    strip below would otherwise silently merge every Patrick turn into the
+    other host's voice. Generic scaffolding prefixes (``Host:``) are still
+    stripped in that mode.
 
     Defense-in-depth: even when prompts forbid these patterns, LLMs
     occasionally include them anyway.  Stripping here prevents them
@@ -1038,11 +1044,20 @@ def _sanitize_podcast_script(text: str) -> str:
     # consistent without forcing prompts to play whack-a-mole with
     # the model's habit.
     text_joined = "\n".join(cleaned)
-    text_joined = re.sub(
-        r"(?im)^\s*(?:host|patrick|оля|olya|olia)\s*[:：]\s+",
-        "",
-        text_joined,
-    )
+    if preserve_speaker_labels:
+        # Dialogue-mode shows: real speaker labels (PATRICK:/DAN:) must
+        # survive to engine.tts_dialogue; only strip generic scaffolding.
+        text_joined = re.sub(
+            r"(?im)^\s*(?:host|narrator|speaker)\s*[:：]\s+",
+            "",
+            text_joined,
+        )
+    else:
+        text_joined = re.sub(
+            r"(?im)^\s*(?:host|patrick|оля|olya|olia)\s*[:：]\s+",
+            "",
+            text_joined,
+        )
     # Strip consecutive same-sentence duplicates within a single line.
     # Operator caught (Финансы Просто Ep32, May 6 2026) the LLM
     # producing ``Давайте разберёмся! Давайте разберёмся в самых
@@ -2163,5 +2178,10 @@ def generate_podcast_script(
     except Exception as exc:
         logger.warning("Repetition detection failed for '%s': %s", config.name, exc)
 
-    text = _sanitize_podcast_script(text)
+    text = _sanitize_podcast_script(
+        text,
+        preserve_speaker_labels=getattr(
+            getattr(config, "tts", None), "dialogue_mode", False,
+        ),
+    )
     return text
