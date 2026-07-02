@@ -1,0 +1,82 @@
+Hey, welcome to Models & Agents, episode 99. It's July 2nd, 2026. Let's see what happened
+in the AI world today. And trust me, it's been busy.
+Z.AI just dropped a free, agentic coding IDE wired directly to its open-weight GLM 5.2
+model, giving builders a self-hostable alternative that sidesteps recent export control shocks.
+Z.AI released Z-code, a desktop-agent environment built around GLM 5.2. The model uses 744 billion
+parameters in a mixture of experts set up with 40 billion active parameters and a 1 million token
+context window. It was trained on Chinese Silicon and supports remote control through WeChat,
+FaceView, or Telegram. The GLM coding plan starts at $16.20 per month. Open weights carry an
+MIT license so teams can self-host without cloud-kill-switch risk. The tool plans, edits files, runs checks,
+and iterates across long horizon tasks. It also supports bring your own key for Claude, Gemini,
+and other models. This release builds directly on the open-weight model's arc we tracked yesterday.
+It narrows the practical gap between closed frontier coding tools and self-hosted stacks while
+raising the open versus closed performance question for long horizon agents. Since Nova released
+the 50-step base version of its 8 billion parameter mixture of Transformers model for dense,
+infographic generation, and editing. The model is available under Apache 2.0 on Hugging Face.
+It handles both general images and complex infographics with consistent fonts, colors, and layouts.
+An 8-step Lora variant trades quality for speed and runs on as little as 16 gigabytes of VRAM.
+Builders can wrap it in a fast API, open AI, compatible endpoint, without comfy UI,
+an interleaved images sibling model supports consistent multi-image stories and slide decks.
+Inception 42 launched a new Arabic-focused model. The launch came through a partnership with
+Microsoft. The model targets regional language and cultural coverage. It adds to non-English
+frontier models for local enterprise use. Parameter count and benchmark details stay limited.
+The collaboration signals Microsoft's push into Arabic language infrastructure.
+Teams in Arabic customer support or content generation should test the endpoint this week.
+A Mac Studio M3 Ultra combined with an RTX 6000 Blackwell setup demonstrated a 14.8%
+pre-fill speed-up. The speed-up occurred when splitting Kimi K2.7 Code Q3 across machines using
+llama.cpprpc. Decode gains remained under 5%. The 432 gigabyte model achieved roughly 18 tokens per
+second in decode on the split setup. The test ran over 1 gigabit e-links. RPC improves capacity
+more than raw decode speed according to the results. Teams with heterogeneous hardware can apply
+these numbers to check split viability. Via her introduced a new multi-agent system.
+The system aims to reduce security alert overload. It also seeks to improve analyst decision
+quality. The platform routes and triages alerts across specialized agents. Consolidated findings
+surface after the process. Early enterprise users report fewer false positives for human analysts.
+Security teams can request the beta for agentic SOC tooling. Beyond trust released a beta solution
+for controlling and auditing AI agent actions inside enterprise environments. The tool focuses on
+privilege management and session oversight for agents that interact with systems. It addresses
+the emerging headless agent risk surface. Security and compliance teams can join the beta to test
+policy enforcement on agent workflows. An update to simple LLM chat reached version 1.2.5.
+The agentic harness for Windows XP and .NET 4.0 now includes user modifiable reasoning levels.
+Tool packages can inject system prompt content and the expanded tool SDK ships with the release.
+hobbyist running local agents on old machines can pull the new version from GitHub.
+Sephora provides 564 college writing drafts paired with 8,240 instructor annotations and rubrics.
+The public reference set supports evaluation of LLM feedback quality.
+The accompanying uni-match evaluation matches generated feedback units to instructor
+priorities and reports F1 scores with no tested LLM exceeding 0.4. Writing tool developers now
+have a concrete benchmark for aligning automated feedback with real instructor behavior.
+Ali extends minimal pair evaluation to 275 plus languages. It generates controlled semantics shifts
+in English, then translates them. The framework exposes large gaps in cross-lingual performance that
+track training data prevalence. Embedding teams can run Ali to diagnose tokenization and
+representation weaknesses in low resource languages. Trace models conversational memory as a hierarchical
+graph. The graph includes explicit temporal edges. Causal edges appear in the structure as well.
+Contradiction edges and validity annotations are also present. Multi-hop and temporal reasoning
+improves on long conversation QA benchmarks. Lexical retrieval separates from state-aware path
+construction in the approach. Persistent agent developers can use the graph schema to cut
+stale-fact errors. Okay, let's pop the hood on continuous diffusion language models. Everyone
+talks about record-load generative perplexity as if the metric directly measures quality.
+In practice, the low scores often come from a one-dimensional contractive attractor inside
+the self-conditioning loop. The loop feeds each step's clean estimate back into the next and
+collapses probability mass toward repetitive tokens. Stripping repetition from ELF-B raises its
+GenPPL from 19.5 to 27.7. The fix subtracts the single-learn direction once, then continues sampling.
+The same vector estimated on a 105 million parameter model transfers to 342 million and 652
+million checkpoints with almost no change. Teams choosing between auto-regressive and diffusion
+generators should therefore measure repetition rate and human-clean token cost, not GenPPL alone.
+Download Zcode and point it at the OpenGLM 5.2 weights to test long horizon coding tasks without
+API spend. Wrap sense NOVA you on to 8B melty, unphographic veguatu in a fast API open AI compatible
+endpoint for consistent infographic generation inside existing chat clients.
+Run ALE on your current embedding model to surface cross-lingual gaps before deploying multi-lingual
+rag. Pull the SE4A Corpus and UniMatch score to benchmark any new writing assistant feedback
+pipeline against real instructor annotations. Microsoft and Inception 42 are expected to release
+Arabic model benchmarks and fine-tuning guides within two weeks. Z.AI has signaled additional
+GLM coding plan quota increases and Linux client stabilization by end of July. ARCs have authors
+behind trace and SE4A plan open source reference implementations in the coming month.
+Tomorrow keep an eye on the first public responses from multiple labs to the new industry jailbreak
+severity framework drafted by anthropic and partners. That wraps up today's AI briefing.
+Share this with a developer or builder who wants to stay current. Subscribe wherever you listen.
+See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Narrow Network.
+Links in the show notes. And before you go, this show is part of the Narrow Network,
+a family of daily podcasts on tech, science and markets. Each one a short, sharp briefing you can
+finish on the commute. If today earned its place in your feed, here's your next listen,
+environmental intelligence, the environment and climate policy brief for Canada.
+Find every show free at NarrowNetwork.com. This episode used AI voice synthesis of my voice.
+Editorial selection and analysis are my own.
