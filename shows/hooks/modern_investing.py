@@ -145,8 +145,12 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     # Evaluate yesterday's open trade (if any)
     _evaluate_open_trade(tracker, tracker_path)
 
-    # Build yesterday's trade review text
+    # Build yesterday's trade review text. This may stamp
+    # ``reviewed_in_episode`` on the latest closed trade (double-review
+    # guard) — persist it immediately so a later benchmark-refresh failure
+    # can't lose the stamp and re-review the same trade next episode.
     context["yesterday_trade_review"] = _build_trade_review(tracker, episode_num)
+    _save_tracker(tracker, tracker_path)
 
     # Build portfolio summary
     context["portfolio_summary"] = _build_portfolio_summary(tracker)
@@ -591,13 +595,24 @@ def _close_trade(trade: dict, tracker: dict) -> None:
         exit_price = None
 
     if entry_price is None or exit_price is None:
-        logger.warning("Could not fetch prices for %s — marking as data_unavailable", symbol)
-        trade["status"] = "closed"
+        # VOID, don't breakeven-close (July 2026 review). Recording a
+        # data-fetch failure as a $0.00 breakeven CLOSE lied twice: it
+        # counted the phantom trade in the spoken record ("41 trades… 7
+        # breakeven outcomes") AND let the trade-review/lookback narration
+        # later present it as a real market outcome ("ROKU closed flat…
+        # illustrates how announced deals require extended holding
+        # periods"). A voided trade is excluded from every aggregation and
+        # never narrated as a result — it only records that the sim could
+        # not be evaluated. (Ep74 XLF / Ep75 KO / Ep77 ROKU / Ep79 ION,
+        # plus the DELL/HIMS NaN-exit shape.)
+        logger.warning("Could not fetch prices for %s — voiding trade (market data unavailable)", symbol)
+        trade["status"] = "voided"
+        trade["void_reason"] = "market_data_unavailable"
         trade["entry_price"] = None
         trade["exit_price"] = None
-        trade["pnl_pct"] = 0.0
-        trade["pnl_dollars"] = 0.0
-        trade["lesson"] = "Market data was unavailable for evaluation."
+        trade["pnl_pct"] = None
+        trade["pnl_dollars"] = None
+        trade["lesson"] = "Trade voided — market data was unavailable for evaluation."
     else:
         pnl_pct = ((exit_price - entry_price) / entry_price) * 100
         position_size = tracker["metadata"].get("position_size", 1000)
@@ -721,7 +736,13 @@ def _fetch_weekly_prices(symbol: str) -> tuple[float | None, float | None]:
 
 
 def _recompute_summary(tracker: dict) -> None:
-    """Recompute summary statistics from all closed trades."""
+    """Recompute summary statistics from all closed trades.
+
+    Voided trades (``status == "voided"`` — a market-data-fetch failure,
+    July 2026 review) are excluded here by the ``status == "closed"``
+    filter, so they never inflate ``total_trades`` / ``breakeven`` or land
+    in the spoken record.
+    """
     closed = [t for t in tracker["trades"] if t.get("status") == "closed"]
     if not closed:
         return
@@ -1035,33 +1056,67 @@ def _extract_lesson_tags(text: str) -> list[str]:
 # Trade review text builders
 # ---------------------------------------------------------------------------
 
+def _weekly_hold_update(open_trades: list) -> str:
+    """Mid-week unrealized-P&L update for the latest open weekly hold, or ''."""
+    if not open_trades:
+        return ""
+    hold = open_trades[-1]
+    current = hold.get("current_price")
+    if current and hold.get("entry_price"):
+        unrealized = ((current - hold["entry_price"]) / hold["entry_price"]) * 100
+        direction = "up" if unrealized >= 0 else "down"
+        return (
+            f"**Current Weekly Hold:** {hold.get('symbol', '???')} — {hold.get('strategy', '')}\n"
+            f"**Entry:** ${hold['entry_price']:.2f} (Monday open)\n"
+            f"**Current:** ${current:.2f} ({direction} {abs(unrealized):.2f}%)\n"
+            f"**Status:** Holding until Friday evaluation\n"
+        )
+    return ""
+
+
 def _build_trade_review(tracker: dict, episode_num: int | None = None) -> str:
     """Build the Trade Review text block for the digest prompt.
 
-    Handles both weekly holds and flash trades, with appropriate framing for each.
+    Handles both weekly holds and flash trades, with appropriate framing
+    for each. Voided trades (market-data failures) are excluded by the
+    ``status == "closed"`` filter — they are never narrated as outcomes.
+
+    Double-review guard (July 2026 review): each closed trade is reviewed
+    EXACTLY ONCE. Previously the block always reviewed the most-recent
+    closed trade, so on days when nothing new closed (the between-trade
+    cadence gap) the same result was re-narrated as if fresh — the MU
+    flash trade was re-told as "yesterday's" on Ep089/091/093. We stamp
+    ``reviewed_in_episode`` on the trade the first time it's narrated; if
+    the latest closed trade was already reviewed in a PRIOR episode, we
+    give an open-hold update instead, or state holdings are pending.
     """
     if episode_num and episode_num <= 1:
         return ""  # No review for Episode 1
 
     closed = [t for t in tracker["trades"] if t.get("status") == "closed"]
+    open_trades = [t for t in tracker["trades"] if t.get("status") == "open"]
     if not closed:
         # Check for open weekly hold — provide mid-week update
-        open_trades = [t for t in tracker["trades"] if t.get("status") == "open"]
-        if open_trades:
-            hold = open_trades[-1]
-            current = hold.get("current_price")
-            if current and hold.get("entry_price"):
-                unrealized = ((current - hold["entry_price"]) / hold["entry_price"]) * 100
-                direction = "up" if unrealized >= 0 else "down"
-                return (
-                    f"**Current Weekly Hold:** {hold.get('symbol', '???')} — {hold.get('strategy', '')}\n"
-                    f"**Entry:** ${hold['entry_price']:.2f} (Monday open)\n"
-                    f"**Current:** ${current:.2f} ({direction} {abs(unrealized):.2f}%)\n"
-                    f"**Status:** Holding until Friday evaluation\n"
-                )
-        return ""
+        return _weekly_hold_update(open_trades)
 
     last = closed[-1]
+
+    # Double-review guard: don't re-narrate an already-reviewed result.
+    already = last.get("reviewed_in_episode")
+    if already is not None and already != episode_num:
+        hold_update = _weekly_hold_update(open_trades)
+        if hold_update:
+            return hold_update
+        return (
+            "**No newly closed trade since the last review.** The most "
+            "recent Practice Investment has already been reviewed; current "
+            "holdings remain open and pending their scheduled evaluation, "
+            "so there is no new realized result to report today.\n"
+        )
+
+    # Stamp so this result is narrated once (persisted by the caller's save).
+    if episode_num is not None:
+        last["reviewed_in_episode"] = episode_num
     symbol = last.get("symbol", "???")
     strategy = last.get("strategy", "")
     trade_type = last.get("trade_type", "weekly")
@@ -1348,7 +1403,10 @@ def _compute_sector_exposure(tracker: dict) -> dict:
     """Return {sector: {trade_count, exposure_pct, cumulative_pnl}} over the
     last ``_CONCENTRATION_WINDOW`` trades (open + closed combined).
     """
-    trades = tracker.get("trades", [])[-_CONCENTRATION_WINDOW:]
+    # Exclude voided trades (July 2026): a data-fetch failure isn't real
+    # market exposure and must not count toward a concentration warning.
+    real = [t for t in tracker.get("trades", []) if t.get("status") != "voided"]
+    trades = real[-_CONCENTRATION_WINDOW:]
     if not trades:
         return {}
     counts: dict[str, int] = {}

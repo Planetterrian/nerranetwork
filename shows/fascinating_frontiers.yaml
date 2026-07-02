@@ -111,6 +111,16 @@ exclude_title_patterns:
 - \bmerger\b.{0,25}\b(valued|deal|shareholders?|billion|trillion)\b
 - \bindex\b.{0,20}\b(inclusion|rebalanc|addition)\b
 - \badded to\b.{0,20}\bindex\b
+# July 2 2026: nightly-ephemeris almanac items kept slipping past the
+# calendar/sky-tonight filters above ("Moon Passes Near the Sickle of Leo
+# Tonight", "Mars passes within 5 degrees of the Pleiades", "Neptune
+# reaches 30 degrees altitude before dawn", "Venus Shines Beneath Leo's
+# Sickle This Evening" — 4 episodes in the June 18-July 2 window). Anchor
+# on a planet/Moon SUBJECT at the start of the title + an almanac verb, so
+# real news survives: "Asteroid passes near Earth" (subject not a planet),
+# "Mars may host large subsurface magma systems" (verb not almanac), and
+# the FF June-16 lesson — never a bare "passes near".
+- ^(the )?(moon|mercury|venus|mars|jupiter|saturn|uranus|neptune)\b.{0,60}\b(passes|shines|reaches \d+ degrees)\b
 keywords:
 - space
 - astronomy
@@ -283,7 +293,11 @@ slow_news:
   cooldown_days: 30
   repeat_trigger_threshold: 5
 content_freshness:
-  lookback_days: 2
+  # July 2 2026: 2 -> 7. A 2-day window let a slow news day re-run stories
+  # already aired earlier the same week (Ep116, 2026-06-29, repeated 4 of
+  # Ep111/112's stories verbatim). A full week matches the cross-episode
+  # dedup horizon listeners actually notice.
+  lookback_days: 7
   similarity_threshold: 0.72
 youtube:
   podcast_playlist_id: PLRHMnzNNXPYDC7-f8Dary-bTZyvwxR-dR

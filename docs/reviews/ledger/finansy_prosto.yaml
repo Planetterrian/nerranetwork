@@ -17,7 +17,7 @@ reviews:
       is (69-129 articles/day).
     shipped:
       - Russian YouTube call-out for FP (engine/intros._RUSSIAN_SPOKEN_SHOWS)
-      - "@" stripped from spoken handle network-wide (fixes "at at" stutter)
+      - '"@" stripped from spoken handle network-wide (fixes "at at" stutter)'
       - cadence-neutral FP closings ("до встречи" replaces "до завтра")
       - _extract_hook matches "HOOK|ЗАГОЛОВОК"
       - structural-retry suffix de-Tesla'd (generic section language)
@@ -30,31 +30,70 @@ reviews:
       - metric: transcripts ending with an English YouTube call-out (FP)
         baseline: "5/5 recent FP episodes (English on the Olya voice)"
         expected: "0 post-merge; the call-out is Russian ('Ссылка в описании выпуска')"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-02 network pass: window FP episodes end with the
+          Russian call-out; no English CTA on the Olya voice."
       - metric: episodes voicing "at at Nerra …" (network-wide)
         baseline: "75+ across 6 shows (49 'at at Nerra Network', 8+10 'Nerra RU')"
         expected: "0 post-merge; handle spoken without the '@' sigil"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-02 network pass: no 'at at' stutter in any window
+          transcript, network-wide."
       - metric: FP transcripts saying "до завтра" in the closing
         baseline: "present in both closing-pool variants (even-days show)"
         expected: "0 post-merge; closings cadence-neutral ('до встречи')"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-02 network pass: closings cadence-neutral; no
+          'до завтра' in the window."
       - metric: FP episodes with digest_structural_regen=true
         baseline: "10/10 (Ep45-54, every episode — ЗАГОЛОВОК hook unrecognized)"
         expected: "0 (or near 0) post-merge — ЗАГОЛОВОК now recognized"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-02 network pass: digest_structural_regen no longer
+          fires every episode; the Russian hook label is recognized."
       - metric: median FP _tts.txt words / audio minutes, last ~5 post-merge eps
         baseline: "~700w / ~5.0 min (Ep50-54)"
         expected: ">= 950w / >= 7 min on normal-news even-days; not lower than baseline"
-        verdict: pending
-        evidence: "Clean --test A/B not possible Jun 16 (news pool drained by real Ep54 + dedup). Score on Jun 18/20."
+        verdict: miss
+        evidence: "2026-07-02 network pass: episodes still ~700w / ~5 min —
+          the digest-depth prompt did not lift shipped length. Chronic
+          under-length stays deferred (digest ceiling; four-show length A/B)."
       - metric: FP practical-tips count per episode (digest)
         baseline: "2-3 (digest) vs podcast's required minimum of 3"
         expected: ">= 3 tips every episode"
+        verdict: hit
+        evidence: "2026-07-02 network pass: window episodes carry >= 3
+          practical tips."
+    agent_cost_usd: null
+
+  - date: 2026-07-02
+    pr: null
+    doc: docs/reviews/network_review_2026_07_02.md
+    reviewer: claude-code (network editorial pass)
+    summary: >
+      Network editorial pass. Scored June-16: five HITs (Russian CTA, at-at,
+      до-завтра, ЗАГОЛОВОК regen, tips), length MISS (deferred). P0: Ep059
+      spoke a raw digest scaffold line on air («Сорс MoneySense…»). Also:
+      one fabricated tip; a template echo the Cyrillic-blind snapshot missed
+      — «не так уж и сложно, правда?» 7/8 and «Подруга спросила меня вчера»
+      6/8. Real niche, real localization otherwise. Cadence is stated three
+      contradictory ways across YAML / CLAUDE.md / ledger (operator item).
+    shipped:
+      - Source-line scrub in the script-save path (network-wide; kills the
+        spoken «Сорс …» scaffold class)
+    deferred:
+      - "A/B proposals (NOT applied): de-seed «не так уж и сложно, правда?»
+        and «Подруга спросила меня вчера» (keep the method, fresh phrasing);
+        cap «Коротко и ясно» at 2-3 sentences + finance-relevance rule;
+        disclaimer line in all closing variants; deep-dive may not
+        re-explain the episode's own main topic"
+      - chronic under-length (carried; digest ceiling, four-show length A/B)
+      - "operator: align the cadence (YAML daily vs CLAUDE.md-table Monday
+        vs ledger even-days; actual mixed)"
+    predictions:
+      - metric: spoken source-scaffold lines («Сорс …» / «Source …») in _tts.txt
+        baseline: "Ep059 spoke «Сорс MoneySense…» on air"
+        expected: "0 post-merge (script-save scrub)"
         verdict: pending
         evidence: null
     agent_cost_usd: null

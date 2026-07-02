@@ -205,6 +205,127 @@ class TestNarrativeQueueRunway:
         assert "concrete_example" in cats
         assert "opportunity_area" in cats
 
+    def test_first_principles_unproduced_alternates(self):
+        """July 2 2026 hygiene pass: the unproduced FP queue was
+        re-sequenced to alternate concrete_example / opportunity_area. The
+        produced tail ended on an opportunity_area (recycling-economics), so
+        the first unproduced entry must be a concrete_example, and adjacent
+        same-category pairs must stay at the theoretical minimum (the
+        |#C - #O| overflow that can't be interleaved away)."""
+        q = yaml.safe_load(
+            (_ROOT / "shows" / "topic_queues" / "first_principles.yaml").read_text(
+                encoding="utf-8"))["queue"]
+        seq = [e.get("category") for e in q if not e.get("produced")]
+        assert seq[0] == "concrete_example", seq[:3]
+        n_c = seq.count("concrete_example")
+        n_o = seq.count("opportunity_area")
+        same_adj = sum(1 for a, b in zip(seq, seq[1:]) if a == b)
+        assert same_adj <= abs(n_c - n_o), (
+            f"FP unproduced queue not minimally alternated: {same_adj} "
+            f"adjacent same-category pairs (C={n_c}, O={n_o}): {seq}"
+        )
+
+    def test_no_duplicate_topics_reintroduced(self):
+        """FP had true-duplicate unproduced entries — aluminum-electrolysis
+        (a second Hall-Héroult story), a second LED entry, and a second
+        heat-pump entry. They were removed; guard against re-adding them."""
+        q = yaml.safe_load(
+            (_ROOT / "shows" / "topic_queues" / "first_principles.yaml").read_text(
+                encoding="utf-8"))["queue"]
+        ids = {e["id"] for e in q}
+        for removed in ("aluminum-electrolysis", "led-lighting-cost-per-lumen",
+                        "heat-pumps-space-heating"):
+            assert removed not in ids, f"{removed} duplicate re-introduced"
+        # The kept canonical entries survive.
+        for kept in ("aluminum-hall-heroult", "lighthouse-led-efficiency",
+                     "air-conditioning-heat-pumps"):
+            assert kept in ids
+
+    def test_uc_biofuels_category_accurate(self):
+        """biofuels-deforestation was mislabeled category: medicine; it's a
+        policy-mandate backfire."""
+        q = yaml.safe_load(
+            (_ROOT / "shows" / "topic_queues" / "unintended_consequences.yaml").read_text(
+                encoding="utf-8"))["queue"]
+        b = next(e for e in q if e["id"] == "biofuels-deforestation")
+        assert b["category"] == "policy"
+
+    def test_uc_unproduced_interleaved_not_clustered(self):
+        """The window shipped 8 consecutive medicine then 5 consecutive
+        infrastructure episodes. The unproduced queue is now round-robin
+        interleaved — no long single-category run at the head."""
+        q = yaml.safe_load(
+            (_ROOT / "shows" / "topic_queues" / "unintended_consequences.yaml").read_text(
+                encoding="utf-8"))["queue"]
+        seq = [e.get("category") for e in q if not e.get("produced")]
+        # No 3-in-a-row of the same category anywhere before the dominant
+        # category's unavoidable tail overflow (economics = 10 of 33).
+        from collections import Counter
+        counts = Counter(seq)
+        dominant = counts.most_common(1)[0][0]
+        head = seq[: len(seq) - counts[dominant]]  # region before overflow can bite
+        runs = [sum(1 for _ in g) for _, g in __import__("itertools").groupby(head)]
+        assert max(runs, default=0) <= 1, f"clustered head: {seq}"
+
+
+class TestNoDuplicateFeedUrls:
+    """July 2 2026: Models & Agents subscribed arXiv cs.CL twice —
+    ``https://arxiv.org/rss/cs.CL`` (label "arXiv NLP") and
+    ``http://export.arxiv.org/rss/cs.CL`` (label "arXiv cs.CL"). Same feed,
+    double-weighted preprints (root cause of the arXiv flood that crowded
+    out Codex Record Replay / Gemini Computer Use). This guard normalizes
+    scheme + the export.arxiv.org host alias so a re-subscribed feed under a
+    different scheme/host can't slip back in.
+    """
+
+    # Pre-existing, out-of-scope duplicate on a show not owned by this pass
+    # (omni_view subscribes BBC News over both http and https). Recorded so
+    # this guard is meaningful network-wide without failing on a file this
+    # pass may not touch; the omni_view owner should collapse it. Any NEW
+    # duplicate — including a second one on omni_view — still fails.
+    _ALLOWED = {
+        "omni_view": {"feeds.bbci.co.uk/news/rss.xml"},
+    }
+
+    @staticmethod
+    def _norm(url: str) -> str:
+        import re
+        u = (url or "").strip().lower()
+        u = re.sub(r"^https?://", "", u)
+        u = u.replace("export.arxiv.org", "arxiv.org")
+        return u.rstrip("/")
+
+    def test_no_show_subscribes_the_same_feed_twice(self):
+        import glob
+        offenders = {}
+        for f in glob.glob(str(_ROOT / "shows" / "*.yaml")):
+            slug = Path(f).stem
+            cfg = yaml.safe_load(Path(f).read_text(encoding="utf-8")) or {}
+            seen = {}
+            for src in cfg.get("sources") or []:
+                if not isinstance(src, dict):
+                    continue
+                n = self._norm(src.get("url", ""))
+                if not n:
+                    continue
+                seen.setdefault(n, 0)
+                seen[n] += 1
+            allowed = self._ALLOWED.get(slug, set())
+            dups = [n for n, c in seen.items() if c > 1 and n not in allowed]
+            if dups:
+                offenders[slug] = dups
+        assert not offenders, f"duplicate feed URLs found: {offenders}"
+
+    def test_models_agents_has_single_cs_cl_feed(self):
+        cfg = _yaml("models_agents")
+        cs_cl = [
+            s for s in (cfg.get("sources") or [])
+            if isinstance(s, dict) and "cs.cl" in self._norm(s.get("url", ""))
+        ]
+        assert len(cs_cl) == 1, (
+            f"arXiv cs.CL must be subscribed exactly once; got {cs_cl}"
+        )
+
 
 class TestFinansyProstoCategoryFix:
     def test_youtube_category_is_education(self):

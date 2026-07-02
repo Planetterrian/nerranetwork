@@ -38,7 +38,12 @@ def count_words(text: str) -> int:
 
 
 def _tokens(text: str) -> list[str]:
-    return re.findall(r"[a-z']+", text.lower())
+    # Unicode-aware word tokens (letters only, internal apostrophes kept).
+    # The old ``[a-z']+`` pattern was Cyrillic-blind: every Russian word
+    # tokenized to nothing, so the tic detector reported "no cross-episode
+    # repeated phrases" for Финансы Просто while a template ran 7/8
+    # episodes (July 2026 network editorial pass).
+    return re.findall(r"[^\W\d_]+(?:['’][^\W\d_]+)*", text.lower())
 
 
 def _stitch_windows(grams: dict[str, int], n: int) -> dict[str, int]:
@@ -135,6 +140,14 @@ def chapter_issues(chapters: list[dict]) -> list[str]:
         issues.append("multiple 'Introduction' chapters")
     if len(titles) <= 1:
         issues.append(f"only {len(titles)} chapter(s)")
+    # Orphan-closing class (July 2026): episodes whose FINAL chapter is not
+    # a Closing slipped past the old checks — EI Ep049/050/051 ended on
+    # promo-collision body chapters and still counted as "clean". The
+    # network shape is body → (Tomorrow Teaser →) Closing, so anything
+    # else ending the episode is a flag. "Outro" is accepted as a Closing
+    # synonym.
+    if len(titles) > 1 and not re.search(r"(?i)\b(closing|outro)\b", titles[-1]):
+        issues.append(f"final chapter is not a Closing (ends on {titles[-1]!r})")
     return issues
 
 

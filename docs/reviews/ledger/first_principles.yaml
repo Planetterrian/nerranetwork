@@ -88,21 +88,66 @@ reviews:
           keyword, e.g. concrete_example days)
         baseline: "7 of 18 episodes (Ep001/004/007/009/011/015/017) had NO Closing"
         expected: "Closing present on 100% of new episodes after the marker reorder"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: >-
+          2026-07-02 network pass: Closing chapter present on all new
+          episodes; the marker-reorder fix verified.
       - metric: >-
           recurrence of the verbatim lesson formula "whose price greatly
           exceeds its [materials/atoms] is announcing a design problem" as the
           lesson opener in _tts.txt
         baseline: "12 of ~16 episodes opened the lesson with the formula"
         expected: "<= 2 of the next 10 episodes use the verbatim formula"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: >-
+          2026-07-02 network pass: the verbatim lesson formula is absent from
+          the window's episodes.
       - metric: "FP brief (.md) word count"
         baseline: "848-1116 words (no digest expansion path)"
         expected: ">= 1300 words median after the digest expansion retry fires"
+        verdict: hit
+        evidence: >-
+          2026-07-02 network pass (~hit): the digest-stage retry fires and
+          lifts briefs toward the 1400 floor; a minority still land below
+          1300 — bounded by the grok-4.3 plateau (do_not_retry), not a fix
+          target.
+
+  - date: 2026-07-02
+    pr: null
+    doc: docs/reviews/network_review_2026_07_02.md
+    reviewer: claude-code (network editorial pass)
+    summary: >-
+      Network editorial pass. Scored June-23: Closing-chapter fix verified
+      (HIT), lesson-template de-seed HIT, digest expansion retry ~HIT
+      (briefs lifted; a few still capped by the model plateau). Best content
+      accuracy in the network. Findings: topic-queue duplicates; Ep020/021
+      shipped back-to-back concrete_example episodes (the
+      concrete/opportunity alternation broken); Ep024 spoke its digest's
+      creative sub-headings mid-paragraph (header leak).
+    shipped:
+      - >-
+        Queue hygiene — duplicate topic pruning + concrete/opportunity
+        alternation restored in shows/topic_queues/first_principles.yaml.
+    deferred:
+      - >-
+        A/B proposals (NOT applied): FPD podcast stage must not emit
+        markdown-style headers (a code-side header-strip is worth
+        considering); forbid absolute cost-effectiveness claims without
+        units sanity (shared with UC — the $50/life-saved class).
+      - >-
+        Garbage auto-segment chapter titles (carried; shared network lever).
+    predictions:
+      - metric: consecutive same-category episodes (concrete vs opportunity)
+        baseline: "Ep020/021 shipped back-to-back concrete_example"
+        expected: "strict alternation over the next 10 episodes"
         verdict: pending
         evidence: null
+      - metric: spoken markdown-style sub-headings in _tts.txt
+        baseline: "Ep024 spoke its digest's creative sub-headings mid-paragraph"
+        expected: "0 once the header rule/strip ships; monitored until then"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
 
 do_not_retry:
   - idea: >-

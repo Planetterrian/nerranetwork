@@ -103,17 +103,54 @@ reviews:
       - Tomorrow-teaser "Watch for the [first/next] <test>" frame now 6/8
         (Ep1,2,4,6,7,8); hardening across two reviews. Rotate teaser opener in
         podcast prompt if it goes fully dead (low risk, P2).
-      - Weekly-recap Closing chapter: dailies confirmed; score the next recap
-        (Sun 2026-06-21) for the recap half of the June-18 prediction.
+      - "Weekly-recap Closing chapter: dailies confirmed; score the next recap
+        (Sun 2026-06-21) for the recap half of the June-18 prediction."
     predictions:
       - metric: stranded time fragments in spacex _tts.txt (regex "[A-Z] M:[0-9]" or "\\d{3,4}:\\d{2}")
         baseline: "2 (Ep8: 'one fifty A M:45' + '0850:45 U T C')"
         expected: "0 — launch times render clean (seconds dropped; compact UTC spoken) from Ep9 on"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-02 network pass: no stranded time fragments in any
+          window _tts.txt / Whisper transcript (Ep9+)."
       - metric: Closing chapter on the 2026-06-21 weekly recap (chapters_ep*.json)
         baseline: "Ep3 (prior recap) shipped with NO Closing; June-18 reorder applied"
         expected: "the 2026-06-21 recap has a Closing chapter (closes the carried-forward June-18 prediction)"
+        verdict: hit
+        evidence: "2026-07-02 network pass: the 2026-06-21 recap shipped WITH a
+          Closing chapter — closes the carried June-18 half. (Separate issue:
+          the June-28 recap never ran at all — scheduler, operator item.)"
+    agent_cost_usd: null
+
+  - date: 2026-07-02
+    pr: null
+    doc: docs/reviews/network_review_2026_07_02.md
+    reviewer: claude-code (network editorial pass)
+    summary: >
+      Network editorial pass. Scored June-19 (time-garbles HIT; recap-Closing
+      HIT). Findings: laundered SEO spam reached the digest ("Fiorentina
+      versus Genoa" video-ID titles); xAI<->SpaceX entity conflation
+      ("SpaceXAI"; Memphis/Colossus attributed to SpaceX); memory-echo
+      "...remain the key open questions" x5 in one episode; Ep17's hook
+      promised a static fire the episode never covered; the June-28 Sunday
+      recap silently never ran (operator item); SPCX price still spoken
+      twice per episode (8/8 — strongest evidence yet for the deferred
+      price-once fix).
+    shipped:
+      - junk-title fetch filter (video-ID / sports-fixture titles;
+        13F/stock-filter class, deterministic, no A/B)
+    deferred:
+      - "A/B proposals (NOT applied): entity discipline (Memphis/Colossus is
+        xAI's; ban 'SpaceXAI'); every hook clause must correspond to a
+        covered story; Tesla-style deep-dive topic-history injection
+        (Ep15/Ep19 ran the same deep dive); decide the deferred price-once
+        fix"
+      - Engineering Deep Dive length floor (carried; four-show length A/B)
+      - "operator: June-28 silently missed Sunday recap — scheduler
+        forensics"
+    predictions:
+      - metric: laundered SEO / sports-fixture / video-ID junk titles in digests
+        baseline: "Fiorentina-vs-Genoa class present in the window"
+        expected: "0 post-merge (fetch filter)"
         verdict: pending
         evidence: null
     agent_cost_usd: null

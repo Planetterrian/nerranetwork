@@ -125,6 +125,74 @@ class TestChapterShapeJune18:
         assert titles.index("Tomorrow Teaser") < titles.index("Closing")
 
 
+class TestAstronomyScopeFilter:
+    """July 2 2026 scope-drift backstop. Planetterrian is a life-science
+    show, but the shared science RSS feeds pushed pure-astronomy items the
+    LLM selection didn't reject — Ep094-107 shipped exoplanet clouds,
+    galaxy clusters, black holes, GRBs, Mars magma, comets, and a
+    Swift-telescope reboost, several DUPLICATING Fascinating Frontiers the
+    same day. A conservative fetch-side ``exclude_title_patterns`` drops
+    unambiguous astronomy/space-physics titles while preserving
+    astrobiology / in-space-biology / origin-of-life edge cases."""
+
+    @staticmethod
+    def _pats():
+        cfg = yaml.safe_load(
+            (_ROOT / "shows/planetterrian.yaml").read_text(encoding="utf-8"))
+        return cfg.get("exclude_title_patterns", []) or []
+
+    # The real astronomy titles PT shipped in the June 18-July 2 window.
+    ASTRO_TITLES = [
+        "Black hole winds strip star-forming gas from giant galaxies",
+        "Distant galaxy cluster shows unexpected maturity",
+        "Super-puff exoplanets exhibit densities lower than cotton candy",
+        "James Webb detects salty clouds on the pink exoplanet — Science Daily",
+        "Mars once held large magmatic systems like Earth’s — Phys.org",
+        "ExoMars rover tests prepare for 2030 Mars soil analysis",
+        "Ancient stellar flyby still influences long-period comets — Phys.org",
+        "Asteroid Donaldjohanson rotates on two axes, Lucy data show — Phys.org",
+        "Submillimeter Array captures earliest GRB observations at mm wavelengths — Phys.org",
+        "NASA prepares robotic mission to extend Swift telescope life — Phys.org",
+        "May 2024 superstorm drew most ring current ions from Earth rather than solar wind — Phys.org",
+        "Solar storms briefly suppress precipitation across North America — Phys.org",
+        "NASA selects mission to study space weather-atmosphere links",
+    ]
+
+    # Real life-science titles that MUST survive (deliberately including the
+    # astrobiology / in-space-biology / toxicology edge cases the filter is
+    # designed NOT to touch).
+    KEEP_TITLES = [
+        "Spatial Proteomics Atlas Covers 13,000 Proteins in Human Tissues — Nature",
+        "Amyloid beta disrupts tau before plaque formation in Alzheimer's",
+        "Probiotic products show mismatch between microbes and claimed benefits",
+        "HIIT preserves muscle while reducing fat in adults over 70 — Science Daily",
+        "Meta-analysis defines shared gut microbiome signature for colon cancer",
+        # astrobiology / in-space biology — legit PT content, must NOT drop
+        "Texas A&M Sends Grape Seeds to International Space Station — Phys.org",
+        "Cold Atom Lab Advances Quantum Research Aboard ISS — Science Daily",
+        # "mercury" is a toxin in health contexts — must NOT be filtered
+        "Mercury exposure linked to cognitive decline in coastal populations",
+        # origin-of-life meteorite chemistry — deliberately not filtered
+        "Meteorite Points to Destroyed Early Solar System World — Science Daily",
+    ]
+
+    def test_drops_astronomy_titles(self):
+        from engine.utils import drop_excluded_titles
+        kept, dropped = drop_excluded_titles(
+            [{"title": t} for t in self.ASTRO_TITLES], self._pats())
+        assert dropped == len(self.ASTRO_TITLES), (
+            f"survivors: {[a['title'] for a in kept]}")
+
+    def test_keeps_life_science_and_edge_cases(self):
+        from engine.utils import drop_excluded_titles
+        kept, dropped = drop_excluded_titles(
+            [{"title": t} for t in self.KEEP_TITLES], self._pats())
+        survivors = [a["title"] for a in kept]
+        assert dropped == 0, (
+            "scope filter over-dropped legitimate life-science titles: "
+            f"{[t for t in self.KEEP_TITLES if t not in survivors]}")
+
+
 class TestUnifiedLength:
     def test_floor_and_single_target(self):
         cfg = yaml.safe_load((_ROOT / "shows/planetterrian.yaml").read_text(encoding="utf-8"))

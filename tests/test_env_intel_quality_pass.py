@@ -66,9 +66,21 @@ class TestChapterPositionalAnchors:
     def test_introduction_anchored_to_start(self):
         assert _markers()["Introduction"].get("where") == "start"
 
-    def test_closing_and_teaser_anchored_to_end(self):
+    def test_closing_unanchored_and_teaser_anchored_to_end(self):
+        """July 2 2026: Closing deliberately carries NO `where: end` anymore.
+        The parser's end window (last 15%) EXCLUDED the closing line itself
+        on short episodes (Ep049 word 539 vs window 555; Ep050 730 vs 738;
+        Ep051 676 vs 685 — EI's sign-off + promo + disclosure block runs
+        ~120-140 words on a ~650-870-word episode), which is why those
+        episodes shipped with no Closing chapter. The brand-anchored
+        pattern ("That's/That covers today's Environmental Intelligence")
+        provides the positional safety instead."""
         by = _markers()
-        assert by["Closing"].get("where") == "end"
+        assert not by["Closing"].get("where"), (
+            "Closing must NOT be `where: end` — the last-15% window "
+            "excludes EI's early-starting closing block on short episodes "
+            "(the Ep049/050/051 orphan-Closing bug)"
+        )
         assert by["Tomorrow Teaser"].get("where") == "end"
 
     def test_closing_pattern_matches_every_closing_variant(self):
@@ -229,6 +241,92 @@ class TestDeepDiveOpenerNotTic:
         # the old verbatim transition must no longer be the sole seeded option
         assert "vary the lead-in" in prompt
         assert "avoid starting every deep dive" in prompt
+
+
+class TestChapterClosingOrderingJuly2:
+    """July 2 2026 pass (orphan-Closing variant 3, the EI June-11 /
+    SpaceX June-18 / FF June-24 ordering class). Ep049/050/051 shipped
+    with NO Closing chapter: unconsumed BODY markers ate the closing
+    paragraph — `science|technical` matched the network promo "…covering
+    tech, science, markets" (Ep049/051) and bare `deep dive` matched the
+    Tesla cross-promo "daily deep dive into everything Tesla" (Ep050).
+    Fixes pinned here: Closing + Tomorrow Teaser listed BEFORE all body
+    markers; the Science & Technical pattern can't match the promos or
+    "geotechnical"; the Practitioner Deep Dive pattern dropped bare
+    `deep dive`/`under the hood` and anchors on the section's signature
+    "most common mistake" beat; and the five real committed episodes
+    re-parse to a shape that ends on Closing."""
+
+    _BODY_TITLES = (
+        "Executive Summary", "Lead Story", "Regulatory & Policy Watch",
+        "Science & Technical", "Industry & Practice",
+        "Practitioner Deep Dive", "Action Items", "Week Ahead",
+    )
+
+    def test_closing_and_teaser_listed_before_all_body_markers(self):
+        titles = [m["title"] for m in _marker_list()]
+        first_body = min(titles.index(t) for t in self._BODY_TITLES)
+        assert titles.index("Closing") < first_body, (
+            "Closing must precede every body marker so an unconsumed body "
+            "marker can't steal the closing paragraph (Ep049/050/051)"
+        )
+        assert titles.index("Tomorrow Teaser") < first_body
+
+    def test_science_pattern_cannot_match_closing_promos(self):
+        rx = re.compile(_markers()["Science & Technical"]["pattern"], re.IGNORECASE)
+        promos = [
+            "a family of daily podcasts covering tech, science, markets, and more.",
+            "a family of daily podcasts on tech, science, and markets, each one a short briefing.",
+            "give Planetterrian Daily a listen: daily breakthroughs in science, health, and longevity.",
+            "Fascinating Frontiers, the most fascinating news from space and science. Find every show at nerranetwork dot com.",
+            "Your briefing on environmental regulatory, science, and compliance developments.",
+        ]
+        for promo in promos:
+            assert not rx.search(promo), f"promo must not open a Science & Technical chapter: {promo!r}"
+
+    def test_science_pattern_still_matches_real_section_not_geotechnical(self):
+        rx = re.compile(_markers()["Science & Technical"]["pattern"], re.IGNORECASE)
+        # The real spoken section label (Ep048).
+        assert rx.search("In Science and Technical, a long-term grassland experiment examined soils.")
+        # "geotechnical" mid-story created false chapters (Ep047/Ep050).
+        assert not rx.search("citing improved geotechnical stability and reduced disturbance")
+
+    def test_deep_dive_pattern_cannot_match_tesla_cross_promo(self):
+        rx = re.compile(_markers()["Practitioner Deep Dive"]["pattern"], re.IGNORECASE)
+        assert not rx.search(
+            "here's your next listen — Tesla Shorts Time, your daily deep dive into everything Tesla"
+        )
+        assert not rx.search("let's go under the hood")
+        # Signature deep-dive beat, present in 7/7 recent episodes.
+        assert rx.search("The mistake I see most often is treating glacial lake risks separately.")
+        assert rx.search("the most common mistake is skipping the vapour pathway check")
+
+    def test_closing_pattern_tolerates_curly_apostrophe(self):
+        rx = re.compile(_markers()["Closing"]["pattern"], re.IGNORECASE)
+        assert rx.search("That’s Environmental Intelligence for today.")
+        assert rx.search("That's Environmental Intelligence for today.")
+        assert rx.search("That covers today's environmental intelligence.")
+
+    def test_real_committed_episodes_reparse_ends_on_closing(self):
+        """Re-parse the actual shipped scripts (the FF June-24
+        TestChapterClosingOrdering method): every episode must start on
+        Introduction and end on Closing — Ep049/050/051 previously ended
+        on a bogus Science & Technical / Practitioner Deep Dive chapter
+        opened by the closing promos."""
+        markers = [_Marker(m) for m in _marker_list()]
+        scripts = sorted((_ROOT / "digests/env_intel").glob("Env_Intel_Ep0*_tts.txt"))
+        scripts = [p for p in scripts if any(
+            f"Ep{ep}_" in p.name for ep in ("047", "048", "049", "050", "051"))]
+        if not scripts:
+            pytest.skip("EI Ep047-051 scripts not present")
+        for p in scripts:
+            titles = [c.title for c in parse_chapters(
+                p.read_text(encoding="utf-8"), markers, show_name="env_intel")]
+            assert titles, f"{p.name}: no chapters parsed"
+            assert titles[0] == "Introduction", f"{p.name}: {titles}"
+            assert titles[-1] == "Closing", (
+                f"{p.name} must end on a Closing chapter; got {titles}"
+            )
 
 
 class TestUnifiedLengthTarget:

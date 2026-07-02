@@ -264,6 +264,45 @@ class TestReplaceCurrency:
         assert "one hundred pounds" in result
 
 
+class TestCommaGroupedCurrency:
+    """July 2026 comma-blindness regression tests: the currency handlers
+    matched only the digits before the thousands comma, so shipped audio
+    said "fifty-nine dollars,990" ($59,990 \u2014 Tesla Ep515 hook),
+    "twenty dollars,000" ($20,000 \u2014 Ep523, Whisper: "under $20 in $1000"),
+    and "eighty dollars,000" ($80,000 \u2014 Ep521)."""
+
+    def test_tesla_ep515_price(self):
+        result = replace_currency("The Model Y now starts at $59,990 in the US.")
+        assert "fifty-nine thousand nine hundred ninety dollars" in result
+        assert "," not in result.replace(", ", " ")  # no stranded ",990"
+        assert "990" not in result
+
+    def test_tesla_ep523_price(self):
+        result = replace_currency("a compact EV under $20,000 for the first time")
+        assert "twenty thousand dollars" in result
+        assert "000" not in result
+
+    def test_tesla_ep521_price(self):
+        result = replace_currency("the $80,000 trim")
+        assert "eighty thousand dollars" in result
+        assert "000" not in result
+
+    def test_comma_grouped_with_cents(self):
+        result = replace_currency("a $1,250.50 invoice")
+        assert "one thousand two hundred fifty dollars and fifty cents" in result
+
+    def test_comma_grouped_large_unit(self):
+        result = replace_currency("a $1,200 million raise")
+        assert "one thousand two hundred million dollars" in result
+
+    def test_plain_amounts_unchanged(self):
+        # The pre-fix behavior for non-comma amounts must be preserved.
+        assert "five hundred dollars" in replace_currency("Cost $500")
+        assert "four hundred seventeen dollars and forty-four cents" in (
+            replace_currency("Price is $417.44")
+        )
+
+
 class TestReplacePercentages:
     def test_simple_percentage(self):
         result = replace_percentages("Up 30%")
@@ -401,6 +440,21 @@ class TestReplaceOrdinalNumbers:
     def test_twenty_second(self):
         result = replace_ordinal_numbers("22nd item")
         assert "twenty-second" in result
+
+    # July 2026 comma-blindness regression tests: the ordinal matcher
+    # matched only the digits after the thousands comma, so "1,000th"
+    # shipped as "1,zeroth" (Tesla Ep518/524) and "1,500th" as
+    # "1,five hundredth" (SpaceX Ep10).
+    def test_comma_grouped_thousandth(self):
+        result = replace_ordinal_numbers("delivered its 1,000th Cybertruck")
+        assert "one thousandth" in result
+        assert "zeroth" not in result
+        assert "1," not in result
+
+    def test_comma_grouped_fifteen_hundredth(self):
+        result = replace_ordinal_numbers("the 1,500th Falcon landing")
+        assert "one thousand five hundredth" in result
+        assert "1," not in result
 
 
 class TestReplaceRomanNumerals:

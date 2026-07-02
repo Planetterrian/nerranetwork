@@ -53,7 +53,14 @@ _RU_STOPWORDS = {
 # inside the forgetting window without crowding new material.
 _REVIEW_GAP_EPISODES = 2
 _REVIEW_WORDS_PER_EPISODE = 4
-_RECENT_EPISODES_NO_RETEACH = 3
+# July 2 2026 review: 3 -> 8. Three episodes was ONE theme-cycle short —
+# the show looped Food -> Animals -> Weather 2.3× in 8 episodes and only 27
+# of 87 taught word-slots were new, because a theme three episodes back was
+# neither in the no-reteach window NOR remembered as a used theme. Eight
+# episodes (~16 days on the even-day cadence) clears a full rotation.
+_RECENT_EPISODES_NO_RETEACH = 8
+# Recent themes surfaced to the prompt as an explicit "do not reuse" list.
+_RECENT_THEMES_WINDOW = 6
 _WORDS_PER_EPISODE_CAP = 12
 
 
@@ -61,15 +68,29 @@ def _path(output_dir: Path) -> Path:
     return Path(output_dir) / VOCAB_FILENAME
 
 
+def _fresh() -> Dict[str, Any]:
+    return {
+        "version": 1, "last_updated": "", "words": {}, "episodes": {},
+        # July 2 2026: permanent Word-of-the-Day ledger (a word here is
+        # never picked as Word of the Day again — «хлеб» was WotD 3× in 12
+        # days) + per-episode theme record for the recent-theme rotation.
+        "word_of_day_history": [], "themes": {},
+    }
+
+
 def load_vocab(output_dir: Path) -> Dict[str, Any]:
     p = _path(output_dir)
     if not p.exists():
-        return {"version": 1, "last_updated": "", "words": {}, "episodes": {}}
+        return _fresh()
     try:
-        return json.loads(p.read_text(encoding="utf-8"))
+        data = json.loads(p.read_text(encoding="utf-8"))
     except Exception as exc:  # noqa: BLE001
         logger.warning("Failed to load %s (%s) — starting fresh", p.name, exc)
-        return {"version": 1, "last_updated": "", "words": {}, "episodes": {}}
+        return _fresh()
+    # Back-compat: older files predate the WotD ledger + theme record.
+    data.setdefault("word_of_day_history", [])
+    data.setdefault("themes", {})
+    return data
 
 
 def save_vocab(data: Dict[str, Any], output_dir: Path) -> None:
@@ -95,8 +116,60 @@ def mine_vocabulary(text: str, cap: int = _WORDS_PER_EPISODE_CAP) -> List[str]:
     return [w for w, c in counts.most_common(cap) if c >= 2]
 
 
+def extract_word_of_day(text: str) -> str:
+    """Return the episode's Word of the Day (lowercased Cyrillic), or ''.
+
+    Handles both the digest's "### Word of the Day" section (the first
+    Cyrillic token after the header, tolerating a bold marker or a
+    "Russian (Cyrillic):" label) and the inline "word of the day is X"
+    phrasing used in lesson prose.
+    """
+    if not text:
+        return ""
+    # Section form: "### Word of the Day\n**хлеб**" / "…**Russian (Cyrillic):** Солнце".
+    m = re.search(r"word of the day\s*[:\-]?\s*(.*)", text, re.IGNORECASE)
+    if m:
+        # Search the header match's tail plus the following ~2 lines.
+        tail_start = m.start()
+        window = text[tail_start:tail_start + 200]
+        # Drop a "Russian (Cyrillic):" label so it doesn't shadow the word.
+        window = re.sub(r"russian\s*\(cyrillic\)\s*:?", " ", window, flags=re.IGNORECASE)
+        cyr = re.search(r"[а-яё]{2,}", window, re.IGNORECASE)
+        if cyr:
+            return cyr.group(0).lower()
+    return ""
+
+
+def extract_theme(text: str) -> str:
+    """Return a short theme label for the episode (from the hook), or ''.
+
+    The hook is the digest's leading blockquote ("> **…**") or a "HOOK:"
+    line. The full hook sentence is a good enough "domain" signal for the
+    LLM's do-not-reuse list; truncated so the block stays scannable.
+    """
+    if not text:
+        return ""
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        if line.startswith(">") or re.match(r"^\**\s*hook\s*:", line, re.IGNORECASE):
+            cleaned = line.lstrip(">").strip()
+            cleaned = re.sub(r"[*_`]+", "", cleaned).strip()
+            cleaned = re.sub(r"^hook\s*:\s*", "", cleaned, flags=re.IGNORECASE).strip()
+            if cleaned:
+                return cleaned[:90].rstrip()
+        # Only inspect the first non-empty line for a hook.
+        break
+    return ""
+
+
 def record_episode_vocab(output_dir: Path, episode_num: int, text: str) -> List[str]:
     """Mine + persist the episode's vocabulary. Idempotent per episode.
+
+    Also records the episode's Word of the Day (into the permanent
+    ``word_of_day_history`` ledger) and its theme (into ``themes``) so the
+    review block can enforce no-repeat WotD selection and theme rotation.
 
     Returns the recorded word list.
     """
@@ -117,9 +190,22 @@ def record_episode_vocab(output_dir: Path, episode_num: int, text: str) -> List[
     for w in taught:
         entry = words.setdefault(w, {"first_taught": episode_num, "last_heard": episode_num})
         entry["last_heard"] = episode_num
+
+    # Permanent Word-of-the-Day ledger (dedup, order-preserving).
+    wotd = extract_word_of_day(text)
+    if wotd:
+        history = data.setdefault("word_of_day_history", [])
+        if wotd not in history:
+            history.append(wotd)
+
+    # Per-episode theme record for the recent-theme rotation list.
+    theme = extract_theme(text)
+    if theme:
+        data.setdefault("themes", {})[key] = theme
+
     save_vocab(data, output_dir)
-    logger.info("Vocab tracker: recorded %d words for Ep%s (%s…)",
-                len(taught), episode_num, ", ".join(taught[:5]))
+    logger.info("Vocab tracker: recorded %d words for Ep%s (%s…); WotD=%s theme=%r",
+                len(taught), episode_num, ", ".join(taught[:5]), wotd or "—", theme[:40])
     return taught
 
 
@@ -145,6 +231,19 @@ def build_review_section(output_dir: Path, current_episode: int) -> str:
     for ep in recent_eps[:_RECENT_EPISODES_NO_RETEACH]:
         recent_words.extend(episodes[str(ep)])
 
+    # Never repeat a Word of the Day (permanent).
+    wotd_history = data.get("word_of_day_history", []) or []
+
+    # Recent themes (most-recent first) to rotate away from.
+    themes = data.get("themes", {}) or {}
+    recent_themes: List[str] = []
+    for ep in recent_eps:
+        t = themes.get(str(ep))
+        if t:
+            recent_themes.append(t)
+        if len(recent_themes) >= _RECENT_THEMES_WINDOW:
+            break
+
     lines = ["### VOCABULARY MEMORY (from previous episodes — use, do not read this section aloud)"]
     if review_words:
         lines.append(
@@ -157,7 +256,18 @@ def build_review_section(output_dir: Path, current_episode: int) -> str:
     if recent_words:
         lines.append(
             "RECENTLY TAUGHT (do NOT re-teach these as new words, and pick a "
-            "DIFFERENT theme than they suggest): " + ", ".join(recent_words[:20]) + "."
+            "DIFFERENT theme than they suggest): " + ", ".join(recent_words[:24]) + "."
+        )
+    if wotd_history:
+        lines.append(
+            "ALREADY USED AS WORD OF THE DAY (NEVER pick any of these as today's "
+            "Word of the Day again — choose a brand-new word): "
+            + ", ".join(wotd_history) + "."
+        )
+    if recent_themes:
+        lines.append(
+            "RECENT THEMES (do NOT reuse any of these everyday domains — choose a "
+            "clearly different theme today): " + "; ".join(recent_themes) + "."
         )
     if len(lines) == 1:
         return ""

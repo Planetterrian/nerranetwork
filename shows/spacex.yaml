@@ -108,6 +108,19 @@ x_accounts:
 min_articles: 8
 min_articles_skip: 5
 
+# July 2 2026: a pirate soccer-stream SEO title — "SpaceX Falcon 9
+# Launches Starlink 6-103 Fiorentina Vs Genoa (RvpT3PF26j)" — was
+# laundered into an on-air "fact" (Ep18 spoke "designated Fiorentina
+# versus Genoa"). These stream-spam titles append a YouTube-style video
+# ID in trailing parentheses. The narrowest pattern that kills the class
+# without touching legit content is a trailing 8+-char alphanumeric
+# parenthetical: it drops "(RvpT3PF26j)" but keeps "(video)" (5 chars)
+# and legit "… vs …" comparison articles that carry no video ID.
+# Verified against all 117 story titles in the June 13-July 1 digests:
+# exactly one drop (the spam title), zero false positives.
+exclude_title_patterns:
+- \([A-Za-z0-9_-]{8,}\)\s*$
+
 multilingual:
   enabled: true
   auto: true

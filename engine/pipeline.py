@@ -25,6 +25,8 @@ from __future__ import annotations
 
 import datetime
 import logging
+import re
+from collections import Counter
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -32,6 +34,106 @@ logger = logging.getLogger(__name__)
 
 # Placeholder for future phase result types
 PublishResult = Dict[str, Any]
+
+
+# ---------------------------------------------------------------------------
+# Missing-closing guard helpers (June 10 2026; hardened July 2026)
+# ---------------------------------------------------------------------------
+
+# Common contractions the LLM expands/collapses when it lightly rewrites the
+# supplied closing block. The July 2026 network editorial pass found the
+# June-10 missing-closing guard comparing the closing's first-5-words
+# signature LITERALLY ("and that's a wrap! if"): the LLM de-contracts to
+# "And that is a wrap!", the literal check misses, and the guard appends the
+# ENTIRE closing again — 5 of 15 MAB episodes shipped the closing spoken
+# twice (Ep075/076/077/079/084, Whisper-confirmed).
+_CLOSING_CONTRACTIONS = {
+    "that's": "that is",
+    "it's": "it is",
+    "we're": "we are",
+    "you're": "you are",
+    "they're": "they are",
+    "i'm": "i am",
+    "we've": "we have",
+    "you've": "you have",
+    "i've": "i have",
+    "we'll": "we will",
+    "you'll": "you will",
+    "i'll": "i will",
+    "here's": "here is",
+    "there's": "there is",
+    "what's": "what is",
+    "let's": "let us",
+    "don't": "do not",
+    "doesn't": "does not",
+    "didn't": "did not",
+    "isn't": "is not",
+    "aren't": "are not",
+    "wasn't": "was not",
+    "won't": "will not",
+    "can't": "cannot",
+}
+
+
+def _normalize_closing_text(text: str) -> str:
+    """Normalize text for closing-signature comparison.
+
+    Lowercases, expands common contractions (so "that's" == "that is"),
+    strips punctuation, and collapses whitespace — the three drift classes
+    (contraction, punctuation, casing) the LLM applies when it "quotes"
+    the supplied closing block.
+    """
+    text = text.lower().replace("’", "'")
+    for contraction, expanded in _CLOSING_CONTRACTIONS.items():
+        text = re.sub(r"\b" + re.escape(contraction) + r"\b", expanded, text)
+    text = re.sub(r"[^\w\s]", " ", text)
+    return " ".join(text.split())
+
+
+def closing_block_present(
+    podcast_script: str,
+    closing_block: str,
+    *,
+    sig_words: int = 10,
+    threshold: float = 0.8,
+) -> bool:
+    """True when the supplied closing block already appears in the script tail.
+
+    Fuzzy by design: both sides are normalized (lowercase, contractions
+    expanded, punctuation stripped) and the closing's first *sig_words*
+    tokens must reach *threshold* token-overlap with some same-length
+    window of the script's tail. A genuinely absent closing (PT Ep081/084
+    class) stays below the threshold and the caller appends the block;
+    a lightly rewritten closing ("And that is a wrap!" for "And that's a
+    wrap!") counts as present so the guard never double-appends (MAB
+    Ep075-084 class).
+    """
+    if not closing_block or not podcast_script:
+        return False
+    # Drop a leading "Host:"-style speaker prefix from the closing.
+    closing = re.sub(r"^\s*\w+:\s*", "", closing_block.strip())
+    sig_tokens = _normalize_closing_text(closing).split()[:sig_words]
+    if not sig_tokens:
+        return True  # nothing meaningful to check — treat as present
+    tail = podcast_script[-max(len(podcast_script) // 4, 600):]
+    tail_tokens = _normalize_closing_text(tail).split()
+    if not tail_tokens:
+        return False
+    # Fast path: exact normalized containment.
+    if " ".join(sig_tokens) in " ".join(tail_tokens):
+        return True
+    n = len(sig_tokens)
+    sig_counts = Counter(sig_tokens)
+    windows = (
+        [tail_tokens]
+        if len(tail_tokens) < n
+        else [tail_tokens[i:i + n] for i in range(len(tail_tokens) - n + 1)]
+    )
+    for window in windows:
+        overlap = sum((sig_counts & Counter(window)).values())
+        if overlap / n >= threshold:
+            return True
+    return False
 
 
 def record_youtube_outcomes(
@@ -368,14 +470,14 @@ def run_generation_phase(
     # the LLM occasionally omits it. If the resolved closing's opening
     # signature isn't in the script's tail, append the block verbatim so
     # every episode ends properly (and the Closing chapter always parses).
+    # July 2026 hardening: the presence check is FUZZY (contractions,
+    # punctuation, casing normalized) — the old literal first-5-words
+    # check missed the LLM's de-contracted "And that is a wrap!" and
+    # double-appended the closing on 5 of 15 MAB episodes. See
+    # closing_block_present().
     _closing = str(pod_vars.get("closing_block", "")).strip()
     if _closing and podcast_script:
-        import re as _re_close
-        _sig = " ".join(
-            _re_close.sub(r"^\s*\w+:\s*", "", _closing).split()[:5]
-        ).lower()
-        _tail = podcast_script[-max(len(podcast_script) // 4, 600):].lower()
-        if _sig and _sig not in _tail:
+        if not closing_block_present(podcast_script, _closing):
             logger.warning(
                 "Podcast script is missing the supplied closing block — "
                 "appending it verbatim (script ended: %r)",

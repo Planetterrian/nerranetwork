@@ -215,8 +215,54 @@ reviews:
           0 stock/market-action items in Ep115 — the content lake no longer
           accumulates stock content (dailies filter at fetch) and the recap window
           (June 22-28) excludes pre-filter Ep103. If it leaks, attack the recap path.
+        verdict: hit
+        evidence: >-
+          2026-07-02 network pass: Ep115 recap (2026-06-28) clean — 0
+          stock/market-action items; pre-filter Ep103 content aged out of the
+          lake window as predicted (resolved-HIT). No recap-side guard needed.
+
+  - date: 2026-07-02
+    pr: null
+    doc: docs/reviews/network_review_2026_07_02.md
+    reviewer: claude-code (network editorial pass)
+    summary: >-
+      Network editorial pass. Scored June-24/16/12 predictions: launch
+      false-drop HIT, recap stock-leak resolved-HIT (Ep115 recap clean),
+      June-12 garbles HIT. Findings: slow-day self-recycling (Ep116 re-ran 4
+      of its own week's stories); ephemeris / sky-tonight filler diluting
+      digests; led with the same SiriusXM launch as SpaceX Daily the same
+      day; the Swift reboost story ran 4x with no new development. Cosmic
+      Deep Dive still earns the subscription.
+    shipped:
+      - >-
+        content_freshness.lookback_days 2 -> 7 (stops same-week
+        self-recycling; deterministic, no A/B).
+      - >-
+        Ephemeris title filter at fetch — verified zero false drops against
+        the window's titles.
+    deferred:
+      - >-
+        A/B proposals (NOT applied): de-prioritize routine comsat/cadence
+        launches (SpaceX Daily's beat); developing-story discipline (no
+        re-run without a new development).
+      - >-
+        Cosmic Deep Dive length lever (carried; four-show length A/B).
+      - >-
+        Mid-section digest-driven chapter titles (carried, network lever);
+        theme residual "science nasa" + curated narrative-tracker status
+        pass (carried).
+    predictions:
+      - metric: own-week story re-runs without a new development, per episode
+        baseline: "Ep116 re-ran 4 of its own week's stories"
+        expected: "0 post-merge (7-day freshness lookback)"
         verdict: pending
         evidence: null
+      - metric: ephemeris / sky-tonight filler items in digests
+        baseline: "recurring across the window"
+        expected: "0 post-merge; no false drops of real astronomy news"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
 
 do_not_retry:
   - idea: Phonetic respellings or programmatic speech-tag injection.

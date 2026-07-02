@@ -27,13 +27,19 @@ reviews:
       - metric: '"not so scary, right?" occurrences in last-10 transcripts'
         baseline: "9/10 episodes (Ep080/081/082 verbatim three-sentence formula)"
         expected: "<= 3/10 episodes generated post-merge; no verbatim 'so next time someone says X, you can tell them' formula"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-02 network pass: verbatim formula gone post-merge.
+          Caveat: successor template '...stops feeling like magic...' emerged
+          in 5/6 post-fix episodes (third-generation tic; de-seed-by-shape
+          proposed under A/B)."
       - metric: 'Big Story openers using "Something [adj] just happened", last 10'
         baseline: "5/10 (Ep073/074/075/078/080)"
         expected: "0/10 post-merge"
-        verdict: pending
-        evidence: null
+        verdict: hit
+        evidence: "2026-07-02 network pass: 0/10 post-merge. Caveat: the model
+          converged on 'Here's something that's going to change...' — straight
+          from the prompt's own example menu; opener-menu rewrite with zero
+          quotable strings proposed under A/B."
       - metric: median _tts.txt words, last 10 eps
         baseline: "~1085 (range 820-1470; 9/10 below 1200 floor)"
         expected: "no regression; chronic under-length stays deferred to the four-show length A/B"
@@ -45,6 +51,40 @@ reviews:
         verdict: pending
         evidence: null
     agent_cost_usd: 0.02
+
+  - date: 2026-07-02
+    pr: null
+    doc: docs/reviews/network_review_2026_07_02.md
+    reviewer: claude-code (network editorial pass)
+    summary: >
+      Network editorial pass. Scored June-25 (both de-seeds HIT, each with a
+      successor-template caveat — the meta-lesson is de-seed by SHAPE, never
+      with a quotable example). P0 found + fixed: the missing-closing
+      guard's literal signature match double-spoke the ENTIRE closing on
+      5/15 episodes (the LLM de-contracts "that's" -> "that is", the guard
+      thinks the closing is absent and appends it again). Also: Quick Bits
+      balloon with expansion-retry restatements; "try this" experiments name
+      no tool. Genuinely distinct and beginner-followable otherwise (caught
+      the two builder stories the sister show missed).
+    shipped:
+      - closing-guard fuzzy signature match (engine/pipeline.py; still fires
+        on genuinely missing closings)
+      - expansion-retry near-duplicate sentence stripping (network-wide)
+    deferred:
+      - "A/B proposals (NOT applied): rewrite the opener menu with zero
+        quotable strings; ban '...stops feeling like magic...' verbatim
+        alongside 'not so scary'; 'try this' items ineligible unless the
+        tool is NAMED in the source; Quick Bits <= 3 sentences, every
+        sentence a new fact"
+      - chronic under-length (carried; digest ceiling, four-show length A/B)
+      - '"The Big Story" chapter missing (carried; digest-driven titles lever)'
+    predictions:
+      - metric: episodes with a double-spoken closing (guard false-fire)
+        baseline: "5 of 15 in the window"
+        expected: "0 of next 15 (fuzzy signature match)"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
 
 do_not_retry:
   - idea: phonetic respellings / programmatic speech-tag injection on the custom voice

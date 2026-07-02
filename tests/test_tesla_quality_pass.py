@@ -473,6 +473,54 @@ class TestSpokenBrandDropsDaily:
             ), f"normalizer left a stray Daily in: {sample!r}"
 
 
+class TestRunnerOpeningNormalizerDropsDaily:
+    """July 2026 network editorial pass: ``_normalize_tst_opening`` in
+    run_show.py was the missed second half of the June-10 brand decision.
+    It runs AFTER the June-20 generator fix and was still normalizing the
+    intro TOWARD "Tesla Shorts Time Daily" — re-adding the "Daily" the
+    generator layer had just dropped, so "Daily" shipped spoken in 14/14
+    post-fix episodes. It now targets the listing brand "Tesla Shorts
+    Time" and consumes the gluing punctuation so no ", episode"-style
+    artifacts remain."""
+
+    def test_daily_dropped_from_opening(self):
+        from run_show import _normalize_tst_opening as fix
+
+        assert fix("Welcome to Tesla Shorts Time Daily, episode 516.\nBody.") == (
+            "Welcome to Tesla Shorts Time, episode 516.\nBody."
+        )
+        # Mangled-spelling variants still normalized — without "Daily".
+        assert fix("This is Tesla Short's Time Daily. Let's go.") == (
+            "This is Tesla Shorts Time. Let's go."
+        )
+        assert fix("Welcome to Tesla Shorts Time. Daily, episode 500.") == (
+            "Welcome to Tesla Shorts Time, episode 500."
+        )
+
+    def test_never_produces_daily_or_artifacts(self):
+        import re
+        from run_show import _normalize_tst_opening as fix
+
+        for sample in (
+            "Welcome to Tesla Shorts Time Daily, episode 516.",
+            "Tesla Short's Time Daily — Tesla never sleeps.",
+            "Welcome to Tesla Shorts Time. Daily.",
+        ):
+            out = fix(sample)
+            assert not re.search(r"(?i)Shorts?\s+Time[.,;\s]*Daily", out), (
+                f"runner normalizer left a stray Daily in: {sample!r} -> {out!r}"
+            )
+            assert " , " not in out and " ," not in out, (
+                f"punctuation artifact in: {sample!r} -> {out!r}"
+            )
+
+    def test_clean_opening_untouched(self):
+        from run_show import _normalize_tst_opening as fix
+
+        clean = "Welcome to Tesla Shorts Time, episode 500. Tesla never sleeps.\n"
+        assert fix(clean) == clean
+
+
 class TestInstitutionalFilingSpamFilter:
     """13F institutional-filing spam ("LLC Purchases New Stake in Tesla",
     "Invests $X Million in Tesla") is filtered at fetch time via
