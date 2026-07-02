@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import datetime
 import logging
+import re
 import subprocess
 import tempfile
 from pathlib import Path
@@ -33,6 +34,16 @@ logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 _MANIFEST = PROJECT_ROOT / "site" / "data" / "gallery-manifest.json"
+
+# YouTube's hard title cap (chars) — the RU title + " #Shorts" must clear it.
+_YT_TITLE_MAX = 100
+_SHORTS_SUFFIX = " #Shorts"
+
+# Leading "Эп. N:" / "Выпуск N:" episode-number label dropped when deriving the
+# punchy Short title from the long title (the Short doesn't need the episode
+# number in its ≤70-char headline).
+_EP_PREFIX_RE = re.compile(
+    r"^\s*(?:Эп\.?|Выпуск)\s*№?\s*\d+\s*[:：.\-—]\s*", re.IGNORECASE)
 
 # Russian AI-voice disclosure appended to every RU description (same text the
 # native RU shows speak; kept in sync with run_show._AI_DISCLOSURE_RU).
@@ -215,6 +226,83 @@ def _cap_title(title: str, limit: int = 95) -> str:
     return title if len(title) <= limit else title[: limit - 1].rstrip() + "…"
 
 
+def _has_cyrillic(text: str) -> bool:
+    return any("Ѐ" <= c <= "ӿ" for c in (text or ""))
+
+
+def _en_optimized_long_title(config, episode_num: int) -> str:
+    """The EN long-form YouTube title recorded for this episode.
+
+    Read from the show's own EN ``youtube_videos.json`` index — the ``title``
+    on the ``long`` record is the LLM-*optimized* YouTube title (or the SEO
+    title where a show has ``optimized_titles`` off), a COMPLETE, non-truncated
+    line unlike the mid-sentence spoken hook. Returns "" when the index is
+    absent/unreadable or has no long record for the episode (best-effort: the
+    caller keeps its legacy hook-based title)."""
+    import json
+    idx = PROJECT_ROOT / config.episode.output_dir / "youtube_videos.json"
+    try:
+        data = json.loads(idx.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001 — best-effort lookup
+        return ""
+    best = ""
+    for v in data.get("videos", []):
+        if (v.get("episode") == episode_num and v.get("kind") == "long"
+                and v.get("title")):
+            best = str(v["title"]).strip()  # newest matching row wins
+    return best
+
+
+def _translate_title_to_ru(en_title: str) -> str:
+    """Best-effort Russian translation of a short YouTube title.
+
+    Cheap: a title-only Grok call via the shared ``engine.translate`` helper —
+    NOT a re-translation of the whole script. ``translate_metadata`` falls back
+    to the English input on failure, so a result with no Cyrillic is treated as
+    "no translation" (we never want an English title on @NerraRU). Returns ""
+    on any failure so the caller keeps the legacy hook-based title."""
+    en_title = (en_title or "").strip()
+    if not en_title:
+        return ""
+    try:
+        from engine import translate
+        ru_title, _desc = translate.translate_metadata(en_title, "", "ru")
+        ru_title = (ru_title or "").strip()
+        if ru_title and _has_cyrillic(ru_title):
+            return ru_title
+    except Exception as exc:  # noqa: BLE001 — title translation is best-effort
+        logger.warning("ru_dub: title translation failed (%s) — using hook", exc)
+    return ""
+
+
+def _word_trim(text: str, limit: int) -> str:
+    """Trim *text* to <= *limit* chars on a WORD boundary (never mid-word).
+
+    No trailing ellipsis — the Short appends " #Shorts", and "…" + "#Shorts"
+    reads awkwardly. Trailing punctuation left by the cut is stripped."""
+    text = (text or "").strip()
+    if len(text) <= limit:
+        return text.rstrip(" ,.:;—-…")
+    cut = text[:limit]
+    if " " in cut:
+        cut = cut[:cut.rfind(" ")]  # break before the partial last word
+    return cut.rstrip(" ,.:;—-…")
+
+
+def _ru_short_title(long_title: str, *, body_limit: int = 70) -> str:
+    """A distinct, punchy Short title derived from the RU long title.
+
+    Drops the "Эп. N:" episode prefix, word-boundary-trims the body to a short
+    headline (never mid-word, no trailing "…"), and appends " #Shorts" — always
+    within YouTube's 100-char cap. Distinct from the long title (at minimum by
+    the suffix; usually also by the dropped prefix + trim)."""
+    body = _EP_PREFIX_RE.sub("", (long_title or "").strip()).strip()
+    body = body.rstrip("…").rstrip()
+    ceiling = min(body_limit, _YT_TITLE_MAX - len(_SHORTS_SUFFIX))
+    body = _word_trim(body, ceiling)
+    return f"{body}{_SHORTS_SUFFIX}".strip()
+
+
 def publish_ru_dub(
     config, episode_num: int, *,
     build_short: bool = True,
@@ -249,12 +337,23 @@ def publish_ru_dub(
         return result
 
     ru_title = _cap_title(ru_track.get("title") or rec.get("episode_title") or "")
+    # Prefer the EN *optimized* YouTube long-form title (translated to Russian)
+    # over the raw hook the translation step produced — the hook is written for
+    # the ear and ships mid-sentence-truncated (…), while the optimized title is
+    # a complete, keyword-front-loaded line (EN long-form parity). Best-effort:
+    # any lookup/translation failure keeps the legacy ru_title.
+    en_long_title = _en_optimized_long_title(config, episode_num)
+    if en_long_title:
+        ru_opt = _translate_title_to_ru(en_long_title)
+        if ru_opt:
+            ru_title = _cap_title(ru_opt)
     ru_desc = ru_track.get("description") or ru_title
 
     # Dry-run is creds-independent so the operator can preview the resolved
     # RU title before doing the @NerraRU OAuth.
     if dry_run:
-        result.update(status="dryrun", title=ru_title)
+        result.update(status="dryrun", title=ru_title,
+                      short_title=_ru_short_title(ru_title))
         return result
 
     from engine.youtube import get_channel_credentials_from_env
@@ -442,7 +541,7 @@ def publish_ru_dub(
                     end_card_image_path=end_card_png)
                 sup = upload_video(
                     short_mp4, credentials=creds,
-                    title=_cap_title(ru_title, 90) + " #Shorts",
+                    title=_ru_short_title(ru_title),
                     description=_ru_long_description(config, ru_desc),
                     tags=list(getattr(config, "keywords", []) or []),
                     category_id=int(getattr(yt, "category_id", 28)),

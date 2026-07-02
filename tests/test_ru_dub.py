@@ -104,6 +104,125 @@ class TestShortParity:
         assert "end_card=True" in src
 
 
+class TestRuShortTitle:
+    """The RU Short title must be DISTINCT from the long title, word-boundary
+    trimmed (never mid-word), carry ' #Shorts', and clear YouTube's 100-char
+    cap. Replaces the old `_cap_title(ru_title, 90) + ' #Shorts'` which was a
+    carbon copy of the long, truncated mid-word."""
+
+    def test_appends_shorts_and_drops_episode_prefix(self):
+        t = ru_dub._ru_short_title(
+            "Эп. 5: Патент Tesla превращает компрессор в бойлер")
+        assert t.endswith(" #Shorts")
+        assert not t.lstrip().startswith("Эп")
+        assert "Патент Tesla" in t
+        assert len(t) <= 100
+
+    def test_word_boundary_never_mid_word(self):
+        long = "Эп. 5: " + "Патент " * 30  # far over the ceiling
+        t = ru_dub._ru_short_title(long)
+        body = t[: -len(" #Shorts")]
+        # The trim breaks between words, so the last token is a whole "Патент".
+        assert body.split()[-1] == "Патент"
+        assert len(t) <= 100
+
+    def test_no_ellipsis_before_shorts_and_distinct_from_long(self):
+        long_title = "Эп. 5: " + "слово " * 40
+        long_cap = ru_dub._cap_title(long_title)   # long form (ends with …)
+        short = ru_dub._ru_short_title(long_title)
+        assert short != long_cap
+        assert "…" not in short
+        assert short.endswith(" #Shorts")
+        assert len(short) <= 100
+
+    def test_short_title_short_input_still_distinct(self):
+        # Even a short title (no prefix, no trim) differs by the suffix.
+        long = "Патент Tesla"
+        short = ru_dub._ru_short_title(long)
+        assert short == "Патент Tesla #Shorts"
+        assert short != long
+
+
+class TestRuLongTitleFromOptimized:
+    """The RU long-form title prefers the EN optimized YouTube title
+    (translated), falling back to the legacy hook-based ru_track title when
+    there's no optimized title or translation fails — never raises."""
+
+    _LEGACY = "Эп. 5: старый хук из перевода который довольно длинный текст для проверки"
+
+    def _cfg_with(self, tmp_path, *, en_long_title="Tesla Patent Runs Compressor As Boiler"):
+        out = tmp_path / "out"
+        out.mkdir()
+        if en_long_title is not None:
+            (out / "youtube_videos.json").write_text(json.dumps({"videos": [
+                {"episode": 5, "kind": "long", "title": en_long_title,
+                 "hook": "Tesla's new winter heat patent turns the compressor..."},
+                {"episode": 5, "kind": "short", "title": "some short headline"},
+            ]}), encoding="utf-8")
+        summaries = tmp_path / "summaries.json"
+        summaries.write_text(json.dumps({"podcast": "TST", "summaries": [{
+            "episode_num": 5, "date": "2026-07-01", "episode_title": "Ep 5",
+            "translations": {"ru": {"title": self._LEGACY, "description": "Оп",
+                                    "audio_url": ""}}}]}), encoding="utf-8")
+        cfg = _cfg()
+        cfg.publishing.summaries_json = str(summaries)
+        cfg.episode.output_dir = str(out)
+        return cfg
+
+    def test_reads_optimized_long_title_from_index(self, tmp_path):
+        cfg = self._cfg_with(tmp_path)
+        assert ru_dub._en_optimized_long_title(cfg, 5) == \
+            "Tesla Patent Runs Compressor As Boiler"
+
+    def test_missing_index_returns_empty(self, tmp_path):
+        cfg = self._cfg_with(tmp_path, en_long_title=None)
+        assert ru_dub._en_optimized_long_title(cfg, 5) == ""
+
+    def test_long_title_prefers_translated_optimized(self, tmp_path, monkeypatch):
+        cfg = self._cfg_with(tmp_path)
+        import engine.translate as tr
+        monkeypatch.setattr(tr, "translate_metadata", lambda title, desc, lang: (
+            "Патент Tesla превращает компрессор в бойлер", desc))
+        res = ru_dub.publish_ru_dub(cfg, 5, dry_run=True)
+        assert res["status"] == "dryrun"
+        assert res["title"] == "Патент Tesla превращает компрессор в бойлер"
+        # Short is derived + distinct.
+        assert res["short_title"].endswith(" #Shorts")
+        assert res["short_title"] != res["title"]
+        assert len(res["short_title"]) <= 100
+
+    def test_falls_back_to_hook_when_no_optimized(self, tmp_path, monkeypatch):
+        cfg = self._cfg_with(tmp_path, en_long_title=None)
+        import engine.translate as tr
+
+        def boom(*a, **k):
+            raise AssertionError("translate must not be called without a title")
+        monkeypatch.setattr(tr, "translate_metadata", boom)
+        res = ru_dub.publish_ru_dub(cfg, 5, dry_run=True)
+        assert res["title"] == ru_dub._cap_title(self._LEGACY)
+
+    def test_translate_failure_keeps_legacy_title(self, tmp_path, monkeypatch):
+        cfg = self._cfg_with(tmp_path)
+        import engine.translate as tr
+
+        def boom(*a, **k):
+            raise RuntimeError("grok down")
+        monkeypatch.setattr(tr, "translate_metadata", boom)
+        res = ru_dub.publish_ru_dub(cfg, 5, dry_run=True)  # must NOT raise
+        assert res["status"] == "dryrun"
+        assert res["title"] == ru_dub._cap_title(self._LEGACY)
+
+    def test_english_result_rejected_keeps_legacy_title(self, tmp_path, monkeypatch):
+        # translate_metadata falls back to the English input on failure — a
+        # no-Cyrillic result must not ship an English title on @NerraRU.
+        cfg = self._cfg_with(tmp_path)
+        import engine.translate as tr
+        monkeypatch.setattr(tr, "translate_metadata",
+                            lambda title, desc, lang: (title, desc))
+        res = ru_dub.publish_ru_dub(cfg, 5, dry_run=True)
+        assert res["title"] == ru_dub._cap_title(self._LEGACY)
+
+
 class TestGuards:
     def test_skip_when_not_enabled(self):
         cfg = _cfg()
