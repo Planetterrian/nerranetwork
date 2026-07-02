@@ -161,6 +161,22 @@ class TestSynthesizeDialogue:
         _calls, _x, m_pad, _out = self._run(tmp_path, SAMPLE_SCRIPT, pause_ms=0)
         assert m_pad.call_count == 0
 
+    def test_speed_passes_through_to_each_chunk(self, tmp_path):
+        kwargs_seen = []
+
+        def fake_chunk(text, voice_id, out_path, **kw):
+            kwargs_seen.append(kw)
+            Path(out_path).write_bytes(b"RIFFfake")
+
+        with mock.patch("engine.tts_dialogue.grok_speak_chunk", side_effect=fake_chunk), \
+             mock.patch("engine.tts_dialogue._crossfade_wavs_to_mp3"), \
+             mock.patch("engine.tts_dialogue._pad_wav_tail", side_effect=lambda p, ms: p):
+            synthesize_dialogue(
+                SAMPLE_SCRIPT, VOICES, tmp_path / "out.mp3",
+                api_key="k", speed=1.05,
+            )
+        assert kwargs_seen and all(kw.get("speed") == 1.05 for kw in kwargs_seen)
+
     def test_unlabeled_script_raises(self, tmp_path):
         with pytest.raises(ValueError, match="no recognised speaker labels"):
             self._run(tmp_path, "Plain narration only.")
@@ -173,6 +189,42 @@ class TestSynthesizeDialogue:
     def test_empty_voices_raises(self, tmp_path):
         with pytest.raises(ValueError, match="dialogue_voices is empty"):
             self._run(tmp_path, SAMPLE_SCRIPT, voices={})
+
+
+class TestGrokSpeedPayload:
+    """Documented Grok TTS speed multiplier: sent only when != 1.0, so every
+    existing show's payload stays byte-identical at the default."""
+
+    def _payload_for(self, tmp_path, **kwargs):
+        from engine import tts as tts_mod
+
+        captured = {}
+
+        class _Resp:
+            status_code = 200
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+            def iter_content(self, chunk_size): return iter([b"RIFF"])
+            def raise_for_status(self): pass
+
+        def fake_post(url, json=None, headers=None, stream=None, timeout=None):
+            captured.update(json)
+            return _Resp()
+
+        with mock.patch.object(tts_mod.requests, "post", side_effect=fake_post):
+            tts_mod.grok_speak_chunk(
+                "Hello there.", "voice", tmp_path / "c.wav",
+                api_key="k", **kwargs,
+            )
+        return captured
+
+    def test_default_speed_omits_field(self, tmp_path):
+        payload = self._payload_for(tmp_path)
+        assert "speed" not in payload
+
+    def test_custom_speed_included_and_clamped(self, tmp_path):
+        assert self._payload_for(tmp_path, speed=1.05)["speed"] == 1.05
+        assert self._payload_for(tmp_path, speed=9.0)["speed"] == 1.5
 
 
 # ---------------------------------------------------------------------------

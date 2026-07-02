@@ -2522,6 +2522,7 @@ def run(args: argparse.Namespace) -> None:
                             max_chars=config.tts.max_chars,
                             language_code=config.tts.language_code,
                             pause_ms=config.tts.dialogue_pause_ms,
+                            speed=getattr(config.tts, "speed", 1.0) or 1.0,
                         )
                     else:
                         logger.warning(

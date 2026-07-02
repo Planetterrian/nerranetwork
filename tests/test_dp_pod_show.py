@@ -213,7 +213,12 @@ class TestDebutRework:
         from engine.audio import append_full_song  # noqa: F401
 
     def test_snappier_handoffs(self):
-        assert CFG.tts.dialogue_pause_ms == 220
+        # 300 -> 220 -> 180 across the two Ep001 listens.
+        assert CFG.tts.dialogue_pause_ms == 180
+
+    def test_energy_speed_multiplier(self):
+        # Documented Grok speed param (0.7-1.5); subtle lift, dp_pod only.
+        assert abs(CFG.tts.speed - 1.05) < 1e-9
 
     def test_hook_supplies_network_context(self):
         import importlib
@@ -245,6 +250,46 @@ class TestDebutRework:
         assert "WRITE THE ENERGY IN" in prompt
         assert "{nerra_network_context}" in prompt
         assert "CROSS-PROMO" in prompt
+
+    def test_podcast_prompt_voice_direction_tags_budgeted(self):
+        # Grok-docs-sanctioned inline tags with a hard budget; wrapping tags
+        # beyond <emphasis> stay banned (the landmine-#17 leak class).
+        prompt = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_podcast.txt").read_text(
+            encoding="utf-8")
+        assert "VOICE DIRECTION TAGS" in prompt
+        assert "[laugh]" in prompt and "<emphasis>" in prompt
+        assert "PUNCTUATION IS PROSODY" in prompt
+
+    def test_analysis_is_the_show(self):
+        prompt = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_podcast.txt").read_text(
+            encoding="utf-8")
+        assert "THE ANALYSIS IS THE SHOW" in prompt
+
+    def test_pipeline_ep1_block_is_dialogue_aware(self):
+        # BOTH Ep001 renders aired pipeline.py's truncated generic closing —
+        # run_show's pod_vars never reach run_generation_phase, so the
+        # pipeline block is the live path and must handle dialogue shows.
+        src = (PROJECT_ROOT / "engine" / "pipeline.py").read_text(encoding="utf-8")
+        ep1_block = src.split("if episode_num == 1:", 1)[1][:2600]
+        assert "dialogue_mode" in ep1_block
+        assert "build_closing_block" in ep1_block
+        assert "please subscribe... " not in src, (
+            "the truncated Ep1 closing literal is back — it aired twice"
+        )
+
+    def test_debut_override_demands_founding_conversation_and_springboard(self):
+        from engine.first_episode import (
+            first_episode_digest_appendix,
+            first_episode_podcast_appendix,
+        )
+
+        podcast = first_episode_podcast_appendix(1, CFG.name, show_slug="dp_pod")
+        assert "500" in podcast  # the founding conversation length floor
+        assert "SPRINGBOARD" in podcast
+        assert "THREE" in podcast  # network tour cap
+        digest = first_episode_digest_appendix(1, CFG.name, show_slug="dp_pod")
+        assert "SPRINGBOARD" in digest
+        assert "BANNED" in digest  # editorial-boilerplate ban (the tour wall)
 
 
 class TestIntrosPersonality:

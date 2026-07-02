@@ -104,10 +104,15 @@ tts:
   dialogue_voices:
     PATRICK: kdif6sqjcyiq   # the network's custom English voice (Patrick)
     DAN: 0vscf8u8yrxc       # Dan's custom Grok voice
-  # 300 -> 220 after the Ep001 listen: the flat 300 ms gap on every handoff
-  # read as robotic turn-taking; 220 keeps handoffs breathing without the
-  # dead air. Tune further by ear (landmine #17 A/B).
-  dialogue_pause_ms: 220
+  # 300 -> 220 -> 180 across the two Ep001 listens: the flat gap on every
+  # handoff read as robotic turn-taking; 180 is conversational overlap-
+  # adjacent without clipping. Tune further by ear (landmine #17 A/B).
+  dialogue_pause_ms: 180
+  # Documented Grok TTS speed multiplier (0.7-1.5). A subtle 1.05 lifts
+  # perceived energy on both custom voices; only sent when != 1.0, so no
+  # other show's payload changes. A/B-listen (landmine #17) — drop back to
+  # 1.0 if it introduces artifacts.
+  speed: 1.05
   # Dialogue mode never applies the speech wrap (per-turn wraps are exactly
   # the landmine-#17 "Fast." leak shape multiplied by every handoff). Pin
   # empty so the config states reality instead of relying on the runtime

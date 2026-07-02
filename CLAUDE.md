@@ -740,6 +740,29 @@ TST received a full recursive improvement architecture (analogous to MIT):
   retired (artifacts deleted, RSS items stripped, numbering back to 1) —
   regenerate via workflow_dispatch; the schedule-event duplicate guard
   doesn't apply to manual dispatch.
+  **July 2 2026 second rework (operator listened again: still robotic,
+  Dan especially; intro too short; too much show-info recap):** the LIVE
+  Ep1 intro/closing path is `engine/pipeline.py:run_generation_phase`
+  (run_show builds pod_vars but never passes them — BOTH Ep001 renders
+  aired pipeline's truncated `"please subscribe... "` literal); pipeline's
+  Ep1 block is now dialogue-aware + the generic literal completed. Grok
+  TTS docs pass (docs.x.ai): punctuation IS prosody (exclamation points
+  now encouraged where genuine), sanctioned inline tags with a hard
+  budget (≤10 of `[laugh]/[sigh]/[breath]/[pause]`, ≤4 `<emphasis>`; all
+  other wraps stay banned), documented `speed` param wired through
+  `grok_speak_chunk`→`synthesize_dialogue` (sent only when ≠1.0; dp_pod
+  pins 1.05), `dialogue_pause_ms` 220→180. Editorial repositioning
+  (All-In-inspired friends-reviewing-consequential-events): system prompt
+  celebrates builders/creators/contributors; "THE ANALYSIS IS THE SHOW"
+  (~⅓ facts / ⅔ hosts' unique-lens takes); digest widened from pure
+  good-news to consequential-with-agency + names the builders. Debut
+  override v2: 500+ word founding conversation introducing show AND
+  network, anchor material as SPRINGBOARD (≤3 recap sentences), network
+  tour capped at 3 shows/1 sentence each with editorial-boilerplate
+  phrases BANNED (the v1 render walled 5 near-verbatim "measured result…"
+  paragraphs). Second Ep001 retired the same way. Dan's voice ceiling is
+  the CLONE — docs: custom-voice quality tracks the reference clips;
+  re-record Dan's samples with expressive conversational takes (operator).
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:
