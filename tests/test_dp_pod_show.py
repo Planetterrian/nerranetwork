@@ -93,6 +93,61 @@ class TestChapterMarkers:
         assert by_title["Sign-Off"].where == "end"
 
 
+class TestClubPage:
+    """July 2026 club redesign (docs/dp_pod_market_assessment_2026_07.md):
+    the page is a membership pitch, not a media property — pledge-led join,
+    constrained Dispatch grammar, seeded member wall, free-forever charter."""
+
+    def test_registry_uses_club_template(self):
+        from generate_html import NETWORK_SHOWS
+
+        assert NETWORK_SHOWS["dp_pod"].get("show_page_template") == "show_page_dp_pod.html.j2"
+        assert (PROJECT_ROOT / "templates" / "show_page_dp_pod.html.j2").exists()
+
+    def test_club_page_renders_with_core_mechanics(self, tmp_path):
+        import generate_html as gh
+
+        html_path = gh.generate_show_page("dp_pod", dry_run=False)
+        html = Path(html_path).read_text(encoding="utf-8")
+        # Mechanic 1: pledge-led join via Buttondown with the show tag
+        assert "buttondown.com/api/emails/embed-subscribe" in html
+        assert 'value="DP Pod"' in html
+        assert "Do Positive Pledge" in html
+        # Mechanic 1b: seeded member wall (pledger-majority sequencing)
+        assert "№ 001" in html and "Dan Perra" in html
+        assert "№ 002" in html and "Patrick Novak" in html
+        # Mechanic 2: constrained Dispatch grammar with a real submission path
+        assert "mailto:" in html and "Do%20Positive%20Dispatch" in html
+        assert "The honest numbers" in html
+        # Mechanic 3/4: starter levers pre-launch + free-forever charter
+        assert "Free forever" in html
+        assert "Do something about it" in html
+
+    def test_lever_board_extracts_from_digest(self, tmp_path, monkeypatch):
+        import generate_html as gh
+
+        digest_dir = tmp_path / "digests" / "dp_pod"
+        digest_dir.mkdir(parents=True)
+        (digest_dir / "DP_Pod_Ep001_20260703.md").write_text(
+            "# The DP Pod: The Do Positive Podcast\n"
+            "**Date:** July 03, 2026\n\n"
+            "**HOOK:** Heat pumps just crossed the payback line.\n\n"
+            "### The Positive Papers\n1. **Solar: Source**\n   Text.\n\n"
+            "### The Lever\n"
+            "Get a free home heat-loss assessment and seal the top three leaks. "
+            "Costs roughly forty dollars and two hours; saves in the range of "
+            "one hundred fifty dollars a year.\n\n"
+            "### Do Positive Dispatch\nNo dispatches in the bag today.\n",
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(gh, "ROOT", tmp_path)
+        levers = gh._collect_dp_levers()
+        assert len(levers) == 1
+        assert levers[0]["episode_num"] == 1
+        assert "heat-loss assessment" in levers[0]["lever_text"]
+        assert "Dispatch" not in levers[0]["lever_text"]
+
+
 class TestIntrosPersonality:
     def test_intro_is_dan_labeled_dialogue(self):
         from engine.intros import build_intro_line
