@@ -164,6 +164,32 @@ class TestClubPage:
         assert "Dispatch" not in levers[0]["lever_text"]
 
 
+class TestEp001Fixes:
+    """Regression guards from the Episode 1 review (July 2 2026)."""
+
+    def test_dialogue_disclosure_is_plural(self):
+        # Ep001 spoke the single-host line ("my voice") on a two-voice
+        # episode; dialogue mode now uses the plural variant.
+        src = (PROJECT_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert "_AI_DISCLOSURE_DIALOGUE" in src
+        assert "our voices" in src
+
+    def test_ep1_dialogue_branch_uses_personality_closing(self):
+        # The generic single-host Ep1 closing fought the dialogue prompt
+        # (Ep001 shipped "please subscribe..." truncated mid-sentence);
+        # dialogue shows now debut with the personality's labeled closing.
+        src = (PROJECT_ROOT / "run_show.py").read_text(encoding="utf-8")
+        ep1_block = src.split("if episode_num == 1:", 1)[1][:2200]
+        assert "config.tts.dialogue_mode" in ep1_block
+        assert "build_closing_block" in ep1_block
+
+    def test_dispatch_prompt_bans_invented_host_anecdotes(self):
+        prompt = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_podcast.txt").read_text(
+            encoding="utf-8")
+        assert "NEVER invent specific past personal anecdotes" in prompt
+        assert "forward commitment" in prompt
+
+
 class TestIntrosPersonality:
     def test_intro_is_dan_labeled_dialogue(self):
         from engine.intros import build_intro_line

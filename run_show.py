@@ -79,6 +79,15 @@ _AI_DISCLOSURE = (
     "editorial selection and analysis are my own."
 )
 
+# Two-host dialogue shows (The DP Pod): the single-host line says "my
+# voice" but two synthesized voices just spoke — the plural variant keeps
+# the disclosure factually accurate. Spoken change → A/B-listen per
+# landmine #17 (it replaces one sentence at the very end of the episode).
+_AI_DISCLOSURE_DIALOGUE = (
+    "This episode used AI voice synthesis of our voices — "
+    "the editorial selection and analysis are our own."
+)
+
 _AI_DISCLOSURE_RSS = (
     "AI Disclosure: This podcast is curated by Patrick but uses AI-generated "
     "voice synthesis for audio production."
@@ -2012,29 +2021,56 @@ def run(args: argparse.Namespace) -> None:
                     "@NerraRU" if config.youtube.channel == "ru" else "@NerraNetwork"
                 )
             if episode_num == 1:
-                pod_vars.setdefault(
-                    "intro_line",
-                    f"{host}: Welcome to the very first episode of {config.name}! "
-                    f"Today is {today_str}. {effective_hook}",
-                )
-                _ep1_close = (
-                    f"{host}: That wraps up our very first episode of {config.name}! "
-                    f"If you enjoyed this, please subscribe on Apple Podcasts, Spotify, "
-                    f"or wherever you listen — and a rating or review really helps new "
-                    f"listeners find us. "
-                    f"I'm {host} in Vancouver. Thanks for joining me on this journey, "
-                    f"and I'll see you tomorrow for episode two."
-                )
-                # Route the YouTube call-out through the shared helper so the
-                # "@" is stripped (no "at at" stutter) and the EN handle is
-                # split to the spaced "Nerra Network" — matching every other
-                # episode's closing.
-                _ep1_close = _maybe_append_youtube_cta(
-                    _ep1_close,
-                    _yt_handle,
-                    is_ru=args.show in _RUSSIAN_SPOKEN_SHOWS,
-                )
-                pod_vars.setdefault("closing_block", _ep1_close)
+                if config.tts.dialogue_mode:
+                    # Dialogue shows: the generic single-host Ep1 closing
+                    # ("I'm X in Vancouver... see you tomorrow") fights the
+                    # dialogue prompt's speaker-label + exact-sign-off rules
+                    # — DP Pod Ep001 shipped it truncated to "please
+                    # subscribe..." mid-sentence. Use a labeled debut intro
+                    # (the personality's lead host) and the personality's
+                    # own labeled closing, which already carries the
+                    # subscribe ask and ends with the exact sign-off.
+                    _lead = get_show_host(args.show)
+                    pod_vars.setdefault(
+                        "intro_line",
+                        f"{_lead}: Welcome to the very first episode of "
+                        f"{config.name}! Today is {today_str}. {effective_hook}",
+                    )
+                    pod_vars.setdefault(
+                        "closing_block",
+                        build_closing_block(
+                            args.show,
+                            episode_num=episode_num,
+                            today_str=today_str,
+                            date=today,
+                            extra_context=extra_context,
+                            youtube_channel_handle=_yt_handle,
+                        ),
+                    )
+                else:
+                    pod_vars.setdefault(
+                        "intro_line",
+                        f"{host}: Welcome to the very first episode of {config.name}! "
+                        f"Today is {today_str}. {effective_hook}",
+                    )
+                    _ep1_close = (
+                        f"{host}: That wraps up our very first episode of {config.name}! "
+                        f"If you enjoyed this, please subscribe on Apple Podcasts, Spotify, "
+                        f"or wherever you listen — and a rating or review really helps new "
+                        f"listeners find us. "
+                        f"I'm {host} in Vancouver. Thanks for joining me on this journey, "
+                        f"and I'll see you tomorrow for episode two."
+                    )
+                    # Route the YouTube call-out through the shared helper so the
+                    # "@" is stripped (no "at at" stutter) and the EN handle is
+                    # split to the spaced "Nerra Network" — matching every other
+                    # episode's closing.
+                    _ep1_close = _maybe_append_youtube_cta(
+                        _ep1_close,
+                        _yt_handle,
+                        is_ru=args.show in _RUSSIAN_SPOKEN_SHOWS,
+                    )
+                    pod_vars.setdefault("closing_block", _ep1_close)
             else:
                 pod_vars.setdefault(
                     "intro_line",
@@ -2346,9 +2382,13 @@ def run(args: argparse.Namespace) -> None:
                 _AI_DISCLOSURE_RU if args.show in _RUSSIAN_SHOWS else _AI_DISCLOSURE
             )
             if config.tts.dialogue_mode:
-                # Unlabeled text inherits the previous speaker's voice —
-                # make the disclosure explicitly the host's line.
-                _disclosure = f"{(config.publishing.host_name or 'PATRICK').upper()}: {_disclosure}"
+                # Two voices spoke, so the disclosure is plural ("our
+                # voices"), and unlabeled text inherits the previous
+                # speaker's voice — make it explicitly the host's line.
+                _disclosure = (
+                    f"{(config.publishing.host_name or 'PATRICK').upper()}: "
+                    f"{_AI_DISCLOSURE_DIALOGUE}"
+                )
             podcast_script = podcast_script.rstrip() + "\n\n" + _disclosure
 
             # Parse chapter markers from the cleaned script (before TTS).
