@@ -13,6 +13,7 @@ import datetime
 import json
 import logging
 import math
+import os
 import re
 from pathlib import Path
 
@@ -33,6 +34,20 @@ def _finite(value, default=0.0):
     return default
 
 logger = logging.getLogger(__name__)
+
+
+def _hooks_readonly() -> bool:
+    """True when the runner asked hooks not to persist state.
+
+    ``run_show.py`` sets ``NERRA_HOOKS_READONLY=1`` for ``--test`` and
+    ``--rehearse`` runs (July 2026 review): previously a ``--test`` run —
+    the exact command the review playbook tells agents to execute —
+    appended a REAL trade to the tracker via post_generate (which runs
+    before the test-mode early exit) and pre_fetch closed/stamped open
+    trades. Test invocations must never mutate the live track record.
+    """
+    return os.environ.get("NERRA_HOOKS_READONLY", "").strip() == "1"
+
 
 TRACKER_FILENAME = "investment_tracker.json"
 TAUGHT_LESSONS_FILENAME = "taught_lessons.json"
@@ -142,15 +157,23 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     # Load tracker
     tracker = _load_tracker(tracker_path)
 
-    # Evaluate yesterday's open trade (if any)
-    _evaluate_open_trade(tracker, tracker_path)
+    readonly = _hooks_readonly()
+    if readonly:
+        logger.info(
+            "Hooks are read-only (test/rehearse run) — skipping trade "
+            "evaluation and all tracker writes."
+        )
+    else:
+        # Evaluate yesterday's open trade (if any)
+        _evaluate_open_trade(tracker, tracker_path)
 
     # Build yesterday's trade review text. This may stamp
     # ``reviewed_in_episode`` on the latest closed trade (double-review
     # guard) — persist it immediately so a later benchmark-refresh failure
     # can't lose the stamp and re-review the same trade next episode.
     context["yesterday_trade_review"] = _build_trade_review(tracker, episode_num)
-    _save_tracker(tracker, tracker_path)
+    if not readonly:
+        _save_tracker(tracker, tracker_path)
 
     # Build portfolio summary
     context["portfolio_summary"] = _build_portfolio_summary(tracker)
@@ -164,7 +187,8 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     try:
         _compute_benchmark_state(tracker)
         tracker["sectors"] = _compute_sector_exposure(tracker)
-        _save_tracker(tracker, tracker_path)
+        if not readonly:
+            _save_tracker(tracker, tracker_path)
     except Exception as exc:
         logger.warning("Benchmark state refresh failed: %s", exc)
     context["benchmark_state"] = _build_benchmark_block(tracker)
@@ -186,7 +210,7 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     library_path = _resolve_segment_library(config)
     segment_id, segment_hint = _pick_deep_dive_segment(tracker, library_path)
     context["deep_dive_hint"] = _build_deep_dive_hint_block(segment_hint)
-    if segment_id:
+    if segment_id and not readonly:
         _record_segment_used(tracker, segment_id)
         _save_tracker(tracker, tracker_path)
 
@@ -381,6 +405,13 @@ def post_generate(config, *, digest_text: str = "", episode_num: int | None = No
     Called by ``run_show.py`` after digest generation.  Parses the pick
     and saves it as an open trade in the tracker for next-day evaluation.
     """
+    if _hooks_readonly():
+        logger.info(
+            "Hooks are read-only (test/rehearse run) — NOT recording the "
+            "Practice Investment pick or lesson state."
+        )
+        return
+
     output_dir = Path(config.episode.output_dir)
     tracker_path = output_dir / TRACKER_FILENAME
 
@@ -394,6 +425,14 @@ def post_generate(config, *, digest_text: str = "", episode_num: int | None = No
             trade["sector"] = _classify_sector(
                 trade.get("symbol", ""), trade.get("strategy", ""), trade.get("market", ""),
             )
+        # Pick-time validation probe: resolve the Yahoo symbol (TSX picks
+        # get their .TO/.V listing) and record a reference price so a
+        # wrong-instrument resolution is caught at close (Ep50 CNR class).
+        # Best-effort — a probe failure is loud but never blocks the pick.
+        try:
+            _probe_pick(trade)
+        except Exception as exc:
+            logger.warning("Pick validation probe failed for %s: %s", trade.get("symbol"), exc)
         tracker["trades"].append(trade)
         tracker["metadata"]["last_updated"] = datetime.date.today().isoformat()
         tracker["sectors"] = _compute_sector_exposure(tracker)
@@ -522,6 +561,52 @@ def _ensure_schema(tracker: dict) -> None:
     tracker.setdefault("sectors", {})
     tracker.setdefault("monthly_snapshots", [])
     tracker.setdefault("trades", [])
+    _void_nonfinite_closed_trades(tracker)
+
+
+def _void_nonfinite_closed_trades(tracker: dict) -> None:
+    """Self-healing migration: a CLOSED trade with a non-finite P&L or
+    exit price is a data failure, not a market outcome — void it.
+
+    July 2026 follow-up: the phantom-trade fix voided the four
+    null-price closes (XLF/KO/ROKU/ION) but MISSED the two NaN-exit
+    closes (DELL Ep57, HIMS Ep63), which stayed ``status: closed`` with
+    ``pnl_pct: NaN`` — ``_finite()`` coerced them to 0.0 in every
+    aggregate, so 2 of the 3 spoken "breakeven" trades were still data
+    failures narrated as market results. Runs on every tracker load so
+    the shape can never ship again.
+    """
+    changed = False
+    for trade in tracker.get("trades", []):
+        if trade.get("status") != "closed":
+            continue
+        pnl = trade.get("pnl_pct")
+        exit_price = trade.get("exit_price")
+        bad_pnl = not (isinstance(pnl, (int, float)) and math.isfinite(pnl))
+        bad_exit = not (
+            isinstance(exit_price, (int, float)) and math.isfinite(exit_price)
+        )
+        if bad_pnl or bad_exit:
+            logger.warning(
+                "Voiding closed trade %s (Ep%s): non-finite %s — data "
+                "failure, not a market outcome",
+                trade.get("symbol"), trade.get("episode_num"),
+                "pnl" if bad_pnl else "exit price",
+            )
+            trade["status"] = "voided"
+            trade["void_reason"] = "market_data_unavailable"
+            trade["entry_price"] = None
+            trade["exit_price"] = None
+            trade["pnl_pct"] = None
+            trade["pnl_dollars"] = None
+            trade["alpha_pct"] = None
+            trade["nasdaq_return_pct"] = None
+            trade["lesson"] = (
+                "Trade voided — market data was unavailable for evaluation."
+            )
+            changed = True
+    if changed:
+        _recompute_summary(tracker)
 
 
 def _save_tracker(tracker: dict, tracker_path: Path) -> None:
@@ -535,6 +620,175 @@ def _save_tracker(tracker: dict, tracker_path: Path) -> None:
 # ---------------------------------------------------------------------------
 # Trade evaluation — uses yfinance for real market data
 # ---------------------------------------------------------------------------
+
+def _yf_symbol_candidates(symbol: str, market: str = "") -> list[str]:
+    """Yahoo Finance symbols to try, exchange-suffixed first for Canadian picks.
+
+    July 2026 review: Ep50 picked "CNR — Canadian National Railway
+    (TSX:CNR)" but the bare symbol was handed to yfinance, which resolved
+    "CNR" to Core Natural Resources on the NYSE — the sim booked +8.66%
+    on the WRONG COMPANY. For TSX picks the ``.TO`` listing must be tried
+    first (``.V`` for TSX-V), falling back to the bare symbol only for
+    dual-listed names where the suffixed lookup fails.
+    """
+    sym = (symbol or "").upper().strip()
+    if not sym:
+        return []
+    m = (market or "").upper().replace("_", "-").strip()
+    if m in ("TSX-V", "TSXV"):
+        return [f"{sym}.V", f"{sym}.TO", sym]
+    if m == "TSX":
+        return [f"{sym}.TO", sym]
+    return [sym]
+
+
+def _trade_symbol_candidates(trade: dict) -> list[str]:
+    """Candidates for an existing trade — a pick-time resolution wins."""
+    resolved = trade.get("resolved_symbol")
+    if resolved:
+        return [resolved]
+    return _yf_symbol_candidates(trade.get("symbol", ""), trade.get("market", ""))
+
+
+def _bars_from_history(hist) -> list[tuple[datetime.date, float, float]]:
+    """Convert a yfinance history frame to ``[(bar_date, open, close)]``.
+
+    Bars with a non-finite open or close are dropped — yfinance returns
+    NaN floats for halted/missing bars (the DELL/HIMS shape) and a NaN
+    must never become an entry or exit price.
+    """
+    bars: list[tuple[datetime.date, float, float]] = []
+    if hist is None or getattr(hist, "empty", True):
+        return bars
+    for idx, row in hist.iterrows():
+        try:
+            open_ = float(row["Open"])
+            close = float(row["Close"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if not (math.isfinite(open_) and math.isfinite(close)):
+            continue
+        bar_date = idx.date() if hasattr(idx, "date") else idx
+        bars.append((bar_date, open_, close))
+    return bars
+
+
+def _fetch_history_bars(
+    yf_symbol: str, *, period: str = "15d", attempts: int = 3,
+) -> list[tuple[datetime.date, float, float]] | None:
+    """Fetch daily bars for *yf_symbol* with retries.
+
+    Returns a list of ``(date, open, close)`` bars (possibly empty when
+    Yahoo knows the symbol but has no data), or ``None`` on total
+    network/API failure.
+    """
+    import time as _time
+
+    for attempt in range(attempts):
+        try:
+            import yfinance as yf
+            hist = yf.Ticker(yf_symbol).history(period=period, interval="1d")
+            return _bars_from_history(hist)
+        except Exception as exc:
+            logger.warning(
+                "yfinance attempt %d for %s failed: %s", attempt + 1, yf_symbol, exc,
+            )
+        if attempt < attempts - 1:
+            _time.sleep(2 ** (attempt + 1))
+    return None
+
+
+def _fetch_bars_for_trade(trade: dict, *, period: str = "15d") -> list | None:
+    """Fetch bars for a trade, trying exchange-suffixed candidates in order.
+
+    Stamps ``resolved_symbol`` on the trade with whichever candidate
+    produced data, so subsequent snapshots/closes price the SAME listing.
+    """
+    for cand in _trade_symbol_candidates(trade):
+        bars = _fetch_history_bars(cand, period=period)
+        if bars:
+            trade["resolved_symbol"] = cand
+            return bars
+    return None
+
+
+def _probe_pick(trade: dict) -> bool:
+    """Resolve the pick's Yahoo symbol at record time and store a reference.
+
+    Stamps ``resolved_symbol`` (exchange-suffixed for TSX/TSX-V picks) and
+    ``pick_reference_price`` (latest close) on the trade. Returns False —
+    with a LOUD warning — when no candidate returns data, which almost
+    always means the digest emitted a bogus or ambiguous ticker (Ep79
+    "ION" voided at close; Ep50 "CNR" priced the wrong company for a
+    week). Catching it on pick day gives the operator a same-day signal
+    instead of a silent void or phantom result four days later.
+    """
+    candidates = _yf_symbol_candidates(trade.get("symbol", ""), trade.get("market", ""))
+    for cand in candidates:
+        bars = _fetch_history_bars(cand, period="5d", attempts=1)
+        if bars:
+            trade["resolved_symbol"] = cand
+            trade["pick_reference_price"] = round(bars[-1][2], 2)
+            logger.info(
+                "Pick validated: %s → %s, reference close $%.2f",
+                trade.get("symbol"), cand, trade["pick_reference_price"],
+            )
+            return True
+    logger.warning(
+        "PICK VALIDATION FAILED: no price data for %s (market=%s; tried %s) "
+        "— the ticker may be bogus/ambiguous and the trade will likely void "
+        "at close. Check today's digest.",
+        trade.get("symbol"), trade.get("market"), ", ".join(candidates) or "nothing",
+    )
+    return False
+
+
+def _pick_flash_bar(bars, pick_date):
+    """The bar ON *pick_date*, else the FIRST bar after it — never before.
+
+    July 2026 review: the old code took ``hist.iloc[-1]`` ("most recent
+    completed trading day"), which silently priced the WRONG DAY whenever
+    the cron ran late into market hours (a partial live bar) or the pick
+    landed on a non-trading day (the prior day's bar — look-back
+    contamination). Returns ``None`` when no bar on/after the pick date
+    exists yet — the caller keeps the trade open instead of voiding.
+    """
+    if pick_date is None:
+        return bars[-1] if bars else None
+    for bar in bars:
+        if bar[0] >= pick_date:
+            return bar
+    return None
+
+
+def _pick_weekly_bars(bars, pick_date):
+    """(entry_bar, exit_bar) for a weekly hold: first/last bar >= pick date.
+
+    July 2026 review: the old code filtered to "this week's Monday", so a
+    weekly hold picked mid-week was BACKDATED to Monday's open — the LLM
+    picked with Mon-Wed price action already known and the sim booked
+    gains it could never have captured (hindsight bias; e.g. Ep35 AMD
+    picked Wednesday, credited from Monday's open, +13.36%). Entry now
+    starts at the first bar on/after the pick date.
+    """
+    if pick_date is None:
+        window = list(bars)
+    else:
+        window = [b for b in bars if b[0] >= pick_date]
+    if not window:
+        return None, None
+    return window[0], window[-1]
+
+
+def _trade_pick_date(trade: dict) -> datetime.date | None:
+    d = trade.get("date")
+    if isinstance(d, str):
+        try:
+            return datetime.date.fromisoformat(d)
+        except ValueError:
+            return None
+    return None
+
 
 def _evaluate_open_trade(tracker: dict, tracker_path: Path) -> None:
     """Evaluate open trades using the hybrid model.
@@ -575,26 +829,45 @@ def _evaluate_open_trade(tracker: dict, tracker_path: Path) -> None:
 
 
 def _close_trade(trade: dict, tracker: dict) -> None:
-    """Close a trade with real market data."""
+    """Close a trade with real market data (pick-date-aligned bars)."""
     symbol = trade.get("symbol", "")
     trade_type = trade.get("trade_type", "weekly")
+    pick_date = _trade_pick_date(trade)
 
-    if trade_type == "flash":
-        # Flash trade: entry = trade date's open, exit = trade date's close
-        entry_price, exit_price = _fetch_trade_prices(symbol)
-    else:
-        # Weekly hold: entry = Monday open, exit = Friday close
-        entry_price, exit_price = _fetch_weekly_prices(symbol)
+    bars = _fetch_bars_for_trade(trade)
 
-    # NaN guard: yfinance returns NaN floats (not None) for halted /
-    # missing bars — they pass an ``is None`` check and poison every
-    # downstream sum (the DELL/HIMS NaN trades, June 2026 review).
-    if entry_price is not None and not math.isfinite(entry_price):
-        entry_price = None
-    if exit_price is not None and not math.isfinite(exit_price):
-        exit_price = None
+    entry_bar = exit_bar = None
+    if bars:
+        if trade_type == "flash":
+            # Flash trade: the pick-date bar's open and close.
+            entry_bar = exit_bar = _pick_flash_bar(bars, pick_date)
+        else:
+            # Weekly hold: first bar on/after the pick date → latest bar.
+            entry_bar, exit_bar = _pick_weekly_bars(bars, pick_date)
+        if entry_bar is None:
+            # Data came back but no bar on/after the pick date exists yet
+            # (e.g. a weekend pick evaluated before the next session).
+            # Keep the trade open — voiding here would discard a real,
+            # evaluable trade. If the pick is stale (halted/delisted right
+            # after the pick), void instead of holding a zombie open.
+            if pick_date and (datetime.date.today() - pick_date).days > 10:
+                logger.warning(
+                    "No trading data for %s in the 10 days since the %s pick "
+                    "— voiding stale trade", symbol, pick_date,
+                )
+                trade["status"] = "voided"
+                trade["void_reason"] = "no_trading_data_after_pick"
+                trade["pnl_pct"] = None
+                trade["pnl_dollars"] = None
+                trade["lesson"] = "Trade voided — no trading data after the pick date."
+                return
+            logger.info(
+                "No bar on/after %s for %s yet — leaving trade open",
+                pick_date, symbol,
+            )
+            return
 
-    if entry_price is None or exit_price is None:
+    if entry_bar is None or exit_bar is None:
         # VOID, don't breakeven-close (July 2026 review). Recording a
         # data-fetch failure as a $0.00 breakeven CLOSE lied twice: it
         # counted the phantom trade in the spoken record ("41 trades… 7
@@ -613,126 +886,69 @@ def _close_trade(trade: dict, tracker: dict) -> None:
         trade["pnl_pct"] = None
         trade["pnl_dollars"] = None
         trade["lesson"] = "Trade voided — market data was unavailable for evaluation."
-    else:
-        pnl_pct = ((exit_price - entry_price) / entry_price) * 100
-        position_size = tracker["metadata"].get("position_size", 1000)
-        pnl_dollars = round(position_size * (pnl_pct / 100), 2)
+        return
 
-        trade["status"] = "closed"
-        trade["entry_price"] = round(entry_price, 2)
-        trade["exit_price"] = round(exit_price, 2)
-        trade["pnl_pct"] = round(pnl_pct, 2)
-        trade["pnl_dollars"] = round(pnl_dollars, 2)
+    entry_date, entry_price, _ = entry_bar[0], entry_bar[1], entry_bar[2]
+    exit_date, exit_price = exit_bar[0], exit_bar[2]
 
-        # Annotate with NASDAQ benchmark alpha — best-effort, tolerant of yfinance failures.
-        try:
-            _annotate_trade_with_nasdaq(trade)
-        except Exception as exc:
-            logger.warning("NASDAQ annotation failed for %s: %s", symbol, exc)
+    pnl_pct = ((exit_price - entry_price) / entry_price) * 100
+    position_size = tracker["metadata"].get("position_size", 1000)
+    pnl_dollars = round(position_size * (pnl_pct / 100), 2)
 
-        # Backfill sector if post_generate never set it (e.g. old trades).
-        if not trade.get("sector"):
-            trade["sector"] = _classify_sector(
-                symbol, trade.get("strategy", ""), trade.get("market", ""),
+    trade["status"] = "closed"
+    trade["entry_price"] = round(entry_price, 2)
+    trade["exit_price"] = round(exit_price, 2)
+    trade["entry_bar_date"] = entry_date.isoformat()
+    trade["exit_bar_date"] = exit_date.isoformat()
+    trade["pnl_pct"] = round(pnl_pct, 2)
+    trade["pnl_dollars"] = round(pnl_dollars, 2)
+
+    # Wrong-instrument tripwire: if the close-time entry price is wildly
+    # far from the price observed when the pick was validated, the symbol
+    # probably resolved to a different listing/company between pick and
+    # close (the Ep50 CNR class). Flag loudly for the operator; do NOT
+    # auto-void — a genuine halving/doubling is a real (instructive)
+    # outcome that a human should adjudicate.
+    ref = trade.get("pick_reference_price")
+    if isinstance(ref, (int, float)) and math.isfinite(ref) and ref > 0:
+        if abs(entry_price - ref) / ref > 0.5:
+            trade["price_discontinuity"] = True
+            logger.warning(
+                "PRICE DISCONTINUITY for %s: entry $%.2f vs pick-time "
+                "reference $%.2f (>50%% apart) — possible wrong-instrument "
+                "pricing; review this trade before trusting its P&L",
+                symbol, entry_price, ref,
             )
 
-        logger.info(
-            "Evaluated %s (%s): entry=$%.2f exit=$%.2f pnl=%.2f%% alpha=%s",
-            symbol, trade_type, entry_price, exit_price, pnl_pct, trade.get("alpha_pct"),
+    # Annotate with NASDAQ benchmark alpha over the SAME bar window —
+    # best-effort, tolerant of yfinance failures.
+    try:
+        _annotate_trade_with_nasdaq(trade, entry_date, exit_date)
+    except Exception as exc:
+        logger.warning("NASDAQ annotation failed for %s: %s", symbol, exc)
+
+    # Backfill sector if post_generate never set it (e.g. old trades).
+    if not trade.get("sector"):
+        trade["sector"] = _classify_sector(
+            symbol, trade.get("strategy", ""), trade.get("market", ""),
         )
+
+    logger.info(
+        "Evaluated %s (%s): entry=$%.2f (%s) exit=$%.2f (%s) pnl=%.2f%% alpha=%s",
+        symbol, trade_type, entry_price, entry_date, exit_price, exit_date,
+        pnl_pct, trade.get("alpha_pct"),
+    )
 
 
 def _snapshot_trade(trade: dict, symbol: str) -> None:
     """Take a mid-week price snapshot for a weekly hold (does not close it)."""
     try:
-        import yfinance as yf
-        ticker = yf.Ticker(symbol)
-        hist = ticker.history(period="1d", interval="1d")
-        if not hist.empty:
-            trade["current_price"] = round(float(hist["Close"].iloc[-1]), 2)
+        bars = _fetch_bars_for_trade(trade, period="5d")
+        if bars:
+            trade["current_price"] = round(bars[-1][2], 2)
             logger.info("Mid-week snapshot %s: $%.2f", symbol, trade["current_price"])
     except Exception as exc:
         logger.warning("Mid-week snapshot failed for %s: %s", symbol, exc)
-
-
-def _fetch_trade_prices(symbol: str) -> tuple[float | None, float | None]:
-    """Fetch market open and close prices for the trade date using yfinance.
-
-    Returns (entry_price, exit_price) or (None, None) on failure.
-    Uses the most recent trading day's open and close.
-    """
-    import time as _time
-
-    for attempt in range(3):
-        try:
-            import yfinance as yf
-            ticker = yf.Ticker(symbol)
-            hist = ticker.history(period="5d", interval="1d")
-            if hist.empty or len(hist) < 1:
-                logger.warning("No history for %s (attempt %d)", symbol, attempt + 1)
-            else:
-                # Use the most recent completed trading day
-                last_row = hist.iloc[-1]
-                entry = float(last_row["Open"])
-                exit_ = float(last_row["Close"])
-                return entry, exit_
-        except Exception as exc:
-            logger.warning("yfinance attempt %d for %s failed: %s", attempt + 1, symbol, exc)
-
-        if attempt < 2:
-            backoff = 2 ** (attempt + 1)
-            logger.info("Retrying %s price in %ds...", symbol, backoff)
-            _time.sleep(backoff)
-
-    return None, None
-
-
-def _fetch_weekly_prices(symbol: str) -> tuple[float | None, float | None]:
-    """Fetch the week's first trading day open and last trading day close.
-
-    Returns (entry_price, exit_price) or (None, None) on failure.
-    Uses 10 calendar days of history to handle shortened weeks (holidays),
-    then filters to only this week's trading days.
-    """
-    import time as _time
-
-    today = datetime.date.today()
-    # Find this week's Monday (weekday 0)
-    monday = today - datetime.timedelta(days=today.weekday())
-
-    for attempt in range(3):
-        try:
-            import yfinance as yf
-            ticker = yf.Ticker(symbol)
-            # Fetch 10 days to cover holidays and weekends
-            hist = ticker.history(period="10d", interval="1d")
-            if hist.empty or len(hist) < 1:
-                logger.warning("No history for %s (attempt %d)", symbol, attempt + 1)
-            else:
-                # Filter to only this week's trading days (Monday through today)
-                week_data = hist[hist.index.date >= monday]
-                if week_data.empty:
-                    logger.warning("No trading days this week for %s", symbol)
-                else:
-                    # First trading day's open, last trading day's close
-                    entry = float(week_data.iloc[0]["Open"])
-                    exit_ = float(week_data.iloc[-1]["Close"])
-                    logger.info(
-                        "Weekly prices for %s: %d trading days this week (entry=%s, exit=%s)",
-                        symbol, len(week_data),
-                        week_data.index[0].strftime("%a"),
-                        week_data.index[-1].strftime("%a"),
-                    )
-                    return entry, exit_
-        except Exception as exc:
-            logger.warning("yfinance attempt %d for %s failed: %s", attempt + 1, symbol, exc)
-
-        if attempt < 2:
-            backoff = 2 ** (attempt + 1)
-            logger.info("Retrying %s price in %ds...", symbol, backoff)
-            _time.sleep(backoff)
-
-    return None, None
 
 
 def _recompute_summary(tracker: dict) -> None:
@@ -764,6 +980,27 @@ def _recompute_summary(tracker: dict) -> None:
     ]
     cum_alpha = sum(alphas)
 
+    # Matched-window compounded score (July 2026 review): the honest
+    # "are the picks beating the NASDAQ?" number. Compounds each
+    # benchmarked trade's return against the index's return over the SAME
+    # bar window. Distinct from BOTH the per-trade alpha sum above (an
+    # additive approximation) and the buy-and-hold gap in the ``alpha``
+    # block (which is not capital-matched — the sim holds one $1,000
+    # position at a time while the index compounds fully-invested).
+    comp_port = 1.0
+    comp_ndq = 1.0
+    n_matched = 0
+    for t in closed:
+        pnl = t.get("pnl_pct")
+        ndq = t.get("nasdaq_return_pct")
+        if (
+            isinstance(pnl, (int, float)) and math.isfinite(pnl)
+            and isinstance(ndq, (int, float)) and math.isfinite(ndq)
+        ):
+            comp_port *= 1 + pnl / 100
+            comp_ndq *= 1 + ndq / 100
+            n_matched += 1
+
     # Streak calculation
     current_streak = 0
     longest_win = 0
@@ -793,6 +1030,10 @@ def _recompute_summary(tracker: dict) -> None:
         "average_return_pct": round(sum(pnl_pcts) / len(pnl_pcts), 2) if pnl_pcts else 0.0,
         "cumulative_alpha_vs_nasdaq": round(cum_alpha, 2),
         "trades_with_alpha": len(alphas),
+        "compounded_return_pct": round((comp_port - 1) * 100, 2),
+        "compounded_nasdaq_matched_pct": round((comp_ndq - 1) * 100, 2),
+        "matched_window_alpha_pct": round((comp_port - comp_ndq) * 100, 2),
+        "matched_window_trades": n_matched,
         "current_streak": current_streak,
         "longest_win_streak": longest_win,
         "longest_loss_streak": longest_loss,
@@ -956,18 +1197,55 @@ def _compute_benchmark_state(tracker: dict) -> None:
     alpha["ytd_pct"] = round(_portfolio_return_ytd_pct(tracker) - benchmark.get("ytd_pct", 0.0), 2)
 
 
+def _matched_nasdaq_window(bars, entry_date, exit_date):
+    """Return ``(entry_open, exit_close, entry_bar_date, exit_bar_date)``
+    for the ^IXIC window matching a trade's actual bar window, or ``None``.
+
+    Entry snaps FORWARD (bar on ``entry_date``, else the first bar after);
+    exit snaps BACKWARD (bar on ``exit_date``, else the last bar before) —
+    the window only ever shrinks inward, never expands past the trade.
+    """
+    if not bars or entry_date is None or exit_date is None:
+        return None
+    entry_bar = next((b for b in bars if b[0] >= entry_date), None)
+    exit_bar = next((b for b in reversed(bars) if b[0] <= exit_date), None)
+    if entry_bar is None or exit_bar is None or entry_bar[0] > exit_bar[0]:
+        return None
+    return entry_bar[1], exit_bar[2], entry_bar[0], exit_bar[0]
+
+
 def _annotate_trade_with_nasdaq(trade: dict, entry_date: datetime.date | None = None, exit_date: datetime.date | None = None) -> None:
-    """Fill in NASDAQ entry/exit closes and alpha on a just-closed trade.
+    """Fill in the NASDAQ move over the trade's OWN bar window, plus alpha.
+
+    July 2026 review — the old implementation compared close-to-close on
+    the calendar dates, with two corruptions: (1) every FLASH trade got
+    ``nasdaq_entry == nasdaq_exit`` (same close twice) so its benchmark
+    return was always 0.0 and "alpha" was just the raw trade return;
+    (2) weekly holds compared a Monday-OPEN stock entry to the PREVIOUS
+    Friday's index close (weekend gap contamination). The benchmark now
+    uses the index OPEN on the trade's entry bar date and the index CLOSE
+    on its exit bar date — the exact same window the trade's own P&L is
+    measured over.
 
     Safe no-op if yfinance data is unavailable — ``nasdaq_*`` fields stay
     ``None`` and ``alpha_pct`` defaults to ``None``.
     """
-    trade_date_str = trade.get("date")
-    if entry_date is None and trade_date_str:
-        try:
-            entry_date = datetime.date.fromisoformat(trade_date_str)
-        except ValueError:
-            entry_date = None
+    if entry_date is None:
+        for key in ("entry_bar_date", "date"):
+            val = trade.get(key)
+            if isinstance(val, str):
+                try:
+                    entry_date = datetime.date.fromisoformat(val)
+                    break
+                except ValueError:
+                    continue
+    if exit_date is None:
+        val = trade.get("exit_bar_date")
+        if isinstance(val, str):
+            try:
+                exit_date = datetime.date.fromisoformat(val)
+            except ValueError:
+                exit_date = None
     if entry_date is None:
         entry_date = datetime.date.today()
     if exit_date is None:
@@ -978,19 +1256,24 @@ def _annotate_trade_with_nasdaq(trade: dict, entry_date: datetime.date | None = 
         else:
             exit_date = entry_date + datetime.timedelta(days=(4 - entry_date.weekday()) % 7)
 
-    entry_close = _fetch_nasdaq_close(entry_date)
-    exit_close = _fetch_nasdaq_close(exit_date)
-    trade["nasdaq_entry"] = round(entry_close, 2) if entry_close else None
-    trade["nasdaq_exit"] = round(exit_close, 2) if exit_close else None
-    if entry_close and exit_close:
-        nasdaq_return = ((exit_close - entry_close) / entry_close) * 100
+    bars = _fetch_history_bars(NASDAQ_SYMBOL, period="1mo")
+    window = _matched_nasdaq_window(bars, entry_date, exit_date) if bars else None
+    if window:
+        entry_open, exit_close, entry_bar_date, exit_bar_date = window
+        trade["nasdaq_entry"] = round(entry_open, 2)
+        trade["nasdaq_exit"] = round(exit_close, 2)
+        trade["nasdaq_entry_date"] = entry_bar_date.isoformat()
+        trade["nasdaq_exit_date"] = exit_bar_date.isoformat()
+        nasdaq_return = ((exit_close - entry_open) / entry_open) * 100
         trade["nasdaq_return_pct"] = round(nasdaq_return, 2)
         pnl = trade.get("pnl_pct")
-        if pnl is not None:
+        if isinstance(pnl, (int, float)) and math.isfinite(pnl):
             trade["alpha_pct"] = round(pnl - nasdaq_return, 2)
         else:
             trade["alpha_pct"] = None
     else:
+        trade["nasdaq_entry"] = None
+        trade["nasdaq_exit"] = None
         trade["nasdaq_return_pct"] = None
         trade["alpha_pct"] = None
 
@@ -1127,8 +1410,25 @@ def _build_trade_review(tracker: dict, episode_num: int | None = None) -> str:
     summary = tracker.get("summary", {})
 
     type_label = "Flash Trade" if trade_type == "flash" else "Weekly Hold"
+    # Prefer the ACTUAL bar dates recorded at close (July 2026 review: the
+    # Friday pre-market run closes weekly holds on Thursday's bar, so the
+    # old hardcoded "Friday close" label put a wrong day on air — and the
+    # Saturday scripts then said "Friday's close" about a Thursday price).
     entry_label = "market open" if trade_type == "flash" else "Monday open"
     exit_label = "market close" if trade_type == "flash" else "Friday close"
+    try:
+        if last.get("entry_bar_date"):
+            entry_label = (
+                datetime.date.fromisoformat(last["entry_bar_date"]).strftime("%A")
+                + " open"
+            )
+        if last.get("exit_bar_date"):
+            exit_label = (
+                datetime.date.fromisoformat(last["exit_bar_date"]).strftime("%A")
+                + " close"
+            )
+    except ValueError:
+        pass
 
     if entry is None or exit_ is None:
         return (
@@ -1182,11 +1482,32 @@ def _build_benchmark_block(tracker: dict) -> str:
             return "n/a"
         return f"{v:+.2f}%"
 
+    # Two DIFFERENT scores exist and episodes have spoken them
+    # interchangeably (+11% one day, -13.1% the Sunday recap — July 2026
+    # review). Label them so the script can never conflate the two.
+    summary = tracker.get("summary", {}) or {}
+    matched_alpha = summary.get("matched_window_alpha_pct")
+    matched_n = summary.get("matched_window_trades", 0)
+    matched_line = ""
+    if matched_n and matched_alpha is not None:
+        matched_line = (
+            f"1) MATCHED-WINDOW SCORE (the honest head-to-head — each $1,000 "
+            f"trade vs the NASDAQ over the SAME holding window, compounded): "
+            f"portfolio {_sign(summary.get('compounded_return_pct'))} vs NASDAQ "
+            f"{_sign(summary.get('compounded_nasdaq_matched_pct'))} → alpha "
+            f"{_sign(matched_alpha)} across {matched_n} benchmarked trades. "
+        )
     return (
         f"NASDAQ Composite ^IXIC: {close:,.0f} "
-        f"(YTD {_sign(bench_ytd)}, since inception {_sign(bench_itd)}). "
-        f"Portfolio: YTD {_sign(portfolio_ytd)}, since inception {_sign(portfolio_itd)}. "
-        f"Alpha vs NASDAQ: YTD {_sign(alpha_ytd)}, since inception {_sign(alpha_itd)}."
+        f"(YTD {_sign(bench_ytd)}, since inception {_sign(bench_itd)}).\n"
+        f"SCOREBOARD — two different measures; ALWAYS name the measure when "
+        f"speaking a number, never mix them in one sentence:\n"
+        f"{matched_line}\n"
+        f"2) BUY-AND-HOLD GAP (context only; NOT capital-matched — the sim "
+        f"holds one $1,000 position at a time while the index compounds "
+        f"fully invested): portfolio YTD {_sign(portfolio_ytd)} / since "
+        f"inception {_sign(portfolio_itd)}; gap vs NASDAQ YTD "
+        f"{_sign(alpha_ytd)} / since inception {_sign(alpha_itd)}."
     )
 
 
@@ -1323,6 +1644,37 @@ def _save_lessons_learned(data: dict, path: Path) -> None:
     )
 
 
+_LESSON_SIMILARITY_THRESHOLD = 0.62
+
+
+def _lesson_similarity(a: str, b: str) -> float:
+    """Similarity ratio between two lesson texts (shared engine helper)."""
+    try:
+        from engine.utils import calculate_similarity
+        return calculate_similarity(a, b)
+    except Exception:
+        return 0.0
+
+
+def _find_similar_active_lesson(data: dict, observation: str, adjustment: str) -> dict | None:
+    """Return an existing ACTIVE entry that says essentially the same thing.
+
+    The comparison weights the Rule (adjustment) text — that's the part
+    the LLM parrots back — and falls back to the combined text.
+    """
+    adjustment = (adjustment or "").strip()
+    combined = f"{(observation or '').strip()} {adjustment}"
+    for entry in data.get("entries") or []:
+        if entry.get("status") != "active":
+            continue
+        if _lesson_similarity(adjustment, entry.get("adjustment", "")) >= _LESSON_SIMILARITY_THRESHOLD:
+            return entry
+        existing_combined = f"{entry.get('observation', '')} {entry.get('adjustment', '')}"
+        if _lesson_similarity(combined, existing_combined) >= _LESSON_SIMILARITY_THRESHOLD:
+            return entry
+    return None
+
+
 def _append_lesson_learned(
     data: dict,
     *,
@@ -1333,8 +1685,31 @@ def _append_lesson_learned(
     category: str = "content",
     metric_target: dict | None = None,
 ) -> dict:
-    """Append a new recursive-improvement rule; returns the new entry."""
+    """Append a new recursive-improvement rule; returns the entry.
+
+    Dedup-on-append (July 2026 review): the ledger had become a feedback
+    echo chamber — the prompt showed the 5 newest rules, the LLM
+    paraphrased them back in its **Lesson Learned** block, and the
+    extractor appended the paraphrase as a NEW rule. 65 entries
+    accumulated, ~35 of them copies of one volume-confirmation rule and
+    12 of the closing-price-confirmation rule (the 9-of-10-episodes
+    spoken tic). A near-duplicate of an active rule now REINFORCES that
+    rule (count + freshness stamp) instead of multiplying it, so the
+    5-rule prompt window stays diverse and the show can actually learn
+    five different things.
+    """
     entries = data.setdefault("entries", [])
+    existing = _find_similar_active_lesson(data, observation, adjustment)
+    if existing is not None:
+        existing["reinforced_count"] = int(existing.get("reinforced_count", 0)) + 1
+        existing["last_reinforced"] = datetime.date.today().isoformat()
+        if episode_num is not None:
+            existing["last_reinforced_episode"] = episode_num
+        logger.info(
+            "Lesson learned duplicates active rule %s — reinforced (x%d), not re-appended",
+            existing.get("id"), existing["reinforced_count"],
+        )
+        return existing
     next_id = f"LL-{len(entries) + 1:03d}"
     entry = {
         "id": next_id,
@@ -1352,13 +1727,29 @@ def _append_lesson_learned(
 
 
 def _build_lessons_learned_block(data: dict, *, max_active: int = 5) -> str:
-    """Block fed to the digest prompt as 'RECURSIVE IMPROVEMENT RULES IN EFFECT'."""
+    """Block fed to the digest prompt as 'RECURSIVE IMPROVEMENT RULES IN EFFECT'.
+
+    Selects the most recent DISTINCT rules — near-duplicate actives (the
+    pre-dedup backlog) collapse to their freshest instance so the block
+    never shows the same rule five times.
+    """
     entries = [e for e in (data.get("entries") or []) if e.get("status") == "active"]
     if not entries:
         return "No active recursive-improvement rules yet — write one if today's trade teaches a generalisable lesson."
     lines = ["The following rules are in effect today. Obey them in every section of the digest:"]
-    # Most-recent-first, capped.
-    for entry in list(reversed(entries))[:max_active]:
+    # Most-recent-first, capped, de-duplicated by rule similarity.
+    selected: list[dict] = []
+    for entry in reversed(entries):
+        if len(selected) >= max_active:
+            break
+        if any(
+            _lesson_similarity(entry.get("adjustment", ""), s.get("adjustment", ""))
+            >= _LESSON_SIMILARITY_THRESHOLD
+            for s in selected
+        ):
+            continue
+        selected.append(entry)
+    for entry in selected:
         lines.append(
             f"- [{entry['id']}] {entry.get('observation', '').rstrip('.')}. "
             f"Rule: {entry.get('adjustment', '').rstrip('.')}."
@@ -1564,12 +1955,25 @@ def _build_portfolio_summary(tracker: dict) -> str:
     alpha_line = ""
     trades_with_alpha = summary.get("trades_with_alpha", 0)
     if trades_with_alpha:
-        alpha_line = (
-            f"- Cumulative alpha vs NASDAQ: "
-            f"{_finite(summary.get('cumulative_alpha_vs_nasdaq')):+.1f}% "
-            f"(across {trades_with_alpha} benchmarked trades) — THE headline "
-            f"number; state it on air every episode\n"
-        )
+        matched_alpha = summary.get("matched_window_alpha_pct")
+        matched_n = summary.get("matched_window_trades", 0)
+        if matched_n and matched_alpha is not None:
+            alpha_line = (
+                f"- Matched-window alpha vs NASDAQ (compounded over each "
+                f"trade's own holding window): {_finite(matched_alpha):+.1f}% "
+                f"across {matched_n} benchmarked trades — THE headline "
+                f"number; state it on air every episode and always call it "
+                f"the 'matched-window' score\n"
+                f"- Sum of per-trade alpha (simple additive tally, secondary): "
+                f"{_finite(summary.get('cumulative_alpha_vs_nasdaq')):+.1f}%\n"
+            )
+        else:
+            alpha_line = (
+                f"- Cumulative alpha vs NASDAQ: "
+                f"{_finite(summary.get('cumulative_alpha_vs_nasdaq')):+.1f}% "
+                f"(across {trades_with_alpha} benchmarked trades) — THE headline "
+                f"number; state it on air every episode\n"
+            )
 
     return (
         f"Portfolio Performance (simulated, $1,000 per trade):\n"
@@ -1866,19 +2270,48 @@ def _derive_operating_principles(tracker: dict) -> list:
 
 
 def get_mit_confidence_calibration(tracker: dict) -> str:
-    """Simple calibration report for the prompt."""
-    closed = [t for t in tracker.get("trades", []) if t.get("status") == "closed" and t.get("confidence") and t.get("alpha_pct") is not None]
+    """Per-bucket calibration report for the prompt.
+
+    July 2026 review: every one of the 46 recorded picks declared
+    "Medium" confidence, so the old High-only report returned
+    "data still limited" forever and the calibration loop never engaged.
+    Report every bucket that exists, and call out a degenerate
+    distribution so the model starts committing to High/Low when the
+    rubric supports it.
+    """
+    closed = [
+        t for t in tracker.get("trades", [])
+        if t.get("status") == "closed" and t.get("confidence")
+        and isinstance(t.get("alpha_pct"), (int, float))
+        and math.isfinite(t["alpha_pct"])
+    ]
     if len(closed) < 5:
         return "Not enough data for confidence calibration yet."
 
-    high_conf = [t for t in closed if t.get("confidence", "").lower() in ("high", "very high")]
-    if not high_conf:
-        return "Confidence calibration data still limited."
+    buckets: dict[str, list[float]] = {}
+    for t in closed:
+        label = str(t.get("confidence", "")).strip().capitalize()
+        buckets.setdefault(label, []).append(t["alpha_pct"])
 
-    high_conf_wins = sum(1 for t in high_conf if t.get("alpha_pct", 0) > 0)
-    wr = high_conf_wins / len(high_conf) * 100 if high_conf else 0
-
-    return f"High-confidence picks have been correct {wr:.0f}% of the time ({high_conf_wins}/{len(high_conf)}). Use this to calibrate how strongly to act on strong signals."
+    parts = []
+    for label in ("High", "Medium", "Low"):
+        alphas = buckets.get(label)
+        if not alphas:
+            continue
+        wins = sum(1 for a in alphas if a > 0)
+        parts.append(
+            f"{label}: {wins}/{len(alphas)} positive-alpha "
+            f"(avg {sum(alphas) / len(alphas):+.1f}%)"
+        )
+    line = "Calibration by stated confidence — " + " · ".join(parts) + "."
+    dominant = max(buckets.values(), key=len)
+    if len(dominant) / len(closed) > 0.9:
+        line += (
+            " NOTE: over 90% of picks used a single confidence level, which "
+            "makes the field uninformative — commit to High or Low whenever "
+            "the calibration rubric supports it, and say WHY."
+        )
+    return line
 
 
 def _maybe_record_monthly_snapshot(tracker: dict, today: "datetime.date") -> None:
@@ -1908,7 +2341,9 @@ def _maybe_record_monthly_snapshot(tracker: dict, today: "datetime.date") -> Non
         "total_trades": summary.get("total_trades", 0),
         "win_rate_pct": summary.get("win_rate_pct", 0.0),
         "cumulative_pnl": summary.get("cumulative_pnl", 0.0),
-        "alpha_vs_nasdaq": tracker.get("alpha", {}).get("ytd_vs_nasdaq", 0.0),
+        # July 2026 fix: this read a key that never existed
+        # ("ytd_vs_nasdaq") and recorded 0.0 in every snapshot.
+        "alpha_vs_nasdaq": tracker.get("alpha", {}).get("ytd_pct", 0.0),
     }
     snapshots.append(snapshot)
     if len(snapshots) > 24:

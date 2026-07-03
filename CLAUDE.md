@@ -337,6 +337,38 @@ nerranetwork/
   (operator schedules via `when: next`). Prompt edits (no-trade platitude
   ban, Market Pulse macro frame) change output — A/B-listen per landmine
   #17.
+  **July 3 2026 benchmark-integrity pass** (review:
+  [`docs/reviews/modern_investing_review_2026_07_03.md`](docs/reviews/modern_investing_review_2026_07_03.md);
+  drift guards: `tests/test_mit_benchmark_integrity.py`): audit driven by
+  the operator's live-trading intent — the measurement layer was not
+  measuring what it claims. Every FLASH trade had `nasdaq_return_pct: 0.0`
+  (the annotator compared the same close to itself → "alpha" was the raw
+  return); mid-week weekly picks were BACKDATED to Monday's open
+  (hindsight gain — Ep35 AMD picked Wed, +13.36% from Mon open); Ep50
+  "CNR (TSX)" was priced as US Core Natural Resources, not Canadian
+  National Railway; DELL/HIMS NaN closes were still spoken as breakevens
+  (the July-2 migration caught nulls, not NaN); `--test` runs appended
+  REAL trades (post_generate runs before the test-mode exit); and the
+  lessons_learned "learning loop" was an echo chamber (65 actives, ~47
+  copies of two rules — the 9/10-episode "closing-price confirmation"
+  tic). Fixed: matched-bar-window benchmark (index open→close over the
+  trade's own bars), pick-date entry integrity (no bars before the pick;
+  cron-delay wrong-day pricing killed; stale picks void after 10d), TSX
+  `.TO`/`.V` resolution + pick-time probe + price-discontinuity tripwire,
+  self-healing void of non-finite closes (tracker now 40 closed/6 voided,
+  win rate 57.5%), `NERRA_HOOKS_READONLY` set by run_show for
+  `--test`/`--rehearse` (only the MIT hook honors it so far — extending to
+  the memory shows is a deferred network item), lessons dedup-on-append +
+  ledger collapse 65→11 distinct rules, matched-window compounded alpha +
+  labeled scoreboard blocks (A/B-listen: scoreboard/lessons/bar-day-label
+  changes alter spoken output), per-bucket confidence calibration (46/46
+  picks had said "Medium"). Operator to-dos: run
+  `scripts/recompute_mit_benchmarks.py --apply` (needs market-data access;
+  realigns historical windows + reports wrong-instrument trades) for the
+  first trustworthy alpha baseline, and see the review doc's live-trading
+  readiness verdict (NOT READY — honest record +$304 over 40 sequential
+  $1k trades vs NASDAQ +15.46% ITD; accumulate 2-3 months of clean
+  post-fix record first).
 
 **Tesla Shorts Time Recursive Memory System (May 2026+)**  
 TST received a full recursive improvement architecture (analogous to MIT):

@@ -499,6 +499,14 @@ def run(args: argparse.Namespace) -> None:
     """
     from engine.config import load_config
 
+    # Test/rehearsal runs must never mutate persistent hook state (July
+    # 2026 MIT review: a `--test` run appended a REAL trade to the
+    # investment tracker because post_generate runs before the test-mode
+    # early exit). Hooks that persist state check this env var and skip
+    # their writes; production runs are unaffected.
+    if args.test or getattr(args, "rehearse", False):
+        os.environ["NERRA_HOOKS_READONLY"] = "1"
+
     # 1. Load config
     config_path = PROJECT_ROOT / "shows" / f"{args.show}.yaml"
     config = load_config(config_path)

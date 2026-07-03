@@ -36,11 +36,102 @@ reviews:
         baseline: "41 spoken incl. 4 phantom data-failure 'breakeven' trades"
         expected: "spoken record excludes voided trades (37 honest trades);
           no data-failure close ever narrated as a market outcome"
-        verdict: pending
-        evidence: null
+        verdict: partial
+        evidence: "2026-07-03 review: the 4 null-price trades are voided and
+          excluded, but the DELL Ep57 / HIMS Ep63 NaN-exit closes were missed
+          by the migration and stayed status=closed with pnl=NaN — 2 of the 3
+          spoken 'breakeven' trades were still data failures. Fixed via the
+          self-healing _void_nonfinite_closed_trades migration."
       - metric: times a single closed trade is reviewed on air
         baseline: "MU reviewed as 'yesterday's flash trade' 3x"
         expected: "exactly once per closed trade (review-once guard)"
+        verdict: hit
+        evidence: "Ep94 reviewed MU once (reviewed_in_episode=94), Ep95
+          reviewed GIS once (95); no re-narration in Ep94/95 transcripts."
+    agent_cost_usd: null
+
+  - date: 2026-07-03
+    pr: null
+    doc: docs/reviews/modern_investing_review_2026_07_03.md
+    reviewer: claude-code (/review-show, operator-requested live-trading focus)
+    summary: >
+      Benchmark-integrity pass driven by the operator's intent to connect
+      the strategy to a live account. The measurement layer was not
+      measuring what it claims: every flash trade had nasdaq_return_pct
+      0.0 (alpha = raw return), mid-week weekly picks were backdated to
+      Monday's open (hindsight gain, Ep35 AMD +13.36%), Ep50 CNR was
+      priced as the wrong US company (Core Natural Resources, not
+      Canadian National Railway), DELL/HIMS NaN closes were still spoken
+      as breakevens, --test runs appended real trades, and the
+      lessons_learned "recursive learning loop" had degenerated into an
+      echo chamber (65 actives, ~47 copies of two rules; the
+      closing-price tic in 9/10 transcripts). Live-trading verdict: NOT
+      READY — honest record is +$304 over 40 sequential $1k trades vs
+      NASDAQ +15.46% ITD; run scripts/recompute_mit_benchmarks.py for the
+      first trustworthy alpha baseline, then accumulate 2-3 months of
+      clean record.
+    shipped:
+      - matched-bar-window NASDAQ benchmark (index open→close over the
+        trade's own bars; flash windows no longer zero)
+      - pick-date entry integrity (no bars before the pick; cron-delay
+        wrong-day pricing killed; stale picks void after 10d)
+      - TSX/.TO symbol resolution + pick-time validation probe +
+        price-discontinuity tripwire
+      - self-healing void of non-finite closed trades + tracker migration
+        (40 closed / 6 voided; breakeven 3→1; win rate 57.5%)
+      - NERRA_HOOKS_READONLY guard (--test/--rehearse never mutate state)
+      - lessons_learned dedup-on-append + diverse 5-rule block + ledger
+        collapse 65→11 distinct actives
+      - matched-window compounded alpha in summary + labeled scoreboard
+        blocks (A/B-listen)
+      - honest bar-day close labels ("Thursday close"); calibration
+        reports all confidence buckets; monthly-snapshot dead key fix
+      - scripts/recompute_mit_benchmarks.py (operator runs with market
+        access; realigns historical windows, reports wrong-instrument
+        trades)
+      - drift guards tests/test_mit_benchmark_integrity.py (37 tests);
+        brittle total_trades==37 pin replaced with invariants (was red on
+        main)
+    deferred:
+      - "operator: run scripts/recompute_mit_benchmarks.py --apply and
+        adjudicate its wrong-instrument report (Ep50 CNR expected)"
+      - "retire the closing-price-confirmation lesson family
+        (LL-054/LL-005/LL-013 — pipeline bugs taught as investing
+        lessons); one-line status flip after the dedup; operator A/B call
+        from July 2"
+      - "chronic under-length (8/10 below 1800w floor) — digest ceiling,
+        behind the four-show length A/B"
+      - "investing.com promo-headline demotion (operator, July 2)"
+      - "close weekly holds on Saturday's run to capture the true Friday
+        close (cadence decision)"
+      - "recap/weekend episodes creating trades from stale news — pricing
+        now fair (Monday entry), but consider disabling picks on recaps"
+      - "extend NERRA_HOOKS_READONLY honoring to other state-mutating
+        hooks (tesla/spacex/FF/PT memory, PR vocab)"
+      - "execution-cost modeling (spread/commission/FX) + enforced stops
+        before any live-account decision"
+    predictions:
+      - metric: closing-price-confirmation phrase frequency (snapshot
+          repeated-phrases, last 10 transcripts)
+        baseline: "9/10 episodes"
+        expected: "<= 2/10 within 10 episodes (dedup removed the echo; the
+          rule is 1 of 11 distinct actives, no longer 5-of-5 in the block)"
+        verdict: pending
+        evidence: null
+      - metric: flash trades with nasdaq_return_pct == 0.0
+        baseline: "8/8 flash trades"
+        expected: "0 new flash trades with a zero benchmark window"
+        verdict: pending
+        evidence: null
+      - metric: weekly trades with entry_bar_date < pick date
+        baseline: "all mid-week weekly picks backdated to Monday"
+        expected: "0 new trades with entry before pick date"
+        verdict: pending
+        evidence: null
+      - metric: TSX picks priced on the .TO listing
+        baseline: "0 (bare US symbols; Ep50 CNR wrong company)"
+        expected: "every new TSX pick carries resolved_symbol ending .TO/.V
+          or a loud PICK VALIDATION FAILED log"
         verdict: pending
         evidence: null
     agent_cost_usd: null
