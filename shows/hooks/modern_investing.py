@@ -15,6 +15,7 @@ import logging
 import math
 import os
 import re
+import uuid
 from pathlib import Path
 
 
@@ -444,6 +445,16 @@ def post_generate(config, *, digest_text: str = "", episode_num: int | None = No
     else:
         logger.warning("Could not extract Practice Investment pick from digest")
 
+    # Execution bridge (July 2026 live-trading prep): emit a
+    # machine-readable trade signal for the (future, isolated) SnapTrade
+    # execution layer. The executor consumes THIS artifact — never the
+    # digest prose — so LLM formatting drift can't reach an order ticket.
+    # Best-effort: a signal-write failure must never block the pipeline.
+    try:
+        _write_trade_signal(output_dir, trade, digest_text, episode_num, tracker)
+    except Exception as exc:
+        logger.warning("Trade-signal write failed (non-fatal): %s", exc)
+
     # Repetition guard: record whichever lesson tags the digest taught.
     taught_path = output_dir / TAUGHT_LESSONS_FILENAME
     taught = _load_taught_lessons(taught_path)
@@ -741,6 +752,106 @@ def _probe_pick(trade: dict) -> bool:
         trade.get("symbol"), trade.get("market"), ", ".join(candidates) or "nothing",
     )
     return False
+
+
+TRADE_SIGNAL_LATEST_FILENAME = "trade_signal_latest.json"
+TRADE_SIGNAL_SCHEMA_VERSION = 1
+
+# uuid5 namespace for deterministic client_order_ids — SnapTrade's
+# place-order endpoint accepts a caller-supplied ``client_order_id`` for
+# idempotent placement, which protects a retried cron from double-buying.
+_SIGNAL_ORDER_NAMESPACE = uuid.UUID("6d49f5a4-1a68-4f6e-9c7e-a1b2c3d4e5f6")
+
+
+def _write_trade_signal(
+    output_dir: Path,
+    trade: dict | None,
+    digest_text: str,
+    episode_num: int | None,
+    tracker: dict,
+) -> None:
+    """Write the per-episode machine-readable trade signal.
+
+    July 2026 live-trading prep: the future SnapTrade execution layer (and
+    the shadow-mode logger before it) must consume a schema-versioned
+    artifact, not the digest markdown — the tracker has already lost real
+    picks to LLM formatting drift, which is survivable for a sim and
+    unacceptable for an order ticket. The signal is explicit about
+    NO-trade days too, so the executor can distinguish "the show chose
+    not to trade" from "the signal never arrived" (fail-closed either way).
+
+    Fields are chosen for SnapTrade specifically:
+    - ``snaptrade_symbol`` is the Yahoo-format symbol (``CNR.TO``) —
+      SnapTrade's canonical symbology follows the Yahoo ticker format, so
+      the tracker's resolved symbol maps 1:1;
+    - ``currency``/``suggested_account`` route TSX picks to a CAD account
+      (Wealthsimple) and US picks to a USD account (Webull) so no order
+      eats a cross-currency conversion spread;
+    - ``client_order_id`` is a deterministic uuid5 of
+      (episode, symbol, date) for idempotent placement across cron
+      retries.
+    """
+    today_iso = datetime.date.today().isoformat()
+    signal: dict = {
+        "schema_version": TRADE_SIGNAL_SCHEMA_VERSION,
+        "generated_at": today_iso,
+        "episode_num": episode_num,
+        "show": "modern_investing",
+        "simulated_position_size_usd": (
+            tracker.get("metadata", {}).get("position_size", 1000)
+        ),
+    }
+
+    if trade is None:
+        explicit_no_trade = bool(
+            digest_text
+            and re.search(r"Today's Pick[:*\s]+No\b", digest_text, re.IGNORECASE)
+        )
+        signal["action"] = "no_trade"
+        signal["reason"] = (
+            "explicit_no_trade" if explicit_no_trade else "no_pick_extracted"
+        )
+        signal["trade"] = None
+    else:
+        symbol = trade.get("symbol", "")
+        market = trade.get("market", "")
+        resolved = trade.get("resolved_symbol")
+        if not resolved:
+            candidates = _yf_symbol_candidates(symbol, market)
+            resolved = candidates[0] if candidates else symbol
+        is_canadian = (market or "").upper().startswith("TSX")
+        seed = f"mit-ep{episode_num or 0}-{symbol}-{trade.get('date', today_iso)}"
+        signal["action"] = "new_trade"
+        signal["reason"] = None
+        signal["trade"] = {
+            "symbol": symbol,
+            "market": market,
+            "snaptrade_symbol": resolved,
+            "side": "BUY",
+            "trade_type": trade.get("trade_type", "weekly"),
+            "confidence": trade.get("confidence", "Unknown"),
+            "strategy": trade.get("strategy", ""),
+            "target_range": trade.get("target_range", ""),
+            "sector": trade.get("sector", ""),
+            "pick_date": trade.get("date", today_iso),
+            "pick_reference_price": trade.get("pick_reference_price"),
+            "pick_validated": bool(trade.get("pick_reference_price")),
+            "currency": "CAD" if is_canadian else "USD",
+            "suggested_account": "wealthsimple" if is_canadian else "webull",
+            "client_order_id": str(uuid.uuid5(_SIGNAL_ORDER_NAMESPACE, seed)),
+        }
+
+    payload = json.dumps(signal, indent=2, ensure_ascii=False) + "\n"
+    latest = output_dir / TRADE_SIGNAL_LATEST_FILENAME
+    latest.write_text(payload, encoding="utf-8")
+    if episode_num is not None:
+        per_episode = output_dir / f"trade_signal_ep{episode_num:03d}.json"
+        per_episode.write_text(payload, encoding="utf-8")
+    logger.info(
+        "Trade signal written: action=%s%s",
+        signal["action"],
+        f" {signal['trade']['snaptrade_symbol']}" if signal.get("trade") else "",
+    )
 
 
 def _pick_flash_bar(bars, pick_date):

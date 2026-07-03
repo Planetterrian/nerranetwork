@@ -35,7 +35,6 @@ from __future__ import annotations
 
 import datetime
 import json
-import math
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -499,3 +498,82 @@ class TestHonestCloseLabels:
         assert "Monday open" in review
         assert "Thursday close" in review
         assert "Friday close" not in review
+
+
+# ---------------------------------------------------------------------------
+# Trade signal (SnapTrade execution bridge, July 2026)
+# ---------------------------------------------------------------------------
+
+class TestTradeSignal:
+    """The future execution layer consumes trade_signal_latest.json — never
+    the digest prose — so LLM formatting drift can't reach an order ticket."""
+
+    _DIGEST = (
+        "### Practice Investment of the Day\n"
+        "**Trade Type:** Weekly Hold\n"
+        "**Today's Pick:** CNR — Canadian National Railway (TSX:CNR)\n"
+        "**Market:** TSX\n"
+        "**Strategy:** Dividend-growth entry\n"
+        "**Confidence Level:** Medium\n"
+    )
+
+    def _run_post_generate(self, tmp_path, digest, monkeypatch):
+        monkeypatch.delenv("NERRA_HOOKS_READONLY", raising=False)
+        config = SimpleNamespace(episode=SimpleNamespace(output_dir=str(tmp_path)))
+        with patch.object(mi, "_probe_pick", return_value=True):
+            mi.post_generate(config, digest_text=digest, episode_num=96)
+        return json.loads(
+            (tmp_path / mi.TRADE_SIGNAL_LATEST_FILENAME).read_text())
+
+    def test_new_trade_signal_routes_tsx_to_cad_wealthsimple(
+            self, tmp_path, monkeypatch):
+        signal = self._run_post_generate(tmp_path, self._DIGEST, monkeypatch)
+        assert signal["schema_version"] == mi.TRADE_SIGNAL_SCHEMA_VERSION
+        assert signal["action"] == "new_trade"
+        t = signal["trade"]
+        assert t["snaptrade_symbol"] == "CNR.TO"  # Yahoo == SnapTrade format
+        assert t["currency"] == "CAD"
+        assert t["suggested_account"] == "wealthsimple"
+        assert t["side"] == "BUY"
+        # Per-episode copy also written.
+        assert (tmp_path / "trade_signal_ep096.json").exists()
+
+    def test_us_pick_routes_to_usd_webull(self, tmp_path, monkeypatch):
+        digest = self._DIGEST.replace(
+            "CNR — Canadian National Railway (TSX:CNR)", "NVDA — Nvidia"
+        ).replace("**Market:** TSX", "**Market:** NASDAQ")
+        signal = self._run_post_generate(tmp_path, digest, monkeypatch)
+        t = signal["trade"]
+        assert t["snaptrade_symbol"] == "NVDA"
+        assert t["currency"] == "USD"
+        assert t["suggested_account"] == "webull"
+
+    def test_client_order_id_is_deterministic(self, tmp_path, monkeypatch):
+        s1 = self._run_post_generate(tmp_path, self._DIGEST, monkeypatch)
+        s2 = self._run_post_generate(tmp_path, self._DIGEST, monkeypatch)
+        # A retried cron produces the SAME id → idempotent placement.
+        assert (s1["trade"]["client_order_id"]
+                == s2["trade"]["client_order_id"])
+        assert len(s1["trade"]["client_order_id"]) == 36  # uuid string
+
+    def test_explicit_no_trade_day_is_explicit_in_signal(
+            self, tmp_path, monkeypatch):
+        digest = ("### Practice Investment of the Day\n"
+                  "**Today's Pick:** No trade today.\n")
+        signal = self._run_post_generate(tmp_path, digest, monkeypatch)
+        assert signal["action"] == "no_trade"
+        assert signal["reason"] == "explicit_no_trade"
+        assert signal["trade"] is None
+
+    def test_extraction_drift_is_distinguishable(self, tmp_path, monkeypatch):
+        signal = self._run_post_generate(
+            tmp_path, "**Today's Pick** is Nvidia at current levels.",
+            monkeypatch)
+        assert signal["action"] == "no_trade"
+        assert signal["reason"] == "no_pick_extracted"
+
+    def test_readonly_mode_writes_no_signal(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("NERRA_HOOKS_READONLY", "1")
+        config = SimpleNamespace(episode=SimpleNamespace(output_dir=str(tmp_path)))
+        mi.post_generate(config, digest_text=self._DIGEST, episode_num=96)
+        assert not (tmp_path / mi.TRADE_SIGNAL_LATEST_FILENAME).exists()
