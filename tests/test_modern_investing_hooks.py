@@ -242,6 +242,17 @@ class TestComputeBenchmarkState:
 # ---------------------------------------------------------------------------
 
 class TestAnnotateTradeWithNasdaq:
+    # July 2026: the benchmark window is now the trade's OWN bar window —
+    # index OPEN on the entry bar, index CLOSE on the exit bar. The bars
+    # come from _fetch_history_bars (stubbed here; no network).
+    _WEEK_BARS = [
+        (datetime.date(2026, 3, 23), 15000.0, 15100.0),  # Mon
+        (datetime.date(2026, 3, 24), 15100.0, 15150.0),
+        (datetime.date(2026, 3, 25), 15150.0, 15200.0),
+        (datetime.date(2026, 3, 26), 15200.0, 15250.0),
+        (datetime.date(2026, 3, 27), 15250.0, 15300.0),  # Fri
+    ]
+
     def test_weekly_alpha_math(self):
         trade = {
             "symbol": "WDC",
@@ -249,28 +260,58 @@ class TestAnnotateTradeWithNasdaq:
             "trade_type": "weekly",
             "pnl_pct": 4.44,
         }
-        # Stub so entry = 15000, exit = 15300 -> NASDAQ +2.0
-        def _stub(for_date=None):
-            if for_date and for_date.weekday() == 4:  # Friday exit
-                return 15300.0
-            return 15000.0
-        with patch.object(m, "_fetch_nasdaq_close", side_effect=_stub):
+        with patch.object(m, "_fetch_history_bars", return_value=self._WEEK_BARS):
             m._annotate_trade_with_nasdaq(trade)
+        # Monday OPEN -> Friday CLOSE: (15300 - 15000) / 15000 = +2.0%
         assert trade["nasdaq_entry"] == 15000.0
         assert trade["nasdaq_exit"] == 15300.0
         assert trade["nasdaq_return_pct"] == 2.0
         # 4.44 - 2.0 = 2.44 alpha
         assert trade["alpha_pct"] == pytest.approx(2.44, abs=0.01)
 
+    def test_flash_trade_gets_same_day_open_to_close_window(self):
+        # The historical bug: flash trades compared the SAME close to
+        # itself, so nasdaq_return_pct was always 0.0 and "alpha" was just
+        # the raw trade return.
+        trade = {
+            "symbol": "MU",
+            "date": "2026-03-25",
+            "trade_type": "flash",
+            "pnl_pct": 1.0,
+        }
+        with patch.object(m, "_fetch_history_bars", return_value=self._WEEK_BARS):
+            m._annotate_trade_with_nasdaq(trade)
+        # Wednesday bar: open 15150 -> close 15200 = +0.33%
+        assert trade["nasdaq_entry"] == 15150.0
+        assert trade["nasdaq_exit"] == 15200.0
+        assert trade["nasdaq_return_pct"] == pytest.approx(0.33, abs=0.01)
+        assert trade["alpha_pct"] == pytest.approx(1.0 - 0.33, abs=0.01)
+
+    def test_uses_recorded_bar_dates_when_present(self):
+        # A weekly hold closed pre-market Friday actually exited on
+        # THURSDAY's bar; the recorded bar dates must drive the window.
+        trade = {
+            "symbol": "WDC",
+            "date": "2026-03-23",
+            "entry_bar_date": "2026-03-23",
+            "exit_bar_date": "2026-03-26",
+            "trade_type": "weekly",
+            "pnl_pct": 2.0,
+        }
+        with patch.object(m, "_fetch_history_bars", return_value=self._WEEK_BARS):
+            m._annotate_trade_with_nasdaq(trade)
+        assert trade["nasdaq_exit"] == 15250.0  # Thursday close, not Friday
+        assert trade["nasdaq_exit_date"] == "2026-03-26"
+
     def test_null_pnl_yields_null_alpha(self):
         trade = {"symbol": "X", "date": "2026-03-23", "trade_type": "weekly", "pnl_pct": None}
-        with patch.object(m, "_fetch_nasdaq_close", return_value=15000.0):
+        with patch.object(m, "_fetch_history_bars", return_value=self._WEEK_BARS):
             m._annotate_trade_with_nasdaq(trade)
         assert trade["alpha_pct"] is None
 
     def test_missing_data_leaves_fields_none(self):
         trade = {"symbol": "X", "date": "2026-03-23", "trade_type": "weekly", "pnl_pct": 3.0}
-        with patch.object(m, "_fetch_nasdaq_close", return_value=None):
+        with patch.object(m, "_fetch_history_bars", return_value=None):
             m._annotate_trade_with_nasdaq(trade)
         assert trade["nasdaq_entry"] is None
         assert trade["alpha_pct"] is None
@@ -385,20 +426,40 @@ class TestTaughtLessons:
 class TestLessonsLearned:
     def test_append_assigns_sequential_id(self, tmp_path: Path):
         data = m._load_lessons_learned(tmp_path / "nope.json")
-        e1 = m._append_lesson_learned(data, observation="obs1", adjustment="do x", episode_num=1)
-        e2 = m._append_lesson_learned(data, observation="obs2", adjustment="do y", episode_num=2)
+        e1 = m._append_lesson_learned(
+            data,
+            observation="Momentum faded after the earnings pop",
+            adjustment="Require volume confirmation before entering momentum trades",
+            episode_num=1,
+        )
+        e2 = m._append_lesson_learned(
+            data,
+            observation="The gold miner gapped down on the political headline",
+            adjustment="Never carry a miner through a pending sanctions resolution",
+            episode_num=2,
+        )
         assert e1["id"] == "LL-001"
         assert e2["id"] == "LL-002"
         assert len(data["entries"]) == 2
 
     def test_build_block_lists_active_only(self, tmp_path: Path):
         data = m._load_lessons_learned(tmp_path / "nope.json")
-        m._append_lesson_learned(data, observation="obs1", adjustment="adj1", episode_num=1)
-        retired = m._append_lesson_learned(data, observation="obs2", adjustment="adj2", episode_num=2)
+        m._append_lesson_learned(
+            data,
+            observation="Momentum faded after the earnings pop",
+            adjustment="Require volume confirmation before entering momentum trades",
+            episode_num=1,
+        )
+        retired = m._append_lesson_learned(
+            data,
+            observation="The gold miner gapped down on the political headline",
+            adjustment="Never carry a miner through a pending sanctions resolution",
+            episode_num=2,
+        )
         retired["status"] = "retired"
         block = m._build_lessons_learned_block(data)
-        assert "adj1" in block
-        assert "adj2" not in block
+        assert "volume confirmation" in block
+        assert "sanctions resolution" not in block
 
     def test_extract_rule_block_with_valid_rule(self):
         digest = (

@@ -81,11 +81,12 @@ class TestNaNImmunity:
     def test_close_trade_voids_on_nan_prices(self):
         # July 2026: a data-fetch failure now VOIDS the trade instead of
         # recording a $0.00 breakeven close (which was counted in the
-        # record and later narrated as a real market outcome).
+        # record and later narrated as a real market outcome). NaN bars
+        # are dropped by _bars_from_history, so a symbol whose only data
+        # is NaN yields no bars at all → void.
         trade = {"symbol": "DELL", "trade_type": "flash"}
         tracker = _tracker_with_trades([])
-        with patch.object(mi, "_fetch_trade_prices",
-                          return_value=(426.15, NAN)):
+        with patch.object(mi, "_fetch_bars_for_trade", return_value=None):
             mi._close_trade(trade, tracker)
         assert trade["status"] == "voided"
         assert trade["void_reason"] == "market_data_unavailable"
@@ -93,6 +94,24 @@ class TestNaNImmunity:
         assert trade["pnl_pct"] is None
         assert trade["pnl_dollars"] is None
         assert "voided" in trade["lesson"].lower()
+
+    def test_bars_from_history_drops_nan_bars(self):
+        # yfinance NaN bars (the DELL/HIMS shape) must never become an
+        # entry or exit price.
+        class _FakeIdx:
+            def __init__(self, d):
+                self._d = d
+            def date(self):
+                return self._d
+
+        class _FakeHist:
+            empty = False
+            def iterrows(self):
+                yield _FakeIdx(datetime.date(2026, 5, 29)), {"Open": 426.15, "Close": NAN}
+                yield _FakeIdx(datetime.date(2026, 6, 1)), {"Open": 430.0, "Close": 432.5}
+
+        bars = mi._bars_from_history(_FakeHist())
+        assert bars == [(datetime.date(2026, 6, 1), 430.0, 432.5)]
 
     def test_sector_exposure_finite(self):
         tracker = _tracker_with_trades([
@@ -152,19 +171,40 @@ class TestVoidedTradesExcluded:
         assert "ROKU" not in review
         assert "AAA" in review
 
-    def test_committed_tracker_has_four_voided_and_37_closed(self):
+    def test_committed_tracker_invariants(self):
+        # Rewritten July 3 2026: the original pinned total_trades == 37 and
+        # went red the moment new trades closed after the migration — a
+        # drift guard that drifts. These invariants hold for ANY healthy
+        # tracker state.
         import json
         d = json.loads(
             (_ROOT / "digests/modern_investing/investment_tracker.json").read_text())
         voided = [t for t in d["trades"] if t.get("status") == "voided"]
         closed = [t for t in d["trades"] if t.get("status") == "closed"]
         voided_ids = {(t["episode_num"], t["symbol"]) for t in voided}
-        assert {(74, "XLF"), (75, "KO"), (77, "ROKU"), (79, "ION")} <= voided_ids
-        assert d["summary"]["total_trades"] == len(closed) == 37
-        # The migration recomputed derived numbers, not hand-edited them.
-        assert d["summary"]["breakeven"] == 3
+        # The six known data-failure trades stay voided (4 null-price from
+        # the July 2 migration + DELL/HIMS NaN-exit from the July 3 one).
+        assert {(74, "XLF"), (75, "KO"), (77, "ROKU"), (79, "ION"),
+                (57, "DELL"), (63, "HIMS")} <= voided_ids
+        # No closed trade may carry a non-finite result — that's a voided
+        # trade wearing a closed costume (the exact shape that put
+        # "breakeven" data failures on air).
+        for t in closed:
+            assert isinstance(t["pnl_pct"], (int, float)) and math.isfinite(t["pnl_pct"]), \
+                f"closed trade {t.get('symbol')} has non-finite pnl"
         for t in voided:
             assert t["pnl_pct"] is None and t["pnl_dollars"] is None
+        # The summary is derived, not hand-edited: recomputing from the
+        # trades must reproduce it.
+        recomputed = {"trades": d["trades"], "metadata": d["metadata"], "summary": {}}
+        mi._recompute_summary(recomputed)
+        for key in ("total_trades", "wins", "losses", "breakeven",
+                    "win_rate_pct", "cumulative_pnl",
+                    "cumulative_alpha_vs_nasdaq"):
+            assert d["summary"][key] == recomputed["summary"][key], key
+        # Breakeven now means an ACTUAL 0.00% close, not a data failure.
+        assert d["summary"]["breakeven"] == sum(
+            1 for t in closed if t["pnl_pct"] == 0)
 
 
 class TestDoubleReviewPrevented:
