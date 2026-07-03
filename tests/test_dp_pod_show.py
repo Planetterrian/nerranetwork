@@ -353,14 +353,19 @@ class TestDebutEnablers:
         # would see its own stories as recently covered).
         assert "skipping content-lake write" in src
 
-    def test_founders_notes_template_is_a_clean_noop(self):
+    def test_shipped_founders_notes_inject_real_material(self):
         import importlib
 
         hook = importlib.import_module("shows.hooks.dp_pod")
-        # The shipped file is comments-only — must inject nothing.
-        assert hook._founders_notes() == ""
+        # July 3 2026: the operator filled the notes with real material —
+        # it must reach the prompts, with the guidance comments stripped.
+        out = hook._founders_notes()
+        assert "FOUNDERS' NOTES" in out
+        assert "Yukon River Quest" in out      # Patrick's real grit story
+        assert "WestJet" in out                # Dan's real world
+        assert "operator-editable" not in out  # HTML comments stripped
         ctx = hook.pre_fetch(CFG, episode_num=1, today_str="July 3, 2026")
-        assert "FOUNDERS' NOTES" not in ctx["nerra_network_context"]
+        assert "FOUNDERS' NOTES" in ctx["nerra_network_context"]
 
     def test_founders_notes_inject_when_real_content_added(self, tmp_path, monkeypatch):
         import importlib
