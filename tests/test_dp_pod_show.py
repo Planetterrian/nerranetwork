@@ -337,6 +337,63 @@ class TestThinkPositiveSegment:
         assert "BANNED" in digest  # editorial-boilerplate ban (the tour wall)
 
 
+class TestDebutEnablers:
+    """July 3 2026: the rehearse-listen-iterate loop + real founders'
+    material — the levers for making the debut genuinely great."""
+
+    def test_rehearse_flag_exists_and_stops_before_publish(self):
+        src = (PROJECT_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert '"--rehearse"' in src
+        stop = src.index("Rehearsal stop (--rehearse)")
+        publish = src.index("=== Publish & Distribution Phase ===")
+        assert stop < publish, "the rehearsal stop must precede the publish phase"
+        # Artifacts renamed so numbering/blog/lever gathers never see them.
+        assert 'f"rehearsal_{_f.name}"' in src
+        # Rehearsals never contaminate the content lake (same-day real run
+        # would see its own stories as recently covered).
+        assert "skipping content-lake write" in src
+
+    def test_founders_notes_template_is_a_clean_noop(self):
+        import importlib
+
+        hook = importlib.import_module("shows.hooks.dp_pod")
+        # The shipped file is comments-only — must inject nothing.
+        assert hook._founders_notes() == ""
+        ctx = hook.pre_fetch(CFG, episode_num=1, today_str="July 3, 2026")
+        assert "FOUNDERS' NOTES" not in ctx["nerra_network_context"]
+
+    def test_founders_notes_inject_when_real_content_added(self, tmp_path, monkeypatch):
+        import importlib
+
+        hook = importlib.import_module("shows.hooks.dp_pod")
+        notes = tmp_path / "shows" / "dp_pod_founders_notes.md"
+        notes.parent.mkdir(parents=True)
+        notes.write_text(
+            "<!-- guidance -->\nDan really did land in a crosswind at YVR "
+            "last week and thought about checklists.", encoding="utf-8")
+        monkeypatch.setattr(hook, "_ROOT", tmp_path)
+        out = hook._founders_notes()
+        assert "FOUNDERS' NOTES" in out
+        assert "crosswind" in out
+        assert "guidance" not in out  # comments stripped
+
+    def test_debut_anchor_pin_wins_over_latest_fp(self, tmp_path, monkeypatch):
+        import importlib
+
+        hook = importlib.import_module("shows.hooks.dp_pod")
+        (tmp_path / "shows").mkdir(parents=True)
+        (tmp_path / "shows" / "dp_pod_debut_anchor.md").write_text(
+            "The price of light fell ten thousandfold.", encoding="utf-8")
+        fp_dir = tmp_path / "digests" / "first_principles"
+        fp_dir.mkdir(parents=True)
+        (fp_dir / "FP_Ep099.md").write_text(
+            "**HOOK:** Something else entirely.\nbody", encoding="utf-8")
+        monkeypatch.setattr(hook, "_ROOT", tmp_path)
+        brief = hook._latest_first_principles_brief()
+        assert "Pinned" in brief and "price of light" in brief
+        assert "Something else" not in brief
+
+
 class TestIntrosPersonality:
     def test_intro_is_dan_labeled_dialogue(self):
         from engine.intros import build_intro_line
