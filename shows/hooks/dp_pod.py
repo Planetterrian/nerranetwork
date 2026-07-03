@@ -73,12 +73,15 @@ def _latest_first_principles_brief() -> str:
     try:
         pinned = _ROOT / "shows" / "dp_pod_debut_anchor.md"
         if pinned.exists():
-            text = pinned.read_text(encoding="utf-8").strip()
+            text = re.sub(
+                r"<!--.*?-->", "", pinned.read_text(encoding="utf-8"),
+                flags=re.DOTALL,
+            ).strip()
             if text:
                 words = text.split()
                 return (
                     "Pinned Nerra Network anchor material (operator-selected):\n  "
-                    + " ".join(words[:400])
+                    + " ".join(words[:900])
                 )
         fp_dir = _ROOT / "digests" / "first_principles"
         md_files = sorted(fp_dir.glob("*.md"))

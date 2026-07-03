@@ -9,6 +9,17 @@ numbers, or dialogue). Keep it current; add freely; delete anything you no
 longer want on air.
 -->
 
+## PACING RULE (applies to everything below)
+
+Personal material is a SLOW REVEAL across the season, never a front-load:
+- At most ONE light biographical detail per host per episode, and only when
+  it genuinely serves the day's topic.
+- EPISODE 1 especially: the debut is about the show, the club, and the
+  network — NOT the founders' résumés. One warm detail each, maximum; no
+  career histories, no life stories.
+- The bigger stories below (the Yukon race, the lab years) are for later
+  episodes, one at a time, where a theme actually calls for them.
+
 ## PATRICK (real, on-air-safe)
 
 - Vancouver-based. Physical chemist by training (BSc Chemistry, University

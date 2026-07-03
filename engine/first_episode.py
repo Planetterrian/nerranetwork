@@ -57,17 +57,20 @@ format entirely and structure the brief as:
    Robbins' massive-action frame) or Viktor Frankl's chosen response —
    attributed, paraphrased (no invented quotes), with one concrete mental
    rep, non-clinical framing.
-3. **The anchor discussion** — take the First Principles Daily material in
-   the NERRA NETWORK section and prepare it as a SPRINGBOARD, not a summary
-   to recite: 2-3 sentences on the core idea and its single most surprising
-   number, then the OPEN QUESTIONS the hosts should argue about — how far
-   the pattern stretches, what a builder listening today would do with it,
-   where it breaks. The hosts' own analysis is the episode; don't pre-write
-   their conclusions.
-4. **The network tour material** — at most THREE sibling shows from the
-   catalog, one-phrase pitch each. No editorial-standards boilerplate
-   ("measured result", "number and a source") — those phrases are BANNED
-   from the brief.
+3. **The anchor discussion — THE STORY OF BUILDING NERRA.** The pinned
+   anchor material in the NERRA NETWORK section is the network's real
+   development history (from its own PR chronicle): the origins bet, the
+   refactor, the AI cost arc, prompts-as-product, languages, the blog, the
+   YouTube pipeline, the reliability war stories, and the show additions
+   over time. Prepare it as a SPRINGBOARD: organize the 5-6 strongest beats
+   WITH their real numbers, then the OPEN QUESTIONS the hosts should argue
+   about (already listed in the material). Weave 2-3 sibling shows into the
+   story where they naturally appear — no separate tour section, no
+   editorial-standards boilerplate ("measured result", "number and a
+   source") — those phrases are BANNED from the brief.
+4. **PERSONAL-DETAIL LIMIT (episode one):** the founders appear as "two
+   friends who built this" — at most ONE light biographical detail each
+   (e.g. a pilot, a chemist), no résumés, no life stories.
 5. **The Lever** — one starter action tied to agency: take the pledge on the
    show page and send this episode to one person who's been doomscrolling.
    Honest numbers: it costs about one minute; it's how a zero-listener show
@@ -91,10 +94,10 @@ This is a designed founding episode, not a news day. Total target stays
    - WHY: the feeds are engineered to make people feel powerless and they
      got tired of it — this show is the opposite bet: individuals are not
      powerless, and ten minutes a day can prove it.
-   - THE NERRA NETWORK STORY: two friends — an airline pilot and a
-     physical-chemist novelist — built an independent, ad-free network of
-     daily shows together (Novak plus Perra equals Nerra); this is the show
-     where they finally step in front of the microphone themselves.
+   - THE NERRA NETWORK STORY: two friends built an independent, ad-free
+     network of daily shows together (Novak plus Perra equals Nerra); this
+     is the show where they finally step in front of the microphone
+     themselves.
    - WHO IT'S FOR: builders, creators, contributors — people who try to
      make a difference, and people who want to start. The show reviews the
      most consequential things happening and celebrates the people building
@@ -103,6 +106,11 @@ This is a designed founding episode, not a news day. Total target stays
      ("nerra network dot com", said naturally, once).
    - WHAT THEY HOPE TO INSPIRE: a daily habit of acting instead of
      doomscrolling.
+   - PERSONAL-DETAIL LIMIT: this debut is about the show and the network,
+     NOT the founders' biographies — at most ONE light personal detail per
+     host in the whole episode (e.g. Dan flies for a living; Patrick came
+     up through chemistry). No career histories, no résumés, no life
+     stories — those unfold naturally over later episodes.
 2. **[Think Positive — introduce the segment, ~60 seconds]** Announced BY
    NAME. Debut the show's mindset segment: why a show about doing positive
    starts in the head — action-orientation, creativity, and individual
@@ -110,29 +118,28 @@ This is a designed founding episode, not a news day. Total target stays
    to treat mental health as seriously as science and tech). Use the
    briefing's Think Positive principle with its named thinker; land the
    concrete mental rep; never invent quotes, never clinical advice.
-3. **[The Positive Papers — the anchor DISCUSSION, not a recap]** ONE piece:
-   the First Principles Daily material from the briefing — but the source
-   material is a SPRINGBOARD, not the content. Maximum three sentences
-   total restating what the source says; everything else is Dan and
-   Patrick's OWN analysis from their unique lenses: Dan's operations and
-   aviation parallels, what he'd bet on and how it fails; Patrick's
-   mechanism reasoning, chemistry parallels, sci-fi extrapolation of where
-   this goes in twenty years. What does this idea mean for a builder
-   listening right now? Where do they genuinely disagree about how far it
-   stretches? Land somewhere better than either started.
-4. **[The network tour — 30 seconds MAXIMUM, strict]** Name at most THREE
-   sibling shows, EXACTLY ONE conversational sentence each, every sentence
-   shaped differently ("if you build with AI, Models and Agents is your
-   morning"; "Fascinating Frontiers is our space-nerd fix"). HARD BANS: no
-   repeated sentence shapes, no editorial-standards boilerplate ("measured
-   result", "number and a source", "evidentiary bar"), no corporate voice.
-   It's a friend saying "you'd like this one", not a catalog read.
-5. **[The Lever]** The starter lever from the brief: take the pledge, send
+3. **[The Positive Papers — the anchor DISCUSSION: how Nerra got built]**
+   ONE piece: the network's own development story from the briefing — the
+   hosts reviewing the thing THEY built, like friends telling a war story
+   with receipts. The briefing's history is a SPRINGBOARD, not a reading:
+   pick the 4-5 beats that genuinely amaze or amuse them (the two-people
+   bet, the cost collapse that made it affordable, the seeded-template
+   lesson, the scheduler war stories, the quota saga) and ANALYZE — what
+   surprised them, where they disagreed at the time, what a builder
+   listening should steal from it, where human judgment stayed
+   load-bearing (the listen-gates, the editorial rules), and what breaks
+   at fifty shows. Dan brings the operations/reliability lens; Patrick the
+   cost-curve/capability lens; they genuinely disagree somewhere and land
+   better than either started. Weave 2-3 sibling shows into the story
+   naturally as they come up (one conversational sentence each — "that
+   one became Fascinating Frontiers") — NO separate tour, NO catalog read,
+   NO editorial-standards boilerplate.
+4. **[The Lever]** The starter lever from the brief: take the pledge, send
    this episode to one doomscroller. Honest numbers, no guilt.
-6. **[Do Positive Dispatch]** No mail yet — it's Episode 1 and say so with a
+5. **[Do Positive Dispatch]** No mail yet — it's Episode 1 and say so with a
    smile. Invite the first dispatches; one host commits to pulling this
    week's lever and reporting back on air.
-7. **[Sign-Off + the song]** IMMEDIATELY BEFORE the supplied closing, one
+6. **[Sign-Off + the song]** IMMEDIATELY BEFORE the supplied closing, one
    host introduces the show's theme song in their own words: we made an
    anthem for this club, it's called "Do Positive", and we're playing the
    whole thing to close the very first episode — stay for it. Then the
