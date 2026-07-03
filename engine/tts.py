@@ -660,6 +660,7 @@ def grok_speak_chunk(
     output_codec: str = "wav",
     output_sample_rate: int = 48000,
     text_normalization: bool = True,
+    speed: float = 1.0,
 ) -> None:
     """Generate audio for a single text chunk via the Grok ``/v1/tts`` endpoint.
 
@@ -708,6 +709,11 @@ def grok_speak_chunk(
         },
         "text_normalization": text_normalization,
     }
+    # Documented Grok TTS speed multiplier (0.7–1.5, default 1.0). Only sent
+    # when a show opts in with a non-default value — the payload stays
+    # byte-identical for every existing show at the 1.0 default.
+    if speed and abs(speed - 1.0) > 1e-6:
+        payload["speed"] = max(0.7, min(1.5, float(speed)))
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",

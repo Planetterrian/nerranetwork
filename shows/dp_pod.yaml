@@ -8,7 +8,7 @@
 # DAN:/PATRICK: turns, each synthesised with that host's Grok voice.
 name: "The DP Pod: The Do Positive Podcast"
 slug: dp_pod
-description: "Daily good news with Dan and Patrick: real progress in science and technology, healthy disagreement about what it means, and one concrete action a regular person can take — with honest numbers on its impact. The antidote to doomscrolling that actually asks something of you. Do something about it."
+description: "Daily good news with Dan and Patrick: the most consequential progress in science and technology, healthy disagreement about what it means, a daily mindset principle for good mental health (Think Positive), and one concrete action a regular person can take — with honest numbers on its impact. The antidote to doomscrolling that actually asks something of you. Do something about it."
 
 # Fresh episode every day including Sunday (operator decision — no Sunday
 # recap branch; do NOT add this show to DAILY_SHOWS in tests/test_schedule.py,
@@ -84,10 +84,11 @@ llm:
   podcast_temperature: 0.8
   max_tokens: 4000
   podcast_max_tokens: 8000
-  # ONE length target: ~10 minutes of two-host dialogue ≈ 1,400–1,600 words
-  # at ~145 wpm. Floor sits just under it so the expand-retry fires on
-  # anything short of a full episode; soft skip floor 0.6 × 1450 = 870.
-  min_podcast_words: 1450
+  # ONE length target: ~10-11 minutes of two-host dialogue ≈ 1,500–1,700
+  # words at ~145 wpm (raised 1450→1550 when the Think Positive mindset
+  # segment was added, July 2026). Floor sits just under it so the
+  # expand-retry fires on anything short of a full episode.
+  min_podcast_words: 1550
   min_podcast_word_floor: 1000
   podcast_expand_below_target: true
   # The podcast tracks the digest ~1:1 network-wide (FF/UC/PT root cause),
@@ -104,10 +105,15 @@ tts:
   dialogue_voices:
     PATRICK: kdif6sqjcyiq   # the network's custom English voice (Patrick)
     DAN: 0vscf8u8yrxc       # Dan's custom Grok voice
-  # 300 -> 220 after the Ep001 listen: the flat 300 ms gap on every handoff
-  # read as robotic turn-taking; 220 keeps handoffs breathing without the
-  # dead air. Tune further by ear (landmine #17 A/B).
-  dialogue_pause_ms: 220
+  # 300 -> 220 -> 180 across the two Ep001 listens: the flat gap on every
+  # handoff read as robotic turn-taking; 180 is conversational overlap-
+  # adjacent without clipping. Tune further by ear (landmine #17 A/B).
+  dialogue_pause_ms: 180
+  # Documented Grok TTS speed multiplier (0.7-1.5). A subtle 1.05 lifts
+  # perceived energy on both custom voices; only sent when != 1.0, so no
+  # other show's payload changes. A/B-listen (landmine #17) — drop back to
+  # 1.0 if it introduces artifacts.
+  speed: 1.05
   # Dialogue mode never applies the speech wrap (per-turn wraps are exactly
   # the landmine-#17 "Fast." leak shape multiplied by every handoff). Pin
   # empty so the config states reality instead of relying on the runtime
@@ -130,7 +136,7 @@ audio:
 publishing:
   rss_file: dp_pod_podcast.rss
   rss_title: "The DP Pod: The Do Positive Podcast"
-  rss_description: "Dan and Patrick's daily antidote to doomscrolling: two or three genuinely good developments in science and tech with sources, honest disagreement about what they mean, and one concrete action with real numbers on its impact — The Lever. Plus the Do Positive Dispatch: what listeners actually did. Do something about it."
+  rss_description: "Dan and Patrick's daily antidote to doomscrolling: the most consequential developments in science and tech with sources and honest disagreement, a daily mindset principle for good mental health (Think Positive — the first show to take mental health as seriously as the science), and one concrete action with real numbers — The Lever. Plus the Do Positive Dispatch: what listeners actually did. Do something about it."
   rss_link: https://nerranetwork.com/thedppod.html
   rss_author: "Dan Perra & Patrick Novak"
   rss_email: patrick@planetterrian.com
@@ -174,6 +180,10 @@ chapters:
       where: end
     - pattern: "[Tt]he Positive Papers"
       title: "The Positive Papers"
+    # The prompt bans speaking "Think Positive" before the segment
+    # announcement so this marker can't be stolen by cold-open chatter.
+    - pattern: "[Tt]hink [Pp]ositive"
+      title: "Think Positive"
     - pattern: "[Tt]he Lever"
       title: "The Lever"
     - pattern: "Do Positive Dispatch"

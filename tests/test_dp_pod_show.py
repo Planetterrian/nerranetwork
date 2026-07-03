@@ -84,7 +84,8 @@ class TestChapterMarkers:
             "Sign-Off must precede the body markers (EI June-11 ordering "
             "rule) so a merged final line is titled Sign-Off, not The Lever"
         )
-        for expected in ("The Positive Papers", "The Lever", "Do Positive Dispatch"):
+        for expected in ("The Positive Papers", "Think Positive", "The Lever",
+                         "Do Positive Dispatch"):
             assert expected in titles
 
     def test_positional_anchors(self):
@@ -213,7 +214,12 @@ class TestDebutRework:
         from engine.audio import append_full_song  # noqa: F401
 
     def test_snappier_handoffs(self):
-        assert CFG.tts.dialogue_pause_ms == 220
+        # 300 -> 220 -> 180 across the two Ep001 listens.
+        assert CFG.tts.dialogue_pause_ms == 180
+
+    def test_energy_speed_multiplier(self):
+        # Documented Grok speed param (0.7-1.5); subtle lift, dp_pod only.
+        assert abs(CFG.tts.speed - 1.05) < 1e-9
 
     def test_hook_supplies_network_context(self):
         import importlib
@@ -245,6 +251,152 @@ class TestDebutRework:
         assert "WRITE THE ENERGY IN" in prompt
         assert "{nerra_network_context}" in prompt
         assert "CROSS-PROMO" in prompt
+
+    def test_podcast_prompt_voice_direction_tags_budgeted(self):
+        # Grok-docs-sanctioned inline tags with a hard budget; wrapping tags
+        # beyond <emphasis> stay banned (the landmine-#17 leak class).
+        prompt = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_podcast.txt").read_text(
+            encoding="utf-8")
+        assert "VOICE DIRECTION TAGS" in prompt
+        assert "[laugh]" in prompt and "<emphasis>" in prompt
+        assert "PUNCTUATION IS PROSODY" in prompt
+
+    def test_analysis_is_the_show(self):
+        prompt = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_podcast.txt").read_text(
+            encoding="utf-8")
+        assert "THE ANALYSIS IS THE SHOW" in prompt
+
+
+class TestThinkPositiveSegment:
+    """July 2026: the mindset segment — mental health via action-orientation,
+    creativity, and individual accountability (Robbins/Sinek et al.), the
+    first show to treat mental health alongside science and tech."""
+
+    def test_digest_prompt_has_the_section_with_guardrails(self):
+        prompt = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_digest.txt").read_text(
+            encoding="utf-8")
+        assert "### Think Positive" in prompt
+        assert "Robbins" in prompt and "Sinek" in prompt
+        # Editorial guardrails: attribution without fabrication, non-clinical.
+        assert "never invent" in prompt
+        assert "not therapy" in prompt or "never substitutes for professional" in prompt
+
+    def test_podcast_prompt_has_the_spoken_segment(self):
+        prompt = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_podcast.txt").read_text(
+            encoding="utf-8")
+        assert "[Think Positive]" in prompt
+        assert "time to Think Positive" in prompt
+        # The marker-theft guard: the phrase is banned before the announcement.
+        assert "Do NOT speak the phrase" in prompt
+
+    def test_chapter_marker_between_papers_and_lever(self):
+        titles = [m.title for m in CFG.chapters.section_markers]
+        assert titles.index("The Positive Papers") < titles.index("Think Positive") < titles.index("The Lever")
+
+    def test_word_target_raised_for_the_extra_segment(self):
+        assert CFG.llm.min_podcast_words == 1550
+
+    def test_debut_includes_the_segment(self):
+        from engine.first_episode import (
+            first_episode_digest_appendix,
+            first_episode_podcast_appendix,
+        )
+
+        assert "Think Positive" in first_episode_digest_appendix(1, CFG.name, show_slug="dp_pod")
+        assert "[Think Positive" in first_episode_podcast_appendix(1, CFG.name, show_slug="dp_pod")
+
+    def test_club_page_shows_the_mindset_step(self):
+        html = (PROJECT_ROOT / "thedppod.html").read_text(encoding="utf-8")
+        assert "Think Positive" in html
+        assert "You get the mindset" in html
+
+    def test_pipeline_ep1_block_is_dialogue_aware(self):
+        # BOTH Ep001 renders aired pipeline.py's truncated generic closing —
+        # run_show's pod_vars never reach run_generation_phase, so the
+        # pipeline block is the live path and must handle dialogue shows.
+        src = (PROJECT_ROOT / "engine" / "pipeline.py").read_text(encoding="utf-8")
+        ep1_block = src.split("if episode_num == 1:", 1)[1][:2600]
+        assert "dialogue_mode" in ep1_block
+        assert "build_closing_block" in ep1_block
+        assert "please subscribe... " not in src, (
+            "the truncated Ep1 closing literal is back — it aired twice"
+        )
+
+    def test_debut_override_demands_founding_conversation_and_springboard(self):
+        from engine.first_episode import (
+            first_episode_digest_appendix,
+            first_episode_podcast_appendix,
+        )
+
+        podcast = first_episode_podcast_appendix(1, CFG.name, show_slug="dp_pod")
+        assert "500" in podcast  # the founding conversation length floor
+        assert "SPRINGBOARD" in podcast
+        assert "THREE" in podcast  # network tour cap
+        digest = first_episode_digest_appendix(1, CFG.name, show_slug="dp_pod")
+        assert "SPRINGBOARD" in digest
+        assert "BANNED" in digest  # editorial-boilerplate ban (the tour wall)
+
+
+class TestDebutEnablers:
+    """July 3 2026: the rehearse-listen-iterate loop + real founders'
+    material — the levers for making the debut genuinely great."""
+
+    def test_rehearse_flag_exists_and_stops_before_publish(self):
+        src = (PROJECT_ROOT / "run_show.py").read_text(encoding="utf-8")
+        assert '"--rehearse"' in src
+        stop = src.index("Rehearsal stop (--rehearse)")
+        publish = src.index("=== Publish & Distribution Phase ===")
+        assert stop < publish, "the rehearsal stop must precede the publish phase"
+        # Artifacts renamed so numbering/blog/lever gathers never see them.
+        assert 'f"rehearsal_{_f.name}"' in src
+        # Rehearsals never contaminate the content lake (same-day real run
+        # would see its own stories as recently covered).
+        assert "skipping content-lake write" in src
+
+    def test_shipped_founders_notes_inject_real_material(self):
+        import importlib
+
+        hook = importlib.import_module("shows.hooks.dp_pod")
+        # July 3 2026: the operator filled the notes with real material —
+        # it must reach the prompts, with the guidance comments stripped.
+        out = hook._founders_notes()
+        assert "FOUNDERS' NOTES" in out
+        assert "Yukon River Quest" in out      # Patrick's real grit story
+        assert "WestJet" in out                # Dan's real world
+        assert "operator-editable" not in out  # HTML comments stripped
+        ctx = hook.pre_fetch(CFG, episode_num=1, today_str="July 3, 2026")
+        assert "FOUNDERS' NOTES" in ctx["nerra_network_context"]
+
+    def test_founders_notes_inject_when_real_content_added(self, tmp_path, monkeypatch):
+        import importlib
+
+        hook = importlib.import_module("shows.hooks.dp_pod")
+        notes = tmp_path / "shows" / "dp_pod_founders_notes.md"
+        notes.parent.mkdir(parents=True)
+        notes.write_text(
+            "<!-- guidance -->\nDan really did land in a crosswind at YVR "
+            "last week and thought about checklists.", encoding="utf-8")
+        monkeypatch.setattr(hook, "_ROOT", tmp_path)
+        out = hook._founders_notes()
+        assert "FOUNDERS' NOTES" in out
+        assert "crosswind" in out
+        assert "guidance" not in out  # comments stripped
+
+    def test_debut_anchor_pin_wins_over_latest_fp(self, tmp_path, monkeypatch):
+        import importlib
+
+        hook = importlib.import_module("shows.hooks.dp_pod")
+        (tmp_path / "shows").mkdir(parents=True)
+        (tmp_path / "shows" / "dp_pod_debut_anchor.md").write_text(
+            "The price of light fell ten thousandfold.", encoding="utf-8")
+        fp_dir = tmp_path / "digests" / "first_principles"
+        fp_dir.mkdir(parents=True)
+        (fp_dir / "FP_Ep099.md").write_text(
+            "**HOOK:** Something else entirely.\nbody", encoding="utf-8")
+        monkeypatch.setattr(hook, "_ROOT", tmp_path)
+        brief = hook._latest_first_principles_brief()
+        assert "Pinned" in brief and "price of light" in brief
+        assert "Something else" not in brief
 
 
 class TestIntrosPersonality:

@@ -166,6 +166,7 @@ def synthesize_dialogue(
     max_chars: int = GROK_MAX_CHARS_PER_REQUEST,
     language_code: str = "en",
     pause_ms: int = 300,
+    speed: float = 1.0,
     timeout: int = GROK_TTS_TIMEOUT_SECONDS,
 ) -> Path:
     """Synthesise a speaker-labeled *script* into a single MP3 at *output_path*.
@@ -208,7 +209,7 @@ def synthesize_dialogue(
                 grok_speak_chunk(
                     chunk, voices[speaker], wav,
                     api_key=api_key, language_code=language_code,
-                    timeout=timeout,
+                    timeout=timeout, speed=speed,
                 )
                 group_wavs.append(wav)
             # Let the handoff breathe: pad the group's final chunk with

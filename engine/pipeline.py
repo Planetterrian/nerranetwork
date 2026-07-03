@@ -387,21 +387,54 @@ def run_generation_phase(
     pod_vars.update(extra_context)
 
     if episode_num == 1:
-        pod_vars.setdefault(
-            "intro_line",
-            f"Welcome to the very first episode of {config.name}! "
-            f"Today is {today_str}. {effective_hook}",
-        )
-        _ep1_close = (
-            f"That wraps up our very first episode of {config.name}! "
-            f"If you enjoyed this, please subscribe... "
-        )
-        # Route the YouTube call-out through the shared helper so the "@" is
-        # stripped (no "at at" stutter) and the EN handle is split to the spaced
-        # "Nerra Network" — matching every other episode's closing.
-        _ep1_is_ru = getattr(config, "slug", "") in _RUSSIAN_SPOKEN_SHOWS
-        _ep1_close = _maybe_append_youtube_cta(_ep1_close, _yt_handle, is_ru=_ep1_is_ru)
-        pod_vars.setdefault("closing_block", _ep1_close)
+        _slug = getattr(config, "slug", "") or (getattr(args, "show", "") if args is not None else "")
+        if getattr(getattr(config, "tts", None), "dialogue_mode", False):
+            # Dialogue shows (The DP Pod): the generic single-host Ep1 text
+            # fights the dialogue prompt's speaker-label + exact-sign-off
+            # rules — BOTH DP Pod Ep001 renders aired the truncated
+            # "please subscribe..." literal from this block (run_show builds
+            # its own pod_vars but never passes them into
+            # run_generation_phase; THIS block is the live path). Debut with
+            # a labeled intro from the personality's lead host + the
+            # personality's own labeled closing (subscribe ask included,
+            # ends with the exact sign-off).
+            from engine.intros import get_show_host as _get_show_host
+            _lead = _get_show_host(_slug)
+            pod_vars.setdefault(
+                "intro_line",
+                f"{_lead}: Welcome to the very first episode of {config.name}! "
+                f"Today is {today_str}. {effective_hook}",
+            )
+            pod_vars.setdefault(
+                "closing_block",
+                build_closing_block(
+                    _slug,
+                    episode_num=episode_num,
+                    today_str=today_str,
+                    date=__import__("datetime").date.today(),
+                    extra_context=extra_context,
+                    youtube_channel_handle=_yt_handle,
+                ),
+            )
+        else:
+            pod_vars.setdefault(
+                "intro_line",
+                f"Welcome to the very first episode of {config.name}! "
+                f"Today is {today_str}. {effective_hook}",
+            )
+            _ep1_close = (
+                f"That wraps up our very first episode of {config.name}! "
+                f"If you enjoyed this, please subscribe on Apple Podcasts, "
+                f"Spotify, or wherever you listen — and a rating or review "
+                f"really helps new listeners find us. Thanks for joining us, "
+                f"and we'll see you tomorrow for episode two."
+            )
+            # Route the YouTube call-out through the shared helper so the "@" is
+            # stripped (no "at at" stutter) and the EN handle is split to the spaced
+            # "Nerra Network" — matching every other episode's closing.
+            _ep1_is_ru = getattr(config, "slug", "") in _RUSSIAN_SPOKEN_SHOWS
+            _ep1_close = _maybe_append_youtube_cta(_ep1_close, _yt_handle, is_ru=_ep1_is_ru)
+            pod_vars.setdefault("closing_block", _ep1_close)
     else:
         if args is not None:
             pod_vars.setdefault(

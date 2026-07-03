@@ -183,6 +183,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--skip-youtube", action="store_true",
                         help="Skip YouTube video build + upload")
     parser.add_argument(
+        "--rehearse",
+        action="store_true",
+        help=(
+            "Full local rehearsal: fetch + digest + script + TTS + mix, then "
+            "STOP before ALL publishing (no content-lake write, no R2/RSS/"
+            "blog/X/newsletter). Episode-numbered artifacts are renamed with "
+            "a rehearsal_ prefix so episode numbering and dedup are untouched "
+            "— listen, iterate, then run for real. Built for The DP Pod "
+            "debut; works for any show (landmine #17 A/B renders)."
+        ),
+    )
+    parser.add_argument(
         "--resume-publish",
         action="store_true",
         help="Publish only: MP3 + digest on disk, skip fetch/TTS (for mid-publish retries)",
@@ -1912,7 +1924,15 @@ def run(args: argparse.Namespace) -> None:
                 show_name=config.name,
                 language=_lang,
             )
-            store_episode(_lake_record)
+            if getattr(args, "rehearse", False):
+                # Rehearsals never touch the lake: a same-day real run would
+                # otherwise see the rehearsal's own stories as "recently
+                # covered" and avoid them. _lake_record stays None so the
+                # later script-update writes are skipped too.
+                logger.info("Rehearsal: skipping content-lake write.")
+                _lake_record = None
+            else:
+                store_episode(_lake_record)
         except Exception as exc:
             logger.warning("Content lake write failed (non-fatal): %s", exc)
 
@@ -2522,6 +2542,7 @@ def run(args: argparse.Namespace) -> None:
                             max_chars=config.tts.max_chars,
                             language_code=config.tts.language_code,
                             pause_ms=config.tts.dialogue_pause_ms,
+                            speed=getattr(config.tts, "speed", 1.0) or 1.0,
                         )
                     else:
                         logger.warning(
@@ -2858,6 +2879,40 @@ def run(args: argparse.Namespace) -> None:
 
                 # NOTE: raw MP3 cleanup is deferred until after post-validation
                 # passes, so we have recovery if the mix is corrupt (see #20).
+
+    # === Rehearsal stop (--rehearse) ===
+    # Everything above ran for real (fetch, digest, script, TTS, mix,
+    # chapters); everything below publishes. Rename this run's episode-
+    # numbered artifacts with a rehearsal_ prefix so the next real run's
+    # episode numbering (mp3 glob), blog collection (digest .md glob), and
+    # Lever board never see them — then stop.
+    if getattr(args, "rehearse", False):
+        renamed = []
+        _patterns = [
+            f"{config.episode.prefix}_Ep{episode_num:03d}_{today:%Y%m%d}*",
+            f"chapters_ep{episode_num:03d}.json",
+            f"metrics_ep{episode_num:03d}.json",
+        ]
+        for _pat in _patterns:
+            for _f in sorted(digests_dir.glob(_pat)):
+                if _f.name.startswith("rehearsal_"):
+                    continue
+                _dest = _f.with_name(f"rehearsal_{_f.name}")
+                try:
+                    _f.replace(_dest)
+                    renamed.append(_dest.name)
+                except OSError as exc:
+                    logger.warning("Rehearsal rename failed for %s: %s", _f.name, exc)
+        logger.info("=" * 60)
+        logger.info("REHEARSAL COMPLETE — nothing was published.")
+        for name in renamed:
+            logger.info("  %s", digests_dir / name)
+        logger.info(
+            "Listen to the rehearsal_*.mp3, tune prompts/config, re-run "
+            "with --rehearse, and drop the flag when it's the one."
+        )
+        logger.info("=" * 60)
+        return
 
     # === Publish & Distribution Phase ===
     # 10b–10d. Publishing & distribution phase (R2, OP3, YouTube).
