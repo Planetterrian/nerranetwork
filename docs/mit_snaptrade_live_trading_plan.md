@@ -154,12 +154,23 @@ brokerages via the portal, set `SNAPTRADE_CLIENT_ID` /
 `SNAPTRADE_CONSUMER_KEY` / `SNAPTRADE_USER_ID` / `SNAPTRADE_USER_SECRET`
 secrets.
 
-**Phase 1 — read-only mirror (1 PR).** `execution/` package +
-`reconcile.py`: pull accounts/balances/positions daily, publish a
-"live account mirror" block to the dashboard, register webhooks
-(`CONNECTION_BROKEN` → notification). Zero orders possible (no
-`place` call in the codebase yet). Proves connection stability with
-Wealthsimple/Webull for a few weeks — the thing we genuinely don't know.
+**Phase 1 — read-only mirror (SHIPPED, same PR).** `execution/` package
+(`snaptrade_client.py` lazy-SDK wrapper + `mirror.py`),
+`scripts/snaptrade_setup.py` (one-time local: `--register` mints the
+user secret, `--connect` prints the Connection Portal URL per broker,
+`--status` verifies), `scripts/snaptrade_mirror.py` +
+`.github/workflows/snaptrade-mirror.yml` (weekdays 13:40 UTC): pulls
+accounts/balances/positions daily, one-line summary to
+`NOTIFICATION_WEBHOOK_URL`, **mirror JSON gitignored + uploaded as a
+14-day CI artifact — never committed (public repo)**. Zero orders
+possible (no `place` call in the package; pinned by
+`tests/test_snaptrade_execution.py`, along with the
+podcast-never-imports-execution isolation contract). Proves connection
+stability with Wealthsimple/Webull for a few weeks — the thing we
+genuinely don't know. Webhook registration (CONNECTION_BROKEN → push)
+is a dashboard setting (Webhooks tab → point at the existing
+notification endpoint); a dedicated receiver Worker is Phase-2 scope if
+signature verification is wanted.
 
 **Phase 2 — shadow mode (1 PR, ≥4 weeks running).** `executor.py` runs
 the FULL pipeline — signal → risk checks → symbol verification → live
