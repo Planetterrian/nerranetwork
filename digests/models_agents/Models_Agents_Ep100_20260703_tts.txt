@@ -1,0 +1,133 @@
+Hey everyone, welcome to Models and Agents, episode one hundred, on July third, twenty twenty-six. Let's see what shipped. Plenty of model releases and agent benchmarks moving today. That's episode one hundred — a big milestone. Thank you for being here.
+
+Local browser agents just became practical and private — WebBrain runs entirely in Chrome or Firefox using your own models.
+
+WebBrain is a free, MIT-licensed A I browser agent for Chrome and Firefox that reads pages, extracts data, and automates multi-step tasks through Ask and Act modes.
+
+It runs on local models via llama dot c p p or Ollama for full privacy or connects to any cloud A P I when needed.
+
+The tool directly addresses the gap between demo agents and usable daily automation by keeping all page processing inside the browser.
+
+Developers gain a concrete starting point for local browser automation without sending sensitive page content to third parties.
+
+Watch how the community extends the Ask and Act modes and whether it becomes the default base for custom local agents.
+
+This sits in the Agents and Tool Use arc we tracked through episode ninety nine.
+
+The release moves the open question on long-horizon reliability forward by showing a working local-first pattern that avoids third-party data exposure.
+
+WebBrain delivers an open-source, MIT-licensed browser agent that reads pages and automates multi-step tasks via Ask and Act modes.
+
+Simon Willison shipped a one-shot CLI coding agent built on his L L M library.
+
+Safety research introduced ProvenanceGuard and Sigil to catch misalignment before tool calls execute.
+
+Builders should watch how local-first agents change the privacy and reliability tradeoffs this week.
+
+RuleChef uses large language models only at training time to synthesize human-editable rules for classification, named entity recognition, and relation extraction from task descriptions and labeled examples.
+
+The approach bootstraps from any existing model’s input-output pairs and releases under Apache two point zero.
+
+Builders working on production natural language processing pipelines should test whether the generated rules replace brittle prompt chains this week.
+
+Office Comprehension Bench evaluates large language models on native dot docx, dot xlsx, and dot pptx files across structural perception and expert-level domain reasoning in twelve industries.
+
+Even frontier systems reach only fifty nine point three percent on the domain question and answer track, with deeper thinking yielding little gain while moving to higher product tiers produces modest improvement.
+
+The benchmark releases the dataset, tooling, judge prompt, and public leaderboard.
+
+Teams building document agents should add it to their evaluation suite immediately.
+
+TokenScope provides an interactive tool for decoder-based large language models that exposes token-level metrics, attention patterns, and structural information during code generation.
+
+It supports token replacement, counterfactual branching, and abstract syntax tree-aware aggregation.
+
+Researchers studying large language model code behavior gain a practical way to explore alternative generation paths without post-hoc analysis.
+
+Sigil adds a verification step before A I agents sign or execute transactions, replacing blind yes clicks with explicit review.
+
+The guardrail targets the common failure mode where agents propose actions that deviate from user intent.
+
+Early users report it fits naturally into existing agent loops without major refactoring.
+
+Teams shipping agentic finance or crypto tools should evaluate it this week.
+
+ProvenanceGuard formalizes misalignment detection as provenance analysis and blocks tool calls unsupported by traceable evidence in the agent’s context.
+
+On Agent-SafetyBench it cuts error rate on misaligned traces from forty two point nine percent to one point eight percent while lowering unnecessary interventions on successful traces.
+
+The multi-stage pipeline works across ten backbone large language models and adds no statistically significant overhead on aligned actions.
+
+Agent developers gain a concrete, auditable alternative to large language model as a judge guardrails.
+
+Simon Willison one-shot a CLI coding agent on top of his L L M Python library and documented the full Fable experiment.
+
+The agent operates directly on local or remote models through the library’s existing interface.
+
+Builders already using L L M can replicate the pattern in minutes and extend it for their own workflows.
+
+This release shows continued rapid iteration on simple, library-backed agents rather than new frameworks.
+
+The A I Journal article catalogs concrete failure modes that appear only after agents leave controlled demos, including state management drift.
+
+Tool schema mismatches surface once agents operate outside sandboxed test conditions.
+
+Compounding errors over long horizons create additional breakdowns not visible in short demo runs.
+
+The piece focuses on production patterns rather than theoretical limits of the underlying models.
+
+Teams moving agents into real environments should review the checklist before scaling.
+
+The analysis draws directly from observed deployments rather than simulated scenarios.
+
+Searches for prompt injection have doubled in the past year as more teams ship agents.
+
+The trend reflects rising awareness of a core agent reliability issue rather than any single new attack.
+
+Developers should treat injection resistance as a first-class evaluation criterion alongside task success.
+
+The increase tracked on autogpt dot net tracks directly with the number of production agent rollouts.
+
+No isolated exploit accounts for the full growth in search volume.
+
+Evaluation suites now routinely test for injection vectors in addition to completion metrics.
+
+OK, let's pop the hood on sliding-window key value cache compression.
+
+Everyone talks about key value cache compression as if it is a simple just drop the unimportant tokens switch.
+
+In practice Kara shows it is a sliding-window decode-time policy that scores recent context with bidirectional attention and then uses a Token2Chunk module to preserve flexible semantic chunks instead of fixed blocks.
+
+The threshold-triggered methods it replaces often create information holes or actually lower throughput.
+
+Kara avoids both by operating only on the active window and expanding selected pairs into variable-length chunks.
+
+The resulting KvLLM implementation on top of vLLM delivers measurable memory reduction and higher output throughput, but the gains depend on how well the bidirectional scorer matches the model’s actual attention patterns.
+
+The practical decision is straightforward.
+
+Use it when long chain-of-thought traces are the bottleneck and you already run on paged attention.
+
+Skip it if your workloads stay short or if you cannot tolerate any risk of dropping a critical intermediate reasoning step.
+
+Install WebBrain in Chrome or Firefox and test the Act mode on a multi-step research workflow using a local Ollama model.
+
+Replicate Simon Willison’s CLI coding agent on top of the L L M library if you already maintain Python tooling around model calls.
+
+Add the Office Comprehension Bench to your document-agent evaluation harness to measure real file-format understanding.
+
+Run ProvenanceGuard on an existing agent loop to compare misalignment detection rates against your current large language model as a judge setup.
+
+More local-first browser agents are expected as the WebBrain pattern spreads.
+
+Additional provenance-style guardrails will likely appear as teams publish on misalignment benchmarks.
+
+Continued growth in prompt-injection tooling and evaluation as agent deployments increase.
+
+Tomorrow, keep an eye on further extensions to the Ask and Act modes in local browser agents.
+
+That wraps up today's A I briefing. Share this with a developer or builder who wants to stay current. Subscribe wherever you listen. See you tomorrow. And if you'd rather watch than listen, find us on YouTube at Nerra Network — link's in the show notes.
+
+And before you go: this show is part of the Nerra Network — a family of daily podcasts on tech, science, and markets, each one a short, sharp briefing you can finish on the commute. If today earned its place in your feed, here's your next listen — Models and Agents for Beginners, artificial intelligence explained simply, for beginners and curious teens. Find every show, free, at nerranetwork dot com.
+
+This episode used AI voice synthesis of my voice — editorial selection and analysis are my own.
