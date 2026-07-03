@@ -238,7 +238,9 @@ class TestDebutRework:
         digest = first_episode_digest_appendix(1, CFG.name, show_slug="dp_pod")
         podcast = first_episode_podcast_appendix(1, CFG.name, show_slug="dp_pod")
         assert "FOUNDING BRIEF" in digest
-        assert "First Principles Daily" in digest
+        # July 3 2026: the debut anchor is the network's own build story
+        # (pinned via shows/dp_pod_debut_anchor.md), not FP material.
+        assert "BUILDING NERRA" in digest
         assert "Do Positive" in podcast and "song" in podcast.lower()
         assert "write NOTHING" in podcast
         # Other shows keep the generic debut guidance.
@@ -331,9 +333,16 @@ class TestThinkPositiveSegment:
         podcast = first_episode_podcast_appendix(1, CFG.name, show_slug="dp_pod")
         assert "500" in podcast  # the founding conversation length floor
         assert "SPRINGBOARD" in podcast
-        assert "THREE" in podcast  # network tour cap
+        # July 3 2026 (operator: too many personal details in the debut):
+        # the anchor is the network's own build story, bios are capped at
+        # one light detail per host, and the tour is woven in — no catalog.
+        assert "how Nerra got built" in podcast
+        assert "PERSONAL-DETAIL LIMIT" in podcast
+        assert "NO separate tour" in podcast
         digest = first_episode_digest_appendix(1, CFG.name, show_slug="dp_pod")
         assert "SPRINGBOARD" in digest
+        assert "BUILDING NERRA" in digest
+        assert "PERSONAL-DETAIL LIMIT" in digest
         assert "BANNED" in digest  # editorial-boilerplate ban (the tour wall)
 
 
@@ -381,6 +390,22 @@ class TestDebutEnablers:
         assert "FOUNDERS' NOTES" in out
         assert "crosswind" in out
         assert "guidance" not in out  # comments stripped
+
+    def test_shipped_debut_anchor_is_the_nerra_build_story(self):
+        import importlib
+
+        hook = importlib.import_module("shows.hooks.dp_pod")
+        brief = hook._latest_first_principles_brief()
+        assert "Pinned" in brief
+        assert "BUILDING NERRA" in brief
+        assert "OPEN QUESTIONS" in brief          # the 900-word cap keeps them
+        assert "DEBUT ANCHOR" not in brief        # HTML guidance comment stripped
+
+    def test_founders_notes_carry_the_pacing_rule(self):
+        text = (PROJECT_ROOT / "shows" / "dp_pod_founders_notes.md").read_text(
+            encoding="utf-8")
+        assert "PACING RULE" in text
+        assert "ONE light biographical detail" in text
 
     def test_debut_anchor_pin_wins_over_latest_fp(self, tmp_path, monkeypatch):
         import importlib
