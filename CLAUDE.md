@@ -931,6 +931,24 @@ TST received a full recursive improvement architecture (analogous to MIT):
   guards: `tests/test_tts_dialogue.py::{TestTurnLevelMatching,
   TestDebutSongLoudness}`, `tests/test_dp_pod_show.py::TestShowAnthem`
   (including a prompt-quote-matches-canon check).
+  **July 4 2026 follow-up-episodes pass (operator approved Ep1 v6 — level
+  drift measured fixed at 0.52 dB stdev across 41 windows — and asked for
+  great regular episodes that regularly point to network shows/episodes):**
+  `shows/hooks/dp_pod.py` now builds a **FRESH ON THE NETWORK** block (each
+  sibling's actual latest episode within 3 days, read from the committed
+  `summaries_*.json` — entries are newest-FIRST, picked by max date) and a
+  **Think Positive rotation memory** (thinkers mined from recent dp_pod
+  digests → do-not-reuse list; roster in `_THINKERS`). The occasional
+  CROSS-PROMO became the regular **FROM THE NETWORK** beat: exactly ONE
+  grounded pointer per episode naming a REAL fresh episode, spoken as a
+  friend's recommendation, position/speaker rotating (never a fixed slot —
+  anti-tic); the digest gained a required-when-fresh **Network pick:** line
+  and the thinker-rotation rule. Depth lever: `min_digest_words` 700→1100
+  (Ep1 scripts capped ~1,200w vs the 1,550 target — the brief was the
+  ceiling). The shipped debut anchor `shows/dp_pod_debut_anchor.md` was
+  deleted (pin mechanism kept). Prompt/digest edits change output —
+  A/B-listen per landmine #17. Drift guards:
+  `tests/test_dp_pod_show.py::TestFollowUpEpisodes`.
 - **AOAI** (The Age of AI) — the network's **AI-hosted LIVE interview show**
   (July 2026): Mira, an AI documentarian persona (Grok voice `ara`,
   deliberately NOT the Patrick clone), phones REAL guests via a Voximplant

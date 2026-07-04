@@ -1,16 +1,29 @@
 """Pre-fetch hook for The DP Pod (The Do Positive Podcast).
 
-Supplies ``{nerra_network_context}`` to both prompts: a compact catalog of
-the network's shows (so the hosts can point listeners at a sibling show when
-a story overlaps its beat) plus the most recent First Principles Daily brief
-(hook + excerpt) as ready-to-discuss network material — the debut episode's
-anchor discussion, and a recurring well for any thin-news day. Everything is
-best-effort: a failure returns a smaller context block, never blocks the
-episode.
+Supplies ``{nerra_network_context}`` to both prompts:
+
+* a compact catalog of the network's shows (so the hosts can describe a
+  sibling show correctly),
+* **FRESH ON THE NETWORK** — the sibling episodes that actually shipped in
+  the last ~3 days (real titles from each show's summaries JSON), so every
+  episode's network pointer names a real, current episode instead of a
+  generic plug (operator direction, July 2026: follow-up episodes should
+  regularly point listeners at network shows/episodes worth their queue),
+* the most recent First Principles Daily brief as ready-to-discuss network
+  material for thin-news days,
+* the founders' notes (the only sanctioned source of personal host material),
+* **Think Positive rotation memory** — the thinkers featured in recent
+  episodes, mined from this show's own digests, so the mindset segment
+  rotates instead of converging on one or two names.
+
+Everything is best-effort: a failure returns a smaller context block, never
+blocks the episode.
 """
 
 from __future__ import annotations
 
+import datetime
+import json
 import logging
 import re
 from pathlib import Path
@@ -19,20 +32,32 @@ logger = logging.getLogger(__name__)
 
 _ROOT = Path(__file__).resolve().parent.parent.parent
 
-# Compact, hand-curated catalog (name — one-phrase pitch). Kept static so a
-# registry hiccup can't garble the on-air description of a sibling show.
+# Compact, hand-curated catalog (digest dir, name, one-phrase pitch). Kept
+# static so a registry hiccup can't garble the on-air description of a
+# sibling show. Russian-language shows are deliberately absent — the DP
+# audience is English-first. Age of AI joins once it has published episodes.
 _NETWORK_SHOWS = [
-    ("First Principles Daily", "reasons a thing should cost less — the magic wand number and the Idiot Index, one example a day"),
-    ("Fascinating Frontiers", "the day's space and science wonders, with a cosmic deep dive"),
-    ("Tesla Shorts Time", "the daily Tesla briefing — deliveries, FSD, energy, and the stock"),
-    ("SpaceX Daily", "engineering-first coverage of SpaceX as a public company"),
-    ("Planetterrian Daily", "science, longevity, and health research that changes how you live"),
-    ("Models & Agents", "the daily AI briefing for people who build with it"),
-    ("Models & Agents for Beginners", "the same AI news, explained from zero"),
-    ("Omni View", "world news with every side steel-manned"),
-    ("Modern Investing Techniques", "markets and investing craft with a transparent track record"),
-    ("Environmental Intelligence", "Canada's environmental policy and compliance brief"),
-    ("Unintended Consequences", "history's best-intentioned decisions and what they actually did"),
+    ("first_principles", "First Principles Daily", "reasons a thing should cost less — the magic wand number and the Idiot Index, one example a day"),
+    ("fascinating_frontiers", "Fascinating Frontiers", "the day's space and science wonders, with a cosmic deep dive"),
+    ("tesla_shorts_time", "Tesla Shorts Time", "the daily Tesla briefing — deliveries, FSD, energy, and the stock"),
+    ("spacex", "SpaceX Daily", "engineering-first coverage of SpaceX as a public company"),
+    ("planetterrian", "Planetterrian Daily", "science, longevity, and health research that changes how you live"),
+    ("models_agents", "Models & Agents", "the daily AI briefing for people who build with it"),
+    ("models_agents_beginners", "Models & Agents for Beginners", "the same AI news, explained from zero"),
+    ("omni_view", "Omni View", "world news with every side steel-manned"),
+    ("modern_investing", "Modern Investing Techniques", "markets and investing craft with a transparent track record"),
+    ("env_intel", "Environmental Intelligence", "Canada's environmental policy and compliance brief"),
+    ("unintended_consequences", "Unintended Consequences", "history's best-intentioned decisions and what they actually did"),
+]
+
+# Named thinkers the digest prompt licenses for Think Positive — used to
+# mine rotation memory from recent digests. Keep in sync with the roster in
+# shows/prompts/dp_pod_digest.txt (a superset is fine).
+_THINKERS = [
+    "Tony Robbins", "Simon Sinek", "Viktor Frankl", "Carol Dweck",
+    "James Clear", "Angela Duckworth", "Mihaly Csikszentmihalyi",
+    "Martin Seligman", "Stephen Covey", "Marcus Aurelius", "Epictetus",
+    "Brené Brown", "Cal Newport", "Adam Grant", "Charlie Munger",
 ]
 
 
@@ -62,13 +87,87 @@ def _founders_notes() -> str:
         return ""
 
 
+def _fresh_network_episodes(max_age_days: int = 3, today: datetime.date | None = None) -> str:
+    """Real sibling episodes from the last *max_age_days* days.
+
+    Reads each show's committed ``summaries_*.json`` for its latest entry —
+    the on-air network pointer must name an actual current episode, never a
+    generic show plug. Returns "" when nothing is fresh (never blocks).
+    """
+    today = today or datetime.date.today()
+    lines = []
+    for dir_name, display, _pitch in _NETWORK_SHOWS:
+        try:
+            candidates = sorted((_ROOT / "digests" / dir_name).glob("summaries_*.json"))
+            if not candidates:
+                continue
+            data = json.loads(candidates[-1].read_text(encoding="utf-8"))
+            summaries = data.get("summaries") or []
+            if not summaries:
+                continue
+            # Newest entry regardless of file ordering (the pipeline
+            # prepends newest-first; be robust to either convention).
+            latest = max(summaries, key=lambda e: str(e.get("date", "")))
+            ep_date = datetime.date.fromisoformat(str(latest.get("date", ""))[:10])
+            age = (today - ep_date).days
+            if age < 0 or age > max_age_days:
+                continue
+            title = str(latest.get("episode_title", "")).strip()
+            # "Ep 12: <hook>" → keep the hook part for the pointer.
+            title = re.sub(r"^Ep\s*\d+:\s*", "", title)
+            if not title:
+                continue
+            when = "today" if age == 0 else ("yesterday" if age == 1 else f"{age} days ago")
+            lines.append(f'- {display} ({when}): "{title[:160]}"')
+        except Exception:
+            continue
+    if not lines:
+        return ""
+    return (
+        "FRESH ON THE NETWORK (real sibling episodes from the last few days "
+        "— when you point listeners at a show, point at one of THESE actual "
+        "episodes and say what it covers; never invent an episode):\n"
+        + "\n".join(lines)
+    )
+
+
+def _recent_think_positive_thinkers(max_digests: int = 8) -> str:
+    """Thinkers featured in recent Think Positive segments (rotation memory).
+
+    Mined from this show's own committed digests, newest first. Returns ""
+    before enough history exists.
+    """
+    try:
+        md_files = sorted((_ROOT / "digests" / "dp_pod").glob("*.md"), reverse=True)
+        seen: list[str] = []
+        for md in md_files[:max_digests]:
+            text = md.read_text(encoding="utf-8")
+            m = re.search(r"###\s*Think Positive\s*\n(.*?)(?:\n[━#]|\Z)", text, re.DOTALL)
+            if not m:
+                continue
+            section = m.group(1)
+            for name in _THINKERS:
+                if name in section and name not in seen:
+                    seen.append(name)
+        if not seen:
+            return ""
+        return (
+            "THINK POSITIVE — RECENTLY FEATURED THINKERS (newest first; do "
+            "NOT reuse any of these today — rotate to someone the show "
+            "hasn't heard from lately): " + ", ".join(seen)
+        )
+    except Exception as exc:
+        logger.warning("dp_pod hook: thinker history unavailable (non-fatal): %s", exc)
+        return ""
+
+
 def _latest_first_principles_brief() -> str:
     """Hook + short excerpt of the newest First Principles Daily digest.
 
-    The operator can PIN the debut/discussion anchor instead: if
+    The operator can PIN discussion-anchor material instead: if
     shows/dp_pod_debut_anchor.md exists with content, it wins over the
-    latest FP digest — paste the best FP episode (or any Nerra material)
-    there to hand-pick what the hosts discuss.
+    latest FP digest — paste any Nerra material there to hand-pick what
+    the hosts discuss.
     """
     try:
         pinned = _ROOT / "shows" / "dp_pod_debut_anchor.md"
@@ -109,17 +208,25 @@ def _latest_first_principles_brief() -> str:
 
 
 def pre_fetch(config, *, episode_num=None, today_str=None) -> dict:
-    catalog = "\n".join(f"- {name} — {pitch}" for name, pitch in _NETWORK_SHOWS)
+    catalog = "\n".join(f"- {name} — {pitch}" for _dir, name, pitch in _NETWORK_SHOWS)
     sections = [
-        "THE NERRA NETWORK (your sibling shows — reference at most ONE per "
-        "episode, only when a story genuinely overlaps its beat; name the "
-        "show naturally, never read this list aloud):",
+        "THE NERRA NETWORK (your sibling shows — the network is ad-free and "
+        "these are the club's library; describe them with these pitches, "
+        "never read this list aloud):",
         catalog,
     ]
+    fresh = _fresh_network_episodes()
+    if fresh:
+        sections.append("")
+        sections.append(fresh)
     fp_brief = _latest_first_principles_brief()
     if fp_brief:
         sections.append("")
         sections.append(fp_brief)
+    thinkers = _recent_think_positive_thinkers()
+    if thinkers:
+        sections.append("")
+        sections.append(thinkers)
     notes = _founders_notes()
     if notes:
         sections.append("")
