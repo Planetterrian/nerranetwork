@@ -136,4 +136,68 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: 2026-07-04
+    pr: null
+    doc: docs/mit_snaptrade_live_trading_plan.md
+    reviewer: claude-code (operator-requested optimize-the-loop pass)
+    summary: >
+      Follow-on to the July 3 benchmark-integrity pass, aimed at "beat all
+      major indices" + a learning loop that audits itself. Multi-index
+      matched-window benchmarking (^IXIC/^GSPC/^GSPTSE per trade,
+      benchmark_scores + indices_beaten in summary, index sweep in the
+      scoreboard block); rule-effectiveness scoring (trades stamped with
+      rules_in_effect; stamped-vs-without alpha per rule; >=8-trade
+      no-edge rules flagged as retirement candidates, operator-decided);
+      shadow mode (Phase 2) shipped and LIVE with no secrets needed
+      (risk gates + would-be marketable-limit orders in a committed
+      shadow ledger at 13:50 UTC weekdays; mit_shadow_report.py =
+      sim-vs-shadow slippage).
+    shipped:
+      - multi-index matched-window benchmark_returns + benchmark_scores +
+        indices_beaten (recompute script rebuilds all three for history)
+      - rules_in_effect stamping + rule scoreboard with retirement
+        candidates (never auto-retired)
+      - execution/risk.py hard gates + execution/shadow.py +
+        mit-shadow-executor.yml (weekdays 13:50 UTC) +
+        scripts/mit_shadow_report.py
+      - shadow EXITS (Phase 2.5, same PR) — would_sell entries on the
+        sim's exit calendar, idempotent, round-trip shadow_return_pct;
+        report gains the shadow-vs-sim P&L gap per trade
+      - regime block (rolling last-10 alpha + drawdown from high-water
+        mark → cold streak raises the pick bar / hot streak holds
+        discipline; rides in the strategy_performance slot)
+      - statistical discipline — FAVOR/AVOID and operating principles now
+        require n>=5 closed trades per sector/tag (was 2-3, coin-flip
+        samples were steering picks); small samples labeled inconclusive
+      - performance page — matched-window alpha tile (honest headline),
+        buy-and-hold gap relabeled "not capital-matched", major-index
+        sweep row
+    deferred:
+      - "feed measured shadow slippage into the sim's cost model once ~20
+        matched round trips accumulate"
+      - "webhook receiver Worker for SnapTrade signature verification
+        (Phase 2 scope if wanted)"
+      - "carried: closing-price lesson retirement (operator A/B),
+        under-length (four-show A/B), recompute --apply run (operator)"
+    predictions:
+      - metric: shadow ledger entries after 2 weeks of weekday runs
+        baseline: "0 (ledger created this pass)"
+        expected: ">= 8 entries with decision in {would_place, skipped};
+          zero duplicate client_order_ids; workflow green without secrets"
+        verdict: pending
+        evidence: null
+      - metric: closed trades carrying benchmark_returns for all 3 indices
+        baseline: "0 of 40"
+        expected: "every NEWLY closed trade has nasdaq+sp500+tsx returns
+          (history backfills when the operator runs the recompute script)"
+        verdict: pending
+        evidence: null
+      - metric: closed trades stamped with rules_in_effect
+        baseline: "0 of 40"
+        expected: "every new pick stamped; first rule scoreboard lines
+          appear after ~5 closes; retirement candidates only at >=8"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
 do_not_retry: []

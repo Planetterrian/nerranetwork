@@ -55,14 +55,25 @@
       <h2 style="margin-top:0; font-size:1.4rem;">Current Track Record vs NASDAQ</h2>
       
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--sp-4); margin: var(--sp-6) 0;">
+        {% set s = tracker.summary if tracker else none %}
+        {% if s and s.matched_window_alpha_pct is defined and s.matched_window_trades %}
         <div>
-          <div style="font-size:0.8rem; color:var(--nn-text-muted); text-transform:uppercase;">Cumulative Alpha vs NASDAQ</div>
+          <div style="font-size:0.8rem; color:var(--nn-text-muted); text-transform:uppercase;">Matched-Window Alpha vs NASDAQ</div>
+          <div style="font-size:2.2rem; font-weight:700; color: {% if (s.matched_window_alpha_pct or 0) >= 0 %}#10b981{% else %}#ef4444{% endif %};">
+            {{ "{:+.2f}".format(s.matched_window_alpha_pct or 0) }}%
+          </div>
+          <div style="font-size:0.85rem;">Each trade vs the index over the same holding window — the honest head-to-head ({{ s.matched_window_trades }} trades)</div>
+        </div>
+        {% endif %}
+
+        <div>
+          <div style="font-size:0.8rem; color:var(--nn-text-muted); text-transform:uppercase;">Buy-and-Hold Gap vs NASDAQ</div>
           <div style="font-size:2.2rem; font-weight:700; color: {% if (performance_data.alpha.inception_to_date_pct or 0) >= 0 %}#10b981{% else %}#ef4444{% endif %};">
             {{ "{:+.2f}".format(performance_data.alpha.inception_to_date_pct or 0) }}%
           </div>
-          <div style="font-size:0.85rem;">Since inception</div>
+          <div style="font-size:0.85rem;">Since inception · not capital-matched (one $1,000 position at a time vs a fully-invested index)</div>
         </div>
-        
+
         <div>
           <div style="font-size:0.8rem; color:var(--nn-text-muted); text-transform:uppercase;">YTD Alpha</div>
           <div style="font-size:2.2rem; font-weight:700; color: {% if (performance_data.alpha.ytd_pct or 0) >= 0 %}#10b981{% else %}#ef4444{% endif %};">
@@ -83,6 +94,28 @@
           <div style="font-size:2.2rem; font-weight:700;">{{ performance_data.summary.total_trades or 0 }}</div>
         </div>
       </div>
+
+      {% if s and s.benchmark_scores and s.benchmark_scores | length > 1 %}
+      <div style="border-top: 1px solid var(--nn-border, rgba(128,128,128,0.25)); padding-top: var(--sp-4); margin-top: var(--sp-4);">
+        <div style="font-size:0.8rem; color:var(--nn-text-muted); text-transform:uppercase; margin-bottom: 0.5rem;">
+          Major-Index Sweep (matched windows) — currently beating {{ s.indices_beaten or 0 }} of {{ s.indices_scored or 0 }} major indices
+        </div>
+        <div style="display:flex; gap: var(--sp-6); flex-wrap: wrap;">
+          {% for key, label in [("nasdaq", "NASDAQ Composite"), ("sp500", "S&P 500"), ("tsx", "TSX Composite")] %}
+            {% if s.benchmark_scores[key] is defined %}
+            {% set score = s.benchmark_scores[key] %}
+            <div>
+              <span style="font-weight:600;">{{ label }}</span>
+              <span style="font-weight:700; color: {% if (score.alpha_pct or 0) >= 0 %}#10b981{% else %}#ef4444{% endif %};">
+                {{ "{:+.2f}".format(score.alpha_pct or 0) }}%
+              </span>
+              <span style="font-size:0.8rem; color:var(--nn-text-muted);">({{ score.trades }} trades)</span>
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
 
       <div style="font-size:0.85rem; color:var(--nn-text-muted);">
         Last updated: {{ performance_data.last_updated or "recently" }} • All figures are simulated with $1,000 per position for tracking purposes only.

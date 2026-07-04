@@ -172,14 +172,27 @@ is a dashboard setting (Webhooks tab → point at the existing
 notification endpoint); a dedicated receiver Worker is Phase-2 scope if
 signature verification is wanted.
 
-**Phase 2 — shadow mode (1 PR, ≥4 weeks running).** `executor.py` runs
-the FULL pipeline — signal → risk checks → symbol verification → live
-quote → computed limit price — and then, instead of placing, appends the
-would-be order to `live_ledger.json` with `mode: "shadow"`. Nightly
-reconcile compares shadow fills (next real bar) against the sim's
-entries → the first real **slippage model**, which then feeds back into
-the sim's cost assumptions (the review's execution-modeling item). This
-IS the paper-trading layer, since SnapTrade's sandbox can't fill orders.
+**Phase 2 — shadow mode (SHIPPED July 4; run ≥4 weeks).**
+`execution/risk.py` (env-tunable hard gates: kill switch off by default,
+$250 cap, 0.5% slippage collar, $2 price floor, 1-day signal freshness,
+duplicate-order rejection — all pure/unit-tested) +
+`execution/shadow.py` (full pipeline: signal → gates → decision-time
+yfinance quote → marketable-limit price + sizing → committed
+`digests/modern_investing/shadow_ledger.json`; idempotent by
+`client_order_id`; hypothetical orders only, safe to commit) +
+`.github/workflows/mit-shadow-executor.yml` (weekdays 13:50 UTC ≈ 9:50
+ET — **live now, needs no secrets**). `scripts/mit_shadow_report.py`
+compares shadow decision-time quotes against the sim's entry-bar opens —
+the first real **slippage model**, feeding the sim's cost assumptions
+once ~20 trades accumulate. This IS the paper-trading layer, since
+SnapTrade's sandbox can't fill orders. **Phase 2.5 (shadow exits) also
+shipped**: each open shadow position gets a paired, idempotent
+`would_sell` on the sim's exit calendar (flash → next weekday, weekly →
+Friday; no-quote days retry), carrying the round-trip
+`shadow_return_pct`, and the report now shows the per-trade
+shadow-vs-sim P&L gap. Entry timing note: the sim enters at the
+pick-date OPEN; shadow quotes at ~9:50 ET — the measured gap between
+them is exactly the execution cost the sim currently ignores.
 
 **Phase 3 — micro-live (operator flips `LIVE_TRADING_ENABLED=1`).**
 Real orders at $150–250, Webull US only at first (single account, USD,

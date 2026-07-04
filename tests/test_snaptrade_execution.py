@@ -17,6 +17,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest  # noqa: F401 (used by the Phase-2 tests below)
+
 _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
@@ -133,3 +135,209 @@ class TestMirrorBuilder:
         mirror = mirror_mod.build_mirror([], {}, {}, now_iso="t")
         assert mirror["account_count"] == 0
         assert mirror["accounts"] == []
+
+
+# ---------------------------------------------------------------------------
+# Risk gates + shadow executor (Phase 2)
+# ---------------------------------------------------------------------------
+
+import datetime  # noqa: E402
+
+from execution import shadow  # noqa: E402
+from execution.risk import RiskConfig, validate_signal  # noqa: E402
+
+_TODAY = datetime.date(2026, 7, 4)
+
+
+def _signal(**overrides):
+    trade = {
+        "symbol": "NVDA", "market": "NASDAQ", "snaptrade_symbol": "NVDA",
+        "side": "BUY", "trade_type": "flash", "confidence": "High",
+        "strategy": "momentum", "target_range": "", "sector": "tech",
+        "pick_date": "2026-07-04", "pick_reference_price": 200.0,
+        "pick_validated": True, "currency": "USD",
+        "suggested_account": "webull",
+        "client_order_id": "11111111-2222-3333-4444-555555555555",
+    }
+    trade.update(overrides.pop("trade_overrides", {}))
+    signal = {
+        "schema_version": 1, "generated_at": "2026-07-04",
+        "episode_num": 96, "show": "modern_investing",
+        "simulated_position_size_usd": 1000,
+        "action": "new_trade", "reason": None, "trade": trade,
+    }
+    signal.update(overrides)
+    return signal
+
+
+class TestRiskGates:
+    def test_valid_signal_passes(self):
+        ok, reasons = validate_signal(_signal(), RiskConfig(), today=_TODAY)
+        assert ok and reasons == []
+
+    def test_no_trade_signal_fails_closed(self):
+        ok, reasons = validate_signal(
+            _signal(action="no_trade", trade=None), RiskConfig(), today=_TODAY)
+        assert not ok
+        assert any("nothing to trade" in r for r in reasons)
+
+    def test_stale_signal_rejected(self):
+        ok, reasons = validate_signal(
+            _signal(generated_at="2026-06-30"), RiskConfig(), today=_TODAY)
+        assert not ok
+        assert any("stale" in r for r in reasons)
+
+    def test_unvalidated_pick_rejected(self):
+        ok, reasons = validate_signal(
+            _signal(trade_overrides={"pick_validated": False,
+                                     "pick_reference_price": None}),
+            RiskConfig(), today=_TODAY)
+        assert not ok
+        assert any("not validated" in r for r in reasons)
+
+    def test_penny_stock_rejected(self):
+        ok, reasons = validate_signal(
+            _signal(trade_overrides={"pick_reference_price": 0.85}),
+            RiskConfig(), today=_TODAY)
+        assert not ok
+        assert any("floor" in r for r in reasons)
+
+    def test_duplicate_order_id_rejected(self):
+        sig = _signal()
+        ok, reasons = validate_signal(
+            sig, RiskConfig(), today=_TODAY,
+            prior_order_ids={sig["trade"]["client_order_id"]})
+        assert not ok
+        assert any("duplicate" in r for r in reasons)
+
+    def test_kill_switch_defaults_off(self, monkeypatch):
+        monkeypatch.delenv("LIVE_TRADING_ENABLED", raising=False)
+        assert RiskConfig.from_env().live_trading_enabled is False
+
+
+class TestShadowExecutor:
+    _NOW = datetime.datetime(2026, 7, 4, 13, 50,
+                             tzinfo=datetime.timezone.utc)
+
+    def test_valid_signal_logs_would_place_order(self):
+        ledger = shadow.load_ledger(Path("/nonexistent/ledger.json"))
+        entry = shadow.run_shadow(
+            _signal(), ledger, RiskConfig(),
+            quote_fn=lambda s: 201.0, now=self._NOW)
+        assert entry["decision"] == "would_place"
+        assert entry["order_type"] == "Limit"
+        assert entry["limit_price"] == pytest.approx(201.0 * 1.005, abs=0.01)
+        assert entry["units"] == pytest.approx(250.0 / entry["limit_price"],
+                                               abs=0.001)
+        assert ledger["orders"] == [entry]
+
+    def test_rerun_is_idempotent(self):
+        ledger = shadow.load_ledger(Path("/nonexistent/ledger.json"))
+        shadow.run_shadow(_signal(), ledger, RiskConfig(),
+                          quote_fn=lambda s: 201.0, now=self._NOW)
+        second = shadow.run_shadow(_signal(), ledger, RiskConfig(),
+                                   quote_fn=lambda s: 201.0, now=self._NOW)
+        assert second["decision"] == "duplicate"
+        assert len(ledger["orders"]) == 1  # not re-logged
+
+    def test_gated_signal_logged_as_skipped_with_reasons(self):
+        ledger = shadow.load_ledger(Path("/nonexistent/ledger.json"))
+        entry = shadow.run_shadow(
+            _signal(generated_at="2026-06-01"), ledger, RiskConfig(),
+            quote_fn=lambda s: 201.0, now=self._NOW)
+        assert entry["decision"] == "skipped"
+        assert any("stale" in r for r in entry["skip_reasons"])
+        assert ledger["orders"] == [entry]
+
+    def test_quote_failure_falls_back_to_reference(self):
+        ledger = shadow.load_ledger(Path("/nonexistent/ledger.json"))
+        entry = shadow.run_shadow(
+            _signal(), ledger, RiskConfig(),
+            quote_fn=lambda s: None, now=self._NOW)
+        assert entry["decision"] == "would_place"
+        assert entry["quote_source"] == "pick_reference_fallback"
+        assert entry["quote"] == 200.0
+
+    def test_ledger_roundtrip(self, tmp_path):
+        path = tmp_path / "shadow_ledger.json"
+        ledger = shadow.load_ledger(path)
+        shadow.run_shadow(_signal(), ledger, RiskConfig(),
+                          quote_fn=lambda s: 201.0, now=self._NOW)
+        shadow.save_ledger(ledger, path)
+        reloaded = shadow.load_ledger(path)
+        assert len(reloaded["orders"]) == 1
+        assert reloaded["orders"][0]["snaptrade_symbol"] == "NVDA"
+
+    def test_shadow_executor_script_fails_closed_without_signal(self):
+        # The script uses ROOT-relative paths, so pin the fail-closed
+        # branch in source (a missing signal must be a clean no-op).
+        src = (_ROOT / "scripts/mit_shadow_executor.py").read_text()
+        assert "nothing to do (fail-closed)" in src
+        assert "return 0" in src
+
+
+class TestShadowExits:
+    _NOW = datetime.datetime(2026, 7, 10, 13, 50,
+                             tzinfo=datetime.timezone.utc)  # Friday
+
+    def _ledger_with_entry(self, pick_date="2026-07-06", trade_type="weekly"):
+        ledger = shadow.load_ledger(Path("/nonexistent/ledger.json"))
+        ledger["orders"].append({
+            "logged_at": f"{pick_date}T13:50:00+00:00", "mode": "shadow",
+            "decision": "would_place", "episode_num": 99,
+            "client_order_id": "aaaa-bbbb", "symbol": "NVDA",
+            "snaptrade_symbol": "NVDA", "trade_type": trade_type,
+            "quote": 200.0, "limit_price": 201.0, "units": 1.24,
+            "pick_date": pick_date,
+        })
+        return ledger
+
+    def test_weekly_exit_due_friday(self):
+        # Monday pick → due this Friday.
+        assert shadow._exit_due_date(
+            datetime.date(2026, 7, 6), "weekly") == datetime.date(2026, 7, 10)
+        # Friday pick → due NEXT Friday (matches _evaluate_open_trade).
+        assert shadow._exit_due_date(
+            datetime.date(2026, 7, 10), "weekly") == datetime.date(2026, 7, 17)
+
+    def test_flash_exit_due_next_weekday(self):
+        assert shadow._exit_due_date(
+            datetime.date(2026, 7, 8), "flash") == datetime.date(2026, 7, 9)
+        # Friday flash → Monday.
+        assert shadow._exit_due_date(
+            datetime.date(2026, 7, 10), "flash") == datetime.date(2026, 7, 13)
+
+    def test_due_position_gets_would_sell_with_round_trip(self):
+        ledger = self._ledger_with_entry()
+        exits = shadow.run_shadow_exits(
+            ledger, RiskConfig(), quote_fn=lambda s: 210.0, now=self._NOW)
+        assert len(exits) == 1
+        x = exits[0]
+        assert x["decision"] == "would_sell"
+        assert x["shadow_return_pct"] == pytest.approx(5.0, abs=0.01)
+        assert x["exit_client_order_id"] == "aaaa-bbbb-exit"
+        assert len(ledger["orders"]) == 2
+
+    def test_exit_is_idempotent(self):
+        ledger = self._ledger_with_entry()
+        shadow.run_shadow_exits(ledger, RiskConfig(),
+                                quote_fn=lambda s: 210.0, now=self._NOW)
+        again = shadow.run_shadow_exits(ledger, RiskConfig(),
+                                        quote_fn=lambda s: 210.0, now=self._NOW)
+        assert again == []
+        assert len(ledger["orders"]) == 2
+
+    def test_not_yet_due_position_stays_open(self):
+        ledger = self._ledger_with_entry(pick_date="2026-07-09")  # Thu weekly
+        exits = shadow.run_shadow_exits(
+            ledger, RiskConfig(), quote_fn=lambda s: 210.0,
+            now=datetime.datetime(2026, 7, 9, 13, 50,
+                                  tzinfo=datetime.timezone.utc))
+        assert exits == []
+
+    def test_no_quote_leaves_position_open_for_retry(self):
+        ledger = self._ledger_with_entry()
+        exits = shadow.run_shadow_exits(
+            ledger, RiskConfig(), quote_fn=lambda s: None, now=self._NOW)
+        assert exits == []
+        assert len(ledger["orders"]) == 1  # nothing logged; retried later

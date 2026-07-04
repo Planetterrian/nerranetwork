@@ -1,0 +1,45 @@
+name: MIT Shadow Executor
+
+# Phase 2 of docs/mit_snaptrade_live_trading_plan.md: run the FULL order
+# pipeline (signal → risk gates → decision-time quote → marketable-limit
+# sizing) at ~9:50 ET and log the would-be order to the committed shadow
+# ledger — no order is ever placed (no SnapTrade credentials are even
+# loaded here). The accumulating ledger is the sim-vs-reality slippage
+# dataset (scripts/mit_shadow_report.py).
+
+on:
+  schedule:
+    - cron: '50 13 * * 1-5'   # 13:50 UTC ≈ 9:50 ET, weekdays (post-open)
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mit-shadow-executor
+  cancel-in-progress: false
+
+jobs:
+  shadow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install yfinance
+
+      - name: Run shadow executor
+        run: python scripts/mit_shadow_executor.py
+
+      - name: Commit shadow ledger
+        uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: digests/modern_investing/shadow_ledger.json
+          commit-message: "MIT shadow executor: ${{ github.run_id }}"
