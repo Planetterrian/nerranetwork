@@ -247,12 +247,14 @@ class TestDebutRework:
         generic = first_episode_podcast_appendix(1, "SpaceX Daily", show_slug="spacex")
         assert "FOUNDING" not in generic
 
-    def test_podcast_prompt_has_energy_and_crosspromo_blocks(self):
+    def test_podcast_prompt_has_energy_and_network_blocks(self):
         prompt = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_podcast.txt").read_text(
             encoding="utf-8")
         assert "WRITE THE ENERGY IN" in prompt
         assert "{nerra_network_context}" in prompt
-        assert "CROSS-PROMO" in prompt
+        # July 2026 follow-up pass: the occasional CROSS-PROMO became the
+        # regular FROM THE NETWORK beat — one grounded pointer per episode.
+        assert "FROM THE NETWORK" in prompt
 
     def test_podcast_prompt_voice_direction_tags_budgeted(self):
         # Grok-docs-sanctioned inline tags with a hard budget; wrapping tags
@@ -391,15 +393,18 @@ class TestDebutEnablers:
         assert "crosswind" in out
         assert "guidance" not in out  # comments stripped
 
-    def test_shipped_debut_anchor_is_the_nerra_build_story(self):
+    def test_debut_anchor_retired_after_ship(self, tmp_path):
+        # Episode 1 shipped (operator-approved July 4 2026) — the pinned
+        # debut anchor is deleted and the hook falls back to the latest
+        # First Principles brief. The pin mechanism itself stays: dropping
+        # content into shows/dp_pod_debut_anchor.md re-engages it.
         import importlib
 
         hook = importlib.import_module("shows.hooks.dp_pod")
+        assert not (PROJECT_ROOT / "shows" / "dp_pod_debut_anchor.md").exists()
         brief = hook._latest_first_principles_brief()
-        assert "Pinned" in brief
-        assert "BUILDING NERRA" in brief
-        assert "OPEN QUESTIONS" in brief          # the 900-word cap keeps them
-        assert "DEBUT ANCHOR" not in brief        # HTML guidance comment stripped
+        assert "Pinned" not in brief
+        assert "First Principles Daily" in brief
 
     def test_founders_notes_carry_the_pacing_rule(self):
         text = (PROJECT_ROOT / "shows" / "dp_pod_founders_notes.md").read_text(
@@ -674,3 +679,84 @@ class TestShowAnthem:
         assert 'id="anthem"' in html
         assert "Turn the worry down" in html
         assert "Now pass it on around" in html
+
+
+class TestFollowUpEpisodes:
+    """July 4 2026 follow-up pass (operator approved Ep1 and asked for great
+    regular episodes that regularly point at real network shows/episodes):
+    the FRESH ON THE NETWORK block, the daily Network pick, Think Positive
+    thinker rotation memory, and the digest-depth floor raise."""
+
+    def test_fresh_network_block_reads_real_episodes(self, tmp_path, monkeypatch):
+        import datetime
+        import json as _json
+
+        import shows.hooks.dp_pod as hook
+
+        monkeypatch.setattr(hook, "_ROOT", tmp_path)
+        d = tmp_path / "digests" / "spacex"
+        d.mkdir(parents=True)
+        (d / "summaries_spacex.json").write_text(_json.dumps({
+            "podcast": "spacex",
+            "summaries": [  # newest-first, as the pipeline writes it
+                {"date": "2026-07-03", "episode_num": "20",
+                 "episode_title": "Ep 20: Starship's six-engine static fire validates the full cluster"},
+                {"date": "2026-07-02", "episode_num": "19",
+                 "episode_title": "Ep 19: older"},
+            ],
+        }), encoding="utf-8")
+        # A stale show (outside the window) must not appear.
+        d2 = tmp_path / "digests" / "tesla_shorts_time"
+        d2.mkdir(parents=True)
+        (d2 / "summaries_tesla.json").write_text(_json.dumps({
+            "summaries": [{"date": "2026-06-01", "episode_title": "Ep 1: old"}],
+        }), encoding="utf-8")
+        block = hook._fresh_network_episodes(today=datetime.date(2026, 7, 4))
+        assert "FRESH ON THE NETWORK" in block
+        assert "SpaceX Daily (yesterday)" in block
+        assert "six-engine static fire" in block
+        assert "Ep 20:" not in block  # episode-number prefix stripped
+        assert "Tesla" not in block   # stale show excluded
+
+    def test_fresh_network_block_empty_when_nothing_fresh(self, tmp_path, monkeypatch):
+        import datetime
+
+        import shows.hooks.dp_pod as hook
+
+        monkeypatch.setattr(hook, "_ROOT", tmp_path)
+        assert hook._fresh_network_episodes(today=datetime.date(2026, 7, 4)) == ""
+
+    def test_thinker_rotation_memory_mines_digests(self, tmp_path, monkeypatch):
+        import shows.hooks.dp_pod as hook
+
+        monkeypatch.setattr(hook, "_ROOT", tmp_path)
+        d = tmp_path / "digests" / "dp_pod"
+        d.mkdir(parents=True)
+        (d / "DP_Pod_Ep001_20260704.md").write_text(
+            "### Think Positive\nViktor Frankl's chosen response...\n\n### The Lever\nx\n",
+            encoding="utf-8")
+        (d / "DP_Pod_Ep002_20260705.md").write_text(
+            "### Think Positive\nCarol Dweck's growth mindset...\n\n### The Lever\nx\n",
+            encoding="utf-8")
+        out = hook._recent_think_positive_thinkers()
+        assert "RECENTLY FEATURED THINKERS" in out
+        # Newest digest first: Dweck before Frankl.
+        assert out.index("Carol Dweck") < out.index("Viktor Frankl")
+
+    def test_prompts_carry_the_network_pick_contract(self):
+        digest = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_digest.txt").read_text(
+            encoding="utf-8")
+        assert "**Network pick:**" in digest
+        assert "RECENTLY FEATURED THINKERS" in digest
+        podcast = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_podcast.txt").read_text(
+            encoding="utf-8")
+        assert "FROM THE NETWORK" in podcast
+        assert "GROUNDED ONLY" in podcast
+        # Anti-tic: the pointer must move around, never become a fixed slot.
+        assert "never a fixed segment" in podcast
+
+    def test_digest_depth_floor_raised(self):
+        # Ep1 scripts capped ~1,200w against the 1,550 target because the
+        # brief was the ceiling — the digest floor is the length lever.
+        assert CFG.llm.min_digest_words == 1100
+        assert CFG.llm.digest_expand_below_target is True
