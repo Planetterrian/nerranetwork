@@ -160,10 +160,21 @@ reviews:
       - execution/risk.py hard gates + execution/shadow.py +
         mit-shadow-executor.yml (weekdays 13:50 UTC) +
         scripts/mit_shadow_report.py
+      - shadow EXITS (Phase 2.5, same PR) — would_sell entries on the
+        sim's exit calendar, idempotent, round-trip shadow_return_pct;
+        report gains the shadow-vs-sim P&L gap per trade
+      - regime block (rolling last-10 alpha + drawdown from high-water
+        mark → cold streak raises the pick bar / hot streak holds
+        discipline; rides in the strategy_performance slot)
+      - statistical discipline — FAVOR/AVOID and operating principles now
+        require n>=5 closed trades per sector/tag (was 2-3, coin-flip
+        samples were steering picks); small samples labeled inconclusive
+      - performance page — matched-window alpha tile (honest headline),
+        buy-and-hold gap relabeled "not capital-matched", major-index
+        sweep row
     deferred:
-      - "shadow EXITS (would-be sells) — Phase 2.5"
       - "feed measured shadow slippage into the sim's cost model once ~20
-        matched trades accumulate"
+        matched round trips accumulate"
       - "webhook receiver Worker for SnapTrade signature verification
         (Phase 2 scope if wanted)"
       - "carried: closing-price lesson retirement (operator A/B),

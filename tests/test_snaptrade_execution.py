@@ -274,3 +274,70 @@ class TestShadowExecutor:
         src = (_ROOT / "scripts/mit_shadow_executor.py").read_text()
         assert "nothing to do (fail-closed)" in src
         assert "return 0" in src
+
+
+class TestShadowExits:
+    _NOW = datetime.datetime(2026, 7, 10, 13, 50,
+                             tzinfo=datetime.timezone.utc)  # Friday
+
+    def _ledger_with_entry(self, pick_date="2026-07-06", trade_type="weekly"):
+        ledger = shadow.load_ledger(Path("/nonexistent/ledger.json"))
+        ledger["orders"].append({
+            "logged_at": f"{pick_date}T13:50:00+00:00", "mode": "shadow",
+            "decision": "would_place", "episode_num": 99,
+            "client_order_id": "aaaa-bbbb", "symbol": "NVDA",
+            "snaptrade_symbol": "NVDA", "trade_type": trade_type,
+            "quote": 200.0, "limit_price": 201.0, "units": 1.24,
+            "pick_date": pick_date,
+        })
+        return ledger
+
+    def test_weekly_exit_due_friday(self):
+        # Monday pick → due this Friday.
+        assert shadow._exit_due_date(
+            datetime.date(2026, 7, 6), "weekly") == datetime.date(2026, 7, 10)
+        # Friday pick → due NEXT Friday (matches _evaluate_open_trade).
+        assert shadow._exit_due_date(
+            datetime.date(2026, 7, 10), "weekly") == datetime.date(2026, 7, 17)
+
+    def test_flash_exit_due_next_weekday(self):
+        assert shadow._exit_due_date(
+            datetime.date(2026, 7, 8), "flash") == datetime.date(2026, 7, 9)
+        # Friday flash → Monday.
+        assert shadow._exit_due_date(
+            datetime.date(2026, 7, 10), "flash") == datetime.date(2026, 7, 13)
+
+    def test_due_position_gets_would_sell_with_round_trip(self):
+        ledger = self._ledger_with_entry()
+        exits = shadow.run_shadow_exits(
+            ledger, RiskConfig(), quote_fn=lambda s: 210.0, now=self._NOW)
+        assert len(exits) == 1
+        x = exits[0]
+        assert x["decision"] == "would_sell"
+        assert x["shadow_return_pct"] == pytest.approx(5.0, abs=0.01)
+        assert x["exit_client_order_id"] == "aaaa-bbbb-exit"
+        assert len(ledger["orders"]) == 2
+
+    def test_exit_is_idempotent(self):
+        ledger = self._ledger_with_entry()
+        shadow.run_shadow_exits(ledger, RiskConfig(),
+                                quote_fn=lambda s: 210.0, now=self._NOW)
+        again = shadow.run_shadow_exits(ledger, RiskConfig(),
+                                        quote_fn=lambda s: 210.0, now=self._NOW)
+        assert again == []
+        assert len(ledger["orders"]) == 2
+
+    def test_not_yet_due_position_stays_open(self):
+        ledger = self._ledger_with_entry(pick_date="2026-07-09")  # Thu weekly
+        exits = shadow.run_shadow_exits(
+            ledger, RiskConfig(), quote_fn=lambda s: 210.0,
+            now=datetime.datetime(2026, 7, 9, 13, 50,
+                                  tzinfo=datetime.timezone.utc))
+        assert exits == []
+
+    def test_no_quote_leaves_position_open_for_retry(self):
+        ledger = self._ledger_with_entry()
+        exits = shadow.run_shadow_exits(
+            ledger, RiskConfig(), quote_fn=lambda s: None, now=self._NOW)
+        assert exits == []
+        assert len(ledger["orders"]) == 1  # nothing logged; retried later

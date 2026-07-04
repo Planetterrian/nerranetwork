@@ -714,3 +714,52 @@ class TestRuleEffectiveness:
         block = mi._build_lessons_learned_block(lessons)
         for rid in selected:
             assert rid in block
+
+
+# ---------------------------------------------------------------------------
+# Regime block (adaptive selectivity) + statistical discipline
+# ---------------------------------------------------------------------------
+
+class TestRegimeBlock:
+    def _closed(self, alpha, pnl_dollars):
+        return {"status": "closed", "alpha_pct": alpha,
+                "pnl_pct": alpha, "pnl_dollars": pnl_dollars}
+
+    def test_cold_streak_raises_the_bar(self):
+        tracker = {"trades": [self._closed(-2.0, -20.0) for _ in range(10)]}
+        block = mi._build_regime_block(tracker)
+        assert "COLD STREAK" in block
+        assert "no-trade day is the DEFAULT" in block
+
+    def test_hot_streak_holds_discipline_never_presses(self):
+        tracker = {"trades": [self._closed(2.5, 25.0) for _ in range(10)]}
+        block = mi._build_regime_block(tracker)
+        assert "HOT STREAK" in block
+        assert "do not loosen criteria" in block
+
+    def test_neutral_regime(self):
+        tracker = {"trades": [self._closed(0.2, 2.0) for _ in range(10)]}
+        block = mi._build_regime_block(tracker)
+        assert "NEUTRAL" in block
+
+    def test_drawdown_alone_triggers_cold(self):
+        # Strong early run, then a deep drawdown — even with recent alpha
+        # near zero, being far below the high-water mark tightens the bar.
+        trades = ([self._closed(5.0, 150.0) for _ in range(5)]
+                  + [self._closed(0.1, -30.0) for _ in range(5)])
+        block = mi._build_regime_block({"trades": trades})
+        assert "COLD STREAK" in block
+
+    def test_too_few_trades_yields_empty(self):
+        tracker = {"trades": [self._closed(1.0, 10.0) for _ in range(3)]}
+        assert mi._build_regime_block(tracker) == ""
+
+
+class TestPerformancePageMultiIndex:
+    def test_template_carries_matched_window_and_sweep(self):
+        src = (_ROOT / "templates/mit_performance_page.html.j2").read_text(
+            encoding="utf-8")
+        assert "Matched-Window Alpha vs NASDAQ" in src
+        assert "Buy-and-Hold Gap vs NASDAQ" in src
+        assert "not capital-matched" in src
+        assert "Major-Index Sweep" in src

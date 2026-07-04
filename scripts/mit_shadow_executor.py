@@ -49,11 +49,16 @@ def main() -> int:
     ledger = shadow.load_ledger(LEDGER_PATH)
     config = RiskConfig.from_env()
     entry = shadow.run_shadow(signal, ledger, config)
+    # Phase 2.5: close any open shadow positions past their sim exit date.
+    exits = shadow.run_shadow_exits(ledger, config)
     shadow.save_ledger(ledger, LEDGER_PATH)
 
     logger.info("Shadow decision: %s%s", entry.get("decision"),
                 f" — {'; '.join(entry.get('skip_reasons', []))}"
                 if entry.get("skip_reasons") else "")
+    for x in exits:
+        logger.info("Shadow exit: %s round trip %s%%",
+                    x.get("snaptrade_symbol"), x.get("shadow_return_pct"))
     return 0
 
 

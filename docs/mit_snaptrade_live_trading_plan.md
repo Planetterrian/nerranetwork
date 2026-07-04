@@ -185,10 +185,14 @@ ET — **live now, needs no secrets**). `scripts/mit_shadow_report.py`
 compares shadow decision-time quotes against the sim's entry-bar opens —
 the first real **slippage model**, feeding the sim's cost assumptions
 once ~20 trades accumulate. This IS the paper-trading layer, since
-SnapTrade's sandbox can't fill orders. Shadow EXITS (would-be sells) are
-Phase-2.5 scope. Entry timing note: the sim enters at the pick-date
-OPEN; shadow quotes at ~9:50 ET — the measured gap between them is
-exactly the execution cost the sim currently ignores.
+SnapTrade's sandbox can't fill orders. **Phase 2.5 (shadow exits) also
+shipped**: each open shadow position gets a paired, idempotent
+`would_sell` on the sim's exit calendar (flash → next weekday, weekly →
+Friday; no-quote days retry), carrying the round-trip
+`shadow_return_pct`, and the report now shows the per-trade
+shadow-vs-sim P&L gap. Entry timing note: the sim enters at the
+pick-date OPEN; shadow quotes at ~9:50 ET — the measured gap between
+them is exactly the execution cost the sim currently ignores.
 
 **Phase 3 — micro-live (operator flips `LIVE_TRADING_ENABLED=1`).**
 Real orders at $150–250, Webull US only at first (single account, USD,

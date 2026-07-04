@@ -250,14 +250,28 @@ class TestDoubleReviewPrevented:
 
 class TestRecursiveLearningLoopAlive:
     def test_analyze_strategy_patterns_defined_with_favor_avoid(self):
+        # July 2026 statistical-discipline pass: FAVOR/AVOID requires
+        # n >= 5 per sector (was 3 — coin-flip samples steered picks).
+        tracker = _tracker_with_trades(
+            [_closed(f"W{i}", 5, 50, alpha=4.0, sector="tech") for i in range(5)]
+            + [_closed(f"L{i}", -5, -50, alpha=-3.0, sector="energy")
+               for i in range(5)]
+        )
+        out = mi._analyze_strategy_patterns(tracker)
+        assert "FAVOR tech" in out
+        assert "AVOID energy" in out
+
+    def test_small_samples_get_no_favor_avoid_verdict(self):
         tracker = _tracker_with_trades(
             [_closed(f"W{i}", 5, 50, alpha=4.0, sector="tech") for i in range(3)]
             + [_closed(f"L{i}", -5, -50, alpha=-3.0, sector="energy")
                for i in range(3)]
         )
         out = mi._analyze_strategy_patterns(tracker)
-        assert "FAVOR tech" in out
-        assert "AVOID energy" in out
+        assert "FAVOR" not in out and "AVOID" not in out
+        block = mi._build_strategy_performance(tracker)
+        assert "insufficient sample" in block
+        assert "FAVOR these sectors" not in block
 
     def test_learning_context_runs_on_live_tracker(self):
         # The historical failure mode: NameError swallowed by pre_fetch.

@@ -137,6 +137,7 @@ def run_shadow(
         "limit_price": limit_price,
         "units": units,
         "position_usd": config.max_position_usd,
+        "pick_date": trade.get("pick_date"),
     })
     logger.info(
         "Shadow: WOULD PLACE BUY %s x%s @ limit $%.2f (quote $%.4f, %s)",
@@ -144,3 +145,118 @@ def run_shadow(
     )
     ledger["orders"].append(entry)
     return entry
+
+
+# ---------------------------------------------------------------------------
+# Shadow exits (Phase 2.5) — the round trip that makes shadow P&L real
+# ---------------------------------------------------------------------------
+
+def _exit_due_date(pick_date: datetime.date, trade_type: str) -> datetime.date:
+    """The first executor run day on/after the sim's exit.
+
+    Mirrors the sim's calendar: flash trades close the next trading day
+    (executor runs weekdays, so the next weekday); weekly holds close on
+    the Friday run (this week's Friday for Mon-Thu picks, NEXT Friday
+    for Fri/Sat/Sun picks — a Friday pick isn't open yet on its own
+    Friday run, matching ``_evaluate_open_trade``).
+    """
+    wd = pick_date.weekday()
+    if trade_type == "flash":
+        days = 3 if wd == 4 else (2 if wd == 5 else 1)  # Fri→Mon, Sat→Mon
+        return pick_date + datetime.timedelta(days=days)
+    if wd == 4:
+        return pick_date + datetime.timedelta(days=7)
+    if wd == 5:
+        return pick_date + datetime.timedelta(days=6)
+    if wd == 6:
+        return pick_date + datetime.timedelta(days=5)
+    return pick_date + datetime.timedelta(days=4 - wd)
+
+
+def run_shadow_exits(
+    ledger: dict,
+    config: RiskConfig,
+    *,
+    quote_fn=decision_quote,
+    now: datetime.datetime | None = None,
+) -> list[dict]:
+    """Log would-be SELLs for every open shadow position past its due date.
+
+    Each ``would_place`` entry gets exactly one paired ``would_sell``
+    (idempotent via the ``exit_client_order_id`` = ``<entry id>-exit``),
+    carrying the decision-time quote and the round-trip shadow return —
+    quote-to-quote, so it's directly comparable against the sim's
+    open-to-close return for the same trade.
+    """
+    now = now or datetime.datetime.now(datetime.timezone.utc)
+    today = now.date()
+    orders = ledger.get("orders", [])
+    existing_exit_ids = {
+        o.get("exit_client_order_id") for o in orders
+        if o.get("exit_client_order_id")
+    }
+
+    exits: list[dict] = []
+    for entry in list(orders):
+        if entry.get("decision") != "would_place":
+            continue
+        exit_id = f"{entry.get('client_order_id')}-exit"
+        if exit_id in existing_exit_ids:
+            continue
+        pick_date = None
+        if isinstance(entry.get("pick_date"), str):
+            try:
+                pick_date = datetime.date.fromisoformat(entry["pick_date"])
+            except ValueError:
+                pick_date = None
+        if pick_date is None and isinstance(entry.get("logged_at"), str):
+            pick_date = datetime.date.fromisoformat(entry["logged_at"][:10])
+        if pick_date is None:
+            continue
+        due = _exit_due_date(pick_date, entry.get("trade_type", "weekly"))
+        if today < due:
+            continue
+
+        quote = quote_fn(entry.get("snaptrade_symbol"))
+        quote_source = "decision_time_quote"
+        if not isinstance(quote, (int, float)) or quote <= 0:
+            # No quote today — leave the position open; a later run
+            # retries (mirrors the sim's leave-open-when-no-bar rule).
+            logger.warning(
+                "Shadow exit: no quote for %s — will retry next run",
+                entry.get("snaptrade_symbol"))
+            continue
+
+        entry_quote = entry.get("quote")
+        shadow_return = (
+            round((quote - entry_quote) / entry_quote * 100, 3)
+            if isinstance(entry_quote, (int, float)) and entry_quote
+            else None
+        )
+        exit_entry = {
+            "logged_at": now.isoformat(timespec="seconds"),
+            "mode": "shadow",
+            "decision": "would_sell",
+            "episode_num": entry.get("episode_num"),
+            "client_order_id": entry.get("client_order_id"),
+            "exit_client_order_id": exit_id,
+            "symbol": entry.get("symbol"),
+            "snaptrade_symbol": entry.get("snaptrade_symbol"),
+            "trade_type": entry.get("trade_type"),
+            "order_type": "Limit",
+            "time_in_force": "Day",
+            "quote": round(float(quote), 4),
+            "quote_source": quote_source,
+            "limit_price": round(quote * (1 - config.max_slippage_pct / 100), 2),
+            "units": entry.get("units"),
+            "shadow_return_pct": shadow_return,
+        }
+        logger.info(
+            "Shadow: WOULD SELL %s x%s @ ~$%.4f (round trip %s%%)",
+            exit_entry["snaptrade_symbol"], exit_entry["units"], quote,
+            shadow_return,
+        )
+        orders.append(exit_entry)
+        existing_exit_ids.add(exit_id)
+        exits.append(exit_entry)
+    return exits

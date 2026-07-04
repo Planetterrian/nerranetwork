@@ -245,8 +245,13 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
 
     # Strategy-level performance analysis — tells the LLM which approaches
     # are producing alpha and which are underperforming, so it can refine
-    # future trade selection.
-    context["strategy_performance"] = _build_strategy_performance(tracker)
+    # future trade selection. The regime check (rolling streak + drawdown
+    # → selection pressure) rides in the same prompt slot.
+    strategy_block = _build_strategy_performance(tracker)
+    regime = _build_regime_block(tracker)
+    if regime:
+        strategy_block = f"{strategy_block}\n\n{regime}"
+    context["strategy_performance"] = strategy_block
 
     # Dynamic tone based on portfolio performance
     context["tone_hint"] = _tone_from_portfolio(tracker)
@@ -261,6 +266,9 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
         context["mit_recursive_learning_context"] = "Learning context temporarily unavailable — focus on process discipline."
 
     return context
+
+
+_MIN_SAMPLE_TRADES = 5
 
 
 def _build_strategy_performance(tracker: dict) -> str:
@@ -303,13 +311,24 @@ def _build_strategy_performance(tracker: dict) -> str:
 
     lines = ["STRATEGY PERFORMANCE ANALYSIS (use this to improve trade selection):"]
 
-    # Sector breakdown
+    # Sector breakdown. Statistical discipline (July 2026): a ✓/✗ verdict
+    # on 2-3 trades is noise-chasing — the loop was steering picks off
+    # coin-flip samples. Verdict flags require n >= _MIN_SAMPLE_TRADES;
+    # smaller samples are shown but explicitly labeled inconclusive.
     lines.append("\nSector results (closed trades):")
     for sec, s in sorted(sector_stats.items(), key=lambda x: x[1]["total_alpha"], reverse=True):
         wr = (s["wins"] / s["trades"] * 100) if s["trades"] > 0 else 0
         avg_alpha = s["total_alpha"] / s["trades"] if s["trades"] > 0 else 0
-        flag = "✓" if avg_alpha > 0 else "✗"
-        lines.append(f"  {flag} {sec}: {s['trades']} trades, {wr:.0f}% win rate, avg alpha {avg_alpha:+.2f}%")
+        if s["trades"] >= _MIN_SAMPLE_TRADES:
+            flag = "✓" if avg_alpha > 0 else "✗"
+            suffix = ""
+        else:
+            flag = "·"
+            suffix = (f" [n={s['trades']} — insufficient sample, "
+                      f"no conclusion]")
+        lines.append(
+            f"  {flag} {sec}: {s['trades']} trades, {wr:.0f}% win rate, "
+            f"avg alpha {avg_alpha:+.2f}%{suffix}")
 
     # Lesson tag patterns
     if tag_stats:
@@ -322,15 +341,84 @@ def _build_strategy_performance(tracker: dict) -> str:
     lines.append(f"\nBest trade: {best.get('symbol')} ({best.get('sector')}) — alpha {best.get('alpha_pct', 0):+.2f}%")
     lines.append(f"Worst trade: {worst.get('symbol')} ({worst.get('sector')}) — alpha {worst.get('alpha_pct', 0):+.2f}%")
 
-    # Actionable guidance
-    winning_sectors = [sec for sec, s in sector_stats.items() if s["total_alpha"] > 0 and s["trades"] >= 2]
-    losing_sectors = [sec for sec, s in sector_stats.items() if s["total_alpha"] < 0 and s["trades"] >= 2]
+    # Actionable guidance — FAVOR/AVOID only on samples big enough to
+    # mean something (n >= _MIN_SAMPLE_TRADES; was 2, i.e. coin flips).
+    winning_sectors = [
+        sec for sec, s in sector_stats.items()
+        if s["total_alpha"] > 0 and s["trades"] >= _MIN_SAMPLE_TRADES]
+    losing_sectors = [
+        sec for sec, s in sector_stats.items()
+        if s["total_alpha"] < 0 and s["trades"] >= _MIN_SAMPLE_TRADES]
     if winning_sectors:
         lines.append(f"\nFAVOR these sectors (positive alpha track record): {', '.join(winning_sectors)}")
     if losing_sectors:
         lines.append(f"AVOID OR BE CAUTIOUS with these sectors (negative alpha): {', '.join(losing_sectors)}")
+    if not winning_sectors and not losing_sectors:
+        lines.append(
+            "\nNo sector has a large enough sample for FAVOR/AVOID guidance "
+            "yet — judge today's pick on its own merits.")
 
     return "\n".join(lines)
+
+
+_REGIME_WINDOW = 10
+
+
+def _build_regime_block(tracker: dict) -> str:
+    """Adaptive selectivity from the rolling record (July 2026).
+
+    The loop previously treated every day identically regardless of how
+    the last stretch of picks performed. This block turns the rolling
+    last-``_REGIME_WINDOW`` matched-window alpha + the drawdown from the
+    P&L high-water mark into explicit selection pressure: a cold streak
+    RAISES the bar (prefer explicit no-trade days, demand more aligned
+    factors); a hot streak holds discipline flat (never "press harder").
+    Deterministic — thresholds are code, not vibes.
+    """
+    closed = [t for t in tracker.get("trades", []) if t.get("status") == "closed"]
+    scored = [
+        t for t in closed
+        if isinstance(t.get("alpha_pct"), (int, float))
+        and math.isfinite(t["alpha_pct"])
+    ]
+    if len(scored) < 5:
+        return ""
+    recent = scored[-_REGIME_WINDOW:]
+    avg_alpha = sum(t["alpha_pct"] for t in recent) / len(recent)
+    wins = sum(1 for t in recent if _finite(t.get("pnl_pct")) > 0)
+
+    # Drawdown from the cumulative-P&L high-water mark (all closed trades).
+    running = peak = 0.0
+    for t in closed:
+        running += _finite(t.get("pnl_dollars"))
+        peak = max(peak, running)
+    drawdown = round(peak - running, 2)
+
+    header = (
+        f"REGIME CHECK (rolling last {len(recent)} closed trades): "
+        f"avg matched-window alpha {avg_alpha:+.2f}%, {wins}/{len(recent)} "
+        f"wins, ${drawdown:.2f} below the P&L high-water mark."
+    )
+    if avg_alpha < -0.5 or drawdown > 100:
+        guidance = (
+            " COLD STREAK — RAISE THE BAR for today's Practice Investment: "
+            "an explicit no-trade day is the DEFAULT unless a setup has 3+ "
+            "independent aligned factors (which also justifies High "
+            "confidence). Do not chase a comeback; smaller, clearer edges "
+            "only."
+        )
+    elif avg_alpha > 1.0:
+        guidance = (
+            " HOT STREAK — the process is working. Keep the SAME selection "
+            "bar and position discipline; do not loosen criteria or reach "
+            "for riskier names because recent picks worked."
+        )
+    else:
+        guidance = (
+            " NEUTRAL — apply the standard selection criteria; no-trade "
+            "days remain acceptable."
+        )
+    return header + guidance
 
 
 def _tone_from_portfolio(tracker: dict) -> str:
@@ -2419,7 +2507,7 @@ def _analyze_strategy_patterns(tracker: dict) -> str:
 
     favor, avoid = [], []
     for sec, alphas in sector_alpha.items():
-        if len(alphas) < 3:
+        if len(alphas) < _MIN_SAMPLE_TRADES:
             continue
         avg = sum(alphas) / len(alphas)
         if avg >= 1.0:
@@ -2525,7 +2613,7 @@ def _derive_operating_principles(tracker: dict) -> list:
         sector_stats[sec]["total_alpha"] += t.get("alpha_pct", 0)
 
     best_sector = max(sector_stats.items(), key=lambda x: x[1]["total_alpha"] / max(x[1]["count"], 1), default=None)
-    if best_sector and best_sector[1]["count"] >= 3 and (best_sector[1]["total_alpha"] / best_sector[1]["count"]) > 2:
+    if best_sector and best_sector[1]["count"] >= _MIN_SAMPLE_TRADES and (best_sector[1]["total_alpha"] / best_sector[1]["count"]) > 2:
         principles.append({
             "title": f"Favor {best_sector[0].replace('_', ' ').title()}",
             "description": f"Data shows strong positive alpha in this sector across {best_sector[1]['count']} trades.",
@@ -2543,7 +2631,7 @@ def _derive_operating_principles(tracker: dict) -> list:
 
     if tag_performance:
         best_tag = max(tag_performance.items(), key=lambda x: x[1]["total_alpha"] / max(x[1]["count"], 1))
-        if best_tag[1]["count"] >= 2 and (best_tag[1]["total_alpha"] / best_tag[1]["count"]) > 3:
+        if best_tag[1]["count"] >= _MIN_SAMPLE_TRADES and (best_tag[1]["total_alpha"] / best_tag[1]["count"]) > 3:
             principles.append({
                 "title": f"Prioritize setups matching '{best_tag[0]}'",
                 "description": "This lesson tag has shown the strongest alpha when present in winning trades.",
