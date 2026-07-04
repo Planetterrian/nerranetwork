@@ -37,8 +37,11 @@ This is the **series premiere** for "{show_name}".
 _SHOW_DIGEST_EP1 = {
     "dp_pod": """
 ### FIRST EPISODE — THE FOUNDING BRIEF (Episode 1 of {show_name})
-This debut brief is NOT a news digest. Skip The Positive Papers news-item
-format entirely and structure the brief as:
+This debut brief is NOT a news digest. It MUST still begin with the standard
+hook line — `**HOOK:** [one sentence, under 120 characters, leading with the
+two-people-built-a-network bet]` — the pipeline reads it (Ep001 v4 spoke a
+raw markdown header on air because this line was missing). Skip The Positive
+Papers news-item format entirely and structure the brief as:
 1. **Founding statement material** (make this the LARGEST section — the
    episode opens with a 500+ word founding conversation) — why this show
    exists: most media profits from making people feel powerless; this club

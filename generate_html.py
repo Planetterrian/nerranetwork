@@ -1581,6 +1581,94 @@ def _collect_dp_levers(limit: int = 6) -> list:
     return levers
 
 
+def _collect_dp_mindsets(limit: int = 6) -> list:
+    """Extract recent "Think Positive" principles from The DP Pod's digests.
+
+    Each episode's digest carries a ``### Think Positive`` section — one
+    attributed mindset principle with a concrete mental rep. The club page
+    surfaces the most recent ones as a "Mindset Shelf" so members can revisit
+    and practice them between episodes. Returns newest-first
+    ``{episode_num, hook, mindset_text, blog_url}`` dicts; empty list
+    pre-launch or on parse failure (never blocks the page).
+    """
+    import re as _re
+
+    mindsets = []
+    try:
+        from engine.blog import extract_blog_metadata
+        digest_dir = ROOT / "digests" / "dp_pod"
+        if not digest_dir.exists():
+            return []
+        seen: dict[int, dict] = {}
+        for md_file in sorted(digest_dir.glob("*.md")):
+            text = md_file.read_text(encoding="utf-8")
+            m = _re.search(
+                r"###\s*Think Positive\s*\n(.*?)(?:\n[━#]|\Z)", text, _re.DOTALL,
+            )
+            if not m:
+                continue
+            mindset_text = " ".join(m.group(1).split())
+            mindset_text = _re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", mindset_text)
+            mindset_text = mindset_text.replace("**", "").strip()
+            if len(mindset_text) > 340:
+                cut = mindset_text[:340]
+                mindset_text = cut[: cut.rfind(" ")] + "…"
+            meta = extract_blog_metadata(text, "dp_pod", md_file.name, file_path=md_file)
+            ep = meta.get("episode_num", 0)
+            entry = {
+                "episode_num": ep,
+                "hook": meta.get("hook", ""),
+                "mindset_text": mindset_text,
+                "blog_url": f"blog/dp_pod/ep{ep:03d}.html",
+                "filename": md_file.name,
+            }
+            if ep not in seen or md_file.name > seen[ep]["filename"]:
+                seen[ep] = entry
+        mindsets = sorted(seen.values(), key=lambda e: e["episode_num"], reverse=True)[:limit]
+    except Exception as e:
+        print(f"Warning: could not collect DP Pod mindsets: {e}")
+    return mindsets
+
+
+def _collect_dp_dispatches(limit: int = 9) -> list:
+    """Load operator-curated listener dispatches for The DP Pod's Dispatch Wall.
+
+    Reads ``digests/dp_pod/dispatches.json`` — a file the OPERATOR curates by
+    hand from real listener mail (the club charter forbids fabricated
+    dispatches, so nothing here is ever generated). Schema per entry:
+    ``{"name": "Sarah, Calgary", "date": "2026-07-10", "did": "...",
+    "numbers": "...", "shoutout": "...", "episode_num": 3}`` — ``did`` is
+    required, everything else optional. Entries missing ``did`` are skipped.
+    Returns newest-first (file order preserved within a date); empty list
+    when the file is absent/empty (the template renders the how-to state).
+    """
+    dispatches = []
+    try:
+        path = ROOT / "digests" / "dp_pod" / "dispatches.json"
+        if not path.exists():
+            return []
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        entries = raw.get("dispatches", raw) if isinstance(raw, dict) else raw
+        if not isinstance(entries, list):
+            return []
+        for e in entries:
+            if not isinstance(e, dict) or not str(e.get("did", "")).strip():
+                continue
+            dispatches.append({
+                "name": str(e.get("name", "A club member")).strip(),
+                "date": str(e.get("date", "")).strip(),
+                "did": str(e.get("did", "")).strip(),
+                "numbers": str(e.get("numbers", "")).strip(),
+                "shoutout": str(e.get("shoutout", "")).strip(),
+                "episode_num": e.get("episode_num"),
+            })
+        dispatches.sort(key=lambda d: d.get("date") or "", reverse=True)
+        dispatches = dispatches[:limit]
+    except Exception as e:
+        print(f"Warning: could not load DP Pod dispatches: {e}")
+    return dispatches
+
+
 def _newsletter_tag_for_slug(slug: str, fallback_name: str) -> str:
     """Return the Buttondown tag for a show.
 
@@ -2267,8 +2355,16 @@ def generate_show_page(slug, *, dry_run=False):
     # in"). Empty list pre-launch — the template renders a founding-era
     # empty state.
     dp_levers = []
+    dp_mindsets = []
+    dp_dispatches = []
     if slug == "dp_pod":
         dp_levers = _collect_dp_levers()
+        # Mindset Shelf: recent Think Positive principles members can revisit
+        # and practice between episodes.
+        dp_mindsets = _collect_dp_mindsets()
+        # Dispatch Wall: operator-curated REAL listener dispatches (club
+        # charter — never fabricated, never generated).
+        dp_dispatches = _collect_dp_dispatches()
 
     is_russian = slug in ("finansy_prosto", "privet_russian")
 
@@ -2341,6 +2437,8 @@ def generate_show_page(slug, *, dry_run=False):
         "latest_blog_posts": latest_blog_posts,
         "static_episodes": static_episodes,
         "dp_levers": dp_levers,
+        "dp_mindsets": dp_mindsets,
+        "dp_dispatches": dp_dispatches,
         "newsletter_tag": _newsletter_tag_for_slug(cfg["slug"], cfg["name"]),
         "all_shows": _build_all_shows_list(),
         "performance_data": performance_data,

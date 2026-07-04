@@ -1607,6 +1607,19 @@ def generate_digest(
                 )
                 # Validate the expanded draft is real content, not a refusal.
                 _validate_llm_output(expanded, stage="digest", show_name=config.name)
+                # July 3 2026 (DP Pod Ep001 v4): the DIGEST retry pads by
+                # paraphrase-restatement exactly like the podcast retry did
+                # (the debut brief re-told every story beat a second time,
+                # and the doubled sentences reached shipped audio). Apply
+                # the same intra-script near-duplicate stripper the July
+                # network pass added on the podcast side.
+                expanded, _dig_dup = _dedup_expansion_sentences(expanded)
+                if _dig_dup:
+                    logger.warning(
+                        "Digest expansion retry for '%s' repeated itself — "
+                        "stripped %d near-duplicate sentence(s)",
+                        config.name, _dig_dup,
+                    )
                 expanded_wc = len(expanded.split())
                 if expanded_wc > word_count:
                     logger.info(

@@ -840,6 +840,28 @@ TST received a full recursive improvement architecture (analogous to MIT):
   paragraphs). Second Ep001 retired the same way. Dan's voice ceiling is
   the CLONE — docs: custom-voice quality tracks the reference clips;
   re-record Dan's samples with expressive conversational takes (operator).
+  **July 4 2026 v4 review + community layer:** the v4 Ep001 render (much
+  improved — real disagreement, Frankl Think Positive debut, proper
+  personality closing, song appended) surfaced three fixable defects, all
+  fixed + retired the render (drift guards:
+  `tests/test_dp_pod_show.py::TestEp001V4Fixes`): the DIGEST expansion
+  retry pads by paraphrase-duplication exactly like the podcast retry did
+  (the founding brief re-told every beat; `_dedup_expansion_sentences` now
+  runs on the digest-retry output too — `engine/generator.py`, global but
+  a correctness strip); the pipeline's `effective_hook` fallback spoke a
+  raw markdown header on air when the digest lacked a HOOK line (fallback
+  now skips `#`/rule lines + strips bold; the dp_pod debut-digest override
+  also REQUIRES the HOOK line); and the cold open's passing "The Lever"
+  mention stole the Lever chapter at 74s (marker is now announce-anchored
+  — "brings us to/time for/now for The Lever" — with a SEGMENT-NAME
+  DISCIPLINE prompt block requiring short forms before announcements).
+  Website community layer ("a place to learn and encourage each other"):
+  the club page gained a **Mindset Shelf** (`_collect_dp_mindsets` in
+  `generate_html.py` extracts each digest's `### Think Positive` principle)
+  and a **Dispatch Wall** (`_collect_dp_dispatches` reads the
+  OPERATOR-CURATED `digests/dp_pod/dispatches.json` — real listener
+  dispatches only, per the club charter; empty file = honest empty state).
+  Drift guards: `tests/test_dp_pod_show.py::TestCommunityLayer`.
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:

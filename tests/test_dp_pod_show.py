@@ -461,3 +461,138 @@ class TestIntrosPersonality:
         speakers = [g[0] for g in groups]
         assert speakers[0] == "DAN"
         assert "PATRICK" in speakers
+
+
+class TestEp001V4Fixes:
+    """Regression guards from the third Episode 1 review (July 4 2026, v4
+    render): digest expansion paraphrase-duplication, spoken markdown header
+    from a missing HOOK, and the Lever chapter stolen by a cold-open mention."""
+
+    def test_digest_expansion_retry_dedups(self):
+        # The v4 digest's expand-retry re-told every beat as a near-verbatim
+        # duplicate wall; the retry output now runs the same near-duplicate
+        # sentence strip the podcast-side retry got in the July net-pass.
+        src = (PROJECT_ROOT / "engine" / "generator.py").read_text(encoding="utf-8")
+        digest_retry = src.split("firing one-shot ", 1)[1]
+        assert "_dedup_expansion_sentences(expanded)" in digest_retry[:3000], (
+            "the digest expansion retry must strip near-duplicate sentences "
+            "(Ep001 v4 shipped a paraphrase-duplicated founding brief)"
+        )
+
+    def test_pipeline_hook_fallback_skips_markdown(self):
+        # v4 spoke "# The DP Pod — The Founding Brief" on air: the hook
+        # fallback grabbed the digest's first line, a raw markdown header.
+        src = (PROJECT_ROOT / "engine" / "pipeline.py").read_text(encoding="utf-8")
+        assert 'startswith(("#", "━", "---", "==="))' in src, (
+            "the effective_hook fallback must skip markdown/rule lines"
+        )
+
+    def test_debut_digest_requires_hook_line(self):
+        from engine.first_episode import first_episode_digest_appendix
+
+        appendix = first_episode_digest_appendix(1, "The DP Pod", "dp_pod")
+        assert "**HOOK:**" in appendix, (
+            "the debut brief must lead with a HOOK line — v4 omitted it and "
+            "the spoken hook fell back to a raw markdown header"
+        )
+
+    def test_lever_marker_is_announce_anchored(self):
+        by_title = {m.title: m for m in CFG.chapters.section_markers}
+        lever = by_title["The Lever"]
+        assert "brings us to" in lever.pattern, (
+            "the Lever marker must be announce-anchored (v4's cold-open "
+            "mention of 'The Lever' stole the chapter at 74s)"
+        )
+        # The bare segment name must NOT be a standalone alternative.
+        import re
+        for alt in lever.pattern.split("|"):
+            assert re.sub(r"\[.\w\]", "", alt).strip().lower() not in (
+                "the lever", "he lever"
+            ), f"bare-name alternative reintroduces the theft: {alt!r}"
+
+    def test_prompt_has_segment_name_discipline(self):
+        prompt = (PROJECT_ROOT / "shows" / "prompts" / "dp_pod_podcast.txt").read_text(
+            encoding="utf-8")
+        assert "SEGMENT-NAME DISCIPLINE" in prompt
+        assert "brings us to The" in prompt
+
+
+class TestCommunityLayer:
+    """The club page's learn-and-encourage layer (July 4 2026): the Mindset
+    Shelf (Think Positive principles from digests) and the Dispatch Wall
+    (operator-curated REAL listener dispatches — never generated)."""
+
+    def test_mindset_collector_extracts_think_positive(self, tmp_path, monkeypatch):
+        import generate_html as gh
+
+        digest_dir = tmp_path / "digests" / "dp_pod"
+        digest_dir.mkdir(parents=True)
+        (digest_dir / "DP_Pod_Ep003_20260706.md").write_text(
+            "# The DP Pod\n\n**HOOK:** Test hook\n\n"
+            "### The Positive Papers\nStuff.\n\n"
+            "### Think Positive\nCarol Dweck's **growth mindset**: add "
+            "\"yet\" out loud. [src](https://x.com)\n\n"
+            "### The Lever\nDo the thing.\n\n### Sources\n- x\n",
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(gh, "ROOT", tmp_path)
+        mindsets = gh._collect_dp_mindsets()
+        assert len(mindsets) == 1
+        text = mindsets[0]["mindset_text"]
+        assert "yet" in text and "**" not in text and "https" not in text
+        assert mindsets[0]["episode_num"] == 3
+        assert mindsets[0]["blog_url"] == "blog/dp_pod/ep003.html"
+
+    def test_dispatch_collector_reads_curated_json(self, tmp_path, monkeypatch):
+        import json as _json
+
+        import generate_html as gh
+
+        dp_dir = tmp_path / "digests" / "dp_pod"
+        dp_dir.mkdir(parents=True)
+        (dp_dir / "dispatches.json").write_text(_json.dumps({"dispatches": [
+            {"name": "Sarah, Calgary", "date": "2026-07-10",
+             "did": "Sealed three drafts.", "numbers": "$14, 2h",
+             "shoutout": "Dad held the ladder."},
+            {"did": ""},  # invalid: skipped
+            {"date": "2026-07-12", "did": "Recruited a doomscroller."},
+        ]}), encoding="utf-8")
+        monkeypatch.setattr(gh, "ROOT", tmp_path)
+        dispatches = gh._collect_dp_dispatches()
+        assert len(dispatches) == 2
+        assert dispatches[0]["date"] == "2026-07-12"  # newest first
+        assert dispatches[0]["name"] == "A club member"  # default
+        assert dispatches[1]["numbers"] == "$14, 2h"
+
+    def test_dispatch_collector_empty_when_file_missing(self, tmp_path, monkeypatch):
+        import generate_html as gh
+
+        monkeypatch.setattr(gh, "ROOT", tmp_path)
+        assert gh._collect_dp_dispatches() == []
+
+    def test_curated_dispatches_file_exists_and_is_empty_at_launch(self):
+        import json as _json
+
+        path = PROJECT_ROOT / "digests" / "dp_pod" / "dispatches.json"
+        assert path.exists(), "the operator-curated Dispatch Wall seed file"
+        data = _json.loads(path.read_text(encoding="utf-8"))
+        assert isinstance(data.get("dispatches"), list)
+
+    def test_page_renders_community_sections(self):
+        import generate_html as gh
+
+        html_path = gh.generate_show_page("dp_pod", dry_run=False)
+        html = Path(html_path).read_text(encoding="utf-8")
+        assert 'id="mindset"' in html and "The Mindset Shelf" in html
+        assert 'id="dispatch"' in html
+        # Charter promise stays on the page: real dispatches only.
+        assert "never invent listener mail" in html
+
+    def test_template_has_honest_empty_states(self):
+        # Pre-launch the wall must NOT render fabricated dispatches and the
+        # shelf must show its opens-with-episode-1 state, not fake principles.
+        tpl = (PROJECT_ROOT / "templates" / "show_page_dp_pod.html.j2").read_text(
+            encoding="utf-8")
+        assert "{% if dp_dispatches %}" in tpl
+        assert "{% if dp_mindsets %}" in tpl
+        assert "The shelf opens with Episode 1" in tpl

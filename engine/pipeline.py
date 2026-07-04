@@ -368,7 +368,24 @@ def run_generation_phase(
             raise
 
     if not effective_hook:
-        effective_hook = (x_thread.split("\n", 1)[0][:120] if x_thread else hook)
+        # Fallback: first substantive line of the digest — but SANITIZED.
+        # DP Pod Ep001 v4 spoke a raw markdown header on air ("# The DP Pod:
+        # The Do Positive Podcast") because the debut brief had no **HOOK:**
+        # line and this fallback grabbed line one verbatim. Skip markdown
+        # scaffolding lines and strip md decorations from whatever is used.
+        effective_hook = hook
+        if x_thread:
+            import re as _re
+            for _line in x_thread.splitlines():
+                _line = _line.strip()
+                if not _line or _line.startswith(("#", "━", "---", "===")):
+                    continue
+                _line = _line.lstrip(">* ").strip()
+                _line = _re.sub(r"\*\*(.+?)\*\*", r"\1", _line)
+                if len(_line) < 20:
+                    continue
+                effective_hook = _line[:120]
+                break
 
     # YouTube handle for closing blocks
     _yt_handle = ""
