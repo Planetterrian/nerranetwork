@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Automated daily podcast generation system running 14 shows via a unified
+Automated daily podcast generation system running 15 shows via a unified
 `run_show.py` runner + per-show YAML configs, plus 4 legacy standalone scripts
 (deprecated — see note below). Shows use **Grok TTS** (`engine.tts.grok_speak_chunk`)
 and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
@@ -23,6 +23,7 @@ and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
 | First Principles Daily | — | `shows/first_principles.yaml` | Daily | — (X disabled) | Grok TTS (custom) |
 | SpaceX Daily | — | `shows/spacex.yaml` | Daily | — (X disabled) | Grok TTS (custom) |
 | The DP Pod | — | `shows/dp_pod.yaml` | Daily | — (X disabled) | Grok TTS (two-voice: Patrick + Dan) |
+| The Age of AI | — | `shows/age_of_ai.yaml` | When a guest is ready (no cron) | — (X disabled) | Grok TTS (two-voice: Nerra `eve` + guest `ara`; quoted-mode episodes single-voice) |
 
 > Sunday recap: shows on a daily cadence with `weekly_recap_on_sunday: true`
 > in their YAML have their Sunday slot rewritten as a weekly-recap episode
@@ -885,6 +886,32 @@ TST received a full recursive improvement architecture (analogous to MIT):
   OPERATOR-CURATED `digests/dp_pod/dispatches.json` — real listener
   dispatches only, per the club charter; empty file = honest empty state).
   Drift guards: `tests/test_dp_pod_show.py::TestCommunityLayer`.
+- **AOAI** (The Age of AI) runs via `run_show.py` + `shows/age_of_ai.yaml`;
+  the network's **AI-hosted interview show** (July 2026 launch) — Nerra, an
+  AI persona (Grok built-in voice `eve`, deliberately NOT the Patrick clone),
+  interviews REAL people about living through the AI transition. Design +
+  operator runbook: [`docs/age_of_ai_plan.md`](docs/age_of_ai_plan.md); drift
+  guards: `tests/test_age_of_ai_show.py`. Two-stage pipeline: (1) a guest
+  "CRM" (`shows/guest_queues/age_of_ai.yaml`, stages prospect→…→published)
+  driven by `scripts/age_of_ai_guests.py` (invite/questions drafts via Grok
+  with offline fallbacks — the OPERATOR sends all outreach; guests answer in
+  writing); (2) `compile` builds a consent-gated interview packet into the
+  standard narrative topic queue (`shows/topic_queues/age_of_ai.yaml`) —
+  `engine/interview.py` REFUSES to compile without `consent_to_publish`, and
+  `voice_mode: ai_voiced` (guest answers performed by synthetic voice `ara`
+  or a per-guest override) degrades to `quoted` (single-narrator, verbatim
+  quotes) without `consent_ai_voice`. Guest words are VERBATIM end-to-end;
+  padding/expand-retries are deliberately OFF (fidelity beats length). The
+  hook (`shows/hooks/age_of_ai.py`) flips `dialogue_mode` per episode from
+  the packet and injects `{guest_dossier}`; post_generate advances the guest
+  to published (honours `NERRA_HOOKS_READONLY`). Disclosure is baked into
+  prompts + closings: every episode says the host is an AI; ai_voiced
+  episodes additionally disclose the synthetic guest voicing on air. NO cron
+  (CRON_MAP/scheduler Worker untouched — empty queue = clean skip): produce
+  via workflow_dispatch or `python run_show.py age_of_ai`. RSS + site only
+  at launch; X/YouTube/newsletter/multilingual off. Ep1 target: Nerra
+  interviews Patrick (guest record seeded; consent flags deliberately false
+  until he answers).
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:

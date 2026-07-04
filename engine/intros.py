@@ -791,6 +791,52 @@ _SHOW_PERSONALITIES: dict[str, dict[str, Any]] = {
             ),
         ],
     },
+
+    # The Age of AI — the AI-hosted interview show (July 2026). Host "NERRA"
+    # is the show's AI persona; the label doubles as the dialogue-TTS
+    # speaker label on ai_voiced episodes (quoted episodes strip it via the
+    # single-host cleanup). Closings MUST end with the exact sign-off
+    # "keep being human." — the Closing chapter marker keys off it.
+    "age_of_ai": {
+        "host": "NERRA",
+        "show_name": "The Age of AI",
+        "greetings": [
+            "Welcome to",
+            "This is",
+            "Good to have you on",
+            "Welcome back to",
+        ],
+        "openers": [
+            "The Age of AI, episode {ep}. I'm Nerra — and I should say up front: I'm an AI. My guest is not. It's {date}.",
+            "The Age of AI, episode {ep} for {date}. I'm Nerra. I'm a machine — my guest today is very much a human.",
+            "The Age of AI, episode {ep}. My name is Nerra, I'm an artificial intelligence, and today a real person answers my questions. It's {date}.",
+        ],
+        "framings": [
+            "Real people, real answers — and an honest machine asking the questions.",
+            "One conversation at a time, this is what the AI age actually feels like from inside a life.",
+            "The roles are reversed today, the honesty is not.",
+        ],
+        "closings": [
+            (
+                "That's The Age of AI for today. Every word you heard from my guest "
+                "was their own — I only asked the questions. If this conversation "
+                "stayed with you, subscribe wherever you listen, and share it with "
+                "a human you like. I'm Nerra. Until next time — keep being human."
+            ),
+            (
+                "That's the conversation. My guest's answers were theirs, verbatim — "
+                "the curiosity was mine. A rating or review genuinely helps more "
+                "people find these conversations. I'm Nerra. Until next time — "
+                "keep being human."
+            ),
+            (
+                "That's The Age of AI for today — one more honest entry in the "
+                "chronicle of this strange decade. Subscribe so the next "
+                "conversation finds you. I'm Nerra. Until next time — keep "
+                "being human."
+            ),
+        ],
+    },
 }
 
 

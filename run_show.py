@@ -1257,6 +1257,11 @@ def run(args: argparse.Namespace) -> None:
         # episode without the quote/debut framing, never a KeyError.
         template_vars.setdefault("spcx_market_block", "")
         template_vars.setdefault("ipo_debut_section", "")
+        # The Age of AI (July 2026): prompts reference the interview
+        # {guest_dossier} block, supplied by the show's hook. Same defaulting
+        # contract — a hook failure degrades to an episode without the
+        # dossier framing, never a KeyError.
+        template_vars.setdefault("guest_dossier", "")
         # Tone hint (Tesla + SpaceX prompts reference it; supplied by their
         # hooks from the day's stock tape). Neutral default on hook failure.
         template_vars.setdefault("tone_hint", "steady day — natural and conversational")
@@ -2026,6 +2031,9 @@ def run(args: argparse.Namespace) -> None:
             # defaulting as the digest stage (str.format_map raises
             # KeyError on missing placeholders).
             pod_vars.setdefault("vocab_review_section", "")
+            # The Age of AI: same hook-failure-safe defaulting for the
+            # interview dossier block in the podcast prompt.
+            pod_vars.setdefault("guest_dossier", "")
 
             # Provide default intro_line/closing_block if hook didn't supply them.
             # Uses engine.intros for day-varying, show-specific intros so
