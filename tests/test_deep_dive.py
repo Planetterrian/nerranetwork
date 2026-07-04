@@ -257,17 +257,17 @@ class TestDeepDiveVsWeeklyRecap:
     WEEKDAY = _dt.date(2026, 5, 29)  # a Friday
 
     def test_recap_fires_on_sunday_normally(self):
-        from run_show import _resolve_weekly_recap
-        assert _resolve_weekly_recap(True, self.SUNDAY, is_deep_dive=False) is True
+        from run_show import _resolve_weekly_summary
+        assert _resolve_weekly_summary(True, self.SUNDAY, is_deep_dive=False) is True
 
     def test_deep_dive_suppresses_sunday_recap(self):
-        from run_show import _resolve_weekly_recap
-        assert _resolve_weekly_recap(True, self.SUNDAY, is_deep_dive=True) is False
+        from run_show import _resolve_weekly_summary
+        assert _resolve_weekly_summary(True, self.SUNDAY, is_deep_dive=True) is False
 
     def test_no_recap_on_weekday(self):
-        from run_show import _resolve_weekly_recap
-        assert _resolve_weekly_recap(True, self.WEEKDAY, is_deep_dive=False) is False
+        from run_show import _resolve_weekly_summary
+        assert _resolve_weekly_summary(True, self.WEEKDAY, is_deep_dive=False) is False
 
     def test_opt_out_show_never_recaps(self):
-        from run_show import _resolve_weekly_recap
-        assert _resolve_weekly_recap(False, self.SUNDAY, is_deep_dive=False) is False
+        from run_show import _resolve_weekly_summary
+        assert _resolve_weekly_summary(False, self.SUNDAY, is_deep_dive=False) is False

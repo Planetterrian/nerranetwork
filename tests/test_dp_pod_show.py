@@ -42,8 +42,9 @@ class TestDialogueTTSWiring:
 
 class TestCadence:
     def test_daily_no_sunday_recap(self):
-        # Operator decision: fresh episode every day including Sunday.
-        assert CFG.weekly_recap_on_sunday is False
+        # Operator decision: fresh episode every day including Sunday, and no
+        # weekly-summary segment (dp_pod has its own fixed daily shape).
+        assert CFG.weekly_summary_segment is False
 
 
 class TestLaunchDistribution:

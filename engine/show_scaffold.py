@@ -38,7 +38,7 @@ class ScaffoldSpec:
     emoji: str = "🎙️"
     rss_category: str = "Technology"
     schedule_label: str = "Daily"
-    weekly_recap: bool = True
+    weekly_summary_segment: bool = True
     min_articles: int = 3
     min_articles_skip: int = 3
     digest_temperature: float = 0.5
@@ -135,7 +135,7 @@ def build_show_yaml(spec: ScaffoldSpec) -> str:
         "show_name": spec.show_name,
         "slug": slug,
         "description": spec.description.replace('"', '\\"'),
-        "weekly_recap": "true" if spec.weekly_recap else "false",
+        "weekly_summary_segment": "true" if spec.weekly_summary_segment else "false",
         "sources_block": _format_sources_block(spec.sources),
         "web_search_block": _format_list_block(spec.web_search_queries),
         "keywords_block": _format_list_block(spec.keywords),
@@ -273,7 +273,7 @@ def generate_registration_patch(spec: ScaffoldSpec) -> str:
     cover = f"assets/covers/{slug.replace('_', '-')}.jpg"
 
     # Reasonable staleness threshold based on cadence
-    if spec.cadence == "daily" or spec.weekly_recap:
+    if spec.cadence == "daily" or spec.weekly_summary_segment:
         health_hours = 48
     elif "weekday" in (spec.cron_day_filter or ""):
         health_hours = 120

@@ -58,8 +58,10 @@ def main() -> int:
     p.add_argument("--brand-color", default="#6B47FF")
     p.add_argument("--emoji", default="🎙️")
     p.add_argument("--schedule", default="Daily", help="Label for website (Daily, Weekdays, …)")
-    p.add_argument("--weekly-recap", action="store_true", default=True)
-    p.add_argument("--no-weekly-recap", action="store_false", dest="weekly_recap")
+    p.add_argument("--weekly-summary-segment", action="store_true", default=True,
+                   dest="weekly_summary_segment")
+    p.add_argument("--no-weekly-summary-segment", action="store_false",
+                   dest="weekly_summary_segment")
     p.add_argument("--min-articles-skip", type=int, default=3)
     p.add_argument("--source", action="append", default=[], dest="sources",
                    help="URL, or 'URL,Label', or plain topic for Google News RSS")
@@ -83,7 +85,7 @@ def main() -> int:
         brand_color=args.brand_color,
         emoji=args.emoji,
         schedule_label=args.schedule,
-        weekly_recap=args.weekly_recap,
+        weekly_summary_segment=args.weekly_summary_segment,
         min_articles_skip=args.min_articles_skip,
         sources=_parse_sources(args.sources),
         keywords=args.keywords,

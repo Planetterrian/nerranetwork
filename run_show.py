@@ -657,11 +657,6 @@ def run(args: argparse.Namespace) -> None:
     digest_md = None
     extra_context: dict = {}
     articles: list = []
-    # Default for the resume-publish path (which skips the generation
-    # branch where the Sunday flag is resolved). Resumed runs generate
-    # imagery as usual — the recap-reuse optimisation only applies to
-    # first-pass Sunday runs where the flag is known.
-    is_weekly_recap = False
 
     if resume_publish:
         args = apply_resume_args(args)
@@ -1263,58 +1258,32 @@ def run(args: argparse.Namespace) -> None:
 
         # 7. Generate digest
         #
-        # Sunday weekly-recap mode (May 2026 schedule overhaul). When the
-        # show has ``weekly_recap_on_sunday: true`` and today is Sunday,
-        # short-circuit the news-fetch + LLM digest stage by synthesising
-        # a digest from the past 7 days of canonical episodes via the
-        # content lake. The rest of the pipeline (podcast script gen,
-        # TTS, publish) runs unchanged on this synthetic digest, so
-        # listeners get the same narrative quality as a daily episode.
-        is_weekly_recap = _resolve_weekly_recap(
-            getattr(config, "weekly_recap_on_sunday", False),
+        # Weekly-summary segment (July 2026). Sunday used to short-circuit into
+        # a FULL weekly-recap episode (news fetch + daily digest skipped). That
+        # mode is retired: Sunday is now a NORMAL daily episode that simply
+        # includes ONE short "week in review" segment. So the daily digest
+        # always generates below; the compact segment is synthesised from the
+        # content lake and appended to the podcast-only copy of the digest
+        # further down (after clean-up), never to the published digest.
+        include_weekly_summary = _resolve_weekly_summary(
+            getattr(config, "weekly_summary_segment", False),
             today,
             is_deep_dive,
         )
         from engine.generator import generate_digest, LLMRefusalError
-        if is_weekly_recap:
-            logger.info("Sunday weekly-recap mode active for %s.", config.slug)
-            from engine.weekly_recap import build_weekly_recap_digest
-            # Pass the freshly-fetched news so the recap can surface genuinely
-            # new, not-yet-covered developments (Sunday still fetches; the recap
-            # historically discarded it). Falls back to a pure look-back when
-            # the fetch was empty / topic-driven.
-            x_thread = build_weekly_recap_digest(
-                config.slug, config.name, today,
-                articles=articles if not _topic_driven else None,
+        logger.info("Generating digest ...")
+        try:
+            with metrics.stage("generate_digest"):
+                x_thread = generate_digest(template_vars, config, tracker=tracker)
+        except LLMRefusalError as e:
+            logger.error("PIPELINE ABORTED: %s", e)
+            logger.error(
+                "The LLM refused to generate content. This typically means the news "
+                "sources had insufficient relevant content. Check source feeds and "
+                "consider re-running later."
             )
-            if not x_thread:
-                logger.warning(
-                    "Weekly recap could not be synthesised (insufficient "
-                    "content lake data) — falling back to daily fetch.",
-                )
-                is_weekly_recap = False
-            else:
-                metrics.record("weekly_recap_mode", True)
-                # The Sunday recap text already embeds the narrative-memory
-                # block (engine.weekly_recap appends it), so clear the prompt's
-                # {narrative_memory_section} to avoid injecting the same content
-                # twice into the podcast prompt on recap days.
-                if template_vars.get("narrative_memory_section"):
-                    template_vars["narrative_memory_section"] = ""
-        if not is_weekly_recap:
-            logger.info("Generating digest ...")
-            try:
-                with metrics.stage("generate_digest"):
-                    x_thread = generate_digest(template_vars, config, tracker=tracker)
-            except LLMRefusalError as e:
-                logger.error("PIPELINE ABORTED: %s", e)
-                logger.error(
-                    "The LLM refused to generate content. This typically means the news "
-                    "sources had insufficient relevant content. Check source feeds and "
-                    "consider re-running later."
-                )
-                save_usage(tracker, digests_dir)
-                sys.exit(1)
+            save_usage(tracker, digests_dir)
+            sys.exit(1)
 
         # Record episode content in the cross-episode tracker
         if section_patterns:
@@ -1349,28 +1318,17 @@ def run(args: argparse.Namespace) -> None:
         #      If critical sections are missing, retry digest generation once with an
         #      explicit instruction to include them.
         #
-        # Skip entirely when in Sunday weekly-recap mode. Operator caught
-        # (May 10 2026) the recap digest produced by ``build_weekly_recap_digest``
-        # being silently OVERWRITTEN here: the daily-format validator
-        # rejected the recap (missing "Top 10 News Items", "Tesla First
-        # Principles", etc. — sections that don't apply on a recap day),
-        # the retry path called ``generate_digest`` with the live news
-        # template, and the synthesised recap content got replaced by a
-        # daily digest from TODAY's news. Six of seven recap-eligible
-        # shows shipped daily content on May 10 with the metric still
-        # claiming ``weekly_recap_mode: True``. M&A survived only because
-        # its validator config didn't enforce conflicting sections. Recaps
-        # have their own fixed shape ("This Week's Top Stories") and
-        # don't need the daily-format validator's protection.
+        # Sunday runs are now normal daily digests (the weekly-summary segment
+        # is a small podcast-only appendix added later), so the daily-format
+        # validator runs on them just like any weekday.
         from engine.validation import validate_digest as _validate_digest, SHOW_VALIDATION_CONFIGS
         _val_factory = SHOW_VALIDATION_CONFIGS.get(config.slug)
         _exact_dups: list = []  # Populated by validate_digest for 100% cross-episode matches
         _empty_section_issues: list = []  # Mandatory sections that came back empty (0 items)
         # Deep-dive digests have a different shape than the show's normal news
         # format, so the daily-format validator (and the structural-integrity
-        # gate below) would false-positive on them — skip both for deep dives,
-        # as we already do for weekly recaps.
-        if _val_factory and not is_weekly_recap and not is_deep_dive:
+        # gate below) would false-positive on them — skip both for deep dives.
+        if _val_factory and not is_deep_dive:
             _val_config = _val_factory()
             _recent = content_tracker.get_recent_headlines(days=7)
             _val_passed, _val_issues, _exact_dups = _validate_digest(
@@ -1734,10 +1692,10 @@ def run(args: argparse.Namespace) -> None:
         #     regeneration with a corrective suffix here — before we spend
         #     the podcast LLM call — gives the episode a structurally sound
         #     digest to expand. Gated on a daily-format validation config
-        #     (narrative / weekly-recap shows have their own fixed shape and
-        #     may legitimately have no HOOK label). Deep dives are skipped too
-        #     — their digest shape isn't the daily news format.
-        if _val_factory and not is_weekly_recap and not is_deep_dive:
+        #     (narrative shows have their own fixed shape and may legitimately
+        #     have no HOOK label). Deep dives are skipped too — their digest
+        #     shape isn't the daily news format.
+        if _val_factory and not is_deep_dive:
             _struct_defects: list = []
             if not _extract_hook(x_thread):
                 _struct_defects.append("the **HOOK:** line is missing")
@@ -1968,6 +1926,36 @@ def run(args: argparse.Namespace) -> None:
             # sometimes echoes these through to the script, and TTS reads them
             # aloud.  This is defense-in-depth alongside the prompt instructions.
             clean_digest = _clean_digest_for_podcast(x_thread)
+
+            # Weekly-summary segment (July 2026): on Sunday, for shows that opt
+            # in via ``weekly_summary_segment: true``, append a compact
+            # "week in review" instruction block synthesised from the content
+            # lake. It is appended to the PODCAST-ONLY digest copy here (after
+            # cleanup), so the host weaves a brief weekly recap into the episode
+            # without any instruction text reaching the published digest / blog
+            # / RSS. A None return (thin content lake) is a clean no-op — the
+            # episode ships as a plain daily with no segment.
+            if include_weekly_summary:
+                try:
+                    from engine.weekly_recap import build_weekly_summary_segment
+                    _summary_segment = build_weekly_summary_segment(
+                        config.slug, config.name, today,
+                    )
+                except Exception as _seg_exc:  # noqa: BLE001
+                    logger.warning(
+                        "Weekly-summary segment build failed (episode ships "
+                        "without it): %s", _seg_exc,
+                    )
+                    _summary_segment = None
+                if _summary_segment:
+                    clean_digest = clean_digest.rstrip() + "\n\n" + _summary_segment
+                    metrics.record("weekly_summary_segment", True)
+                    logger.info(
+                        "Weekly-summary segment appended to podcast digest for %s.",
+                        config.slug,
+                    )
+                else:
+                    metrics.record("weekly_summary_segment", False)
 
             # Strip exact cross-episode duplicates from the digest so they don't
             # make it into the podcast script.  _exact_dups is populated by
@@ -2288,51 +2276,6 @@ def run(args: argparse.Namespace) -> None:
             # bulletproof for the spoken intro.
             if args.show == "tesla":
                 podcast_script = _normalize_tst_opening(podcast_script)
-
-            # Weekly recap: republish the digest from the clean narrative.
-            # On recap days x_thread is the build_weekly_recap_digest scaffold
-            # — a PROMPT for the podcast LLM, not publishable prose. It carries
-            # per-episode source HTML, "REAL-TIME TSLA price:" headers, and a
-            # "Recap framing for the host" instruction block, all of which were
-            # leaking verbatim into the newsletter / blog / RSS. The narrative
-            # the LLM actually wrote lives in the podcast script; capture it
-            # here (after speaker/stage-direction cleanup, before TTS-only
-            # pronunciation spacing like "T S L A") and republish it. Daily
-            # episodes are untouched.
-            if is_weekly_recap and podcast_script.strip():
-                _hdr_lines = []
-                for _ln in x_thread.split("\n"):
-                    if _ln.startswith("━"):
-                        break
-                    if _ln.startswith("# ") or _ln.startswith("**HOOK:"):
-                        _hdr_lines.append(_ln)
-                _recap_header = "\n".join(_hdr_lines).strip() or f"# {config.name} — Weekly Recap"
-                # Carry the scaffold's "## Sources" block onto the published
-                # digest so the recap blog / summary / RSS stay transparently
-                # sourced (the spoken script the LLM wrote carries no URLs by
-                # design). The scaffold appends Sources as its final block.
-                _sources_tail = ""
-                if "## Sources" in x_thread:
-                    _sources_tail = "\n\n## Sources" + x_thread.split("## Sources", 1)[1].rstrip()
-                x_thread = _recap_header + "\n\n" + podcast_script.strip() + _sources_tail
-                try:
-                    from engine.utils import strip_lone_surrogates as _scrub_sur
-                    digest_md.write_text(_scrub_sur(x_thread), encoding="utf-8")
-                except Exception as _exc:  # noqa: BLE001
-                    logger.warning("Recap digest rewrite failed (non-fatal): %s", _exc)
-                # Keep the content lake's stored digest in sync with what we
-                # publish, so next week's recap doesn't pull this scaffold back.
-                if _lake_record is not None:
-                    try:
-                        from engine.content_lake import store_episode as _store_ep2
-                        _lake_record.digest_md = x_thread
-                        _store_ep2(_lake_record)
-                    except Exception:  # noqa: BLE001
-                        pass
-                logger.info(
-                    "Weekly recap: republished digest from clean narrative "
-                    "(%d chars) — scaffold no longer published.", len(x_thread),
-                )
 
             # Defensive scrub: drop raw "Source:" / "Источник:" scaffold
             # lines BEFORE pronunciation — FP Ep059 voiced "Сорс MoneySense…"
@@ -2960,7 +2903,6 @@ def run(args: argparse.Namespace) -> None:
         chapters_path=chapters_path_for_yt,
         digests_dir=digests_dir,
         args=args,
-        is_weekly_recap=is_weekly_recap,
     )
     youtube_long_url = youtube_urls.get("long_url", "")
     youtube_short_url = youtube_urls.get("short_url", "")
@@ -3636,23 +3578,22 @@ def _empty_mandatory_section_issues(item_count_issues: list) -> list:
     return [i for i in item_count_issues if re.search(r":\s*0\s+(?:items|chars)", i)]
 
 
-def _resolve_weekly_recap(
-    weekly_recap_on_sunday: bool,
+def _resolve_weekly_summary(
+    weekly_summary_segment: bool,
     today: "datetime.date",
     is_deep_dive: bool,
 ) -> bool:
-    """Whether this run is a Sunday weekly-recap episode.
+    """Whether this Sunday episode should include a weekly-summary segment.
 
-    True when the show opts into Sunday recaps and today is Sunday — UNLESS a
-    deep dive has already claimed this run. A deep dive is an explicit operator
-    action (scheduled / ``when: next`` / ``--deep-dive``) and takes precedence
-    over the automatic recap, so a deep dive that lands on a Sunday still airs
-    as the deep dive instead of being silently turned into a recap (which would
-    also burn the deep-dive queue slot). The monthly MIT episode is a separate
-    entry point (scripts/run_monthly_mit_episode.py) and does not interact here.
+    True when the show opts in (``weekly_summary_segment: true``) and today is
+    Sunday — UNLESS a deep dive has already claimed this run. A deep dive is an
+    explicit operator action (scheduled / ``when: next`` / ``--deep-dive``) with
+    its own fixed shape, so it airs unchanged rather than picking up a weekly
+    recap beat. The monthly MIT episode is a separate entry point
+    (scripts/run_monthly_mit_episode.py) and does not interact here.
     """
     return (
-        bool(weekly_recap_on_sunday)
+        bool(weekly_summary_segment)
         and today.weekday() == 6  # Monday=0 … Sunday=6
         and not is_deep_dive
     )

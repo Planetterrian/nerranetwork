@@ -903,7 +903,7 @@ def aggregate_metrics(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]
         # Phase 2.6 health cards: track recent metrics that have no
         # dedicated dashboard surface yet.
         recap_attempts = 0  # Sundays where this show's runner ticked
-        recap_synthesised = 0  # Sundays where the recap actually built
+        recap_synthesised = 0  # Sundays where the weekly-summary segment built
         tag_leak_episodes = 0  # episodes with tag_leaks > 0
         # Grok Imagine health (May 2026 rollout). Tracks per-show:
         #   - cost (USD spent generating images this 30-ep window)
@@ -949,9 +949,16 @@ def aggregate_metrics(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]
                 q_units = counters.get("youtube_quota_units_this_episode")
                 if isinstance(q_units, (int, float)):
                     youtube_quota_units += int(q_units)
-            # Sunday weekly-recap health (Phase 1.1 of the May 2026
-            # schedule overhaul wired weekly_recap_mode into metrics).
-            if "weekly_recap_mode" in counters:
+            # Sunday weekly-summary-segment health. July 2026: the full
+            # weekly-recap mode became a small in-episode segment; the
+            # runner records ``weekly_summary_segment`` (True when the
+            # segment built from the content lake, False when skipped).
+            # ``weekly_recap_mode`` is the legacy key from the retired mode.
+            if "weekly_summary_segment" in counters:
+                recap_attempts += 1
+                if counters.get("weekly_summary_segment"):
+                    recap_synthesised += 1
+            elif "weekly_recap_mode" in counters:
                 recap_attempts += 1
                 if counters.get("weekly_recap_mode"):
                     recap_synthesised += 1
@@ -1028,12 +1035,13 @@ def aggregate_metrics(root: Path, shows: List[Dict[str, Any]]) -> Dict[str, Any]
                 # (transient — retry next slot).
                 "long_form_errors": yt_long_errors[-5:],
             },
-            # Sunday weekly-recap synthesis health (Phase 1.1 of
-            # the schedule overhaul). recap_attempts is the count
-            # of Sunday slots in the last 30 episodes; recap_synthesised
-            # is how many actually built a recap from the content lake.
-            # A gap means the lake had <2 episodes in the 7-day window
-            # (the runner falls back to a normal daily fetch).
+            # Sunday weekly-summary-segment health. attempts is the count
+            # of Sunday slots in the last 30 episodes for opted-in shows;
+            # synthesised is how many actually built the "week in review"
+            # segment from the content lake. A gap means the lake had <2
+            # episodes in the 7-day window (the episode ships as a plain
+            # daily with no segment). Key kept as ``weekly_recap`` for
+            # dashboard-consumer backward compatibility.
             "weekly_recap": {
                 "attempts": recap_attempts,
                 "synthesised": recap_synthesised,

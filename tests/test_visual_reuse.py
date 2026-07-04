@@ -407,9 +407,10 @@ class TestRunShowWiring:
         assert 'broll_clips=_visual_plan.get("broll_clips")' in src
         # Shorts: extras feed the renderer.
         assert "scene_change_times=_short_visuals.get(" in src
-        # Recap flag threaded from run() into _publish_youtube.
-        assert "is_weekly_recap=is_weekly_recap" in src
-        # Recap + degraded fallback pools wired.
+        # Degraded fallback pool wired. (The recap-scene-reuse pool is a
+        # dormant capability inside _publish_youtube since the full Sunday
+        # weekly-recap mode was retired in July 2026 — its is_weekly_recap
+        # param now defaults False and the caller no longer passes it.)
         assert "recap_scene_pool" in src
         assert "fallback_scene_pool" in src
         # Scene-based thumbnail + variants.

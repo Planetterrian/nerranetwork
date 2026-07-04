@@ -48,8 +48,8 @@ class TestShowYaml:
         assert cfg["topic_queue_file"].endswith(
             "shows/topic_queues/unintended_consequences.yaml",
         )
-        # Weekday-only narrative show — no Sunday recap (queue is the input).
-        assert cfg.get("weekly_recap_on_sunday", False) is False
+        # Weekday-only narrative show — no weekly-summary segment (queue is the input).
+        assert cfg.get("weekly_summary_segment", False) is False
         # YouTube enabled in the full-network rollout (200k quota, June 2026).
         assert cfg["youtube"]["enabled"] is True
         # X posting enabled May 12 2026 — UC shares the @planetterrian

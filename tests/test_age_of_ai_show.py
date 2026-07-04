@@ -77,7 +77,7 @@ class TestShowRegistryShape:
         assert raw["youtube"]["image_provider"] == "grok"
         assert raw["newsletter"]["enabled"] is False
         assert raw["multilingual"]["enabled"] is False
-        assert raw.get("weekly_recap_on_sunday") is False
+        assert raw.get("weekly_summary_segment") is False
 
     def test_intro_personality_is_mira(self):
         import datetime as dt
