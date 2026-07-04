@@ -1,0 +1,23 @@
+{# Age of AI — pre-interview brief, emailed to the guest T-1 day
+   (rendered by pipelines/voices/generate_briefs.py). #}
+<div style="font-family:system-ui,sans-serif;max-width:640px;margin:0 auto;color:#1a202c;line-height:1.6">
+  <h2 style="color:#7C3AED">Your Age of AI interview — tomorrow</h2>
+  <p>Hi {{ guest_name }},</p>
+  <p>Mira here — well, Mira's producers. Your interview is scheduled for
+  <strong>{{ scheduled_at }}</strong>. Mira will call the number you gave us;
+  find a quiet spot and let it be a conversation, not a performance.</p>
+  <h3>The angle we're excited about</h3>
+  <p style="background:#faf5ff;border-left:4px solid #7C3AED;padding:.7em 1em">{{ thesis }}</p>
+  <h3>Themes Mira plans to explore</h3>
+  <ul>
+  {% for q in questions %}
+    <li>{{ q.question if q.question is defined else q }}</li>
+  {% endfor %}
+  </ul>
+  <p>No prep required — she follows the conversation, not the list. Near the
+  end there's a quick lightning round and one closing question about a bet
+  you're making that you can't prove yet. Worth a minute's thought.</p>
+  <p>Reminders: the call is recorded for the podcast, and <strong>nothing
+  publishes until you've reviewed and approved the transcript</strong>.</p>
+  <p>— The Age of AI, Nerra Network</p>
+</div>

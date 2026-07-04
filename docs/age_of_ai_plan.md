@@ -1,114 +1,116 @@
-# The Age of AI — AI-hosted interview show (design + runbook)
+# The Age of AI — Automated Interview Pipeline (implementation notes)
 
-**Status:** Phase 1 shipped (July 2026). Distribution OFF at launch (RSS + site
-only, no cron — episodes are produced via `workflow_dispatch` when an
-interview packet is ready).
+**Show:** The Age of AI · **Host:** Mira (AI documentarian persona, Grok voice `ara`)
+**Status:** Repo-side implementation landed July 2026 (PR #771). External
+provisioning (Voximplant, Supabase, Cal.com, phone number) is the operator
+bootstrap below.
 
-## Concept
+This document tracks the operator's full pipeline spec ("The Age of AI —
+Automated Interview Pipeline Spec") as implemented in this repo. The spec's
+architecture is unchanged: everything between the guest form and publish is
+automated, with exactly two intentional manual gates — **Patrick's
+editorial review** (gate 1) and the **guest's transcript approval** (gate 2,
+auto-approve at day 7 with a day-4 reminder). Gate 1 never times out into a
+publish; Patrick is the bottleneck by design.
 
-The Age of AI is the Nerra Network's interview show with a twist that *is* the
-premise: the host is an AI. **Nerra** — the network's resident AI — sets up
-and conducts interviews with real people about living and working through the
-AI transition: founders, teachers, artists, tradespeople, researchers,
-skeptics. The guest is always a real human; their words are always their own.
+## What lives where
 
-The show inverts the usual arrangement of every other Nerra show (AI produces,
-human curates): here the machine asks the questions and the human provides the
-substance. That inversion is stated on air, every episode.
+| Spec § | Piece | In this repo |
+|---|---|---|
+| §3 | Voximplant scenario (the central glue) | `voximplant/scenarios/age_of_ai_interview.js` + `voximplant/api_clients/voximplant_client.py` (StartScenarios, scenario deploy, secrets, SMS) |
+| §3.2 | Mira's 3 in-call tools | Tool definitions in `pipelines/voices/fire_interviews.py` (`MIRA_TOOLS`); endpoints in the voices Worker |
+| §3.3 | Mira's system prompt (templated per interview) | `pipelines/voices/prompts/mira_system_prompt.txt`, compiled at fire time |
+| §4 | Supabase schema (6 tables + RLS) | `supabase/migrations/20260704_nerra_voices_schema.sql` (separate instance from Bill Saved, per §11.4) |
+| §5.1 | Daily prep briefs (9am PT) | `.github/workflows/nerra_voices_prep_briefs.yml` → `pipelines/voices/generate_briefs.py` |
+| §5.2 | Fire interviews (every 5 min) + T-2h SMS | `nerra_voices_fire_interview.yml` → `fire_interviews.py` (drift-tolerant window, idempotent via `interview_runs`) |
+| §5.3 | Post-interview processing | `nerra_voices_post_interview.yml` (repository_dispatch `interview-complete`) → `post_interview.py`: R2 copies, ffmpeg mix, **per-channel Whisper STT (the stereo tracks are the diarization)**, 8 validated editorial passes, Slack ping |
+| §5.4 | Produce final episode | `nerra_voices_produce_episode.yml` (dispatch `interview-approved-by-guest`) → `produce_episode.py`: narration LLM pass → Mira TTS → assembly with **redaction cuts first** → waveform video → R2 |
+| §5.5 | Publish | `nerra_voices_publish.yml` → `publish_episode.py` (reuses `engine.publisher` RSS + summaries + site regen; commits like run-show) |
+| §5.6 | Webhook/API layer | **`workers/voices/`** — see deviation note below |
+| §10 | Editorial pass prompts + validators | `pipelines/voices/prompts/editorial_passes/01..08` + `pipelines/voices/validators/schema_validators.py` (schema check → one strict retry → surface to Patrick) |
+| §10 | Guest form | `age-of-ai-apply.html` (static, posts to the Worker) |
+| §10 | Email templates | `templates/email/voices_*.j2` (8) |
+| — | Show registry (RSS/site/dashboards) | `shows/age_of_ai.yaml` — **run_show is a guard-railed no-op** (narrative mode + permanently-empty `shows/topic_queues/age_of_ai.yaml` → clean `narrative_queue_empty` skip). Production never goes through run_show. |
 
-## Non-negotiable ethics rules (enforced in code + prompts)
+**Documented deviation (spec §5.6):** the spec sketched the webhook handlers
+as Vercel/Next.js routes beside Bill Saved. That app isn't in this repo, and
+the network's API surface is Cloudflare Workers on `api.nerranetwork.com`
+(gallery worker precedent) — so the handlers live in `workers/voices/`
+(route `api.nerranetwork.com/voices/*`; more-specific routes win over the
+gallery worker's custom domain). The handlers are deliberately thin and port
+1:1 to Next.js if the operator prefers Vercel later. The Worker also hosts
+the three UIs (Patrick's triage + editorial review, the guest's signed-link
+transcript review) and a daily cron for gate-2 housekeeping.
 
-1. **Never fabricate guest words.** The guest's answers enter the pipeline
-   verbatim and both prompts require verbatim fidelity (light spoken-flow
-   edits only — fillers, false starts). The digest stage may *select and
-   order* answers, never rewrite their meaning.
-2. **Consent gates publication.** `engine.interview.compile_packet` refuses
-   to build an episode packet unless the guest record has
-   `consent_to_publish: true`.
-3. **AI voicing needs separate consent.** Guest turns are synthesised with a
-   synthetic voice ONLY when `consent_ai_voice: true`
-   (`voice_mode: ai_voiced`). Otherwise the episode runs in `quoted` mode:
-   Nerra narrates and quotes the guest — one voice, clearly attributed.
-4. **Disclosure on air.** Every episode says the host is an AI; `ai_voiced`
-   episodes additionally say the guest's answers are their own written words
-   performed by a synthetic voice with their permission.
+Two small mechanical deviations inside the scenario: recordings reach R2 via
+the post-interview workflow (scenario `Net.httpRequest` can't stream
+multi-hundred-MB audio reliably; GitHub Actions retries are cheap — the
+§7 upload-failure row is handled there), and scenario secrets come from
+Voximplant application custom data set once via
+`voximplant_client.set_application_secrets()`.
 
-## Pipeline (two stages, one file each)
-
-### Stage A — Guest pipeline (operator-in-the-loop CRM)
-
-`shows/guest_queues/age_of_ai.yaml` holds guest records with a `stage` field:
+## The state machine (single source of truth: Supabase)
 
 ```
-prospect → invited → accepted → questions_sent → answers_received
-        → compiled → published          (or → declined at any point)
+guest_applications.status : pending → approved|declined … lapsed (2 no-shows)
+interviews.status         : scheduled → briefed → in_progress → recorded/
+                            editorial_review → guest_review → approved →
+                            published   (or cancelled/failed/missed)
+editorial_packages.status : draft → in_review → approved_by_patrick →
+                            approved_by_guest → published   (or killed)
+interview_runs.status     : pending → fired → in_progress → completed|failed
 ```
 
-Operator CLI — `scripts/age_of_ai_guests.py`:
+Edge-case handling follows spec §7: no-answer → missed + reschedule email
+(2nd no-show lapses the application); Grok drop → 10 s grace, Mira apology
+clip, hangup; short call / low STT confidence → flags on the editorial
+package for Patrick; LLM pass garbage → schema validator + one strict
+retry, then manual-draft escalation; double cron tick → `interview_runs`
+idempotency check.
 
-| Command | What it does |
-|---|---|
-| `list` | Pipeline overview + next action per guest |
-| `add <id> --name … --angle …` | Add a prospect |
-| `invite <id>` | Draft a personalized invitation email (Grok if `GROK_API_KEY` is set, deterministic template otherwise) → `digests/age_of_ai/outreach/<id>_invite.md` |
-| `questions <id>` | Draft a tailored question set → stored on the record + `outreach/<id>_questions.md` |
-| `ingest <id> --answers <file>` | Record the guest's written answers (`Q:` / `A:` markdown) |
-| `compile <id>` | Consent-checked: build the interview packet and append it to the topic queue |
+## Operator bootstrap (one-time, in order)
 
-The AI drafts the outreach; **the operator sends it** (from their own inbox)
-and pastes the replies back. Nothing emails anyone automatically in Phase 1.
+1. **Supabase**: create the Nerra Voices project (separate from Bill
+   Saved), apply `supabase/migrations/20260704_nerra_voices_schema.sql`.
+2. **Voximplant** (phase 1 smoke test): enable the Grok Voice Agent
+   connector, create app `nerra-voices` + rule `age-of-ai-interview`, buy
+   Mira's dedicated Vancouver-area number (§11.1, ~$1/mo), then
+   `voximplant_client.upload_scenario()` +
+   `set_application_secrets(supabase_key, xai_key)`. Record the consent
+   disclosure + Grok-drop apology clips (Mira `ara` voice) to R2 and put
+   their URLs on the run rows' config (columns exist).
+   **Smoke test:** point a hand-inserted `interview_runs` row at your own
+   cell, `StartScenarios`, talk to Mira for 5 minutes, listen back.
+3. **Worker**: `cd workers/voices && wrangler secret put …` (see its
+   README) `&& wrangler deploy`.
+4. **Cal.com**: event type (Tue/Wed/Thu 9-15 PT + overnight slots for
+   EU/Asia guests, §11.6), webhook → `/voices/cal-com-booked`.
+5. **GitHub secrets**: `VOICES_SUPABASE_URL`, `VOICES_SUPABASE_SERVICE_KEY`,
+   `VOXIMPLANT_ACCOUNT_ID`, `VOXIMPLANT_API_KEY`, `VOXIMPLANT_CALLER_ID`,
+   `RESEND_API_KEY` (or `POSTMARK_TOKEN`), `CALCOM_BOOKING_URL`,
+   `SLACK_WEBHOOK` (R2_* and GROK_API_KEY already exist).
+6. **Dry runs** (phase 4): three end-to-end test interviews with Patrick /
+   Trystan as guests; tune Mira's prompt from the recordings.
+7. **Soft launch** (phase 7): first real guest from the inbound queue; no
+   network announcement until 2-3 real interviews land (phase 8 flips on
+   cross-promo via the `cross_show_callouts` table + X/YouTube/newsletter
+   in `shows/age_of_ai.yaml`).
 
-### Stage B — Episode production (standard narrative pipeline)
+Open decisions §11 stay with Patrick (caller ID bought vs shared, consent
+wording, Cal.com self-host vs cloud, Postmark vs Resend, slot windows,
+first three guests). Defaults implemented: dedicated caller ID assumed,
+soft-cap-45 + hard-cap-50, auto-reschedule once then lapse.
 
-`shows/age_of_ai.yaml` is a `narrative_mode: true` show whose
-`topic_queue_file` (`shows/topic_queues/age_of_ai.yaml`) contains **compiled
-interview packets** in the standard queue schema (`id`/`title`/`brief`/
-`produced` + interview extras: `guest_id`, `voice_mode`, `guest_voice_id`).
-An empty queue is a clean skip (`narrative_queue_empty`) — the show simply
-doesn't publish until an interview is ready.
+## Cost (spec §8, verified there)
 
-- **Digest stage** → an *interview edit plan*: episode arc, which answers to
-  feature in what order, framing notes. Guest answers stay verbatim.
-- **Podcast stage** → the spoken script. Two modes, chosen per episode by the
-  hook (`shows/hooks/age_of_ai.py` reads the upcoming packet):
-  - `ai_voiced` — two-voice dialogue script (`NERRA:` / `GUEST:` labels) on
-    the existing `engine/tts_dialogue.py` path (DP Pod infrastructure).
-    Voices: Nerra = Grok built-in `eve`, guest default = Grok built-in `ara`,
-    per-guest override via the packet's `guest_voice_id`.
-  - `quoted` — the hook flips `config.tts.dialogue_mode = False` for the run;
-    Nerra narrates single-voice and quotes the guest with attribution.
-- **post_generate hook** marks the guest `published` (honours
-  `NERRA_HOOKS_READONLY`, so `--test`/`--rehearse` runs never advance CRM
-  state).
+~$4.50–7.00 per 45-min interview end-to-end (PSTN + Grok Voice + STT +
+editorial passes + TTS + storage); ~$120–180/yr at biweekly cadence. Same
+order as one daily show's API spend.
 
-## Launch shape
+## Quality gates philosophy (spec §6 — keep both manual)
 
-- No cron entry (CRON_MAP and the scheduler Worker are untouched — the
-  punctuality drift guard stays at 14 slots). Produce episodes with
-  `Run Podcast Show → workflow_dispatch → age_of_ai` once `compile` has
-  queued a packet, or locally: `python run_show.py age_of_ai`.
-- X / YouTube / newsletter / multilingual: all off. RSS + site page only.
-- Ep1 target: Nerra interviews **Patrick** (network founder) about building
-  an AI podcast network — seeded as the first guest record. His real answers
-  make the debut; nothing ships until they exist.
-
-## Operator checklist (one-time)
-
-1. Add cover art `assets/covers/age-of-ai.jpg` (1200×1200).
-2. Answer the Ep1 questions: `python scripts/age_of_ai_guests.py questions
-   patrick-novak`, write answers, `ingest`, set the consent flags in the
-   guest record, `compile`.
-3. Dispatch the episode; A/B-listen the `eve`/`ara` voices (landmine #17
-   applies to any future voice change).
-4. When a cadence emerges, add a cron via the standard CRON_MAP + scheduler
-   Worker SLOTS pair.
-
-## Later phases (not in Phase 1)
-
-- **Phase 2 — real guest audio.** Guests record answers; the pipeline splices
-  their actual audio between Nerra's turns (new assembly step next to
-  `engine/tts_dialogue.py`; per-turn loudness normalization).
-- **Phase 3 — live interviews.** Real-time voice conversation (Grok realtime
-  voice session), recorded and edited by the same packet machinery.
-- **Outreach automation.** Send invitations via Resend + a reply-ingestion
-  inbox, with the operator approving each send.
+Real humans on tape ≠ AI news scripts. Gate 1 protects Patrick's editorial
+reputation (~20-30 min/episode); gate 2 protects guest relationships and
+consent (auto-approve day 7, never removed). Revisit relaxing gate 1 only
+after 25 episodes if editorial veto rate < 5% and redaction rate < 10% —
+and never remove gate 2.

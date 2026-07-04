@@ -1,13 +1,10 @@
-# The Age of AI — production queue of COMPILED interview packets.
+# The Age of AI — DELIBERATELY EMPTY topic queue (guard rail).
 #
-# Do not hand-author entries here: `scripts/age_of_ai_guests.py compile <id>`
-# builds each packet from a consented, answered guest record in
-# shows/guest_queues/age_of_ai.yaml (the consent gate lives in
-# engine/interview.py, not in prompts). Standard narrative-queue schema
-# (id / title / brief / produced / episode_number / produced_date) plus
-# interview extras (guest_id / voice_mode / guest_voice_id).
-#
-# An empty queue is the normal resting state: the show cleanly skips
-# (`narrative_queue_empty`) until the next interview is ready.
+# Production episodes are made by the Nerra Voices live-interview pipeline
+# (pipelines/voices/ + .github/workflows/nerra_voices_*.yml), NOT by
+# run_show.py. This queue stays empty so an accidental
+# `run_show.py age_of_ai` dispatch is a clean skip (`narrative_queue_empty`)
+# before any credits are spent. Do not queue entries here unless you
+# intentionally want a run_show-generated contingency episode.
 
 queue: []

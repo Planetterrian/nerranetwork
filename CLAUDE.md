@@ -23,7 +23,7 @@ and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
 | First Principles Daily | — | `shows/first_principles.yaml` | Daily | — (X disabled) | Grok TTS (custom) |
 | SpaceX Daily | — | `shows/spacex.yaml` | Daily | — (X disabled) | Grok TTS (custom) |
 | The DP Pod | — | `shows/dp_pod.yaml` | Daily | — (X disabled) | Grok TTS (two-voice: Patrick + Dan) |
-| The Age of AI | — | `shows/age_of_ai.yaml` | When a guest is ready (no cron) | — (X disabled) | Grok TTS (two-voice: Nerra `eve` + guest `ara`; quoted-mode episodes single-voice) |
+| The Age of AI | — | `shows/age_of_ai.yaml` | When an interview is ready (Nerra Voices pipeline, NOT run_show) | — (X disabled) | Real guest phone audio + Mira narration (Grok voice `ara`) |
 
 > Sunday recap: shows on a daily cadence with `weekly_recap_on_sunday: true`
 > in their YAML have their Sunday slot rewritten as a weekly-recap episode
@@ -886,32 +886,38 @@ TST received a full recursive improvement architecture (analogous to MIT):
   OPERATOR-CURATED `digests/dp_pod/dispatches.json` — real listener
   dispatches only, per the club charter; empty file = honest empty state).
   Drift guards: `tests/test_dp_pod_show.py::TestCommunityLayer`.
-- **AOAI** (The Age of AI) runs via `run_show.py` + `shows/age_of_ai.yaml`;
-  the network's **AI-hosted interview show** (July 2026 launch) — Nerra, an
-  AI persona (Grok built-in voice `eve`, deliberately NOT the Patrick clone),
-  interviews REAL people about living through the AI transition. Design +
-  operator runbook: [`docs/age_of_ai_plan.md`](docs/age_of_ai_plan.md); drift
-  guards: `tests/test_age_of_ai_show.py`. Two-stage pipeline: (1) a guest
-  "CRM" (`shows/guest_queues/age_of_ai.yaml`, stages prospect→…→published)
-  driven by `scripts/age_of_ai_guests.py` (invite/questions drafts via Grok
-  with offline fallbacks — the OPERATOR sends all outreach; guests answer in
-  writing); (2) `compile` builds a consent-gated interview packet into the
-  standard narrative topic queue (`shows/topic_queues/age_of_ai.yaml`) —
-  `engine/interview.py` REFUSES to compile without `consent_to_publish`, and
-  `voice_mode: ai_voiced` (guest answers performed by synthetic voice `ara`
-  or a per-guest override) degrades to `quoted` (single-narrator, verbatim
-  quotes) without `consent_ai_voice`. Guest words are VERBATIM end-to-end;
-  padding/expand-retries are deliberately OFF (fidelity beats length). The
-  hook (`shows/hooks/age_of_ai.py`) flips `dialogue_mode` per episode from
-  the packet and injects `{guest_dossier}`; post_generate advances the guest
-  to published (honours `NERRA_HOOKS_READONLY`). Disclosure is baked into
-  prompts + closings: every episode says the host is an AI; ai_voiced
-  episodes additionally disclose the synthetic guest voicing on air. NO cron
-  (CRON_MAP/scheduler Worker untouched — empty queue = clean skip): produce
-  via workflow_dispatch or `python run_show.py age_of_ai`. RSS + site only
-  at launch; X/YouTube/newsletter/multilingual off. Ep1 target: Nerra
-  interviews Patrick (guest record seeded; consent flags deliberately false
-  until he answers).
+- **AOAI** (The Age of AI) — the network's **AI-hosted LIVE interview show**
+  (July 2026): Mira, an AI documentarian persona (Grok voice `ara`,
+  deliberately NOT the Patrick clone), phones REAL guests via a Voximplant
+  scenario bridged to a Grok Voice Agent, dual-track records the call, and
+  the episode is produced from the real recording. **Production does NOT go
+  through run_show** — `shows/age_of_ai.yaml` exists for registry/publish
+  surfaces only, and its narrative mode + permanently-empty topic queue make
+  an accidental `run_show.py age_of_ai` a clean `narrative_queue_empty` skip.
+  The real pipeline is **Nerra Voices**: `pipelines/voices/` + the five
+  `nerra_voices_*.yml` workflows + `workers/voices/` (webhooks, Mira's 3
+  in-call tools, triage/review UIs — Cloudflare Worker at
+  `api.nerranetwork.com/voices/*`, a documented deviation from the spec's
+  Vercel sketch) + `supabase/migrations/20260704_nerra_voices_schema.sql`
+  (separate Supabase instance; 6 tables are the state machine) +
+  `voximplant/scenarios/age_of_ai_interview.js` (the central glue: outbound
+  PSTN → Grok Voice bridge → stereo recorder → hangup webhook; 50-min hard
+  cap). Flow: apply form → Patrick triage (~30 s) → Cal.com booking → T-1d
+  LLM prep brief emailed to guest → T-2h SMS → fire (5-min cron,
+  drift-tolerant window, idempotent) → live call → post-processing (R2, mix,
+  per-channel Whisper STT — the stereo tracks ARE the diarization, 8
+  schema-validated editorial passes) → **gate 1: Patrick editorial review
+  (never times out into publish)** → **gate 2: guest transcript approval
+  (day-4 reminder, day-7 auto-approve; redactions cut from audio FIRST at
+  assembly)** → Mira narration TTS + ffmpeg assembly + waveform video →
+  publish via the standard `engine.publisher` surface. Guest words are
+  verbatim; every episode discloses the AI host. Spec-as-implemented +
+  operator bootstrap (Voximplant/Supabase/Cal.com/Worker provisioning +
+  phase-1 smoke test): [`docs/age_of_ai_plan.md`](docs/age_of_ai_plan.md);
+  drift guards: `tests/test_age_of_ai_show.py` (registry no-op shape, spec
+  artifacts, dispatch-event coherence, validators, the two human gates).
+  RSS + site only at launch; X/YouTube/newsletter/multilingual off until
+  the phase-8 public launch.
 - All shows delegate X posting to `engine.publisher.post_to_x()`
 - TST/FF/PT delegate voice normalization to `engine.audio.normalize_voice()`
 - All shows use `engine.audio.mix_with_music()` for music mixing (3 modes:

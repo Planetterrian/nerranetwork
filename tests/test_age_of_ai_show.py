@@ -1,89 +1,74 @@
-"""Launch-shape + guest-pipeline drift guards for The Age of AI (July 2026).
+"""Drift guards for The Age of AI — the Nerra Voices live-interview pipeline.
 
-The Age of AI is the network's AI-hosted interview show: Nerra (an AI
-persona, Grok built-in voice ``eve``) interviews real people whose written
-answers enter the pipeline verbatim. These tests pin:
+The Age of AI is the network's AI-hosted interview show: Mira (an AI
+documentarian persona, Grok voice ``ara``) phones real guests via a
+Voximplant scenario bridged to a Grok Voice Agent, and the episode is
+produced from the real recording through two human gates (Patrick's
+editorial review, guest transcript approval). Spec + runbook:
+docs/age_of_ai_plan.md.
 
-* the launch config shape (narrative mode, dialogue TTS with NERRA/GUEST
-  voices, distribution off);
-* the consent gates in ``engine.interview`` (publish consent required;
-  ai_voiced degrades to quoted without voice consent);
-* verbatim answer ingestion + packet compilation;
-* the hook's per-episode voicing behaviour (quoted packets flip dialogue
-  mode off; consented per-guest voice overrides apply);
-* the read-only-hooks contract (``NERRA_HOOKS_READONLY`` protects the CRM).
+These tests pin:
+* the show-registry shape (run_show is a guard-railed no-op; production
+  belongs to pipelines/voices/);
+* the presence + coherence of the spec artifacts (schema, scenario,
+  workflows, prompts, Worker) so a partial revert fails CI;
+* the editorial-pass validators (the LLM-output schema gates);
+* the fire-window compilation logic that runs before any credits are spent.
 """
 
 from __future__ import annotations
 
+import re
 import sys
-import textwrap
 from pathlib import Path
-from types import SimpleNamespace
 
+import pytest
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
-# Hooks live in shows/hooks/ without a package __init__ at shows/ — import
-# them the same way run_show and the other hook tests do.
-sys.path.insert(0, str(ROOT / "shows" / "hooks"))
 SHOW_YAML = ROOT / "shows" / "age_of_ai.yaml"
-GUEST_QUEUE = ROOT / "shows" / "guest_queues" / "age_of_ai.yaml"
 TOPIC_QUEUE = ROOT / "shows" / "topic_queues" / "age_of_ai.yaml"
+PIPELINES = ROOT / "pipelines" / "voices"
+WORKER_TS = ROOT / "workers" / "voices" / "src" / "index.ts"
+SCENARIO = ROOT / "voximplant" / "scenarios" / "age_of_ai_interview.js"
+MIGRATION = ROOT / "supabase" / "migrations" / "20260704_nerra_voices_schema.sql"
 
-
-def _guest(**overrides):
-    base = {
-        "id": "test-guest",
-        "name": "Test Guest",
-        "stage": "answers_received",
-        "bio": "A test human.",
-        "angle": "testing the age of AI",
-        "consent_to_publish": True,
-        "consent_ai_voice": False,
-        "voice_mode": "quoted",
-        "guest_voice_id": "",
-        "answers": [{"q": "How are you?", "a": "Honestly, fine."}],
-    }
-    base.update(overrides)
-    return base
+sys.path.insert(0, str(PIPELINES))
 
 
 # ---------------------------------------------------------------------------
-# Launch config shape
+# Show registry shape (run_show side)
 # ---------------------------------------------------------------------------
 
-class TestLaunchShape:
-    def test_config_loads_and_is_narrative(self):
+class TestShowRegistryShape:
+    def test_config_loads_with_mira_voice(self):
         from engine.config import load_config
         cfg = load_config(SHOW_YAML)
         assert cfg.slug == "age_of_ai"
-        assert cfg.narrative_mode is True
-        assert cfg.topic_queue_file == "shows/topic_queues/age_of_ai.yaml"
-        assert cfg.min_articles_skip == 0, (
-            "interview show never fetches news — a nonzero floor would block "
-            "every episode"
-        )
-
-    def test_dialogue_tts_shape(self):
-        """NERRA/GUEST dialogue voices are real Grok built-ins (not the
-        network's Patrick clone — the host persona is a machine, not
-        Patrick) and the speech wrap is pinned empty (landmine #17)."""
-        from engine.config import load_config
-        cfg = load_config(SHOW_YAML)
         assert cfg.tts.provider == "grok"
-        assert cfg.tts.dialogue_mode is True
-        voices = cfg.tts.dialogue_voices
-        assert set(voices) == {"NERRA", "GUEST"}
-        for label, vid in voices.items():
-            assert vid and "REPLACE" not in str(vid).upper(), (
-                f"dialogue voice {label} must be a real Grok voice ID"
-            )
-        assert voices["NERRA"] != "kdif6sqjcyiq", (
-            "Nerra must NOT reuse the Patrick voice clone — the AI host is "
-            "its own on-air identity"
+        assert cfg.tts.voice_id == "ara", (
+            "Mira's narration voice is the Grok built-in `ara` (spec §3.1)"
         )
-        assert cfg.tts.speech_wrap_open == "" and cfg.tts.speech_wrap_close == ""
+        assert cfg.tts.voice_id != "kdif6sqjcyiq", (
+            "the AI host must not reuse the Patrick voice clone"
+        )
+        assert getattr(cfg.tts, "dialogue_mode", False) is False, (
+            "guest audio is REAL recorded phone audio — dialogue TTS is not "
+            "part of this show"
+        )
+        assert cfg.publishing.host_name == "Mira"
+
+    def test_run_show_guard_rail(self):
+        """An accidental `run_show.py age_of_ai` must be a clean skip:
+        narrative mode + a permanently-empty topic queue."""
+        raw = yaml.safe_load(SHOW_YAML.read_text(encoding="utf-8"))
+        assert raw.get("narrative_mode") is True
+        assert raw.get("min_articles_skip") == 0
+        queue = yaml.safe_load(TOPIC_QUEUE.read_text(encoding="utf-8"))
+        assert queue == {"queue": []}, (
+            "the run_show topic queue must stay empty — production goes "
+            "through pipelines/voices/ (see the comment in the queue file)"
+        )
 
     def test_distribution_off_at_launch(self):
         raw = yaml.safe_load(SHOW_YAML.read_text(encoding="utf-8"))
@@ -94,262 +79,235 @@ class TestLaunchShape:
         assert raw["multilingual"]["enabled"] is False
         assert raw.get("weekly_recap_on_sunday") is False
 
-    def test_no_expand_retry(self):
-        """The expand-below-target retry pads by paraphrase — on an
-        interview show padding risks drifting from verbatim guest words, so
-        it must stay off."""
-        raw = yaml.safe_load(SHOW_YAML.read_text(encoding="utf-8"))
-        assert not raw["llm"].get("podcast_expand_below_target", False)
-        assert not raw["llm"].get("digest_expand_below_target", False)
-
-    def test_chapter_ordering_rules(self):
-        """Closing carries where:end and is listed before the body markers
-        (EI June-11 ordering rule); Introduction anchors to start."""
-        raw = yaml.safe_load(SHOW_YAML.read_text(encoding="utf-8"))
-        markers = raw["chapters"]["section_markers"]
-        titles = [m["title"] for m in markers]
-        by_title = {m["title"]: m for m in markers}
-        assert by_title["Introduction"]["where"] == "start"
-        assert by_title["Closing"]["where"] == "end"
-        body_positions = [
-            titles.index(t) for t in titles
-            if t not in ("Introduction", "Closing")
-        ]
-        assert body_positions, "expected at least one body marker"
-        assert titles.index("Closing") < min(body_positions), (
-            "Closing must be listed before body markers so a merged final "
-            "line can't be stolen (EI June-11 ordering rule)"
-        )
-
-    def test_topic_queue_starts_empty_and_valid(self):
-        data = yaml.safe_load(TOPIC_QUEUE.read_text(encoding="utf-8"))
-        assert data == {"queue": []}
-
-    def test_intro_personality_registered(self):
-        from engine.intros import build_intro_line, build_closing_block
+    def test_intro_personality_is_mira(self):
         import datetime as dt
-        intro = build_intro_line(
-            "age_of_ai", episode_num=2, today_str="July 4, 2026",
-            date=dt.date(2026, 7, 4),
-        )
-        assert intro.startswith("NERRA: ")
-        assert "Age of AI" in intro
-        closing = build_closing_block(
-            "age_of_ai", episode_num=2, today_str="July 4, 2026",
-            date=dt.date(2026, 7, 4),
-        )
+        from engine.intros import build_closing_block, build_intro_line
+        intro = build_intro_line("age_of_ai", episode_num=2,
+                                 today_str="July 4, 2026",
+                                 date=dt.date(2026, 7, 4))
+        assert "Mira" in intro and "Age of AI" in intro
+        closing = build_closing_block("age_of_ai", episode_num=2,
+                                      today_str="July 4, 2026",
+                                      date=dt.date(2026, 7, 4))
         assert closing.rstrip().endswith("keep being human.")
-
-    def test_prompts_carry_fidelity_and_disclosure_rules(self):
-        podcast = (ROOT / "shows/prompts/age_of_ai_podcast.txt").read_text(encoding="utf-8")
-        digest = (ROOT / "shows/prompts/age_of_ai_digest.txt").read_text(encoding="utf-8")
-        for text in (podcast, digest):
-            assert "VERBATIM" in text.upper()
-        assert "{guest_dossier}" in podcast and "{guest_dossier}" in digest
-        assert "DISCLOSURE" in podcast
-
-    def test_run_show_defaults_guest_dossier(self):
-        """A hook failure must degrade to an empty dossier, never a
-        KeyError in prompt substitution (both stages)."""
-        src = (ROOT / "run_show.py").read_text(encoding="utf-8")
-        assert src.count('setdefault("guest_dossier", "")') >= 2
+        assert "Mira" in closing
 
 
 # ---------------------------------------------------------------------------
-# Guest queue + consent gates
+# Spec artifacts present + coherent
 # ---------------------------------------------------------------------------
 
-class TestGuestPipeline:
-    def test_seed_guest_queue_shape(self):
-        data = yaml.safe_load(GUEST_QUEUE.read_text(encoding="utf-8"))
-        guests = data["guests"]
-        assert guests, "guest queue should seed at least the Ep1 prospect"
-        from engine.interview import GUEST_STAGES
-        for g in guests:
-            assert g.get("stage") in GUEST_STAGES
-            # Consent is a human agreement — the seed must never pre-set it.
-            assert g.get("consent_to_publish") is False
-            assert g.get("consent_ai_voice") is False
-
-    def test_compile_refuses_without_publish_consent(self):
-        import pytest
-        from engine.interview import compile_packet
-        with pytest.raises(ValueError, match="consent"):
-            compile_packet(_guest(consent_to_publish=False))
-
-    def test_compile_refuses_without_answers(self):
-        import pytest
-        from engine.interview import compile_packet
-        with pytest.raises(ValueError, match="answers"):
-            compile_packet(_guest(answers=[]))
-
-    def test_ai_voiced_degrades_to_quoted_without_voice_consent(self):
-        from engine.interview import compile_packet
-        packet = compile_packet(_guest(voice_mode="ai_voiced",
-                                       consent_ai_voice=False))
-        assert packet["voice_mode"] == "quoted"
-        assert "guest_voice_id" not in packet
-
-    def test_ai_voiced_honoured_with_consent(self):
-        from engine.interview import compile_packet
-        packet = compile_packet(_guest(voice_mode="ai_voiced",
-                                       consent_ai_voice=True,
-                                       guest_voice_id="custom123"))
-        assert packet["voice_mode"] == "ai_voiced"
-        assert packet["guest_voice_id"] == "custom123"
-
-    def test_compiled_packet_is_standard_queue_schema(self):
-        from engine.interview import compile_packet
-        packet = compile_packet(_guest())
-        for key in ("id", "title", "brief", "produced",
-                    "episode_number", "produced_date"):
-            assert key in packet
-        assert packet["produced"] is False
-        assert packet["id"] == "interview-test-guest"
-        assert "Honestly, fine." in packet["brief"], (
-            "the guest's verbatim answer must reach the brief untouched"
-        )
-        assert "VERBATIM" in packet["brief"]
-
-    def test_parse_answers_markdown_multiparagraph(self):
-        from engine.interview import parse_answers_markdown
-        pairs = parse_answers_markdown(textwrap.dedent("""\
-            Q: First question?
-            A: First paragraph.
-
-            Second paragraph of the same answer.
-
-            Q: Second question?
-            A: Short answer.
-        """))
-        assert len(pairs) == 2
-        assert "Second paragraph" in pairs[0]["a"]
-        assert pairs[1]["a"] == "Short answer."
-
-    def test_append_packet_refuses_duplicates(self, tmp_path):
-        import pytest
-        from engine.interview import append_packet_to_topic_queue, compile_packet
-        queue = tmp_path / "queue.yaml"
-        packet = compile_packet(_guest())
-        append_packet_to_topic_queue(queue, packet)
-        with pytest.raises(ValueError, match="already"):
-            append_packet_to_topic_queue(queue, packet)
-        data = yaml.safe_load(queue.read_text(encoding="utf-8"))
-        assert len(data["queue"]) == 1
-
-    def test_invite_and_questions_fallbacks_work_offline(self):
-        """Outreach drafting must never require an API key."""
-        from engine.interview import build_invite_email, build_question_set
-        guest = _guest()
-        invite = build_invite_email(guest, use_llm=False)
-        assert "AI" in invite and "verbatim" in invite.lower()
-        questions = build_question_set(guest, use_llm=False)
-        assert len(questions) >= 5
-        assert all(q.endswith("?") for q in questions)
-
-
-# ---------------------------------------------------------------------------
-# Hook behaviour
-# ---------------------------------------------------------------------------
-
-class TestHook:
-    def _packet(self, **overrides):
-        base = {
-            "id": "interview-test-guest",
-            "title": "Test Guest on testing",
-            "brief": "GUEST: Test Guest\nQ1: ...\nA1: ...",
-            "guest_id": "test-guest",
-            "voice_mode": "ai_voiced",
-            "consent_ai_voice": True,
-            "produced": False,
-        }
-        base.update(overrides)
-        return base
-
-    def _run_hook(self, tmp_path, packet):
-        import age_of_ai as hook  # noqa: PLC0415 (sys.path manipulation above)
-        queue = tmp_path / "queue.yaml"
-        queue.write_text(
-            yaml.safe_dump({"queue": [packet]}, sort_keys=False),
-            encoding="utf-8",
-        )
-        tts = SimpleNamespace(
-            dialogue_mode=True,
-            dialogue_voices={"NERRA": "eve", "GUEST": "ara"},
-        )
-        config = SimpleNamespace(topic_queue_file="", tts=tts)
-        # The hook resolves topic_queue_file relative to the repo root, so
-        # point it at the tmp queue via an absolute-path-tolerant monkeypatch.
-        orig = hook._peek_next_packet
-        hook._peek_next_packet = lambda cfg: packet if not packet.get("produced") else {}
-        try:
-            result = hook.pre_fetch(config, episode_num=1, today_str="July 4, 2026")
-        finally:
-            hook._peek_next_packet = orig
-        return result, config
-
-    def test_quoted_packet_flips_dialogue_off(self, tmp_path):
-        packet = self._packet(voice_mode="quoted")
-        result, config = self._run_hook(tmp_path, packet)
-        assert config.tts.dialogue_mode is False
-        assert "guest_dossier" in result
-        assert "quoted" in result["guest_dossier"]
-
-    def test_ai_voiced_packet_keeps_dialogue_and_overrides_voice(self, tmp_path):
-        packet = self._packet(guest_voice_id="guestvoice1")
-        result, config = self._run_hook(tmp_path, packet)
-        assert config.tts.dialogue_mode is True
-        assert config.tts.dialogue_voices["GUEST"] == "guestvoice1"
-        assert config.tts.dialogue_voices["NERRA"] == "eve"
-        assert "ai_voiced" in result["guest_dossier"]
-
-    def test_empty_queue_returns_no_context(self, tmp_path):
-        import age_of_ai as hook  # noqa: PLC0415 (sys.path manipulation above)
-        orig = hook._peek_next_packet
-        hook._peek_next_packet = lambda cfg: {}
-        try:
-            result = hook.pre_fetch(
-                SimpleNamespace(topic_queue_file="x", tts=SimpleNamespace()),
-                episode_num=1, today_str="today",
+class TestSpecArtifacts:
+    def test_supabase_migration_covers_all_tables(self):
+        sql = MIGRATION.read_text(encoding="utf-8")
+        for table in ("guest_applications", "interviews", "interview_briefs",
+                      "interview_runs", "editorial_packages",
+                      "cross_show_callouts"):
+            assert f"create table if not exists {table}" in sql, table
+            assert f"alter table {table} enable row level security" in sql, (
+                f"{table} missing RLS"
             )
-        finally:
-            hook._peek_next_packet = orig
-        assert result == {}
+        assert "anon can submit applications" in sql
 
-    def test_post_generate_readonly_guard(self, tmp_path, monkeypatch):
-        """--test/--rehearse runs (NERRA_HOOKS_READONLY=1) must never touch
-        the guest queue."""
-        import age_of_ai as hook  # noqa: PLC0415 (sys.path manipulation above)
-        monkeypatch.setenv("NERRA_HOOKS_READONLY", "1")
-        called = []
-        monkeypatch.setattr(
-            "engine.interview.mark_guest_published",
-            lambda *a, **k: called.append(a),
-        )
-        hook.post_generate(
-            SimpleNamespace(topic_queue_file="shows/topic_queues/age_of_ai.yaml"),
-            digest_text="", episode_num=1,
-        )
-        assert called == []
+    def test_scenario_core_contracts(self):
+        js = SCENARIO.read_text(encoding="utf-8")
+        assert "Modules.GrokVoiceAgent" in js
+        assert "stereo: true" in js, "dual-track recording is the diarization"
+        assert "50 * 60 * 1000" in js, "50-minute hard cap (spec §11.8)"
+        assert "api.nerranetwork.com/voices/interview-complete" in js
+        assert "CallEvents.Failed" in js, "no-answer path must fire the webhook"
+        assert "webhookFired" in js, "webhook must be exactly-once"
 
-    def test_post_generate_marks_guest_published(self, tmp_path, monkeypatch):
-        import age_of_ai as hook  # noqa: PLC0415 (sys.path manipulation above)
-        monkeypatch.delenv("NERRA_HOOKS_READONLY", raising=False)
-        queue = tmp_path / "queue.yaml"
-        queue.write_text(
-            yaml.safe_dump({"queue": [self._packet(
-                produced=True, episode_number=7, produced_date="2026-07-04",
-            )]}, sort_keys=False),
-            encoding="utf-8",
+    def test_workflows_exist_and_parse(self):
+        wf_dir = ROOT / ".github" / "workflows"
+        expected = {
+            "nerra_voices_prep_briefs.yml",
+            "nerra_voices_fire_interview.yml",
+            "nerra_voices_post_interview.yml",
+            "nerra_voices_produce_episode.yml",
+            "nerra_voices_publish.yml",
+        }
+        for name in expected:
+            data = yaml.safe_load((wf_dir / name).read_text(encoding="utf-8"))
+            assert data, f"{name} failed to parse"
+
+    def test_dispatch_event_types_match_worker(self):
+        """The Worker's repository_dispatch event names must match the
+        workflows' `repository_dispatch: types:` — a rename on one side
+        silently orphans the other."""
+        worker = WORKER_TS.read_text(encoding="utf-8")
+        post = yaml.safe_load(
+            (ROOT / ".github/workflows/nerra_voices_post_interview.yml")
+            .read_text(encoding="utf-8"))
+        produce = yaml.safe_load(
+            (ROOT / ".github/workflows/nerra_voices_produce_episode.yml")
+            .read_text(encoding="utf-8"))
+        post_types = post[True]["repository_dispatch"]["types"] \
+            if True in post else post["on"]["repository_dispatch"]["types"]
+        produce_types = produce[True]["repository_dispatch"]["types"] \
+            if True in produce else produce["on"]["repository_dispatch"]["types"]
+        assert "interview-complete" in post_types
+        assert "interview-approved-by-guest" in produce_types
+        assert 'dispatch(env, "interview-complete"' in worker
+        assert 'dispatch(env, "interview-approved-by-guest"' in worker
+
+    def test_editorial_pass_prompts_match_pipeline_list(self):
+        from post_interview import EDITORIAL_PASSES
+        prompt_dir = PIPELINES / "prompts" / "editorial_passes"
+        on_disk = {p.name for p in prompt_dir.glob("*.txt")}
+        listed = {name for name, _ in EDITORIAL_PASSES}
+        assert listed == on_disk, (
+            f"editorial pass list and prompt files diverged: "
+            f"listed-only={listed - on_disk}, disk-only={on_disk - listed}"
         )
-        monkeypatch.setattr(hook, "_ROOT", tmp_path)
-        calls = []
-        monkeypatch.setattr(
-            "engine.interview.mark_guest_published",
-            lambda path, gid, ep, date: calls.append((gid, ep, date)) or True,
+        assert len(EDITORIAL_PASSES) == 8, "spec §5.3: exactly 8 passes"
+
+    def test_mira_system_prompt_contracts(self):
+        text = (PIPELINES / "prompts" / "mira_system_prompt.txt").read_text(
+            encoding="utf-8")
+        assert "You are Mira" in text
+        assert "Lightning round" in text
+        assert "the one bet you're making" in text, "closing question (spec §3.3)"
+        assert "Hard time cap: 45 minutes" in text
+        for token in ("{{guest_name}}", "{{episode_thesis}}", "{{guest_brief}}"):
+            assert token in text, f"missing template token {token}"
+
+    def test_worker_routes_cover_spec_endpoints(self):
+        worker = WORKER_TS.read_text(encoding="utf-8")
+        for route in ("/voices/apply", "/voices/interview-complete",
+                      "/voices/cal-com-booked", "/voices/triage-decision",
+                      "/voices/episode-lookup", "/voices/guest-brief",
+                      "/voices/fact-check", "/voices/admin/triage"):
+            assert route in worker, f"Worker missing route {route}"
+        assert "gate2Housekeeping" in worker, "day-7 auto-approve cron missing"
+
+    def test_email_templates_exist(self):
+        email_dir = ROOT / "templates" / "email"
+        for name in ("voices_application_received.j2",
+                     "voices_triage_approved_booking_link.j2",
+                     "voices_booking_confirmation.j2",
+                     "voices_prep_brief.j2",
+                     "voices_interview_reminder.j2",
+                     "voices_transcript_for_approval.j2",
+                     "voices_publish_notification.j2",
+                     "voices_weekly_digest.j2"):
+            assert (email_dir / name).exists(), name
+
+    def test_apply_form_posts_to_worker(self):
+        page = (ROOT / "age-of-ai-apply.html").read_text(encoding="utf-8")
+        assert "api.nerranetwork.com/voices/apply" in page
+        assert "recorded" in page and "approve the transcript" in page.lower() \
+            or "approved the transcript" in page.lower() \
+            or "approve" in page.lower()
+
+
+# ---------------------------------------------------------------------------
+# Fire logic (runs before any credits are spent)
+# ---------------------------------------------------------------------------
+
+class TestFireLogic:
+    def test_mira_tools_shape(self):
+        from fire_interviews import MIRA_TOOLS
+        names = {t["name"] for t in MIRA_TOOLS}
+        assert names == {"nerra_episode_lookup", "guest_brief_lookup",
+                         "fact_check_claim"}, "spec §3.2: exactly these 3 tools"
+        for tool in MIRA_TOOLS:
+            assert tool["type"] == "function"
+            assert tool["parameters"]["type"] == "object"
+
+    def test_compile_mira_prompt_substitutes_everything(self):
+        from fire_interviews import compile_mira_prompt
+        prompt = compile_mira_prompt(
+            {"episode_thesis": "THESIS-X"},
+            {"name": "Jane Doe", "title": "Teacher", "organization": "PS 42"},
+            {"bio_research": "BRIEF-X",
+             "likely_questions": [{"question": "Q-ONE?"}, "Q-TWO?"]},
         )
-        hook.post_generate(
-            SimpleNamespace(topic_queue_file="queue.yaml"),
-            digest_text="", episode_num=7,
+        for needle in ("Jane Doe", "Teacher", "PS 42", "THESIS-X", "BRIEF-X",
+                       "Q-ONE?", "Q-TWO?"):
+            assert needle in prompt, needle
+        assert "{{" not in prompt, "unsubstituted template tokens remain"
+
+    def test_fire_window_tolerates_cron_drift(self):
+        import fire_interviews as fi
+        assert fi.FIRE_GRACE_BEHIND_MIN >= 5, (
+            "GitHub cron is best-effort — a delayed tick must still fire "
+            "what it missed (spec §5.2 note)"
         )
-        assert calls == [("test-guest", 7, "2026-07-04")]
+
+
+# ---------------------------------------------------------------------------
+# Editorial-pass validators (the LLM-output schema gates, spec §7)
+# ---------------------------------------------------------------------------
+
+class TestValidators:
+    def test_chapter_markers_good_and_bad(self):
+        from validators.schema_validators import validate_pass_output
+        good = [{"start": 0, "end": 300, "title": "The studio ban"},
+                {"start": 300, "end": 900, "title": "What apprentices lose"}]
+        validate_pass_output("chapter_markers", good)
+        with pytest.raises(ValueError):
+            validate_pass_output("chapter_markers", [])
+        with pytest.raises(ValueError, match="starts before"):
+            validate_pass_output("chapter_markers", [
+                {"start": 300, "end": 400, "title": "b"},
+                {"start": 0, "end": 200, "title": "a"},
+            ])
+
+    def test_social_copy_twitter_length(self):
+        from validators.schema_validators import validate_pass_output
+        base = {"twitter": "x" * 200, "linkedin": "y", "instagram": "z"}
+        validate_pass_output("social_copy", base)
+        with pytest.raises(ValueError, match="280"):
+            validate_pass_output("social_copy", {**base, "twitter": "x" * 300})
+
+    def test_show_fits_rejects_unknown_slugs(self):
+        from validators.schema_validators import validate_pass_output
+        validate_pass_output("topical_show_fits", ["models_agents"])
+        with pytest.raises(ValueError, match="unknown"):
+            validate_pass_output("topical_show_fits", ["not_a_show"])
+
+    def test_clip_bounds(self):
+        from validators.schema_validators import validate_pass_output
+        validate_pass_output("clip_suggestions", [
+            {"start": 10, "end": 55, "title": "t", "why": "w"}])
+        with pytest.raises(ValueError):
+            validate_pass_output("clip_suggestions", [
+                {"start": 10, "end": 11, "title": "too short", "why": "w"}])
+
+    def test_cleaned_transcript_keeps_labels(self):
+        from validators.schema_validators import validate_pass_output
+        ok = "\n".join(f"[00:{i:02d}] {'MIRA' if i % 2 else 'GUEST'}: " +
+                       "word " * 30 for i in range(20))
+        validate_pass_output("transcript_cleaned", ok)
+        with pytest.raises(ValueError, match="labels"):
+            validate_pass_output("transcript_cleaned", "word " * 300)
+
+    def test_callouts_reject_unknown_show(self):
+        from validators.schema_validators import validate_pass_output
+        validate_pass_output("cross_show_callouts",
+                             {"tesla": "Mira interviewed a battery engineer "
+                                       "about the cell supply chain."})
+        with pytest.raises(ValueError):
+            validate_pass_output("cross_show_callouts", {"nope": "x" * 30})
+
+
+# ---------------------------------------------------------------------------
+# The two human gates stay wired (spec §6)
+# ---------------------------------------------------------------------------
+
+class TestHumanGates:
+    def test_gate1_no_auto_publish_language(self):
+        """Patrick's gate has no timeout-to-publish: the Worker only
+        auto-approves GATE 2 (guest, day 7). A gate-1 auto-publish would
+        contradict spec §6/§7 ('the package waits indefinitely')."""
+        worker = WORKER_TS.read_text(encoding="utf-8")
+        assert "approved_by_patrick" in worker
+        housekeeping = worker.split("async function gate2Housekeeping")[1]
+        assert "status=eq.approved_by_patrick" in housekeeping, (
+            "housekeeping must only act on packages Patrick ALREADY approved"
+        )
+
+    def test_publish_requires_approved_status(self):
+        src = (PIPELINES / "publish_episode.py").read_text(encoding="utf-8")
+        assert "'approved'" in src and "publish requires status" in src

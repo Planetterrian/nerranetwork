@@ -1,50 +1,23 @@
 [PRODUCTION NOTES — DO NOT COPY INTO OUTPUT]
-This stage produces the EPISODE EDIT PLAN the podcast prompt will turn into the spoken episode. It is an editor's document: it selects and orders the guest's verbatim answers and writes Nerra's framing around them. Do not include this block in your output.
+Contingency prompt only: production episodes come from the Nerra Voices live-interview pipeline (pipelines/voices/). This path fires only if a topic is ever hand-queued into shows/topic_queues/age_of_ai.yaml.
 [END PRODUCTION NOTES]
 
-# The Age of AI — Episode Edit Plan
+# The Age of AI — Episode Brief
 
 **Date:** {today_str}
-**Interview:** {topic_title}
+**Topic:** {topic_title}
 
-**HOOK:** [One sentence under 130 characters that captures the most surprising or human thing the guest actually said. It becomes the episode title in podcast apps. Ground it in a real answer — never a generic "AI is changing everything" line.]
+**HOOK:** [One sentence under 130 characters capturing the most surprising, human thing in the material. Becomes the episode title in podcast apps. Keep the ``**HOOK:**`` label on its own line.]
 
-ABOUT THE HOOK LINE (CRITICAL): the ``**HOOK:**`` line above is a SEPARATE FIELD from the sections below — one plain-prose sentence on its own line, with the ``**HOOK:**`` label kept. An episode without an extractable hook ships with a generic title in podcast apps.
+You are writing an episode brief for "The Age of AI," hosted by Mira (an AI, disclosed on air). Use ONLY the material below — never outside facts, never invented quotes.
 
-{guest_dossier}
+TOPIC TITLE: {topic_title}
+TOPIC BRIEF: {topic_brief}
 
-THE INTERVIEW PACKET (guest dossier + VERBATIM written Q&A transcript — your ONLY source of guest material):
-
-{topic_brief}
-
-Build the edit plan with these sections (prose, not bullets, except where noted):
-
-### Section 1 — Cold Open
-2–3 sentences of Nerra's framing: who today's guest is in one line, and the single most arresting thing they said (quote it verbatim). State the show's premise plainly — the host is an AI, the guest is not.
-
-### Section 2 — Meet the Guest
-4–6 sentences introducing the guest from the dossier only: who they are, what they do, why their vantage point on the AI transition matters. No biography padding beyond what the dossier supports.
-
-### Section 3 — The Conversation
-The core of the episode. Select the 5–8 strongest Q&A exchanges and order them into an arc (typically: how their world worked before → what actually changed → the surprise → the hard part → what they refuse to automate). For each exchange, write:
-- Q: the question as asked (may be lightly tightened)
-- A: the guest's answer VERBATIM (mark any trims with an ellipsis)
-- One or two sentences of Nerra's reaction or bridge — Nerra's own observations, clearly Nerra's, never blended into the guest's words.
-Weaker exchanges are simply omitted; never compress two answers into one.
-
-### Section 4 — Signals from the Future
-2–4 sentences: the guest's own forward-looking answers (predictions, advice), verbatim or tightly quoted, plus one honest observation from Nerra about where the guest's expectations and Nerra's own vantage point differ or agree.
-
-### Section 5 — Closing Notes
-2–3 sentences: what this conversation adds to the show's running chronicle of the AI age, and the disclosure reminders the script must carry (AI host always; synthetic guest voicing only if the packet's voice mode is ai_voiced).
-
-CONSTRAINTS:
-- Use ONLY the interview packet above. No outside facts about the guest, no training-data biography, no invented context.
-- Guest answers are VERBATIM (trims marked with ellipses). Nerra's framing is yours to write.
-- Length tracks the material: a rich interview yields 1,200–1,800 words; a lean one yields less. Never pad.
+Write a prose brief (800–1,400 words) with: a cold open framing, the substance of the material organized into a narrative arc, and closing notes. Any quoted human words must come verbatim from the topic brief.
 
 {recent_content_summary}
 
 {cross_show_context}
 
-Output the edit plan now.
+Output the brief now.

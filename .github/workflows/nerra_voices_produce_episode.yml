@@ -1,0 +1,34 @@
+# Nerra Voices — final episode production (spec §5.4). Triggered when the
+# guest approves the transcript (or the 7-day auto-approve fires): Mira
+# narration TTS, ffmpeg assembly with redaction cuts, waveform video, R2.
+name: Produce final episode
+on:
+  repository_dispatch:
+    types: [interview-approved-by-guest]
+
+permissions:
+  contents: read
+
+jobs:
+  produce:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: FedericoCarboni/setup-ffmpeg@v3
+      - run: pip install -r pipelines/requirements.txt
+      - run: python pipelines/voices/produce_episode.py
+        env:
+          INTERVIEW_ID: ${{ github.event.client_payload.interview_id }}
+          SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY: ${{ secrets.R2_ACCESS_KEY }}
+          R2_SECRET_KEY: ${{ secrets.R2_SECRET_KEY }}
+          R2_PUBLIC_BASE_URL: ${{ secrets.R2_PUBLIC_BASE_URL }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}

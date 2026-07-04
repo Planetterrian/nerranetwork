@@ -301,12 +301,12 @@ class TestSanitizePodcastScriptDialogueMode:
 # ---------------------------------------------------------------------------
 
 def test_no_existing_show_enables_dialogue_mode():
-    """Dialogue mode is opt-in; only multi-voice shows may set it —
-    dp_pod (two hosts) and age_of_ai (AI host + consent-gated synthetic
-    guest voicing, July 2026)."""
+    """Dialogue mode is opt-in; only two-host shows (dp_pod) may set it.
+    (The Age of AI's guest audio is REAL recorded phone audio via the
+    Nerra Voices pipeline, not dialogue TTS.)"""
     from engine.config import discover_show_slugs, load_config
 
-    allowed = {"dp_pod", "age_of_ai"}
+    allowed = {"dp_pod"}
     for slug in discover_show_slugs():
         cfg = load_config(PROJECT_ROOT / "shows" / f"{slug}.yaml")
         if slug in allowed:

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Apply to be a guest — The Age of AI · Nerra Network</title>
+<meta name="description" content="Apply to be interviewed on The Age of AI — the podcast where Mira, an AI host, interviews real people about living through the AI transition.">
+<style>
+  :root { --brand:#7C3AED; --ink:#1a202c; --muted:#4a5568; --line:#e2e8f0; }
+  * { box-sizing: border-box; }
+  body { font: 16px/1.6 system-ui, -apple-system, sans-serif; color: var(--ink);
+         max-width: 720px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+  h1 { color: var(--brand); margin-bottom: .2rem; }
+  .sub { color: var(--muted); margin-top: 0; }
+  .card { background: #faf5ff; border: 1px solid #e9d8fd; border-radius: 10px;
+          padding: 1rem 1.2rem; margin: 1.4rem 0; }
+  label { display: block; font-weight: 600; margin: 1rem 0 .25rem; }
+  input, textarea { width: 100%; padding: .6rem .7rem; border: 1px solid var(--line);
+                    border-radius: 8px; font: inherit; }
+  textarea { min-height: 110px; }
+  .hint { font-size: .85rem; color: var(--muted); margin-top: .2rem; }
+  button { margin-top: 1.4rem; background: var(--brand); color: #fff; border: 0;
+           border-radius: 10px; padding: .85rem 1.6rem; font-size: 1.05rem; cursor: pointer; }
+  button:disabled { opacity: .6; cursor: wait; }
+  #result { margin-top: 1rem; font-weight: 600; }
+  a { color: var(--brand); }
+</style>
+</head>
+<body>
+  <h1>Be a guest on The Age of AI</h1>
+  <p class="sub">The interview show where the roles are reversed: Mira, an AI, asks the questions — and real people answer.</p>
+
+  <div class="card">
+    <strong>How it works, honestly and completely:</strong>
+    <ul>
+      <li>Our AI host, <strong>Mira</strong>, calls you at a time you book — a real ~45-minute phone conversation, recorded for the podcast.</li>
+      <li>The day before, you get a short prep brief with the themes she plans to explore.</li>
+      <li><strong>Nothing publishes until you approve the transcript.</strong> You can have anything removed.</li>
+      <li>Every episode discloses that the host is an AI. The guests never are.</li>
+    </ul>
+  </div>
+
+  <form id="applyForm">
+    <label for="name">Your name *</label>
+    <input id="name" name="name" required maxlength="200">
+
+    <label for="email">Email *</label>
+    <input id="email" name="email" type="email" required maxlength="200">
+
+    <label for="phone">Phone number (the one Mira should call)</label>
+    <input id="phone" name="phone" maxlength="40" placeholder="+1 604 …">
+    <p class="hint">You can add this later — it's only needed once your interview is booked.</p>
+
+    <label for="title">Role / title</label>
+    <input id="title" name="title" maxlength="200" placeholder="High school teacher · Founder · Electrician …">
+
+    <label for="organization">Organization (optional)</label>
+    <input id="organization" name="organization" maxlength="200">
+
+    <label for="bio">Who are you? *</label>
+    <textarea id="bio" name="bio" required maxlength="4000" placeholder="A few sentences about you and your work — in your own words."></textarea>
+
+    <label for="topics">What should Mira ask you about? *</label>
+    <textarea id="topics" name="topics" required maxlength="1000" placeholder="One topic per line — e.g. 'AI in the writers' room', 'what apprentices lose when AI does the estimating'"></textarea>
+
+    <label for="links">Links (optional)</label>
+    <input id="links" name="links" maxlength="500" placeholder="Website, LinkedIn, publications — comma separated">
+
+    <label for="preferred_window">Rough availability (optional)</label>
+    <input id="preferred_window" name="preferred_window" maxlength="200" placeholder="e.g. weekday mornings, Pacific time">
+
+    <button id="submitBtn" type="submit">Apply to be a guest</button>
+    <p id="result" role="status"></p>
+  </form>
+
+<script>
+document.getElementById('applyForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const result = document.getElementById('result');
+  btn.disabled = true; result.textContent = '';
+  const val = id => document.getElementById(id).value.trim();
+  const payload = {
+    name: val('name'), email: val('email'), phone: val('phone'),
+    title: val('title'), organization: val('organization'), bio: val('bio'),
+    topics: val('topics').split('\n').map(s => s.trim()).filter(Boolean),
+    links: { raw: val('links') },
+    preferred_window: val('preferred_window'),
+    referrer: document.referrer || null
+  };
+  try {
+    const resp = await fetch('https://api.nerranetwork.com/voices/apply', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    result.textContent = 'Application received! We read every one — if it\'s a fit, a booking link lands in your inbox.';
+    e.target.reset();
+  } catch (err) {
+    result.textContent = 'Something went wrong — email patrick@planetterrian.com and we\'ll sort it out.';
+  } finally { btn.disabled = false; }
+});
+</script>
+</body>
+</html>
