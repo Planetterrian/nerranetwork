@@ -1,0 +1,75 @@
+name: MIT Live Executor
+
+# Phase 3 of docs/mit_snaptrade_live_trading_plan.md — DORMANT BY DEFAULT.
+# Places real micro-live orders ONLY when the repository variable
+# LIVE_TRADING_ENABLED is "1" AND the SNAPTRADE_* secrets are set AND all
+# risk gates pass. While dormant every run is a logged clean no-op.
+# Morning slot places at most one entry from today's signal; the
+# afternoon slot (~15:45 ET) sells positions due on the sim's calendar.
+# Committed state carries only the halt flag + id-level order index; the
+# full ledger is gitignored and uploaded as an artifact.
+
+on:
+  schedule:
+    - cron: '52 13 * * 1-5'   # 13:52 UTC ≈ 9:52 ET — entries
+    - cron: '45 19 * * 1-5'   # 19:45 UTC ≈ 3:45 PM ET — exits
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mit-live-executor
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests yfinance snaptrade-python-sdk
+
+      - name: Determine slot
+        id: slot
+        run: |
+          if [ "${{ github.event.schedule }}" = "52 13 * * 1-5" ]; then
+            echo "mode=--entries" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.schedule }}" = "45 19 * * 1-5" ]; then
+            echo "mode=--exits" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=" >> "$GITHUB_OUTPUT"   # dispatch: both
+          fi
+
+      - name: Run live executor
+        env:
+          LIVE_TRADING_ENABLED: ${{ vars.LIVE_TRADING_ENABLED }}
+          MIT_MAX_POSITION_USD: ${{ vars.MIT_MAX_POSITION_USD }}
+          SNAPTRADE_CLIENT_ID: ${{ secrets.SNAPTRADE_CLIENT_ID }}
+          SNAPTRADE_CONSUMER_KEY: ${{ secrets.SNAPTRADE_CONSUMER_KEY }}
+          SNAPTRADE_USER_ID: ${{ secrets.SNAPTRADE_USER_ID }}
+          SNAPTRADE_USER_SECRET: ${{ secrets.SNAPTRADE_USER_SECRET }}
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+        run: python scripts/mit_live_executor.py ${{ steps.slot.outputs.mode }}
+
+      - name: Upload full ledger artifact
+        if: hashFiles('digests/modern_investing/live_ledger.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-ledger
+          path: digests/modern_investing/live_ledger.json
+          retention-days: 90
+
+      - name: Commit execution state (id-level index only)
+        uses: ./.github/actions/safe-commit-push
+        with:
+          add-paths: digests/modern_investing/live_execution_state.json
+          commit-message: "MIT live executor state: ${{ github.run_id }}"

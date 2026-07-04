@@ -438,6 +438,27 @@ nerranetwork/
   block (trade-signal freshness/staleness + shadow-ledger vitals).
   Stop enforcement changes sim outcomes going forward; the honesty line
   + stop narration are new prompt context → A/B-listen per landmine #17.
+  **July 4 2026 Phase-3 live executor (DORMANT)** (drift guards:
+  `tests/test_snaptrade_execution.py::{TestLiveEntry,TestLiveExits,TestLiveStatePrivacy}`):
+  operator-directed "build the next layer" — real order placement now
+  EXISTS but cannot run until armed. `execution/live.py` +
+  `scripts/mit_live_executor.py` + `mit-live-executor.yml` (13:52 UTC
+  entries / 19:45 UTC exits). Gate order, all fail-closed: kill switch
+  (repo var `LIVE_TRADING_ENABLED=1`; unset → logged no-op that never
+  loads credentials) → SnapTrade config → self-halt (2 consecutive
+  rejects halt the layer via committed `live_execution_state.json`;
+  exits still run so positions are never unmanaged) → shared risk gates
+  → daily/open-position caps → account resolution (institution match on
+  the signal's routing hint) → live quote (none = never place blind).
+  Integer-share marketable limits under `MIT_MAX_POSITION_USD` (default
+  $250); idempotent `client_order_id`; the narrated stop rides on the
+  signal for future bracket orders. Privacy split: committed state =
+  ids/status only; full `live_ledger.json` (account ids/amounts) is
+  gitignored + 90-day CI artifact. The Phase-1/2 "no placement code"
+  contract is superseded by a narrower pinned one: the SDK trading call
+  exists ONLY in `snaptrade_client.py`, invoked ONLY by `live.py`, whose
+  FIRST gate is the kill switch (a poisoned-client test proves disabled
+  runs touch nothing). No prompt/audio changes (outside landmine #17).
 
 **Tesla Shorts Time Recursive Memory System (May 2026+)**  
 TST received a full recursive improvement architecture (analogous to MIT):
