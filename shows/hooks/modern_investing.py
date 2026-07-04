@@ -533,6 +533,13 @@ def post_generate(config, *, digest_text: str = "", episode_num: int | None = No
             trade["sector"] = _classify_sector(
                 trade.get("symbol", ""), trade.get("strategy", ""), trade.get("market", ""),
             )
+        # Stop-loss capture (July 2026): store the narrated stop so the
+        # close-time evaluation can ENFORCE it (and the future live layer
+        # can attach it to a bracket order). None when unparseable — the
+        # sim never invents a stop the show didn't state.
+        stop = _extract_stop_loss(digest_text)
+        if stop:
+            trade["stop_loss"] = stop
         # Rule-effectiveness stamping (July 2026): record which
         # recursive-improvement rules were shown to the model when it made
         # this pick. Read BEFORE today's lesson is appended below, so the
@@ -781,14 +788,17 @@ def _trade_symbol_candidates(trade: dict) -> list[str]:
     return _yf_symbol_candidates(trade.get("symbol", ""), trade.get("market", ""))
 
 
-def _bars_from_history(hist) -> list[tuple[datetime.date, float, float]]:
-    """Convert a yfinance history frame to ``[(bar_date, open, close)]``.
+def _bars_from_history(hist) -> list[tuple]:
+    """Convert a yfinance history frame to ``[(bar_date, open, close, low)]``.
 
     Bars with a non-finite open or close are dropped — yfinance returns
     NaN floats for halted/missing bars (the DELL/HIMS shape) and a NaN
-    must never become an entry or exit price.
+    must never become an entry or exit price. The intraday ``low`` (July
+    2026 stop-enforcement pass) is best-effort: ``None`` when the column
+    is missing/NaN, and every consumer treats bars as len>=3 tuples so
+    3-tuple fixtures keep working.
     """
-    bars: list[tuple[datetime.date, float, float]] = []
+    bars: list[tuple] = []
     if hist is None or getattr(hist, "empty", True):
         return bars
     for idx, row in hist.iterrows():
@@ -799,9 +809,22 @@ def _bars_from_history(hist) -> list[tuple[datetime.date, float, float]]:
             continue
         if not (math.isfinite(open_) and math.isfinite(close)):
             continue
+        try:
+            low = float(row["Low"])
+            if not math.isfinite(low):
+                low = None
+        except (KeyError, TypeError, ValueError):
+            low = None
         bar_date = idx.date() if hasattr(idx, "date") else idx
-        bars.append((bar_date, open_, close))
+        bars.append((bar_date, open_, close, low))
     return bars
+
+
+def _bar_low(bar) -> float | None:
+    """Intraday low of a bar tuple; None for legacy 3-tuple bars."""
+    if len(bar) > 3 and isinstance(bar[3], (int, float)):
+        return bar[3]
+    return None
 
 
 def _fetch_history_bars(
@@ -956,6 +979,7 @@ def _write_trade_signal(
             "pick_date": trade.get("date", today_iso),
             "pick_reference_price": trade.get("pick_reference_price"),
             "pick_validated": bool(trade.get("pick_reference_price")),
+            "stop_loss": trade.get("stop_loss"),
             "currency": "CAD" if is_canadian else "USD",
             "suggested_account": "wealthsimple" if is_canadian else "webull",
             "client_order_id": str(uuid.uuid5(_SIGNAL_ORDER_NAMESPACE, seed)),
@@ -1009,6 +1033,70 @@ def _pick_weekly_bars(bars, pick_date):
     if not window:
         return None, None
     return window[0], window[-1]
+
+
+_STOP_PRICE_RE = re.compile(
+    r"stop[- ]?loss[^.\n%$]{0,60}?\$\s*([\d,]+(?:\.\d+)?)", re.IGNORECASE)
+_STOP_PCT_RE = re.compile(
+    r"stop[- ]?loss[^.\n%$]{0,60}?(\d{1,2}(?:\.\d+)?)\s*%", re.IGNORECASE)
+
+
+def _extract_stop_loss(digest_text: str) -> dict | None:
+    """Pull the narrated stop-loss from the Practice Investment section.
+
+    July 2026 fidelity pass: the digest states a stop-loss level in every
+    Risk Assessment, but the sim never enforced it — losers rode to the
+    scheduled exit while the show TAUGHT stop discipline. Returns
+    ``{"price": x}`` or ``{"pct": y}`` (percent below entry), or ``None``
+    when no parseable stop exists (enforcement simply doesn't apply —
+    never guess one).
+    """
+    if not digest_text:
+        return None
+    # Scope to the Practice Investment block when present so a stop
+    # mentioned in the education section can't leak onto the trade.
+    section = digest_text
+    m = re.search(r"### Practice Investment.*?(?=\n### |\Z)", digest_text,
+                  re.DOTALL | re.IGNORECASE)
+    if m:
+        section = m.group(0)
+    price_m = _STOP_PRICE_RE.search(section)
+    if price_m:
+        try:
+            return {"price": float(price_m.group(1).replace(",", ""))}
+        except ValueError:
+            pass
+    pct_m = _STOP_PCT_RE.search(section)
+    if pct_m:
+        try:
+            pct = float(pct_m.group(1))
+            if 0 < pct < 50:
+                return {"pct": pct}
+        except ValueError:
+            pass
+    return None
+
+
+def _stop_breach(bars, entry_bar, exit_bar, stop_price: float):
+    """First bar in (entry, exit] whose low (or close) breaches the stop.
+
+    Returns ``(bar_date, exit_price)`` or ``None``. Gap-aware: a bar that
+    OPENS below the stop fills at its open (a real stop order can't fill
+    better than the gap), otherwise the stop price itself is used. The
+    entry bar is excluded — intraday ordering within the entry bar is
+    unknowable from daily data, so same-day breaches are not claimed.
+    """
+    if stop_price is None or entry_bar is None or exit_bar is None:
+        return None
+    for bar in bars:
+        if bar[0] <= entry_bar[0] or bar[0] > exit_bar[0]:
+            continue
+        low = _bar_low(bar)
+        probe = low if low is not None else bar[2]
+        if probe <= stop_price:
+            fill = min(stop_price, bar[1])  # gap-through fills at the open
+            return bar[0], round(fill, 2)
+    return None
 
 
 def _trade_pick_date(trade: dict) -> datetime.date | None:
@@ -1119,8 +1207,33 @@ def _close_trade(trade: dict, tracker: dict) -> None:
         trade["lesson"] = "Trade voided — market data was unavailable for evaluation."
         return
 
-    entry_date, entry_price, _ = entry_bar[0], entry_bar[1], entry_bar[2]
+    entry_date, entry_price = entry_bar[0], entry_bar[1]
     exit_date, exit_price = exit_bar[0], exit_bar[2]
+
+    # Stop-loss enforcement (July 2026 fidelity pass): the digest narrates
+    # a stop on every pick but the sim let losers ride to the scheduled
+    # exit. If the pick carried a parseable stop and any bar between entry
+    # and scheduled exit breached it, the trade closes AT THE STOP on the
+    # breach day (gap-aware) — matching what the show tells listeners it
+    # would do, and what a live bracket order will actually do.
+    stop = trade.get("stop_loss")
+    if isinstance(stop, dict) and bars:
+        stop_price = None
+        if isinstance(stop.get("price"), (int, float)):
+            stop_price = float(stop["price"])
+        elif isinstance(stop.get("pct"), (int, float)):
+            stop_price = round(entry_price * (1 - float(stop["pct"]) / 100), 2)
+        # Sanity: a "stop" at/above entry is a parse artifact — ignore it.
+        if stop_price is not None and 0 < stop_price < entry_price:
+            breach = _stop_breach(bars, entry_bar, exit_bar, stop_price)
+            if breach:
+                exit_date, exit_price = breach
+                trade["stopped_out"] = True
+                trade["stop_price"] = stop_price
+                logger.info(
+                    "STOP ENFORCED for %s: breached %s, exit at $%.2f",
+                    symbol, exit_date, exit_price,
+                )
 
     pnl_pct = ((exit_price - entry_price) / entry_price) * 100
     position_size = tracker["metadata"].get("position_size", 1000)
@@ -1211,6 +1324,18 @@ def _recompute_summary(tracker: dict) -> None:
     ]
     cum_alpha = sum(alphas)
 
+    # Statistical significance of the per-trade alpha (July 2026): "are
+    # we beating the index?" needs "…and is that distinguishable from
+    # luck?". One-sample t-stat on per-trade alpha; |t| >= 2 ≈ 95%
+    # confidence the true mean isn't zero. Spoken honestly either way.
+    alpha_t_stat = None
+    if len(alphas) >= 2:
+        mean_alpha = sum(alphas) / len(alphas)
+        variance = sum((a - mean_alpha) ** 2 for a in alphas) / (len(alphas) - 1)
+        std = variance ** 0.5
+        if std > 0:
+            alpha_t_stat = round(mean_alpha / (std / len(alphas) ** 0.5), 2)
+
     # Matched-window compounded score (July 2026 review): the honest
     # "are the picks beating the NASDAQ?" number. Compounds each
     # benchmarked trade's return against the index's return over the SAME
@@ -1299,6 +1424,9 @@ def _recompute_summary(tracker: dict) -> None:
         "benchmark_scores": benchmark_scores,
         "indices_beaten": indices_beaten,
         "indices_scored": len(benchmark_scores),
+        "alpha_t_stat": alpha_t_stat,
+        "alpha_statistically_significant": bool(
+            alpha_t_stat is not None and alpha_t_stat >= 2.0),
         "current_streak": current_streak,
         "longest_win_streak": longest_win,
         "longest_loss_streak": longest_loss,
@@ -1731,8 +1859,17 @@ def _build_trade_review(tracker: dict, episode_num: int | None = None) -> str:
         )
 
     direction = "gained" if pnl_pct >= 0 else "lost"
+    stop_note = ""
+    if last.get("stopped_out"):
+        stop_note = (
+            f"**Stopped out:** the narrated stop-loss "
+            f"(${_finite(last.get('stop_price')):.2f}) was breached and the "
+            f"position exited at the stop — say so plainly; stop discipline "
+            f"working as designed is a teachable win.\n"
+        )
     return (
         f"**Last {type_label}:** {symbol} — {strategy}\n"
+        f"{stop_note}"
         f"**Entry:** ${entry:.2f} ({entry_label}) → **Exit:** ${exit_:.2f} ({exit_label})\n"
         f"**Result:** {direction} {abs(pnl_pct):.2f}% (${pnl_dollars:+.2f} on $1,000 position)\n"
         f"**Running Total:** ${summary.get('cumulative_pnl', 0):.2f} across "
@@ -1805,6 +1942,23 @@ def _build_benchmark_block(tracker: dict) -> str:
                 + ". NASDAQ stays the headline benchmark; mention the sweep "
                   "at most once per episode. "
             )
+        t_stat = summary.get("alpha_t_stat")
+        if t_stat is not None:
+            if summary.get("alpha_statistically_significant"):
+                matched_line += (
+                    f"STATISTICAL CONFIDENCE: per-trade alpha t-stat "
+                    f"{t_stat:+.2f} across {matched_n} trades — the edge is "
+                    f"statistically meaningful (~95%+); you may say the "
+                    f"record shows genuine outperformance. "
+                )
+            else:
+                matched_line += (
+                    f"STATISTICAL CONFIDENCE: per-trade alpha t-stat "
+                    f"{t_stat:+.2f} across {matched_n} trades — NOT yet "
+                    f"statistically distinguishable from luck; if the "
+                    f"episode claims outperformance, say 'early and not yet "
+                    f"statistically significant' in the same breath. "
+                )
     return (
         f"NASDAQ Composite ^IXIC: {close:,.0f} "
         f"(YTD {_sign(bench_ytd)}, since inception {_sign(bench_itd)}).\n"

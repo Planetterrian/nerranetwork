@@ -200,4 +200,50 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: 2026-07-04
+    pr: null
+    doc: docs/mit_snaptrade_live_trading_plan.md
+    reviewer: claude-code (fidelity batch, operator "continue improvements")
+    summary: >
+      Sim-fidelity + statistical-honesty batch. (1) Stop-loss enforcement:
+      the digest narrates a stop on every pick but the sim never enforced
+      it — stops are now parsed at pick time (never guessed), stored on
+      the trade AND in the trade signal (future bracket orders), and
+      enforced at evaluation against intraday lows (gap-aware fills;
+      entry-bar breaches never claimed; benchmark window follows the
+      shortened hold). (2) Per-trade alpha t-stat in the summary; the
+      scoreboard block instructs the model to hedge on air when the edge
+      is not yet statistically distinguishable from luck. (3) Dashboard
+      execution_health: signal freshness/staleness + shadow-ledger vitals
+      (decision counts, round trips, avg round-trip).
+    shipped:
+      - _extract_stop_loss + _stop_breach + enforcement in _close_trade;
+        stopped_out narration in the trade review; stop_loss in the trade
+        signal schema
+      - bars carry intraday lows (4th element, None-safe for legacy)
+      - alpha_t_stat + alpha_statistically_significant in summary +
+        honesty line in the benchmark block
+      - execution_health block in aggregate_mit_performance
+    deferred:
+      - "same-day (entry-bar) stop breaches — unknowable from daily bars;
+        revisit with intraday data if ever needed"
+      - "carried: slippage->sim cost model (~20 shadow round trips),
+        recompute --apply (operator), closing-price lesson retirement
+        (operator A/B)"
+    predictions:
+      - metric: trades with a parsed stop_loss on the trade record
+        baseline: "0 of 46 (never captured)"
+        expected: ">= 70% of new picks carry stop_loss (the Risk
+          Assessment states one nearly every episode); no trade ever
+          carries a stop above its entry"
+        verdict: pending
+        evidence: null
+      - metric: spoken outperformance claims without a significance hedge
+        baseline: "n/a (t-stat never computed)"
+        expected: "while alpha_statistically_significant is false, episodes
+          claiming outperformance also say it is early/not yet significant"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
 do_not_retry: []

@@ -111,7 +111,9 @@ class TestNaNImmunity:
                 yield _FakeIdx(datetime.date(2026, 6, 1)), {"Open": 430.0, "Close": 432.5}
 
         bars = mi._bars_from_history(_FakeHist())
-        assert bars == [(datetime.date(2026, 6, 1), 430.0, 432.5)]
+        # July 2026 stop-enforcement pass: bars carry a best-effort 4th
+        # element (intraday low; None when the column is absent).
+        assert bars == [(datetime.date(2026, 6, 1), 430.0, 432.5, None)]
 
     def test_sector_exposure_finite(self):
         tracker = _tracker_with_trades([

@@ -763,3 +763,164 @@ class TestPerformancePageMultiIndex:
         assert "Buy-and-Hold Gap vs NASDAQ" in src
         assert "not capital-matched" in src
         assert "Major-Index Sweep" in src
+
+
+# ---------------------------------------------------------------------------
+# Stop-loss enforcement (July 2026 fidelity pass)
+# ---------------------------------------------------------------------------
+
+_BARS_WITH_LOWS = [
+    (datetime.date(2026, 6, 29), 102.0, 103.0, 101.5),  # Mon
+    (datetime.date(2026, 6, 30), 103.5, 104.0, 103.0),  # Tue
+    (datetime.date(2026, 7, 1), 104.5, 96.0, 94.0),     # Wed — plunge
+    (datetime.date(2026, 7, 2), 95.5, 97.0, 95.0),      # Thu
+]
+
+
+class TestStopLossExtraction:
+    def test_dollar_stop_extracted(self):
+        digest = ("### Practice Investment of the Day\n"
+                  "**Risk Assessment:** Momentum could fade; stop-loss at "
+                  "$98.50, max acceptable loss 4%.\n")
+        assert mi._extract_stop_loss(digest) == {"price": 98.5}
+
+    def test_percent_stop_extracted(self):
+        digest = ("### Practice Investment of the Day\n"
+                  "**Risk Assessment:** Set a stop-loss of 5% below entry.\n")
+        assert mi._extract_stop_loss(digest) == {"pct": 5.0}
+
+    def test_no_stop_returns_none_never_guesses(self):
+        digest = ("### Practice Investment of the Day\n"
+                  "**Risk Assessment:** Volatility is elevated.\n")
+        assert mi._extract_stop_loss(digest) is None
+
+    def test_stop_outside_practice_section_ignored(self):
+        digest = ("### Investor Education\n"
+                  "A stop-loss at $50 protects capital.\n"
+                  "### Practice Investment of the Day\n"
+                  "**Risk Assessment:** thesis intact.\n")
+        assert mi._extract_stop_loss(digest) is None
+
+
+class TestStopBreach:
+    def test_breach_fills_at_stop_price(self):
+        entry_bar, exit_bar = _BARS_WITH_LOWS[0], _BARS_WITH_LOWS[-1]
+        breach = mi._stop_breach(_BARS_WITH_LOWS, entry_bar, exit_bar, 97.0)
+        assert breach == (datetime.date(2026, 7, 1), 97.0)
+
+    def test_gap_through_stop_fills_at_open(self):
+        bars = [
+            (datetime.date(2026, 6, 29), 102.0, 103.0, 101.5),
+            (datetime.date(2026, 6, 30), 90.0, 92.0, 89.0),  # gaps below stop
+        ]
+        breach = mi._stop_breach(bars, bars[0], bars[-1], 97.0)
+        assert breach == (datetime.date(2026, 6, 30), 90.0)  # open, not stop
+
+    def test_entry_bar_never_claims_same_day_breach(self):
+        bars = [(datetime.date(2026, 6, 29), 102.0, 103.0, 90.0)]
+        assert mi._stop_breach(bars, bars[0], bars[0], 97.0) is None
+
+    def test_no_breach_returns_none(self):
+        entry_bar, exit_bar = _BARS_WITH_LOWS[0], _BARS_WITH_LOWS[1]
+        assert mi._stop_breach(
+            _BARS_WITH_LOWS[:2], entry_bar, exit_bar, 90.0) is None
+
+    def test_close_trade_enforces_stop(self):
+        trade = {
+            "symbol": "GIS", "market": "NYSE", "trade_type": "weekly",
+            "date": "2026-06-29", "stop_loss": {"pct": 4.0},
+        }
+        with patch.object(mi, "_fetch_bars_for_trade",
+                          return_value=_BARS_WITH_LOWS), \
+             patch.object(mi, "_fetch_history_bars",
+                          return_value=_BARS_WITH_LOWS):
+            mi._close_trade(trade, {"metadata": {"position_size": 1000},
+                                    "trades": [], "summary": {}})
+        assert trade["stopped_out"] is True
+        # stop = 102 * 0.96 = 97.92; breached Wed (low 94), fills at stop.
+        assert trade["exit_price"] == 97.92
+        assert trade["exit_bar_date"] == "2026-07-01"
+        # Benchmark window matches the ACTUAL shortened holding period.
+        assert trade["nasdaq_exit_date"] == "2026-07-01"
+
+    def test_close_trade_without_stop_unchanged(self):
+        trade = {
+            "symbol": "GIS", "market": "NYSE", "trade_type": "weekly",
+            "date": "2026-06-29",
+        }
+        with patch.object(mi, "_fetch_bars_for_trade",
+                          return_value=_BARS_WITH_LOWS), \
+             patch.object(mi, "_fetch_history_bars",
+                          return_value=_BARS_WITH_LOWS):
+            mi._close_trade(trade, {"metadata": {"position_size": 1000},
+                                    "trades": [], "summary": {}})
+        assert "stopped_out" not in trade
+        assert trade["exit_bar_date"] == "2026-07-02"
+
+    def test_review_narrates_stop_out(self):
+        tracker = {
+            "metadata": {"position_size": 1000},
+            "trades": [{
+                "symbol": "GIS", "status": "closed", "trade_type": "weekly",
+                "strategy": "earnings play", "entry_price": 102.0,
+                "exit_price": 97.92, "pnl_pct": -4.0, "pnl_dollars": -40.0,
+                "stopped_out": True, "stop_price": 97.92,
+                "entry_bar_date": "2026-06-29", "exit_bar_date": "2026-07-01",
+            }],
+            "summary": {"cumulative_pnl": 0.0, "total_trades": 1, "wins": 0,
+                        "win_rate_pct": 0.0, "current_streak": -1},
+        }
+        review = mi._build_trade_review(tracker, episode_num=101)
+        assert "Stopped out" in review
+        assert "$97.92" in review
+
+
+class TestAlphaTStat:
+    def _closed(self, alpha):
+        return {"status": "closed", "pnl_pct": alpha, "pnl_dollars": alpha,
+                "alpha_pct": alpha, "nasdaq_return_pct": 0.0}
+
+    def test_consistent_edge_is_significant(self):
+        # 10 trades, alpha ~ +1% with tiny spread → t >> 2.
+        tracker = {"metadata": {"position_size": 1000}, "summary": {},
+                   "trades": [self._closed(1.0 + 0.01 * i) for i in range(10)]}
+        mi._recompute_summary(tracker)
+        assert tracker["summary"]["alpha_t_stat"] > 2
+        assert tracker["summary"]["alpha_statistically_significant"] is True
+
+    def test_noisy_record_is_not_significant(self):
+        tracker = {"metadata": {"position_size": 1000}, "summary": {},
+                   "trades": [self._closed(a) for a in
+                              (5.0, -4.0, 3.0, -3.5, 4.0, -4.2)]}
+        mi._recompute_summary(tracker)
+        assert tracker["summary"]["alpha_statistically_significant"] is False
+
+    def test_block_tells_the_model_to_hedge_when_not_significant(self):
+        tracker = mi._fresh_tracker()
+        tracker["benchmark"] = {"current_close": 25000.0, "ytd_pct": 11.0,
+                                "inception_to_date_pct": 15.0,
+                                "last_updated": "2026-07-04"}
+        tracker["summary"] = {
+            "matched_window_alpha_pct": 3.0, "matched_window_trades": 12,
+            "compounded_return_pct": 5.0,
+            "compounded_nasdaq_matched_pct": 2.0,
+            "alpha_t_stat": 0.9, "alpha_statistically_significant": False,
+        }
+        block = mi._build_benchmark_block(tracker)
+        assert "NOT yet statistically distinguishable from luck" in block
+
+    def test_signal_carries_stop_loss(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("NERRA_HOOKS_READONLY", raising=False)
+        config = SimpleNamespace(episode=SimpleNamespace(output_dir=str(tmp_path)))
+        digest = ("### Practice Investment of the Day\n"
+                  "**Trade Type:** Flash Trade\n"
+                  "**Today's Pick:** NVDA — Nvidia\n"
+                  "**Market:** NASDAQ\n"
+                  "**Strategy:** Momentum play\n"
+                  "**Risk Assessment:** stop-loss at $190.00.\n"
+                  "**Confidence Level:** High\n")
+        with patch.object(mi, "_probe_pick", return_value=True):
+            mi.post_generate(config, digest_text=digest, episode_num=102)
+        signal = json.loads(
+            (tmp_path / mi.TRADE_SIGNAL_LATEST_FILENAME).read_text())
+        assert signal["trade"]["stop_loss"] == {"price": 190.0}
