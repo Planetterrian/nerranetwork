@@ -42,13 +42,44 @@ class TestIsolationContract:
         assert offenders == [], (
             f"podcast-path files import execution/: {offenders}")
 
-    def test_phase1_has_no_order_placement_code(self):
-        # Trading code arrives in a later phase behind its own risk layer.
+    def test_order_placement_confined_to_live_path(self):
+        # Phase 3 (operator-directed) supersedes the Phase-1/2 no-placement
+        # contract with a narrower one: the SDK trading call exists ONLY in
+        # the snaptrade_client wrapper, and the only module invoking that
+        # wrapper is execution/live.py — whose first gate is the
+        # LIVE_TRADING_ENABLED kill switch. Shadow/mirror stay order-free.
         for f in sorted((_ROOT / "execution").rglob("*.py")):
-            text = f.read_text(encoding="utf-8").lower()
-            assert "place_order" not in text and "placeforceorder" not in text, (
-                f"{f.name} contains order-placement code — Phase 1 is "
-                f"read-only by contract")
+            text = f.read_text(encoding="utf-8")
+            if f.name == "snaptrade_client.py":
+                assert "place_force_order" in text  # the single SDK call site
+                continue
+            assert "place_force_order" not in text.lower(), (
+                f"{f.name} calls the SDK trading endpoint directly — only "
+                f"the snaptrade_client wrapper may")
+            if f.name == "live.py":
+                continue
+            assert "place_limit_order" not in text, (
+                f"{f.name} places orders — only execution/live.py may")
+
+    def test_live_entry_first_gate_is_the_kill_switch(self):
+        # With the switch off, run_live_entry must return 'disabled' BEFORE
+        # touching credentials, accounts, or quotes.
+        import datetime as _dt
+
+        class _Boom:
+            def __getattr__(self, name):
+                raise AssertionError(
+                    "live layer touched the client while disabled")
+
+        decision = __import__("execution.live", fromlist=["live"]).run_live_entry(
+            {"schema_version": 1, "action": "new_trade", "trade": {}},
+            {"orders": []}, {"orders": []},
+            RiskConfig(live_trading_enabled=False),
+            client=_Boom(),
+            now=_dt.datetime(2026, 7, 6, 13, 52,
+                             tzinfo=_dt.timezone.utc),
+        )
+        assert decision["decision"] == "disabled"
 
     def test_mirror_output_is_gitignored(self):
         # Public repo: balances/positions must never be committable.
@@ -341,3 +372,254 @@ class TestShadowExits:
             ledger, RiskConfig(), quote_fn=lambda s: None, now=self._NOW)
         assert exits == []
         assert len(ledger["orders"]) == 1  # nothing logged; retried later
+
+
+# ---------------------------------------------------------------------------
+# Live executor (Phase 3 — dormant by default)
+# ---------------------------------------------------------------------------
+
+from execution import live  # noqa: E402
+
+
+class _FakeClient:
+    """Configured SnapTrade client with scriptable placement results."""
+
+    def __init__(self, *, accounts=None, positions=None,
+                 place_result=None, place_raises=None):
+        self.accounts = accounts if accounts is not None else [{
+            "id": "acct-webull", "institution_name": "Webull",
+            "balance": {"total": {"amount": 5000.0, "currency": "USD"}},
+        }]
+        self.positions = positions or []
+        self.place_result = place_result or {
+            "brokerage_order_id": "bo-1", "status": "ACCEPTED"}
+        self.place_raises = place_raises
+        self.placed = []
+
+    def is_configured(self):
+        return True
+
+    def list_accounts(self):
+        return self.accounts
+
+    def account_positions(self, account_id):
+        return self.positions
+
+    def place_limit_order(self, **kwargs):
+        if self.place_raises:
+            raise self.place_raises
+        self.placed.append(kwargs)
+        return dict(self.place_result)
+
+
+_LIVE_NOW = datetime.datetime(2026, 7, 6, 13, 52,
+                              tzinfo=datetime.timezone.utc)  # Monday
+
+
+def _live_config(**kw):
+    return RiskConfig(live_trading_enabled=True, **kw)
+
+
+def _live_signal(**overrides):
+    sig = _signal(**overrides)
+    sig["generated_at"] = "2026-07-06"
+    sig["trade"]["pick_date"] = "2026-07-06"
+    return sig
+
+
+class TestLiveEntry:
+    def test_places_integer_share_marketable_limit(self, monkeypatch):
+        monkeypatch.delenv("NOTIFICATION_WEBHOOK_URL", raising=False)
+        client = _FakeClient()
+        state, ledger = live.load_state(Path("/nope")), live.load_ledger(Path("/nope"))
+        decision = live.run_live_entry(
+            _live_signal(), state, ledger, _live_config(),
+            client=client, quote_fn=lambda s: 100.0, now=_LIVE_NOW)
+        assert decision["decision"] == "placed"
+        order = client.placed[0]
+        assert order["action"] == "BUY"
+        assert order["symbol"] == "NVDA"
+        assert order["units"] == 2            # int(250 // 100.5)
+        assert order["limit_price"] == 100.5  # quote * 1.005
+        assert order["client_order_id"] == _live_signal()["trade"]["client_order_id"]
+        # Committed index carries ids/status only — no dollar amounts.
+        idx = state["orders"][0]
+        assert "limit_price" not in idx and "units" not in idx
+        # Full ledger carries the audit detail.
+        assert ledger["orders"][0]["units"] == 2
+        assert ledger["orders"][0]["account_id"] == "acct-webull"
+
+    def test_duplicate_signal_not_replaced(self, monkeypatch):
+        monkeypatch.delenv("NOTIFICATION_WEBHOOK_URL", raising=False)
+        client = _FakeClient()
+        state, ledger = live.load_state(Path("/nope")), live.load_ledger(Path("/nope"))
+        live.run_live_entry(_live_signal(), state, ledger, _live_config(),
+                            client=client, quote_fn=lambda s: 100.0, now=_LIVE_NOW)
+        second = live.run_live_entry(
+            _live_signal(), state, ledger, _live_config(),
+            client=client, quote_fn=lambda s: 100.0, now=_LIVE_NOW)
+        assert second["decision"] == "skipped"
+        assert any("duplicate" in r for r in second["skip_reasons"])
+        assert len(client.placed) == 1
+
+    def test_price_above_cap_skips(self, monkeypatch):
+        monkeypatch.delenv("NOTIFICATION_WEBHOOK_URL", raising=False)
+        client = _FakeClient()
+        state, ledger = live.load_state(Path("/nope")), live.load_ledger(Path("/nope"))
+        decision = live.run_live_entry(
+            _live_signal(), state, ledger, _live_config(),
+            client=client, quote_fn=lambda s: 1200.0, now=_LIVE_NOW)
+        assert decision["decision"] == "skipped"
+        assert any("position cap" in r for r in decision["skip_reasons"])
+        assert client.placed == []
+
+    def test_no_quote_never_places_blind(self, monkeypatch):
+        monkeypatch.delenv("NOTIFICATION_WEBHOOK_URL", raising=False)
+        client = _FakeClient()
+        state, ledger = live.load_state(Path("/nope")), live.load_ledger(Path("/nope"))
+        decision = live.run_live_entry(
+            _live_signal(), state, ledger, _live_config(),
+            client=client, quote_fn=lambda s: None, now=_LIVE_NOW)
+        assert decision["decision"] == "skipped"
+        assert client.placed == []
+
+    def test_no_matching_account_skips(self, monkeypatch):
+        monkeypatch.delenv("NOTIFICATION_WEBHOOK_URL", raising=False)
+        client = _FakeClient(accounts=[{
+            "id": "a", "institution_name": "Questrade",
+            "balance": {"total": {"amount": 1.0, "currency": "CAD"}}}])
+        state, ledger = live.load_state(Path("/nope")), live.load_ledger(Path("/nope"))
+        decision = live.run_live_entry(
+            _live_signal(), state, ledger, _live_config(),
+            client=client, quote_fn=lambda s: 100.0, now=_LIVE_NOW)
+        assert decision["decision"] == "skipped"
+        assert any("no matching account" in r for r in decision["skip_reasons"])
+
+    def test_two_consecutive_rejects_halt_the_layer(self, monkeypatch):
+        monkeypatch.delenv("NOTIFICATION_WEBHOOK_URL", raising=False)
+        state, ledger = live.load_state(Path("/nope")), live.load_ledger(Path("/nope"))
+        client = _FakeClient(place_result={"status": "REJECTED"})
+        sig1 = _live_signal()
+        live.run_live_entry(sig1, state, ledger, _live_config(),
+                            client=client, quote_fn=lambda s: 100.0, now=_LIVE_NOW)
+        assert state["halted"] is False
+        sig2 = _live_signal(
+            trade_overrides={"client_order_id": "22222222-3333-4444-5555-666666666666"})
+        # Second reject on a fresh day (daily cap would otherwise block).
+        later = _LIVE_NOW + datetime.timedelta(days=1)
+        sig2["generated_at"] = "2026-07-07"
+        live.run_live_entry(sig2, state, ledger, _live_config(),
+                            client=client, quote_fn=lambda s: 100.0, now=later)
+        assert state["halted"] is True
+        # Third attempt: refused outright.
+        sig3 = _live_signal(
+            trade_overrides={"client_order_id": "33333333-4444-5555-6666-777777777777"})
+        sig3["generated_at"] = "2026-07-08"
+        decision = live.run_live_entry(
+            sig3, state, ledger, _live_config(), client=client,
+            quote_fn=lambda s: 100.0,
+            now=_LIVE_NOW + datetime.timedelta(days=2))
+        assert decision["decision"] == "halted"
+
+    def test_open_position_cap_blocks_second_entry(self, monkeypatch):
+        monkeypatch.delenv("NOTIFICATION_WEBHOOK_URL", raising=False)
+        client = _FakeClient()
+        state, ledger = live.load_state(Path("/nope")), live.load_ledger(Path("/nope"))
+        live.run_live_entry(_live_signal(), state, ledger, _live_config(),
+                            client=client, quote_fn=lambda s: 100.0, now=_LIVE_NOW)
+        sig2 = _live_signal(
+            trade_overrides={"client_order_id": "22222222-3333-4444-5555-666666666666"})
+        sig2["generated_at"] = "2026-07-07"
+        decision = live.run_live_entry(
+            sig2, state, ledger, _live_config(), client=client,
+            quote_fn=lambda s: 100.0,
+            now=_LIVE_NOW + datetime.timedelta(days=1))
+        assert decision["decision"] == "skipped"
+        assert any("open-position cap" in r for r in decision["skip_reasons"])
+
+
+class TestLiveExits:
+    def _state_with_entry(self, pick_date="2026-07-06"):
+        state = live.load_state(Path("/nope"))
+        ledger = live.load_ledger(Path("/nope"))
+        state["orders"].append({
+            "kind": "entry", "client_order_id": "e1", "symbol": "NVDA",
+            "trade_type": "flash", "pick_date": pick_date,
+            "status": "EXECUTED", "logged_at": f"{pick_date}T13:52:00+00:00",
+        })
+        ledger["orders"].append({
+            "kind": "entry", "client_order_id": "e1", "symbol": "NVDA",
+            "mode": "live", "account_id": "acct-webull", "units": 2,
+            "limit_price": 100.5,
+        })
+        return state, ledger
+
+    def _position(self, units):
+        return [{"symbol": {"symbol": {"symbol": "NVDA"}}, "units": units}]
+
+    def test_due_exit_sells_held_units(self, monkeypatch):
+        monkeypatch.delenv("NOTIFICATION_WEBHOOK_URL", raising=False)
+        state, ledger = self._state_with_entry()
+        client = _FakeClient(positions=self._position(2))
+        exits = live.run_live_exits(
+            state, ledger, _live_config(), client=client,
+            quote_fn=lambda s: 110.0,
+            now=datetime.datetime(2026, 7, 7, 19, 45,
+                                  tzinfo=datetime.timezone.utc))
+        assert len(exits) == 1
+        order = client.placed[0]
+        assert order["action"] == "SELL"
+        assert order["units"] == 2
+        assert order["limit_price"] == round(110.0 * 0.995, 2)
+        assert order["client_order_id"] == "e1-exit"
+
+    def test_unfilled_entry_marks_flat_instead_of_selling(self, monkeypatch):
+        monkeypatch.delenv("NOTIFICATION_WEBHOOK_URL", raising=False)
+        state, ledger = self._state_with_entry()
+        client = _FakeClient(positions=self._position(0))
+        exits = live.run_live_exits(
+            state, ledger, _live_config(), client=client,
+            quote_fn=lambda s: 110.0,
+            now=datetime.datetime(2026, 7, 7, 19, 45,
+                                  tzinfo=datetime.timezone.utc))
+        assert exits == []
+        assert client.placed == []
+        assert state["orders"][0]["exited"] is True
+        assert "no position" in state["orders"][0]["exit_note"]
+
+    def test_not_due_yet_no_sell(self, monkeypatch):
+        monkeypatch.delenv("NOTIFICATION_WEBHOOK_URL", raising=False)
+        state, ledger = self._state_with_entry()
+        client = _FakeClient(positions=self._position(2))
+        exits = live.run_live_exits(
+            state, ledger, _live_config(), client=client,
+            quote_fn=lambda s: 110.0,
+            now=datetime.datetime(2026, 7, 6, 19, 45,
+                                  tzinfo=datetime.timezone.utc))
+        assert exits == [] and client.placed == []
+
+    def test_disabled_layer_never_sells(self):
+        state, ledger = self._state_with_entry()
+        client = _FakeClient(positions=self._position(2))
+        exits = live.run_live_exits(
+            state, ledger, RiskConfig(live_trading_enabled=False),
+            client=client, quote_fn=lambda s: 110.0,
+            now=datetime.datetime(2026, 7, 7, 19, 45,
+                                  tzinfo=datetime.timezone.utc))
+        assert exits == [] and client.placed == []
+
+
+class TestLiveStatePrivacy:
+    def test_live_ledger_is_gitignored(self):
+        result = subprocess.run(
+            ["git", "check-ignore",
+             "digests/modern_investing/live_ledger.json"],
+            cwd=_ROOT, capture_output=True, text=True)
+        assert result.returncode == 0, (
+            "live_ledger.json must never be committable (real account "
+            "activity, public repo)")
+
+    def test_executor_script_dormant_without_kill_switch(self):
+        src = (_ROOT / "scripts/mit_live_executor.py").read_text()
+        assert "live layer dormant" in src
+        assert "return 0" in src

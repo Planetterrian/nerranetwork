@@ -194,11 +194,32 @@ shadow-vs-sim P&L gap. Entry timing note: the sim enters at the
 pick-date OPEN; shadow quotes at ~9:50 ET — the measured gap between
 them is exactly the execution cost the sim currently ignores.
 
-**Phase 3 — micro-live (operator flips `LIVE_TRADING_ENABLED=1`).**
-Real orders at $150–250, Webull US only at first (single account, USD,
-simplest), 20–30 trades. Every order → notification with fill vs sim
-delta. Halt automatically on: 2 consecutive rejected orders, daily loss
-> cap, connection broken, or sim-vs-live divergence > threshold.
+**Phase 3 — micro-live (CODE SHIPPED July 4, DORMANT; operator arms it).**
+`execution/live.py` + `scripts/mit_live_executor.py` +
+`.github/workflows/mit-live-executor.yml` (13:52 UTC entries / 19:45 UTC
+≈ 3:45 PM ET exits). Gate order, each fail-closed: kill switch
+(`LIVE_TRADING_ENABLED` repo **variable** = "1"; while unset every run
+is a logged no-op that never loads credentials) → SnapTrade config →
+self-halt state → the shared risk gates → daily-order + open-position
+caps → resolvable account (institution match on the signal's routing
+hint, currency-preferring; no match = no order) → live quote (no quote =
+never place blind). Orders are integer-share marketable limits under
+`MIT_MAX_POSITION_USD` (default $250; a $1,200 stock correctly skips),
+idempotent via the signal's `client_order_id`. Exits sell at most the
+units the account actually holds (an expired unfilled Day entry marks
+itself flat instead of shorting). **Two consecutive rejected/errored
+placements self-halt the layer** (committed
+`live_execution_state.json`; operator clears it after investigating) —
+exits still run while halted so no position goes unmanaged. Every
+placement/failure/halt notifies. Privacy split: the committed state file
+carries ids/status only; the full audit ledger (`live_ledger.json`,
+account ids + amounts) is gitignored and uploaded as a 90-day CI
+artifact. To arm: set the 4 SnapTrade secrets + repo variable
+`LIVE_TRADING_ENABLED=1` (optionally `MIT_MAX_POSITION_USD`). The
+original sequencing advice stands: arm only after the shadow record and
+the clean sim record support it. Remaining v1.1 items: realized
+daily-loss halt (needs fill data), native bracket/stop attachment once
+the broker matrix confirms Stop orders, sim-vs-live divergence alarm.
 
 **Phase 4 — scale decision (operator).** Add Wealthsimple/TSX routing,
 raise size toward $1,000 — only if Phase 3's matched-window alpha net of

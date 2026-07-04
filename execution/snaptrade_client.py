@@ -139,3 +139,52 @@ def recent_orders(account_id: str) -> list[dict]:
     resp = snaptrade.account_information.get_user_account_orders(
         account_id=account_id, **_user_kwargs())
     return list(_body(resp) or [])
+
+
+# ---------------------------------------------------------------------------
+# Trading (Phase 3 — reachable ONLY through execution/live.py, whose first
+# gate is the LIVE_TRADING_ENABLED kill switch; see execution/__init__.py)
+# ---------------------------------------------------------------------------
+
+def place_limit_order(
+    *,
+    account_id: str,
+    symbol: str,
+    action: str,
+    units: float,
+    limit_price: float,
+    client_order_id: str | None = None,
+    time_in_force: str = "Day",
+) -> dict:
+    """Place a Limit/Day equity order; returns the order confirmation.
+
+    Thin pass-through to SnapTrade's place-equity-order endpoint. The
+    ``client_order_id`` makes placement idempotent server-side — a
+    retried workflow re-sends the same id instead of double-buying.
+    All risk decisions happen in ``execution/live.py`` BEFORE this call;
+    this function never adjusts an order.
+    """
+    snaptrade = _sdk()
+    kwargs = dict(
+        _user_kwargs(),
+        account_id=account_id,
+        action=action,
+        symbol=symbol,
+        order_type="Limit",
+        time_in_force=time_in_force,
+        units=units,
+        price=limit_price,
+    )
+    if client_order_id:
+        kwargs["client_order_id"] = client_order_id
+    resp = snaptrade.trading.place_force_order(**kwargs)
+    return dict(_body(resp) or {})
+
+
+def order_status(account_id: str, brokerage_order_id: str) -> dict:
+    """Best-effort status of a previously placed order."""
+    snaptrade = _sdk()
+    resp = snaptrade.account_information.get_user_account_order_detail(
+        account_id=account_id, brokerage_order_id=brokerage_order_id,
+        **_user_kwargs())
+    return dict(_body(resp) or {})

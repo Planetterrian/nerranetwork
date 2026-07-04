@@ -246,4 +246,45 @@ reviews:
         evidence: null
     agent_cost_usd: null
 
+  - date: 2026-07-04
+    pr: null
+    doc: docs/mit_snaptrade_live_trading_plan.md
+    reviewer: claude-code (operator "build the next layer")
+    summary: >
+      Phase 3 live executor shipped DORMANT. execution/live.py places
+      integer-share marketable-limit BUYs from the trade signal and SELLs
+      on the sim's exit calendar, behind ordered fail-closed gates: kill
+      switch (repo var LIVE_TRADING_ENABLED; unset = no-op that never
+      loads credentials) -> SnapTrade config -> self-halt (2 consecutive
+      rejects; exits still run while halted) -> shared risk gates ->
+      daily/open-position caps -> account resolution -> live quote.
+      Idempotent client_order_id; unfilled Day entries mark flat instead
+      of shorting; every action notifies. Privacy: committed
+      live_execution_state.json is id/status-only; full live_ledger.json
+      gitignored + CI artifact. Phase-1/2 no-placement contract
+      superseded by a narrower pinned one (SDK call only in the wrapper,
+      wrapper called only by live.py, kill switch first — poisoned-client
+      test).
+    shipped:
+      - execution/live.py (run_live_entry/run_live_exits + halt logic)
+      - snaptrade_client.place_limit_order/order_status (single SDK
+        trading call site)
+      - scripts/mit_live_executor.py + mit-live-executor.yml (13:52
+        entries / 19:45 exits slots)
+      - contract re-pin + 13 live-layer drift guards
+    deferred:
+      - "arming is the OPERATOR's call, gated on the shadow record + clean
+        sim record per the plan; set 4 secrets + LIVE_TRADING_ENABLED=1"
+      - "v1.1: realized daily-loss halt (needs fill polling), native
+        bracket/stop attachment (broker-matrix dependent), sim-vs-live
+        divergence alarm"
+    predictions:
+      - metric: mit-live-executor workflow runs while dormant
+        baseline: "workflow new"
+        expected: "every scheduled run green with 'live layer dormant'
+          no-op; zero SnapTrade calls until the operator arms it"
+        verdict: pending
+        evidence: null
+    agent_cost_usd: null
+
 do_not_retry: []
