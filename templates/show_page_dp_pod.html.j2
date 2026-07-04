@@ -180,6 +180,40 @@
   .dpc-lever .lv-did { background:var(--dp-green); color:#06130b; }
   .dpc-lever .lv-listen { border:1px solid var(--dp-line); color:var(--dp-cream); }
 
+  /* Mindset shelf */
+  .dpc-mindsets { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:1.1rem; margin-top:2rem; }
+  .dpc-mindset { background:linear-gradient(180deg, rgba(232,196,104,0.07), rgba(18,183,106,0.04));
+    border:1px solid rgba(232,196,104,0.28); border-radius:16px; padding:1.5rem 1.4rem;
+    display:flex; flex-direction:column; gap:0.7rem; position:relative; }
+  .dpc-mindset::before { content:"\201C"; position:absolute; top:0.4rem; right:1rem;
+    font-family:'Source Serif 4',Georgia,serif; font-size:3rem; color:rgba(232,196,104,0.25);
+    line-height:1; }
+  .dpc-mindset .ms-ep { font-size:0.68rem; letter-spacing:0.12em; text-transform:uppercase;
+    color:var(--dp-gold); font-weight:700; }
+  .dpc-mindset p { margin:0; color:var(--nn-text-muted,#9aa7b8); font-size:0.92rem;
+    line-height:1.65; flex:1; }
+  .dpc-mindset .ms-link { font-size:0.82rem; font-weight:700; color:var(--dp-cream);
+    text-decoration:none; border:1px solid var(--dp-line); border-radius:999px;
+    padding:0.45rem 0.95rem; align-self:flex-start; }
+  .dpc-mindset .ms-link:hover { background:rgba(18,183,106,0.1); }
+
+  /* Dispatch wall */
+  .dpc-dispatch-wall { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:1.1rem; margin:2rem 0; text-align:left; }
+  .dpc-dispatch { background:rgba(18,183,106,0.05); border:1px solid var(--dp-line);
+    border-radius:16px; padding:1.4rem; display:flex; flex-direction:column; gap:0.6rem; }
+  .dpc-dispatch .dw-name { font-family:'Source Serif 4',Georgia,serif; font-size:1.02rem;
+    color:var(--dp-cream); }
+  .dpc-dispatch .dw-name small { font-size:0.75rem; color:#7ba893; font-family:'DM Sans',system-ui,sans-serif;
+    margin-left:0.4rem; }
+  .dpc-dispatch .dw-did { margin:0; color:var(--dp-cream); font-size:0.92rem; line-height:1.6; }
+  .dpc-dispatch .dw-numbers { margin:0; font-size:0.85rem; color:var(--dp-green);
+    line-height:1.55; font-variant-numeric:tabular-nums; }
+  .dpc-dispatch .dw-numbers b { font-weight:700; }
+  .dpc-dispatch .dw-shoutout { margin:0; font-size:0.84rem; color:#c9b98a; line-height:1.55;
+    font-style:italic; }
+
   /* Dispatch */
   .dpc-grammar { display:grid; grid-template-columns:repeat(3,1fr); gap:1.1rem; margin:2rem 0; }
   .dpc-grammar .g { border:1px dashed rgba(232,196,104,0.35); border-radius:14px; padding:1.2rem;
@@ -471,6 +505,34 @@
     </div>
   </section>
 
+  <!-- ================= The Mindset Shelf ================= -->
+  <section class="dpc-section dpc-center" id="mindset">
+    <span class="dpc-eyebrow">The Mindset Shelf</span>
+    <h2 class="dpc-h2">One mental rep a day.</h2>
+    <p class="dpc-sub">Every episode's Think Positive segment leaves a principle on the shelf —
+      action, creativity, accountability, from thinkers who earned it. Pick one up between
+      episodes and practice it.</p>
+    <div class="dpc-mindsets" style="text-align:left;">
+      {% if dp_mindsets %}
+        {% for ms in dp_mindsets %}
+        <div class="dpc-mindset">
+          <span class="ms-ep">Episode {{ ms.episode_num }}</span>
+          <p>{{ ms.mindset_text }}</p>
+          <a class="ms-link" href="{{ path_prefix }}{{ ms.blog_url }}">Hear the full segment →</a>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="dpc-mindset">
+          <span class="ms-ep">The shelf opens with Episode 1</span>
+          <p>Each daily briefing ends its Think Positive segment with one concrete mental
+          rep — a small, practical exercise you can actually try that day. They'll collect
+          here as episodes ship, so the shelf becomes the club's shared practice library.</p>
+          <a class="ms-link" href="#pledge">Get Episode 1 first →</a>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
   <!-- ================= The Dispatch ================= -->
   <section class="dpc-section dpc-center" id="dispatch">
     <span class="dpc-eyebrow">The Do Positive Dispatch</span>
@@ -478,6 +540,18 @@
     <p class="dpc-sub">Dispatches follow the club format — three parts, honest numbers, real
       actions only. We will never invent listener mail, which means every dispatch we read
       is a real member doing a real thing.</p>
+    {% if dp_dispatches %}
+    <div class="dpc-dispatch-wall" aria-label="Dispatch wall — what members actually did">
+      {% for dw in dp_dispatches %}
+      <div class="dpc-dispatch">
+        <div class="dw-name">{{ dw.name }}{% if dw.date %}<small>{{ dw.date }}</small>{% endif %}</div>
+        <p class="dw-did">{{ dw.did }}</p>
+        {% if dw.numbers %}<p class="dw-numbers"><b>The honest numbers:</b> {{ dw.numbers }}</p>{% endif %}
+        {% if dw.shoutout %}<p class="dw-shoutout">“{{ dw.shoutout }}”</p>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
     <div class="dpc-grammar">
       <div class="g"><div class="gt">1 · What you did</div>
         <p>The action, plainly. “Sealed the three worst drafts in my house.”</p></div>
