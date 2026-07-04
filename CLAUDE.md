@@ -25,10 +25,14 @@ and (where enabled) post to X/Twitter via `engine/publisher.post_to_x()`.
 | The DP Pod | — | `shows/dp_pod.yaml` | Daily | — (X disabled) | Grok TTS (two-voice: Patrick + Dan) |
 | The Age of AI | — | `shows/age_of_ai.yaml` | When an interview is ready (Nerra Voices pipeline, NOT run_show) | — (X disabled) | Real guest phone audio + Mira narration (Grok voice `ara`) |
 
-> Sunday recap: shows on a daily cadence with `weekly_recap_on_sunday: true`
-> in their YAML have their Sunday slot rewritten as a weekly-recap episode
-> synthesised from the past 7 days via the content lake — the daily news
-> fetch is skipped. See landmine #19.
+> Weekly-summary segment (July 2026): shows on a daily cadence with
+> `weekly_summary_segment: true` in their YAML run a NORMAL daily episode on
+> Sunday that ALSO includes one short "week in review" segment synthesised
+> from the past 7 days via the content lake. (This replaced the retired full
+> Sunday weekly-recap mode, which skipped the daily news fetch and turned the
+> whole Sunday episode into a look-back.) The segment is appended to the
+> podcast-only copy of the digest, so no host-instruction text reaches the
+> blog / RSS. See landmine #19.
 
 **Science That Changes Everything** (`digests/science_that_changes.py`, ~83 lines)
 is a standalone X-posting script, not a podcast show.
@@ -2233,26 +2237,38 @@ decision); everything else has a live status card.
     The `ELEVENLABS_API_KEY` and legacy ElevenLabs settings in
     `_defaults.yaml` remain untouched — separate concern.
 
-19. **Schedule overhaul + Sunday weekly recap (May 2026)** — 7 shows
-    moved to daily cadence (Omni View, Planetterrian, Fascinating
-    Frontiers, Models & Agents, MAB, Modern Investing, Tesla). Cron
-    times shifted +1h across the board to widen the per-slot window;
-    last show now finishes ~12 UTC (~8 AM ET). The `weekly_recap_on_sunday:
-    true` flag in each daily show YAML opts that show into a Sunday-only
-    pipeline branch in `run_show.py`: when today is Sunday and the flag
-    is set, the runner skips the news fetch + LLM digest stage and instead
-    calls `engine.weekly_recap.build_weekly_recap_digest` to synthesise a
-    digest-shaped summary from the past 7 days of episodes pulled from
-    the content lake. The synthetic digest is fed through the unchanged
-    podcast prompt + TTS pipeline so listeners get the same narrative
-    quality as a daily episode. Modern Investing additionally has a
-    Saturday "weekend mode" instruction in its podcast prompt covering
-    international markets, crypto, lessons learned, and what to prepare
-    for in the coming weeks. Drift guards in `tests/test_schedule.py`
-    pin: cron consistency, the 7 daily shows carrying the recap flag,
-    alt-cadence shows NOT carrying it, and the YouTube quota cap
-    (the EN full-format pair is Tesla + SpaceX as of June 14 2026,
-    MAB paused — see also landmine #20).
+19. **Schedule overhaul + weekly-summary segment (May 2026; restructured
+    July 2026)** — 7 shows moved to daily cadence (Omni View,
+    Planetterrian, Fascinating Frontiers, Models & Agents, MAB, Modern
+    Investing, Tesla; SpaceX joined later). Cron times shifted +1h across
+    the board to widen the per-slot window; last show now finishes ~12 UTC
+    (~8 AM ET). **July 2026 restructure:** the full Sunday weekly-recap
+    mode was RETIRED. Sunday is no longer a special episode — every daily
+    show runs a NORMAL daily episode every day, and shows with
+    `weekly_summary_segment: true` (was `weekly_recap_on_sunday`) simply
+    include ONE short "week in review" *segment* on Sunday. Mechanically:
+    `_resolve_weekly_summary` in `run_show.py` gates on Sunday + the flag
+    + not-a-deep-dive; when true, the daily digest generates as usual and
+    `engine.weekly_recap.build_weekly_summary_segment` synthesises a
+    compact host-instruction block from the past 7 days in the content
+    lake. That block is appended to the **podcast-only** copy of the digest
+    (`clean_digest`, after cleanup) — NOT to the published `x_thread` — so
+    the host weaves a brief recap into the episode while zero instruction
+    text reaches the blog / RSS / newsletter. A thin content lake (<2
+    episodes in window) returns `None` → a plain daily episode with no
+    segment. The retired full-recap machinery (digest short-circuit,
+    daily-validator skip, and the recap "republish from clean narrative"
+    step) is gone; the video recap-scene-reuse path in `_publish_youtube`
+    remains as a dormant default-off capability. Prompt/audio-affecting on
+    Sunday → A/B-listen per landmine #17. Modern Investing additionally has
+    a Saturday "weekend mode" instruction in its podcast prompt covering
+    international markets, crypto, lessons learned, and what to prepare for
+    in the coming weeks. Drift guards in `tests/test_schedule.py` +
+    `tests/test_weekly_summary_segment.py` pin: cron consistency, the daily
+    shows carrying the weekly-summary flag, alt-cadence/narrative shows NOT
+    carrying it, the segment shape/append point, and that the retired
+    full-recap machinery does not return. The legacy `weekly_recap_on_sunday`
+    YAML key is still read as a back-compat fallback in `engine/config.py`.
 
 20. **YouTube quota cap (May 2026; four-show expansion June 2026)** —
     the YouTube Data API quota is 10,000 units/day **per channel**;

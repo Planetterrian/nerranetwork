@@ -1,10 +1,11 @@
-"""Guards for the Sunday weekly-recap body sanitizer.
+"""Guards for the weekly-summary body sanitizer.
 
-June 2026: the Tesla Sunday recap newsletter shipped with raw source HTML
+June 2026: Sunday recap bodies shipped with raw source HTML
 (`<a href=...>Google News</a>`), markdown source links, "Read more (sources)"
-lines, and "REAL-TIME TSLA price:" headers leaking out of the per-episode
-bodies that ``build_weekly_recap_digest`` stitches together. These pin the
-scrub so the regression can't return.
+lines, and "REAL-TIME TSLA price:" headers leaking out of per-episode hooks.
+``_sanitize_recap_body`` scrubs them before they reach the host; it is still
+used to clean episode hooks in the July 2026 weekly-summary segment. These
+pin the scrub so the regression can't return.
 """
 
 from engine.weekly_recap import _sanitize_recap_body

@@ -5,11 +5,12 @@ Covers:
 - Every cron line in ``.github/workflows/run-show.yml`` has a matching
   entry in the gate's ``CRON_MAP`` (drift between the two would silently
   break a show — schedule fires but nothing runs).
-- The 7 daily *news* shows carry ``weekly_recap_on_sunday: true`` in their
+- The 7 daily *news* shows carry ``weekly_summary_segment: true`` in their
   YAML; the alt-cadence shows do NOT (Привет, ФП, Env Intel, UC).
 - ``first_principles`` is a daily *narrative* show: it runs every day
   (``day_filter`` None) but, like Unintended Consequences, deliberately does
-  NOT carry the Sunday-recap flag (its topic queue is evergreen, not news).
+  NOT carry the weekly-summary-segment flag (its topic queue is evergreen,
+  not news).
 - Only Tesla and Models & Agents for Beginners have
   ``youtube.enabled: true`` (post quota-cap).
 """
@@ -119,7 +120,7 @@ class TestCronConsistency:
 
 
 # ---------------------------------------------------------------------------
-# Sunday weekly-recap flag
+# Sunday weekly-summary-segment flag
 # ---------------------------------------------------------------------------
 
 DAILY_SHOWS = [
@@ -134,28 +135,28 @@ ALT_CADENCE_SHOWS = [
 
 
 @pytest.mark.parametrize("slug", DAILY_SHOWS)
-def test_daily_show_has_weekly_recap_flag(slug):
-    """Every show that runs daily must opt in to Sunday recap mode —
-    otherwise Sunday's slot tries to fetch news for a show that may
-    not have anything fresh and the recap never happens."""
+def test_daily_show_has_weekly_summary_flag(slug):
+    """Every show that runs daily must opt in to the Sunday weekly-summary
+    segment — otherwise its Sunday episode ships without the short
+    'week in review' beat listeners expect on a daily news show."""
     cfg_path = SHOWS_DIR / f"{slug}.yaml"
     cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8"))
-    assert cfg.get("weekly_recap_on_sunday") is True, (
+    assert cfg.get("weekly_summary_segment") is True, (
         f"{slug} runs daily but is missing "
-        f"`weekly_recap_on_sunday: true` — Sunday slot would fetch "
-        f"news instead of recapping."
+        f"`weekly_summary_segment: true` — Sunday episode would ship "
+        f"without a weekly-summary segment."
     )
 
 
 @pytest.mark.parametrize("slug", ALT_CADENCE_SHOWS)
 def test_alt_cadence_show_does_not_recap(slug):
     """Shows on alt cadence (even days, odd weekdays) shouldn't have
-    the recap flag — they don't run every Sunday so the flag is
+    the weekly-summary flag — they don't run every Sunday so the flag is
     misleading drift."""
     cfg_path = SHOWS_DIR / f"{slug}.yaml"
     cfg = yaml.safe_load(cfg_path.read_text(encoding="utf-8"))
-    assert not cfg.get("weekly_recap_on_sunday", False), (
-        f"{slug} is alt-cadence but has weekly_recap_on_sunday=true — "
+    assert not cfg.get("weekly_summary_segment", False), (
+        f"{slug} is alt-cadence but has weekly_summary_segment=true — "
         f"either flip the cadence to daily or drop the flag."
     )
 
@@ -171,16 +172,16 @@ DAILY_NARRATIVE_SHOWS = ["first_principles", "unintended_consequences"]
 def test_daily_narrative_show_runs_daily_without_recap(slug):
     """A daily *narrative* show runs every day (``day_filter`` None in
     CRON_MAP) but is topic-queue-driven and evergreen, so it must NOT
-    carry ``weekly_recap_on_sunday`` (there's no week of news to recap)
+    carry ``weekly_summary_segment`` (there's no week of news to recap)
     and MUST declare ``narrative_mode: true`` with a topic queue. This
     documents why first_principles is intentionally absent from both
-    DAILY_SHOWS (recap-required) and ALT_CADENCE_SHOWS (sub-daily)."""
+    DAILY_SHOWS (segment-required) and ALT_CADENCE_SHOWS (sub-daily)."""
     cfg = yaml.safe_load((SHOWS_DIR / f"{slug}.yaml").read_text(encoding="utf-8"))
     assert cfg.get("narrative_mode") is True, f"{slug} must set narrative_mode: true"
     assert cfg.get("topic_queue_file"), f"{slug} must set topic_queue_file"
-    assert not cfg.get("weekly_recap_on_sunday", False), (
+    assert not cfg.get("weekly_summary_segment", False), (
         f"{slug} is a daily narrative show — it must NOT carry the "
-        f"weekly_recap_on_sunday flag."
+        f"weekly_summary_segment flag."
     )
     cron_map = _extract_cron_map()
     no_filter = {s for (s, df) in cron_map.values() if df is None}
@@ -233,15 +234,15 @@ def test_youtube_enabled_show_set():
 
 
 # ---------------------------------------------------------------------------
-# weekly_recap_digest behaviour (the helper itself)
+# weekly-summary-segment behaviour (the helper itself)
 # ---------------------------------------------------------------------------
 
-class TestWeeklyRecapHelper:
-    """``build_weekly_recap_digest`` short-circuits when the content
-    lake is missing or has too few episodes. The runner falls back to
-    a normal daily fetch in that case — the function MUST return None
-    rather than raising or returning something the daily pipeline
-    would mistake for a real digest."""
+class TestWeeklySummarySegment:
+    """``build_weekly_summary_segment`` returns a compact host-instruction
+    block appended to the podcast-only digest on Sundays. It short-circuits
+    (returns None) when the content lake is missing or has too few episodes —
+    the runner then ships a plain daily episode with no segment, never raising
+    or returning something the pipeline would mistake for content."""
 
     def test_returns_none_when_lake_unavailable(self, monkeypatch):
         from engine import weekly_recap
@@ -249,24 +250,14 @@ class TestWeeklyRecapHelper:
         import sys
         monkeypatch.setitem(sys.modules, "engine.content_lake", None)
         from datetime import date
-        out = weekly_recap.build_weekly_recap_digest(
+        out = weekly_recap.build_weekly_summary_segment(
             "tesla", "Tesla Shorts Time", date(2026, 5, 3),
         )
-        # We don't strictly require None on import-fail (different
-        # branch), but it must not raise. Acceptable: None or a string
-        # we never use as a real digest.
+        # Must not raise. Acceptable: None or a string we never use as content.
         assert out is None or isinstance(out, str)
 
     def test_returns_none_when_too_few_episodes(self, monkeypatch):
         from engine import weekly_recap
-        # Force the helper to see only one episode.
-        monkeypatch.setattr(
-            weekly_recap,
-            "build_weekly_recap_digest",
-            weekly_recap.build_weekly_recap_digest,  # keep real
-        )
-
-        # Patch query_show_range inside the helper to return one episode
         import engine.content_lake as _cl
 
         def fake_query(slug, start, end):
@@ -277,12 +268,12 @@ class TestWeeklyRecapHelper:
 
         monkeypatch.setattr(_cl, "query_show_range", fake_query)
         from datetime import date
-        out = weekly_recap.build_weekly_recap_digest(
+        out = weekly_recap.build_weekly_summary_segment(
             "tesla", "Tesla Shorts Time", date(2026, 5, 3),
         )
         assert out is None
 
-    def test_synthesises_digest_with_two_or_more_episodes(self, monkeypatch):
+    def test_builds_segment_with_two_or_more_episodes(self, monkeypatch):
         from engine import weekly_recap
         import engine.content_lake as _cl
 
@@ -300,59 +291,23 @@ class TestWeeklyRecapHelper:
 
         monkeypatch.setattr(_cl, "query_show_range", fake_query)
         from datetime import date
-        out = weekly_recap.build_weekly_recap_digest(
-            "tesla", "Tesla Shorts Time", date(2026, 5, 3),
-        )
-        assert out is not None
-        # Title and recap framing present.
-        assert "Tesla Shorts Time" in out
-        assert "Weekly Recap" in out
-        # Both hooks survive into the synthetic digest.
-        assert "Story A happened." in out
-        assert "Story B happened." in out
-        # Recap-mode framing instruction at the bottom for the host.
-        assert "Sunday weekly recap" in out
-
-    def test_recap_framing_pushes_continuity_stakes_and_forward_look(self, monkeypatch):
-        """The host-framing must steer the narration toward the
-        'where we are now' continuity, explicit stakes, concrete
-        specifics, and forward-looking beats that make a recap valuable
-        (and that the listener-value scorer rewards). Without this, the
-        generated recap scripts read as a flat list of items and score
-        ~1.9/10 (see TST Ep494)."""
-        from engine import weekly_recap
-        import engine.content_lake as _cl
-
-        def fake_query(slug, start, end):
-            return [
-                {"episode_num": 1, "date": "2026-04-28",
-                 "hook": "Story A.", "digest_md": "Body A."},
-                {"episode_num": 2, "date": "2026-04-29",
-                 "hook": "Story B.", "digest_md": "Body B."},
-            ]
-
-        monkeypatch.setattr(_cl, "query_show_range", fake_query)
-        from datetime import date
-        out = weekly_recap.build_weekly_recap_digest(
+        out = weekly_recap.build_weekly_summary_segment(
             "tesla", "Tesla Shorts Time", date(2026, 5, 3),
         )
         assert out is not None
         low = out.lower()
-        # Continuity ('where we are now') cues.
-        assert "where we are now" in low
-        assert "since we last" in low
-        assert "where the story stands now" in low
-        # Stakes framing.
-        assert "why this matters" in low
-        # Specifics + forward look.
-        assert "numbers" in low
-        assert "watch for next week" in low
-        assert "open question" in low
-        # June 14 2026 improvements: go deep on the biggest events, open
-        # intuitively (not by reciting the date range), and never read URLs aloud.
-        assert "go deep on the biggest events" in low
-        assert "do not open by reciting the calendar date range" in low
-        assert "never read urls" in low
+        # It's a SEGMENT, not the whole episode — the framing must say so and
+        # keep today's news the main focus.
+        assert "weekly summary segment" in low
+        assert "week in review" in low
+        assert "main focus" in low
+        assert "segment, not the whole episode" in low
+        # Both episode hooks feed the host's reference highlights.
+        assert "Story A happened." in out
+        assert "Story B happened." in out
+        # No URLs read aloud; don't re-report today's stories inside it.
+        assert "never read" in low
+        assert "do not re-report today" in low
 
 
 def test_youtube_post_quota_full_format_shape():

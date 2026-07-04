@@ -726,12 +726,14 @@ class ShowConfig:
     content_freshness: ContentFreshnessConfig = field(default_factory=ContentFreshnessConfig)
     youtube: YouTubeConfig = field(default_factory=YouTubeConfig)
     multilingual: MultilingualConfig = field(default_factory=MultilingualConfig)
-    # Sunday weekly-recap mode. When ``true`` and the runner ticks on
-    # a Sunday, the show skips the daily news fetch and instead
-    # synthesises a recap from the past 7 days of episodes pulled
-    # from the content lake. May 2026 schedule overhaul: 7 shows on
-    # daily cadence (OV, PT, FF, M&A, MAB, MIT, TST) opt in.
-    weekly_recap_on_sunday: bool = False
+    # Weekly-summary segment (July 2026). When ``true`` and the runner
+    # ticks on a Sunday, the show runs a NORMAL daily episode AND weaves
+    # in one short "week in review" segment synthesised from the past 7
+    # days of episodes in the content lake. (This replaced the retired
+    # full weekly-recap mode, which turned the whole Sunday episode into a
+    # look-back.) The daily-cadence news shows (OV, PT, FF, M&A, MAB, MIT,
+    # TST, SpaceX) opt in.
+    weekly_summary_segment: bool = False
     # Narrative mode (May 2026 — Unintended Consequences). When
     # ``true``, the runner skips RSS fetch + slow-news fallback +
     # the digest stage and instead pulls the next unproduced topic
@@ -936,7 +938,13 @@ def load_config(yaml_path: str | Path) -> ShowConfig:
         content_freshness=_build_nested(ContentFreshnessConfig, data.get("content_freshness")),
         youtube=_build_nested(YouTubeConfig, data.get("youtube")),
         multilingual=_build_nested(MultilingualConfig, data.get("multilingual")),
-        weekly_recap_on_sunday=bool(data.get("weekly_recap_on_sunday", False)),
+        # Accept the legacy ``weekly_recap_on_sunday`` key as a fallback so any
+        # unmigrated YAML keeps working (the field was renamed July 2026 when
+        # the full Sunday-recap mode became a small in-episode segment).
+        weekly_summary_segment=bool(
+            data.get("weekly_summary_segment",
+                     data.get("weekly_recap_on_sunday", False))
+        ),
         narrative_mode=bool(data.get("narrative_mode", False)),
         topic_queue_file=str(data.get("topic_queue_file", "") or ""),
         deep_dive=_build_nested(DeepDiveConfig, data.get("deep_dive")),
