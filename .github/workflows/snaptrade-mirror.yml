@@ -1,0 +1,52 @@
+name: SnapTrade Account Mirror
+
+# Phase 1 of docs/mit_snaptrade_live_trading_plan.md: a READ-ONLY daily
+# snapshot of the operator's connected Wealthsimple/Webull accounts.
+# Proves connection stability before any executor code exists. The
+# mirror JSON is uploaded as a short-lived artifact — NEVER committed
+# (public repo). Clean no-op until the SNAPTRADE_* secrets are set.
+
+on:
+  schedule:
+    - cron: '40 13 * * 1-5'   # 13:40 UTC ≈ 9:40 ET, weekdays (post-open)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: snaptrade-mirror
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests snaptrade-python-sdk
+
+      - name: Run mirror
+        env:
+          SNAPTRADE_CLIENT_ID: ${{ secrets.SNAPTRADE_CLIENT_ID }}
+          SNAPTRADE_CONSUMER_KEY: ${{ secrets.SNAPTRADE_CONSUMER_KEY }}
+          SNAPTRADE_USER_ID: ${{ secrets.SNAPTRADE_USER_ID }}
+          SNAPTRADE_USER_SECRET: ${{ secrets.SNAPTRADE_USER_SECRET }}
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+        run: python scripts/snaptrade_mirror.py
+
+      - name: Upload mirror artifact
+        if: hashFiles('digests/modern_investing/live_account_mirror.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-account-mirror
+          path: digests/modern_investing/live_account_mirror.json
+          retention-days: 14

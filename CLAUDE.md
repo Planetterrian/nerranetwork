@@ -369,6 +369,27 @@ nerranetwork/
   readiness verdict (NOT READY — honest record +$304 over 40 sequential
   $1k trades vs NASDAQ +15.46% ITD; accumulate 2-3 months of clean
   post-fix record first).
+  **July 3 2026 SnapTrade execution plan** (doc:
+  [`docs/mit_snaptrade_live_trading_plan.md`](docs/mit_snaptrade_live_trading_plan.md);
+  drift guards: `tests/test_mit_benchmark_integrity.py::TestTradeSignal`):
+  design for live trading via SnapTrade (the only sanctioned Wealthsimple
+  API route; Webull US/CA trading added Dec 2025). Shipped the execution
+  bridge: `post_generate` now writes a schema-versioned
+  `trade_signal_latest.json` + per-episode copy (explicit
+  new_trade/no_trade with drift-distinguishing reason, SnapTrade-format
+  symbol — Yahoo `.TO` convention matches the tracker's resolved symbols
+  1:1 — CAD→Wealthsimple / USD→Webull routing, deterministic uuid5
+  `client_order_id` for idempotent placement; read-only runs write
+  nothing). The future `execution/` package consumes ONLY this artifact
+  — the LLM never touches the order path. Phased rollout in the doc
+  (read-only mirror → shadow mode → $150-250 micro-live on Webull →
+  scale), fail-closed risk caps, and an operator checklist (SnapTrade's
+  per-broker matrix must be verified in the dashboard: trade enablement
+  for Wealthsimple, Limit+Day support, fractional/notional). NOTE:
+  SnapTrade's sandbox is READ-ONLY (no simulated fills) — shadow mode is
+  the paper-trading layer. Podcast stays a simulation on air; live
+  execution is a private layer decoupled from the 08:16 UTC episode run
+  (executor runs its own ~13:50 UTC slot).
 
 **Tesla Shorts Time Recursive Memory System (May 2026+)**  
 TST received a full recursive improvement architecture (analogous to MIT):
