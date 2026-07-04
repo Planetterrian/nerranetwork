@@ -390,6 +390,30 @@ nerranetwork/
   the paper-trading layer. Podcast stays a simulation on air; live
   execution is a private layer decoupled from the 08:16 UTC episode run
   (executor runs its own ~13:50 UTC slot).
+  **July 4 2026 optimize-the-loop pass** (drift guards:
+  `tests/test_mit_benchmark_integrity.py::{TestMultiIndexBenchmark,TestRuleEffectiveness}`,
+  `tests/test_snaptrade_execution.py::{TestRiskGates,TestShadowExecutor}`):
+  three workstreams toward "beat all major indices". (1) **Multi-index
+  matched-window benchmarking** — every closed trade now carries
+  `benchmark_returns` for ^IXIC + ^GSPC + ^GSPTSE over the SAME bar
+  window; summary gains per-index compounded `benchmark_scores` +
+  `indices_beaten`; the scoreboard block adds a once-per-episode
+  "beating N of 3 major indices" sweep (NASDAQ stays the headline;
+  legacy trades fall back to the nasdaq field; recompute script rebuilds
+  history for all three). (2) **Rule-effectiveness scoring** — trades are
+  stamped with `rules_in_effect` (the exact rule IDs shown on pick day);
+  `_build_rule_scoreboard` compares stamped-trade alpha vs trades
+  without each rule and flags ≥8-trade no-edge rules as RETIREMENT
+  CANDIDATES (operator decision — never auto-retired). The learning loop
+  now measures whether its own rules work. (3) **Shadow mode (Phase 2)
+  LIVE** — `execution/risk.py` (pure, env-tunable hard gates; kill
+  switch defaults off) + `execution/shadow.py` (signal → gates →
+  decision-time quote → would-be marketable-limit order → committed
+  `shadow_ledger.json`, idempotent) + `mit-shadow-executor.yml`
+  (weekdays 13:50 UTC, yfinance only, no secrets); the read-only/no
+  order-placement contract still pinned. `scripts/mit_shadow_report.py`
+  = sim-vs-shadow slippage table. Scoreboard/lessons-block additions
+  change prompt context → A/B-listen per landmine #17.
 
 **Tesla Shorts Time Recursive Memory System (May 2026+)**  
 TST received a full recursive improvement architecture (analogous to MIT):

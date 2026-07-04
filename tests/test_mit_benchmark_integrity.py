@@ -577,3 +577,140 @@ class TestTradeSignal:
         config = SimpleNamespace(episode=SimpleNamespace(output_dir=str(tmp_path)))
         mi.post_generate(config, digest_text=self._DIGEST, episode_num=96)
         assert not (tmp_path / mi.TRADE_SIGNAL_LATEST_FILENAME).exists()
+
+
+# ---------------------------------------------------------------------------
+# Multi-index benchmarking (July 2026 "beat all major indices" pass)
+# ---------------------------------------------------------------------------
+
+class TestMultiIndexBenchmark:
+    def _closed(self, pnl, ndq, sp500=None, tsx=None):
+        return {
+            "status": "closed", "pnl_pct": pnl, "pnl_dollars": pnl * 10,
+            "nasdaq_return_pct": ndq, "alpha_pct": pnl - ndq,
+            "benchmark_returns": {"nasdaq": ndq, "sp500": sp500, "tsx": tsx},
+        }
+
+    def test_summary_scores_every_index(self):
+        tracker = {"metadata": {"position_size": 1000}, "summary": {},
+                   "trades": [self._closed(10.0, 2.0, sp500=1.0, tsx=-1.0),
+                              self._closed(-2.0, 1.0, sp500=0.5, tsx=0.2)]}
+        mi._recompute_summary(tracker)
+        scores = tracker["summary"]["benchmark_scores"]
+        assert set(scores) == {"nasdaq", "sp500", "tsx"}
+        assert scores["sp500"]["trades"] == 2
+        # portfolio compounded: 1.10*0.98-1 = +7.8%; tsx: 0.99*1.002-1
+        assert scores["tsx"]["alpha_pct"] == pytest.approx(
+            (1.10 * 0.98 - 0.99 * 1.002) * 100, abs=0.05)
+        assert tracker["summary"]["indices_scored"] == 3
+        # Beats nasdaq (7.8 vs 3.02), sp500 (7.8 vs 1.5), tsx (7.8 vs -0.6).
+        assert tracker["summary"]["indices_beaten"] == 3
+
+    def test_legacy_trades_fall_back_to_nasdaq_field_only(self):
+        legacy = {"status": "closed", "pnl_pct": 5.0, "pnl_dollars": 50.0,
+                  "nasdaq_return_pct": 2.0, "alpha_pct": 3.0}
+        tracker = {"metadata": {"position_size": 1000}, "summary": {},
+                   "trades": [legacy]}
+        mi._recompute_summary(tracker)
+        scores = tracker["summary"]["benchmark_scores"]
+        assert scores["nasdaq"]["trades"] == 1
+        assert "sp500" not in scores  # no data — not silently zeroed
+
+    def test_annotate_fills_benchmark_returns_for_all_indices(self):
+        trade = {"symbol": "MU", "date": "2026-07-01",
+                 "trade_type": "flash", "pnl_pct": 1.0}
+        with patch.object(mi, "_fetch_history_bars", return_value=_BARS):
+            mi._annotate_trade_with_nasdaq(trade)
+        returns = trade["benchmark_returns"]
+        assert set(returns) == {"nasdaq", "sp500", "tsx"}
+        # Same stub bars for every index → same matched-window return.
+        assert returns["sp500"] == returns["nasdaq"] == pytest.approx(0.48, abs=0.01)
+
+    def test_benchmark_block_reports_index_sweep(self):
+        tracker = mi._fresh_tracker()
+        tracker["benchmark"] = {"current_close": 25000.0, "ytd_pct": 11.0,
+                                "inception_to_date_pct": 15.0,
+                                "last_updated": "2026-07-04"}
+        tracker["alpha"] = {"ytd_pct": -10.0, "inception_to_date_pct": -14.0,
+                            "monthly": {}}
+        tracker["summary"] = {
+            "matched_window_alpha_pct": 11.2, "matched_window_trades": 35,
+            "compounded_return_pct": 23.6,
+            "compounded_nasdaq_matched_pct": 12.4,
+            "indices_beaten": 2, "indices_scored": 3,
+            "benchmark_scores": {
+                "nasdaq": {"alpha_pct": 11.2, "trades": 35},
+                "sp500": {"alpha_pct": 5.0, "trades": 35},
+                "tsx": {"alpha_pct": -1.0, "trades": 35},
+            },
+        }
+        block = mi._build_benchmark_block(tracker)
+        assert "beating 2 of 3 major indices" in block
+        assert "S&P 500" in block and "TSX Composite" in block
+
+
+# ---------------------------------------------------------------------------
+# Rule-effectiveness scoring (the loop learns whether it's learning)
+# ---------------------------------------------------------------------------
+
+class TestRuleEffectiveness:
+    _RULE_A = {"id": "LL-017", "status": "active",
+               "observation": "Momentum faded without volume",
+               "adjustment": "Always require volume confirmation before momentum entries"}
+    _RULE_B = {"id": "LL-002", "status": "active",
+               "observation": "Sector concentration built up",
+               "adjustment": "Cap any single sector at 30% of the trailing window"}
+
+    def _closed(self, alpha, rules):
+        return {"status": "closed", "alpha_pct": alpha,
+                "rules_in_effect": rules}
+
+    def test_post_generate_stamps_rules_in_effect(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("NERRA_HOOKS_READONLY", raising=False)
+        lessons = {"metadata": {}, "entries": [self._RULE_A, self._RULE_B]}
+        (tmp_path / mi.LESSONS_LEARNED_FILENAME).write_text(
+            json.dumps(lessons), encoding="utf-8")
+        config = SimpleNamespace(episode=SimpleNamespace(output_dir=str(tmp_path)))
+        digest = ("**Trade Type:** Flash Trade\n"
+                  "**Today's Pick:** NVDA — Nvidia\n"
+                  "**Market:** NASDAQ\n"
+                  "**Strategy:** Momentum play\n"
+                  "**Confidence Level:** High\n")
+        with patch.object(mi, "_probe_pick", return_value=True):
+            mi.post_generate(config, digest_text=digest, episode_num=100)
+        tracker = json.loads((tmp_path / mi.TRACKER_FILENAME).read_text())
+        assert set(tracker["trades"][0]["rules_in_effect"]) == {"LL-017", "LL-002"}
+
+    def test_scoreboard_reports_with_and_without_alpha(self):
+        lessons = {"entries": [self._RULE_A]}
+        tracker = {"trades": (
+            [self._closed(2.0, ["LL-017"]) for _ in range(5)]
+            + [self._closed(-1.0, []) for _ in range(5)]
+        )}
+        board = mi._build_rule_scoreboard(lessons, tracker)
+        assert "[LL-017] in effect for 5 closed trades" in board
+        assert "+2.00%" in board
+        assert "-1.00%" in board
+        assert "RETIREMENT" not in board  # positive edge — keep
+
+    def test_ineffective_rule_flagged_for_retirement(self):
+        lessons = {"entries": [self._RULE_A]}
+        tracker = {"trades": (
+            [self._closed(0.0, ["LL-017"]) for _ in range(8)]
+            + [self._closed(1.0, []) for _ in range(4)]
+        )}
+        board = mi._build_rule_scoreboard(lessons, tracker)
+        assert "RETIREMENT CANDIDATE" in board
+        assert "keep obeying it until retired" in board  # never auto-retired
+
+    def test_too_few_stamped_trades_yields_empty_board(self):
+        lessons = {"entries": [self._RULE_A]}
+        tracker = {"trades": [self._closed(2.0, ["LL-017"])]}
+        assert mi._build_rule_scoreboard(lessons, tracker) == ""
+
+    def test_selected_rules_match_block_content(self):
+        lessons = {"entries": [self._RULE_A, self._RULE_B]}
+        selected = {e["id"] for e in mi._selected_active_rules(lessons)}
+        block = mi._build_lessons_learned_block(lessons)
+        for rid in selected:
+            assert rid in block

@@ -56,6 +56,21 @@ LESSONS_LEARNED_FILENAME = "lessons_learned.json"
 MONTHLY_EPISODES_FILENAME = "monthly_episodes.json"
 NASDAQ_SYMBOL = "^IXIC"
 
+# Multi-index benchmarking (July 2026 "beat all major indices" pass).
+# ^IXIC stays THE headline benchmark (the show's identity and every legacy
+# field); the other two majors are scored over the same matched windows so
+# the show can honestly say how many of the three it is beating.
+BENCHMARK_INDICES = {
+    "nasdaq": "^IXIC",
+    "sp500": "^GSPC",
+    "tsx": "^GSPTSE",
+}
+BENCHMARK_LABELS = {
+    "nasdaq": "NASDAQ Composite",
+    "sp500": "S&P 500",
+    "tsx": "TSX Composite",
+}
+
 # Sector vocabulary — canonical tags used across tracker, taught_lessons,
 # lessons_learned, and the dashboard. Keep this list in sync with
 # ``_SECTOR_BY_SYMBOL`` below and the digest prompt's required
@@ -202,7 +217,11 @@ def pre_fetch(config, *, episode_num: int | None = None, today_str: str | None =
     lessons = _load_lessons_learned(lessons_path)
     context["taught_lessons_block"] = _build_taught_lessons_block(taught)
     context["sector_warning"] = _build_sector_warning_block(tracker)
-    context["lessons_learned_block"] = _build_lessons_learned_block(lessons)
+    lessons_block = _build_lessons_learned_block(lessons)
+    scoreboard = _build_rule_scoreboard(lessons, tracker)
+    if scoreboard:
+        lessons_block = f"{lessons_block}\n\n{scoreboard}"
+    context["lessons_learned_block"] = lessons_block
     context["narrative_callback"] = _build_narrative_callback(tracker)
 
     # Evergreen deep-dive rotation — surfaces the previously-unused
@@ -426,6 +445,19 @@ def post_generate(config, *, digest_text: str = "", episode_num: int | None = No
             trade["sector"] = _classify_sector(
                 trade.get("symbol", ""), trade.get("strategy", ""), trade.get("market", ""),
             )
+        # Rule-effectiveness stamping (July 2026): record which
+        # recursive-improvement rules were shown to the model when it made
+        # this pick. Read BEFORE today's lesson is appended below, so the
+        # stamp reflects exactly the pick-day prompt. The rule scoreboard
+        # scores these stamps once trades close.
+        try:
+            pick_day_lessons = _load_lessons_learned(
+                output_dir / LESSONS_LEARNED_FILENAME)
+            trade["rules_in_effect"] = [
+                e["id"] for e in _selected_active_rules(pick_day_lessons)
+            ]
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("rules_in_effect stamping failed: %s", exc)
         # Pick-time validation probe: resolve the Yahoo symbol (TSX picks
         # get their .TO/.V listing) and record a reference price so a
         # wrong-instrument resolution is caught at close (Ep50 CNR class).
@@ -1112,6 +1144,37 @@ def _recompute_summary(tracker: dict) -> None:
             comp_ndq *= 1 + ndq / 100
             n_matched += 1
 
+    # Per-index matched-window scores (July 2026 multi-index pass): the
+    # same compounding, one score per major index, so the show can state
+    # "beating N of 3 major indices" with a defensible number. Legacy
+    # trades that predate ``benchmark_returns`` fall back to the NASDAQ
+    # field for that index only.
+    def _finite_num(v):
+        return isinstance(v, (int, float)) and math.isfinite(v)
+
+    benchmark_scores: dict = {}
+    for key in BENCHMARK_INDICES:
+        comp_p = comp_i = 1.0
+        n = 0
+        for t in closed:
+            pnl = t.get("pnl_pct")
+            ret = (t.get("benchmark_returns") or {}).get(key)
+            if key == "nasdaq" and ret is None:
+                ret = t.get("nasdaq_return_pct")
+            if _finite_num(pnl) and _finite_num(ret):
+                comp_p *= 1 + pnl / 100
+                comp_i *= 1 + ret / 100
+                n += 1
+        if n:
+            benchmark_scores[key] = {
+                "portfolio_pct": round((comp_p - 1) * 100, 2),
+                "index_pct": round((comp_i - 1) * 100, 2),
+                "alpha_pct": round((comp_p - comp_i) * 100, 2),
+                "trades": n,
+            }
+    indices_beaten = sum(
+        1 for v in benchmark_scores.values() if v["alpha_pct"] > 0)
+
     # Streak calculation
     current_streak = 0
     longest_win = 0
@@ -1145,6 +1208,9 @@ def _recompute_summary(tracker: dict) -> None:
         "compounded_nasdaq_matched_pct": round((comp_ndq - 1) * 100, 2),
         "matched_window_alpha_pct": round((comp_port - comp_ndq) * 100, 2),
         "matched_window_trades": n_matched,
+        "benchmark_scores": benchmark_scores,
+        "indices_beaten": indices_beaten,
+        "indices_scored": len(benchmark_scores),
         "current_streak": current_streak,
         "longest_win_streak": longest_win,
         "longest_loss_streak": longest_loss,
@@ -1388,6 +1454,31 @@ def _annotate_trade_with_nasdaq(trade: dict, entry_date: datetime.date | None = 
         trade["nasdaq_return_pct"] = None
         trade["alpha_pct"] = None
 
+    # Multi-index annotation (July 2026): the same matched window scored
+    # against every major index, so the record can honestly answer "does
+    # this beat ALL of them?". Best-effort per index; NASDAQ reuses the
+    # window computed above rather than refetching.
+    returns: dict[str, float | None] = {}
+    for key, symbol in BENCHMARK_INDICES.items():
+        if key == "nasdaq":
+            returns[key] = trade.get("nasdaq_return_pct")
+            continue
+        try:
+            idx_bars = _fetch_history_bars(symbol, period="1mo")
+            idx_window = (
+                _matched_nasdaq_window(idx_bars, entry_date, exit_date)
+                if idx_bars else None
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Benchmark %s annotation failed: %s", symbol, exc)
+            idx_window = None
+        if idx_window:
+            idx_open, idx_close, _, _ = idx_window
+            returns[key] = round(((idx_close - idx_open) / idx_open) * 100, 2)
+        else:
+            returns[key] = None
+    trade["benchmark_returns"] = returns
+
 
 # ---------------------------------------------------------------------------
 # Sector classification + lesson-tag extraction
@@ -1608,6 +1699,24 @@ def _build_benchmark_block(tracker: dict) -> str:
             f"{_sign(summary.get('compounded_nasdaq_matched_pct'))} → alpha "
             f"{_sign(matched_alpha)} across {matched_n} benchmarked trades. "
         )
+        scores = summary.get("benchmark_scores") or {}
+        if len(scores) > 1:
+            parts = []
+            for key in ("nasdaq", "sp500", "tsx"):
+                s = scores.get(key)
+                if s:
+                    parts.append(
+                        f"{BENCHMARK_LABELS[key]} {_sign(s['alpha_pct'])}"
+                    )
+            beaten = summary.get("indices_beaten", 0)
+            scored = summary.get("indices_scored", 0)
+            matched_line += (
+                f"MAJOR-INDEX SWEEP (same matched windows): currently beating "
+                f"{beaten} of {scored} major indices — "
+                + "; ".join(parts)
+                + ". NASDAQ stays the headline benchmark; mention the sweep "
+                  "at most once per episode. "
+            )
     return (
         f"NASDAQ Composite ^IXIC: {close:,.0f} "
         f"(YTD {_sign(bench_ytd)}, since inception {_sign(bench_itd)}).\n"
@@ -1837,18 +1946,14 @@ def _append_lesson_learned(
     return entry
 
 
-def _build_lessons_learned_block(data: dict, *, max_active: int = 5) -> str:
-    """Block fed to the digest prompt as 'RECURSIVE IMPROVEMENT RULES IN EFFECT'.
+def _selected_active_rules(data: dict, *, max_active: int = 5) -> list[dict]:
+    """The distinct active rules shown to the LLM today (most recent first).
 
-    Selects the most recent DISTINCT rules — near-duplicate actives (the
-    pre-dedup backlog) collapse to their freshest instance so the block
-    never shows the same rule five times.
+    Shared by the prompt block AND the trade-stamping in post_generate so
+    the ``rules_in_effect`` recorded on each trade is exactly the set the
+    model was told to obey when it made the pick.
     """
     entries = [e for e in (data.get("entries") or []) if e.get("status") == "active"]
-    if not entries:
-        return "No active recursive-improvement rules yet — write one if today's trade teaches a generalisable lesson."
-    lines = ["The following rules are in effect today. Obey them in every section of the digest:"]
-    # Most-recent-first, capped, de-duplicated by rule similarity.
     selected: list[dict] = []
     for entry in reversed(entries):
         if len(selected) >= max_active:
@@ -1860,12 +1965,80 @@ def _build_lessons_learned_block(data: dict, *, max_active: int = 5) -> str:
         ):
             continue
         selected.append(entry)
+    return selected
+
+
+def _build_lessons_learned_block(data: dict, *, max_active: int = 5) -> str:
+    """Block fed to the digest prompt as 'RECURSIVE IMPROVEMENT RULES IN EFFECT'.
+
+    Selects the most recent DISTINCT rules — near-duplicate actives (the
+    pre-dedup backlog) collapse to their freshest instance so the block
+    never shows the same rule five times.
+    """
+    selected = _selected_active_rules(data, max_active=max_active)
+    if not selected:
+        return "No active recursive-improvement rules yet — write one if today's trade teaches a generalisable lesson."
+    lines = ["The following rules are in effect today. Obey them in every section of the digest:"]
     for entry in selected:
         lines.append(
             f"- [{entry['id']}] {entry.get('observation', '').rstrip('.')}. "
             f"Rule: {entry.get('adjustment', '').rstrip('.')}."
         )
     return "\n".join(lines)
+
+
+def _build_rule_scoreboard(data: dict, tracker: dict, *,
+                           min_trades: int = 5,
+                           retire_after: int = 8) -> str:
+    """Measured effectiveness of each active rule — the loop's own audit.
+
+    July 2026 "learn whether it's learning" pass: rules accumulated but
+    nothing ever checked whether obeying them helped. Every recorded
+    trade now carries ``rules_in_effect`` (the rule IDs shown to the
+    model on pick day); once a rule has been in effect for enough closed
+    trades, its stamped-trade average alpha is compared against the
+    average alpha of closed trades made WITHOUT it. Rules with enough
+    evidence and no measurable edge are flagged as retirement candidates
+    — surfaced for the OPERATOR (rules are never auto-retired).
+    """
+    closed = [
+        t for t in tracker.get("trades", [])
+        if t.get("status") == "closed"
+        and isinstance(t.get("alpha_pct"), (int, float))
+        and math.isfinite(t["alpha_pct"])
+    ]
+    active = [e for e in (data.get("entries") or []) if e.get("status") == "active"]
+    if not closed or not active:
+        return ""
+
+    lines = []
+    for entry in active:
+        rid = entry.get("id")
+        stamped = [t for t in closed if rid in (t.get("rules_in_effect") or [])]
+        if len(stamped) < min_trades:
+            continue
+        others = [t for t in closed if rid not in (t.get("rules_in_effect") or [])]
+        avg_with = sum(t["alpha_pct"] for t in stamped) / len(stamped)
+        line = (
+            f"- [{rid}] in effect for {len(stamped)} closed trades: "
+            f"avg alpha {avg_with:+.2f}%"
+        )
+        if others:
+            avg_without = sum(t["alpha_pct"] for t in others) / len(others)
+            line += f" (trades without it: {avg_without:+.2f}%)"
+            if len(stamped) >= retire_after and avg_with <= avg_without:
+                line += (
+                    " → RETIREMENT CANDIDATE: no measurable edge — flag for "
+                    "the operator; keep obeying it until retired"
+                )
+        lines.append(line)
+    if not lines:
+        return ""
+    return (
+        "RULE EFFECTIVENESS (measured on closed trades — weight proven "
+        "rules more heavily when selecting today's pick):\n"
+        + "\n".join(lines)
+    )
 
 
 def _extract_lesson_learned_from_digest(digest_text: str) -> tuple[str, str] | None:

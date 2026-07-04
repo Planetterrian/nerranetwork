@@ -142,6 +142,21 @@ def main() -> int:
             trade["alpha_pct"] = (
                 round(pnl - ndq_ret, 2) if isinstance(pnl, (int, float)) else None
             )
+            # Multi-index sweep over the identical window (July 2026).
+            returns = {"nasdaq": trade["nasdaq_return_pct"]}
+            for key, idx_symbol in mi.BENCHMARK_INDICES.items():
+                if key == "nasdaq":
+                    continue
+                idx_bars = _fetch_range_bars(
+                    idx_symbol, window_start, window_end)
+                idx_window = mi._matched_nasdaq_window(
+                    idx_bars, entry_bar[0], exit_bar[0]) if idx_bars else None
+                if idx_window:
+                    io, ic, _, _ = idx_window
+                    returns[key] = round(((ic - io) / io) * 100, 2)
+                else:
+                    returns[key] = None
+            trade["benchmark_returns"] = returns
             realigned += 1
             print(f"  Ep{ep:>3} {sym:6} window {d1}→{d2}  "
                   f"ndq {trade['nasdaq_return_pct']:+.2f}%  "
@@ -158,6 +173,11 @@ def main() -> int:
           f"{s.get('matched_window_alpha_pct'):+.2f}% across "
           f"{s.get('matched_window_trades')} trades")
     print(f"Per-trade alpha sum: {s.get('cumulative_alpha_vs_nasdaq'):+.2f}%")
+    for key, score in (s.get("benchmark_scores") or {}).items():
+        print(f"  vs {mi.BENCHMARK_LABELS.get(key, key)}: "
+              f"alpha {score['alpha_pct']:+.2f}% over {score['trades']} trades")
+    print(f"Beating {s.get('indices_beaten', 0)} of "
+          f"{s.get('indices_scored', 0)} major indices (matched windows)")
 
     if backdated:
         print("\nBACKDATED ENTRIES (hindsight gain in the published record):")
