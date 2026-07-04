@@ -596,3 +596,34 @@ class TestCommunityLayer:
         assert "{% if dp_dispatches %}" in tpl
         assert "{% if dp_mindsets %}" in tpl
         assert "The shelf opens with Episode 1" in tpl
+
+    def test_operator_dispatch_cli_round_trips(self, tmp_path, monkeypatch):
+        # scripts/add_dp_dispatch.py writes entries the page collector reads —
+        # pin the round-trip so the two never drift apart.
+        import importlib.util
+        import json as _json
+
+        spec = importlib.util.spec_from_file_location(
+            "add_dp_dispatch", PROJECT_ROOT / "scripts" / "add_dp_dispatch.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+        wall = tmp_path / "digests" / "dp_pod" / "dispatches.json"
+        wall.parent.mkdir(parents=True)
+        wall.write_text(_json.dumps({"dispatches": []}), encoding="utf-8")
+        monkeypatch.setattr(mod, "DISPATCHES_PATH", wall)
+        monkeypatch.setattr(
+            sys, "argv",
+            ["add_dp_dispatch.py", "--name", "Sarah, Calgary",
+             "--did", "Sealed three drafts.", "--numbers", "$14, 2h",
+             "--date", "2026-07-10", "--episode", "3"],
+        )
+        mod.main()
+
+        import generate_html as gh
+        monkeypatch.setattr(gh, "ROOT", tmp_path)
+        dispatches = gh._collect_dp_dispatches()
+        assert len(dispatches) == 1
+        assert dispatches[0]["name"] == "Sarah, Calgary"
+        assert dispatches[0]["numbers"] == "$14, 2h"
+        assert dispatches[0]["episode_num"] == 3
