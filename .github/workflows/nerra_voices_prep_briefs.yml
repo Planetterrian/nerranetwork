@@ -1,0 +1,30 @@
+# Nerra Voices (The Age of AI) — daily prep-brief generator (spec §5.1).
+# Researches guests interviewing in the next 12-36h, drafts questions +
+# thesis, emails the brief to the guest. Clean no-op with nothing due.
+name: Generate interview prep briefs
+on:
+  schedule:
+    - cron: '0 16 * * *'  # 9am PT = 16:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prep_briefs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r pipelines/requirements.txt
+      - run: python pipelines/voices/generate_briefs.py
+        env:
+          SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          POSTMARK_TOKEN: ${{ secrets.POSTMARK_TOKEN }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}

@@ -301,7 +301,9 @@ class TestSanitizePodcastScriptDialogueMode:
 # ---------------------------------------------------------------------------
 
 def test_no_existing_show_enables_dialogue_mode():
-    """Dialogue mode is opt-in; only two-host shows (dp_pod) may set it."""
+    """Dialogue mode is opt-in; only two-host shows (dp_pod) may set it.
+    (The Age of AI's guest audio is REAL recorded phone audio via the
+    Nerra Voices pipeline, not dialogue TTS.)"""
     from engine.config import discover_show_slugs, load_config
 
     allowed = {"dp_pod"}

@@ -1,0 +1,139 @@
+# The Age of AI — the network's AI-hosted LIVE INTERVIEW show (July 2026).
+#
+# Host: Mira, an AI documentarian persona (Grok voice `ara`). Guests are real
+# people interviewed over a REAL PHONE CALL: a Voximplant scenario dials the
+# guest, bridges the call to a Grok Voice Agent running Mira's persona, and
+# records both tracks. See docs/age_of_ai_plan.md for the full spec.
+#
+# IMPORTANT — production does NOT go through run_show.py generation.
+# Episodes are produced by the Nerra Voices pipeline:
+#   pipelines/voices/  +  .github/workflows/nerra_voices_*.yml
+#   (apply → triage → Cal.com booking → prep brief → live call → editorial
+#    review [gate 1: Patrick] → guest transcript approval [gate 2] →
+#    assembly → publish via the same engine.publisher path as every show).
+# This YAML exists so the show is a first-class network citizen (RSS, blog,
+# site page, dashboards) and so an ACCIDENTAL `run_show.py age_of_ai`
+# dispatch is a clean no-op: narrative_mode + a permanently-empty topic
+# queue means run_show skips with `narrative_queue_empty` before spending
+# a single credit.
+name: "The Age of AI"
+slug: age_of_ai
+description: >-
+  The interview show where the roles are reversed: Mira, an AI, calls real
+  people and asks the questions. Teachers, founders, artists, tradespeople,
+  and skeptics on what the AI transition actually feels like from inside a
+  life and a livelihood. Real conversations, recorded live. Real people.
+  An honest machine asking the questions.
+
+# Guard rail: keeps an accidental run_show dispatch a clean skip (the queue
+# is deliberately empty forever — the voices pipeline owns production).
+narrative_mode: true
+topic_queue_file: shows/topic_queues/age_of_ai.yaml
+weekly_recap_on_sunday: false
+min_articles_skip: 0
+
+multilingual:
+  enabled: false
+  auto: false
+  languages: []
+
+llm:
+  provider: xai
+  # Contingency prompts only — never used while the topic queue stays empty
+  # (the live pipeline's prompts live in pipelines/voices/prompts/).
+  system_prompt_file: shows/prompts/age_of_ai_system.txt
+  digest_prompt_file: shows/prompts/age_of_ai_digest.txt
+  podcast_prompt_file: shows/prompts/age_of_ai_podcast.txt
+  digest_temperature: 0.5
+  podcast_temperature: 0.7
+  max_tokens: 4500
+  podcast_max_tokens: 9000
+  min_podcast_words: 1200
+  min_podcast_word_floor: 700
+
+tts:
+  # Mira's narration voice (Grok built-in `ara`, per the pipeline spec) —
+  # used by pipelines/voices/audio/generate_narration.py, and by run_show
+  # only in the never-reached contingency path. Deliberately NOT the
+  # network's Patrick clone: the AI host is its own on-air identity.
+  voice_id: ara
+
+audio:
+  transition_sting: assets/music/transition_sting.mp3
+
+publishing:
+  rss_file: age_of_ai_podcast.rss
+  rss_title: "The Age of AI"
+  rss_description: >-
+    The interview show where the roles are reversed: Mira, an AI, calls real
+    people and asks the questions — live, on the record. Honest conversations
+    about what the AI transition actually feels like from inside a life and a
+    livelihood, with full disclosure baked into every episode: the host is a
+    machine, the guests never are.
+  rss_summary: "Real people. AI host. The age we're all living through."
+  rss_link: https://nerranetwork.com/age-of-ai.html
+  rss_author: Nerra Network
+  rss_email: patrick@planetterrian.com
+  rss_image: https://nerranetwork.com/assets/covers/age-of-ai.jpg
+  rss_category: Society & Culture
+  rss_subcategory: Personal Journals
+  rss_keywords: "AI, artificial intelligence, interviews, future of work, technology and society, AI transition"
+  guid_prefix: age-of-ai
+  base_url: https://nerranetwork.com
+  audio_subdir: digests/age_of_ai
+  summaries_json: digests/age_of_ai/summaries_age_of_ai.json
+  summaries_podcast_name: age_of_ai
+  player_html: age-of-ai.html
+  summaries_html: age-of-ai-summaries.html
+  # RSS + site page only at launch (X/YouTube/newsletter flip on at public
+  # launch, spec phase 8).
+  x_enabled: false
+  x_env_prefix: ""
+  host_name: Mira
+
+episode:
+  prefix: Age_of_AI
+  filename_pattern: "{prefix}_Ep{num:03d}_{date:%Y%m%d}.mp3"
+  output_dir: digests/age_of_ai
+  mp3_glob: "Age_of_AI_Ep*.mp3"
+
+chapters:
+  enabled: true
+  # Published-episode chapters come from the editorial package
+  # (editorial pass 02_chapter_markers, written by produce_episode.py).
+  # These markers only cover the contingency run_show path: positional
+  # anchors + Closing before body markers (EI June-11 ordering rule).
+  section_markers:
+    - pattern: "[Ww]elcome to The Age of AI|[Tt]his is The Age of AI"
+      title: "Introduction"
+      where: start
+    - pattern: "keep being human|[Tt]hat.?s The Age of AI for"
+      title: "Closing"
+      where: end
+
+newsletter:
+  enabled: false
+  tag: "The Age of AI"
+  short_label: "Age of AI"
+  emoji: "🤖"
+
+content_tracking:
+  section_patterns: {}
+
+youtube:
+  # Off at launch. image_provider pre-set to grok so a future one-line
+  # enable doesn't trip tests/test_config.py's Grok-Imagine drift guard.
+  # The voices pipeline publishes a waveform video independently of this
+  # block (pipelines/voices/audio/waveform_video.py).
+  enabled: false
+  channel: en
+  category_id: 28               # Science & Technology
+  image_provider: grok
+  # Required ≥3 even while YouTube is disabled
+  # (tests/test_visual_assets.py::test_every_show_yaml_has_image_queries).
+  image_queries:
+    - human and robot hands almost touching
+    - person being interviewed in a warm studio
+    - craftsperson at work with modern technology
+    - teacher in a classroom with holographic display
+    - portrait of a thoughtful person dramatic lighting

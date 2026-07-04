@@ -1,0 +1,54 @@
+# Nerra Voices — publish an approved, produced episode (spec §5.5).
+# Manual dispatch (operator picks the release moment) or repository_dispatch
+# from a scheduler. Updates RSS + summaries + site pages and commits, same
+# publish surface as every other Nerra show.
+name: Publish Age of AI episode
+on:
+  workflow_dispatch:
+    inputs:
+      interview_id:
+        description: 'Supabase interviews.id to publish'
+        required: true
+        type: string
+  repository_dispatch:
+    types: [interview-publish]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nerra-voices-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: FedericoCarboni/setup-ffmpeg@v3
+      - run: pip install -r pipelines/requirements.txt
+      - run: python pipelines/voices/publish_episode.py
+        env:
+          INTERVIEW_ID: ${{ github.event.inputs.interview_id || github.event.client_payload.interview_id }}
+          SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+      - name: Commit RSS + summaries + pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add age_of_ai_podcast.rss digests/age_of_ai/ age-of-ai.html age-of-ai-summaries.html blog/age_of_ai/ 2>/dev/null || true
+          git diff --cached --quiet && echo "Nothing to commit" && exit 0
+          git commit -m "Publish: Age of AI episode ($(date -u +%F))"
+          for i in 1 2 3 4; do
+            git pull --rebase origin main && git push origin main && exit 0
+            sleep $((2**i))
+          done
+          echo "::error::Publish push failed after retries"
+          exit 1

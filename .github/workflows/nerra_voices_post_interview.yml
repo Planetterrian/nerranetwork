@@ -1,0 +1,38 @@
+# Nerra Voices — post-interview processing (spec §5.3). Triggered by the
+# api.nerranetwork.com/voices/interview-complete Worker (which receives the
+# Voximplant hangup webhook) via repository_dispatch. Mixes audio, runs
+# per-channel STT, the 8 editorial passes, and pings Patrick (gate 1).
+name: Post-interview processing
+on:
+  repository_dispatch:
+    types: [interview-complete]
+
+permissions:
+  contents: read
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: FedericoCarboni/setup-ffmpeg@v3
+      - run: pip install -r pipelines/requirements.txt
+      - run: python pipelines/voices/post_interview.py
+        env:
+          INTERVIEW_RUN_ID: ${{ github.event.client_payload.run_id }}
+          SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT_URL: ${{ secrets.R2_ENDPOINT_URL }}
+          R2_ACCESS_KEY: ${{ secrets.R2_ACCESS_KEY }}
+          R2_SECRET_KEY: ${{ secrets.R2_SECRET_KEY }}
+          R2_PUBLIC_BASE_URL: ${{ secrets.R2_PUBLIC_BASE_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          POSTMARK_TOKEN: ${{ secrets.POSTMARK_TOKEN }}
+          CALCOM_BOOKING_URL: ${{ secrets.CALCOM_BOOKING_URL }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}

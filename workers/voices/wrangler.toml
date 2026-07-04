@@ -1,0 +1,37 @@
+# Nerra Voices (The Age of AI) API Worker — webhook + tool-endpoint layer
+# for the live-interview pipeline. See workers/voices/README.md and
+# docs/age_of_ai_plan.md.
+#
+# NOTE (documented deviation from the pipeline spec §5.6): the spec sketched
+# these handlers as Vercel/Next.js API routes beside Bill Saved. This repo's
+# established API surface is Cloudflare Workers on api.nerranetwork.com
+# (gallery worker precedent), so the handlers live here; the logic ports
+# 1:1 to Next.js route files if the operator prefers Vercel later.
+
+name = "nerra-voices-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+account_id = ""  # intentionally blank in-repo (gallery worker convention)
+
+# The gallery worker holds api.nerranetwork.com as a custom domain; this
+# worker claims only the /voices/* path via a zone route (more-specific
+# routes take precedence over the custom-domain worker).
+routes = [
+  { pattern = "api.nerranetwork.com/voices/*", zone_name = "nerranetwork.com" },
+]
+
+# Daily cron: gate-2 housekeeping — day-4 guest reminder, day-7
+# auto-approve (spec §7).
+[triggers]
+crons = ["0 17 * * *"]
+
+# Secrets (set once via `wrangler secret put <NAME>`):
+#   SUPABASE_URL              Nerra Voices Supabase project URL
+#   SUPABASE_SERVICE_KEY      service-role key (RLS bypass; Worker-only)
+#   GITHUB_DISPATCH_TOKEN     fine-grained PAT, contents:write on
+#                             Planetterrian/nerranetwork (repository_dispatch)
+#   ADMIN_TOKEN               bearer token gating /voices/admin/*
+#   RESEND_API_KEY            transactional email (booking link, approvals)
+#   VOICES_FROM_EMAIL         e.g. mira@nerranetwork.com
+#   CALCOM_BOOKING_URL        the show's Cal.com event link
+#   SLACK_WEBHOOK             operator notifications (optional)

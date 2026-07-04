@@ -1,0 +1,37 @@
+# Nerra Voices — fire scheduled interviews (spec §5.2). Every 5 minutes:
+# T-2h SMS reminders + fire any interview whose slot falls in the window
+# (window computed in-script with drift grace; interview_runs uniqueness
+# makes double ticks safe). GitHub cron is best-effort — the in-script
+# window, not the cron, is the precision mechanism.
+name: Fire scheduled interviews
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nerra-voices-fire
+  cancel-in-progress: false
+
+jobs:
+  fire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r pipelines/requirements.txt
+      - run: python pipelines/voices/fire_interviews.py
+        env:
+          SUPABASE_URL: ${{ secrets.VOICES_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.VOICES_SUPABASE_SERVICE_KEY }}
+          VOXIMPLANT_ACCOUNT_ID: ${{ secrets.VOXIMPLANT_ACCOUNT_ID }}
+          VOXIMPLANT_API_KEY: ${{ secrets.VOXIMPLANT_API_KEY }}
+          VOXIMPLANT_CALLER_ID: ${{ secrets.VOXIMPLANT_CALLER_ID }}
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
